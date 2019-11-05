@@ -91,6 +91,7 @@ class AtCoderContestFormat(DefaultContestFormat):
 
         participation.cumtime = cumtime + penalty
         participation.score = points
+        participation.tiebreaker = 0
         participation.format_data = format_data
         participation.save()
 
