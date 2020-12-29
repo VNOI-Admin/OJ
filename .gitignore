@@ -6,6 +6,10 @@
 *.mo
 *~
 dmoj/local_settings.py
+dmoj-site.pid
+dmoj-site.sock
+uwsgi.ini
+.fuse_hidden*
 resources/style.css
 resources/content-description.css
 resources/ranks.css
