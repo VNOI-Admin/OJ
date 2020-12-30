@@ -1,5 +1,10 @@
 VNOJ: Viet Nam Online Judge, based on DMOJ[https://github.com/DMOJ].
 =====
+
+## Developing:
+- allow cpp checker
+- how about interactive problem?
+
 ## Installation
 
 Check out the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/site/installation). 
@@ -23,6 +28,7 @@ GRANT ALL PRIVILEGES ON dmoj.* to 'dmoj'@'localhost' IDENTIFIED BY '<password>';
 exit
 python3 manage.py migrate
 python3 manage.py loaddata navbar language_small demo //please consider to split this into 3 command 
+python3 manage.py createsuperuser //if needed
 ```
 
 ### Fix lại static site
@@ -52,6 +58,3 @@ dmoj -c judge.yml localhost
 - Khi edit test trên web, nếu không setting DMOJ_PROBLEM_DATA_ROOT vào local_setting thì sẽ không click vào view yaml được -> còn nếu cố định DMOJ_PROBLEM_DATA_ROOT thì làm sao chạy nhiều máy được?
 
 - Có thể edit 2 table `judge_problem` và `judge_problem_allowed_languages` để thêm problem vào (import 1k bài)
-
-## Doing:
-add cpp checker
