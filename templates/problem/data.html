@@ -26,7 +26,7 @@
 
             var $table = $('#case-table');
             $table.on('add-row', function (e, $tr) {
-                update_select2();
+                //update_select2();
                 $tr.find('input').filter('[id$=file]').each(function () {
                     var $select, val = $(this).replaceWith($select = $('<select>').attr({
                         id: $(this).attr('id'),
@@ -95,12 +95,29 @@
                 }).change();
             }
 
-            function checker_custom_py($checker, $custom_py_checker) {
-                $tr = $custom_py_checker.parent().parent();
+            (function toggle_custom() {
+                let $custom_checker_py = $('#id_problem-data-custom_checker_py')
+                let $checker = $('#id_problem-data-checker')
+                let $custom_checker_cpp = $('#id_problem-data-custom_checker_cpp')
+
+                $tr_checker_py = $custom_checker_py.parent().parent();
+                $tr_checker_cpp = $custom_checker_cpp.parent().parent()
+
+                $td = $checker.parent();
+                var $sample = $("<a/>",{
+                    text: "{{_('Instruction')}}",
+                    style: "margin-left:3em;",
+                    target: "_blank",
+                    href: "{{url('custom_checker_sample')}}"
+                }).appendTo($td);
+
                 $checker.change(function () {
-                    $tr.toggle($checker.val().startsWith('custom_py')).change();
+                    $tr_checker_py.toggle($checker.val().startsWith('custom_py')).change();
+                    $tr_checker_cpp.toggle($checker.val().startsWith('custom_cpp')).change();
+                    $sample.toggle($checker.val().startsWith('custom_')).change();
                 }).change();
-            }
+            })();
+
 
             function swap_row($a, $b) {
                 var $a_order = $a.find('input[id$=order]'), $b_order = $b.find('input[id$=order]');
@@ -114,7 +131,7 @@
             }
 
             checker_precision($('#id_problem-data-checker'));
-            checker_custom_py($('#id_problem-data-checker'), $('#id_problem-data-custom_checker_py'));
+
             $table.on('add-row', function (e, $tr) {
                 var $order = $tr.find('input').filter('[id$=order]').attr('type', 'hidden').val(++order);
                 $order.after($('<span>', {'class': 'order'}).text($order.val()))
@@ -212,6 +229,50 @@
                 return false;
             });
 
+            $('a#fill-testcases').click(function () {
+                var inFiles = [], outFiles = [];
+                for (var i = 0; i < window.valid_files.length; i++) {
+                    if (window.valid_files[i].endsWith(".in") || window.valid_files[i].endsWith(".inp")) {
+                        inFiles.push(window.valid_files[i]);
+                    }
+                    if (window.valid_files[i].endsWith(".out")) {
+                        outFiles.push(window.valid_files[i]);
+                    }
+                }
+                if (inFiles.length == 0) {
+                    alert("No input/output files. Make sure your files' suffices are .in(p)/.out");
+                    return false;
+                }
+                if (inFiles.length != outFiles.length) {
+                    alert("The number of input files do not match the number of output files!");
+                    return false;
+                }
+                // add boxes
+                while ($total.val() < inFiles.length) {
+                    $('a#add-case-row').click();
+                }
+                // fill cases
+                for (var i = 0; i < inFiles.length; i++) {
+                    $("#id_cases-" + i + "-input_file").val(inFiles[i]).change();
+                }
+                for (var i = 0; i < outFiles.length; i++) {
+                    $("#id_cases-" + i + "-output_file").val(outFiles[i]).change();
+                }
+                // add points
+                if ($('#problem-type').val() == "ICPC") {
+                    for (i = 0; i + 1 < inFiles.length; i++) {
+                        $("#id_cases-" + i + "-points").val("0").change();
+                    }
+                    $("#id_cases-" + (inFiles.length - 1) + "-points").val("100").change();
+                }
+                else {
+                    for (i = 0; i < inFiles.length; i++) {
+                        $("#id_cases-" + i + "-points").val("1").change();
+                    }
+                }
+                return false;
+            });
+
             var oldIndex;
             $table.sortable({
                 containerSelector: 'table',
@@ -244,26 +305,15 @@
                 }
             });
 
-            var $controls = $('#column-visible');
-            var problem = $controls.attr('data-problem');
-            $controls.find('input').change(function () {
-                var $this = $(this), suffix = $this.attr('data-suffix'), checked = $this.is(':checked');
-                $table.find('.' + suffix.replace(/_/g, '-')).toggle(checked);
-                localStorage.setItem('data-visible:' + problem + ':' + suffix, checked ? '1' : '0')
-            }).each(function () {
-                var $this = $(this), suffix = $this.attr('data-suffix'), filled = false;
-                filled = localStorage.getItem('data-visible:' + problem + ':' + suffix);
-                if (filled !== null)
-                    filled = filled == '1';
-                else {
-                    filled = false;
-                    $table.find('[id$=' + suffix + ']').each(function () {
-                        filled |= !!$(this).val();
-                    });
+            $('input#delete-all').change(function() {
+                if (this.checked) {
+                    $("input[name$='DELETE']").attr('checked', true);
                 }
-                $this.prop('checked', filled).trigger('change');
+                else {
+                    $("input[name$='DELETE']").attr('checked', false);
+                }
             });
-        });
+        }).change();
     </script>
 {% endblock %}
 
@@ -331,7 +381,7 @@
             height: 8em;
         }
 
-        .generator-args-editor .button {
+        .generator-args-editor #submit-button {
             display: block;
             float: right;
         }
@@ -371,26 +421,24 @@
     <form action="" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ cases_formset.management_form }}
-        <table class="table">{{ data_form.as_table() }}</table>
-        <div id="column-visible" data-problem="{{ problem.code }}">
-            <strong>{{ _('Show columns:') }}</strong>
-            <label>
-                <input type="checkbox" data-suffix="output_prefix">
-                {{ _('Output prefix') }}
-            </label>
-            <label>
-                <input type="checkbox" data-suffix="output_limit">
-                {{ _('Output limit') }}
-            </label>
-            <label>
-                <input type="checkbox" data-suffix="checker">
-                {{ _('Checker') }}
-            </label>
-            <label>
-                <input type="checkbox" data-suffix="generator_args">
-                {{ _('Generator args') }}
-            </label>
-        </div>
+        <table class="table">
+            {{ data_form.as_table() }}
+            <th>
+                <label>Autofill testcases:</label>
+            </th>
+            <td>
+                Problem type:
+                <select id="problem-type">
+                    <option value="ICPC">ICPC</option>
+                    <option value="OI">OI</option>
+                </select>
+                <a id="fill-testcases" href="#">
+                    <i class="fa fa-circle"></i>
+                    Fill testcases
+                </a>
+            </td>
+        </table>
+        <input type="submit" value="{{ _('Apply!') }}" class="button" id="submit-button">
         <table id="case-table" class="table">
             <thead>
             <tr>
@@ -400,12 +448,12 @@
                 <th>{{ _('Output file') }}</th>
                 <th>{{ _('Points') }}</th>
                 <th>{{ _('Pretest?') }}</th>
-                <th class="output-prefix">{{ _('Output prefix') }}</th>
-                <th class="output-limit">{{ _('Output limit') }}</th>
-                <th class="checker">{{ _('Checker') }}</th>
                 <th class="generator-args">{{ _('Generator args') }}</th>
                 {% if cases_formset.can_delete %}
-                    <th>{{ _('Delete?') }}</th>
+                    <th>{{ _('Delete?') }}
+                        <br>
+                        <input type="checkbox" name="delete-all" id="delete-all"> 
+                    </th>
                 {% endif %}
             </tr>
             </thead>
@@ -433,15 +481,10 @@
                     </td>
                     <td>{{ form.points.errors }}{{ form.points }}</td>
                     <td>{{ form.is_pretest.errors }}{{ form.is_pretest }}</td>
-                    <td class="output-prefix">{{ form.output_prefix.errors }}{{ form.output_prefix }}</td>
-                    <td class="output-limit">{{ form.output_limit.errors }}{{ form.output_limit }}</td>
-                    <td class="checker">
-                        {{ form.checker.errors }}{{ form.checker }}{{ form.checker_args.errors }}{{ form.checker_args }}
-                    </td>
                     <td class="generator-args">{{ form.generator_args.errors }}{{ form.generator_args }}
                         <a href="javascript:void(0)" class="edit-generator-args">
                             <i class="fa fa-pencil"></i>
-                            {{ _('Edit') }}
+                            {{ _('Edit generator args') }}
                         </a>
                     </td>
                     {% if cases_formset.can_delete %}
@@ -451,7 +494,7 @@
             {% endfor %}
             </tbody>
         </table>
-        <input type="submit" value="{{ _('Submit!') }}" class="button">
+        <input type="submit" value="{{ _('Apply!') }}" class="button" id="submit-button">
         <a id="add-case-row" href="#"><i class="fa fa-plus"></i> {{ _('Add new case') }}</a>
     </form>
     <div style="display: none" class="generator-args-editor"><textarea></textarea><a class="button">{{ _('Save') }}</a></div>
