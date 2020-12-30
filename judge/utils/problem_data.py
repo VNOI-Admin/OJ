@@ -64,6 +64,11 @@ class ProblemDataCompiler(object):
             cases.append(batch)
 
         def make_checker(case):
+            if (case.checker == 'custom_py'):
+                custom_py_checker_path = split_path_first(case.custom_py_checker.name)
+                if len(custom_py_checker_path) != 2:
+                    raise ProblemDataError(_('How did you corrupt the custom checker path?'))
+                return(custom_py_checker_path[1])
             if case.checker_args:
                 return {
                     'name': case.checker,

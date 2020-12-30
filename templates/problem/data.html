@@ -95,6 +95,13 @@
                 }).change();
             }
 
+            function checker_custom_py($checker, $custom_py_checker) {
+                $tr = $custom_py_checker.parent().parent();
+                $checker.change(function () {
+                    $tr.toggle($checker.val().startsWith('custom_py')).change();
+                }).change();
+            }
+
             function swap_row($a, $b) {
                 var $a_order = $a.find('input[id$=order]'), $b_order = $b.find('input[id$=order]');
                 var order = $a_order.val();
@@ -107,7 +114,7 @@
             }
 
             checker_precision($('#id_problem-data-checker'));
-
+            checker_custom_py($('#id_problem-data-checker'), $('#id_problem-data-custom_checker_py'));
             $table.on('add-row', function (e, $tr) {
                 var $order = $tr.find('input').filter('[id$=order]').attr('type', 'hidden').val(++order);
                 $order.after($('<span>', {'class': 'order'}).text($order.val()))
