@@ -3,9 +3,9 @@ import re
 import subprocess
 
 from dmoj.error import InternalError
-from dmoj.judgeenv import env, get_problem_root
+from dmoj.judgeenv import get_problem_root
 from dmoj.result import CheckerResult
-from dmoj.utils.helper_files import compile_with_auxiliary_files, mktemp, parse_helper_file_error
+from dmoj.utils.helper_files import compile_with_auxiliary_files, mktemp  # , parse_helper_file_error
 from dmoj.utils.unicode import utf8text
 
 executor = None
@@ -54,8 +54,8 @@ class Module:
 
 
 def check(process_output, judge_output, judge_input,
-          problem_id={{problemid}},
-          files={{filecpp}},
+          problem_id={{'problemid'}},
+          files={{'filecpp'}},
           lang='CPP17',
           time_limit=3,  # second
           memory_limit=1024 * 512,  # 512 MB

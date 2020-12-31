@@ -84,8 +84,8 @@ class ProblemDataCompiler(object):
 
             # replace {{filecpp}} and {{problemid}} in checker file
             filedata = open(checker, 'r').read()
-            filedata = filedata.replace('{{filecpp}}', "\'%s\'" % custom_cpp_checker_name)
-            filedata = filedata.replace('{{problemid}}', "\'%s\'" % custom_cpp_checker_path[0])
+            filedata = filedata.replace('{{\'filecpp\'}}', "\'%s\'" % custom_cpp_checker_name)
+            filedata = filedata.replace('{{\'problemid\'}}', "\'%s\'" % custom_cpp_checker_path[0])
             open(checker, 'w').write(filedata)
 
             return checker_name
