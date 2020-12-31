@@ -51,9 +51,12 @@ python3 manage.py runserver localhost:8081
 
 ### Chạy với nginx
 ```
-supervisorctl restart all
-service nginx restart
+sudo supervisorctl restart site bridged celery
+sudo service nginx reload
 ```
+Nếu 2 thằng bridged và celery mà chạy lỗi do permission thì xóa file log của bridged đi rồi chạy
+
+
 
 ### Chạy judger
 ```
