@@ -48,15 +48,15 @@ class ProblemData(models.Model):
     checker_args = models.TextField(verbose_name=_('checker arguments'), blank=True,
                                     help_text=_('checker arguments as a JSON object'))
     custom_py_checker = models.FileField(verbose_name=_('custom python checker file'), storage=problem_data_storage,
-                                      null=True,
-                                      blank=True,
-                                      upload_to=problem_directory_file,
-                                      validators=[FileExtensionValidator(allowed_extensions=['py'])])
+                                         null=True,
+                                         blank=True,
+                                         upload_to=problem_directory_file,
+                                         validators=[FileExtensionValidator(allowed_extensions=['py'])])
     custom_cpp_checker = models.FileField(verbose_name=_('custom cpp checker file'), storage=problem_data_storage,
-                                      null=True,
-                                      blank=True,
-                                      upload_to=problem_directory_file,
-                                      validators=[FileExtensionValidator(allowed_extensions=['cpp'])])
+                                          null=True,
+                                          blank=True,
+                                          upload_to=problem_directory_file,
+                                          validators=[FileExtensionValidator(allowed_extensions=['cpp'])])
 
     __original_zipfile = None
 

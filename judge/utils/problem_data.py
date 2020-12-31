@@ -75,8 +75,8 @@ class ProblemDataCompiler(object):
             if len(custom_cpp_checker_path) != 2:
                 raise ProblemDataError(_('How did you corrupt the custom checker path?'))
 
-            checker = os.path.join(settings.DMOJ_PROBLEM_DATA_ROOT, 
-                                   custom_cpp_checker_path[0], 
+            checker = os.path.join(settings.DMOJ_PROBLEM_DATA_ROOT,
+                                   custom_cpp_checker_path[0],
                                    checker_name)
 
             custom_cpp_checker_name = custom_cpp_checker_path[1]
