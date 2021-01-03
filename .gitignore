@@ -17,3 +17,6 @@ resources/table.css
 resources/martor-description.css
 sass_processed
 bridge_log.txt
+_mytempfile/
+tmp_uwsgi.ini
+nginx_template.conf
