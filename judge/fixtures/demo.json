@@ -17,7 +17,7 @@
             "points": 0.0,
             "problem_count": 0,
             "rating": null,
-            "timezone": "America/Toronto",
+            "timezone": "Asia/SaiGon",
             "user": 1,
             "user_script": ""
         },
@@ -55,10 +55,10 @@
             ],
             "creation_date": "2017-12-02T08:50:25.199Z",
             "is_open": true,
-            "slug": "dmoj",
-            "name": "DMOJ: Modern Online Judge",
+            "slug": "vnoj",
+            "name": "VNOJ: Viet Nam Online Judge",
             "registrant": 1,
-            "short_name": "DMOJ",
+            "short_name": "VNOJ",
             "slots": null
         },
         "model": "judge.organization",
@@ -165,7 +165,7 @@
     {
         "fields": {
             "domain": "localhost:8081",
-            "name": "DMOJ: Modern Online Judge"
+            "name": "VNOJ: Viet Nam Online Judge"
         },
         "model": "sites.site",
         "pk": 1
