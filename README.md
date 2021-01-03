@@ -40,12 +40,14 @@ python3 manage.py createsuperuser //if needed
 
 ### Fix lại static site
 ```
+./make_style.sh
 python3 manage.py collectstatic
 python3 manage.py compilejsi18n 
 ```
 
 ### Chạy debug ở localhost:
 ```
+python3 manage.py check
 python3 manage.py runserver localhost:8081
 ```
 
