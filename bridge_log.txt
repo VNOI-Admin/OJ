@@ -1,0 +1,4 @@
+INFO 2021-01-03 03:06:57,949 daemon Exiting due to SIGINT
+INFO 2021-01-03 15:26:39,398 daemon Exiting due to SIGINT
+INFO 2021-01-04 17:43:08,350 daemon Exiting due to SIGINT
+INFO 2021-01-05 04:47:42,776 daemon Exiting due to SIGINT
