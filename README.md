@@ -42,6 +42,7 @@ python3 manage.py createsuperuser //if needed
 ```
 ./make_style.sh
 python3 manage.py collectstatic
+python3 manage.py compilemessages
 python3 manage.py compilejsi18n 
 ```
 
@@ -70,3 +71,5 @@ dmoj -c judge.yml localhost
 - Khi edit test trên web, nếu không setting DMOJ_PROBLEM_DATA_ROOT vào local_setting thì sẽ không click vào view yaml được -> còn nếu cố định DMOJ_PROBLEM_DATA_ROOT thì làm sao chạy nhiều máy được?
 
 - Có thể edit 2 table `judge_problem` và `judge_problem_allowed_languages` để thêm problem vào (import 1k bài), hoac la fix file demo
+
+- Có nên allow hết 75 ngôn ngữ không, hay chỉ 15 cái thôi? (languages_small & languages_all)
