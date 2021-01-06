@@ -122,7 +122,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'code', 'name', 'is_public', 'is_manually_managed', 'date', 'authors', 'curators', 'testers',
+                'code', 'name', 'is_public', 'is_manually_managed', 'is_polygon_problem', 'date', 'authors', 'curators', 'testers',
                 'is_organization_private', 'organizations', 'is_full_markup', 'description', 'license',
             ),
         }),
@@ -162,6 +162,8 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         fields = self.readonly_fields
+        if not request.user.is_superuser:
+            fields += ('is_polygon_problem')
         if not request.user.has_perm('judge.change_public_visibility'):
             fields += ('is_public',)
         if not request.user.has_perm('judge.change_manually_managed'):
