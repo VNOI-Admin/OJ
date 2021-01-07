@@ -3,6 +3,7 @@ VNOJ: Viet Nam Online Judge, based on DMOJ[https://github.com/DMOJ].
 
 ## Developing:
 - [x] allow cpp checker
+- [x] allow testlib
 - [x] allow render pure HTML with polygon statement (only superusers can set `is_polygon_problem`)
 - [ ] how about interactive problem with cpp checker? (skip for now)
 
@@ -16,10 +17,11 @@ Check out the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/sit
 Check out [**DMOJ/judge-server**](https://github.com/DMOJ/judge-server) for more judging backend details.
 
 ### Notes for installation:
+- To support cpp checker, I have to use a python wrapper, by default, the cpp checker will have 512 MB ram, 3 seconds running time limit, 10 seconds compile time limit. You should change its setting in [wrapper_checker_template/template.py](wrapper_checker_template/template.py) 
+- To support `testlib.h`, you need to copy the [testlib.h](wrapper_checker_template/testlib.h) to g++ include path in judge server. To speed up compiler time, you may create the precompiled header.
 - The admin page (/admin) will redirect to `localhost:8081` if you use `python3 manage.py demo`, there is 2 ways to fix it: 
     1. You can change that in [demo.json](judge/fixtures/demo.json)
     2. You can go to the admin page, scoll down to file the `Sites` settings.
-- To support cpp checker, I have to use a python wrapper, by default, the cpp checker will have 512 MB ram, 3 seconds running time limit, 10 seconds compile time limit. You should change its setting in [wrapper_checker_template/template.py](wrapper_checker_template/template.py) 
 
 ## Some useful script:
 

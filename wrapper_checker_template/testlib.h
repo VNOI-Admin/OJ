@@ -2754,9 +2754,9 @@ void InStream::xmlSafeWrite(std::FILE *file, const char *msg) {
 }
 
 void InStream::quitscrS(WORD color, std::string msg) {
-    quitscr(color, msg.c_str());
     // DMOJ read feedback from stdout
     // Extended feedback from stderr
+    // quitscr(color, msg.c_str());
     std::fprintf(stdout, "%s", msg.c_str()); 
 }
 
