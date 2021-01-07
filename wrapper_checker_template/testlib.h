@@ -2491,33 +2491,7 @@ void InStream::textColor(
 #endif
         WORD color
 ) {
-#if defined(ON_WINDOWS) && (!defined(_MSC_VER) || _MSC_VER > 1400)
-    HANDLE handle = GetStdHandle(STD_OUTPUT_HANDLE);
-    SetConsoleTextAttribute(handle, color);
-#endif
-#if !defined(ON_WINDOWS) && defined(__GNUC__)
-    if (isatty(2))
-    {
-        switch (color)
-        {
-        case LightRed:
-            fprintf(stderr, "\033[1;31m");
-            break;
-        case LightCyan:
-            fprintf(stderr, "\033[1;36m");
-            break;
-        case LightGreen:
-            fprintf(stderr, "\033[1;32m");
-            break;
-        case LightYellow:
-            fprintf(stderr, "\033[1;33m");
-            break;
-        case LightGray:
-        default:
-            fprintf(stderr, "\033[0m");
-        }
-    }
-#endif
+    return; // We don't use this function 
 }
 
 NORETURN void halt(int exitCode) {
@@ -2665,7 +2639,7 @@ NORETURN void InStream::quit(TResult result, const char *msg) {
             result = _pe;
             break;
         case _points:
-            errorName = "points ";
+            errorName = "partial points ";
             quitscrS(LightYellow, errorName);
             break;
         case _unexpected_eof:
@@ -2781,6 +2755,9 @@ void InStream::xmlSafeWrite(std::FILE *file, const char *msg) {
 
 void InStream::quitscrS(WORD color, std::string msg) {
     quitscr(color, msg.c_str());
+    // DMOJ read feedback from stdout
+    // Extended feedback from stderr
+    std::fprintf(stdout, "%s", msg.c_str()); 
 }
 
 void InStream::quitscr(WORD color, const char *msg) {
