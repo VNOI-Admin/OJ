@@ -20,3 +20,4 @@ bridge_log.txt
 _mytempfile/
 tmp_uwsgi.ini
 nginx_template.conf
+martor/
