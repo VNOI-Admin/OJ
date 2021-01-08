@@ -27,29 +27,41 @@ def get_executor(files, lang, compiler_time_limit, problem_id):
 class Module:
     AC = 0
     WA = 1
-    PARTIAL = 2
+    PARTIAL = 7  # match with testlib
+    ACTUAL_POINT = 17
 
     # regex to match a float from 0 to 1 in the first line of stderr
-    repartial = re.compile(r'^[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?', re.M)
+    # prefix `points ` from testlib is also accepted
+    repartial = re.compile(r'^(partial points )?([-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)', re.M)
 
     @classmethod
     def parse_return_code(cls, proc, executor, point_value, time_limit, memory_limit, feedback, name, stderr):
+        feedback = feedback.strip()
         if proc.returncode == cls.AC:
             return CheckerResult(True, point_value, feedback=feedback, extended_feedback=stderr)
-        elif proc.returncode == cls.PARTIAL:
+        elif proc.returncode == cls.PARTIAL or proc.returncode == cls.ACTUAL_POINT:
             match = cls.repartial.search(stderr)
             if not match:
-                raise InternalError('Invalid first line of stderr partial points: %r' % stderr)
-            points = float(match.group(0))
-            if not 0 <= points <= 1:
-                raise InternalError('Invalid partial points: %d' % points)
+                return CheckerResult(False, 0, 'Invalid first line of stderr for points.', extended_feedback=stderr)
+            points = float(match.group(2))
+            actual_point = points * point_value
 
-            ac = (points == 1)
-            return CheckerResult(ac, points * point_value, feedback=feedback, extended_feedback=stderr)
-        elif proc.returncode == cls.WA:
+            # in this case, maybe `points` is the actual_point
+            if not 0 <= points <= 1:
+                actual_point = point_value
+                # This is for polygon problems
+                # if point_value was multiplied by 100
+                if point_value >= 100:
+                    actual_point *= 100
+
+            if proc.returncode == cls.ACTUAL_POINT:
+                actual_point = points
+
+            return CheckerResult(False, actual_point, feedback=feedback, extended_feedback=stderr)
+        elif proc.returncode <= cls.ACTUAL_POINT:
+            # including WA, wrong output format from testlib
             return CheckerResult(False, 0, feedback=feedback, extended_feedback=stderr)
         else:
-            # parse_helper_file_error(proc, executor, name, stderr.encode(), time_limit, memory_limit)
             return CheckerResult(False, 0, f"Checker exitcode {proc.returncode}", extended_feedback=stderr)
 
 
@@ -68,7 +80,9 @@ def check(process_output, judge_output, judge_input,
         try:
             process = executor.launch(input_file.name, output_file.name, judge_file.name, stdout=subprocess.PIPE,
                                       stderr=subprocess.PIPE, memory=memory_limit, time=time_limit)
-            proc_output, error = map(utf8text, process.communicate())
+            proc_output, error = process.communicate()
+            proc_output = utf8text(proc_output, errors='ignore')
+            error = utf8text(error, errors='ignore')
         except Exception as err:
             raise InternalError('Error while running checker: %r', err)
 
