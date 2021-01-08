@@ -44,6 +44,7 @@ exit
 
 ### Migrations
 Make migrations: `python3 manage.py makemigrations`
+Make data to load: `python3 manage.py dumpdata`
 
 Migrate: `python3 manage.py migrate`
 
