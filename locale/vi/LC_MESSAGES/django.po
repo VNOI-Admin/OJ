@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-11 13:36+0000\n"
+"POT-Creation-Date: 2021-01-11 14:03+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -404,9 +404,7 @@ msgstr "Không có phần nói của ngươi, đồ cóc ghẻ."
 #: judge/comments.py:50 templates/comments/list.html:142
 msgid ""
 "You need to have solved at least one problem before your voice can be heard."
-msgstr ""
-"Bạn cần giải được ít nhất một bài tập trước khi lời nói của bạn có thể được "
-"lắng nghe."
+msgstr "Bạn cần giải được ít nhất một bài tập trước khi bình luận."
 
 #: judge/comments.py:94
 msgid "Posted comment"
@@ -2694,7 +2692,7 @@ msgstr "trang lỗi %s"
 #: judge/views/language.py:12 templates/status/judge-status-table.html:9
 #: templates/status/status-tabs.html:5
 msgid "Runtimes"
-msgstr "Đang chạy"
+msgstr "Các ngôn ngữ"
 
 #: judge/views/organization.py:44 judge/views/organization.py:47
 msgid "No such organization"
@@ -3007,13 +3005,14 @@ msgstr "Nộp %(problem)s bởi %(user)s"
 msgid "All submissions"
 msgstr "Tất cả các bài nộp"
 
-#: judge/views/submission.py:349
+#: judge/views/submission.py:349 judge/views/submission.py:354
 msgid "All my submissions"
-msgstr "Tất cả những lần nộp bài của tôi"
+msgstr "Tất cả bài nộp của tôi"
 
-#: judge/views/submission.py:350
-#, python-format
-msgid "All submissions by %s"
+#: judge/views/submission.py:350 judge/views/submission.py:355
+#, fuzzy
+#| msgid "All submissions by %s"
+msgid "All submissions by"
 msgstr "Tất cả các bài nộp bởi %s"
 
 #: judge/views/submission.py:381
@@ -3347,7 +3346,7 @@ msgstr "Cuộc thi đang diễn ra"
 
 #: templates/blog/list.html:172
 msgid "Upcoming contests"
-msgstr "Sự kiện sắp tới"
+msgstr "Cuộc thi sắp tới"
 
 #: templates/blog/list.html:189
 msgid "Comment stream"
@@ -3673,7 +3672,7 @@ msgstr "Sự kiện sắp tới"
 
 #: templates/contest/list.html:254
 msgid "There are no scheduled contests at this time."
-msgstr "Không có không có cuộc thi dự kiến tại thời điểm này."
+msgstr "Không có cuộc thi dự kiến tại thời điểm này."
 
 #: templates/contest/list.html:260
 msgid "Past Contests"
@@ -4062,7 +4061,7 @@ msgstr[0] "Tác giả:"
 
 #: templates/problem/list.html:62
 msgid "Filter by type..."
-msgstr "Lọc theo loại..."
+msgstr "Lọc theo dạng..."
 
 #: templates/problem/list.html:185
 msgid "Hot problems"
@@ -4276,7 +4275,7 @@ msgstr "Tìm kiếm"
 
 #: templates/problem/search-form.html:21
 msgid "Hide solved problems"
-msgstr "Ẩn các bài đã có lời giải"
+msgstr "Ẩn các bài đã AC"
 
 #: templates/problem/search-form.html:27
 msgid "Show problem types"
@@ -4289,11 +4288,11 @@ msgstr "Tất cả"
 
 #: templates/problem/search-form.html:45
 msgid "Problem types"
-msgstr "Kiểu bài tập"
+msgstr "Dạng bài tập"
 
 #: templates/problem/search-form.html:55
 msgid "Point range"
-msgstr ""
+msgstr "Khoảng điểm"
 
 #: templates/problem/search-form.html:61 templates/submission/list.html:331
 #: templates/ticket/list.html:245
@@ -4605,7 +4604,7 @@ msgstr "Ping"
 
 #: templates/status/judge-status-table.html:8
 msgid "Load"
-msgstr "Tải"
+msgstr "Tốc độ"
 
 #: templates/status/judge-status-table.html:34
 #: templates/status/judge-status-table.html:41
@@ -5079,11 +5078,11 @@ msgstr ""
 
 #: templates/user/user-about.html:40
 msgid "You have not shared any information."
-msgstr ""
+msgstr "Bạn chưa cung cấp thông tin về bản thân"
 
 #: templates/user/user-about.html:42
 msgid "This user has not shared any information."
-msgstr ""
+msgstr "Người dùng này chưa cung cấp thông tin về bản thân"
 
 #: templates/user/user-about.html:59
 #, fuzzy
@@ -5105,8 +5104,8 @@ msgstr "Thứ Ba"
 
 #: templates/user/user-about.html:74
 msgid "Wed"
-msgstr ""
-
+msgstr "Thứ tư"
+tư
 #: templates/user/user-about.html:79
 #, fuzzy
 #| msgid "Thursday"
@@ -5123,7 +5122,7 @@ msgstr "Thứ Sáu"
 #, fuzzy
 #| msgid "State"
 msgid "Sat"
-msgstr "Trạng thái"
+msgstr "Thứ Bảy"
 
 #: templates/user/user-about.html:98
 msgid "Less"
@@ -5151,11 +5150,11 @@ msgstr[0] ""
 
 #: templates/user/user-base.html:50
 msgid "Rank by points:"
-msgstr ""
+msgstr "Xếp hạng:"
 
 #: templates/user/user-base.html:53
 msgid "Total points:"
-msgstr ""
+msgstr "Tổng điểm: "
 
 #: templates/user/user-base.html:67
 #, python-format

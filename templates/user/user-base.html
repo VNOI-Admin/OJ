@@ -40,9 +40,7 @@
 
             <div><b>
                 {%- trans trimmed counter=user.problem_count %}
-                    {{ counter }} problem solved
-                {% pluralize %}
-                    {{ counter }} problems solved
+                    {{ _('Problems solved') }}: {{ counter }}
                 {% endtrans -%}
             </b></div>
 
