@@ -84,6 +84,7 @@ def check(process_output, judge_output, judge_input, point_value, **kwargs):
     </article>
     <article id="cpp">
         <h2>2. Custom validator (CPP)</h2>
+        <p> Có hổ trợ checker viết bằng testlib, với các checker dùng testlib thì cứ viết theo chuẩn polygon là được.  </p>
         <hr>
         <p>
         Để sử dụng chức năng này, cần viết một chương trình C++ pass vào 3 arguments theo thứ tự <code>input_file</code>, <code>output_file</code>, <code>ans_file</code> tương ứng với các file input, output, đáp án.
@@ -100,7 +101,7 @@ main.exe [input_file] [output_file] [ans_file]</pre>
             <ul>
                 <li> 0 nếu AC (100% điểm)</li>
                 <li> 1 nếu WA (0 điểm)</li>
-                <li> 2 nếu điểm thành phần. Khi đó cần in ra stderr một số thực trong đoạn [0, 1] thể hiện cho tỷ lệ điểm. Nếu điểm < 1 thì hiển thị WA, điểm = 1 thì hiển thị AC. Lưu ý rằng điểm phải được in ra ở dòng đầu tiên của stderr. </li> 
+                <li> 7 nếu điểm thành phần. Khi đó cần in ra stderr một số thực trong đoạn [0, 1] thể hiện cho tỷ lệ điểm. Lưu ý rằng điểm phải được in ra ở dòng đầu tiên của stderr. </li> 
                 <li> Nếu chương trình trả về giá trị khác (run time error) thì bài nộp sẽ được 0 điểm (xem như WA)
             </ul>
             Những thông tin được viết ra stdout (bằng cout) sẽ được in ra màn hình cho người nộp bài(feedback), nhưng thông tin này chỉ hiển thị được khoản 20 ký tự. </br>
