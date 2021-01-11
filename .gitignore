@@ -23,6 +23,7 @@ nginx_template.conf
 martor/
 judge/fixtures/fixed*
 judge/fixtures/voj_*
+judge/fixtures/VOJ_*
 VOJ_*problems.json
 vo21.json
 tmp.json
