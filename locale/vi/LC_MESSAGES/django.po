@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-11 14:23+0000\n"
+"POT-Creation-Date: 2021-01-11 14:29+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -2824,7 +2824,8 @@ msgid "Editorial for <a href=\"{1}\">{0}</a>"
 msgstr "Hướng giải của <a href=\"{1}\">{0}</a>"
 
 #: judge/views/problem.py:284 templates/contest/contest.html:79
-#: templates/user/user-tabs.html:5 templates/user/users-table.html:23
+#: templates/problem/list.html:166 templates/user/user-tabs.html:5
+#: templates/user/users-table.html:23
 msgid "Problems"
 msgstr "Đề bài"
 
@@ -3202,7 +3203,7 @@ msgstr ""
 
 #: judge/views/user.py:443 templates/user/user-list-tabs.html:4
 msgid "Leaderboard"
-msgstr "Leaderboard"
+msgstr "Bảng xếp hạng"
 
 #: judge/views/widgets.py:52 judge/views/widgets.py:62
 #, python-format
@@ -3668,7 +3669,7 @@ msgstr "Cuộc thi đang diễn ra"
 
 #: templates/contest/list.html:226
 msgid "Upcoming Contests"
-msgstr "Sự kiện sắp tới"
+msgstr "Các cuộc thi sắp tới"
 
 #: templates/contest/list.html:254
 msgid "There are no scheduled contests at this time."
@@ -4070,7 +4071,7 @@ msgstr "Những bài tập nổi bật"
 #: templates/problem/list.html:207 templates/problem/list.html:224
 #: templates/problem/search-form.html:30 templates/user/user-problems.html:59
 msgid "Category"
-msgstr "Thuộc Danh mục"
+msgstr "Danh mục"
 
 #: templates/problem/list.html:209 templates/problem/list.html:228
 msgid "Types"
@@ -5143,9 +5144,6 @@ msgid "past year"
 msgstr ""
 
 #: templates/user/user-base.html:42
-#, fuzzy
-#| msgctxt "contest problem"
-#| msgid "%(problem)s in %(contest)s"
 msgid "Problems solved:"
 msgstr "Số bài đã giải:"
 

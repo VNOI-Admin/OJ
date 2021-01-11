@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-11 14:23+0000\n"
+"POT-Creation-Date: 2021-01-11 14:29+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2803,7 +2803,8 @@ msgid "Editorial for <a href=\"{1}\">{0}</a>"
 msgstr ""
 
 #: judge/views/problem.py:284 templates/contest/contest.html:79
-#: templates/user/user-tabs.html:5 templates/user/users-table.html:23
+#: templates/problem/list.html:166 templates/user/user-tabs.html:5
+#: templates/user/users-table.html:23
 msgid "Problems"
 msgstr ""
 
