@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-11 14:03+0000\n"
+"POT-Creation-Date: 2021-01-11 14:23+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -3241,7 +3241,7 @@ msgid "View Submissions"
 msgstr "Xem các bài nộp"
 
 #: templates/admin/judge/problem/change_form.html:17
-#: templates/user/user-base.html:61
+#: templates/user/user-base.html:57
 msgid "View submissions"
 msgstr "Xem các bài nộp"
 
@@ -5105,7 +5105,7 @@ msgstr "Thứ Ba"
 #: templates/user/user-about.html:74
 msgid "Wed"
 msgstr "Thứ tư"
-tư
+
 #: templates/user/user-about.html:79
 #, fuzzy
 #| msgid "Thursday"
@@ -5143,42 +5143,43 @@ msgid "past year"
 msgstr ""
 
 #: templates/user/user-base.html:42
-#, python-format
-msgid "%(counter)s problem solved"
-msgid_plural "%(counter)s problems solved"
-msgstr[0] ""
+#, fuzzy
+#| msgctxt "contest problem"
+#| msgid "%(problem)s in %(contest)s"
+msgid "Problems solved:"
+msgstr "Số bài đã giải:"
 
-#: templates/user/user-base.html:50
+#: templates/user/user-base.html:46
 msgid "Rank by points:"
 msgstr "Xếp hạng:"
 
-#: templates/user/user-base.html:53
+#: templates/user/user-base.html:49
 msgid "Total points:"
 msgstr "Tổng điểm: "
 
-#: templates/user/user-base.html:67
+#: templates/user/user-base.html:63
 #, python-format
 msgid "%(counter)s contest written"
 msgid_plural "%(counter)s contests written"
 msgstr[0] ""
 
-#: templates/user/user-base.html:74
+#: templates/user/user-base.html:70
 msgid "Rank by rating:"
 msgstr "Xếp hạng theo điểm số:"
 
-#: templates/user/user-base.html:76
+#: templates/user/user-base.html:72
 msgid "Rating:"
 msgstr "Điểm số:"
 
-#: templates/user/user-base.html:77
+#: templates/user/user-base.html:73
 msgid "Volatility:"
 msgstr "Độ biến động:"
 
-#: templates/user/user-base.html:78
+#: templates/user/user-base.html:74
 msgid "Min. rating:"
 msgstr "Điểm số thấp nhất:"
 
-#: templates/user/user-base.html:79
+#: templates/user/user-base.html:75
 msgid "Max rating:"
 msgstr "Điểm số cao nhất:"
 
@@ -5231,6 +5232,11 @@ msgstr ""
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+#, fuzzy
+#~| msgid "Rank by points:"
+#~ msgid "%(_('Rank by points:'))s"
+#~ msgstr "Xếp hạng:"
 
 #~ msgid "German"
 #~ msgstr "Tiếng Đức"

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-11 14:03+0000\n"
+"POT-Creation-Date: 2021-01-11 14:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -3210,7 +3210,7 @@ msgid "View Submissions"
 msgstr ""
 
 #: templates/admin/judge/problem/change_form.html:17
-#: templates/user/user-base.html:61
+#: templates/user/user-base.html:57
 msgid "View submissions"
 msgstr ""
 
@@ -5059,44 +5059,41 @@ msgid "past year"
 msgstr ""
 
 #: templates/user/user-base.html:42
-#, python-format
-msgid "%(counter)s problem solved"
-msgid_plural "%(counter)s problems solved"
-msgstr[0] ""
-msgstr[1] ""
+msgid "Problems solved:"
+msgstr ""
 
-#: templates/user/user-base.html:50
+#: templates/user/user-base.html:46
 msgid "Rank by points:"
 msgstr ""
 
-#: templates/user/user-base.html:53
+#: templates/user/user-base.html:49
 msgid "Total points:"
 msgstr ""
 
-#: templates/user/user-base.html:67
+#: templates/user/user-base.html:63
 #, python-format
 msgid "%(counter)s contest written"
 msgid_plural "%(counter)s contests written"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/user/user-base.html:74
+#: templates/user/user-base.html:70
 msgid "Rank by rating:"
 msgstr ""
 
-#: templates/user/user-base.html:76
+#: templates/user/user-base.html:72
 msgid "Rating:"
 msgstr ""
 
-#: templates/user/user-base.html:77
+#: templates/user/user-base.html:73
 msgid "Volatility:"
 msgstr ""
 
-#: templates/user/user-base.html:78
+#: templates/user/user-base.html:74
 msgid "Min. rating:"
 msgstr ""
 
-#: templates/user/user-base.html:79
+#: templates/user/user-base.html:75
 msgid "Max rating:"
 msgstr ""
 
