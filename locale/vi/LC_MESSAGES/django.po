@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-12 03:23+0000\n"
+"POT-Creation-Date: 2021-01-12 03:27+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -24,6 +24,22 @@ msgstr "Tiếng Anh"
 #: dmoj/settings.py:362
 msgid "Vietnamese"
 msgstr "Tiếng Việt"
+
+#: dmoj/urls.py:34
+msgid "Activation Successful!"
+msgstr "Ký hoạt thành công"
+
+#: dmoj/urls.py:41
+msgid "Activation key invalid"
+msgstr "Mã kích hoạt không hợp lệ"
+
+#: dmoj/urls.py:48
+msgid "Registration Completed"
+msgstr "Đăng ký thành công"
+
+#: dmoj/urls.py:52
+msgid "Registration not allowed"
+msgstr "Không được phép đăng ký"
 
 #: dmoj/urls.py:104 templates/base.html:190
 msgid "Home"
@@ -2380,7 +2396,7 @@ msgid "message time"
 msgstr ""
 
 #: judge/override_standard_messages.py:4
-#,  python-format
+#, python-format
 msgid ""
 "This password is too short. It must contain at least %(min_length)d "
 "character."
@@ -2542,7 +2558,7 @@ msgstr "%h:%m"
 #: judge/views/about.py:9 templates/user/user-about.html:33
 #: templates/user/user-tabs.html:4
 msgid "About"
-msgstr ""
+msgstr "Thông tin"
 
 #: judge/views/about.py:15
 msgid "Custom Checker Sample"
@@ -2860,7 +2876,7 @@ msgstr "Đề bài"
 #: judge/views/problem.py:556 judge/views/problem.py:564
 #, python-format
 msgid "Submit to %s"
-msgstr "Nộp bài đến %s"
+msgstr "Nộp bài %s"
 
 #: judge/views/problem.py:613
 msgid "Banned from submitting"
@@ -3028,7 +3044,7 @@ msgstr "Phiên bản của trình chấm"
 #: judge/views/submission.py:53 judge/views/submission.py:60
 #, python-format
 msgid "Submission of %(problem)s by %(user)s"
-msgstr "Các bài nộp %(problem)s của %(user)s"
+msgstr "Bài nộp %(problem)s của %(user)s"
 
 #: judge/views/submission.py:203 judge/views/submission.py:204
 #: templates/problem/problem.html:130

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-12 03:23+0000\n"
+"POT-Creation-Date: 2021-01-12 03:27+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,6 +24,22 @@ msgstr ""
 
 #: dmoj/settings.py:362
 msgid "Vietnamese"
+msgstr ""
+
+#: dmoj/urls.py:34
+msgid "Activation Successful!"
+msgstr ""
+
+#: dmoj/urls.py:41
+msgid "Activation key invalid"
+msgstr ""
+
+#: dmoj/urls.py:48
+msgid "Registration Completed"
+msgstr ""
+
+#: dmoj/urls.py:52
+msgid "Registration not allowed"
 msgstr ""
 
 #: dmoj/urls.py:104 templates/base.html:190
