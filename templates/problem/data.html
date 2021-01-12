@@ -96,9 +96,9 @@
             }
 
             (function toggle_custom() {
-                let $custom_checker_py = $('#id_problem-data-custom_checker_py')
+                let $custom_checker_py = $('#id_problem-data-custom_py_checker')
                 let $checker = $('#id_problem-data-checker')
-                let $custom_checker_cpp = $('#id_problem-data-custom_checker_cpp')
+                let $custom_checker_cpp = $('#id_problem-data-custom_cpp_checker')
 
                 $tr_checker_py = $custom_checker_py.parent().parent();
                 $tr_checker_cpp = $custom_checker_cpp.parent().parent()
@@ -405,7 +405,7 @@
 {% endblock %}
 
 {% block header %}
-    {% if data_form.instance.has_yml %}
+    {% if data_form.instance.has_yml() %}
         <div class="title-line-action">
             [<a href="{{ url('problem_data_init', problem.code) }}">{{ _('View YAML') }}</a>]
         </div>

@@ -289,7 +289,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
     manual_sort = frozenset(('name', 'group', 'solved', 'type'))
     all_sorts = sql_sort | manual_sort
     default_desc = frozenset(('points', 'ac_rate', 'user_count'))
-    default_sort = 'code'
+    default_sort = 'name'
 
     def get_paginator(self, queryset, per_page, orphans=0,
                       allow_empty_first_page=True, **kwargs):
@@ -305,7 +305,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
             if sort_key in self.sql_sort:
                 queryset = queryset.order_by(self.order, 'id')
             elif sort_key == 'name':
-                queryset = queryset.order_by(self.order.replace('name', 'i18n_name'), 'id')
+                queryset = queryset.order_by('i18n_name', self.order, 'id')
             elif sort_key == 'group':
                 queryset = queryset.order_by(self.order + '__name', 'id')
             elif sort_key == 'solved':

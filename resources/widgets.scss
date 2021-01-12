@@ -142,7 +142,8 @@ input {
 // Codeforces copy button
 .btn-clipboard {
     font-size: 0.9rem;
-    float: right;
+    right: 0;
+    position: absolute;
     color: #888 !important;
     cursor: pointer;
     border: 1px solid #b9b9b9;
@@ -155,7 +156,7 @@ input {
 
 .copy-clipboard {
     position: relative;
-    margin-top: 1.5em;
+    // margin-top: 1.5em;
 }
 
 // Bootstrap-y tabs
