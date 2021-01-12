@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-11 14:29+0000\n"
+"POT-Creation-Date: 2021-01-11 14:50+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2534,7 +2534,7 @@ msgstr ""
 msgid "Could not find a contest with the key \"%s\"."
 msgstr ""
 
-#: judge/views/contests.py:70
+#: judge/views/contests.py:70 templates/contest/list.html:53
 msgid "Contests"
 msgstr ""
 
@@ -3172,6 +3172,10 @@ msgstr ""
 
 #: judge/views/user.py:443 templates/user/user-list-tabs.html:4
 msgid "Leaderboard"
+msgstr ""
+
+#: judge/views/user.py:504
+msgid "You have been successfully logged out."
 msgstr ""
 
 #: judge/views/widgets.py:52 judge/views/widgets.py:62

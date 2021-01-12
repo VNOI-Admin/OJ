@@ -27,3 +27,4 @@ judge/fixtures/VOJ_*
 VOJ_*problems.json
 vo21.json
 tmp.json
+language_voj.json
