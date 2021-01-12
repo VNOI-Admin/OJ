@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-12 02:08+0000\n"
+"POT-Creation-Date: 2021-01-12 02:37+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -263,7 +263,7 @@ msgstr "Thành viên"
 
 #: judge/admin/profile.py:93 templates/registration/registration_form.html:145
 msgid "Email"
-msgstr "Hộp thư"
+msgstr "Địa chỉ email"
 
 #: judge/admin/profile.py:98 judge/views/register.py:29
 #: templates/registration/registration_form.html:173
@@ -2972,11 +2972,11 @@ msgstr ""
 "Nhà cung cấp email của bạn không được phép do phát tán thư rác. Xin vui lòng "
 "sử dụng một nhà cung cấp email có uy tín."
 
-#: judge/views/register.py:57 judge/views/register.py:95
+#: judge/views/register.py:57 judge/views/register.py:94
 msgid "Registration"
 msgstr "Đăng ký"
 
-#: judge/views/register.py:106
+#: judge/views/register.py:105
 msgid "Authentication failure"
 msgstr "Xác thực không thành công"
 
@@ -3197,7 +3197,8 @@ msgstr ""
 msgid "Generated scratch codes for user"
 msgstr ""
 
-#: judge/views/user.py:443 templates/user/user-list-tabs.html:4
+#: judge/views/user.py:443 templates/user/list.html:20
+#: templates/user/user-list-tabs.html:4
 msgid "Leaderboard"
 msgstr "Bảng xếp hạng"
 
@@ -4484,6 +4485,10 @@ msgstr ""
 "Cảm ơn bạn đã đăng ký. Một email đã được gửi đến cho bạn để xác nhận đăng ký "
 "của bạn."
 
+#: templates/registration/registration_form.html:145
+msgid "Please choose a popular email provider, e.g. gmail"
+msgstr "Hãy chọn một địa chỉ mail thông dụng như gmail"
+
 #: templates/registration/registration_form.html:166
 msgid "(again, for confirmation)"
 msgstr "(xác nhận mật khẩu)"
@@ -5254,6 +5259,32 @@ msgstr ""
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+#~ msgid ""
+#~ "This password is too short. It must contain at least %(min_length)d "
+#~ "character."
+#~ msgid_plural ""
+#~ "This password is too short. It must contain at least %(min_length)d "
+#~ "characters."
+#~ msgstr[0] "Mật khẩu quá ngắn, mật khẩu cần có ít nhất %(min_length)d ký tự."
+
+#~ msgid "Your password must contain at least %(min_length)d character."
+#~ msgid_plural ""
+#~ "Your password must contain at least %(min_length)d characters."
+#~ msgstr[0] "Mật khẩu cần có ít nhất %(min_length)d ký tự."
+
+#~ msgid "The password is too similar to the %(verbose_name)s."
+#~ msgstr "Mật khẩu không được quá giống với %(verbose_name)s."
+
+#~ msgid ""
+#~ "Your password can't be too similar to your other personal information."
+#~ msgstr "Mật khẩu không được quá giống với các tông tin các nhân"
+
+#~ msgid "This password is entirely numeric."
+#~ msgstr "Mật khẩu này chỉ toàn các số."
+
+#~ msgid "Your password can't be entirely numeric."
+#~ msgstr "Mật khẩu không được hoàn toàn bằng số."
 
 #, fuzzy
 #~| msgid "Rank by points:"

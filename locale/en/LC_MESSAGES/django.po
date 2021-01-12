@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-12 02:08+0000\n"
+"POT-Creation-Date: 2021-01-12 02:37+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2949,11 +2949,11 @@ msgid ""
 "reputable email provider."
 msgstr ""
 
-#: judge/views/register.py:57 judge/views/register.py:95
+#: judge/views/register.py:57 judge/views/register.py:94
 msgid "Registration"
 msgstr ""
 
-#: judge/views/register.py:106
+#: judge/views/register.py:105
 msgid "Authentication failure"
 msgstr ""
 
@@ -3170,7 +3170,8 @@ msgstr ""
 msgid "Generated scratch codes for user"
 msgstr ""
 
-#: judge/views/user.py:443 templates/user/user-list-tabs.html:4
+#: judge/views/user.py:443 templates/user/list.html:20
+#: templates/user/user-list-tabs.html:4
 msgid "Leaderboard"
 msgstr ""
 
@@ -4417,6 +4418,10 @@ msgstr ""
 msgid ""
 "You have successfully been registered. An email has been sent to the email "
 "address you provided to confirm your registration."
+msgstr ""
+
+#: templates/registration/registration_form.html:145
+msgid "Please choose a popular email provider, e.g. gmail"
 msgstr ""
 
 #: templates/registration/registration_form.html:166

@@ -142,7 +142,7 @@
                 <div class="form-field-error">{{ form.username.errors }}</div>
             {% endif %}
 
-            <div class="block-header">{{ _('Email') }}</div>
+            <div class="block-header">{{ _('Email') }}<small>{{ _('Please choose a popular email provider, e.g. gmail') }}</small></div>
             <span class="fullwidth{% if form.email.errors %}-error{% endif %}">{{ form.email }}</span>
             {% if form.email.errors %}
                 <div class="form-field-error">{{ form.email.errors }}</div>

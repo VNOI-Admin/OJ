@@ -57,7 +57,6 @@ class RegistrationView(OldRegistrationView):
     title = _('Registration')
     form_class = CustomRegistrationForm
     template_name = 'registration/registration_form.html'
-
     def get_context_data(self, **kwargs):
         if 'title' not in kwargs:
             kwargs['title'] = self.title

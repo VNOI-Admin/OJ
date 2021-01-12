@@ -41,7 +41,7 @@ register_patterns = [
         ActivationView.as_view(title='Activation key invalid'),
         name='registration_activate'),
     url(r'^register/$',
-        RegistrationView.as_view(title='Register'),
+        RegistrationView.as_view(),
         name='registration_register'),
     url(r'^register/complete/$',
         TitledTemplateView.as_view(template_name='registration/registration_complete.html',
