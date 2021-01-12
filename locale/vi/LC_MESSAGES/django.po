@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-12 01:52+0000\n"
+"POT-Creation-Date: 2021-01-12 02:08+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -3678,7 +3678,7 @@ msgstr "Các cuộc thi sắp tới"
 
 #: templates/contest/list.html:254
 msgid "There are no scheduled contests at this time."
-msgstr "Chưa có các cuộc thi dự kiến tại thời điểm này."
+msgstr "Chưa có cuộc thi dự kiến tại thời điểm này."
 
 #: templates/contest/list.html:260
 msgid "Past Contests"
@@ -5079,7 +5079,7 @@ msgstr ""
 
 #: templates/user/user-about.html:14
 msgid "From"
-msgstr ""
+msgstr "Từ"
 
 #: templates/user/user-about.html:25
 msgid "Admin Notes"
@@ -5135,7 +5135,41 @@ msgstr "Lịch sử rating"
 
 #: templates/user/user-about.html:183
 msgid "past year"
-msgstr ""
+msgstr "năm vừa qua"
+
+#: templates/user/user-about.html:200
+msgid "#(cnt)d total submission"
+msgstr "Số lượng bài nộp: #(cnt)d"
+
+#: templates/user/user-about.html:200
+msgid "#(cnt)d total submissions"
+msgstr "Số lượng bài nộp: #(cnt)d"
+
+#: templates/user/user-about.html:205
+msgid "#(cnt)d submission in the last year"
+msgstr "Số bài nộp trong năm vừa qua: #(cnt)d"
+
+#: templates/user/user-about.html:205
+msgid "#(cnt)d submissions in the last year"
+msgstr "Số bài nộp trong năm vừa qua: #(cnt)d"
+
+#: templates/user/user-about.html:210
+#, fuzzy
+#| msgid "#(cnt)d submission in #(year)d"
+msgid "#(cnt)d submission in (year)d"
+msgstr "Số bài nộp trong năm #(year)d: #(cnt)d"
+
+#: templates/user/user-about.html:210
+msgid "#(cnt)d submissions in #(year)d"
+msgstr "Số bài nộp trong năm #(year)d: #(cnt)d"
+
+#: templates/user/user-about.html:228
+msgid "#(cnt)d submission on #(date)s"
+msgstr "Số bài nộp trong ngày #(date)s: #(cnt)d"
+
+#: templates/user/user-about.html:228
+msgid "#(cnt)d submissions on #(date)s"
+msgstr "Số bài nộp trong ngày #(date)s: #(cnt)d"
 
 #: templates/user/user-base.html:42
 msgid "Problems solved:"

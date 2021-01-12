@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-12 01:52+0000\n"
+"POT-Creation-Date: 2021-01-12 02:08+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -5061,6 +5061,38 @@ msgstr ""
 
 #: templates/user/user-about.html:183
 msgid "past year"
+msgstr ""
+
+#: templates/user/user-about.html:200
+msgid "#(cnt)d total submission"
+msgstr ""
+
+#: templates/user/user-about.html:200
+msgid "#(cnt)d total submissions"
+msgstr ""
+
+#: templates/user/user-about.html:205
+msgid "#(cnt)d submission in the last year"
+msgstr ""
+
+#: templates/user/user-about.html:205
+msgid "#(cnt)d submissions in the last year"
+msgstr ""
+
+#: templates/user/user-about.html:210
+msgid "#(cnt)d submission in (year)d"
+msgstr ""
+
+#: templates/user/user-about.html:210
+msgid "#(cnt)d submissions in #(year)d"
+msgstr ""
+
+#: templates/user/user-about.html:228
+msgid "#(cnt)d submission on #(date)s"
+msgstr ""
+
+#: templates/user/user-about.html:228
+msgid "#(cnt)d submissions on #(date)s"
 msgstr ""
 
 #: templates/user/user-base.html:42
