@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-11 14:50+0000\n"
+"POT-Creation-Date: 2021-01-12 01:52+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -1392,16 +1392,16 @@ msgstr "Liệu trình trang web có được quản lý dữ liệu test hay kh�
 
 #: judge/models/problem.py:139
 #, fuzzy
-msgid "polygon problem"
+msgid "polygon problem "
 msgstr "polygon problem"
 
 #: judge/models/problem.py:140
 msgid "Is the problem statement copied from polygon html?"
-msgstr ""
+msgstr "Bài này có phải từ polygon không?"
 
 #: judge/models/problem.py:141
 msgid "date of publishing"
-msgstr "ngày xuất bản"
+msgstr "ngày đăng"
 
 #: judge/models/problem.py:142
 msgid ""
@@ -2406,8 +2406,8 @@ msgid "Recalculating user points"
 msgstr "Đang tính điểm"
 
 #: judge/tasks/user.py:50
-msgid "Đang chuẩn bị dữ liệu về bài nộp của bạn"
-msgstr ""
+msgid "Preparing your submission data"
+msgstr "Đang chuẩn bị dữ liệu về bài nộp của bạn"
 
 #: judge/tasks/user.py:81
 msgid "Preparing your comment data"
@@ -2418,7 +2418,6 @@ msgid "Empty batches not allowed."
 msgstr "Không được để nhóm test rỗng."
 
 #: judge/utils/problem_data.py:76 judge/utils/problem_data.py:97
-#| msgid "How did you corrupt the zip path?"
 msgid "How did you corrupt the custom checker path?"
 msgstr ""
 
@@ -2594,8 +2593,7 @@ msgstr "Không thể tham gia"
 msgid ""
 "You have been declared persona non grata for this contest. You are "
 "permanently barred from joining this contest."
-msgstr ""
-"Bạn đã được coi là cá nhận không tham gia cuộc thi này này."
+msgstr "Bạn đã được coi là cá nhận không tham gia cuộc thi này này."
 
 #: judge/views/contests.py:372
 #, python-format
@@ -2937,8 +2935,8 @@ msgstr "Những bài giải tốt nhất cho bài %(number)s trong cuộc thi %(
 #, python-brace-format
 msgid "Best solutions for <a href=\"{1}\">{0}</a> in <a href=\"{3}\">{2}</a>"
 msgstr ""
-"Các bài giải tốt nhất cho <a href=\"{1}\">{0}</a> trong <a href=\"{3}\">{2}"
-"</a>"
+"Các bài giải tốt nhất cho <a href=\"{1}\">{0}</a> trong <a href=\"{3}\">{2}</"
+"a>"
 
 #: judge/views/ranked_submission.py:82
 #, python-brace-format
@@ -3061,8 +3059,8 @@ msgid ""
 "<a href=\"{1}\">{0}</a>'s submissions for <a href=\"{3}\">{2}</a> in <a href="
 "\"{5}\">{4}</a>"
 msgstr ""
-"Các bài nộp của <a href=\"{1}\">{0}</a> cho bài <a href=\"{3}\">{2}</a> trong <a href="
-"\"{5}\">{4}</a>"
+"Các bài nộp của <a href=\"{1}\">{0}</a> cho bài <a href=\"{3}\">{2}</a> "
+"trong <a href=\"{5}\">{4}</a>"
 
 #: judge/views/submission.py:590
 #, python-brace-format
@@ -3416,9 +3414,10 @@ msgid ""
 "                                            "
 msgstr ""
 "\n"
-"                                                Bình luận này đã bị ảnh vì có quá nhiều phản ứng tiêu cực.\n"
-"                                                Nhán vào <a href=\"javascript:"
-"comment_show_content(%(id)s)\">đây</a> để xem.\n"
+"                                                Bình luận này đã bị ảnh vì "
+"có quá nhiều phản ứng tiêu cực.\n"
+"                                                Nhán vào <a href="
+"\"javascript:comment_show_content(%(id)s)\">đây</a> để xem.\n"
 "                                            "
 
 #: templates/comments/list.html:131
@@ -3603,8 +3602,7 @@ msgid ""
 "<b>%(time_limit)s</b> window between <b>%(start_time)s</b> and <b>"
 "%(end_time)s</b>"
 msgstr ""
-"<b>%(time_limit)s</b> giữa <b>%(start_time)s</b> và <b>%(end_time)s</"
-"b>"
+"<b>%(time_limit)s</b> giữa <b>%(start_time)s</b> và <b>%(end_time)s</b>"
 
 #: templates/contest/contest.html:63
 #, python-format
@@ -3866,8 +3864,8 @@ msgid ""
 "been sent to you. In that email you will find a link which you need to "
 "follow in order to update your subscription."
 msgstr ""
-"Yêu cầu bản Cập Nhật của bạn đã được nhận thành công và một email kích hoạt đã "
-"được gửi đến bạn. Trong email đó, bạn sẽ tìm thấy một liên kết mà bạn cần "
+"Yêu cầu bản Cập Nhật của bạn đã được nhận thành công và một email kích hoạt "
+"đã được gửi đến bạn. Trong email đó, bạn sẽ tìm thấy một liên kết mà bạn cần "
 "phải làm theo để cập nhật đăng ký của bạn."
 
 #: templates/organization/edit.html:47
@@ -4055,10 +4053,10 @@ msgid ""
 "editorialist. <br><br> <b>Submitting an official solution before solving the "
 "problem yourself is a bannable offence.</b>"
 msgstr ""
-"Chỉ dùng lời giải này khi không có ý tưởng, và <b>đừng copy-paste "
-"code từ lời giải này</b>. Hãy tôn trọng người ra đề và người làm lời giải."
-"<br><br> <b>Nộp một lời giải chính thức trước khi tự giải là một hành động "
-"có thể bị ban."
+"Chỉ dùng lời giải này khi không có ý tưởng, và <b>đừng copy-paste code từ "
+"lời giải này</b>. Hãy tôn trọng người ra đề và người làm lời giải.<br><br> "
+"<b>Nộp một lời giải chính thức trước khi tự giải là một hành động có thể bị "
+"ban."
 
 #: templates/problem/editorial.html:27 templates/problem/problem.html:212
 msgid "Author:"
@@ -4408,15 +4406,13 @@ msgstr "Đường dẫn đặt lại mật khẩu không hợp lệ."
 msgid ""
 "We've emailed you instructions for setting your password. You should be "
 "receiving them shortly."
-msgstr ""
-"Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu qua email."
+msgstr "Chúng tôi đã gửi hướng dẫn đặt lại mật khẩu qua email."
 
 #: templates/registration/password_reset_done.html:5
 msgid ""
 "If you don't receive an email, please make sure you've entered the address "
 "you registered with, and check your spam folder."
-msgstr ""
-"Nếu bạn không nhận được email, hãy kiểm tra hòm thư rác."
+msgstr "Nếu bạn không nhận được email, hãy kiểm tra hòm thư rác."
 
 #: templates/registration/password_reset_email.html:9
 #, python-format
@@ -4427,18 +4423,16 @@ msgid ""
 "below.\n"
 msgstr ""
 "\n"
-"Để đặt lại mật khẩu của tài khoản \"%(username)s\" ở trang web %(site_name)s, "
-"nhấn vào link ở dưới.\n"
+"Để đặt lại mật khẩu của tài khoản \"%(username)s\" ở trang web "
+"%(site_name)s, nhấn vào link ở dưới.\n"
 
 #: templates/registration/password_reset_email.html:17
 msgid ""
 "See you soon! If you have problems resetting your email, feel free to shoot "
 "us an email at"
-msgstr ""
-"Nếu có vấn đề với việc đặt lại email, hãy liên hệ với chúng tối qua"
+msgstr "Nếu có vấn đề với việc đặt lại email, hãy liên hệ với chúng tối qua"
 
 #: templates/registration/password_reset_email.html:19
-#| msgid "See you later!"
 msgid "See you soon!"
 msgstr "Hẹn gặp lại!"
 
@@ -4487,8 +4481,8 @@ msgid ""
 "You have successfully been registered. An email has been sent to the email "
 "address you provided to confirm your registration."
 msgstr ""
-"Cảm ơn bạn đã đăng ký. Một email đã được gửi đến cho bạn để "
-"xác nhận đăng ký của bạn."
+"Cảm ơn bạn đã đăng ký. Một email đã được gửi đến cho bạn để xác nhận đăng ký "
+"của bạn."
 
 #: templates/registration/registration_form.html:166
 msgid "(again, for confirmation)"
@@ -4655,9 +4649,8 @@ msgid ""
 "administrators have been notified.<br> In the meantime, try resubmitting in "
 "a few seconds."
 msgstr ""
-"Một lỗi hệ thống đã xảy ra trong quá trình chấm, "
-"admin %(SITE_NAME)s đã nhận được thông báo.<br> Bạn có thể thử nộp lại "
-"bài trong vài giây nữa."
+"Một lỗi hệ thống đã xảy ra trong quá trình chấm, admin %(SITE_NAME)s đã nhận "
+"được thông báo.<br> Bạn có thể thử nộp lại bài trong vài giây nữa."
 
 #: templates/submission/internal-error-message.html:8
 msgid "An internal error occurred while grading."
@@ -4728,8 +4721,7 @@ msgstr "Nộp lại"
 
 #: templates/submission/status-testcases.html:10
 msgid "We are waiting for a suitable judge to process your submission..."
-msgstr ""
-"Chúng tôi đang đợi một máy chấm phù hợp để chấm bài của bạn..."
+msgstr "Chúng tôi đang đợi một máy chấm phù hợp để chấm bài của bạn..."
 
 #: templates/submission/status-testcases.html:12
 msgid "Your submission is being processed..."
@@ -4794,8 +4786,7 @@ msgstr "Điểm cuối cùng:"
 #: templates/submission/status-testcases.html:159
 msgid "Passing pretests does not guarantee a full score on system tests."
 msgstr ""
-"Đúng các pretest sẽ không đảm bảo được việc đúng toàn bộ test "
-"hệ thống."
+"Đúng các pretest sẽ không đảm bảo được việc đúng toàn bộ test hệ thống."
 
 #: templates/submission/status-testcases.html:162
 msgid "Submission aborted!"
@@ -4870,8 +4861,8 @@ msgid ""
 "a problem, ask in the comments instead."
 msgstr ""
 "Xin lưu ý rằng biểu mẫu này dành cho việc báo cáo các vấn đề của đề bài, và "
-"không dành cho việc hỏi bài. Nếu bạn cần hỗ trợ về việc giải bài, "
-"hãy hỏi trong phần bình luận."
+"không dành cho việc hỏi bài. Nếu bạn cần hỗ trợ về việc giải bài, hãy hỏi "
+"trong phần bình luận."
 
 #: templates/ticket/ticket.html:346
 msgid "Post"
@@ -5123,7 +5114,6 @@ msgid "Thurs"
 msgstr "Thứ năm"
 
 #: templates/user/user-about.html:84
-#| msgid "Friday"
 msgid "Fri"
 msgstr "Thứ sáu"
 
