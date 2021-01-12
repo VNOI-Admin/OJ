@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-12 02:37+0000\n"
+"POT-Creation-Date: 2021-01-12 03:23+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -2379,6 +2379,39 @@ msgstr ""
 msgid "message time"
 msgstr ""
 
+#: judge/override_standard_messages.py:4
+#,  python-format
+msgid ""
+"This password is too short. It must contain at least %(min_length)d "
+"character."
+msgid_plural ""
+"This password is too short. It must contain at least %(min_length)d "
+"characters."
+msgstr[0] "Mật khẩu quá ngắn, mật khẩu cần có ít nhất %(min_length)d ký tự."
+
+#: judge/override_standard_messages.py:5
+#, python-format
+msgid "Your password must contain at least %(min_length)d character."
+msgid_plural "Your password must contain at least %(min_length)d characters."
+msgstr[0] "Mật khẩu cần có ít nhất %(min_length)d ký tự."
+
+#: judge/override_standard_messages.py:6
+#, python-format
+msgid "The password is too similar to the %(verbose_name)s."
+msgstr "Mật khẩu không được quá giống với %(verbose_name)s."
+
+#: judge/override_standard_messages.py:7
+msgid "Your password can't be too similar to your other personal information."
+msgstr "Mật khẩu không được quá giống với các thông tin các nhân"
+
+#: judge/override_standard_messages.py:8
+msgid "This password is entirely numeric."
+msgstr "Mật khẩu này chỉ toàn các số."
+
+#: judge/override_standard_messages.py:9
+msgid "Your password can't be entirely numeric."
+msgstr "Mật khẩu không được hoàn toàn bằng số."
+
 #: judge/pdf_problems.py:147 judge/pdf_problems.py:200
 #: judge/pdf_problems.py:260
 msgid "Page [page] of [topage]"
@@ -4486,7 +4519,9 @@ msgstr ""
 "của bạn."
 
 #: templates/registration/registration_form.html:145
-msgid "Please choose a popular email provider, e.g. gmail"
+#, fuzzy
+#| msgid "Please choose a popular email provider, e.g. gmail"
+msgid "please choose a popular email provider, e.g. gmail"
 msgstr "Hãy chọn một địa chỉ mail thông dụng như gmail"
 
 #: templates/registration/registration_form.html:166
@@ -4509,6 +4544,10 @@ msgstr "Ngôn ngữ mặc định"
 #: templates/user/edit-profile.html:309
 msgid "Affiliated organizations"
 msgstr "Tổ chức đại diện"
+
+#: templates/registration/registration_form.html:186
+msgid "can be blank"
+msgstr "có thể bỏ trống"
 
 #: templates/registration/registration_form.html:192
 #: templates/user/edit-profile.html:323
@@ -5262,174 +5301,8 @@ msgstr "Chọn tất cả"
 
 #~ msgid ""
 #~ "This password is too short. It must contain at least %(min_length)d "
-#~ "character."
-#~ msgid_plural ""
-#~ "This password is too short. It must contain at least %(min_length)d "
 #~ "characters."
-#~ msgstr[0] "Mật khẩu quá ngắn, mật khẩu cần có ít nhất %(min_length)d ký tự."
+#~ msgstr "Mật khẩu quá ngắn, mật khẩu cần có ít nhất %(min_length)d ký tự."
 
-#~ msgid "Your password must contain at least %(min_length)d character."
-#~ msgid_plural ""
-#~ "Your password must contain at least %(min_length)d characters."
-#~ msgstr[0] "Mật khẩu cần có ít nhất %(min_length)d ký tự."
-
-#~ msgid "The password is too similar to the %(verbose_name)s."
-#~ msgstr "Mật khẩu không được quá giống với %(verbose_name)s."
-
-#~ msgid ""
-#~ "Your password can't be too similar to your other personal information."
-#~ msgstr "Mật khẩu không được quá giống với các tông tin các nhân"
-
-#~ msgid "This password is entirely numeric."
-#~ msgstr "Mật khẩu này chỉ toàn các số."
-
-#~ msgid "Your password can't be entirely numeric."
-#~ msgstr "Mật khẩu không được hoàn toàn bằng số."
-
-#, fuzzy
-#~| msgid "Rank by points:"
-#~ msgid "%(_('Rank by points:'))s"
-#~ msgstr "Xếp hạng:"
-
-#~ msgid "German"
-#~ msgstr "Tiếng Đức"
-
-#~ msgid "Spanish"
-#~ msgstr "Tiếng Tây Ban Nha"
-
-#~ msgid "French"
-#~ msgstr "Tiếng Pháp"
-
-#~ msgid "Croatian"
-#~ msgstr "Tiếng Croatia"
-
-#~ msgid "Hungarian"
-#~ msgstr "Tiếng Hung-ga-ri"
-
-#~ msgid "Japanese"
-#~ msgstr "Tiếng Nhật Bản"
-
-#~ msgid "Korean"
-#~ msgstr "Tiếng Hàn Quốc"
-
-#~ msgid "Brazilian Portuguese"
-#~ msgstr "Tiếng Braxin-Bồ Đào Nha"
-
-#~ msgid "Romanian"
-#~ msgstr "Tiếng Romania"
-
-#~ msgid "Russian"
-#~ msgstr "Tiếng Nga"
-
-#~ msgid "Serbian (Latin)"
-#~ msgstr "Tiếng Séc-bi (Latin)"
-
-#~ msgid "Turkish"
-#~ msgstr "Tiếng Thổ Nhĩ Kỳ"
-
-#~ msgid "Simplified Chinese"
-#~ msgstr "Tiếng Trung (Giản thể)"
-
-#~ msgid "Traditional Chinese"
-#~ msgstr "Tiếng Trung phồn thể"
-
-#~ msgid "biography"
-#~ msgstr "tiểu sử"
-
-#~ msgid "owner"
-#~ msgstr "chủ sở hữu"
-
-#~ msgid "name"
-#~ msgstr "tên"
-
-#~ msgid "Category of Books"
-#~ msgstr "Thể loại sách"
-
-#~ msgid "Categories of Books"
-#~ msgstr "Thể loại sách"
-
-#~ msgid "title"
-#~ msgstr "tiêu đề"
-
-#~ msgid "category"
-#~ msgstr "thể loại"
-
-#~ msgid "author"
-#~ msgstr "tác giả"
-
-#~ msgid "publication date"
-#~ msgstr "ngày xuất bản"
-
-#~ msgid "Book"
-#~ msgstr "Sách"
-
-#~ msgid "Books"
-#~ msgstr "Sách"
-
-#~ msgid "Category of CDs"
-#~ msgstr "Thể loại CDs"
-
-#~ msgid "Categories of CDs"
-#~ msgstr "Thể loại CDs"
-
-#~ msgid "CD"
-#~ msgstr "CD"
-
-#~ msgid "CDs"
-#~ msgstr "CDs"
-
-#~ msgid "Category of DVDs"
-#~ msgstr "Thể loại DVDs"
-
-#~ msgid "Categories of DVDs"
-#~ msgstr "Thể loại DVDs"
-
-#~ msgid "DVD"
-#~ msgstr "DVD"
-
-#~ msgid "DVDs"
-#~ msgstr "DVDs"
-
-#~ msgid "Django administration"
-#~ msgstr "Quản trị viên Django"
-
-#~ msgid ""
-#~ "Please enter the correct %(username)s and password for an admin account. "
-#~ "Note that both fields may be case-sensitive."
-#~ msgstr ""
-#~ "Hãy nhập %(username)s và mật khẩu hợp lệ cho tài khoản quản trị. Chú ý cả "
-#~ "hai trường có phân biệt chữ Hoa-thường."
-
-#~ msgid ""
-#~ "Please enter the correct %(username)s and password for an user account. "
-#~ "Note that both fields may be case-sensitive."
-#~ msgstr ""
-#~ "Hãy nhập %(username)s và mật khẩu hợp lệ cho tài khoản thành viên. Chú ý "
-#~ "cả hai trường có phân biệt chữ Hoa-thường."
-
-#~ msgid "Site"
-#~ msgstr "Trang"
-
-#~ msgid "Dashboard"
-#~ msgstr "Bảng điều khiển"
-
-#~ msgid "Applications"
-#~ msgstr "Ứng dụng"
-
-#~ msgid "Color theme"
-#~ msgstr "Chủ đề màu sắc"
-
-#~ msgid "Change color theme"
-#~ msgstr "Đổi chủ đề màu sắc"
-
-#~ msgid "Show columns:"
-#~ msgstr "Hiển thị các cột:"
-
-#~ msgid "Output prefix"
-#~ msgstr "Tiền tố đầu ra"
-
-#~ msgid "Output limit"
-#~ msgstr "Giới hạn đầu ra"
-
-#~ msgid "Checker"
-#~ msgstr "Kiểm tra"
+#~ msgid "Your password must contain at least %(min_length)d characters."
+#~ msgstr "Mật khẩu cần có ít nhất %(min_length)d ký tự."

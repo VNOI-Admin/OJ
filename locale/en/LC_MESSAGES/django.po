@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-12 02:37+0000\n"
+"POT-Creation-Date: 2021-01-12 03:23+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2360,6 +2360,41 @@ msgstr ""
 msgid "message time"
 msgstr ""
 
+#: judge/override_standard_messages.py:4
+#, python-format
+msgid ""
+"This password is too short. It must contain at least %(min_length)d "
+"character."
+msgid_plural ""
+"This password is too short. It must contain at least %(min_length)d "
+"characters."
+msgstr[0] ""
+msgstr[1] ""
+
+#: judge/override_standard_messages.py:5
+#, python-format
+msgid "Your password must contain at least %(min_length)d character."
+msgid_plural "Your password must contain at least %(min_length)d characters."
+msgstr[0] ""
+msgstr[1] ""
+
+#: judge/override_standard_messages.py:6
+#, python-format
+msgid "The password is too similar to the %(verbose_name)s."
+msgstr ""
+
+#: judge/override_standard_messages.py:7
+msgid "Your password can't be too similar to your other personal information."
+msgstr ""
+
+#: judge/override_standard_messages.py:8
+msgid "This password is entirely numeric."
+msgstr ""
+
+#: judge/override_standard_messages.py:9
+msgid "Your password can't be entirely numeric."
+msgstr ""
+
 #: judge/pdf_problems.py:147 judge/pdf_problems.py:200
 #: judge/pdf_problems.py:260
 msgid "Page [page] of [topage]"
@@ -4421,7 +4456,7 @@ msgid ""
 msgstr ""
 
 #: templates/registration/registration_form.html:145
-msgid "Please choose a popular email provider, e.g. gmail"
+msgid "please choose a popular email provider, e.g. gmail"
 msgstr ""
 
 #: templates/registration/registration_form.html:166
@@ -4443,6 +4478,10 @@ msgstr ""
 #: templates/registration/registration_form.html:186
 #: templates/user/edit-profile.html:309
 msgid "Affiliated organizations"
+msgstr ""
+
+#: templates/registration/registration_form.html:186
+msgid "can be blank"
 msgstr ""
 
 #: templates/registration/registration_form.html:192
