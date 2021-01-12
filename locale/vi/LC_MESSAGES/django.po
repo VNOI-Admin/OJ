@@ -886,10 +886,8 @@ msgid "Prevent submissions from this contest from being rejudged."
 msgstr ""
 
 #: judge/models/contest.py:131
-#, fuzzy
-#| msgid "test case points"
 msgid "precision points"
-msgstr "điểm cho testcase"
+msgstr ""
 
 #: judge/models/contest.py:133
 msgid "Number of digits to round points to."
@@ -1394,9 +1392,8 @@ msgstr "Liệu trình trang web có được quản lý dữ liệu test hay kh�
 
 #: judge/models/problem.py:139
 #, fuzzy
-#| msgid "Clone problem"
-msgid "polygon problem "
-msgstr "Copy sang bài mới"
+msgid "polygon problem"
+msgstr "polygon problem"
 
 #: judge/models/problem.py:140
 msgid "Is the problem statement copied from polygon html?"
@@ -3207,10 +3204,8 @@ msgid "Leaderboard"
 msgstr "Bảng xếp hạng"
 
 #: judge/views/user.py:504
-#, fuzzy
-#| msgid "Your account has been successfully activated."
 msgid "You have been successfully logged out."
-msgstr "Tài khoản của bạn đã được kích hoạt thành công."
+msgstr "Bạn đã đăng xuất thành công."
 
 #: judge/views/widgets.py:52 judge/views/widgets.py:62
 #, python-format
@@ -4042,8 +4037,6 @@ msgid "Generator args"
 msgstr "Tham số trình sinh tests"
 
 #: templates/problem/data.html:487
-#, fuzzy
-#| msgid "Generator args"
 msgid "Edit generator args"
 msgstr "Sửa tham số trình sinh test"
 
@@ -4071,7 +4064,7 @@ msgstr ""
 msgid "Author:"
 msgid_plural "Authors:"
 msgstr[0] "Tác giả:"
-msgstr[0] "Các tác giả:"
+msgstr[1] "Các tác giả:"
 
 #: templates/problem/list.html:62
 msgid "Filter by type..."
@@ -4433,6 +4426,7 @@ msgid ""
 "To reset the password for your account \"%(username)s\", click the button "
 "below.\n"
 msgstr ""
+"\n"
 "Để đặt lại mật khẩu của tài khoản \"%(username)s\" ở trang web %(site_name)s, "
 "nhấn vào link ở dưới.\n"
 
@@ -5146,8 +5140,6 @@ msgid "More"
 msgstr ""
 
 #: templates/user/user-about.html:112
-#, fuzzy
-#| msgid "Rating"
 msgid "Rating history"
 msgstr "Lịch sử rating"
 
@@ -5194,10 +5186,8 @@ msgid "Max rating:"
 msgstr "Rating cao nhất:"
 
 #: templates/user/user-problems.html:37
-#, fuzzy
-#| msgid "points granted"
 msgid "Points breakdown"
-msgstr "điểm được cho"
+msgstr "Phân tích điểm"
 
 #: templates/user/user-problems.html:43
 msgid "Load more..."
@@ -5208,8 +5198,6 @@ msgid "This user has not yet solved any problems."
 msgstr "Người dùng này chưa giải bài tập nào."
 
 #: templates/user/user-problems.html:53
-#, fuzzy
-#| msgid "Included problems"
 msgid "Authored problems"
 msgstr "Tác giả của các bài"
 
