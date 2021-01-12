@@ -41,18 +41,16 @@
                     {% endfor %}
                 </select>
             </div>
-            {% if show_types %}
-                <div class="filter-form-group">
-                    <label for="type"><i>{{ _('Problem types') }}</i></label>
-                    <select id="types" name="type" multiple>
-                        {% for type in problem_types %}
-                            <option value="{{ type.id }}"{% if type.id in selected_types %} selected{% endif %}>
-                                {{ type.full_name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            {% endif %}
+            <div class="filter-form-group">
+                <label for="type"><i>{{ _('Problem types') }}</i></label>
+                <select id="types" name="type" multiple>
+                    {% for type in problem_types %}
+                        <option value="{{ type.id }}"{% if type.id in selected_types %} selected{% endif %}>
+                            {{ type.full_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
             {% if point_values %}
                 <div class="form-label">{{ _('Point range') }}</div>
                 <div id="point-slider"></div>

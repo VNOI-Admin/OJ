@@ -2,7 +2,7 @@
 {% block content_media %}
     {% include "comments/media-css.html" %}
     {% if problem.is_polygon_problem %}
-        {% include "problem/codeforces-statement-css.html" %}
+        <link rel="stylesheet" href="{{ static('codeforces-statement.css') }}">
     {% endif %}
     <style>
         .title-state {
