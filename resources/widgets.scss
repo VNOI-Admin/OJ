@@ -141,17 +141,17 @@ input {
 
 // Codeforces copy button
 .btn-clipboard {
-    font-size: 0.9rem;
+    top: 0;
     right: 0;
-    position: absolute;
-    color: #888 !important;
+    display: block;
+    font-size: 12px;
+    color: #767676;
     cursor: pointer;
-    border: 1px solid #b9b9b9;
-    padding: 3px;
-    margin: 4px;
-    line-height: 0.9rem;
-    text-transform: none;
-    font-weight: bold;
+    background-color: #fff;
+    border: 1px solid #e1e1e8;
+    border-radius: 0 4px;
+    position: absolute;
+    padding: 5px 8px;
 }
 
 .copy-clipboard {
