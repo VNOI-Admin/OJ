@@ -1,18 +1,14 @@
 .content-description pre {
     white-space: pre-wrap;
     word-wrap: break-word;
-    margin: 1.5em 0 1.5em 0;
+    margin: 1.5em 0;
     padding: 1em;
-    border: none;
+    border: 1px solid #ccc;
     background-color: #f8f8f8;
-    color: black;
-    border-radius: none;
+    color: #000;
+    border-radius: 4px;
 }
 .problem-statement {
-    margin: 0.5em auto 2em auto;
-    font-family: verdana, serif;
-    line-height: 1.5em;
-    font-size: 14px;
     max-width: 1024px;
 }
 
@@ -81,10 +77,13 @@
     margin-bottom: 1em;
 }
 
-.problem-statement .section-title {
-    font-family: arial;
-    font-size: 115%;
-    font-weight: bold;
+.problem-statement .section-title { 
+    font-weight: 700;   
+    font-size: 1.4em;
+    border-bottom: 1px solid #eee;
+    line-height: 1.225;
+    padding-bottom: .3em;
+    padding-top: .5em;
 }
 
 
@@ -94,7 +93,6 @@
 
 .problem-statement .sample-tests .input,
 .problem-statement .sample-tests .output {
-    border: 1px solid #888;
 }
 
 .problem-statement .sample-tests .output {
@@ -103,17 +101,12 @@
 }
 
 .problem-statement .sample-tests pre {
-    line-height: 1.25em;
-    padding: 0.25em;
     margin: 0;
     background-color: #efefef;
 }
 
 .problem-statement .sample-tests .title {
-    font-family: arial;
     padding: 0.25em;
-    border-bottom: 1px solid #888;
-    text-transform: lowercase;
     font-weight: bold;
 }
 
