@@ -31,8 +31,8 @@ a {
 
 img {
     max-width: 100%;
-
-    // height: auto
+    // width: auto;
+    // height: auto;
 }
 
 .full {
@@ -108,7 +108,6 @@ body {
     position: relative;
     min-height: 100%;
     margin: 0 auto;
-    max-width: 107em;
     font-size: $base_font_size;
     line-height: 1.231;
     background: $background_light_gray;
@@ -170,14 +169,11 @@ header {
     right: 0;
     position: absolute;
     color: #5c5954;
-
-    .anon {
-        padding-right: 10px;
-        display: inline-flex;
-        min-height: 100%;
-        align-items: center;
-        white-space: nowrap;
-    }
+    padding-right: 10px;
+    display: inline-flex;
+    min-height: 100%;
+    align-items: center;
+    white-space: nowrap;
 
     a {
         color: #FFF;
@@ -217,13 +213,23 @@ header {
     }
 }
 
+#nav-background {
+    position: absolute;
+    z-index: 3;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 56px;
+    background: $widget_black;
+}
+
 #nav-shadow {
-    height: 3px;
+    height: 59px;
     background: linear-gradient(rgba(0, 0, 0, 0.5), transparent);
 }
 
 #nav-container {
-    background: $widget_black;
+    // background: $widget_black;
 
     // opacity: 0.77
     // filter: alpha(opacity=77)
@@ -231,10 +237,11 @@ header {
 }
 
 #navigation {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: 0;
     right: 0;
+    max-width: 80em;
 }
 
 nav {
@@ -260,7 +267,7 @@ nav {
             color: #FFF;
             text-transform: uppercase;
             position: relative;
-
+            font-family: 'Source Sans Pro', sans-serif;
             &.home-nav-element a {
                 padding: 0;
                 height: 44px;
@@ -273,7 +280,6 @@ nav {
             }
 
             a, button {
-                display: inline-block;
                 text-decoration: none;
                 vertical-align: middle;
                 color: #FFF;
@@ -292,7 +298,7 @@ nav {
 
                 &.active {
                     color: #FFF;
-                    background: $highlight_blue;
+                    border-bottom: 5px solid $highlight_blue;
                 }
 
                 .nav-expand {
@@ -326,7 +332,7 @@ nav {
                         font-size: 0.8em;
                         line-height: 18px;
                         display: block;
-                        border-left: 4px solid $highlight_blue;
+                        // border-left: 4px solid $highlight_blue;
                         white-space: nowrap;
                     }
                 }
@@ -505,7 +511,6 @@ noscript #noscript {
 
 #user-links {
     height: 100%;
-
     ul {
         margin: 0;
 
@@ -529,6 +534,7 @@ noscript #noscript {
     border-right: 1px solid $border_gray;
     border-left: 1px solid $border_gray;
     background: white;
+    max-width: 80em;
 }
 
 // border-bottom: 1px solid rgb(204, 204, 204)
@@ -569,7 +575,20 @@ math {
     #navigation {
         height: 36px;
     }
-
+    #nav-background {
+        position: absolute;
+        z-index: 3;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 36px;
+        background: $widget_black;
+    }
+    
+    #nav-shadow {
+        height: 39px;
+        background: linear-gradient(rgba(0, 0, 0, 0.5), transparent);
+    }
     #navicon {
         transition-duration: 0.25s;
         display: block;
