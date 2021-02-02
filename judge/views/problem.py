@@ -305,9 +305,9 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
             if sort_key in self.sql_sort:
                 queryset = queryset.order_by(self.order, 'id')
             elif sort_key == 'name':
-                queryset = queryset.order_by('i18n_name', self.order, 'id')
+                queryset = queryset.order_by('i18n_name', self.order, 'name', 'id')
             elif sort_key == 'group':
-                queryset = queryset.order_by(self.order + '__name', 'id')
+                queryset = queryset.order_by(self.order + '__name', 'name', 'id')
             elif sort_key == 'solved':
                 if self.request.user.is_authenticated:
                     profile = self.request.profile
