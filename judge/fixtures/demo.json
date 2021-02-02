@@ -66,15 +66,15 @@
     },
     {
         "fields": {
-            "full_name": "Simple Math",
-            "name": "Simple Math"
+            "full_name": "Ch\u01b0a ph\u00e2n lo\u1ea1i",
+            "name": "uncategorized"
         },
         "model": "judge.problemtype",
         "pk": 1
     },
     {
         "fields": {
-            "full_name": "Uncategorized",
+            "full_name": "Ch\u01b0a ph\u00e2n lo\u1ea1i",
             "name": "Uncategorized"
         },
         "model": "judge.problemgroup",
@@ -84,14 +84,16 @@
         "fields": {
             "ac_rate": 0.0,
             "allowed_languages": [
+                1,
+                2,
                 3,
                 4,
                 5,
                 6,
-                2,
                 7,
-                1,
-                8
+                8,
+                9,
+                10
             ],
             "authors": [
                 1
