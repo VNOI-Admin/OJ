@@ -285,6 +285,7 @@ nav {
                 color: #FFF;
                 padding: 13px 7px;
                 height: 18px;
+                display: inline-table;
 
                 &:link {
                     color: #FFF;
@@ -298,7 +299,9 @@ nav {
 
                 &.active {
                     color: #FFF;
+                    border: 5px solid transparent; 
                     border-bottom: 5px solid $highlight_blue;
+                    padding: 13px 2px;
                 }
 
                 .nav-expand {
@@ -317,10 +320,9 @@ nav {
                 box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
 
                 li {
-                    &:first-child {
-                        a.active {
-                            border-top: 1px solid $widget_black;
-                        }
+                    a.active {
+                        border: none;
+                        border-left: 5px solid $highlight_blue;
                     }
                 }
 
@@ -332,7 +334,7 @@ nav {
                         font-size: 0.8em;
                         line-height: 18px;
                         display: block;
-                        // border-left: 4px solid $highlight_blue;
+                        border-left: 4px solid lightskyblue;
                         white-space: nowrap;
                     }
                 }
