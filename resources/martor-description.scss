@@ -20,6 +20,11 @@ form .martor-preview {
     z-index: 99999 !important;
 }
 
+.ace_editor {
+    font-size: 13px;
+    font-family: 'Liberation Mono', monospace !important;
+}
+
 .section-martor {
     div[data-tab="editor-tab-description"] {
         padding: 0;
