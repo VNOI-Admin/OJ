@@ -1,98 +1,130 @@
 [
     {
+        "model": "judge.navigationbar",
+        "pk": 1,
         "fields": {
-            "key": "problems",
-            "label": "Đề bài",
-            "level": 0,
-            "lft": 1,
             "order": 1,
-            "parent": null,
+            "key": "problems",
+            "label": "\u0110\u1ec1 b\u00e0i",
             "path": "/problems/",
             "regex": "^/problem",
+            "parent": null,
+            "lft": 1,
             "rght": 2,
-            "tree_id": 1
-        },
-        "model": "judge.navigationbar",
-        "pk": 1
+            "tree_id": 1,
+            "level": 0
+        }
     },
     {
+        "model": "judge.navigationbar",
+        "pk": 2,
         "fields": {
-            "key": "submit",
-            "label": "Bài nộp",
-            "level": 0,
-            "lft": 1,
             "order": 2,
-            "parent": null,
+            "key": "submit",
+            "label": "B\u00e0i n\u1ed9p",
             "path": "/submissions/",
             "regex": "^/submi|^/src/",
+            "parent": null,
+            "lft": 1,
             "rght": 2,
-            "tree_id": 2
-        },
-        "model": "judge.navigationbar",
-        "pk": 2
+            "tree_id": 2,
+            "level": 0
+        }
     },
     {
+        "model": "judge.navigationbar",
+        "pk": 3,
         "fields": {
-            "key": "user",
-            "label": "Người dùng",
-            "level": 0,
-            "lft": 1,
             "order": 3,
-            "parent": null,
+            "key": "user",
+            "label": "Ng\u01b0\u1eddi d\u00f9ng",
             "path": "/users/",
             "regex": "^/user",
+            "parent": null,
+            "lft": 1,
             "rght": 2,
-            "tree_id": 3
-        },
-        "model": "judge.navigationbar",
-        "pk": 3
+            "tree_id": 3,
+            "level": 0
+        }
     },
     {
+        "model": "judge.navigationbar",
+        "pk": 4,
         "fields": {
+            "order": 4,
             "key": "contest",
-            "label": "Kì thi",
-            "level": 0,
-            "lft": 1,
-            "order": 5,
-            "parent": null,
+            "label": "K\u00ec thi",
             "path": "/contests/",
             "regex": "^/contest",
+            "parent": null,
+            "lft": 1,
             "rght": 2,
-            "tree_id": 4
-        },
-        "model": "judge.navigationbar",
-        "pk": 5
+            "tree_id": 4,
+            "level": 0
+        }
     },
     {
+        "model": "judge.navigationbar",
+        "pk": 5,
         "fields": {
+            "order": 5,
             "key": "about",
-            "label": "Thông tin",
-            "level": 0,
-            "lft": 1,
-            "order": 6,
-            "parent": null,
+            "label": "Th\u00f4ng tin",
             "path": "/about/",
             "regex": "^/about/$",
-            "rght": 4,
-            "tree_id": 5
-        },
-        "model": "judge.navigationbar",
-        "pk": 6
+            "parent": null,
+            "lft": 1,
+            "rght": 8,
+            "tree_id": 5,
+            "level": 0
+        }
     },
     {
+        "model": "judge.navigationbar",
+        "pk": 6,
         "fields": {
+            "order": 6,
             "key": "status",
-            "label": "Status",
-            "level": 1,
-            "lft": 2,
-            "order": 7,
-            "parent": 6,
+            "label": "M\u00e1y ch\u1ea5m",
             "path": "/status/",
             "regex": "^/status/$|^/judge/",
+            "parent": 6,
+            "lft": 2,
             "rght": 3,
-            "tree_id": 5
-        },
+            "tree_id": 5,
+            "level": 1
+        }
+    },
+    {
         "model": "judge.navigationbar",
-        "pk": 7
+        "pk": 7,
+        "fields": {
+            "order": 7,
+            "key": "checkers",
+            "label": "Custom Checkers",
+            "path": "/custom_checkers/",
+            "regex": "^/custom_checkers/$",
+            "parent": 6,
+            "lft": 4,
+            "rght": 5,
+            "tree_id": 5,
+            "level": 1
+        }
+    },
+    {
+        "model": "judge.navigationbar",
+        "pk": 8,
+        "fields": {
+            "order": 8,
+            "key": "github",
+            "label": "Github",
+            "path": "https://github.com/VNOI-Admin/OJ",
+            "regex": "^https://github.com/VNOI-Admin/OJ$",
+            "parent": 6,
+            "lft": 6,
+            "rght": 7,
+            "tree_id": 5,
+            "level": 1
+        }
     }
 ]

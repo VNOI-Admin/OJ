@@ -9,7 +9,16 @@
 {% block header %}
     {% include "flatpages/admin_link.html" %}
 {% endblock %}
-
 {% block body %}
-    {{ render_django(flatpage.content) }}
+    <div class="body content-description">
+        {% cache 86400 'flatpage' flatpage.url %}
+            {{ flatpage.content|markdown('flatpage', jax)|reference|str|safe}}
+        {% endcache %}
+    </div>
+{% endblock %}
+
+{% block bodyend %}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
 {% endblock %}
