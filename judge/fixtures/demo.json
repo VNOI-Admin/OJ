@@ -131,21 +131,21 @@
         "pk": 1
     },
     {
+        "model": "judge.blogpost",
+        "pk": 1,
         "fields": {
+            "title": "Ch\u00e0o m\u1eebng b\u1ea1n \u0111\u1ebfn v\u1edbi VNOJ",
+            "slug": "welcome-to-vnoj",
+            "visible": true,
+            "sticky": true,
+            "publish_on": "2017-12-02T05:00:00Z",
+            "content": "Ch\u00e0o m\u1eebng b\u1ea1n \u0111\u1ebfn v\u1edbi VNOJ.\r\n\r\nVNOJ - Vi\u1ec7t Nam Online Judge - l\u00e0 h\u1ec7 th\u1ed1ng online judge ch\u00ednh th\u1ee9c c\u1ee7a [VNOI](https://team.vnoi.info/)",
+            "summary": "",
+            "og_image": "",
             "authors": [
                 1
-            ],
-            "content": "Welcome to VNOJ!\n\n```python\nprint \"Hello, World!\"\n```\n\nYou can get started by checking out [this problem we've added for you](/problem/aplusb).",
-            "og_image": "",
-            "publish_on": "2017-12-02T05:00:00Z",
-            "slug": "first-post",
-            "sticky": true,
-            "summary": "",
-            "title": "First Post",
-            "visible": true
-        },
-        "model": "judge.blogpost",
-        "pk": 1
+            ]
+        }
     },
     {
         "fields": {
@@ -171,5 +171,35 @@
         },
         "model": "sites.site",
         "pk": 1
+    },
+    {
+        "model": "flatpages.flatpage",
+        "pk": 1,
+        "fields": {
+            "url": "/custom_checkers/",
+            "title": "Custom checkers",
+            "content": "M\u1ed9t s\u1ed1 b\u00e0i t\u1eadp c\u00f3 th\u1ec3 c\u00f3 nhi\u1ec1u output \u0111\u00fang, v\u00ec v\u1eady \u0111\u00f4i l\u00fac ta c\u1ea7n ph\u1ea3i vi\u1ebft checker \u0111\u1ec3  ki\u1ec3m tra xem output c\u00f3 \u0111\u00fang hay ch\u01b0a. \r\n\r\n\r\n# 1. Checker m\u1eb7c \u0111\u1ecbnh\r\nVNOJ c\u00f3 h\u1ed7 tr\u1ee3 c\u00e1c checker m\u1eb7c \u0111\u1ecbnh c\u1ee7a DMOJ, c\u00e1c b\u1ea1n c\u00f3 th\u1ec3 xem \u1edf [\u0111\u00e2y](https://docs.dmoj.ca/#/problem_format/custom_checkers)\r\n\r\n# 2. Custom Checker (Python)\r\n\r\nM\u1ed9t `checker` \u0111\u01b0\u1ee3c vi\u1ebft b\u1eb1ng Python c\u1ea7n c\u00e0i \u0111\u1eb7t m\u1ed9t h\u00e0m nh\u01b0 sau:\r\n```python3\r\ndef check(process_output, judge_output, **kwargs):\r\n    # your code\r\n    \r\n```\r\n\r\nTrong \u0111\u00f3:\r\n* `process_output`: output c\u1ee7a b\u00e0i n\u1ed9p\r\n* `judge_output`: \u0111\u00e1p \u00e1n\r\n \r\n`**kwargs` c\u00f3 th\u1ec3 ch\u1ee9a c\u00e1c bi\u1ebfn sau:\r\n\r\n* `submission_source`: source code c\u1ee7a b\u00e0i n\u1ed9p\r\n* `judge_input`: input c\u1ee7a \u0111\u1ec1 b\u00e0i\r\n* `point_value`: \u0111i\u1ec3m c\u1ee7a test \u0111ang ch\u1ea5m\r\n* `case_position`: th\u1ee9 t\u1ef1 c\u1ee7a test\r\n* `batch`: batch c\u1ee7a test case (v\u1edbi c\u00e1c b\u00e0i ch\u1ea5m theo subtask), \u0111\u1ea1i \u0111a s\u1ed1 c\u00e1c b\u00e0i ta kh\u00f4ng c\u1ea7n quan t\u00e2m t\u1edbi bi\u1ebfn n\u00e0y.\r\n* `submission_language`: ng\u00f4n ng\u1eef c\u1ee7a b\u00e0i n\u1ed9p\r\n* `execution_time`: th\u1eddi gian ch\u1ea1y, t\u00ednh b\u1eb1ng gi\u00e2y\r\n\r\n## Return\r\nH\u00e0m `check` c\u00f3 2 c\u00e1ch return:\r\n\r\n\r\n1. Return b\u1eb1ng True ho\u1eb7c False, n\u1ebfu \u0111\u00e1p \u00e1n \u0111\u00fang th\u00ec return True, ng\u01b0\u1ee3c l\u1ea1i return False\r\n2. Return b\u1eb1ng `CheckerResult`, return b\u1eb1ng c\u00e1ch n\u00e0y th\u00ec c\u00f3 th\u1ec3 tr\u1ea3 v\u1ec1 \u0111\u01b0\u1ee3c feedback cho ng\u01b0\u1eddi n\u1ed9p. C\u00e1ch d\u00f9ng nh\u01b0 sau: `CheckerResult(passed, points_awarded)`. Trong \u0111\u00f3:\r\n    * `passed` l\u00e0 c\u00f3 gi\u00e1 tr\u1ecb True/False t\u00f9y v\u00e0o k\u1ebft qu\u1ea3 c\u00f3 \u0111\u00fang hay kh\u00f4ng.\r\n    * `points_awarded`: l\u00e0 s\u1ed1 \u0111i\u1ec3m nh\u1eadn \u0111\u01b0\u1ee3c v\u1edbi test \u0111\u00f3.\r\n    * `feedback`: th\u00f4ng tin \u0111\u01b0a t\u1edbi ng\u01b0\u1eddi n\u1ed9p. \r\n\r\n## V\u00ed d\u1ee5\r\nD\u01b0\u1edbi \u0111\u00e2y l\u00e0 checker m\u1eabu cho b\u00e0i to\u00e1n [POST - A c\u1ed9ng B](/problem/post).\r\n\r\n```python3\r\nfrom dmoj.result import CheckerResult\r\n\r\ndef check(process_output, judge_output, judge_input, point_value, **kwargs):\r\n    # convert from bytes to texts\r\n    process_output = process_output.decode(\"ascii\")\r\n    judge_output = judge_output.decode(\"ascii\")\r\n    judge_input = judge_input.decode(\"ascii\")\r\n    \r\n    # read data as normal\r\n    a, b = judge_input.split(' ')\r\n    output_sum = int(process_output)\r\n    if a + b != output_sum:\r\n        return CheckerResult(False, 0, f\"{a} + {b} != {output_sum}\")\r\n    return CheckerResult(True, point_value, \"Ok answer is correct\")\r\n```\r\n\r\n# 3. Custom Checker (C++)\r\n\r\n\u0110\u1ec3 vi\u1ebft \u0111\u01b0\u1ee3c C++ checker, ta c\u1ea7n vi\u1ebft m\u1ed9t ch\u01b0\u01a1ng tr\u00ecnh C++ nh\u1eadn v\u00e0o 3 tham s\u1ed1 d\u00f2ng l\u1ec7nh theo th\u1ee9 t\u1ef1 l\u00e0 `input_file`, `output_file`, `answer_file`, t\u01b0\u01a1n \u1ee9ng v\u1edbi \u0111\u01b0\u1eddng d\u1eabn t\u1edbi c\u00e1c file input, output, \u0111\u00e1p \u00e1n. \r\n\r\n## Return\r\n\r\nCh\u01b0\u01a1ng tr\u00ecnh (h\u00e0m main) tr\u1ea3 v\u1ec1 c\u00e1c gi\u00e1 tr\u1ecb sau:\r\n* 0 n\u1ebfu AC (100% s\u1ed1 \u0111i\u1ec3m)\r\n* 1 n\u1ebfu WA (0 \u0111i\u1ec3m)\r\n* 7 n\u1ebfu nh\u1eadn \u0111\u01b0\u1ee3c \u0111i\u1ec3m th\u00e0nh ph\u1ea7n. Khi \u0111\u00f3 c\u1ea7n in ra `stderr` m\u1ed9t s\u1ed1 th\u1ef1c trong \u0111o\u1ea1n `[0, 1]` th\u1ec3 hi\u1ec7n t\u1ef7 l\u1ec7 \u0111i\u1ec3m. L\u01b0u \u00fd r\u1eb1ng \u0111i\u1ec3m ph\u1ea3i \u0111\u01b0\u1ee3c in ra \u1edf d\u00f2ng \u0111\u1ea7u ti\u00ean c\u1ee7a `stderr`\r\n* N\u1ebfu ch\u01b0\u01a1ng tr\u00ecnh tr\u1ea3 v\u1ec1 gi\u00e1 tr\u1ecb kh\u00e1c (exit code kh\u00e1c 0, hay run time error) th\u00ec b\u00e0i n\u1ed9p s\u1ebd \u0111\u01b0\u1ee3c 0 \u0111i\u1ec3m (xem nh\u01b0 WA).\r\n\r\nNh\u1eefng th\u00f4ng tin \u0111\u01b0\u1ee3c vi\u1ebft ra `stdout` s\u1ebd \u0111\u01b0\u1ee3c in ra m\u00e0n h\u00ecnh cho ng\u01b0\u1eddi n\u1ed9p b\u00e0i (feedback), nh\u01b0ng th\u00f4ng tin n\u00e0y ch\u1ec9 hi\u1ec3n th\u1ecb \u0111\u01b0\u1ee3c kho\u1ea3n 20 k\u00fd t\u1ef1.\r\nN\u1ebfu mu\u1ed1n ng\u01b0\u1eddi d\u00f9ng xem \u0111\u01b0\u1ee3c nhi\u1ec1u feedback h\u01a1n, th\u00ec in feedback v\u00e0o stderr (l\u01b0u \u00fd in sau khi in \u0111i\u1ec3m \u1edf d\u00f2ng \u0111\u1ea7u ti\u00ean).\r\n\r\n\r\n## V\u00ed d\u1ee5: \r\nCh\u01b0\u01a1ng tr\u00ecnh sau d\u00f9ng \u0111\u1ec3 ch\u1ea5m b\u00e0i to\u00e1n: Cho ~n~ l\u00e0 m\u1ed9t s\u1ed1 nguy\u00ean d\u01b0\u01a1ng. In ra hai s\u1ed1 t\u1ef1 nhi\u00ean ~a~, ~b~ sao cho ~a + b = n~.\r\n\r\nN\u1ebfu in ra ~a + b = n~ v\u00e0 ~a, b \\ge 0~ th\u00ec \u0111\u01b0\u1ee3c ~100\\%~ s\u1ed1 \u0111i\u1ec3m, n\u1ebfu ~a + b = n~ nh\u01b0ng m\u1ed9t trong 2 s\u1ed1 ~a, b~ \u00e2m th\u00ec \u0111\u01b0\u1ee3c ~50\\%~ s\u1ed1 \u0111i\u1ec3m.\r\n\r\n```c++\r\n#include <bits/stdc++.h>\r\nusing namespace std;\r\n\r\nint main(int argc, char** argv) {\r\n    ifstream inp(argv[1]);\r\n    ifstream out(argv[2]);\r\n    ifstream ans(argv[3]);\r\n\r\n    int n, a, b, c, d;\r\n    \r\n    inp >> n;\r\n    out >> a >> b;\r\n    ans >> c >> d;\r\n\r\n    if (a + b == c + d) {\r\n        cout << a << \" + \" << b << \" = \" << c << \" + \" << d << endl;\r\n            \r\n        if (a >= 0 && b >= 0) {\r\n            cerr << \"This line will be show to the contestants as a extended feedback\";\r\n            return 0; // AC\r\n        }\r\n        else {\r\n            cerr << 0.5 << '\\n'; // in ra \u0111i\u1ec3m \u1edf d\u00f2ng \u0111\u1ea7u ti\u00ean\r\n            cerr << \"Th\u00eds line will be show to the contestants as a extended feedback\";\r\n            return 7; // PARTIAL\r\n        }\r\n    }     \r\n    else {\r\n        cout << \"a + b = \" << a + b << \" != \" << n << endl;\r\n        return 1; // WA\r\n    }\r\n}\r\n```\r\n\r\nVNOJ c\u0169ng h\u1ed9 tr\u1ee3 c\u00e1c checker \u0111\u01b0\u1ee3c vi\u1ebft b\u1eb1ng [testlib.h](https://github.com/MikeMirzayanov/testlib/blob/master/testlib.h), tuy nhi\u00ean hi\u1ec7n t\u1ea1i ch\u1ec9 c\u00f3 th\u1ec3 ch\u1ea5m c\u00e1c b\u00e0i kh\u00f4ng ph\u1ea3i interactive. \r\n\r\n\u0110\u00e2y l\u00e0 checker \u0111\u01b0\u1ee3c vi\u1ebft b\u1eb1ng `testlib.h` cho b\u00e0i to\u00e1n tr\u00ean:\r\n\r\n```c++\r\n#include \"testlib.h\"\r\n\r\nusing namespace std;\r\n\r\nint main(int argc, char* argv[]) {\r\n    registerTestlibCmd(argc, argv);\r\n\r\n    int n = inf.readInt();\r\n    int a = ouf.readInt();\r\n    int b = ouf.readInt();\r\n    ensuref(a + b == n, \"%d + %d != %d\", a, b, n);\r\n    if (a < 0) {\r\n        quitf(_points, \"0.5 \\n a = %d < 0\", a);\r\n    }\r\n    if (b < 0) {\r\n        quitf(_points, \"0.5 \\n b = %d < 0\", a);\r\n    }\r\n    quitf(_ok, \"%d + %d = %d\", a, b, n);\r\n}\r\n```",
+            "enable_comments": false,
+            "template_name": "",
+            "registration_required": false,
+            "sites": [
+                1
+            ]
+        }
+    },
+    {
+        "model": "flatpages.flatpage",
+        "pk": 2,
+        "fields": {
+            "url": "/about/",
+            "title": "Th\u00f4ng tin",
+            "content": "VNOJ - Vi\u1ec7t Nam Online Judge l\u00e0 h\u1ec7 th\u1ed1ng online judge ch\u00ednh th\u1ee9c c\u1ee7a [VNOI](https://team.vnoi.info/)\r\n\r\n\r\n\r\n\r\n# 1. Todo 1\r\n\r\n# 2. Todo 2",
+            "enable_comments": false,
+            "template_name": "",
+            "registration_required": false,
+            "sites": [
+                1
+            ]
+        }
     }
 ]

@@ -65,7 +65,7 @@
             {% elif problem.id in attempted_problems %}
                 <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
                     {% if problem.is_public or request.in_contest %}
-                        <i class="attempted-problem-color title-state fa fa-minus-circle"></i>
+                        <i class="attempted-problem-color title-state fa fa-frown-o"></i>
                     {% else %}
                         <i class="attempted-problem-color title-state fa fa-lock"></i>
                     {% endif %}
