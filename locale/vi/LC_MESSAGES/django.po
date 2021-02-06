@@ -78,7 +78,7 @@ msgstr "Các kì thi"
 #: templates/problem/list.html:221 templates/user/user-problems.html:58
 #: templates/user/user-problems.html:100
 msgid "Problem"
-msgstr "Đề bài"
+msgstr "Bài"
 
 #: judge/admin/contest.py:113
 msgid "Settings"
@@ -2862,7 +2862,7 @@ msgstr "Hướng dẫn giải của <a href=\"{1}\">{0}</a>"
 #: templates/problem/list.html:166 templates/user/user-tabs.html:5
 #: templates/user/users-table.html:23
 msgid "Problems"
-msgstr "Đề bài"
+msgstr "Bài"
 
 #: judge/views/problem.py:556 judge/views/problem.py:564
 #, python-format
@@ -3223,7 +3223,7 @@ msgstr "Cập Nhật trên trang web"
 #: templates/admin/auth/user/change_form.html:17 templates/base.html:226
 #: templates/user/user-tabs.html:10
 msgid "Edit profile"
-msgstr "Chỉnh sửa tiểu sử"
+msgstr "Chỉnh sửa hồ sơ"
 
 #: judge/views/user.py:415
 msgid "Generated API token for user"
@@ -5003,7 +5003,7 @@ msgstr ""
 
 #: templates/user/edit-profile.html:295
 msgid "Editor theme"
-msgstr "Giao diện khung viết code"
+msgstr "Giao diện khung code"
 
 #: templates/user/edit-profile.html:300
 msgid "Math engine"
@@ -5059,7 +5059,7 @@ msgstr ""
 
 #: templates/user/edit-profile.html:413
 msgid "Update profile"
-msgstr "Cập nhật profile"
+msgstr "Cập nhật"
 
 #: templates/user/pp-row.html:24
 #, python-format
@@ -5097,7 +5097,7 @@ msgstr ""
 
 #: templates/user/prepare-data.html:103
 msgid "Submissions"
-msgstr "Bài nộp"
+msgstr ""
 
 #: templates/user/prepare-data.html:120
 msgid "Prepare new download"
@@ -5141,39 +5141,39 @@ msgstr "Người dùng không chia sẻ thông tin."
 
 #: templates/user/user-about.html:59
 msgid "Sun"
-msgstr "Chủ nhật"
+msgstr "CN"
 
 #: templates/user/user-about.html:64
 msgid "Mon"
-msgstr "Thứ hai"
+msgstr "T2"
 
 #: templates/user/user-about.html:69
 msgid "Tues"
-msgstr "Thứ ba"
+msgstr "T3"
 
 #: templates/user/user-about.html:74
 msgid "Wed"
-msgstr "Thứ tư"
+msgstr "T4"
 
 #: templates/user/user-about.html:79
 msgid "Thurs"
-msgstr "Thứ năm"
+msgstr "T5"
 
 #: templates/user/user-about.html:84
 msgid "Fri"
-msgstr "Thứ sáu"
+msgstr "T6"
 
 #: templates/user/user-about.html:89
 msgid "Sat"
-msgstr "Thứ bảy"
+msgstr "T7"
 
 #: templates/user/user-about.html:98
 msgid "Less"
-msgstr ""
+msgstr "Ít"
 
 #: templates/user/user-about.html:104
 msgid "More"
-msgstr ""
+msgstr "Nhiều"
 
 #: templates/user/user-about.html:112
 msgid "Rating history"
@@ -5207,15 +5207,15 @@ msgstr "Số bài nộp trong năm #(year)d: #(cnt)d"
 
 #: templates/user/user-about.html:210
 msgid "#(cnt)d submissions in #(year)d"
-msgstr "Số bài nộp trong năm #(year)d: #(cnt)d"
+msgstr "Số bài nộp trong năm #(year)d"
 
 #: templates/user/user-about.html:228
 msgid "#(cnt)d submission on #(date)s"
-msgstr "Số bài nộp trong ngày #(date)s: #(cnt)d"
+msgstr "#(date)s: #(cnt)d bài"
 
 #: templates/user/user-about.html:228
 msgid "#(cnt)d submissions on #(date)s"
-msgstr "Số bài nộp trong ngày #(date)s: #(cnt)d"
+msgstr "#(date)s: #(cnt)d bài"
 
 #: templates/user/user-base.html:42
 msgid "Problems solved:"
@@ -5223,21 +5223,21 @@ msgstr "Số bài đã giải:"
 
 #: templates/user/user-base.html:46
 msgid "Rank by points:"
-msgstr "Xếp hạng theo điểm:"
+msgstr "Hạng điểm:"
 
 #: templates/user/user-base.html:49
 msgid "Total points:"
-msgstr "Tổng điểm: "
+msgstr "Tổng điểm:"
 
 #: templates/user/user-base.html:63
 #, python-format
 msgid "%(counter)s contest written"
-msgid_plural "%(counter)s contests written"
+msgid_plural "Viết %(counter)s kì thi"
 msgstr[0] ""
 
 #: templates/user/user-base.html:70
 msgid "Rank by rating:"
-msgstr "Xếp hạng theo rating:"
+msgstr "Hạng rating:"
 
 #: templates/user/user-base.html:72
 msgid "Rating:"
@@ -5249,11 +5249,11 @@ msgstr "Độ biến động:"
 
 #: templates/user/user-base.html:74
 msgid "Min. rating:"
-msgstr "Rating thấp nhất:"
+msgstr "" 
 
 #: templates/user/user-base.html:75
 msgid "Max rating:"
-msgstr "Rating cao nhất:"
+msgstr ""
 
 #: templates/user/user-problems.html:37
 msgid "Points breakdown"
