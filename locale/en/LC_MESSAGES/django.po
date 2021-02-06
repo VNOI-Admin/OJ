@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-12 03:27+0000\n"
+"POT-Creation-Date: 2021-02-06 01:55+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -26,23 +26,23 @@ msgstr ""
 msgid "Vietnamese"
 msgstr ""
 
-#: dmoj/urls.py:34
+#: dmoj/urls.py:33
 msgid "Activation Successful!"
 msgstr ""
 
-#: dmoj/urls.py:41
+#: dmoj/urls.py:40
 msgid "Activation key invalid"
 msgstr ""
 
-#: dmoj/urls.py:48
+#: dmoj/urls.py:47
 msgid "Registration Completed"
 msgstr ""
 
-#: dmoj/urls.py:52
+#: dmoj/urls.py:51
 msgid "Registration not allowed"
 msgstr ""
 
-#: dmoj/urls.py:104 templates/base.html:190
+#: dmoj/urls.py:103 templates/base.html:194
 msgid "Home"
 msgstr ""
 
@@ -177,7 +177,7 @@ msgstr ""
 msgid "username"
 msgstr ""
 
-#: judge/admin/contest.py:348 templates/base.html:258
+#: judge/admin/contest.py:348 templates/base.html:261
 msgid "virtual"
 msgstr ""
 
@@ -1789,7 +1789,7 @@ msgstr ""
 msgid "Problem Setter"
 msgstr ""
 
-#: judge/models/profile.py:108 templates/base.html:220
+#: judge/models/profile.py:108 templates/base.html:224
 #: templates/comments/list.html:99 templates/contest/contest-list-tabs.html:24
 #: templates/contest/ranking-table.html:49
 #: templates/problem/problem-list-tabs.html:6
@@ -2376,7 +2376,7 @@ msgstr ""
 msgid "message time"
 msgstr ""
 
-#: judge/override_standard_messages.py:4
+#: judge/override_standard_messages.py:6
 #, python-format
 msgid ""
 "This password is too short. It must contain at least %(min_length)d "
@@ -2387,27 +2387,27 @@ msgid_plural ""
 msgstr[0] ""
 msgstr[1] ""
 
-#: judge/override_standard_messages.py:5
+#: judge/override_standard_messages.py:10
 #, python-format
 msgid "Your password must contain at least %(min_length)d character."
 msgid_plural "Your password must contain at least %(min_length)d characters."
 msgstr[0] ""
 msgstr[1] ""
 
-#: judge/override_standard_messages.py:6
+#: judge/override_standard_messages.py:13
 #, python-format
 msgid "The password is too similar to the %(verbose_name)s."
 msgstr ""
 
-#: judge/override_standard_messages.py:7
+#: judge/override_standard_messages.py:14
 msgid "Your password can't be too similar to your other personal information."
 msgstr ""
 
-#: judge/override_standard_messages.py:8
+#: judge/override_standard_messages.py:15
 msgid "This password is entirely numeric."
 msgstr ""
 
-#: judge/override_standard_messages.py:9
+#: judge/override_standard_messages.py:16
 msgid "Your password can't be entirely numeric."
 msgstr ""
 
@@ -2539,15 +2539,6 @@ msgstr[1] ""
 #: judge/utils/timedelta.py:63
 msgctxt "hours and minutes"
 msgid "%h:%m"
-msgstr ""
-
-#: judge/views/about.py:9 templates/user/user-about.html:33
-#: templates/user/user-tabs.html:4
-msgid "About"
-msgstr ""
-
-#: judge/views/about.py:15
-msgid "Custom Checker Sample"
 msgstr ""
 
 #: judge/views/blog.py:37
@@ -3000,11 +2991,11 @@ msgid ""
 "reputable email provider."
 msgstr ""
 
-#: judge/views/register.py:57 judge/views/register.py:94
+#: judge/views/register.py:57 judge/views/register.py:95
 msgid "Registration"
 msgstr ""
 
-#: judge/views/register.py:105
+#: judge/views/register.py:106
 msgid "Authentication failure"
 msgstr ""
 
@@ -3195,7 +3186,7 @@ msgstr ""
 msgid "Preparing your data..."
 msgstr ""
 
-#: judge/views/user.py:311 templates/user/edit-profile.html:347
+#: judge/views/user.py:311 templates/user/edit-profile.html:334
 msgid "Download your data"
 msgstr ""
 
@@ -3204,7 +3195,7 @@ msgid "Updated on site"
 msgstr ""
 
 #: judge/views/user.py:400 templates/admin/auth/user/change_form.html:14
-#: templates/admin/auth/user/change_form.html:17 templates/base.html:222
+#: templates/admin/auth/user/change_form.html:17 templates/base.html:226
 #: templates/user/user-tabs.html:10
 msgid "Edit profile"
 msgstr ""
@@ -3282,33 +3273,33 @@ msgstr ""
 msgid "Rejudge"
 msgstr ""
 
-#: templates/base.html:214
+#: templates/base.html:218
 #, python-format
 msgid "Hello, <b>%(username)s</b>."
 msgstr ""
 
-#: templates/base.html:229
+#: templates/base.html:233
 msgid "Log out"
 msgstr ""
 
-#: templates/base.html:238
+#: templates/base.html:242
 #: templates/registration/password_reset_complete.html:4
 msgid "Log in"
 msgstr ""
 
-#: templates/base.html:239 templates/registration/registration_form.html:177
+#: templates/base.html:243 templates/registration/registration_form.html:177
 msgid "or"
 msgstr ""
 
-#: templates/base.html:240
+#: templates/base.html:244
 msgid "Sign up"
 msgstr ""
 
-#: templates/base.html:252
+#: templates/base.html:255
 msgid "spectating"
 msgstr ""
 
-#: templates/base.html:265
+#: templates/base.html:268
 msgid "This site works best with JavaScript enabled."
 msgstr ""
 
@@ -4492,7 +4483,7 @@ msgid "Default language"
 msgstr ""
 
 #: templates/registration/registration_form.html:186
-#: templates/user/edit-profile.html:309
+#: templates/user/edit-profile.html:374
 msgid "Affiliated organizations"
 msgstr ""
 
@@ -4501,7 +4492,7 @@ msgid "can be blank"
 msgstr ""
 
 #: templates/registration/registration_form.html:192
-#: templates/user/edit-profile.html:323
+#: templates/user/edit-profile.html:310
 msgid "Notify me about upcoming contests"
 msgstr ""
 
@@ -4908,11 +4899,11 @@ msgid "Generating..."
 msgstr ""
 
 #: templates/user/edit-profile.html:121 templates/user/edit-profile.html:243
-#: templates/user/edit-profile.html:370 templates/user/edit-profile.html:389
+#: templates/user/edit-profile.html:357
 msgid "Regenerate"
 msgstr ""
 
-#: templates/user/edit-profile.html:127 templates/user/edit-profile.html:391
+#: templates/user/edit-profile.html:127
 msgid "Remove"
 msgstr ""
 
@@ -4920,8 +4911,7 @@ msgstr ""
 msgid "Are you sure you want to remove your API token?"
 msgstr ""
 
-#: templates/user/edit-profile.html:144 templates/user/edit-profile.html:374
-#: templates/user/edit-profile.html:395
+#: templates/user/edit-profile.html:144 templates/user/edit-profile.html:361
 msgid "Generate"
 msgstr ""
 
@@ -4945,63 +4935,55 @@ msgstr ""
 msgid "Math engine"
 msgstr ""
 
-#: templates/user/edit-profile.html:334 templates/user/edit-profile.html:336
+#: templates/user/edit-profile.html:321 templates/user/edit-profile.html:323
 msgid "Change your avatar"
 msgstr ""
 
-#: templates/user/edit-profile.html:341
+#: templates/user/edit-profile.html:328
 msgid "Change your password"
 msgstr ""
 
-#: templates/user/edit-profile.html:355
+#: templates/user/edit-profile.html:342
 msgid "Two-factor Authentication is enabled"
 msgstr ""
 
-#: templates/user/edit-profile.html:357
+#: templates/user/edit-profile.html:344
 msgid "Two-factor Authentication is disabled"
 msgstr ""
 
-#: templates/user/edit-profile.html:362 templates/user/edit-profile.html:364
+#: templates/user/edit-profile.html:349 templates/user/edit-profile.html:351
 msgid "Disable"
 msgstr ""
 
-#: templates/user/edit-profile.html:367
+#: templates/user/edit-profile.html:354
 msgid "Scratch Codes:"
 msgstr ""
 
-#: templates/user/edit-profile.html:371 templates/user/edit-profile.html:392
+#: templates/user/edit-profile.html:358
 msgid "Hidden"
 msgstr ""
 
-#: templates/user/edit-profile.html:380
+#: templates/user/edit-profile.html:367
 msgid "Enable"
 msgstr ""
 
 #: templates/user/edit-profile.html:386
-msgid "API Token"
-msgstr ""
-
-#: templates/user/edit-profile.html:403
 msgid "Security keys"
 msgstr ""
 
-#: templates/user/edit-profile.html:413
+#: templates/user/edit-profile.html:396
 msgid "Delete"
 msgstr ""
 
-#: templates/user/edit-profile.html:420
+#: templates/user/edit-profile.html:403
 msgid "Enter a name for this key"
 msgstr ""
 
-#: templates/user/edit-profile.html:421
+#: templates/user/edit-profile.html:404
 msgid "Add"
 msgstr ""
 
-#: templates/user/edit-profile.html:429
-msgid "User-script"
-msgstr ""
-
-#: templates/user/edit-profile.html:433
+#: templates/user/edit-profile.html:413
 msgid "Update profile"
 msgstr ""
 
@@ -5069,6 +5051,10 @@ msgstr ""
 
 #: templates/user/user-about.html:25
 msgid "Admin Notes"
+msgstr ""
+
+#: templates/user/user-about.html:33 templates/user/user-tabs.html:4
+msgid "About"
 msgstr ""
 
 #: templates/user/user-about.html:40
