@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-01-12 03:27+0000\n"
+"POT-Creation-Date: 2021-02-06 02:16+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -25,23 +25,23 @@ msgstr "Tiếng Anh"
 msgid "Vietnamese"
 msgstr "Tiếng Việt"
 
-#: dmoj/urls.py:34
+#: dmoj/urls.py:33
 msgid "Activation Successful!"
-msgstr "Ký hoạt thành công"
+msgstr "Kích hoạt thành công"
 
-#: dmoj/urls.py:41
+#: dmoj/urls.py:40
 msgid "Activation key invalid"
 msgstr "Mã kích hoạt không hợp lệ"
 
-#: dmoj/urls.py:48
+#: dmoj/urls.py:47
 msgid "Registration Completed"
 msgstr "Đăng ký thành công"
 
-#: dmoj/urls.py:52
+#: dmoj/urls.py:51
 msgid "Registration not allowed"
 msgstr "Không được phép đăng ký"
 
-#: dmoj/urls.py:104 templates/base.html:190
+#: dmoj/urls.py:103 templates/base.html:194
 msgid "Home"
 msgstr "Trang chủ"
 
@@ -71,7 +71,7 @@ msgstr "Trang liên kết"
 
 #: judge/admin/contest.py:30
 msgid "Included contests"
-msgstr "Các cuộc thi"
+msgstr "Các kì thi"
 
 #: judge/admin/contest.py:64 templates/contest/contest.html:83
 #: templates/contest/moss.html:43 templates/problem/list.html:206
@@ -168,7 +168,7 @@ msgstr "Kết quả tính lại"
 msgid "username"
 msgstr "tên người dùng"
 
-#: judge/admin/contest.py:348 templates/base.html:258
+#: judge/admin/contest.py:348 templates/base.html:261
 msgid "virtual"
 msgstr "ảo"
 
@@ -468,7 +468,7 @@ msgstr ""
 
 #: judge/forms.py:45
 msgid "Subscribe to contest updates"
-msgstr "Đăng ký để nhận các cập nhật về cuộc thi"
+msgstr "Đăng ký để nhận các cập nhật về kì thi"
 
 #: judge/forms.py:46
 msgid "Enable experimental features"
@@ -552,7 +552,7 @@ msgstr "Mã bài tập đã tồn tại."
 
 #: judge/forms.py:268 judge/models/contest.py:58
 msgid "Contest id must be ^[a-z0-9]+$"
-msgstr "id cuộc thi phải bao gồm ^[a-z0-9] + $"
+msgstr "id kì thi phải bao gồm ^[a-z0-9] + $"
 
 #: judge/forms.py:273
 msgid "Contest with key already exists."
@@ -673,23 +673,23 @@ msgstr "mô tả thẻ"
 
 #: judge/models/contest.py:52
 msgid "contest tag"
-msgstr "thẻ cuộc thi"
+msgstr "thẻ kì thi"
 
 #: judge/models/contest.py:53 judge/models/contest.py:110
 msgid "contest tags"
-msgstr "thẻ cuộc thi"
+msgstr "thẻ kì thi"
 
 #: judge/models/contest.py:57
 msgid "contest id"
-msgstr "mã Id cuộc thi"
+msgstr "mã Id kì thi"
 
 #: judge/models/contest.py:59
 msgid "contest name"
-msgstr "tên cuộc thi"
+msgstr "tên kì thi"
 
 #: judge/models/contest.py:60
 msgid "These people will be able to edit the contest."
-msgstr "Những người này sẽ có thể chỉnh sửa các cuộc thi."
+msgstr "Những người này sẽ có thể chỉnh sửa các kì thi."
 
 #: judge/models/contest.py:62 judge/models/runtime.py:136
 msgid "description"
@@ -722,16 +722,16 @@ msgid ""
 "Should be set even for organization-private contests, where it determines "
 "whether the contest is visible to members of the specified organizations."
 msgstr ""
-"Nên được đặt ngay cả đối với các cuộc thi riêng, nơi nó sẽ xác định xem các "
-"cuộc thi chỉ được nhìn thấy bởi các thành viên của tổ chức này."
+"Nên được đặt ngay cả đối với các kì thi riêng, nơi nó sẽ xác định xem các kì "
+"thi chỉ được nhìn thấy bởi các thành viên của tổ chức này."
 
 #: judge/models/contest.py:71
 msgid "contest rated"
-msgstr "cuộc thi đã được xếp hạng"
+msgstr "kì thi đã được xếp hạng"
 
 #: judge/models/contest.py:71
 msgid "Whether this contest can be rated."
-msgstr "Cho dù cuộc thi này có thể được đánh giá cao."
+msgstr "Kì thi này có rated hay không."
 
 #: judge/models/contest.py:73
 msgid "hide scoreboard"
@@ -760,11 +760,11 @@ msgstr "Đừng comment mà hãy sử dụng hệ thống giải đáp thắc m�
 
 #: judge/models/contest.py:83
 msgid "Rating floor for contest"
-msgstr "Xếp loại thấp nhất cho cuộc thi"
+msgstr "Rating thấp nhất để tham gia kì thi"
 
 #: judge/models/contest.py:85
 msgid "Rating ceiling for contest"
-msgstr "Xếp loại cao nhất cho cuộc thi"
+msgstr "Rating cao nhất để tham gia kì thi"
 
 #: judge/models/contest.py:87
 msgid "rate all"
@@ -808,8 +808,8 @@ msgid ""
 "set during a contest, then unset prior to rejudging user submissions when "
 "the contest ends."
 msgstr ""
-"Chỉ chấm bài thử. Thường sử dụng trong các cuộc thi, sau đó bỏ để chấm lại "
-"các bài chấm ở cuối cuộc thi."
+"Chỉ chấm pretests. Thường sử dụng trong các kì thi, sau đó bỏ để chấm lại "
+"ở cuối kì thi."
 
 #: judge/models/contest.py:102 judge/models/problem.py:160
 msgid "private to organizations"
@@ -822,7 +822,7 @@ msgstr "tổ chức"
 
 #: judge/models/contest.py:104
 msgid "If private, only these organizations may see the contest"
-msgstr "Nếu là dành riêng, thì chỉ các tổ chức này mới có thể xem cuộc thi"
+msgstr "Nếu là private, thì chỉ các tổ chức này mới có thể xem kì thi"
 
 #: judge/models/contest.py:105 judge/models/problem.py:147
 msgid "OpenGraph image"
@@ -843,7 +843,7 @@ msgstr "số lượng người tham gia trực tiếp"
 
 #: judge/models/contest.py:112
 msgid "contest summary"
-msgstr "tổng kết cuộc thi"
+msgstr "tổng kết kì thi"
 
 #: judge/models/contest.py:113 judge/models/problem.py:149
 msgid "Plain-text, shown in meta description tag, e.g. for social media."
@@ -957,15 +957,15 @@ msgstr ""
 #: judge/models/contest.py:491 judge/models/contest.py:513
 #: judge/models/submission.py:84
 msgid "contest"
-msgstr "cuộc thi"
+msgstr "kì thi"
 
 #: judge/models/contest.py:356
 msgid "contests"
-msgstr "cuộc thi"
+msgstr "kì thi"
 
 #: judge/models/contest.py:363
 msgid "associated contest"
-msgstr "cuộc thi liên quan"
+msgstr "kì thi liên quan"
 
 #: judge/models/contest.py:366
 msgid "score"
@@ -1016,11 +1016,11 @@ msgstr "%s trong %s"
 
 #: judge/models/contest.py:445
 msgid "contest participation"
-msgstr "tham gia cuộc thi"
+msgstr "tham gia kì thi"
 
 #: judge/models/contest.py:446
 msgid "contest participations"
-msgstr "tham gia cuộc thi"
+msgstr "tham gia kì thi"
 
 #: judge/models/contest.py:452 judge/models/contest.py:475
 #: judge/models/contest.py:514 judge/models/problem.py:424
@@ -1061,11 +1061,11 @@ msgstr "Tại sao lại thêm bài mà bạn không thể nộp?"
 
 #: judge/models/contest.py:468
 msgid "contest problem"
-msgstr "đề bài của cuộc thi"
+msgstr "đề bài của kì thi"
 
 #: judge/models/contest.py:469
 msgid "contest problems"
-msgstr "đề bài của cuộc thi"
+msgstr "đề bài của kì thi"
 
 #: judge/models/contest.py:473 judge/models/submission.py:201
 msgid "submission"
@@ -1105,11 +1105,11 @@ msgstr "lần xếp hạng cuối"
 
 #: judge/models/contest.py:501
 msgid "contest rating"
-msgstr "xếp hạng cuộc thi"
+msgstr "xếp hạng kì thi"
 
 #: judge/models/contest.py:502
 msgid "contest ratings"
-msgstr "xếp hạng cuộc thi"
+msgstr "xếp hạng kì thi"
 
 #: judge/models/contest.py:521
 msgid "contest moss result"
@@ -1695,7 +1695,7 @@ msgstr "Tên tổ chức trong URL"
 
 #: judge/models/profile.py:43
 msgid "Displayed beside user name during contests"
-msgstr "Hiển thị bên cạnh tên trong cuộc thi"
+msgstr "Hiển thị bên cạnh tên trong các kì thi"
 
 #: judge/models/profile.py:44
 msgid "organization description"
@@ -1800,7 +1800,7 @@ msgstr ""
 msgid "Problem Setter"
 msgstr ""
 
-#: judge/models/profile.py:108 templates/base.html:220
+#: judge/models/profile.py:108 templates/base.html:224
 #: templates/comments/list.html:99 templates/contest/contest-list-tabs.html:24
 #: templates/contest/ranking-table.html:49
 #: templates/problem/problem-list-tabs.html:6
@@ -1835,7 +1835,7 @@ msgstr "JavaScript tự định nghĩa bởi người dùng để tùy chỉnh."
 
 #: judge/models/profile.py:116
 msgid "current contest"
-msgstr "cuộc thi hiện tại"
+msgstr "kì thi hiện tại"
 
 #: judge/models/profile.py:118
 msgid "math engine"
@@ -2395,7 +2395,7 @@ msgstr ""
 msgid "message time"
 msgstr ""
 
-#: judge/override_standard_messages.py:4
+#: judge/override_standard_messages.py:6
 #, python-format
 msgid ""
 "This password is too short. It must contain at least %(min_length)d "
@@ -2405,26 +2405,26 @@ msgid_plural ""
 "characters."
 msgstr[0] "Mật khẩu quá ngắn, mật khẩu cần có ít nhất %(min_length)d ký tự."
 
-#: judge/override_standard_messages.py:5
+#: judge/override_standard_messages.py:10
 #, python-format
 msgid "Your password must contain at least %(min_length)d character."
 msgid_plural "Your password must contain at least %(min_length)d characters."
 msgstr[0] "Mật khẩu cần có ít nhất %(min_length)d ký tự."
 
-#: judge/override_standard_messages.py:6
+#: judge/override_standard_messages.py:13
 #, python-format
 msgid "The password is too similar to the %(verbose_name)s."
 msgstr "Mật khẩu không được quá giống với %(verbose_name)s."
 
-#: judge/override_standard_messages.py:7
+#: judge/override_standard_messages.py:14
 msgid "Your password can't be too similar to your other personal information."
 msgstr "Mật khẩu không được quá giống với các thông tin các nhân"
 
-#: judge/override_standard_messages.py:8
+#: judge/override_standard_messages.py:15
 msgid "This password is entirely numeric."
 msgstr "Mật khẩu này chỉ toàn các số."
 
-#: judge/override_standard_messages.py:9
+#: judge/override_standard_messages.py:16
 msgid "Your password can't be entirely numeric."
 msgstr "Mật khẩu không được hoàn toàn bằng số."
 
@@ -2440,7 +2440,7 @@ msgstr ""
 
 #: judge/tasks/contest.py:19
 msgid "Recalculating contest scores"
-msgstr "Tính lại điểm cuộc thi"
+msgstr "Tính lại điểm của kì thi"
 
 #: judge/tasks/contest.py:40
 msgid "Running MOSS"
@@ -2555,15 +2555,6 @@ msgctxt "hours and minutes"
 msgid "%h:%m"
 msgstr "%h:%m"
 
-#: judge/views/about.py:9 templates/user/user-about.html:33
-#: templates/user/user-tabs.html:4
-msgid "About"
-msgstr "Thông tin"
-
-#: judge/views/about.py:15
-msgid "Custom Checker Sample"
-msgstr ""
-
 #: judge/views/blog.py:37
 #, python-format
 msgid "Page %d of Posts"
@@ -2592,25 +2583,25 @@ msgstr "Đang chỉnh sửa bình luận"
 #: judge/views/contests.py:56 judge/views/contests.py:201
 #: judge/views/contests.py:204 judge/views/contests.py:382
 msgid "No such contest"
-msgstr "Không có cuộc thi nào"
+msgstr "Không có kì thi nào"
 
 #: judge/views/contests.py:57 judge/views/contests.py:202
 #, python-format
 msgid "Could not find a contest with the key \"%s\"."
-msgstr "Không thể tìm thấy cuộc thi với khóa \"%s\"."
+msgstr "Không thể tìm thấy kì thi với khóa \"%s\"."
 
 #: judge/views/contests.py:70 templates/contest/list.html:53
 msgid "Contests"
-msgstr "Cuộc thi"
+msgstr "Kì thi"
 
 #: judge/views/contests.py:205
 msgid "Could not find such contest."
-msgstr "Không thể tìm thấy cuộc thi nào."
+msgstr "Không thể tìm thấy kì thi nào."
 
 #: judge/views/contests.py:208
 #, python-format
 msgid "Access to contest \"%s\" denied"
-msgstr "Bị từ chối truy cập vào cuộc thi \"%s\""
+msgstr "Bị từ chối truy cập vào kì thi \"%s\""
 
 #: judge/views/contests.py:235
 msgid "Clone Contest"
@@ -2618,7 +2609,7 @@ msgstr ""
 
 #: judge/views/contests.py:301
 msgid "Contest not ongoing"
-msgstr "Cuộc thi đang không diễn ra"
+msgstr "Kì thi đang không diễn ra"
 
 #: judge/views/contests.py:302
 #, python-format
@@ -2627,12 +2618,12 @@ msgstr "\"%s\" đang không diễn ra."
 
 #: judge/views/contests.py:306
 msgid "Already in contest"
-msgstr "Đã trong cuộc thi"
+msgstr "Đã trong kì thi"
 
 #: judge/views/contests.py:307
 #, python-format
 msgid "You are already in a contest: \"%s\"."
-msgstr "Bạn đang ở một cuộc thi: \"%s\"."
+msgstr "Bạn đang ở một kì thi: \"%s\"."
 
 #: judge/views/contests.py:310
 msgid "Banned from joining"
@@ -2642,7 +2633,7 @@ msgstr "Không thể tham gia"
 msgid ""
 "You have been declared persona non grata for this contest. You are "
 "permanently barred from joining this contest."
-msgstr "Bạn đã được coi là cá nhận không tham gia cuộc thi này này."
+msgstr "Bạn đã được coi là cá nhận không tham gia kì thi này."
 
 #: judge/views/contests.py:372
 #, python-format
@@ -2652,7 +2643,7 @@ msgstr "Nhập access code của \"%s\""
 #: judge/views/contests.py:383
 #, python-format
 msgid "You are not in contest \"%s\"."
-msgstr "Bạn đang không tham gia cuộc thi \"%s\"."
+msgstr "Bạn đang không tham gia kì thi \"%s\"."
 
 #: judge/views/contests.py:402
 msgid "ContestCalendar requires integer year and month"
@@ -2661,7 +2652,7 @@ msgstr "Tháng và năm phải là số nguyên"
 #: judge/views/contests.py:442
 #, python-format
 msgid "Contests in %(month)s"
-msgstr "Cuộc thi trong tháng %(month)s"
+msgstr "Kì thi trong tháng %(month)s"
 
 #: judge/views/contests.py:442
 msgid "F Y"
@@ -2712,7 +2703,7 @@ msgstr ""
 #: judge/views/contests.py:800
 #, python-format
 msgid "Contest tag: %s"
-msgstr "Thẻ cuộc thi %s"
+msgstr "Thẻ kì thi %s"
 
 #: judge/views/error.py:14
 msgid "404 error"
@@ -2978,7 +2969,7 @@ msgstr "Các bài giải tốt nhất cho %(problem)s trong %(contest)s"
 #: judge/views/ranked_submission.py:73
 #, python-format
 msgid "Best solutions for problem %(number)s in %(contest)s"
-msgstr "Những bài giải tốt nhất cho bài %(number)s trong cuộc thi %(contest)s"
+msgstr "Những bài giải tốt nhất cho bài %(number)s trong kì thi %(contest)s"
 
 #: judge/views/ranked_submission.py:79
 #, python-brace-format
@@ -3021,11 +3012,11 @@ msgstr ""
 "Nhà cung cấp email của bạn không được phép do phát tán thư rác. Xin vui lòng "
 "sử dụng một nhà cung cấp email có uy tín."
 
-#: judge/views/register.py:57 judge/views/register.py:94
+#: judge/views/register.py:57 judge/views/register.py:95
 msgid "Registration"
 msgstr "Đăng ký"
 
-#: judge/views/register.py:105
+#: judge/views/register.py:106
 msgid "Authentication failure"
 msgstr "Xác thực không thành công"
 
@@ -3080,7 +3071,7 @@ msgstr "bài nộp của %(user)s cho %(problem)s"
 
 #: judge/views/submission.py:536
 msgid "Must pass a contest"
-msgstr "Phải vượt qua một cuộc thi"
+msgstr "Phải vượt qua một kì thi"
 
 #: judge/views/submission.py:544
 #, python-format
@@ -3220,7 +3211,7 @@ msgstr "M j, Y, G:i"
 msgid "Preparing your data..."
 msgstr ""
 
-#: judge/views/user.py:311 templates/user/edit-profile.html:347
+#: judge/views/user.py:311 templates/user/edit-profile.html:334
 msgid "Download your data"
 msgstr ""
 
@@ -3229,7 +3220,7 @@ msgid "Updated on site"
 msgstr "Cập Nhật trên trang web"
 
 #: judge/views/user.py:400 templates/admin/auth/user/change_form.html:14
-#: templates/admin/auth/user/change_form.html:17 templates/base.html:222
+#: templates/admin/auth/user/change_form.html:17 templates/base.html:226
 #: templates/user/user-tabs.html:10
 msgid "Edit profile"
 msgstr "Chỉnh sửa tiểu sử"
@@ -3271,11 +3262,11 @@ msgstr "Bạn có chắc chắn muốn chấm lại TẤT CẢ các bài nộp?"
 #: templates/admin/judge/contest/change_form.html:17
 #: templates/admin/judge/contest/change_form.html:20
 msgid "Rate"
-msgstr "Đánh giá"
+msgstr ""
 
 #: templates/admin/judge/contest/change_list.html:9
 msgid "Rate all ratable contests"
-msgstr "Đánh giá các cuộc thi"
+msgstr ""
 
 #: templates/admin/judge/judge/change_form.html:15
 #: templates/admin/judge/judge/change_form.html:18
@@ -3307,33 +3298,33 @@ msgstr "Cập nhật người dùng"
 msgid "Rejudge"
 msgstr "Chấm lại"
 
-#: templates/base.html:214
+#: templates/base.html:218
 #, python-format
 msgid "Hello, <b>%(username)s</b>."
 msgstr "Xin chào, <b>%(username)s</b>."
 
-#: templates/base.html:229
+#: templates/base.html:233
 msgid "Log out"
 msgstr "Đăng xuất"
 
-#: templates/base.html:238
+#: templates/base.html:242
 #: templates/registration/password_reset_complete.html:4
 msgid "Log in"
 msgstr "Đăng nhập"
 
-#: templates/base.html:239 templates/registration/registration_form.html:177
+#: templates/base.html:243 templates/registration/registration_form.html:177
 msgid "or"
 msgstr "hoặc"
 
-#: templates/base.html:240
+#: templates/base.html:244
 msgid "Sign up"
 msgstr "Đăng ký"
 
-#: templates/base.html:252
+#: templates/base.html:255
 msgid "spectating"
 msgstr "spectating"
 
-#: templates/base.html:265
+#: templates/base.html:268
 msgid "This site works best with JavaScript enabled."
 msgstr "Trang web này hoạt động tốt nhất với JavaScript được cho phép."
 
@@ -3393,11 +3384,11 @@ msgstr "Chưa có lời làm rõ nào được đưa ra ở thời điểm này.
 
 #: templates/blog/list.html:154
 msgid "Ongoing contests"
-msgstr "Cuộc thi đang diễn ra"
+msgstr "Kì thi đang diễn ra"
 
 #: templates/blog/list.html:172
 msgid "Upcoming contests"
-msgstr "Cuộc thi sắp tới"
+msgstr "Kì thi sắp tới"
 
 #: templates/blog/list.html:189
 msgid "Comment stream"
@@ -3612,7 +3603,7 @@ msgstr ""
 #: templates/contest/contest-tabs.html:38
 #: templates/contest/contest-tabs.html:58
 msgid "Leave contest"
-msgstr "Rời khỏi cuộc thi"
+msgstr "Rời khỏi kì thi"
 
 #: templates/contest/contest-tabs.html:45 templates/contest/list.html:296
 msgid "Virtual join"
@@ -3624,11 +3615,11 @@ msgstr "Ngừng hóng"
 
 #: templates/contest/contest-tabs.html:65
 msgid "Spectate contest"
-msgstr "Hóng cuộc thi"
+msgstr "Hóng kì thi"
 
 #: templates/contest/contest-tabs.html:72
 msgid "Join contest"
-msgstr "Tham gia cuộc thi"
+msgstr "Tham gia kì thi"
 
 #: templates/contest/contest-tabs.html:81
 msgid "Log in to participate"
@@ -3640,7 +3631,7 @@ msgstr "Tham gia ảo"
 
 #: templates/contest/contest.html:43
 msgid "Contest is over."
-msgstr "Cuộc thi kết thúc."
+msgstr "Kì thi kết thúc."
 
 #: templates/contest/contest.html:59 templates/contest/contest.html:63
 msgid "F j, Y, G:i T"
@@ -3686,8 +3677,8 @@ msgid ""
 "Joining a contest for the first time starts your timer, after which it "
 "becomes unstoppable."
 msgstr ""
-"Truy cập vào một cuộc thi lần đầu tiên sẽ bắt đầu việc đếm ngược thời gian "
-"cuộc thi và không thể dừng lại được."
+"Truy cập vào một kì thi lần đầu tiên sẽ bắt đầu việc đếm ngược thời gian kì "
+"thi và không thể dừng lại được."
 
 #: templates/contest/list.html:65
 msgid "hidden"
@@ -3716,23 +3707,23 @@ msgstr ""
 #: templates/contest/list.html:151 templates/contest/list.html:193
 #: templates/contest/list.html:231 templates/contest/list.html:270
 msgid "Contest"
-msgstr "Cuộc thi"
+msgstr "Kì thi"
 
 #: templates/contest/list.html:189
 msgid "Ongoing Contests"
-msgstr "Cuộc thi đang diễn ra"
+msgstr "Kì thi đang diễn ra"
 
 #: templates/contest/list.html:226
 msgid "Upcoming Contests"
-msgstr "Các cuộc thi sắp tới"
+msgstr "Các kì thi sắp tới"
 
 #: templates/contest/list.html:254
 msgid "There are no scheduled contests at this time."
-msgstr "Chưa có cuộc thi dự kiến tại thời điểm này."
+msgstr "Chưa có kì thi dự kiến tại thời điểm này."
 
 #: templates/contest/list.html:260
 msgid "Past Contests"
-msgstr "Cuộc thi đã qua"
+msgstr "Các Kì thi đã qua"
 
 #: templates/contest/media-js.html:4
 msgid "Are you sure you want to leave?"
@@ -3750,8 +3741,8 @@ msgstr ""
 msgid ""
 "Joining a contest starts your timer, after which it becomes unstoppable."
 msgstr ""
-"Truy cập một cuộc thi sẽ bắt đầu đếm ngược thời gian cuộc thi đó, và không "
-"thể dừng lại được."
+"Truy cập một kì thi sẽ bắt đầu đếm ngược thời gian kì thi đó, và không thể "
+"dừng lại được."
 
 #: templates/contest/moss.html:28
 msgid "Are you sure you want MOSS the contest?"
@@ -3775,15 +3766,15 @@ msgstr ""
 
 #: templates/contest/private.html:5
 msgid "This contest is private to specific users."
-msgstr "Cuộc thi này là riêng tư và chỉ dành cho một số người dùng."
+msgstr "Kì thi này là riêng tư và chỉ dành cho một số người dùng."
 
 #: templates/contest/private.html:10
 msgid "Additionally, only the following organizations may access this contest:"
-msgstr "Ngoài ra, chỉ có các tổ chức sau có thể truy cập vào cuộc thi này:"
+msgstr "Ngoài ra, chỉ có các tổ chức sau có thể truy cập vào kì thi này:"
 
 #: templates/contest/private.html:12
 msgid "Only the following organizations may access this contest:"
-msgstr "Chỉ có các tổ chức sau có thể truy cập vào cuộc thi này:"
+msgstr "Chỉ có các tổ chức sau có thể truy cập vào kì thi này:"
 
 #: templates/contest/ranking-table.html:7
 msgid "Organization"
@@ -4557,7 +4548,7 @@ msgid "Default language"
 msgstr "Ngôn ngữ mặc định"
 
 #: templates/registration/registration_form.html:186
-#: templates/user/edit-profile.html:309
+#: templates/user/edit-profile.html:374
 msgid "Affiliated organizations"
 msgstr "Tổ chức đại diện"
 
@@ -4566,9 +4557,9 @@ msgid "can be blank"
 msgstr "có thể bỏ trống"
 
 #: templates/registration/registration_form.html:192
-#: templates/user/edit-profile.html:323
+#: templates/user/edit-profile.html:310
 msgid "Notify me about upcoming contests"
-msgstr "Thông báo cho tôi về các cuộc thi sắp tới"
+msgstr "Thông báo cho tôi về các kì thi sắp tới"
 
 #: templates/registration/registration_form.html:206
 msgid "By registering, you agree to our"
@@ -4982,11 +4973,11 @@ msgid "Generating..."
 msgstr ""
 
 #: templates/user/edit-profile.html:121 templates/user/edit-profile.html:243
-#: templates/user/edit-profile.html:370 templates/user/edit-profile.html:389
+#: templates/user/edit-profile.html:357
 msgid "Regenerate"
 msgstr ""
 
-#: templates/user/edit-profile.html:127 templates/user/edit-profile.html:391
+#: templates/user/edit-profile.html:127
 msgid "Remove"
 msgstr ""
 
@@ -4994,8 +4985,7 @@ msgstr ""
 msgid "Are you sure you want to remove your API token?"
 msgstr ""
 
-#: templates/user/edit-profile.html:144 templates/user/edit-profile.html:374
-#: templates/user/edit-profile.html:395
+#: templates/user/edit-profile.html:144 templates/user/edit-profile.html:361
 msgid "Generate"
 msgstr ""
 
@@ -5019,63 +5009,55 @@ msgstr "Giao diện khung viết code"
 msgid "Math engine"
 msgstr ""
 
-#: templates/user/edit-profile.html:334 templates/user/edit-profile.html:336
+#: templates/user/edit-profile.html:321 templates/user/edit-profile.html:323
 msgid "Change your avatar"
 msgstr "Đổi ảnh đại diện của bạn"
 
-#: templates/user/edit-profile.html:341
+#: templates/user/edit-profile.html:328
 msgid "Change your password"
 msgstr "Đổi mật khẩu của bạn"
 
-#: templates/user/edit-profile.html:355
+#: templates/user/edit-profile.html:342
 msgid "Two-factor Authentication is enabled"
 msgstr ""
 
-#: templates/user/edit-profile.html:357
+#: templates/user/edit-profile.html:344
 msgid "Two-factor Authentication is disabled"
 msgstr ""
 
-#: templates/user/edit-profile.html:362 templates/user/edit-profile.html:364
+#: templates/user/edit-profile.html:349 templates/user/edit-profile.html:351
 msgid "Disable"
 msgstr ""
 
-#: templates/user/edit-profile.html:367
+#: templates/user/edit-profile.html:354
 msgid "Scratch Codes:"
 msgstr ""
 
-#: templates/user/edit-profile.html:371 templates/user/edit-profile.html:392
+#: templates/user/edit-profile.html:358
 msgid "Hidden"
 msgstr ""
 
-#: templates/user/edit-profile.html:380
+#: templates/user/edit-profile.html:367
 msgid "Enable"
 msgstr ""
 
 #: templates/user/edit-profile.html:386
-msgid "API Token"
-msgstr ""
-
-#: templates/user/edit-profile.html:403
 msgid "Security keys"
 msgstr ""
 
-#: templates/user/edit-profile.html:413
+#: templates/user/edit-profile.html:396
 msgid "Delete"
 msgstr ""
 
-#: templates/user/edit-profile.html:420
+#: templates/user/edit-profile.html:403
 msgid "Enter a name for this key"
 msgstr ""
 
-#: templates/user/edit-profile.html:421
+#: templates/user/edit-profile.html:404
 msgid "Add"
 msgstr ""
 
-#: templates/user/edit-profile.html:429
-msgid "User-script"
-msgstr ""
-
-#: templates/user/edit-profile.html:433
+#: templates/user/edit-profile.html:413
 msgid "Update profile"
 msgstr "Cập nhật profile"
 
@@ -5115,7 +5097,7 @@ msgstr ""
 
 #: templates/user/prepare-data.html:103
 msgid "Submissions"
-msgstr ""
+msgstr "Bài nộp"
 
 #: templates/user/prepare-data.html:120
 msgid "Prepare new download"
@@ -5144,6 +5126,10 @@ msgstr "Từ"
 #: templates/user/user-about.html:25
 msgid "Admin Notes"
 msgstr ""
+
+#: templates/user/user-about.html:33 templates/user/user-tabs.html:4
+msgid "About"
+msgstr "Thông tin"
 
 #: templates/user/user-about.html:40
 msgid "You have not shared any information."
