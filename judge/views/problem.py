@@ -430,8 +430,8 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         if not points:
             return 0, 0, {}
         if len(points) == 1:
-            return points[0], points[0], {
-                'min': points[0] - 1,
+            return points[0], points[0] + 1, {
+                'min': points[0],
                 'max': points[0] + 1,
             }
 
