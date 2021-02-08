@@ -217,7 +217,10 @@
                                 </a>
                             </th>
                         {% endif %}
-                        <th class="problem">
+                        <th class="problem-code">
+                            <a href="{{ sort_links.code }}">{{ _('Problem ID') }}{{ sort_order.code}}</a>
+                        </th>
+                        <th class="problem-name">
                             <a href="{{ sort_links.name }}">{{ _('Problem') }}{{ sort_order.name }}</a>
                         </th>
                         <th class="category">
@@ -274,7 +277,10 @@
                                 </td>
                             {% endif %}
                         {% endif %}
-                        <td class="problem">
+                        <td class="problem-code">
+                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code}}</a>
+                        </td>
+                        <td class="problem-name">
                             <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
                         </td>
                         <td class="category">{{ problem.group.full_name }}</td>
