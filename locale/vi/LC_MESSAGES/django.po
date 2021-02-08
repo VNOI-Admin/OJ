@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-08 04:16+0000\n"
+"POT-Creation-Date: 2021-02-08 09:07+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -449,6 +449,43 @@ msgstr "IOI"
 #: judge/contest_format/legacy_ioi.py:18
 msgid "IOI (pre-2016)"
 msgstr ""
+
+#: judge/custom_translations.py:11
+#, python-format
+msgid ""
+"This password is too short. It must contain at least %(min_length)d "
+"character."
+msgid_plural ""
+"This password is too short. It must contain at least %(min_length)d "
+"characters."
+msgstr[0] "Mật khẩu quá ngắn, mật khẩu cần có ít nhất %(min_length)d ký tự."
+
+#: judge/custom_translations.py:15
+#, python-format
+msgid "Your password must contain at least %(min_length)d character."
+msgid_plural "Your password must contain at least %(min_length)d characters."
+msgstr[0] "Mật khẩu cần có ít nhất %(min_length)d ký tự."
+
+#: judge/custom_translations.py:18
+#, python-format
+msgid "The password is too similar to the %(verbose_name)s."
+msgstr "Mật khẩu không được quá giống với %(verbose_name)s."
+
+#: judge/custom_translations.py:19
+msgid "Your password can't be too similar to your other personal information."
+msgstr "Mật khẩu không được quá giống với các thông tin các nhân"
+
+#: judge/custom_translations.py:20
+msgid "This password is entirely numeric."
+msgstr "Mật khẩu này chỉ toàn các số."
+
+#: judge/custom_translations.py:21
+msgid "Your password can't be entirely numeric."
+msgstr "Mật khẩu không được hoàn toàn bằng số."
+
+#: judge/custom_translations.py:24
+msgid "PRoblems"
+msgstr "Bài tập"
 
 #: judge/forms.py:26
 msgid "Two-factor authentication tokens must be 6 decimal digits."
@@ -1469,7 +1506,7 @@ msgstr ""
 
 #: judge/models/problem.py:417 templates/problem/problem.html:161
 msgid "Clone problem"
-msgstr "Copy sang bài mới"
+msgstr "Clone sang bài mới"
 
 #: judge/models/problem.py:418
 msgid "Change is_public field"
@@ -2386,39 +2423,6 @@ msgstr ""
 msgid "message time"
 msgstr ""
 
-#: judge/override_standard_messages.py:6
-#, python-format
-msgid ""
-"This password is too short. It must contain at least %(min_length)d "
-"character."
-msgid_plural ""
-"This password is too short. It must contain at least %(min_length)d "
-"characters."
-msgstr[0] "Mật khẩu quá ngắn, mật khẩu cần có ít nhất %(min_length)d ký tự."
-
-#: judge/override_standard_messages.py:10
-#, python-format
-msgid "Your password must contain at least %(min_length)d character."
-msgid_plural "Your password must contain at least %(min_length)d characters."
-msgstr[0] "Mật khẩu cần có ít nhất %(min_length)d ký tự."
-
-#: judge/override_standard_messages.py:13
-#, python-format
-msgid "The password is too similar to the %(verbose_name)s."
-msgstr "Mật khẩu không được quá giống với %(verbose_name)s."
-
-#: judge/override_standard_messages.py:14
-msgid "Your password can't be too similar to your other personal information."
-msgstr "Mật khẩu không được quá giống với các thông tin các nhân"
-
-#: judge/override_standard_messages.py:15
-msgid "This password is entirely numeric."
-msgstr "Mật khẩu này chỉ toàn các số."
-
-#: judge/override_standard_messages.py:16
-msgid "Your password can't be entirely numeric."
-msgstr "Mật khẩu không được hoàn toàn bằng số."
-
 #: judge/pdf_problems.py:147 judge/pdf_problems.py:200
 #: judge/pdf_problems.py:260
 msgid "Page [page] of [topage]"
@@ -2850,10 +2854,9 @@ msgid "Editorial for <a href=\"{1}\">{0}</a>"
 msgstr "Hướng dẫn giải của <a href=\"{1}\">{0}</a>"
 
 #: judge/views/problem.py:283 templates/contest/contest.html:79
-#: templates/problem/list.html:166 templates/user/user-tabs.html:5
-#: templates/user/users-table.html:23
+#: templates/problem/list.html:166
 msgid "Problems"
-msgstr "Bài tập"
+msgstr "Bài"
 
 #: judge/views/problem.py:555 judge/views/problem.py:563
 #, python-format
@@ -3571,7 +3574,7 @@ msgid "Info"
 msgstr "Thông tin"
 
 #: templates/contest/contest-tabs.html:6 templates/stats/base.html:9
-#: templates/submission/list.html:339
+#: templates/submission/list.html:339 templates/user/user-tabs.html:5
 msgid "Statistics"
 msgstr "Thống kê"
 
@@ -3932,7 +3935,7 @@ msgstr "Yêu cầu tư cách thành viên"
 
 #: templates/organization/home.html:39
 msgid "Edit organization"
-msgstr "Chỉnh sửa các tổ chức"
+msgstr "Chỉnh sửa tổ chức"
 
 #: templates/organization/home.html:43
 msgid "View requests"
@@ -3940,7 +3943,7 @@ msgstr "Xem yêu cầu"
 
 #: templates/organization/home.html:50
 msgid "Admin organization"
-msgstr "Tổ chức quản trị"
+msgstr "Quản trị tổ chức"
 
 #: templates/organization/home.html:55
 msgid "View members"
@@ -4230,7 +4233,7 @@ msgstr "Quản lý báo cáo"
 
 #: templates/problem/problem.html:140
 msgid "Edit problem"
-msgstr "Sửa bài"
+msgstr "Sửa đề bài"
 
 #: templates/problem/problem.html:142
 msgid "Edit test data"
@@ -4891,7 +4894,7 @@ msgstr "Huỷ bỏ"
 
 #: templates/submission/submission-list-tabs.html:6
 msgid "Mine"
-msgstr "Bài của tôi"
+msgstr "Bài nộp của tôi"
 
 #: templates/submission/submission-list-tabs.html:9
 msgid "Best"
@@ -5131,7 +5134,7 @@ msgstr ""
 
 #: templates/user/prepare-data.html:103
 msgid "Submissions"
-msgstr ""
+msgstr "Bài nộp"
 
 #: templates/user/prepare-data.html:120
 msgid "Prepare new download"
@@ -5330,6 +5333,10 @@ msgstr ""
 #: templates/user/user-tabs.html:16
 msgid "Admin Profile"
 msgstr ""
+
+#: templates/user/users-table.html:23
+msgid "Problems count"
+msgstr "Số bài"
 
 #: templates/widgets/select_all.html:8
 msgid "Check all"

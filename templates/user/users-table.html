@@ -20,7 +20,7 @@
 {% block after_point_head %}
     <th class="problems">
         {% if sort_links %}<a href="{{ sort_links.problem_count }}">{% endif %}
-        {{ _('Problems') }}
+        {{ _('Problems count') }}
         {%- if sort_links %}{{ sort_order.problem_count }}</a>{% endif %}
     </th>
 {% endblock %}

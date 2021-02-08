@@ -5,7 +5,7 @@
         "fields": {
             "order": 1,
             "key": "problems",
-            "label": "Problems",
+            "label": "PRoblems",
             "path": "/problems/",
             "regex": "^/problem",
             "parent": null,
