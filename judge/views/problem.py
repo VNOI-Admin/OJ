@@ -213,7 +213,6 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
                                           context['description'], 'problem')
         context['meta_description'] = self.object.summary or metadata[0]
         context['og_image'] = self.object.og_image or metadata[1]
-        context['is_polygon_problem'] = self.object.is_polygon_problem
         return context
 
 
