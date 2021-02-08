@@ -1,9 +1,9 @@
-Please activate your {{ site.name }} account in {{ expiration_days }} days.
+{{ _('Please activate your %(site_name)s account in the next %(expiration_days)d days.', expiration_days=expiration_days, site_name=SITE_NAME) }}
 
-Please click on the following link to activate your account:
+{{ _('Please click on the following link to activate your account:') }}
     http://{{ site.domain }}/accounts/activate/{{ activation_key }}/
 
-Alternatively, you can reply to this message to activate your account.
-Your reply must keep the following text intact for this to work:
+{{ _('Alternatively, you can reply to this message to activate your account.') }} 
+{{ _('Your reply must keep the following text intact for this to work:') }}
 
 {{ activation_key }}
