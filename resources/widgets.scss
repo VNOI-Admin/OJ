@@ -139,7 +139,7 @@ input {
     }
 }
 
-// Codeforces copy button
+// Bootstrap-y copy button
 .btn-clipboard {
     top: 0;
     right: 0;
@@ -147,16 +147,16 @@ input {
     font-size: 12px;
     color: #767676;
     cursor: pointer;
-    background-color: #fff;
-    border: 1px solid #e1e1e8;
-    border-radius: 0 4px;
+    background-color: #FFF;
+    border: 1px solid #E1E1E8;
+    border-radius: 0 $widget_border_radius;
     position: absolute;
     padding: 5px 8px;
 }
 
 .copy-clipboard {
     position: relative;
-    // margin-top: 1.5em;
+    margin-top: 1.5em;
 }
 
 // Bootstrap-y tabs
