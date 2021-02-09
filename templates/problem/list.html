@@ -163,7 +163,7 @@
 
 {% block title_row %}
     {% set tab = 'list' %}
-    {% set title = _('Problems') %}
+    {% set title = _('Problem list') %}
     {% include "problem/problem-list-tabs.html" %}
 {% endblock %}
 
@@ -218,7 +218,7 @@
                             </th>
                         {% endif %}
                         <th class="problem-code">
-                            <a href="{{ sort_links.code }}">{{ _('Problem ID') }}{{ sort_order.code}}</a>
+                            <a href="{{ sort_links.code }}">{{ _('ID') }}{{ sort_order.code}}</a>
                         </th>
                         <th class="problem-name">
                             <a href="{{ sort_links.name }}">{{ _('Problem') }}{{ sort_order.name }}</a>
@@ -235,10 +235,10 @@
                             <a href="{{ sort_links.points }}">{{ _('Points') }}{{ sort_order.points }}</a>
                         </th>
                         <th class="ac-rate">
-                            <a href="{{ sort_links.ac_rate }}">{{ _('AC %%') }}{{ sort_order.ac_rate }}</a>
+                            <a href="{{ sort_links.ac_rate }}">{{ _('%% AC') }}{{ sort_order.ac_rate }}</a>
                         </th>
                         <th class="users">
-                            <a href="{{ sort_links.user_count }}">{{ _('Users') }}{{ sort_order.user_count }}</a>
+                            <a href="{{ sort_links.user_count }}">{{ _('# AC') }}{{ sort_order.user_count }}</a>
                         </th>
                     {% endif %}
                 </tr>
@@ -291,7 +291,7 @@
                                 {% endfor %}
                             </td>
                         {% endif %}
-                        <td class="p">{{ problem.points|floatformat }}{% if problem.partial %}p{% endif %}</td>
+                        <td class="p">{{ problem.points|floatformat }}{% if problem.partial %}{% endif %}</td>
                         {% if not request.in_contest %}
                             <td class="ac-rate">{{ problem.ac_rate|floatformat(1) }}%</td>
                         {% endif %}

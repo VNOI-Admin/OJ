@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-08 09:07+0000\n"
+"POT-Creation-Date: 2021-02-09 10:31+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -75,7 +75,7 @@ msgstr "Các kì thi"
 
 #: judge/admin/contest.py:64 templates/contest/contest.html:83
 #: templates/contest/moss.html:43 templates/problem/list.html:206
-#: templates/problem/list.html:221 templates/user/user-problems.html:58
+#: templates/problem/list.html:224 templates/user/user-problems.html:58
 #: templates/user/user-problems.html:100
 msgid "Problem"
 msgstr "Bài"
@@ -213,7 +213,7 @@ msgstr "Phân loại"
 
 #: judge/admin/problem.py:132 templates/contest/contest.html:84
 #: templates/problem/data.html:449 templates/problem/list.html:211
-#: templates/problem/list.html:232 templates/user/base-users-table.html:10
+#: templates/problem/list.html:235 templates/user/base-users-table.html:10
 #: templates/user/user-problems.html:60
 msgid "Points"
 msgstr "Điểm"
@@ -485,7 +485,7 @@ msgstr "Mật khẩu không được hoàn toàn bằng số."
 
 #: judge/custom_translations.py:24
 msgid "PRoblems"
-msgstr "Bài tập"
+msgstr "Danh sách bài"
 
 #: judge/forms.py:26
 msgid "Two-factor authentication tokens must be 6 decimal digits."
@@ -2854,7 +2854,6 @@ msgid "Editorial for <a href=\"{1}\">{0}</a>"
 msgstr "Hướng dẫn giải của <a href=\"{1}\">{0}</a>"
 
 #: judge/views/problem.py:283 templates/contest/contest.html:79
-#: templates/problem/list.html:166
 msgid "Problems"
 msgstr "Bài"
 
@@ -3650,7 +3649,7 @@ msgstr "Tỷ lệ AC"
 
 #: templates/contest/contest.html:86 templates/contest/list.html:152
 #: templates/contest/list.html:194 templates/contest/list.html:273
-#: templates/problem/list.html:212 templates/problem/list.html:238
+#: templates/problem/list.html:212
 msgid "Users"
 msgstr "Thành viên"
 
@@ -4103,23 +4102,36 @@ msgstr[1] "Các tác giả:"
 msgid "Filter by type..."
 msgstr "Lọc theo dạng..."
 
+#: templates/problem/list.html:166
+msgid "Problem list"
+msgstr "Danh sách bài"
+
 #: templates/problem/list.html:185
 msgid "Hot problems"
 msgstr "Những bài tập nổi bật"
 
-#: templates/problem/list.html:207 templates/problem/list.html:224
+#: templates/problem/list.html:207 templates/problem/list.html:227
 #: templates/problem/search-form.html:30 templates/user/user-problems.html:59
 msgid "Category"
 msgstr "Nhóm"
 
-#: templates/problem/list.html:209 templates/problem/list.html:228
+#: templates/problem/list.html:209 templates/problem/list.html:231
 msgid "Types"
 msgstr "Dạng"
 
-#: templates/problem/list.html:235
+#: templates/problem/list.html:221 templates/status/language-list.html:34
+#: templates/ticket/list.html:259
+msgid "ID"
+msgstr "ID"
+
+#: templates/problem/list.html:238
 #, python-format
-msgid "AC %%"
-msgstr "AC %%"
+msgid "%% AC"
+msgstr ""
+
+#: templates/problem/list.html:241
+msgid "# AC"
+msgstr ""
 
 #: templates/problem/manage_submission.html:55
 msgid "Leave empty to not filter by language"
@@ -4713,10 +4725,6 @@ msgstr "Không có thông tin"
 #: templates/status/judge-status-table.html:64
 msgid "There are no judges available at this time."
 msgstr "Không có máy chấm nào tại thời điểm này."
-
-#: templates/status/language-list.html:34 templates/ticket/list.html:259
-msgid "ID"
-msgstr "ID"
 
 #: templates/status/language-list.html:36
 msgid "Runtime Info"
@@ -5341,6 +5349,9 @@ msgstr "Số bài"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+#~ msgid "AC %%"
+#~ msgstr "AC %%"
 
 #, fuzzy
 #~ msgid "polygon problem "
