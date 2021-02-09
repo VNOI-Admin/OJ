@@ -5142,7 +5142,7 @@ msgstr ""
 
 #: templates/user/prepare-data.html:103
 msgid "Submissions"
-msgstr "Bài nộp"
+msgstr "Các bài nộp"
 
 #: templates/user/prepare-data.html:120
 msgid "Prepare new download"
