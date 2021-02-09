@@ -49,6 +49,9 @@
                 var $category = $('#category');
 
                 function prep_form() {
+                    // disable point range when searching
+                    $('#point-start').prop('disabled', !!$search.val());
+                    $('#point-end').prop('disabled', !!$search.val());
                     $search.prop('disabled', !$search.val());
                     $category.prop('disabled', !$category.val());
                 }
