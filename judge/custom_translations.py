@@ -22,3 +22,8 @@ _("Your password can't be entirely numeric.")
 
 # NavBar
 _("PRoblems")
+
+# Footer
+# _('proudly powered by <a href="https://dmoj.ca"><b>DMOJ</b></a>')
+# _('proudly powered by <a href="https://dmoj.ca"><b>DMOJ</b></a>')
+# _('follow us on <a href="https://github.com/VNOI-Admin/OJ"><b>Github</b></a> and <a href="https://www.facebook.com/vnoi.wiki"><b>Facebook</b></a>')

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-02-09 10:31+0000\n"
+"POT-Creation-Date: 2021-02-10 07:52+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -77,8 +77,8 @@ msgid "Included contests"
 msgstr ""
 
 #: judge/admin/contest.py:64 templates/contest/contest.html:83
-#: templates/contest/moss.html:43 templates/problem/list.html:206
-#: templates/problem/list.html:224 templates/user/user-problems.html:58
+#: templates/contest/moss.html:43 templates/problem/list.html:209
+#: templates/problem/list.html:227 templates/user/user-problems.html:58
 #: templates/user/user-problems.html:100
 msgid "Problem"
 msgstr ""
@@ -221,8 +221,8 @@ msgid "Taxonomy"
 msgstr ""
 
 #: judge/admin/problem.py:132 templates/contest/contest.html:84
-#: templates/problem/data.html:449 templates/problem/list.html:211
-#: templates/problem/list.html:235 templates/user/base-users-table.html:10
+#: templates/problem/data.html:449 templates/problem/list.html:214
+#: templates/problem/list.html:238 templates/user/base-users-table.html:10
 #: templates/user/user-problems.html:60
 msgid "Points"
 msgstr ""
@@ -3297,6 +3297,19 @@ msgstr ""
 msgid "This site works best with JavaScript enabled."
 msgstr ""
 
+#: templates/base.html:295
+msgid ""
+"proudly powered by <a style=\"color: #808080\" href=\"https://dmoj.ca"
+"\"><b>DMOJ</b></a>"
+msgstr ""
+
+#: templates/base.html:296
+msgid ""
+"follow us on <a style=\"color: #808080\" href=\"https://github.com/VNOI-"
+"Admin/OJ\"><b>Github</b></a> and <a style=\"color: #808080\" href=\"https://"
+"www.facebook.com/vnoi.wiki\"><b>Facebook</b></a>"
+msgstr ""
+
 #: templates/blog/content.html:13 templates/comments/list.html:75
 #: templates/comments/list.html:90 templates/contest/contest-tabs.html:23
 #: templates/contest/tag-title.html:9 templates/flatpages/admin_link.html:3
@@ -3612,7 +3625,7 @@ msgstr ""
 
 #: templates/contest/contest.html:86 templates/contest/list.html:152
 #: templates/contest/list.html:194 templates/contest/list.html:273
-#: templates/problem/list.html:212
+#: templates/problem/list.html:215
 msgid "Users"
 msgstr ""
 
@@ -4044,38 +4057,38 @@ msgid_plural "Authors:"
 msgstr[0] ""
 msgstr[1] ""
 
-#: templates/problem/list.html:62
+#: templates/problem/list.html:65
 msgid "Filter by type..."
 msgstr ""
 
-#: templates/problem/list.html:166
+#: templates/problem/list.html:169
 msgid "Problem list"
 msgstr ""
 
-#: templates/problem/list.html:185
+#: templates/problem/list.html:188
 msgid "Hot problems"
 msgstr ""
 
-#: templates/problem/list.html:207 templates/problem/list.html:227
+#: templates/problem/list.html:210 templates/problem/list.html:230
 #: templates/problem/search-form.html:30 templates/user/user-problems.html:59
 msgid "Category"
 msgstr ""
 
-#: templates/problem/list.html:209 templates/problem/list.html:231
+#: templates/problem/list.html:212 templates/problem/list.html:234
 msgid "Types"
 msgstr ""
 
-#: templates/problem/list.html:221 templates/status/language-list.html:34
+#: templates/problem/list.html:224 templates/status/language-list.html:34
 #: templates/ticket/list.html:259
 msgid "ID"
 msgstr ""
 
-#: templates/problem/list.html:238
+#: templates/problem/list.html:241
 #, python-format
 msgid "%% AC"
 msgstr ""
 
-#: templates/problem/list.html:241
+#: templates/problem/list.html:244
 msgid "# AC"
 msgstr ""
 
