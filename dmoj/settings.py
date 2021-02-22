@@ -40,7 +40,7 @@ DMOJ_REQUIRE_STAFF_2FA = True
 # Set to 1 to use HTTPS if request was made to https://
 # Set to 2 to always use HTTPS for links
 # Set to 0 to always use HTTP for links
-DMOJ_SSL = 0
+DMOJ_SSL = 1
 
 # Refer to dmoj.ca/post/103-point-system-rework
 DMOJ_PP_STEP = 0.95
@@ -141,7 +141,7 @@ INLINE_JQUERY = True
 INLINE_FONTAWESOME = True
 JQUERY_JS = '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'
 FONTAWESOME_CSS = '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'
-DMOJ_CANONICAL = ''
+DMOJ_CANONICAL = 'oj.vnoi.info'
 
 # Application definition
 
