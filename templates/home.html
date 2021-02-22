@@ -7,6 +7,8 @@
 {% block meta %}
     {% if i18n_config.meta_description %}
         <meta name="description" content="{{ i18n_config['meta_description'] }}">
+    {% elif misc_config.meta_description %}
+        <meta name="description" content="{{ misc_config.meta_description }}">
     {% endif %}
     <script type="application/ld+json">
         {
