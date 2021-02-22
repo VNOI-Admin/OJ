@@ -1,39 +1,41 @@
 #problem-table {
     td {
+        &.problem-code {
+            width: 5em;
+            text-align: left;
+            padding-left: 0.5em;
+            word-break: break-word;
+        }
+
+        &.problem-name {
+            text-align: left;
+            padding-left: 0.5em;
+        }
+
         &.category {
+            width: 5em;
             text-align: left;
             padding: 0 1em;
-        }
-
-        &.problem {
-            text-align: left;
-            padding-left: 1em;
-            width: 100%;
-        }
-
-        &.pp {
-            text-align: left;
-            padding-left: 1em;
-            width: 100%;
-        }
-
-        &.users {
-            text-align: left;
-            padding: 0 1em;
-            white-space: nowrap;
         }
 
         &.types {
+            width: 5em;
             text-align: left;
             padding: 0 1em;
+            word-break: break-word;
+        }
+
+        &.p {
+            text-align: center;
         }
 
         &.ac-rate {
             white-space: nowrap;
         }
 
-        &.points {
-            white-space: nowrap;
+        &.users {
+            text-align: center;
+            padding: 0 1em;
         }
     }
 
@@ -105,9 +107,9 @@ label[for="category"], label[for="type"] {
     width: 100%;
 }
 
-span.type-tag {
-    white-space: nowrap;
-}
+// span.type-tag {
+//     white-space: nowrap;
+// }
 
 ul.problem-list {
     list-style: none;
