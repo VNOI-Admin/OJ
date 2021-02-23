@@ -2,8 +2,10 @@ import itertools
 import json
 import os
 from datetime import datetime
+from datetime import timedelta
 from operator import attrgetter, itemgetter
 
+import pytz
 from django.conf import settings
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
@@ -14,7 +16,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db import transaction
-from django.db.models import Count, Max, Min
+from django.db.models import Count, F, Max, Min
 from django.db.models.fields import DateField
 from django.db.models.functions import Cast, ExtractYear
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -185,9 +187,14 @@ class UserAboutPage(UserPage):
             context['max_graph'] = max_user + ratio * delta
             context['min_graph'] = min_user + ratio * delta - delta
 
+        user_timezone = settings.DEFAULT_USER_TIME_ZONE
+        if self.request is not None and self.request.profile is not None:
+            user_timezone = user_timezone or self.request.profile.timezone
+        timezone_offset = pytz.timezone(user_timezone).utcoffset(datetime.utcnow()).seconds
+
         submissions = (
             self.object.submission_set
-            .annotate(date_only=Cast('date', DateField()))
+            .annotate(date_only=Cast(F('date') + timedelta(seconds=timezone_offset), DateField()))
             .values('date_only').annotate(cnt=Count('id'))
         )
 
