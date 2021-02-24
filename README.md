@@ -1,33 +1,27 @@
-VNOJ: Viet Nam Online Judge, based on DMOJ[https://github.com/DMOJ].
-=====
+# VNOJ
 
-## Developing:
-- [x] allow cpp checker
-- [x] allow testlib
-- [x] allow render pure HTML with polygon statement (only superusers can set `is_polygon_problem`)
-- [ ] how about interactive problem with cpp checker? (skip for now)
+As a fork of [DMOJ](https://github.com/DMOJ/online-judge), VNOJ serves as the official online judge and programming contests of [VNOI](https://vnoi.info/). 
 
-## Issues:
-- Deal with images from polygon statement (maybe we can store it in `/martor/`)
+See it live at [oj.vnoi.info](oj.vnoi.info)!
+
+## Features
+
+Checkout the features listed [here](https://github.com/DMOJ/online-judge#features).
 
 ## Installation
 
 Check out the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/site/installation). 
 
-Check out [**DMOJ/judge-server**](https://github.com/DMOJ/judge-server) for more judging backend details.
-
 ### Notes for installation:
-- To support cpp checker, I have to use a python wrapper, by default, the cpp checker will have 512 MB ram, 3 seconds running time limit, 10 seconds compile time limit. You should change its setting in [wrapper_checker_template/template.py](wrapper_checker_template/template.py) 
+- To support cpp checker, you have to use a python wrapper. By default, the cpp checker will have 512 MB ram, 3 seconds running time limit, 10 seconds compile time limit. You should change its settings in [wrapper_checker_template/template.py](wrapper_checker_template/template.py) 
 - To support `testlib.h`, you need to copy the [testlib.h](wrapper_checker_template/testlib.h) to g++ include path in judge server. To speed up compiler time, you may create the precompiled header.
 - The admin page (/admin) will redirect to `localhost:8081` if you use `python3 manage.py demo`, there is 2 ways to fix it: 
     1. You can change that in [demo.json](judge/fixtures/demo.json)
     2. You can go to the admin page, scoll down to file the `Sites` settings.
 
-## Some useful script:
+## Useful scripts:
 
-Dưới đây là mấy cái script em hay dùng để tiện start server:
-
-Đại đa số các script này đều cần chạy trong virtualenv, ở trong folder của repo này
+Run these only in venv.
 
 ### Fix database
 ```
@@ -44,14 +38,16 @@ exit
 
 ### Migrations
 Make migrations: `python3 manage.py makemigrations`
+
 Make data to load: `python3 manage.py dumpdata`
 
 Migrate: `python3 manage.py migrate`
 
-Loaddata (if needed): `python3 manage.py loaddata navbar language_small demo` //please consider to split this into 3 command 
+Loaddata (if needed): `python3 manage.py loaddata navbar language_small demo`. Please consider to split this into 3 command 
 
-Create super user: `python3 manage.py createsuperuser` //if needed
-### Fix lại static site
+Create super user: `python3 manage.py createsuperuser` if needed
+
+### Update static site
 ```
 ./make_style.sh
 python3 manage.py collectstatic
@@ -59,22 +55,20 @@ python3 manage.py compilemessages
 python3 manage.py compilejsi18n 
 ```
 
-### Chạy debug ở localhost:
+### Debug at localhost:
 ```
 python3 manage.py check
 python3 manage.py runserver localhost:8081
 ```
 
-### Chạy với nginx
+### Run with nginx
 ```
 sudo supervisorctl restart site bridged celery
 sudo service nginx reload
 ```
 Nếu 2 thằng bridged và celery mà chạy lỗi do permission thì xóa file log của bridged đi rồi chạy
 
-
-
-### Chạy judger
+### Run judger
 ```
 cd tới thư mục chứa judge.yml xong chạy: 
 dmoj -c judge.yml localhost
