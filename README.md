@@ -6,8 +6,8 @@ As a fork of [DMOJ](https://github.com/DMOJ/online-judge), VNOJ serves as the of
 See it live at [oj.vnoi.info](http://oj.vnoi.info/)!
 
 ## Features
-
 Checkout the features listed [here](https://github.com/DMOJ/online-judge#features).
+
 Addition features:
 - Beside Python checkers [here](https://docs.dmoj.ca/#/problem_format/custom_checkers), we can write custom C++ checker using `testlib.h`. The idea of this feature came from [LQDOJ](https://github.com/LQDJudge/online-judge).
 
