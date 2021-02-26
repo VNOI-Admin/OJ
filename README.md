@@ -24,7 +24,7 @@ Check out the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/sit
 - To support cpp checker, you have to use a python wrapper. By default, the cpp checker will have 512 MB ram, 3 seconds running time limit, 10 seconds compile time limit. You should change its settings in [wrapper_checker_template/template.py](wrapper_checker_template/template.py) 
 - To support `testlib.h`, you need to copy the [testlib.h](wrapper_checker_template/testlib.h) to g++ include path in judge server. I modified the testlib a little bit to fit to dmoj system. (To speed up compiler time, you may create the precompiled header.)
 
-## Contributing ![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)  
-If you found any bug, please feel free to contact us via Discord [![Discord Chat](https://img.shields.io/discord/660930260405190688.svg)](https://discord.gg/660930260405190688), open an issue. 
+## Contributing ![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)
+If you found any bug, please feel free to contact us via Discord [![Discord Chat](https://img.shields.io/discord/660930260405190688.svg)](https://discord.gg/660930260405190688) or open an issue. 
 
 Pull requests are welcome as well. Before you submitting your PR, please check your code with [flake8](https://flake8.pycqa.org/en/latest/) and format it if needed. 
