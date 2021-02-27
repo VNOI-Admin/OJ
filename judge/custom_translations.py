@@ -22,3 +22,4 @@ _("Your password can't be entirely numeric.")
 
 # NavBar
 _("PRoblems")
+_('posted {time}')

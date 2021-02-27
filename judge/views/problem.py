@@ -280,7 +280,7 @@ class ProblemPdfView(ProblemMixin, SingleObjectMixin, View):
 
 class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView):
     model = Problem
-    title = gettext_lazy('Problems')
+    title = gettext_lazy('Problem list')
     context_object_name = 'problems'
     template_name = 'problem/list.html'
     paginate_by = 50
