@@ -7,7 +7,7 @@
         <meta name="keywords" content="{{ misc_config.meta_keywords }}">
     {% endif %}
     {% if meta_description %}
-        <meta name="description" content="{{ meta_description }}">
+        <meta name="description" property="og:description" content="{{ meta_description }}">
     {% endif %}
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1">
     <!-- Favicons-->
@@ -32,15 +32,13 @@
     {% if og_image %}
         <meta property="og:image" content="{{ request.build_absolute_uri(og_image) }}">
     {% else %}
-        <meta property="og:image" content="{{ request.build_absolute_uri("/android-chrome-192x192.png") }}">
+        <meta property="og:image" content="{{ request.build_absolute_uri("/logo.png") }}">
     {% endif %}
     {% block og_title %}{% endblock %}
     <meta property="og:site_name" content="{{ SITE_LONG_NAME }}">
     <meta property="og:url"
           content="{{ DMOJ_SCHEME }}://{{ DMOJ_CANONICAL|default(site.domain) }}{{ request.get_full_path() }}">
-    {% if meta_description %}
-        <meta property="og:description" content="{{ meta_description }}">
-    {% endif %}
+
     <!--[if lt IE 9]>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
     <script>window.bad_browser = true</script>
