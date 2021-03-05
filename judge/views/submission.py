@@ -555,6 +555,9 @@ class ForceContestMixin(object):
 
 
 class AllContestSubmissions(ForceContestMixin, AllSubmissions):
+    def get_content_title(self):
+        return format_html(_('All submissions in<a href="{1}">{0}</a>'),
+                               self.contest.name, reverse("contest_view", args=[self.contest.key]))
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
             return reverse('contest_all_user_submissions', kwargs={'user': self.request.user.username,
