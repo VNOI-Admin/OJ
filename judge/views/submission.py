@@ -269,6 +269,8 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         return None
 
     def get_all_submissions_page(self):
+        if hasattr(self, 'contest'):
+            return reverse('contest_all_submissions', kwargs={'contest': self.contest.key})
         return reverse('all_submissions')
 
     def get_searchable_status_codes(self):
@@ -389,7 +391,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
             raise Http404()
 
     def access_check(self, request):
-        if not self.problem.is_accessible_by(request.user):
+        if not self.in_contest and not self.problem.is_accessible_by(request.user):
             raise Http404()
 
         if self.check_contest_in_access_check:
@@ -403,6 +405,8 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         return super(ProblemSubmissionsBase, self).get(request, *args, **kwargs)
 
     def get_all_submissions_page(self):
+        if hasattr(self, 'contest'):
+            return reverse('contest_all_submissions', kwargs={'contest': self.contest.key})
         return reverse('chronological_submissions', kwargs={'problem': self.problem.code})
 
     def get_context_data(self, **kwargs):
@@ -411,13 +415,22 @@ class ProblemSubmissionsBase(SubmissionsListBase):
             context['dynamic_update'] = context['page_obj'].number == 1
             context['dynamic_problem_id'] = self.problem.id
             context['last_msg'] = event.last()
-        context['best_submissions_link'] = reverse('ranked_submissions', kwargs={'problem': self.problem.code})
+        if hasattr(self, 'contest'):
+            context['best_submissions_link'] = reverse('contest_ranked_submissions',
+                                                       kwargs={'problem': self.problem.code,
+                                                               'contest': self.contest.key})
+        else:
+            context['best_submissions_link'] = reverse('ranked_submissions', kwargs={'problem': self.problem.code})
         return context
 
 
 class ProblemSubmissions(ProblemSubmissionsBase):
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
+            if hasattr(self, 'contest'):
+                return reverse('contest_user_submissions', kwargs={'problem': self.problem.code,
+                                                                   'user': self.request.user.username,
+                                                                   'contest': self.contest.key})
             return reverse('user_submissions', kwargs={'problem': self.problem.code,
                                                        'user': self.request.user.username})
 
@@ -531,11 +544,25 @@ class ForceContestMixin(object):
     def get_problem_number(self, problem):
         return self.contest.contest_problems.select_related('problem').get(problem=problem).order
 
+    def get_problem_label(self, problem):
+        return self.contest.get_label_for_problem(self.get_problem_number(problem) - 1)
+
     def get(self, request, *args, **kwargs):
         if 'contest' not in kwargs:
             raise ImproperlyConfigured(_('Must pass a contest'))
         self._contest = get_object_or_404(Contest, key=kwargs['contest'])
         return super(ForceContestMixin, self).get(request, *args, **kwargs)
+
+
+class AllContestSubmissions(ForceContestMixin, AllSubmissions):
+    def get_content_title(self):
+        return format_html(_('All submissions in<a href="{1}">{0}</a>'),
+                           self.contest.name, reverse("contest_view", args=[self.contest.key]))
+
+    def get_my_submissions_page(self):
+        if self.request.user.is_authenticated:
+            return reverse('contest_all_user_submissions', kwargs={'user': self.request.user.username,
+                                                                   'contest': self.contest.key})
 
 
 class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
@@ -546,6 +573,11 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
             'user': self.username,
             'contest': self.contest.name,
         }
+
+    def get_my_submissions_page(self):
+        if self.request.user.is_authenticated:
+            return reverse('contest_all_user_submissions', kwargs={'user': self.request.user.username,
+                                                                   'contest': self.contest.key})
 
     def access_check(self, request):
         super().access_check(request)
@@ -564,7 +596,8 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        filter_submissions_by_visible_problems(queryset, self.request.user)
+        if not self.in_contest:
+            filter_submissions_by_visible_problems(queryset, self.request.user)
         return queryset
 
 
@@ -573,7 +606,7 @@ class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
         if self.problem.is_accessible_by(self.request.user):
             return "%s's submissions for %s in %s" % (self.username, self.problem_name, self.contest.name)
         return "%s's submissions for problem %s in %s" % (
-            self.username, self.get_problem_number(self.problem), self.contest.name)
+            self.username, self.get_problem_label(self.problem), self.contest.name)
 
     def access_check(self, request):
         super(UserContestSubmissions, self).access_check(request)
@@ -590,5 +623,5 @@ class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
         return format_html(_('<a href="{1}">{0}</a>\'s submissions for '
                              'problem {2} in <a href="{4}">{3}</a>'),
                            self.username, reverse('user_page', args=[self.username]),
-                           self.get_problem_number(self.problem),
+                           self.get_problem_label(self.problem),
                            self.contest.name, reverse('contest_view', args=[self.contest.key]))
