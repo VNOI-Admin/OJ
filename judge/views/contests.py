@@ -225,6 +225,11 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
             .annotate(has_public_editorial=Sum(Case(When(solution__is_public=True, then=1),
                                                     default=0, output_field=IntegerField()))) \
             .add_i18n_name(self.request.LANGUAGE_CODE)
+
+        # convert to problem points in contest instead of actual points
+        points_list = self.object.contest_problems.values_list('points').order_by('order')
+        for idx, p in enumerate(context['contest_problems']):
+            p.points = points_list[idx][0]
         context['contest_has_public_editorials'] = any(
             problem.is_public and problem.has_public_editorial for problem in context['contest_problems']
         )
