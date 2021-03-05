@@ -206,13 +206,11 @@
                         {% if request.user.is_authenticated %}
                             <th class="solved"><i class="fa fa-check"></i></th>
                         {% endif %}
-                        <th class="problem">{{ _('Problem') }}</th>
+                        <th class="problem-code">{{ _('ID') }}</th>
+                        <th class="problem-name">{{ _('Problem') }}</th>
                         <th class="category">{{ _('Category') }}</th>
-                        {% if show_types %}
-                            <th>{{ _('Types') }}</th>
-                        {% endif %}
                         <th class="points">{{ _('Points') }}</th>
-                        <th class="users">{{ _('Users') }}</th>
+                        <th class="users">{{ _('# AC') }}</th>
                     {% else %}
                         {% if request.user.is_authenticated %}
                             <th class="solved">

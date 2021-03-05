@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import Count, F, Prefetch, Q
+from django.db.models import F, Prefetch, Q
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -339,11 +339,11 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
     def get_contest_queryset(self):
         queryset = self.profile.current_contest.contest.contest_problems.select_related('problem__group') \
             .defer('problem__description').order_by('problem__code') \
-            .annotate(user_count=Count('submission__participation', distinct=True)) \
             .order_by('order')
         queryset = TranslatedProblemForeignKeyQuerySet.add_problem_i18n_name(queryset, 'i18n_name',
                                                                              self.request.LANGUAGE_CODE,
                                                                              'problem__name')
+
         return [{
             'id': p['problem_id'],
             'code': p['problem__code'],
@@ -352,9 +352,9 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
             'group': {'full_name': p['problem__group__full_name']},
             'points': p['points'],
             'partial': p['partial'],
-            'user_count': p['user_count'],
+            'user_count': p['problem__user_count'],
         } for p in queryset.values('problem_id', 'problem__code', 'problem__name', 'i18n_name',
-                                   'problem__group__full_name', 'points', 'partial', 'user_count')]
+                                   'problem__group__full_name', 'points', 'partial', 'problem__user_count')]
 
     def get_normal_queryset(self):
         filter = Q(is_public=True)
