@@ -50,7 +50,7 @@ class ProblemDataForm(ModelForm):
 
     class Meta:
         model = ProblemData
-        fields = ['zipfile', 'generator', 'checker', 'checker_args', 'custom_py_checker', 'custom_cpp_checker']
+        fields = ['zipfile', 'generator', 'custom_py_checker', 'custom_cpp_checker', 'checker', 'checker_args']
         widgets = {
             'checker_args': HiddenInput,
             'output_limit': HiddenInput,
