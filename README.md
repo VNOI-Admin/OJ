@@ -9,7 +9,7 @@ See it live at [oj.vnoi.info](http://oj.vnoi.info/)!
 Checkout the features listed [here](https://github.com/DMOJ/online-judge#features).
 
 Addition features:
-- Beside Python checkers [here](https://docs.dmoj.ca/#/problem_format/custom_checkers), we can write custom C++ checker using `testlib.h`. The idea of this feature came from [LQDOJ](https://github.com/LQDJudge/online-judge).
+- Beside Python checkers [here](https://docs.dmoj.ca/#/problem_format/custom_checkers), we can write custom C++ checker using `testlib.h`. 
 
 ## Installation
 Check out the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/site/installation). Almost all installation steps is the same as the docs, there is one minor change: clone this repo instead of dmoj repo.
@@ -21,8 +21,7 @@ Check out the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/sit
 - The "home button" the admin dashboard (/admin) will redirect to `localhost:8081` if you use `python3 manage.py loaddata demo`, there is 2 ways to fix it: 
     1. You can change that in [demo.json](judge/fixtures/demo.json)
     2. You can go to the admin page, scoll down to find the `Sites` settings and change `localhost:8081` to your domain.
-- To support cpp checker, you have to use a python wrapper. By default, the cpp checker will have 512 MB ram, 3 seconds running time limit, 10 seconds compile time limit. You should change its settings in [wrapper_checker_template/template.py](wrapper_checker_template/template.py) 
-- To support `testlib.h`, you need to copy the [testlib.h](wrapper_checker_template/testlib.h) to g++ include path in judge server. I modified the testlib a little bit to fit to dmoj system. (To speed up compiler time, you may create the precompiled header.)
+- To support `testlib.h`, you need to copy the [testlib.h](https://github.com/MikeMirzayanov/testlib/blob/master/testlib.h) to g++ include path in judge server. To speed up compiler time, you may create the precompiled header to `testlib.h`.
 
 ## Contributing ![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)
 If you found any bug, please feel free to contact us via Discord [![Discord Chat](https://img.shields.io/discord/660930260405190688.svg)](https://discord.gg/660930260405190688) or open an issue. 
