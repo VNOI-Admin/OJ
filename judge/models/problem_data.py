@@ -25,12 +25,9 @@ CHECKERS = (
     ('floats', _('Floats')),
     ('floatsabs', _('Floats (absolute)')),
     ('floatsrel', _('Floats (relative)')),
-    ('rstripped', _('Non-trailing spaces')),
-    ('sorted', _('Unordered')),
     ('identical', _('Byte identical')),
     ('linecount', _('Line-by-line')),
-    ('custom_py', _('Custom checker (PY)')),
-    ('custom_cpp', _('Custom checker (CPP17)')),
+    ('bridged', _('Custom checker')),
 )
 
 
@@ -47,16 +44,12 @@ class ProblemData(models.Model):
     checker = models.CharField(max_length=10, verbose_name=_('checker'), choices=CHECKERS, blank=True)
     checker_args = models.TextField(verbose_name=_('checker arguments'), blank=True,
                                     help_text=_('checker arguments as a JSON object'))
-    custom_py_checker = models.FileField(verbose_name=_('custom python checker file'), storage=problem_data_storage,
-                                         null=True,
-                                         blank=True,
-                                         upload_to=problem_directory_file,
-                                         validators=[FileExtensionValidator(allowed_extensions=['py'])])
-    custom_cpp_checker = models.FileField(verbose_name=_('custom cpp checker file'), storage=problem_data_storage,
-                                          null=True,
-                                          blank=True,
-                                          upload_to=problem_directory_file,
-                                          validators=[FileExtensionValidator(allowed_extensions=['cpp'])])
+
+    custom_checker = models.FileField(verbose_name=_('custom checker file'), storage=problem_data_storage,
+                                      null=True,
+                                      blank=True,
+                                      upload_to=problem_directory_file,
+                                      validators=[FileExtensionValidator(allowed_extensions=['cpp', 'py'])])
 
     __original_zipfile = None
 
