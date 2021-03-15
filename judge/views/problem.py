@@ -27,12 +27,11 @@ from django.views.generic.detail import SingleObjectMixin
 from judge.comments import CommentedDetailView
 from judge.forms import ProblemCloneForm, ProblemSubmitForm
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource, \
-    TranslatedProblemForeignKeyQuerySet
+    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
-from judge.utils.problems import contest_attempted_ids, contest_completed_ids, hot_problems, user_attempted_ids, \
+from judge.utils.problems import hot_problems, user_attempted_ids, \
     user_completed_ids
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
@@ -319,7 +318,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
             if self.show_types:
                 queryset = list(queryset)
                 queryset.sort(key=lambda problem: problem.types_list[0] if problem.types_list else '',
-                                reverse=self.order.startswith('-'))
+                              reverse=self.order.startswith('-'))
         paginator.object_list = queryset
         return paginator
 
