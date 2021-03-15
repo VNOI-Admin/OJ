@@ -484,11 +484,6 @@ class FixedContestRanking(ContestRanking):
 
 
 def users(request):
-    if request.user.is_authenticated:
-        participation = request.profile.current_contest
-        if participation is not None:
-            contest = participation.contest
-            return FixedContestRanking.as_view(contest=contest)(request, contest=contest.key)
     return user_list_view(request)
 
 
