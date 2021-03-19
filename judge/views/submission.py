@@ -221,7 +221,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
 
     @cached_property
     def in_contest(self):
-        return self.request.user.is_authenticated and self.request.profile.current_contest is not None
+        return False
 
     @cached_property
     def contest(self):
@@ -269,7 +269,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         return None
 
     def get_all_submissions_page(self):
-        if hasattr(self, 'contest'):
+        if self.in_contest and hasattr(self, 'contest'):
             return reverse('contest_all_submissions', kwargs={'contest': self.contest.key})
         return reverse('all_submissions')
 
@@ -556,7 +556,7 @@ class ForceContestMixin(object):
 
 class AllContestSubmissions(ForceContestMixin, AllSubmissions):
     def get_content_title(self):
-        return format_html(_('All submissions in<a href="{1}">{0}</a>'),
+        return format_html(_('All submissions in <a href="{1}">{0}</a>'),
                            self.contest.name, reverse("contest_view", args=[self.contest.key]))
 
     def get_my_submissions_page(self):
