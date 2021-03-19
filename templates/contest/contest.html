@@ -73,7 +73,8 @@
         {% endcache %}
     </div>
 
-    {% if contest.ended or request.user.is_superuser or is_organizer %}
+    {% set in_contest = contest.is_in_contest(request.user) %}
+    {% if in_contest or contest.ended or request.user.is_superuser or is_organizer %}
         <hr>
         <div class="contest-problems">
             <h2 style="margin-bottom: 0.2em"><i class="fa fa-fw fa-question-circle"></i>{{ _('Problems') }} </h2>
@@ -93,7 +94,7 @@
                 {% for problem in contest_problems %}
                     <tr>
                         <td>
-                            {% if problem.is_public or request.user.is_superuser or is_organizer %}
+                            {% if in_contest or problem.is_public or request.user.is_superuser or is_organizer %}
                                 <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
                             {% else %}
                                 {{ problem.i18n_name or problem.name }}

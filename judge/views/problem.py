@@ -27,12 +27,11 @@ from django.views.generic.detail import SingleObjectMixin
 from judge.comments import CommentedDetailView
 from judge.forms import ProblemCloneForm, ProblemSubmitForm
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource, \
-    TranslatedProblemForeignKeyQuerySet
+    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
-from judge.utils.problems import contest_attempted_ids, contest_completed_ids, hot_problems, user_attempted_ids, \
+from judge.utils.problems import hot_problems, user_attempted_ids, \
     user_completed_ids
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
@@ -76,16 +75,10 @@ class ProblemMixin(object):
 
 class SolvedProblemMixin(object):
     def get_completed_problems(self):
-        if self.in_contest:
-            return contest_completed_ids(self.profile.current_contest)
-        else:
-            return user_completed_ids(self.profile) if self.profile is not None else ()
+        return user_completed_ids(self.profile) if self.profile is not None else ()
 
     def get_attempted_problems(self):
-        if self.in_contest:
-            return contest_attempted_ids(self.profile.current_contest)
-        else:
-            return user_attempted_ids(self.profile) if self.profile is not None else ()
+        return user_attempted_ids(self.profile) if self.profile is not None else ()
 
     @cached_property
     def in_contest(self):
@@ -294,40 +287,39 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
                       allow_empty_first_page=True, **kwargs):
         paginator = DiggPaginator(queryset, per_page, body=6, padding=2, orphans=orphans,
                                   allow_empty_first_page=allow_empty_first_page, **kwargs)
-        if not self.in_contest:
-            # Get the number of pages and then add in this magic.
-            # noinspection PyStatementEffect
-            paginator.num_pages
+        # Get the number of pages and then add in this magic.
+        # noinspection PyStatementEffect
+        paginator.num_pages
 
-            queryset = queryset.add_i18n_name(self.request.LANGUAGE_CODE)
-            sort_key = self.order.lstrip('-')
-            if sort_key in self.sql_sort:
-                queryset = queryset.order_by(self.order, 'id')
-            elif sort_key == 'name':
-                queryset = queryset.order_by('i18n_name', self.order, 'name', 'id')
-            elif sort_key == 'group':
-                queryset = queryset.order_by(self.order + '__name', 'name', 'id')
-            elif sort_key == 'solved':
-                if self.request.user.is_authenticated:
-                    profile = self.request.profile
-                    solved = user_completed_ids(profile)
-                    attempted = user_attempted_ids(profile)
+        queryset = queryset.add_i18n_name(self.request.LANGUAGE_CODE)
+        sort_key = self.order.lstrip('-')
+        if sort_key in self.sql_sort:
+            queryset = queryset.order_by(self.order, 'id')
+        elif sort_key == 'name':
+            queryset = queryset.order_by('i18n_name', self.order, 'name', 'id')
+        elif sort_key == 'group':
+            queryset = queryset.order_by(self.order + '__name', 'name', 'id')
+        elif sort_key == 'solved':
+            if self.request.user.is_authenticated:
+                profile = self.request.profile
+                solved = user_completed_ids(profile)
+                attempted = user_attempted_ids(profile)
 
-                    def _solved_sort_order(problem):
-                        if problem.id in solved:
-                            return 1
-                        if problem.id in attempted:
-                            return 0
-                        return -1
+                def _solved_sort_order(problem):
+                    if problem.id in solved:
+                        return 1
+                    if problem.id in attempted:
+                        return 0
+                    return -1
 
-                    queryset = list(queryset)
-                    queryset.sort(key=_solved_sort_order, reverse=self.order.startswith('-'))
-            elif sort_key == 'type':
-                if self.show_types:
-                    queryset = list(queryset)
-                    queryset.sort(key=lambda problem: problem.types_list[0] if problem.types_list else '',
-                                  reverse=self.order.startswith('-'))
-            paginator.object_list = queryset
+                queryset = list(queryset)
+                queryset.sort(key=_solved_sort_order, reverse=self.order.startswith('-'))
+        elif sort_key == 'type':
+            if self.show_types:
+                queryset = list(queryset)
+                queryset.sort(key=lambda problem: problem.types_list[0] if problem.types_list else '',
+                              reverse=self.order.startswith('-'))
+        paginator.object_list = queryset
         return paginator
 
     @cached_property
@@ -335,26 +327,6 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         if not self.request.user.is_authenticated:
             return None
         return self.request.profile
-
-    def get_contest_queryset(self):
-        queryset = self.profile.current_contest.contest.contest_problems.select_related('problem__group') \
-            .defer('problem__description').order_by('problem__code') \
-            .order_by('order')
-        queryset = TranslatedProblemForeignKeyQuerySet.add_problem_i18n_name(queryset, 'i18n_name',
-                                                                             self.request.LANGUAGE_CODE,
-                                                                             'problem__name')
-
-        return [{
-            'id': p['problem_id'],
-            'code': p['problem__code'],
-            'name': p['problem__name'],
-            'i18n_name': p['i18n_name'],
-            'group': {'full_name': p['problem__group__full_name']},
-            'points': p['points'],
-            'partial': p['partial'],
-            'user_count': p['problem__user_count'],
-        } for p in queryset.values('problem_id', 'problem__code', 'problem__name', 'i18n_name',
-                                   'problem__group__full_name', 'points', 'partial', 'problem__user_count')]
 
     def get_normal_queryset(self):
         filter = Q(is_public=True)
@@ -394,16 +366,13 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         return queryset.distinct()
 
     def get_queryset(self):
-        if self.in_contest:
-            return self.get_contest_queryset()
-        else:
-            return self.get_normal_queryset()
+        return self.get_normal_queryset()
 
     def get_context_data(self, **kwargs):
         context = super(ProblemList, self).get_context_data(**kwargs)
-        context['hide_solved'] = 0 if self.in_contest else int(self.hide_solved)
-        context['show_types'] = 0 if self.in_contest else int(self.show_types)
-        context['full_text'] = 0 if self.in_contest else int(self.full_text)
+        context['hide_solved'] = int(self.hide_solved)
+        context['show_types'] = int(self.show_types)
+        context['full_text'] = int(self.full_text)
         context['category'] = self.category
         context['categories'] = ProblemGroup.objects.all()
         if self.show_types:
@@ -415,14 +384,9 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         context['attempted_problems'] = self.get_attempted_problems()
 
         context.update(self.get_sort_paginate_context())
-        if not self.in_contest:
-            context.update(self.get_sort_context())
-            context['hot_problems'] = hot_problems(timedelta(days=1), settings.DMOJ_PROBLEM_HOT_PROBLEM_COUNT)
-            context['point_start'], context['point_end'], context['point_values'] = self.get_noui_slider_points()
-        else:
-            context['hot_problems'] = None
-            context['point_start'], context['point_end'], context['point_values'] = 0, 0, {}
-            context['hide_contest_scoreboard'] = self.contest.hide_scoreboard
+        context.update(self.get_sort_context())
+        context['hot_problems'] = hot_problems(timedelta(days=1), settings.DMOJ_PROBLEM_HOT_PROBLEM_COUNT)
+        context['point_start'], context['point_end'], context['point_values'] = self.get_noui_slider_points()
         return context
 
     def get_noui_slider_points(self):
