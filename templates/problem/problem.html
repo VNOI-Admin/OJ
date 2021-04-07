@@ -170,7 +170,7 @@
             {% if contest_problem %}
                 {{ contest_problem.points }}{% if contest_problem.partial %} {{ _('(partial)') }}{% endif %}
             {% else %}
-                {{ problem.points|floatformat }}{% if problem.partial %} {{ _('(partial)') }}{% endif %}
+                {{ problem.points|floatformat(2) }}{% if problem.partial %} {{ _('(partial)') }}{% endif %}
             {% endif %}
         </span>
     </div>
