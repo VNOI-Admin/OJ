@@ -151,8 +151,8 @@
                               total=contest.problem.points|floatformat(-1)) }})
                     {% endwith %}
                 {% else %}
-                    ({{ _('%(points)s/%(total)s points', points=submission.points|roundfloat(3),
-                          total=submission.problem.points|floatformat(-1)) }})
+                    ({{ _('%(points)s/%(total)s points', points=submission.points|floatformat(3),
+                          total=submission.problem.points|floatformat(3)) }})
                 {% endif %}
                 {% if is_pretest and submission.result == "AC" %}
                     <br>
