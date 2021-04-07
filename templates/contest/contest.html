@@ -100,7 +100,7 @@
                                 {{ problem.i18n_name or problem.name }}
                             {% endif %}
                         </td>
-                        <td>{{ problem.points|floatformat }}{% if problem.partial %}p{% endif %}</td>
+                        <td>{{ problem.points|floatformat(2) }}</td>
                         <td>{{ problem.ac_rate|floatformat(1) }}%</td>
                         <td>
                             <a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ problem.user_count }}</a>

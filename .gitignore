@@ -29,3 +29,5 @@ vo21.json
 tmp.json
 language_voj.json
 /static
+backup.json
+custom_script_*
