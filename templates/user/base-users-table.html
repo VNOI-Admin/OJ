@@ -23,7 +23,7 @@
         {% block before_point scoped %}{% endblock %}
         {% block point scoped %}
             <td title="{{ user.performance_points|floatformat(2) }}" class="user-points">
-                {{ user.performance_points|floatformat(0) }}
+                {{ user.performance_points|floatformat(2) }}
             </td>
         {% endblock %}
         {% block after_point scoped %}{% endblock %}
