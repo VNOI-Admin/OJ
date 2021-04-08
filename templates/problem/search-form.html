@@ -62,5 +62,17 @@
                 <a id="random" class="button">{{ _('Random') }}</a>
             </div>
         </form>
+
+        <script>
+            var my_options = $("#types option");
+            var selected = $("#types").val();
+
+            my_options.sort(function(a,b) {
+                return a.text.localeCompare(b.text, 'vi');
+            })
+
+            $("#types").empty().append(my_options);
+            $("#types").val(selected);
+        </script>
     </div>
 </div>
