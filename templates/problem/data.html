@@ -2,7 +2,7 @@
 
 {% block js_media %}
     <script type="text/javascript">
-        window.valid_files = {{valid_files_json}};
+        window.valid_files = {{valid_files_json}}.sort();
 
         $(function () {
         });
@@ -92,6 +92,7 @@
                             $file_name = $old_file.innerText;
                         }
                         if (!($file_name == '')) {
+                            $file_name = $file_name.split('/').pop()
                             $file_ext = $file_name.split('.').pop()
                             if (!(['cpp', 'py'].includes($file_ext))) {
                                 alert("Expected checker's extension must be in [cpp, py], found '" + $file_ext + "'");
