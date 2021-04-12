@@ -75,10 +75,8 @@ class ProblemData(models.Model):
             self.zipfile.name = _problem_directory_file(new, self.zipfile.name)
         if self.generator:
             self.generator.name = _problem_directory_file(new, self.generator.name)
-        if self.custom_py_checker:
-            self.custom_py_checker.name = _problem_directory_file(new, self.custom_py_checker.name)
-        if self.custom_cpp_checker:
-            self.custom_cpp_checker.name = _problem_directory_file(new, self.custom_cpp_checker.name)
+        if self.custom_checker:
+            self.custom_checker.name = _problem_directory_file(new, self.custom_checker.name)
         self.save()
     _update_code.alters_data = True
 
