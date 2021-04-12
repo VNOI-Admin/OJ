@@ -1,5 +1,10 @@
 #problem-table {
     td {
+        &.solved {
+            width: 2.4em;
+            text-align: center;
+        }
+
         &.problem-code {
             width: 5em;
             text-align: left;
@@ -26,14 +31,19 @@
         }
 
         &.p {
+            width: 3em;
             text-align: center;
+            padding: 0 1em;
         }
 
         &.ac-rate {
+            width: 3em;
             white-space: nowrap;
+            padding: 0 1em;
         }
 
         &.users {
+            width: 3em;
             text-align: center;
             padding: 0 1em;
         }

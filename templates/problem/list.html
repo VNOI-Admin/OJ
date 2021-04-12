@@ -200,7 +200,7 @@
                     <tr>
                         {% if request.user.is_authenticated %}
                             {% if problem.id in completed_problem_ids %}
-                                <td solved="1">
+                                <td class="solved" solved="1">
                                     <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
                                         {% if problem.is_public %}
                                             <i class="solved-problem-color fa fa-check-circle"></i>
@@ -210,7 +210,7 @@
                                     </a>
                                 </td>
                             {% elif problem.id in attempted_problems %}
-                                <td solved="0">
+                                <td class="solved" solved="0">
                                     <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
                                         {% if problem.is_public %}
                                             <i class="attempted-problem-color fa fa-frown-o"></i>
@@ -220,7 +220,7 @@
                                     </a>
                                 </td>
                             {% else %}
-                                <td solved="-1">
+                                <td class="solved" solved="-1">
                                     {% if problem.is_public %}
                                         <i class="unsolved-problem-color fa"></i>
                                     {% else %}
