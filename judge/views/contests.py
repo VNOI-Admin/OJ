@@ -226,10 +226,20 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
                                                     default=0, output_field=IntegerField()))) \
             .add_i18n_name(self.request.LANGUAGE_CODE)
 
-        # convert to problem points in contest instead of actual points
-        points_list = self.object.contest_problems.values_list('points').order_by('order')
-        for idx, p in enumerate(context['contest_problems']):
-            p.points = points_list[idx][0]
+        # calculate problem AC rate in contest
+        contest_problem_fields = self.object.contest_problems.defer('problem__description') \
+            .order_by('order') \
+            .annotate(user_count=Count('submission__submission', filter=Q(submission__submission__result='AC'))) \
+            .annotate(submission_count=Count('submission__submission')) \
+            .values('points', 'user_count', 'submission_count')
+
+        for p, contest_p in zip(context['contest_problems'], contest_problem_fields):
+            p.points = contest_p['points']
+            p.user_count = contest_p['user_count']
+            if contest_p['submission_count']:
+                p.ac_rate = contest_p['user_count'] / contest_p['submission_count'] * 100
+            else:
+                p.ac_rate = 0
         context['contest_has_public_editorials'] = any(
             problem.is_public and problem.has_public_editorial for problem in context['contest_problems']
         )
