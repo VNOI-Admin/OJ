@@ -2,14 +2,6 @@
 {% block title_row %}{% endblock %}
 {% block title_ruler %}{% endblock %}
 
-{% block bodyend %}
-    {{ super() }}
-    {% if REQUIRE_JAX %}
-        {% include "mathjax-load.html" %}
-    {% endif %}
-    {% include "comments/math.html" %}
-{% endblock %}
-
 {% block media %}
     <link rel="alternate" type="application/atom+xml" href="{{ url('blog_atom') }}" title="Atom Blog Feed">
     <link rel="alternate" type="application/rss+xml" href="{{ url('blog_rss') }}" title="RSS Blog Feed">
@@ -274,4 +266,12 @@
         </div>
     </div>
     {% block after_posts %}{% endblock %}
+{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
+    {% include "comments/math.html" %}
 {% endblock %}
