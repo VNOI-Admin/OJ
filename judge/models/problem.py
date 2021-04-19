@@ -93,7 +93,7 @@ class TranslatedProblemForeignKeyQuerySet(QuerySet):
 
 
 class Problem(models.Model):
-    code = models.CharField(max_length=20, verbose_name=_('problem code'), unique=True,
+    code = models.CharField(max_length=32, verbose_name=_('problem code'), unique=True,
                             validators=[RegexValidator('^[a-z0-9_]+$', _('Problem code must be ^[a-z0-9_]+$'))],
                             help_text=_('A short, unique code for the problem, '
                                         'used in the url after /problem/'))
