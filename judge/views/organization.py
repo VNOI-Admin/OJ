@@ -33,7 +33,7 @@ class OrganizationMixin(object):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['logo_override_image'] = self.object.logo_override_image
-        context['meta_description'] = self.object.about
+        context['meta_description'] = self.object.about[:settings.DESCRIPTION_MAX_LENGTH]
         return context
 
     def dispatch(self, request, *args, **kwargs):
