@@ -43,9 +43,9 @@ DMOJ_REQUIRE_STAFF_2FA = True
 DMOJ_SSL = 1
 
 # Refer to dmoj.ca/post/103-point-system-rework
-DMOJ_PP_STEP = 0.95
-DMOJ_PP_ENTRIES = 100
-DMOJ_PP_BONUS_FUNCTION = lambda n: 300 * (1 - 0.997 ** n)  # noqa: E731
+DMOJ_PP_STEP = 0.98514
+DMOJ_PP_ENTRIES = 300
+DMOJ_PP_BONUS_FUNCTION = lambda n: 0.05 * n # 15 * (1 - 0.997 ** n)  # noqa: E731; 100 bai nua diem: 0.9930924
 
 NODEJS = '/usr/bin/node'
 EXIFTOOL = '/usr/bin/exiftool'
