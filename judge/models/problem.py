@@ -100,7 +100,10 @@ class Problem(models.Model):
     name = models.CharField(max_length=100, verbose_name=_('problem name'), db_index=True,
                             help_text=_('The full name of the problem, '
                                         'as shown in the problem list.'))
-    description = models.TextField(verbose_name=_('problem body'))
+    pdf_url = models.CharField(max_length=100, verbose_name=_('PDF statement URL'), blank=True,
+                               help_text=_('URL to PDF statement. The PDF file must be embeddable (Mobile web browsers'
+                                           'may not support embedding). Fallback included.'))
+    description = models.TextField(verbose_name=_('problem body'), blank=True)
     authors = models.ManyToManyField(Profile, verbose_name=_('creators'), blank=True, related_name='authored_problems',
                                      help_text=_('These users will be able to edit the problem, '
                                                  'and be listed as authors.'))
