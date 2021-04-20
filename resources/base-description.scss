@@ -65,6 +65,10 @@
         border-left: 0.5em #EEE solid;
     }
 
+    blockquote.spoiler, blockquote.spoiler > * { color: #000000; transition: color 0.5s, opacity 0.5s }
+    blockquote.spoiler:not(:hover) { color: transparent }
+    blockquote.spoiler:not(:hover) > * { opacity: 0 }
+
     hr {
         display: block;
         height: 0;

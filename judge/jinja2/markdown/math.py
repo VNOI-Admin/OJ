@@ -1,65 +1,77 @@
 import re
 
-import mistune
+import markdown2
 
-from judge.utils.mathoid import MathoidMathParser
+placeholder_string = '38K9QWXZrNAx8qqCm1JN'
 
-mistune._pre_tags.append('latex')
+def extractLatexeq(string, inline_delims=['~', '~'], display_delims=['\$\$', '\$\$'],
+placeholder=placeholder_string):
+    """
+    Given a string, extract latex equations from it and replace them with 
+    placeholder string; the function returns a tuple of the form
+    
+    (new string, list of latex equations)
 
+    Note: 
+        - The function is only intended for the MathJax setup of VNOJ.
+        - Placeholder must not be found by regex 
+    """
 
-class MathInlineGrammar(mistune.InlineGrammar):
-    block_math = re.compile(r'^\$\$(.*?)\$\$|^\\\[(.*?)\\\]', re.DOTALL)
-    math = re.compile(r'^~(.*?)~|^\\\((.*?)\\\)', re.DOTALL)
-    text = re.compile(r'^[\s\S]+?(?=[\\<!\[_*`~$]|\\[\[(]|https?://| {2,}\n|$)')
+    it = re.finditer(
+        '(' + inline_delims[0]  + '.*?' + inline_delims[1]  + ')' + '|' +
+        '(' + display_delims[0] + '.*?' + display_delims[1] + ')',
+        string
+    )
 
+    indices = [0]
+    for match in it:
+        indices.append(match.start(0))
+        indices.append(match.end(0))
 
-class MathInlineLexer(mistune.InlineLexer):
-    grammar_class = MathInlineGrammar
+    strings = []
+    latexeqs = []
 
-    def __init__(self, *args, **kwargs):
-        self.default_rules = self.default_rules[:]
-        self.inline_html_rules = self.default_rules
-        self.default_rules.insert(self.default_rules.index('strikethrough') + 1, 'math')
-        self.default_rules.insert(self.default_rules.index('strikethrough') + 1, 'block_math')
-        super(MathInlineLexer, self).__init__(*args, **kwargs)
+    for i in range(0, len(indices) - 1, 2):
+        strings.append(string[indices[i]:indices[i+1]])
+        latexeqs.append(string[indices[i+1]:indices[i+2]])
+    strings.append(string[indices[-1]:])
 
-    def output_block_math(self, m):
-        return self.renderer.block_math(m.group(1) or m.group(2))
+    result = [None] * (len(strings) + len(latexeqs))
+    result[::2] = strings
+    result[1::2] = [placeholder] * len(latexeqs)
+    # for i in range(1, len(result), 2):
+    #     result[i] = placeholder
+    result = ''.join(result)
 
-    def output_math(self, m):
-        return self.renderer.math(m.group(1) or m.group(2))
+    return (result, latexeqs)
+    
+def recontructString(string, latexeqs, inline_delims=['~', '~'], display_delims=['\$\$', '\$\$'],
+placeholder=placeholder_string):
+    """
+    Given a string (with placeholder substrings) and a list of latex
+    equations, return a new string which replaces the placeholders with 
+    latex equations.
+    """    
 
-    def output_inline_html(self, m):
-        tag = m.group(1)
-        text = m.group(3)
-        if self._parse_inline_html and text:
-            if tag == 'a':
-                self._in_link = True
-                text = self.output(text)
-                self._in_link = False
-            else:
-                text = self.output(text)
-            extra = m.group(2) or ''
-            html = '<%s%s>%s</%s>' % (tag, extra, text, tag)
-        else:
-            html = m.group(0)
-        return self.renderer.inline_html(html)
+    it = re.finditer(
+        placeholder_string,
+        string
+    )
 
+    indices = [0]
+    for match in it:
+        indices.append(match.start(0))
+        indices.append(match.end(0))
 
-class MathRenderer(mistune.Renderer):
-    def __init__(self, *args, **kwargs):
-        if kwargs.pop('math', False):
-            self.mathoid = MathoidMathParser(kwargs.pop('math_engine', None) or 'svg')
-        else:
-            self.mathoid = None
-        super(MathRenderer, self).__init__(*args, **kwargs)
+    strings = []
 
-    def block_math(self, math):
-        if self.mathoid is None or not math:
-            return r'\[%s\]' % mistune.escape(str(math))
-        return self.mathoid.display_math(math)
+    for i in range(0, len(indices) - 1, 2):
+        strings.append(string[indices[i]:indices[i+1]])
+    strings.append(string[indices[-1]:])
 
-    def math(self, math):
-        if self.mathoid is None or not math:
-            return r'\(%s\)' % mistune.escape(str(math))
-        return self.mathoid.inline_math(math)
+    result = [None] * (len(strings) + len(latexeqs))
+    result[::2] = strings
+    result[1::2] = latexeqs
+    result = ''.join(result)
+
+    return result
