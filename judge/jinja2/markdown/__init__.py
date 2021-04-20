@@ -3,6 +3,7 @@ import re
 from html.parser import HTMLParser
 from urllib.parse import urlparse
 
+import markdown2
 import mistune
 from bleach.sanitizer import Cleaner
 from django.conf import settings
@@ -165,11 +166,13 @@ def markdown(value, style, math_engine=None, lazy_load=False):
     if lazy_load:
         post_processors.append(lazy_load_processor)
 
-    renderer = AwesomeRenderer(escape=escape, nofollow=nofollow, texoid=texoid,
-                               math=math and math_engine is not None, math_engine=math_engine)
-    markdown = mistune.Markdown(renderer=renderer, inline=AwesomeInlineLexer,
-                                parse_block_html=1, parse_inline_html=1)
-    result = markdown(value)
+    # renderer = AwesomeRenderer(escape=escape, nofollow=nofollow, texoid=texoid,
+    #                            math=math and math_engine is not None, math_engine=math_engine)
+    # markdown = mistune.Markdown(renderer=renderer, inline=AwesomeInlineLexer,
+    #                             parse_block_html=1, parse_inline_html=1)
+    # result = markdown(value)
+
+    result = markdown2.markdown(value, extras=["spoiler"])
 
     if post_processors:
         tree = fragments_to_tree(result)
