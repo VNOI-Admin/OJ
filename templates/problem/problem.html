@@ -280,11 +280,29 @@
 {% block description %}
     {% with pdf_url=problem.pdf_url %}
         {% if pdf_url %}
-            <embed src="{{ pdf_url }}" height="500" style="width: 100%;">
-                <noembed>
-                    PDF viewer is not supported on this browser. To read the statement, click <a href="{{ pdf_url }}">this</a>.
-                </noembed>
-            </embed>
+            <style>
+                .hidden {
+                    display: none;
+                }
+            </style>
+            <object id="pdfContainer" data="{{ pdf_url }}" type="application/pdf" height="500" style="width: 100%;" >
+                <p style="font-size: 0.5em; font-family: 'Courier New', Courier, monospace;">
+                    If no PDF preview is shown, or the preview is not readable, click <a href={{ pdf_url }}>this</a> link.
+                </p>
+            </object>
+            <div id="pdfContainerFallback" class="hidden">
+                <p style="font-size: 0.5em; font-family: 'Courier New', Courier, monospace;">
+                    If no PDF preview is shown, or the preview is not readable, click <a href={{ pdf_url }}>this</a> link.
+                </p>
+            </div>
+            <script>
+                var pdf = document.querySelector('#pdfContainer');
+                var msg = document.querySelector('#pdfContainerFallback');
+                if(/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                    pdf.classList.add('hidden');
+                    msg.classList.remove('hidden');
+                }
+            </script>
         {% endif %}
     {% endwith %}
 
