@@ -24,6 +24,6 @@ Check out the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/sit
 - To support `testlib.h`, you need to copy the [testlib.h](https://github.com/MikeMirzayanov/testlib/blob/master/testlib.h) to g++ include path in judge server. To speed up compiler time, you may create the precompiled header to `testlib.h`.
 
 ## Contributing ![PR's Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)
-If you found any bug, please feel free to contact us via Discord [![Discord Chat](https://img.shields.io/discord/660930260405190688.svg)](https://discord.gg/660930260405190688) or open an issue. 
+If you found any bug, please feel free to contact us via Discord [![Discord Chat](https://img.shields.io/discord/660930260405190688.svg)](https://discord.gg/TDyYVyd) or open an issue. 
 
 Pull requests are welcome as well. Before you submitting your PR, please check your code with [flake8](https://flake8.pycqa.org/en/latest/) and format it if needed. 
