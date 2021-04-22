@@ -356,7 +356,7 @@ $(function () {
 
 $(function () {
     // Reveal spoiler
-    $('blockquote.spoiler').on('click', function (e) {
+    $(document).on('click', 'blockquote.spoiler', function (e) {
         $(this).addClass("is-visible");
         e.stopPropagation();
     } );
