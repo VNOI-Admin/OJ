@@ -15,8 +15,8 @@ from judge.jinja2.markdown.lazy_load import lazy_load as lazy_load_processor
 from judge.utils.camo import client as camo_client
 from judge.utils.texoid import TEXOID_ENABLED, TexoidRenderer
 from .bleach_whitelist import all_styles, mathml_attrs, mathml_tags
-from .. import registry
 from .math import extractLatexeq, recontructString
+from .. import registry
 
 logger = logging.getLogger('judge.html')
 
@@ -65,10 +65,6 @@ def fragment_tree_to_str(tree):
 @registry.filter
 def markdown(value, style, math_engine=None, lazy_load=False):
     styles = settings.MARKDOWN_STYLES.get(style, settings.MARKDOWN_DEFAULT_STYLE)
-    escape = styles.get('safe_mode', True)
-    nofollow = styles.get('nofollow', True)
-    texoid = TEXOID_ENABLED and styles.get('texoid', False)
-    math = getattr(settings, 'MATHOID_URL') and styles.get('math', False)
     bleach_params = styles.get('bleach', {})
 
     post_processors = []
