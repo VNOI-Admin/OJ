@@ -353,3 +353,12 @@ $(function () {
         handler();
     });
 });
+
+$(function () {
+    // Reveal spoiler
+    $(document).on('click', 'blockquote.spoiler', function (e) {
+        $(this).addClass("is-visible");
+        e.stopPropagation();
+    } );
+});
+

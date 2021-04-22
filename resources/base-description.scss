@@ -60,9 +60,59 @@
 
     blockquote {
         color: #666;
-        margin: 0;
-        padding-left: 1.5em;
-        border-left: 0.5em #EEE solid;
+        margin: 1em 1em;
+        padding: 1px 1px 1px 1.5em;
+    }
+
+    blockquote.spoiler {
+        position: relative;
+        background: #eff0f1;
+        border-radius: 5px;
+        color: #242729;
+        cursor: pointer;
+        min-height: 48px;
+        border: solid 1px #c8ccd0;
+    }
+
+    blockquote.spoiler > * { 
+        display: none;
+    }
+
+    blockquote.spoiler::before { 
+        content: "";
+        display: block;
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        width: 4px;
+        border-radius: 8px;
+        background: #c8ccd0;
+    }
+    
+    blockquote.spoiler::after { 
+        content: "Reveal spoiler!";
+        background-repeat: no-repeat;
+        background-position: center right;
+        font-size: 13px;
+        color: #6a737c;
+        padding-right: 22px;
+        position: absolute;
+        top: 1em;
+        right: 0em;
+        pointer-events: none;
+    }
+
+    blockquote.spoiler.is-visible  {
+        cursor: auto;
+    }
+
+    blockquote.spoiler.is-visible > * {
+        display: block;
+    }
+
+    blockquote.spoiler.is-visible::after {
+        opacity: 0;
     }
 
     hr {
