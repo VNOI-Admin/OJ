@@ -1,11 +1,11 @@
 import re
 
-import markdown2
 
 placeholder_string = '38K9QWXZrNAx8qqCm1JN'
 
+
 def extractLatexeq(string, inline_delims=['~', '~'], display_delims=[r'\$\$', r'\$\$'],
-    placeholder=placeholder_string):
+        placeholder=placeholder_string):
     """
     Given a string, extract latex equations from it and replace them with
     placeholder string; the function returns a tuple of the form
@@ -46,7 +46,7 @@ def extractLatexeq(string, inline_delims=['~', '~'], display_delims=[r'\$\$', r'
     return (result, latexeqs)
 
 def recontructString(string, latexeqs, inline_delims=['~', '~'], display_delims=[r'\$\$', r'\$\$'],
-    placeholder=placeholder_string):
+        placeholder=placeholder_string):
     """
     Given a string (with placeholder substrings) and a list of latex
     equations, return a new string which replaces the placeholders with
