@@ -74,7 +74,7 @@ def markdown(value, style, math_engine=None, lazy_load=False):
         post_processors.append(lazy_load_processor)
 
     string, latexeqs = extractLatexeq(value)
-    string = markdown2.markdown(string, extras=['spoiler'])
+    string = markdown2.markdown(string, extras=['spoiler', 'fenced-code-blocks', 'cuddled-lists'])
     result = recontructString(string, latexeqs)
 
     if post_processors:
