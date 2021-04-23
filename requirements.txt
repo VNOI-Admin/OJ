@@ -36,3 +36,4 @@ martor @ git+git://github.com/DMOJ/martor.git
 netaddr
 webauthn
 bleach
+markdown2 @ git+git://github.com/ngkan/python-markdown2.git

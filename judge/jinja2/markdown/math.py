@@ -1,65 +1,50 @@
 import re
 
-import mistune
 
-from judge.utils.mathoid import MathoidMathParser
-
-mistune._pre_tags.append('latex')
+placeholder_string = '~~'
 
 
-class MathInlineGrammar(mistune.InlineGrammar):
-    block_math = re.compile(r'^\$\$(.*?)\$\$|^\\\[(.*?)\\\]', re.DOTALL)
-    math = re.compile(r'^~(.*?)~|^\\\((.*?)\\\)', re.DOTALL)
-    text = re.compile(r'^[\s\S]+?(?=[\\<!\[_*`~$]|\\[\[(]|https?://| {2,}\n|$)')
+def extractLatexeq(text, inline_delims=['~', '~'], display_delims=[r'\$\$', r'\$\$'],
+                   placeholder=placeholder_string):
+    """
+    Given a string, extract latex equations from it and replace them with
+    placeholder string; the function returns a tuple of the form
+
+    (new string, list of latex equations)
+
+    Note:
+        - The function is only intended for the MathJax setup of VNOJ.
+        - Placeholder must not be found by regex
+    """
+
+    pattern = re.compile(
+        '(' + inline_delims[0] + '.*?' + inline_delims[1] + ')' + '|' +
+        '(' + display_delims[0] + '.*?' + display_delims[1] + ')',
+        re.S | re.X | re.M,
+    )
+    latexeqs = []
+
+    def replaceWithPlaceholder(x):
+        latexeqs.append(x.group())
+        return placeholder
+
+    result = re.sub(pattern, replaceWithPlaceholder, text)
+    return (result, latexeqs)
 
 
-class MathInlineLexer(mistune.InlineLexer):
-    grammar_class = MathInlineGrammar
+def recontructString(text, latexeqs, inline_delims=['~', '~'], display_delims=[r'\$\$', r'\$\$'],
+                     placeholder=placeholder_string):
+    """
+    Given a string (with placeholder substrings) and a list of latex
+    equations, return a new string which replaces the placeholders with
+    latex equations.
+    """
 
-    def __init__(self, *args, **kwargs):
-        self.default_rules = self.default_rules[:]
-        self.inline_html_rules = self.default_rules
-        self.default_rules.insert(self.default_rules.index('strikethrough') + 1, 'math')
-        self.default_rules.insert(self.default_rules.index('strikethrough') + 1, 'block_math')
-        super(MathInlineLexer, self).__init__(*args, **kwargs)
+    cur_latex_eq = 0
 
-    def output_block_math(self, m):
-        return self.renderer.block_math(m.group(1) or m.group(2))
+    def replaceWithLatexEq(x):
+        nonlocal cur_latex_eq
+        cur_latex_eq += 1
+        return latexeqs[cur_latex_eq - 1]
 
-    def output_math(self, m):
-        return self.renderer.math(m.group(1) or m.group(2))
-
-    def output_inline_html(self, m):
-        tag = m.group(1)
-        text = m.group(3)
-        if self._parse_inline_html and text:
-            if tag == 'a':
-                self._in_link = True
-                text = self.output(text)
-                self._in_link = False
-            else:
-                text = self.output(text)
-            extra = m.group(2) or ''
-            html = '<%s%s>%s</%s>' % (tag, extra, text, tag)
-        else:
-            html = m.group(0)
-        return self.renderer.inline_html(html)
-
-
-class MathRenderer(mistune.Renderer):
-    def __init__(self, *args, **kwargs):
-        if kwargs.pop('math', False):
-            self.mathoid = MathoidMathParser(kwargs.pop('math_engine', None) or 'svg')
-        else:
-            self.mathoid = None
-        super(MathRenderer, self).__init__(*args, **kwargs)
-
-    def block_math(self, math):
-        if self.mathoid is None or not math:
-            return r'\[%s\]' % mistune.escape(str(math))
-        return self.mathoid.display_math(math)
-
-    def math(self, math):
-        if self.mathoid is None or not math:
-            return r'\(%s\)' % mistune.escape(str(math))
-        return self.mathoid.inline_math(math)
+    return re.sub(placeholder_string, replaceWithLatexEq, text)
