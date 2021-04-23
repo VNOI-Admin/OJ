@@ -22,27 +22,13 @@ def extractLatexeq(text, inline_delims=['~', '~'], display_delims=[r'\$\$', r'\$
         '(' + display_delims[0] + '.*?' + display_delims[1] + ')',
         re.S | re.X | re.M,
     )
-
-    it = re.finditer(pattern, text)
-
-    indices = [0]
-    for match in it:
-        indices.append(match.start(0))
-        indices.append(match.end(0))
-
-    strings = []
     latexeqs = []
 
-    for i in range(0, len(indices) - 1, 2):
-        strings.append(text[indices[i]:indices[i + 1]])
-        latexeqs.append(text[indices[i + 1]:indices[i + 2]])
-    strings.append(text[indices[-1]:])
+    def replaceWithPlaceholder(x):
+        latexeqs.append(x.group())
+        return placeholder
 
-    result = [None] * (len(strings) + len(latexeqs))
-    result[::2] = strings
-    result[1::2] = [placeholder] * len(latexeqs)
-    result = ''.join(result)
-
+    result = re.sub(pattern, replaceWithPlaceholder, text)
     return (result, latexeqs)
 
 
@@ -54,25 +40,11 @@ def recontructString(text, latexeqs, inline_delims=['~', '~'], display_delims=[r
     latex equations.
     """
 
-    it = re.finditer(
-        placeholder_string,
-        text,
-    )
+    cur_latex_eq = 0
 
-    indices = [0]
-    for match in it:
-        indices.append(match.start(0))
-        indices.append(match.end(0))
+    def replaceWithLatexEq(x):
+        nonlocal cur_latex_eq
+        cur_latex_eq += 1
+        return latexeqs[cur_latex_eq - 1]
 
-    strings = []
-
-    for i in range(0, len(indices) - 1, 2):
-        strings.append(text[indices[i]:indices[i + 1]])
-    strings.append(text[indices[-1]:])
-
-    result = [None] * (len(strings) + len(latexeqs))
-    result[::2] = strings
-    result[1::2] = latexeqs
-    result = ''.join(result)
-
-    return result
+    return re.sub(placeholder_string, replaceWithLatexEq, text)

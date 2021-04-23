@@ -69,27 +69,7 @@ def inc_header(text, level):
         re.X | re.M,
     )
 
-    it = re.finditer(pattern, text)
-
-    indices = [0]
-    for match in it:
-        indices.append(match.start(0))
-        indices.append(match.end(0))
-
-    strings = []
-    headers = []
-
-    for i in range(0, len(indices) - 1, 2):
-        strings.append(text[indices[i]:indices[i + 1]])
-        headers.append(text[indices[i + 1]:indices[i + 2]])
-    strings.append(text[indices[-1]:])
-
-    result = [None] * (len(strings) + len(headers))
-    result[::2] = strings
-    result[1::2] = [x + s for x in headers]
-    result = ''.join(result)
-
-    return result
+    return re.sub(pattern, lambda x: x.group() + s, text)
 
 
 @registry.filter
