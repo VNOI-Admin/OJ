@@ -85,7 +85,7 @@ def markdown(value, style, math_engine=None, lazy_load=False):
 
     preprocessed_value = inc_header(value, 2)
     string, latexeqs = extractLatexeq(preprocessed_value)
-    string = markdown2.markdown(string, extras=['spoiler', 'fenced-code-blocks', 'cuddled-lists'])
+    string = markdown2.markdown(string, extras=['spoiler', 'fenced-code-blocks', 'cuddled-lists', 'tables'])
     result = recontructString(string, latexeqs)
 
     if post_processors:
