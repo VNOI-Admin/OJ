@@ -62,6 +62,36 @@ def fragment_tree_to_str(tree):
     return html.tostring(tree, encoding='unicode')[len('<div>'):-len('</div>')]
 
 
+def inc_header(text, level):
+    s = '#' * level
+    pattern = re.compile(
+        r'^\#{1,10}',
+        re.X | re.M
+    )
+
+    it = re.finditer(pattern, text)
+
+    indices = [0]
+    for match in it:
+        indices.append(match.start(0))
+        indices.append(match.end(0))
+
+    strings = []
+    headers = []
+
+    for i in range(0, len(indices) - 1, 2):
+        strings.append(text[indices[i]:indices[i + 1]])
+        headers.append(text[indices[i + 1]:indices[i + 2]])
+    strings.append(text[indices[-1]:])
+
+    result = [None] * (len(strings) + len(headers))
+    result[::2] = strings
+    result[1::2] = [x + s for x in headers]
+    result = ''.join(result)
+
+    return result
+
+
 @registry.filter
 def markdown(value, style, math_engine=None, lazy_load=False):
     styles = settings.MARKDOWN_STYLES.get(style, settings.MARKDOWN_DEFAULT_STYLE)
@@ -73,7 +103,8 @@ def markdown(value, style, math_engine=None, lazy_load=False):
     if lazy_load:
         post_processors.append(lazy_load_processor)
 
-    string, latexeqs = extractLatexeq(value)
+    preprocessed_value = inc_header(value, 2)
+    string, latexeqs = extractLatexeq(preprocessed_value)
     string = markdown2.markdown(string, extras=['spoiler', 'fenced-code-blocks', 'cuddled-lists'])
     result = recontructString(string, latexeqs)
 

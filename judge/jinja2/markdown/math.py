@@ -1,10 +1,10 @@
 import re
 
 
-placeholder_string = '38K9QWXZrNAx8qqCm1JN'
+placeholder_string = '~~'
 
 
-def extractLatexeq(string, inline_delims=['~', '~'], display_delims=[r'\$\$', r'\$\$'],
+def extractLatexeq(text, inline_delims=['~', '~'], display_delims=[r'\$\$', r'\$\$'],
                    placeholder=placeholder_string):
     """
     Given a string, extract latex equations from it and replace them with
@@ -20,10 +20,10 @@ def extractLatexeq(string, inline_delims=['~', '~'], display_delims=[r'\$\$', r'
     pattern = re.compile(
         '(' + inline_delims[0] + '.*?' + inline_delims[1] + ')' + '|' +
         '(' + display_delims[0] + '.*?' + display_delims[1] + ')',
-        re.S | re.X
+        re.S | re.X | re.M,
     )
 
-    it = re.finditer(pattern, string)
+    it = re.finditer(pattern, text)
 
     indices = [0]
     for match in it:
@@ -34,21 +34,19 @@ def extractLatexeq(string, inline_delims=['~', '~'], display_delims=[r'\$\$', r'
     latexeqs = []
 
     for i in range(0, len(indices) - 1, 2):
-        strings.append(string[indices[i]:indices[i + 1]])
-        latexeqs.append(string[indices[i + 1]:indices[i + 2]])
-    strings.append(string[indices[-1]:])
+        strings.append(text[indices[i]:indices[i + 1]])
+        latexeqs.append(text[indices[i + 1]:indices[i + 2]])
+    strings.append(text[indices[-1]:])
 
     result = [None] * (len(strings) + len(latexeqs))
     result[::2] = strings
     result[1::2] = [placeholder] * len(latexeqs)
-    # for i in range(1, len(result), 2):
-    #     result[i] = placeholder
     result = ''.join(result)
 
     return (result, latexeqs)
 
 
-def recontructString(string, latexeqs, inline_delims=['~', '~'], display_delims=[r'\$\$', r'\$\$'],
+def recontructString(text, latexeqs, inline_delims=['~', '~'], display_delims=[r'\$\$', r'\$\$'],
                      placeholder=placeholder_string):
     """
     Given a string (with placeholder substrings) and a list of latex
@@ -58,7 +56,7 @@ def recontructString(string, latexeqs, inline_delims=['~', '~'], display_delims=
 
     it = re.finditer(
         placeholder_string,
-        string,
+        text,
     )
 
     indices = [0]
@@ -69,8 +67,8 @@ def recontructString(string, latexeqs, inline_delims=['~', '~'], display_delims=
     strings = []
 
     for i in range(0, len(indices) - 1, 2):
-        strings.append(string[indices[i]:indices[i + 1]])
-    strings.append(string[indices[-1]:])
+        strings.append(text[indices[i]:indices[i + 1]])
+    strings.append(text[indices[-1]:])
 
     result = [None] * (len(strings) + len(latexeqs))
     result[::2] = strings
