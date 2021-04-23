@@ -17,11 +17,13 @@ def extractLatexeq(string, inline_delims=['~', '~'], display_delims=[r'\$\$', r'
         - Placeholder must not be found by regex
     """
 
-    it = re.finditer(
+    pattern = re.compile(
         '(' + inline_delims[0] + '.*?' + inline_delims[1] + ')' + '|' +
         '(' + display_delims[0] + '.*?' + display_delims[1] + ')',
-        string,
+        re.S | re.X
     )
+
+    it = re.finditer(pattern, string)
 
     indices = [0]
     for match in it:
