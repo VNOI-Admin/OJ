@@ -66,7 +66,7 @@ def inc_header(text, level):
     s = '#' * level
     pattern = re.compile(
         r'^\#{1,10}',
-        re.X | re.M
+        re.X | re.M,
     )
 
     it = re.finditer(pattern, text)
