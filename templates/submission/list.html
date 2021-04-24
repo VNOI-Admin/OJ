@@ -82,6 +82,12 @@
                     placeholder: '{{ _('Filter by language...') }}',
                     matcher: idAndTextMatcher,
                 }).css({'visibility': 'visible'});
+
+                $('#organization').select2({
+                    multiple: 0,
+                    placeholder: '{{ _('Filter by organization...') }}',
+                    matcher: idAndTextMatcher,
+                }).css({'visibility': 'visible'});
             });
 
             // Draw the statistics graph.
@@ -321,6 +327,17 @@
                                 <select id="language" name="language" multiple>
                                     {% for code, name in all_languages %}
                                         <option {% if code in selected_languages %}selected{% endif %}
+                                                value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="filter-form-group">
+                                <label for="organization"><i>{{ _('Organization') }}</i></label>
+                                <select id="organization" name="organization">
+                                    <option value="">{{ _('All') }}</option>
+                                    <option disabled="disabled">---</option>
+                                    {% for code, name in all_organizations %}
+                                        <option {% if code == selected_organization %}selected{% endif %}
                                                 value="{{ code }}">{{ name }}</option>
                                     {% endfor %}
                                 </select>
