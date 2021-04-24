@@ -72,8 +72,12 @@ def inc_header(text, level):
     return re.sub(pattern, lambda x: x.group() + s, text)
 
 
+def add_table_class(text):
+    return text.replace(r'<table>', r'<table class="table">')
+
+
 @registry.filter
-def markdown(value, style, math_engine=None, lazy_load=False):
+def markdown(text, style, math_engine=None, lazy_load=False):
     styles = settings.MARKDOWN_STYLES.get(style, settings.MARKDOWN_DEFAULT_STYLE)
     bleach_params = styles.get('bleach', {})
 
@@ -83,10 +87,11 @@ def markdown(value, style, math_engine=None, lazy_load=False):
     if lazy_load:
         post_processors.append(lazy_load_processor)
 
-    preprocessed_value = inc_header(value, 2)
-    string, latexeqs = extractLatexeq(preprocessed_value)
+    value = inc_header(text, 2)
+    string, latexeqs = extractLatexeq(value)
     string = markdown2.markdown(string, extras=['spoiler', 'fenced-code-blocks', 'cuddled-lists', 'tables'])
     result = recontructString(string, latexeqs)
+    result = add_table_class(result)
 
     if post_processors:
         tree = fragments_to_tree(result)
