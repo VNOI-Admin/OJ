@@ -73,7 +73,7 @@ def inc_header(text, level):
 
 
 def add_table_class(text):
-    return re.sub(r'<table>', r'<table class="table"', text)
+    return text.replace(r'<table>', r'<table class="table">')
 
 
 @registry.filter
