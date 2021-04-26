@@ -15,4 +15,4 @@ Ensure the PR description clearly describes the problem and solution. Include th
 We use flake8.
 
 ## Translation
-Vietnamese translation is stored in [this file](https://github.com/VNOI-Admin/OJ/blob/master/locale/vi/LC_MESSAGES/django.po). If you want to contribute to the translation, please do a pull request to branch [translation](https://github.com/VNOI-Admin/OJ/tree/translation).
+Vietnamese translation is stored in [this folder](locale/vi/LC_MESSAGES). Feel free to do a PR on this file.
