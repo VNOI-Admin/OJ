@@ -95,26 +95,24 @@
 
             {% if print_case_output or case.extended_feedback %}
                 <tr id="{{ case.id }}-output" style="display:none" class="case-feedback toggled">
-                    {% if print_case_output and request.user.is_superuser %}
-                        <td colspan="5" class="case-output">
-                            <div class="case-info">
-                                <strong>{{ _('Your output (clipped)') }}</strong>
-                                {% if prefix_length is none %}
-                                    <pre class="case-output">{{ case.output|linebreaksbr }}</pre>
-                                {% else %}
-                                    <pre class="case-output">{{ case.output[:prefix_length]|linebreaksbr }}</pre>
-                                {% endif %}
-                            </div>
-                        </td>
-                    {% endif %}
-                    {% if case.extended_feedback and not request.in_contest %}
-                        <td colspan="5" class="case-ext-feedback">
-                            <div class="case-info">
-                                <strong>{{ _('Judge feedback') }}</strong>
-                                <pre class="case-output">{{ case.extended_feedback|linebreaksbr }}</pre>
-                            </div>
-                        </td>
-                    {% endif %}
+                    <td colspan="5" class="case-output">
+                        {% if print_case_output and request.user.is_superuser %}
+                        <div class="case-info">
+                            <strong>{{ _('Your output (clipped)') }}</strong>
+                            {% if prefix_length is none %}
+                                <pre class="case-output">{{ case.output|linebreaksbr }}</pre>
+                            {% else %}
+                                <pre class="case-output">{{ case.output[:prefix_length]|linebreaksbr }}</pre>
+                            {% endif %}
+                        </div>
+                        {% endif %}
+                        {% if case.extended_feedback and not request.in_contest %}
+                        <div class="case-info">
+                            <strong>{{ _('Judge feedback') }}</strong>
+                            <pre class="case-output">{{ case.extended_feedback|linebreaksbr }}</pre>
+                        </div>
+                        {% endif %}
+                    </td>
                 </tr>
             {% endif %}
         {% endfor %}
