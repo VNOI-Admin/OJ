@@ -56,6 +56,10 @@ class Comment(MPTTModel):
     class MPTTMeta:
         order_insertion_by = ['-time']
 
+    def vote(self, delta):
+        self.score += delta
+        self.save(update_fields=['score'])
+
     @classmethod
     def most_recent(cls, user, n, batch=None):
         queryset = cls.objects.filter(hidden=False).select_related('author__user') \
