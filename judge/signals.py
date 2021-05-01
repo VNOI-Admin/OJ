@@ -158,5 +158,4 @@ def contest_submission_update(sender, instance, **kwargs):
 
 @receiver(post_save, sender=FlatPage)
 def flatpage_update(sender, instance, **kwargs):
-    print("ngu ne: ", make_template_fragment_key('flatpage', (instance.url, )))
     cache.delete(make_template_fragment_key('flatpage', (instance.url, )))
