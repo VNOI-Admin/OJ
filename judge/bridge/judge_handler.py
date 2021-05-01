@@ -13,7 +13,8 @@ from django.utils import timezone
 from judge import event_poster as event
 from judge.bridge.base_handler import ZlibPacketHandler, proxy_list
 from judge.caching import finished_submission
-from judge.models import Judge, Language, LanguageLimit, Problem, Profile, RuntimeVersion, Submission, SubmissionTestCase
+from judge.models import Judge, Language, LanguageLimit, Problem, Profile, \
+    RuntimeVersion, Submission, SubmissionTestCase
 
 logger = logging.getLogger('judge.bridge')
 json_log = logging.getLogger('judge.json.bridge')
@@ -625,5 +626,6 @@ class JudgeHandler(ZlibPacketHandler):
                 'contest': data['contest_object__key'],
                 'user': data['user_id'], 'problem': data['problem_id'],
                 'status': data['status'], 'language': data['language__key'],
-                'organizations': [x[0] for x in Profile.objects.get(id=data['user_id']).organizations.values_list('id')],
+                'organizations':
+                [x[0] for x in Profile.objects.get(id=data['user_id']).organizations.values_list('id')],
             })
