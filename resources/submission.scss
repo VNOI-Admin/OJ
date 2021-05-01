@@ -112,7 +112,7 @@
     color: grey;
 }
 
-label[for="language"], label[for="status"] {
+label[for="language"], label[for="status"], label[for="organization"] {
     padding-bottom: 0.25em;
     display: block;
 }
@@ -175,7 +175,7 @@ label[for="language"], label[for="status"] {
     }
 
     #content-right.submission {
-        display: none;
+        max-width: 100%;
     }
 }
 
