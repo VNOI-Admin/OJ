@@ -59,6 +59,10 @@ class Comment(MPTTModel):
     def vote(self, delta):
         self.score += delta
         self.save(update_fields=['score'])
+        # this is just for testing the contribution
+        # we should not use this function to calculate contribution points
+        self.author.contribution_points += delta
+        self.author.save(update_fields=['contribution_points'])
 
     @classmethod
     def most_recent(cls, user, n, batch=None):
