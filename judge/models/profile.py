@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import F, Max
+from django.db.models import F, Max, Sum
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.functional import cached_property
@@ -179,6 +179,18 @@ class Profile(models.Model):
         return points
 
     calculate_points.alters_data = True
+
+    def calculate_contribution_points(self):
+        # this function calculate contribution by summing all votes
+        # this is just for testing the contribution
+        # we should not use this function to calculate contribution points
+        from judge.models import Comment
+        self.contribution_points = Comment.objects.filter(author=self.user_id, hidden=False)\
+            .aggregate(s=Sum('score'))['s'] or 0
+        self.save(update_fields=['contribution_points'])
+        return self.contribution_points
+
+    calculate_contribution_points.alters_data = True
 
     def generate_api_token(self):
         secret = secrets.token_bytes(32)
