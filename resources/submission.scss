@@ -134,6 +134,10 @@ label[for="language"], label[for="status"], label[for="organization"] {
     border-right: 1px solid white;
 }
 
+#statistics-table {
+    padding-top: 1.5em;
+}
+
 #content-left.submission {
     flex: 70%;
 }
