@@ -112,7 +112,7 @@
     color: grey;
 }
 
-label[for="language"], label[for="status"] {
+label[for="language"], label[for="status"], label[for="organization"] {
     padding-bottom: 0.25em;
     display: block;
 }
@@ -134,6 +134,10 @@ label[for="language"], label[for="status"] {
     border-right: 1px solid white;
 }
 
+#statistics-table {
+    padding-top: 1.5em;
+}
+
 #content-left.submission {
     flex: 70%;
 }
@@ -141,7 +145,7 @@ label[for="language"], label[for="status"] {
 #content-right.submission {
     flex: 12%;
     min-width: initial;
-    max-width: 100%;
+    max-width: 25%;
     padding-top: 0;
 }
 
@@ -175,7 +179,7 @@ label[for="language"], label[for="status"] {
     }
 
     #content-right.submission {
-        display: none;
+        max-width: 100%;
     }
 }
 

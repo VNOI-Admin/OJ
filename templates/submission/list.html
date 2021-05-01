@@ -75,17 +75,20 @@
                     multiple: 1,
                     placeholder: '{{ _('Filter by status...') }}',
                     matcher: idAndTextMatcher,
+                    width: '100%',
                 }).css({'visibility': 'visible'});
 
                 $('#language').select2({
                     multiple: 1,
                     placeholder: '{{ _('Filter by language...') }}',
                     matcher: idAndTextMatcher,
+                    width: '100%',
                 }).css({'visibility': 'visible'});
 
                 $('#organization').select2({
                     multiple: 0,
                     matcher: idAndTextMatcher,
+                    width: '100%',
                 }).css({'visibility': 'visible'});
             });
 
@@ -349,9 +352,6 @@
                             </div>
                         </form>
                     </div>
-                </div>
-
-                <div class="sidebox">
                     <div id="statistics-table">
                         <h3>{{ _('Statistics') }} <i class="fa fa-pie-chart"></i></h3>
                         <div class="sidebox-content">
