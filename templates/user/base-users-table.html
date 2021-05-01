@@ -11,6 +11,7 @@
         {%- if sort_links %}{{ sort_order.performance_points }}</a>{% endif %}
     </th>
     {% block after_point_head %}{% endblock %}
+    {% block contribution_head %}{% endblock %}
 </tr>
 </thead>
 
@@ -27,6 +28,7 @@
             </td>
         {% endblock %}
         {% block after_point scoped %}{% endblock %}
+        {% block contribution scoped %}{% endblock %}
     </tr>
 {% endfor %}
 </tbody>
