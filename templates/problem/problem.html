@@ -278,19 +278,16 @@
 {% endblock %}
 
 {% block description %}
-    {% with pdf_url=problem.pdf_url %}
-        {% if pdf_url %}
-            <embed src="{{ pdf_url }}" height="500" style="width: 100%;">
-                <noembed>
-                    PDF viewer is not supported on this browser. To read the statement, click <a href="{{ pdf_url }}">this</a>.
-                </noembed>
-            </embed>
-        {% endif %}
-    {% endwith %}
-
     {% cache 86400 'problem_html' problem.id MATH_ENGINE LANGUAGE_CODE %}
         {{ description|markdown(problem.markdown_style, MATH_ENGINE)|reference|str|safe }}
     {% endcache %}
+
+    {% with pdf_url=problem.pdf_url %}
+        {% if pdf_url %}
+            <p>{{ _("In case the statement didn't load correctly, you can download the statement here: ") }}<a href="{{ pdf_url }}">{{ _("Statement") }}</a></p>
+            <object id="pdfContainer" data="{{ pdf_url }}" type="application/pdf" height="500" style="width: 100%;" ></object>
+        {% endif %}
+    {% endwith %}
 
     {% with license=problem.license %}
         {% if license %}
