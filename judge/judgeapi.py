@@ -18,7 +18,8 @@ def _post_update_submission(submission, done=False):
                                    'id': submission.id,
                                    'contest': submission.contest_key,
                                    'user': submission.user_id, 'problem': submission.problem_id,
-                                   'status': submission.status, 'language': submission.language.key})
+                                   'status': submission.status, 'language': submission.language.key,
+                                   'organizations': [x[0] for x in submission.user.organizations.get_queryset().values_list('id')]})
 
 
 def judge_request(packet, reply=True):
