@@ -6,7 +6,7 @@
     }
 }
 
-td.user-name {
+td.user-name, td.organization-name {
     padding-left: 2em;
     text-align: left;
 }
@@ -36,7 +36,7 @@ th.header.rank {
     padding-left: 0.5em;
 }
 
-#users-table {
+#users-table, #organization-table {
     .username {
         width: 100%;
     }
