@@ -47,6 +47,10 @@ DMOJ_PP_STEP = 0.98514
 DMOJ_PP_ENTRIES = 300
 DMOJ_PP_BONUS_FUNCTION = lambda n: 0.05 * n # 15 * (1 - 0.997 ** n)  # noqa: E731; 100 bai nua diem: 0.9930924
 
+VNOJ_ORG_PP_STEP = 0.95
+VNOJ_ORG_PP_ENTRIES = 20
+VNOJ_ORG_PP_TABLE = [pow(VNOJ_ORG_PP_STEP, i) for i in range(VNOJ_ORG_PP_ENTRIES)]
+
 NODEJS = '/usr/bin/node'
 EXIFTOOL = '/usr/bin/exiftool'
 ACE_URL = '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3'

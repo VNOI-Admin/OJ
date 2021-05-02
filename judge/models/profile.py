@@ -57,6 +57,16 @@ class Organization(models.Model):
                                                        'viewing the organization.'))
     performance_points = models.FloatField(default=0, db_index=True)
 
+    def calculate_points(self):
+        data = self.members.get_queryset().order_by('-performance_points') \
+                   .values_list('performance_points').filter(performance_points__gt=0)
+        entries = min(len(data), settings.VNOJ_ORG_PP_ENTRIES)
+        pp = sum(map(mul, settings.VNOJ_ORG_PP_TABLE[:entries], data[:entries]))
+        if self.performance_points != pp:
+            self.performance_points = pp
+            self.save(update_fields=['performance_points'])
+        return pp
+
     def __contains__(self, item):
         if isinstance(item, int):
             return self.members.filter(id=item).exists()
