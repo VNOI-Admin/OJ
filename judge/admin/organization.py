@@ -60,7 +60,7 @@ class OrganizationAdmin(VersionAdmin):
             org.calculate_points()
             count += 1
         self.message_user(request, ungettext('%d organization have scores recalculated.',
-                                             '%d organization have scores recalculated.',
+                                             '%d organizations have scores recalculated.',
                                              count) % count)
     recalculate_points.short_description = _('Recalculate scores')
 
