@@ -236,6 +236,16 @@
                 });
             });
 
+            $('.vote-good, .vote-norm, .vote-bad').click(function () {
+                $.ajax({
+                    url: $(this).attr('data-ajax'), type: 'POST',
+                    success: function () {},
+                    error: function (data) {
+                        alert('Could not change ticket: ' + data.responseText);
+                    }
+                });
+            });
+
             $('.edit-notes').featherlight({
                 afterOpen: function () {
                     var $form = $('#edit-notes');
@@ -421,9 +431,12 @@
                 <div class="info-box">
                     <div class="info-title">{{ _('Vote') }}</div>
                     <div class="info-data vote-box">
-                        <button class="vote vote-good">{{ _('Good') }}</button>
-                        <button class="vote vote-norm">{{ _('Norm') }}</button>
-                        <button class="vote vote-bad">{{ _('Bad') }}</button>
+                        <button data-ajax="{{ url('ticket_good', ticket.id) }}"
+                            class="vote vote-good">{{ _('Good') }}</button>
+                        <button data-ajax="{{ url('ticket_norm', ticket.id) }}"
+                            class="vote vote-norm">{{ _('Norm') }}</button>
+                        <button data-ajax="{{ url('ticket_bad', ticket.id) }}"
+                            class="vote vote-bad">{{ _('Bad') }}</button>
                     </div>
                 </div>
 
