@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.forms import ModelForm
 from django.urls import reverse_lazy
 from django.utils.html import format_html
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _, ungettext
 from reversion.admin import VersionAdmin
 
 from judge.models import Organization
@@ -23,6 +23,7 @@ class OrganizationAdmin(VersionAdmin):
               'creation_date', 'admins')
     list_display = ('name', 'short_name', 'is_open', 'slots', 'show_public')
     prepopulated_fields = {'slug': ('name',)}
+    actions = ('recalculate_points',)
     actions_on_top = True
     actions_on_bottom = True
     form = OrganizationForm
@@ -52,6 +53,16 @@ class OrganizationAdmin(VersionAdmin):
         if request.user.has_perm('judge.edit_all_organization') or obj is None:
             return True
         return obj.admins.filter(id=request.profile.id).exists()
+
+    def recalculate_points(self, request, queryset):
+        count = 0
+        for org in queryset:
+            org.calculate_points()
+            count += 1
+        self.message_user(request, ungettext('%d organization have scores recalculated.',
+                                             '%d organization have scores recalculated.',
+                                             count) % count)
+    recalculate_points.short_description = _('Recalculate scores')
 
 
 class OrganizationRequestAdmin(admin.ModelAdmin):
