@@ -55,7 +55,7 @@ class Organization(models.Model):
                                            blank=True,
                                            help_text=_('This image will replace the default site logo for users '
                                                        'viewing the organization.'))
-    performance_points = models.FloatField(default=0, db_index=True)
+    performance_points = models.FloatField(default=0)
 
     def calculate_points(self):
         data = self.members.get_queryset().order_by('-performance_points') \

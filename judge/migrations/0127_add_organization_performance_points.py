@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='organization',
             name='performance_points',
-            field=models.FloatField(db_index=True, default=0),
+            field=models.FloatField(default=0),
         ),
     ]
