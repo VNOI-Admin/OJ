@@ -61,6 +61,10 @@
             width: 33%;
         }
 
+        .vote:disabled {
+            opacity: 0.5;
+        }
+
         .vote-good {
             background: linear-gradient(to bottom, #4bad00, #278811);
             border-color: #24710e;
@@ -224,10 +228,13 @@
             }
 
             function update_ticket_vote(contributive) {
+                $('.vote-good').prop('disabled', contributive == 1);
+                $('.vote-norm').prop('disabled', contributive == 0);
+                $('.vote-bad').prop('disabled', contributive == -1);
                 $vote_status.removeClass()
-                if (contributive == "1")
+                if (contributive == 1)
                     $vote_status.addClass('fa fa-arrow-up')
-                else if (contributive == "0")
+                else if (contributive == 0)
                     $vote_status.addClass('fa fa-minus')
                 else
                     $vote_status.addClass('fa fa-arrow-down')
@@ -247,7 +254,7 @@
             });
 
             $('.vote-good, .vote-norm, .vote-bad').click(function () {
-                var contributive = $(this).attr('data-contributive');
+                var contributive = parseInt($(this).attr('data-contributive'));
                 $.ajax({
                     url: $(this).attr('data-ajax'), type: 'POST',
                     success: function () {
