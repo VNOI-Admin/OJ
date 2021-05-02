@@ -55,6 +55,7 @@ class Organization(models.Model):
                                            blank=True,
                                            help_text=_('This image will replace the default site logo for users '
                                                        'viewing the organization.'))
+    performance_points = models.FloatField(default=0, db_index=True)
 
     def __contains__(self, item):
         if isinstance(item, int):
