@@ -454,11 +454,11 @@
                     <div class="info-title">{{ _('Vote') }}</div>
                     <div class="info-data vote-box">
                         <button data-ajax="{{ url('ticket_good', ticket.id) }}" data-contributive="1"
-                            class="vote vote-good">{{ _('Good') }}</button>
+                            class="vote vote-good" {% if ticket.is_contributive == 1 %} disabled {% endif %}>{{ _('Good') }}</button>
                         <button data-ajax="{{ url('ticket_norm', ticket.id) }}" data-contributive="0"
-                            class="vote vote-norm">{{ _('Norm') }}</button>
+                            class="vote vote-norm" {% if ticket.is_contributive == 0 %} disabled {% endif %}>{{ _('Norm') }}</button>
                         <button data-ajax="{{ url('ticket_bad', ticket.id) }}" data-contributive="-1"
-                            class="vote vote-bad">{{ _('Bad') }}</button>
+                            class="vote vote-bad" {% if ticket.is_contributive == -1 %} disabled {% endif %}>{{ _('Bad') }}</button>
                     </div>
                 </div>
 
