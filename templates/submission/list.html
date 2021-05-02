@@ -75,12 +75,20 @@
                     multiple: 1,
                     placeholder: '{{ _('Filter by status...') }}',
                     matcher: idAndTextMatcher,
+                    width: '100%',
                 }).css({'visibility': 'visible'});
 
                 $('#language').select2({
                     multiple: 1,
                     placeholder: '{{ _('Filter by language...') }}',
                     matcher: idAndTextMatcher,
+                    width: '100%',
+                }).css({'visibility': 'visible'});
+
+                $('#organization').select2({
+                    multiple: 0,
+                    matcher: idAndTextMatcher,
+                    width: '100%',
                 }).css({'visibility': 'visible'});
             });
 
@@ -135,6 +143,7 @@
                 };
                 var language_filter = $.map($('select#language option[selected]'), _collect);
                 var status_filter = $.map($('select#status option[selected]'), _collect);
+                var organization_filter = $.map($('select#organization option[selected]'), _collect);
 
                 var table = $('#submissions-table');
                 var statistics = $("#statistics-table");
@@ -148,7 +157,9 @@
                     if (status_filter.length && 'status' in message &&
                         status_filter.indexOf(message.status) == -1)
                         return;
-
+                    if (organization_filter.length && 'organizations' in message &&
+                        message.organizations.indexOf(parseInt(organization_filter[0])) == -1)
+                        return;
                     var id = message.id;
                     var row = table.find('div#' + id);
                     if (row.length < 1) {
@@ -325,14 +336,22 @@
                                     {% endfor %}
                                 </select>
                             </div>
+                            <div class="filter-form-group">
+                                <label for="organization"><i>{{ _('Organization') }}</i></label>
+                                <select id="organization" name="organization">
+                                    <option value="">{{ _('All') }}</option>
+                                    <option disabled="disabled">---</option>
+                                    {% for code, name in all_organizations %}
+                                        <option {% if code == selected_organization %}selected{% endif %}
+                                                value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
                             <div class="form-submit-group">
                                 <a id="go" onclick="form.submit()" class="button">{{ _('Go') }}</a>
                             </div>
                         </form>
                     </div>
-                </div>
-
-                <div class="sidebox">
                     <div id="statistics-table">
                         <h3>{{ _('Statistics') }} <i class="fa fa-pie-chart"></i></h3>
                         <div class="sidebox-content">
