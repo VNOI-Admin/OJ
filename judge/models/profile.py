@@ -59,7 +59,7 @@ class Organization(models.Model):
 
     def calculate_points(self):
         data = self.members.get_queryset().order_by('-performance_points') \
-                   .values_list('performance_points').filter(performance_points__gt=0)
+                   .values_list('performance_points', flat=True).filter(performance_points__gt=0)
         entries = min(len(data), settings.VNOJ_ORG_PP_ENTRIES)
         pp = sum(map(mul, settings.VNOJ_ORG_PP_TABLE[:entries], data[:entries]))
         if self.performance_points != pp:
@@ -186,6 +186,8 @@ class Profile(models.Model):
             self.problem_count = problems
             self.performance_points = pp
             self.save(update_fields=['points', 'problem_count', 'performance_points'])
+            for org in self.organizations.get_queryset():
+                org.calculate_points()
         return points
 
     calculate_points.alters_data = True
