@@ -51,6 +51,46 @@
             border-radius: 5px;
         }
 
+        .vote-box {
+            display: flex;
+            flex-flow: row;
+        }
+
+        .vote {
+            display: block;
+            width: 33%;
+        }
+
+        .vote-good {
+            background: linear-gradient(to bottom, #4bad00, #278811);
+            border-color: #24710e;
+            font-weight: 600;
+        }
+        .vote-good:hover {
+            background: #24710e;
+        }
+
+        .vote-norm {
+            background: linear-gradient(to bottom, #9b9b9b, #5c5c5c);
+            border-color: #5c5c5c;
+            font-weight: 600;
+        }
+
+        .vote-norm:hover {
+            background-color: #5c5c5c;
+        }
+
+        .vote-bad {
+            background: linear-gradient(to bottom, #ff130f, #b03d17);
+            border-color: #990f0f;
+            font-weight: 600;
+        }
+
+        .vote-bad:hover {
+            background-color: #990f0f;
+        }
+
+
         .info-title {
             padding: 2px 5px;
             font-weight: 600;
@@ -310,6 +350,13 @@
 {% endblock %}
 
 {% block content_title %}
+    {% if ticket.is_contributive == 1 %}
+        <i class="fa fa-arrow-up" style="color:#00a900;"></i>
+    {% elif ticket.is_contributive == -1 %}
+        <i class="fa fa-arrow-down" style="color:#ff130f"></i>
+    {% else %}
+        <i class="fa fa-minus"></i>
+    {% endif %}
     <div class="status">
         <i class="fa {% if ticket.is_open %}fa-exclamation-circle{% else %}fa-check-circle-o{% endif %}"></i>
     </div>
@@ -369,6 +416,14 @@
                         {% else %}
                             <div class="info-empty">{{ _('No one is assigned.') }}</div>
                         {% endif %}
+                    </div>
+                </div>
+                <div class="info-box">
+                    <div class="info-title">{{ _('Vote') }}</div>
+                    <div class="info-data vote-box">
+                        <button class="vote vote-good">{{ _('Good') }}</button>
+                        <button class="vote vote-norm">{{ _('Norm') }}</button>
+                        <button class="vote vote-bad">{{ _('Bad') }}</button>
                     </div>
                 </div>
 
