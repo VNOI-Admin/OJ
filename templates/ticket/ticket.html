@@ -8,16 +8,16 @@
             margin-left: 0.3em;
         }
 
-        #content > h2:first-child .status, #content > h2:first-child .title {
+        #content > h2:first-child .vote-status, #content > h2:first-child .status, #content > h2:first-child .title {
             display: inline;
         }
 
-        #content > h2:first-child .fa-check-circle-o {
+        #content > h2:first-child .fa-check-circle-o, #content > h2:first-child .fa-arrow-up {
             color: #00a900;
         }
 
-        #content > h2:first-child .fa-exclamation-circle {
-            color: darkred;
+        #content > h2:first-child .fa-arrow-down, #content > h2:first-child .fa-exclamation-circle {
+            color: #ff130f;
         }
 
         .container {
@@ -49,6 +49,51 @@
             margin: 5px 0 10px;
             border: 1px #999 solid;
             border-radius: 5px;
+        }
+
+        .vote-box {
+            display: flex;
+            flex-flow: row;
+        }
+
+        .vote {
+            display: block;
+            width: 33%;
+            margin-left: 1px;
+            margin-right: 1px;
+        }
+
+        .vote:disabled {
+            opacity: 0.5;
+        }
+
+        .vote-good {
+            background: linear-gradient(to bottom, #4bad00, #278811);
+            border-color: #24710e;
+            font-weight: 600;
+        }
+        .vote-good:hover {
+            background: #24710e;
+        }
+
+        .vote-norm {
+            background: linear-gradient(to bottom, #9b9b9b, #5c5c5c);
+            border-color: #5c5c5c;
+            font-weight: 600;
+        }
+
+        .vote-norm:hover {
+            background-color: #5c5c5c;
+        }
+
+        .vote-bad {
+            background: linear-gradient(to bottom, #ff130f, #b03d17);
+            border-color: #990f0f;
+            font-weight: 600;
+        }
+
+        .vote-bad:hover {
+            background-color: #990f0f;
         }
 
         .info-title {
@@ -172,7 +217,7 @@
     <script type="text/javascript">
         $(function () {
             var $h2 = $('#content').find('> h2:first-child');
-            var $status = $h2.find('.status i'), $title = $h2.find('.title');
+            var $vote_status = $h2.find('.vote-status i'), $status = $h2.find('.status i'), $title = $h2.find('.title');
 
             function update_ticket_state(open) {
                 if (open)
@@ -183,12 +228,38 @@
                 $('.open-ticket').toggle(!open);
             }
 
+            function update_ticket_vote(contributive) {
+                $('.vote-good').prop('disabled', contributive == 1);
+                $('.vote-norm').prop('disabled', contributive == 0);
+                $('.vote-bad').prop('disabled', contributive == -1);
+                $vote_status.removeClass()
+                if (contributive == 1)
+                    $vote_status.addClass('fa fa-arrow-up')
+                else if (contributive == 0)
+                    $vote_status.addClass('fa fa-minus')
+                else
+                    $vote_status.addClass('fa fa-arrow-down')
+            }
+
             $('.close-ticket, .open-ticket').click(function () {
                 var open = $(this).attr('data-open') == '1';
                 $.ajax({
                     url: $(this).attr('data-ajax'), type: 'POST',
                     success: function () {
                         update_ticket_state(open);
+                    },
+                    error: function (data) {
+                        alert('Could not change ticket: ' + data.responseText);
+                    }
+                });
+            });
+
+            $('.vote-good, .vote-norm, .vote-bad').click(function () {
+                var contributive = parseInt($(this).attr('data-contributive'));
+                $.ajax({
+                    url: $(this).attr('data-ajax'), type: 'POST',
+                    success: function () {
+                        update_ticket_vote(contributive);
                     },
                     error: function (data) {
                         alert('Could not change ticket: ' + data.responseText);
@@ -310,6 +381,15 @@
 {% endblock %}
 
 {% block content_title %}
+    <div class="vote-status">
+        {% if ticket.is_contributive == 1 %}
+            <i class="fa fa-arrow-up"></i>
+        {% elif ticket.is_contributive == -1 %}
+            <i class="fa fa-arrow-down"></i>
+        {% else %}
+            <i class="fa fa-minus"></i>
+        {% endif %}
+    </div>
     <div class="status">
         <i class="fa {% if ticket.is_open %}fa-exclamation-circle{% else %}fa-check-circle-o{% endif %}"></i>
     </div>
@@ -369,6 +449,17 @@
                         {% else %}
                             <div class="info-empty">{{ _('No one is assigned.') }}</div>
                         {% endif %}
+                    </div>
+                </div>
+                <div class="info-box">
+                    <div class="info-title">{{ _('Vote') }}</div>
+                    <div class="info-data vote-box">
+                        <button data-ajax="{{ url('ticket_good', ticket.id) }}" data-contributive="1"
+                            class="vote vote-good" {% if ticket.is_contributive == 1 %} disabled {% endif %}>{{ _('Good') }}</button>
+                        <button data-ajax="{{ url('ticket_norm', ticket.id) }}" data-contributive="0"
+                            class="vote vote-norm" {% if ticket.is_contributive == 0 %} disabled {% endif %}>{{ _('Norm') }}</button>
+                        <button data-ajax="{{ url('ticket_bad', ticket.id) }}" data-contributive="-1"
+                            class="vote vote-bad" {% if ticket.is_contributive == -1 %} disabled {% endif %}>{{ _('Bad') }}</button>
                     </div>
                 </div>
 

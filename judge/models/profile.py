@@ -192,6 +192,15 @@ class Profile(models.Model):
 
     calculate_contribution_points.alters_data = True
 
+    def update_contribution_points(self, delta):
+        # this is just for testing the contribution
+        # we should not use this function to update contribution points
+        self.contribution_points += delta
+        self.save(update_fields=['contribution_points'])
+        return self.contribution_points
+
+    update_contribution_points.alters_data = True
+
     def generate_api_token(self):
         secret = secrets.token_bytes(32)
         self.api_token = hmac.new(force_bytes(settings.SECRET_KEY), msg=secret, digestmod='sha256').hexdigest()
