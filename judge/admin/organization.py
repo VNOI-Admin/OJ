@@ -59,7 +59,7 @@ class OrganizationAdmin(VersionAdmin):
         for org in queryset:
             org.calculate_points()
             count += 1
-        self.message_user(request, ungettext('%d organization have scores recalculated.',
+        self.message_user(request, ungettext('%d organization has scores recalculated.',
                                              '%d organizations have scores recalculated.',
                                              count) % count)
     recalculate_points.short_description = _('Recalculate scores')
