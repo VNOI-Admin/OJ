@@ -172,9 +172,9 @@ class TicketStatusChangeView(TicketMixin, SingleObjectMixin, View):
                 })
 
         if self.contributive is not None and ticket.is_contributive != self.contributive:
+            ticket.user.update_contribution_points(self.contributive - ticket.is_contributive)
             ticket.is_contributive = self.contributive
             ticket.save()
-            ticket.user.update_contribution_points(self.contributive)
         return HttpResponse(status=204)
 
 
