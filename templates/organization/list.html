@@ -27,7 +27,7 @@
         <tbody>
         {% for org in organizations %}
             <tr>
-                <td><a href="{{ org.get_absolute_url() }}">{{ org.name }}</a></td>
+                <td class="organization-name"><a href="{{ org.get_absolute_url() }}">{{ org.name }}</a></td>
                 <td><a href="{{ org.get_users_url() }}">{{ org.member_count }}</a></td>
             </tr>
         {% endfor %}
