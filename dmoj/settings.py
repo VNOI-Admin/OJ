@@ -49,7 +49,6 @@ DMOJ_PP_BONUS_FUNCTION = lambda n: 0.05 * n # 15 * (1 - 0.997 ** n)  # noqa: E73
 
 VNOJ_ORG_PP_STEP = 0.95
 VNOJ_ORG_PP_ENTRIES = 20
-VNOJ_ORG_PP_TABLE = [pow(VNOJ_ORG_PP_STEP, i) for i in range(VNOJ_ORG_PP_ENTRIES)]
 
 NODEJS = '/usr/bin/node'
 EXIFTOOL = '/usr/bin/exiftool'
