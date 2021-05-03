@@ -181,8 +181,7 @@ class Profile(models.Model):
         bonus_function = settings.DMOJ_PP_BONUS_FUNCTION
         points = sum(data)
         problems = len(data)
-        entries = min(len(data), len(table))
-        pp = sum(map(mul, table[:entries], data[:entries])) + bonus_function(extradata)
+        pp = sum([x * y for x, y in zip(table, data)]) + bonus_function(extradata)
         if not float_compare_equal(self.points, points) or \
            problems != self.problem_count or \
            not float_compare_equal(self.performance_points, pp):
