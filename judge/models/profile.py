@@ -22,6 +22,7 @@ from sortedm2m.fields import SortedManyToManyField
 from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, TIMEZONE
 from judge.models.runtime import Language
 from judge.ratings import rating_class
+from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
 
 __all__ = ['Organization', 'Profile', 'OrganizationRequest', 'WebAuthnCredential']
@@ -63,7 +64,7 @@ class Organization(models.Model):
         data = self.members.get_queryset().order_by('-performance_points') \
                    .values_list('performance_points', flat=True).filter(performance_points__gt=0)
         pp = sum(ratio * pp for ratio, pp in zip(table, data))
-        if self.performance_points != pp:
+        if not float_compare_equal(self.performance_points, pp):
             self.performance_points = pp
             self.save(update_fields=['performance_points'])
         return pp
@@ -182,7 +183,9 @@ class Profile(models.Model):
         problems = len(data)
         entries = min(len(data), len(table))
         pp = sum(map(mul, table[:entries], data[:entries])) + bonus_function(extradata)
-        if self.points != points or problems != self.problem_count or self.performance_points != pp:
+        if not float_compare_equal(self.points, points) or \
+           problems != self.problem_count or \
+           not float_compare_equal(self.performance_points, pp):
             self.points = points
             self.problem_count = problems
             self.performance_points = pp
