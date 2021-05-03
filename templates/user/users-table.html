@@ -31,10 +31,10 @@
 {% block user_data scoped %}
     {% if user.organizations.all() %}  
         &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
-        <em style="font-size: 0.7em; color:grey;"> 
+        <em style="font-size: 0.75em; color:grey;"> 
         {{ user.organizations.all()[0].name }}
         {% for organization in user.organizations.all()[1:] %}
-            / {{ organization.name }}
+            | {{ organization.name }}
         {% endfor %}
         </em> 
     {% endif %}
