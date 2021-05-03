@@ -48,7 +48,8 @@ DMOJ_PP_ENTRIES = 300
 DMOJ_PP_BONUS_FUNCTION = lambda n: 0.05 * n # 15 * (1 - 0.997 ** n)  # noqa: E731; 100 bai nua diem: 0.9930924
 
 VNOJ_ORG_PP_STEP = 0.95
-VNOJ_ORG_PP_ENTRIES = 20
+VNOJ_ORG_PP_ENTRIES = 100
+VNOJ_ORG_PP_SCALE = 1
 
 NODEJS = '/usr/bin/node'
 EXIFTOOL = '/usr/bin/exiftool'

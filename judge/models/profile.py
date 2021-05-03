@@ -62,7 +62,7 @@ class Organization(models.Model):
     def calculate_points(self, table=_pp_table):
         data = self.members.get_queryset().order_by('-performance_points') \
                    .values_list('performance_points', flat=True).filter(performance_points__gt=0)
-        pp = sum(ratio * pp for ratio, pp in zip(table, data))
+        pp = settings.VNOJ_ORG_PP_SCALE * sum(ratio * pp for ratio, pp in zip(table, data))
         if not float_compare_equal(self.performance_points, pp):
             self.performance_points = pp
             self.save(update_fields=['performance_points'])
