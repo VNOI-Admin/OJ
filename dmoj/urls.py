@@ -357,9 +357,8 @@ urlpatterns = [
         url(r'^/ajax$', ticket.TicketMessageDataAjax.as_view(), name='ticket_message_ajax'),
         url(r'^/open$', ticket.TicketStatusChangeView.as_view(open=True), name='ticket_open'),
         url(r'^/close$', ticket.TicketStatusChangeView.as_view(open=False), name='ticket_close'),
-        url(r'^/good$', ticket.TicketStatusChangeView.as_view(contributive=1), name='ticket_good'),
-        url(r'^/norm$', ticket.TicketStatusChangeView.as_view(contributive=0), name='ticket_norm'),
-        url(r'^/bad$', ticket.TicketStatusChangeView.as_view(contributive=-1), name='ticket_bad'),
+        url(r'^/good$', ticket.TicketStatusChangeView.as_view(contributive=True), name='ticket_good'),
+        url(r'^/norm$', ticket.TicketStatusChangeView.as_view(contributive=False), name='ticket_norm'),
         url(r'^/notes$', ticket.TicketNotesEditView.as_view(), name='ticket_notes'),
     ])),
 
