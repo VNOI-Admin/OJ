@@ -28,3 +28,14 @@
 {% block after_point %}
     <td>{{ user.problem_count }}</td>
 {% endblock %}
+{% block user_data scoped %}
+    {% if user.organizations.all() %}  
+        &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 
+        <em style="font-size: 0.7em; color:grey;"> 
+        {{ user.organizations.all()[0].name }}
+        {% for organization in user.organizations.all()[1:] %}
+            / {{ organization.name }}
+        {% endfor %}
+        </em> 
+    {% endif %}
+{% endblock %}
