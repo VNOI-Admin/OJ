@@ -3,7 +3,6 @@ import hmac
 import json
 import secrets
 import struct
-from operator import mul
 
 import webauthn
 from django.conf import settings
