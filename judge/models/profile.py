@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import F, Max, Sum
+from django.db.models import F, Max
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.functional import cached_property
@@ -181,12 +181,13 @@ class Profile(models.Model):
     calculate_points.alters_data = True
 
     def calculate_contribution_points(self):
-        # this function calculate contribution by summing all votes
-        # this is just for testing the contribution
-        # we should not use this function to calculate contribution points
-        from judge.models import Comment
-        self.contribution_points = Comment.objects.filter(author=self.user_id, hidden=False)\
-            .aggregate(s=Sum('score'))['s'] or 0
+        from judge.models import Comment, Ticket
+        cp_step = settings.DMOJ_CP_STEP
+        ticket_step = settings.DMOJ_CP_TICKETS_STEP
+        comments = Comment.objects.filter(author=self.user_id)
+        tickets = Ticket.objects.filter(user=self.user_id)
+        self.contribution_points = sum([x.score ** cp_step for x in comments])
+        self.contribution_points += sum([x.is_contributive * ticket_step for x in tickets])
         self.save(update_fields=['contribution_points'])
         return self.contribution_points
 

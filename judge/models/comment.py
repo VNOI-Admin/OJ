@@ -1,5 +1,6 @@
 import itertools
 
+from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
@@ -57,9 +58,10 @@ class Comment(MPTTModel):
         order_insertion_by = ['-time']
 
     def vote(self, delta):
+        self.author.update_contribution_points(-int(self.score ** settings.DMOJ_CP_STEP))
         self.score += delta
         self.save(update_fields=['score'])
-        self.author.calculate_contribution_points()
+        self.author.update_contribution_points(int(self.score ** settings.DMOJ_CP_STEP))
 
     @classmethod
     def most_recent(cls, user, n, batch=None):

@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
@@ -172,7 +173,8 @@ class TicketStatusChangeView(TicketMixin, SingleObjectMixin, View):
                 })
 
         if self.contributive is not None and ticket.is_contributive != self.contributive:
-            ticket.user.update_contribution_points(self.contributive - ticket.is_contributive)
+            ticket.user.update_contribution_points(settings.DMOJ_CP_TICKETS_STEP *
+                                                   (self.contributive - ticket.is_contributive))
             ticket.is_contributive = self.contributive
             ticket.save()
         return HttpResponse(status=204)
