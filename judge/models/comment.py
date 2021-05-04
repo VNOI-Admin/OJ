@@ -58,11 +58,9 @@ class Comment(MPTTModel):
         order_insertion_by = ['-time']
 
     def vote(self, delta):
-        cp_reduction = settings.DMOJ_CP_REDUCTION
-        self.author.update_contribution_points(-(self.score * cp_reduction))
         self.score += delta
         self.save(update_fields=['score'])
-        self.author.update_contribution_points(self.score * cp_reduction)
+        self.author.update_contribution_points(delta * settings.VNOJ_CP_REDUCTION)
 
     @classmethod
     def most_recent(cls, user, n, batch=None):
