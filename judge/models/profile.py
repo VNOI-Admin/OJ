@@ -182,12 +182,12 @@ class Profile(models.Model):
 
     def calculate_contribution_points(self):
         from judge.models import Comment, Ticket
-        cp_step = settings.DMOJ_CP_STEP
+        cp_reduction = settings.DMOJ_CP_REDUCTION
         ticket_step = settings.DMOJ_CP_TICKETS_STEP
         comments = Comment.objects.filter(author=self.user_id)
         tickets = Ticket.objects.filter(user=self.user_id)
-        self.contribution_points = sum([x.score ** cp_step for x in comments])
-        self.contribution_points += sum([x.is_contributive * ticket_step for x in tickets])
+        self.contribution_points = sum([x.score for x in comments]) * cp_reduction
+        self.contribution_points += sum([x.is_contributive for x in tickets]) * ticket_step
         self.save(update_fields=['contribution_points'])
         return self.contribution_points
 
