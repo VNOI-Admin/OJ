@@ -48,8 +48,8 @@ DMOJ_PP_ENTRIES = 300
 DMOJ_PP_BONUS_FUNCTION = lambda n: 0.05 * n # 15 * (1 - 0.997 ** n)  # noqa: E731; 100 bai nua diem: 0.9930924
 
 # Contribution points function
-DMOJ_CP_REDUCTION = 0.2 # XXX: Testing
-DMOJ_CP_TICKETS_STEP = 10 # XXX: Testing
+VNOJ_CP_REDUCTION = 0.2  # XXX: Testing
+VNOJ_CP_TICKETS_STEP = 10  # XXX: Testing
 
 NODEJS = '/usr/bin/node'
 EXIFTOOL = '/usr/bin/exiftool'

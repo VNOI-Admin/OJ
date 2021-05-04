@@ -173,7 +173,7 @@ class TicketStatusChangeView(TicketMixin, SingleObjectMixin, View):
                 })
 
         if self.contributive is not None and ticket.is_contributive != self.contributive:
-            ticket.user.update_contribution_points(settings.DMOJ_CP_TICKETS_STEP *
+            ticket.user.update_contribution_points(settings.VNOJ_CP_TICKETS_STEP *
                                                    (self.contributive - ticket.is_contributive))
             ticket.is_contributive = self.contributive
             ticket.save()
