@@ -186,8 +186,8 @@ class Profile(models.Model):
         ticket_step = settings.DMOJ_CP_TICKETS_STEP
         comments = Comment.objects.filter(author=self.user_id)
         tickets = Ticket.objects.filter(user=self.user_id)
-        self.contribution_points = sum([x.score for x in comments]) * cp_reduction
-        self.contribution_points += sum([x.is_contributive for x in tickets]) * ticket_step
+        self.contribution_points = sum(x.score for x in comments) * cp_reduction
+        self.contribution_points += sum(x.is_contributive for x in tickets) * ticket_step
         self.save(update_fields=['contribution_points'])
         return self.contribution_points
 
