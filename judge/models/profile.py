@@ -3,7 +3,6 @@ import hmac
 import json
 import secrets
 import struct
-from operator import mul
 
 import webauthn
 from django.conf import settings
@@ -22,6 +21,7 @@ from sortedm2m.fields import SortedManyToManyField
 from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, TIMEZONE
 from judge.models.runtime import Language
 from judge.ratings import rating_class
+from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
 
 __all__ = ['Organization', 'Profile', 'OrganizationRequest', 'WebAuthnCredential']
@@ -55,6 +55,18 @@ class Organization(models.Model):
                                            blank=True,
                                            help_text=_('This image will replace the default site logo for users '
                                                        'viewing the organization.'))
+    performance_points = models.FloatField(default=0)
+
+    _pp_table = [pow(settings.VNOJ_ORG_PP_STEP, i) for i in range(settings.VNOJ_ORG_PP_ENTRIES)]
+
+    def calculate_points(self, table=_pp_table):
+        data = self.members.get_queryset().order_by('-performance_points') \
+                   .values_list('performance_points', flat=True).filter(performance_points__gt=0)
+        pp = settings.VNOJ_ORG_PP_SCALE * sum(ratio * pp for ratio, pp in zip(table, data))
+        if not float_compare_equal(self.performance_points, pp):
+            self.performance_points = pp
+            self.save(update_fields=['performance_points'])
+        return pp
 
     def __contains__(self, item):
         if isinstance(item, int):
@@ -169,13 +181,16 @@ class Profile(models.Model):
         bonus_function = settings.DMOJ_PP_BONUS_FUNCTION
         points = sum(data)
         problems = len(data)
-        entries = min(len(data), len(table))
-        pp = sum(map(mul, table[:entries], data[:entries])) + bonus_function(extradata)
-        if self.points != points or problems != self.problem_count or self.performance_points != pp:
+        pp = sum(x * y for x, y in zip(table, data)) + bonus_function(extradata)
+        if not float_compare_equal(self.points, points) or \
+           problems != self.problem_count or \
+           not float_compare_equal(self.performance_points, pp):
             self.points = points
             self.problem_count = problems
             self.performance_points = pp
             self.save(update_fields=['points', 'problem_count', 'performance_points'])
+            for org in self.organizations.get_queryset():
+                org.calculate_points()
         return points
 
     calculate_points.alters_data = True
