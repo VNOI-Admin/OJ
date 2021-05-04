@@ -9,7 +9,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import F, Max
+from django.db.models import F, Max, Sum
 from django.urls import reverse
 from django.utils.encoding import force_bytes
 from django.utils.functional import cached_property
@@ -197,12 +197,15 @@ class Profile(models.Model):
 
     def calculate_contribution_points(self):
         from judge.models import Comment, Ticket
-        cp_reduction = settings.VNOJ_CP_REDUCTION
-        ticket_step = settings.VNOJ_CP_TICKETS_STEP
-        comments = Comment.objects.filter(author=self.user_id)
-        tickets = Ticket.objects.filter(user=self.user_id)
-        self.contribution_points = sum(x.score for x in comments) * cp_reduction
-        self.contribution_points += sum(x.is_contributive for x in tickets) * ticket_step
+        # Because the aggregate function can return None
+        # So we use `X or 0` to get 0 if X is None
+        # Please note that `0 or X` will return None if X is None
+        total_comment_scores = Comment.objects.filter(author=self.user_id) \
+            .aggregate(sum=Sum('score'))['sum'] or 0
+        count_good_tickets = Ticket.objects.filter(user=self.user_id, is_contributive=True) \
+            .count()
+        self.contribution_points = total_comment_scores * settings.VNOJ_CP_REDUCTION
+        self.contribution_points += count_good_tickets * settings.VNOJ_CP_TICKETS_STEP
         self.save(update_fields=['contribution_points'])
         return self.contribution_points
 
