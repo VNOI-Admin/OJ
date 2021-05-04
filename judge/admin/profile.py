@@ -107,7 +107,7 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
         for profile in queryset:
             profile.calculate_points()
             count += 1
-        self.message_user(request, ungettext('%d user have scores recalculated.',
+        self.message_user(request, ungettext('%d user has scores recalculated.',
                                              '%d users have scores recalculated.',
                                              count) % count)
     recalculate_points.short_description = _('Recalculate scores')
@@ -117,7 +117,7 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
         for profile in queryset:
             profile.calculate_contribution_points()
             count += 1
-        self.message_user(request, ungettext('%d user have contribution scores recalculated.',
+        self.message_user(request, ungettext('%d user has contribution scores recalculated.',
                                              '%d users have contribution scores recalculated.',
                                              count) % count)
     recalulate_contribution_points.short_description = _('Recalulate contribution points')
