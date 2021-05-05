@@ -63,8 +63,6 @@ def vote_comment(request, delta):
                     # We must continue racing in case this is exploited to manipulate votes.
                     continue
                 return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
-                vote.delete()
-            Comment.objects.get(id=comment_id).vote(-vote.score)
         else:
             Comment.objects.get(id=comment_id).vote(delta)
         break
