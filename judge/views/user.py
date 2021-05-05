@@ -451,20 +451,20 @@ class UserList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
     context_object_name = 'users'
     template_name = 'user/list.html'
     paginate_by = 100
-    all_sorts = frozenset(('points', 'problem_count', 'rating', 'performance_points'))
+    all_sorts = frozenset(('points', 'problem_count', 'rating', 'performance_points', 'contribution_points'))
     default_desc = all_sorts
     default_sort = '-performance_points'
 
     def get_queryset(self):
         return (Profile.objects.filter(is_unlisted=False).order_by(self.order).select_related('user')
                 .only('display_rank', 'user__username', 'points', 'rating', 'performance_points',
-                      'problem_count'))
+                      'problem_count', 'contribution_points'))
 
     def get_context_data(self, **kwargs):
         context = super(UserList, self).get_context_data(**kwargs)
         context['users'] = ranker(
             context['users'],
-            key=attrgetter('performance_points', 'problem_count'),
+            key=attrgetter('performance_points', 'problem_count', 'contribution_points'),
             rank=self.paginate_by * (context['page_obj'].number - 1),
         )
         context['first_page_href'] = '.'

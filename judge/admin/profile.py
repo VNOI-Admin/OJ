@@ -54,7 +54,7 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
     ordering = ('user__username',)
     search_fields = ('user__username', 'ip', 'user__email')
     list_filter = ('language', TimezoneFilter)
-    actions = ('recalculate_points',)
+    actions = ('recalculate_points', 'recalulate_contribution_points')
     actions_on_top = True
     actions_on_bottom = True
     form = ProfileForm
@@ -107,10 +107,20 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
         for profile in queryset:
             profile.calculate_points()
             count += 1
-        self.message_user(request, ungettext('%d user have scores recalculated.',
+        self.message_user(request, ungettext('%d user has scores recalculated.',
                                              '%d users have scores recalculated.',
                                              count) % count)
     recalculate_points.short_description = _('Recalculate scores')
+
+    def recalulate_contribution_points(self, request, queryset):
+        count = 0
+        for profile in queryset:
+            profile.calculate_contribution_points()
+            count += 1
+        self.message_user(request, ungettext('%d user has contribution scores recalculated.',
+                                             '%d users have contribution scores recalculated.',
+                                             count) % count)
+    recalulate_contribution_points.short_description = _('Recalulate contribution points')
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(ProfileAdmin, self).get_form(request, obj, **kwargs)
