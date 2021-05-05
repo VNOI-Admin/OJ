@@ -52,8 +52,9 @@ VNOJ_ORG_PP_ENTRIES = 100
 VNOJ_ORG_PP_SCALE = 1
 
 # Contribution points function
-VNOJ_CP_REDUCTION = 0.2  # XXX: Testing
-VNOJ_CP_TICKETS_STEP = 10  # XXX: Testing
+# Both should be int
+VNOJ_CP_COMMENT = 1  # Each comment vote equals 1 CP
+VNOJ_CP_TICKET = 10  # Each good ticket equals CP
 
 NODEJS = '/usr/bin/node'
 EXIFTOOL = '/usr/bin/exiftool'

@@ -204,8 +204,8 @@ class Profile(models.Model):
             .aggregate(sum=Sum('score'))['sum'] or 0
         count_good_tickets = Ticket.objects.filter(user=self.user_id, is_contributive=True) \
             .count()
-        self.contribution_points = total_comment_scores * settings.VNOJ_CP_REDUCTION
-        self.contribution_points += count_good_tickets * settings.VNOJ_CP_TICKETS_STEP
+        self.contribution_points = total_comment_scores * settings.VNOJ_CP_COMMENT
+        self.contribution_points += count_good_tickets * settings.VNOJ_CP_TICKET
         self.save(update_fields=['contribution_points'])
         return self.contribution_points
 
