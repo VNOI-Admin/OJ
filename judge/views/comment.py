@@ -43,8 +43,9 @@ def vote_comment(request, delta):
     except ValueError:
         return HttpResponseBadRequest()
     else:
-        if not Comment.objects.filter(id=comment_id, hidden=False).exists():
-            raise Http404()
+        comment = get_object_or_404(Comment, id=comment_id, hidden=False)
+        if request.profile == comment.author:
+            return HttpResponseBadRequest(_('You cannot vote your own comment'), content_type='text/plain')
 
     vote = CommentVote()
     vote.comment_id = comment_id
@@ -62,8 +63,6 @@ def vote_comment(request, delta):
                     # We must continue racing in case this is exploited to manipulate votes.
                     continue
                 return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
-                vote.delete()
-            Comment.objects.get(id=comment_id).vote(-vote.score)
         else:
             Comment.objects.get(id=comment_id).vote(delta)
         break
