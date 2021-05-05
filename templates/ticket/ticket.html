@@ -8,16 +8,16 @@
             margin-left: 0.3em;
         }
 
-        #content > h2:first-child .status, #content > h2:first-child .title {
+        #content > h2:first-child .vote-status, #content > h2:first-child .status, #content > h2:first-child .title {
             display: inline;
         }
 
-        #content > h2:first-child .fa-check-circle-o {
+        #content > h2:first-child .fa-check-circle-o, #content > h2:first-child .fa-arrow-up {
             color: #00a900;
         }
 
-        #content > h2:first-child .fa-exclamation-circle {
-            color: darkred;
+        #content > h2:first-child .fa-arrow-down, #content > h2:first-child .fa-exclamation-circle {
+            color: #ff130f;
         }
 
         .container {
@@ -68,7 +68,10 @@
             font-style: italic;
         }
 
-        .close-ticket {
+        .vote-good, .vote-norm {
+            margin: 5px 0 10px;
+        }
+        .close-ticket, .vote-good {
             display: block;
             width: 100%;
             background: linear-gradient(to bottom, #4bad00 0%, #278811 100%);
@@ -76,11 +79,11 @@
             font-weight: 600;
         }
 
-        .close-ticket:hover {
+        .close-ticket:hover, .vote-good:hover {
             background: #24710e;
         }
 
-        .open-ticket {
+        .open-ticket, .vote-norm {
             display: block;
             width: 100%;
             background: linear-gradient(to bottom, #ff130f, #b03d17);
@@ -88,7 +91,7 @@
             font-weight: 600;
         }
 
-        .open-ticket:hover {
+        .open-ticket:hover, .vote-norm:hover {
             background: #853011;
         }
 
@@ -172,7 +175,7 @@
     <script type="text/javascript">
         $(function () {
             var $h2 = $('#content').find('> h2:first-child');
-            var $status = $h2.find('.status i'), $title = $h2.find('.title');
+            var $vote_status = $h2.find('.vote-status i'), $status = $h2.find('.status i'), $title = $h2.find('.title');
 
             function update_ticket_state(open) {
                 if (open)
@@ -183,12 +186,34 @@
                 $('.open-ticket').toggle(!open);
             }
 
+            function update_ticket_vote(contributive) {
+                if (contributive)
+                    $vote_status.removeClass('fa-minus').addClass('fa-arrow-up');
+                else
+                    $vote_status.removeClass('fa-arrow-up').addClass('fa-minus');
+                $('.vote-norm').toggle(contributive);
+                $('.vote-good').toggle(!contributive);
+            }
+
             $('.close-ticket, .open-ticket').click(function () {
                 var open = $(this).attr('data-open') == '1';
                 $.ajax({
                     url: $(this).attr('data-ajax'), type: 'POST',
                     success: function () {
                         update_ticket_state(open);
+                    },
+                    error: function (data) {
+                        alert('Could not change ticket: ' + data.responseText);
+                    }
+                });
+            });
+
+            $('.vote-good, .vote-norm').click(function () {
+                var contributive = $(this).attr('data-contributive') == '1';
+                $.ajax({
+                    url: $(this).attr('data-ajax'), type: 'POST',
+                    success: function () {
+                        update_ticket_vote(contributive);
                     },
                     error: function (data) {
                         alert('Could not change ticket: ' + data.responseText);
@@ -310,6 +335,9 @@
 {% endblock %}
 
 {% block content_title %}
+    <div class="vote-status">
+        <i class="fa {% if ticket.is_contributive %}fa-arrow-up{% else %}fa-minus{% endif %}"></i>
+    </div>
     <div class="status">
         <i class="fa {% if ticket.is_open %}fa-exclamation-circle{% else %}fa-check-circle-o{% endif %}"></i>
     </div>
@@ -372,11 +400,6 @@
                     </div>
                 </div>
 
-                <button data-ajax="{{ url('ticket_close', ticket.id) }}" data-open="0" class="close-ticket"
-                        {% if not ticket.is_open %}style="display: none"{% endif %}>{{ _('Close ticket') }}</button>
-                <button data-ajax="{{ url('ticket_open', ticket.id) }}" data-open="1" class="open-ticket"
-                        {% if ticket.is_open %}style="display: none"{% endif %}>{{ _('Reopen ticket') }}</button>
-
                 {% if perms.judge.change_ticket or request.profile in assignees %}
                     <div class="info-box">
                         <div class="info-title">{{ _('Assignee notes') }}
@@ -391,7 +414,17 @@
                             <div class="info-real">{{ ticket.notes|linebreaks }}</div>
                         </div>
                     </div>
+
+                    <button data-ajax="{{ url('ticket_good', ticket.id) }}" data-contributive="1" class="vote-good"
+                        {% if ticket.is_contributive %}style="display: none"{% endif %}>{{ _('Upvote') }}</button>
+                    <button data-ajax="{{ url('ticket_norm', ticket.id) }}" data-contributive="0" class="vote-norm"
+                        {% if not ticket.is_contributive %}style="display: none"{% endif %}>{{ _('Undo vote') }}</button>
                 {% endif %}
+
+                <button data-ajax="{{ url('ticket_close', ticket.id) }}" data-open="0" class="close-ticket"
+                        {% if not ticket.is_open %}style="display: none"{% endif %}>{{ _('Close ticket') }}</button>
+                <button data-ajax="{{ url('ticket_open', ticket.id) }}" data-open="1" class="open-ticket"
+                        {% if ticket.is_open %}style="display: none"{% endif %}>{{ _('Reopen ticket') }}</button>
             </div>
         </aside>
     </div>

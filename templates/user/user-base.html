@@ -51,6 +51,12 @@
                     {{ user.performance_points|floatformat(2) }}
                 </span>
             </div>
+            <div>
+                <b class="semibold">{{ _('Contribution points:') }}</b>
+                <span title="{{ user.contribution_points }}">
+                    {{ user.contribution_points }}
+                </span>
+            </div>
 
             <br>
             <div>

@@ -1,6 +1,7 @@
 import json
 
 from django import forms
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
@@ -151,12 +152,13 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
 
 class TicketStatusChangeView(TicketMixin, SingleObjectMixin, View):
     open = None
+    contributive = None
 
     def post(self, request, *args, **kwargs):
-        if self.open is None:
-            raise ImproperlyConfigured('Need to define open')
+        if self.open is None and self.contributive is None:
+            raise ImproperlyConfigured('Need to define open or contributive')
         ticket = self.get_object()
-        if ticket.is_open != self.open:
+        if self.open is not None and ticket.is_open != self.open:
             ticket.is_open = self.open
             ticket.save()
             if event.real:
@@ -169,6 +171,14 @@ class TicketStatusChangeView(TicketMixin, SingleObjectMixin, View):
                 event.post('ticket-%d' % ticket.id, {
                     'type': 'ticket-status', 'open': self.open,
                 })
+
+        if self.contributive is not None and ticket.is_contributive != self.contributive:
+            if not request.user.has_perm('change_ticket') and self.request.profile == ticket.user:
+                return HttpResponseBadRequest(_('You cannot vote your own ticket.'), content_type='text/plain')
+            ticket.user.update_contribution_points(settings.VNOJ_CP_TICKET *
+                                                   (self.contributive - ticket.is_contributive))
+            ticket.is_contributive = self.contributive
+            ticket.save()
         return HttpResponse(status=204)
 
 

@@ -2,7 +2,6 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
 from django.db import IntegrityError, transaction
-from django.db.models import F
 from django.forms.models import ModelForm
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
@@ -44,8 +43,9 @@ def vote_comment(request, delta):
     except ValueError:
         return HttpResponseBadRequest()
     else:
-        if not Comment.objects.filter(id=comment_id, hidden=False).exists():
-            raise Http404()
+        comment = get_object_or_404(Comment, id=comment_id, hidden=False)
+        if request.profile == comment.author:
+            return HttpResponseBadRequest(_('You cannot vote your own comment'), content_type='text/plain')
 
     vote = CommentVote()
     vote.comment_id = comment_id
@@ -62,12 +62,9 @@ def vote_comment(request, delta):
                 except CommentVote.DoesNotExist:
                     # We must continue racing in case this is exploited to manipulate votes.
                     continue
-                if -vote.score != delta:
-                    return HttpResponseBadRequest(_('You already voted.'), content_type='text/plain')
-                vote.delete()
-            Comment.objects.filter(id=comment_id).update(score=F('score') - vote.score)
+                return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
         else:
-            Comment.objects.filter(id=comment_id).update(score=F('score') + delta)
+            Comment.objects.get(id=comment_id).vote(delta)
         break
     return HttpResponse('success', content_type='text/plain')
 
