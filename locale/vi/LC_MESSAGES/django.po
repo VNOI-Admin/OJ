@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-06 10:38+0000\n"
+"POT-Creation-Date: 2021-05-06 10:49+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -506,6 +506,21 @@ msgstr "Danh sách bài"
 #, python-brace-format
 msgid "posted {time}"
 msgstr "đã đăng {time}"
+
+#: judge/custom_translations.py:28
+#, python-brace-format
+msgid "commented {time}"
+msgstr "đã bình luận {time}"
+
+#: judge/custom_translations.py:31
+#, python-format
+msgid "%(duration)s long"
+msgstr "thời gian làm bài: %(duration)s"
+
+#: judge/custom_translations.py:32
+#, python-format
+msgid "%(time_limit)s window"
+msgstr "thời gian làm bài: %(time_limit)s (bắt đầu tính giờ khi nhấn tham gia kỳ thi)"
 
 #: judge/forms.py:26
 msgid "Two-factor authentication tokens must be 6 decimal digits."
@@ -2573,7 +2588,7 @@ msgstr "%h:%m:%s"
 msgctxt "time format no seconds with day"
 msgid "%d day %h:%m"
 msgid_plural "%d days %h:%m"
-msgstr[0] "%d ngày %h:%m"
+msgstr[0] "%d ngày, %h giờ, %m phút"
 
 #: judge/utils/timedelta.py:61
 #, python-format
@@ -2584,7 +2599,7 @@ msgstr[0] "%d ngày"
 #: judge/utils/timedelta.py:63
 msgctxt "hours and minutes"
 msgid "%h:%m"
-msgstr "%h:%m"
+msgstr "%h giờ, %m phút"
 
 #: judge/views/blog.py:37
 #, python-format
@@ -3247,7 +3262,7 @@ msgstr "Đăng nhập"
 
 #: judge/views/user.py:175
 msgid "M j, Y, G:i"
-msgstr "M j, Y, G:i"
+msgstr "j M, Y, G:i"
 
 #: judge/views/user.py:314
 msgid "Preparing your data..."
@@ -5442,6 +5457,3 @@ msgstr "Đóng góp"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
-
-#~ msgid "commented {time}"
-#~ msgstr "đã bình luận {time}"

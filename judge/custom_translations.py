@@ -23,3 +23,10 @@ _("Your password can't be entirely numeric.")
 # NavBar
 _("PRoblems")
 _('posted {time}')
+
+# Comment
+_('commented {time}')
+
+# Contest duration
+_('%(duration)s long')
+_('%(time_limit)s window')
