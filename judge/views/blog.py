@@ -80,6 +80,16 @@ class PostList(ListView):
         context['current_contests'] = visible_contests.filter(start_time__lte=now, end_time__gt=now)
         context['future_contests'] = visible_contests.filter(start_time__gt=now)
 
+        context['top_pp_users'] = (Profile.objects.order_by('-performance_points')
+                                   .filter(performance_points__gt=0)
+                                   .values_list('user__username', 'performance_points')
+                                   [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
+
+        context['top_contrib'] = (Profile.objects.order_by('-contribution_points')
+                                       .filter(contribution_points__gt=0)
+                                       .values_list('user__username', 'contribution_points')
+                                       [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
+
         if self.request.user.is_authenticated:
             context['own_open_tickets'] = (
                 Ticket.objects.filter(user=self.request.profile, is_open=True).order_by('-id')
