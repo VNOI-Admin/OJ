@@ -3479,6 +3479,11 @@ msgstr "Hãy đăng nhập để bình chọn"
 msgid "commented on {time}"
 msgstr "đã bình luận lúc {time}"
 
+#: templates/comments/list.html:47
+#, python-brace-format
+msgid "commented {time}"
+msgstr "đã bình luận {time}"
+
 #: templates/comments/list.html:56
 #, python-format
 msgid "edit %(edits)s"
@@ -3773,7 +3778,7 @@ msgstr "Tham gia"
 
 #: templates/contest/list.html:147
 msgid "Active Contests"
-msgstr ""
+msgstr "Các kỳ thi đang diễn ra"
 
 #: templates/contest/list.html:151 templates/contest/list.html:193
 #: templates/contest/list.html:231 templates/contest/list.html:268
