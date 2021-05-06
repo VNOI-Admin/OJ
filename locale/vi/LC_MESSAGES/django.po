@@ -3088,7 +3088,7 @@ msgstr "Bài nộp %(problem)s của %(user)s"
 #: judge/views/submission.py:203 judge/views/submission.py:204
 #: templates/problem/problem.html:127
 msgid "All submissions"
-msgstr "Danh sách các bài nộp"
+msgstr "Danh sách bài nộp"
 
 #: judge/views/submission.py:366 judge/views/submission.py:371
 msgid "All my submissions"
@@ -3096,12 +3096,12 @@ msgstr "Tất cả bài nộp của tôi"
 
 #: judge/views/submission.py:367 judge/views/submission.py:372
 msgid "All submissions by"
-msgstr "Danh sách các bài nộp bởi %s"
+msgstr "Danh sách bài nộp bởi"
 
 #: judge/views/submission.py:398
 #, python-format
 msgid "All submissions for %s"
-msgstr "Danh sách các bài nộp bởi %s"
+msgstr "Danh sách bài nộp %s"
 
 #: judge/views/submission.py:417
 msgid "Must pass a problem"
@@ -3714,7 +3714,7 @@ msgstr "Kỳ thi đã kết thúc."
 
 #: templates/contest/contest.html:59 templates/contest/contest.html:63
 msgid "F j, Y, G:i T"
-msgstr "F j, Y, G:i T"
+msgstr "j F, Y, G:i T"
 
 #: templates/contest/contest.html:59
 #, python-format
