@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-05 11:19+0000\n"
+"POT-Creation-Date: 2021-05-06 10:38+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -532,9 +532,10 @@ msgid "Enable experimental features"
 msgstr "Bật các tính năng đang thử nghiệm"
 
 #: judge/forms.py:71
-#| msgid "You must solve at least one problem before you can vote."
 msgid "You must solve at least one problem before you can update your profile."
-msgstr "Bạn phải giải ít nhất một bài trước khi có thể bỏ thay đổi thông tin người dùng"
+msgstr ""
+"Bạn phải giải ít nhất một bài trước khi có thể bỏ thay đổi thông tin người "
+"dùng"
 
 #: judge/forms.py:80 judge/views/organization.py:128
 #, python-brace-format
@@ -613,7 +614,6 @@ msgid "Problem with code already exists."
 msgstr "Mã bài tập đã tồn tại."
 
 #: judge/forms.py:273 judge/models/contest.py:66
-#| msgid "Contest id must be ^[a-z0-9]+$"
 msgid "Contest id must be ^[a-z0-9_]+$"
 msgstr "id kỳ thi phải bao gồm ^[a-z0-9_] + $"
 
@@ -751,7 +751,6 @@ msgid "Hidden for duration of contest"
 msgstr "Ẩn khi kỳ thi đang diễn ra"
 
 #: judge/models/contest.py:63
-#| msgid "View user participation"
 msgid "Hidden for duration of participation"
 msgstr "Ẩn khi thí sinh đang tham gia kỳ thi ảo"
 
@@ -3108,6 +3107,7 @@ msgid "Must pass a contest"
 msgstr "Phải vượt qua một kỳ thi"
 
 #: judge/views/submission.py:574
+#, python-brace-format
 msgid "All submissions in <a href=\"{1}\">{0}</a>"
 msgstr "Danh sách các bài nộp trong <a href=\"{1}\">{0}</a>"
 
@@ -3478,11 +3478,6 @@ msgstr "Hãy đăng nhập để bình chọn"
 #, python-brace-format
 msgid "commented on {time}"
 msgstr "đã bình luận lúc {time}"
-
-#: templates/comments/list.html:47
-#, python-brace-format
-msgid "commented {time}"
-msgstr "đã bình luận {time}"
 
 #: templates/comments/list.html:56
 #, python-format
@@ -4384,11 +4379,13 @@ msgstr "Không có máy chấm nào"
 msgid ""
 "In case the statement didn't load correctly, you can download the statement "
 "here: "
-msgstr "Trong trường hợp đề bài hiện thị không chính xác, bạn có thể tải đề bài tại đây: "
+msgstr ""
+"Trong trường hợp đề bài hiện thị không chính xác, bạn có thể tải đề bài tại "
+"đây: "
 
 #: templates/problem/problem.html:287
-msgid "Đề bài"
-msgstr "Trạng thái"
+msgid "Statement"
+msgstr "Đề bài"
 
 #: templates/problem/problem.html:305
 msgid "Request clarification"
@@ -5445,3 +5442,6 @@ msgstr "Đóng góp"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+#~ msgid "commented {time}"
+#~ msgstr "đã bình luận {time}"
