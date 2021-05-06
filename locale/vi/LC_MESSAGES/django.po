@@ -199,12 +199,10 @@ msgid "View on site"
 msgstr "Xem trên trang web"
 
 #: judge/admin/organization.py:62
-#, fuzzy, python-format
-#| msgid "%d user have scores recalculated."
-#| msgid_plural "%d users have scores recalculated."
+#, python-format
 msgid "%d organization has scores recalculated."
 msgid_plural "%d organizations have scores recalculated."
-msgstr[0] "%d người dùng có tính lại điểm."
+msgstr[0] "Đã tính lại điểm của %d tổ chức."
 
 #: judge/admin/organization.py:65 judge/admin/profile.py:113
 msgid "Recalculate scores"
@@ -303,26 +301,20 @@ msgid "date joined"
 msgstr "ngày tham gia"
 
 #: judge/admin/profile.py:110
-#, fuzzy, python-format
-#| msgid "%d user have scores recalculated."
-#| msgid_plural "%d users have scores recalculated."
+#, python-format
 msgid "%d user has scores recalculated."
 msgid_plural "%d users have scores recalculated."
-msgstr[0] "%d người dùng có tính lại điểm."
+msgstr[0] "Đã tính lại điểm của %d người dùng."
 
 #: judge/admin/profile.py:120
-#, fuzzy, python-format
-#| msgid "%d user have scores recalculated."
-#| msgid_plural "%d users have scores recalculated."
+#, python-format
 msgid "%d user has contribution scores recalculated."
 msgid_plural "%d users have contribution scores recalculated."
-msgstr[0] "%d người dùng có tính lại điểm."
+msgstr[0] "Đã tính lại điểm đóng góp của %d người dùng."
 
 #: judge/admin/profile.py:123
-#, fuzzy
-#| msgid "Recalculating user points"
 msgid "Recalulate contribution points"
-msgstr "Đang tính điểm"
+msgstr "Tính lại điểm đóng góp"
 
 #: judge/admin/runtime.py:19
 msgid "Disallowed problems"
@@ -540,10 +532,9 @@ msgid "Enable experimental features"
 msgstr "Bật các tính năng đang thử nghiệm"
 
 #: judge/forms.py:71
-#, fuzzy
 #| msgid "You must solve at least one problem before you can vote."
 msgid "You must solve at least one problem before you can update your profile."
-msgstr "Bạn phải giải ít nhất một bài trước khi có thể bỏ biết"
+msgstr "Bạn phải giải ít nhất một bài trước khi có thể bỏ thay đổi thông tin người dùng"
 
 #: judge/forms.py:80 judge/views/organization.py:128
 #, python-brace-format
@@ -614,20 +605,17 @@ msgid "Must specify either totp_token or webauthn_response."
 msgstr ""
 
 #: judge/forms.py:263 judge/models/problem.py:105
-#, fuzzy
-#| msgid "Problem code must be ^[a-z0-9]+$"
 msgid "Problem code must be ^[a-z0-9_]+$"
-msgstr "Mã đầu bài chỉ bao gồm ^[a-z0-9] + $"
+msgstr "Mã đầu bài chỉ bao gồm ^[a-z0-9_] + $"
 
 #: judge/forms.py:268
 msgid "Problem with code already exists."
 msgstr "Mã bài tập đã tồn tại."
 
 #: judge/forms.py:273 judge/models/contest.py:66
-#, fuzzy
 #| msgid "Contest id must be ^[a-z0-9]+$"
 msgid "Contest id must be ^[a-z0-9_]+$"
-msgstr "id kỳ thi phải bao gồm ^[a-z0-9] + $"
+msgstr "id kỳ thi phải bao gồm ^[a-z0-9_] + $"
 
 #: judge/forms.py:278
 msgid "Contest with key already exists."
@@ -756,17 +744,16 @@ msgstr "thẻ kỳ thi"
 
 #: judge/models/contest.py:61
 msgid "Visible"
-msgstr ""
+msgstr "Có thể xem"
 
 #: judge/models/contest.py:62
 msgid "Hidden for duration of contest"
-msgstr ""
+msgstr "Ẩn khi kỳ thi đang diễn ra"
 
 #: judge/models/contest.py:63
-#, fuzzy
 #| msgid "View user participation"
 msgid "Hidden for duration of participation"
-msgstr "Xem thành viên tham gia"
+msgstr "Ẩn khi thí sinh đang tham gia kỳ thi ảo"
 
 #: judge/models/contest.py:65
 msgid "contest id"
@@ -824,29 +811,23 @@ msgstr "Kỳ thi này có rated hay không."
 
 #: judge/models/contest.py:81
 msgid "view contest scoreboard"
-msgstr ""
+msgstr "xem bảng điểm"
 
 #: judge/models/contest.py:83
 msgid "These users will be able to view the scoreboard."
-msgstr ""
+msgstr "Những người dùng này có thể xem bảng điểm."
 
 #: judge/models/contest.py:84
-#, fuzzy
-#| msgid "public visibility"
 msgid "scoreboard visibility"
-msgstr "hiển thị công khai"
+msgstr "Chế độ hiển thị bảng điểm"
 
 #: judge/models/contest.py:85
-#, fuzzy
-#| msgid ""
-#| "Whether the scoreboard should remain hidden for the duration of the "
-#| "contest."
 msgid "Scoreboard visibility through the duration of the contest"
-msgstr "Liệu bảng điểm có nên được giấu trong suốt thời gian của kỳ thi."
+msgstr "Chế độ hiển thị bảng điểm trong quá trình diễn ra kì thi"
 
 #: judge/models/contest.py:87
 msgid "no comments"
-msgstr "không có bình luận gì"
+msgstr "không bình luận"
 
 #: judge/models/contest.py:88
 msgid "Use clarification system instead of comments."
@@ -3127,8 +3108,6 @@ msgid "Must pass a contest"
 msgstr "Phải vượt qua một kỳ thi"
 
 #: judge/views/submission.py:574
-#, fuzzy, python-brace-format
-#| msgid "All submissions in<a href=\"{1}\">{0}</a>"
 msgid "All submissions in <a href=\"{1}\">{0}</a>"
 msgstr "Danh sách các bài nộp trong <a href=\"{1}\">{0}</a>"
 
@@ -4400,12 +4379,10 @@ msgstr "Không có máy chấm nào"
 msgid ""
 "In case the statement didn't load correctly, you can download the statement "
 "here: "
-msgstr ""
+msgstr "Trong trường hợp đề bài hiện thị không chính xác, bạn có thể tải đề bài tại đây: "
 
 #: templates/problem/problem.html:287
-#, fuzzy
-#| msgid "State"
-msgid "Statement"
+msgid "Đề bài"
 msgstr "Trạng thái"
 
 #: templates/problem/problem.html:305
@@ -4684,10 +4661,8 @@ msgstr ""
 "của bạn."
 
 #: templates/registration/registration_form.html:143
-#, fuzzy
-#| msgid "Please choose a popular email provider, e.g. gmail"
 msgid "please choose a popular email provider, e.g. gmail"
-msgstr "Hãy chọn một địa chỉ mail thông dụng như gmail"
+msgstr "hãy chọn một địa chỉ mail thông dụng, ví dụ như gmail"
 
 #: templates/registration/registration_form.html:164
 msgid "(again, for confirmation)"
@@ -5090,10 +5065,8 @@ msgid "Nothing here."
 msgstr "Không có gì ở đây."
 
 #: templates/ticket/ticket.html:419
-#, fuzzy
-#| msgid "votes"
 msgid "Upvote"
-msgstr "đánh giá"
+msgstr ""
 
 #: templates/ticket/ticket.html:421
 msgid "Undo vote"
@@ -5358,7 +5331,7 @@ msgstr "Số bài nộp trong năm vừa qua: #(cnt)d"
 #, fuzzy
 #| msgid "#(cnt)d submission in #(year)d"
 msgid "#(cnt)d submission in (year)d"
-msgstr "Số bài nộp trong năm #(year)d: #(cnt)d"
+msgstr "Số bài nộp trong năm (year)d: #(cnt)d"
 
 #: templates/user/user-about.html:210
 msgid "#(cnt)d submissions in #(year)d"
@@ -5385,8 +5358,6 @@ msgid "Total points:"
 msgstr "Tổng điểm:"
 
 #: templates/user/user-base.html:55
-#, fuzzy
-#| msgid "Total points:"
 msgid "Contribution points:"
 msgstr "Đóng góp:"
 
@@ -5394,7 +5365,7 @@ msgstr "Đóng góp:"
 #, python-format
 msgid "%(counter)s contest written"
 msgid_plural "%(counter)s contests written"
-msgstr[0] ""
+msgstr[0] "Đã tạo %(counter)s kỳ thi"
 
 #: templates/user/user-base.html:76
 msgid "Rank by rating:"
@@ -5469,24 +5440,3 @@ msgstr "Đóng góp"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
-
-#~ msgid "All submissions in %(contest)s"
-#~ msgstr "Danh sách các bài nộp trong %(contest)s"
-
-#~ msgid "AC %%"
-#~ msgstr "AC %%"
-
-#, fuzzy
-#~ msgid "polygon problem "
-#~ msgstr "polygon problem"
-
-#~ msgid "Is the problem statement copied from polygon html?"
-#~ msgstr "Bài này có phải từ polygon không?"
-
-#~ msgid ""
-#~ "This password is too short. It must contain at least %(min_length)d "
-#~ "characters."
-#~ msgstr "Mật khẩu quá ngắn, mật khẩu cần có ít nhất %(min_length)d ký tự."
-
-#~ msgid "Your password must contain at least %(min_length)d characters."
-#~ msgstr "Mật khẩu cần có ít nhất %(min_length)d ký tự."
