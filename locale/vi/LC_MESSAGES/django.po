@@ -515,12 +515,12 @@ msgstr "đã bình luận {time}"
 #: judge/custom_translations.py:31
 #, python-format
 msgid "%(duration)s long"
-msgstr "thời gian làm bài: %(duration)s"
+msgstr "Thời gian làm bài: %(duration)s"
 
 #: judge/custom_translations.py:32
 #, python-format
 msgid "%(time_limit)s window"
-msgstr "thời gian làm bài: %(time_limit)s (bắt đầu tính giờ khi nhấn tham gia kỳ thi)"
+msgstr "Thời gian làm bài: %(time_limit)s (bắt đầu tính giờ khi nhấn tham gia kỳ thi)"
 
 #: judge/forms.py:26
 msgid "Two-factor authentication tokens must be 6 decimal digits."
