@@ -86,9 +86,9 @@ class PostList(ListView):
                                    [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
 
         context['top_contrib'] = (Profile.objects.order_by('-contribution_points')
-                                       .filter(contribution_points__gt=0)
-                                       .values_list('user__username', 'contribution_points')
-                                       [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
+                                  .filter(contribution_points__gt=0)
+                                  .values_list('user__username', 'contribution_points')
+                                  [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
 
         if self.request.user.is_authenticated:
             context['own_open_tickets'] = (
