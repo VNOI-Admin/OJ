@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db import IntegrityError, transaction
+from django.db import IntegrityError
 from django.forms.models import ModelForm
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404
@@ -122,7 +122,7 @@ class CommentEditAjax(LoginRequiredMixin, CommentMixin, UpdateView):
     form_class = CommentEditForm
 
     def form_valid(self, form):
-        with transaction.atomic(), revisions.create_revision():
+        with revisions.create_revision(atomic=True):
             revisions.set_comment(_('Edited from site'))
             revisions.set_user(self.request.user)
             return super(CommentEditAjax, self).form_valid(form)
