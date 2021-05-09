@@ -21,7 +21,7 @@
         <td>{{ rank }}</td>
         {% block after_rank scoped %}{% endblock %}
         <td class="user-name"> 
-            <div style="float:left"> {{ link_user(user) }} </div> 
+            <div style="float:left"> {% block user_name_display scoped %} {{ link_user(user) }} {% endblock %} </div> 
             <div style="float:right"> {% block user_data scoped %}{% endblock %} </div>
         </td>
         {% block before_point scoped %}{% endblock %}

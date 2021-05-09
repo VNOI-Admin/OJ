@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-05 11:19+0000\n"
+"POT-Creation-Date: 2021-05-09 12:11+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -523,6 +523,21 @@ msgstr ""
 #: judge/custom_translations.py:25
 #, python-brace-format
 msgid "posted {time}"
+msgstr ""
+
+#: judge/custom_translations.py:28
+#, python-brace-format
+msgid "commented {time}"
+msgstr ""
+
+#: judge/custom_translations.py:31
+#, python-format
+msgid "%(duration)s long"
+msgstr ""
+
+#: judge/custom_translations.py:32
+#, python-format
+msgid "%(time_limit)s window"
 msgstr ""
 
 #: judge/forms.py:26
@@ -1850,7 +1865,7 @@ msgstr ""
 
 #: judge/models/profile.py:118 templates/base.html:255
 #: templates/comments/list.html:99 templates/contest/contest-list-tabs.html:24
-#: templates/contest/ranking-table.html:49
+#: templates/contest/ranking-table.html:62
 #: templates/problem/problem-list-tabs.html:6
 #: templates/submission/info-base.html:13
 #: templates/submission/submission-list-tabs.html:15
@@ -2685,44 +2700,44 @@ msgstr ""
 msgid "%s Statistics"
 msgstr ""
 
-#: judge/views/contests.py:677
+#: judge/views/contests.py:678
 #, python-format
 msgid "%s Rankings"
 msgstr ""
 
-#: judge/views/contests.py:685
+#: judge/views/contests.py:686
 msgid "???"
-msgstr ""
-
-#: judge/views/contests.py:701
-#, python-format
-msgid "Your participation in %s"
 msgstr ""
 
 #: judge/views/contests.py:702
 #, python-format
+msgid "Your participation in %s"
+msgstr ""
+
+#: judge/views/contests.py:703
+#, python-format
 msgid "%s's participation in %s"
 msgstr ""
 
-#: judge/views/contests.py:709
+#: judge/views/contests.py:710
 msgid "Live"
 msgstr ""
 
-#: judge/views/contests.py:721 templates/contest/contest-tabs.html:13
+#: judge/views/contests.py:722 templates/contest/contest-tabs.html:13
 msgid "Participation"
 msgstr ""
 
-#: judge/views/contests.py:765
+#: judge/views/contests.py:766
 #, python-format
 msgid "%s MOSS Results"
 msgstr ""
 
-#: judge/views/contests.py:792
+#: judge/views/contests.py:793
 #, python-format
 msgid "Running MOSS for %s..."
 msgstr ""
 
-#: judge/views/contests.py:815
+#: judge/views/contests.py:816
 #, python-format
 msgid "Contest tag: %s"
 msgstr ""
@@ -3415,19 +3430,19 @@ msgstr ""
 msgid "Upcoming contests"
 msgstr ""
 
-#: templates/blog/list.html:189
+#: templates/blog/list.html:190
 msgid "Comment stream"
 msgstr ""
 
-#: templates/blog/list.html:209
+#: templates/blog/list.html:216
 msgid "New problems"
 msgstr ""
 
-#: templates/blog/list.html:226
+#: templates/blog/list.html:233
 msgid "My open tickets"
 msgstr ""
 
-#: templates/blog/list.html:247
+#: templates/blog/list.html:254
 msgid "New tickets"
 msgstr ""
 
@@ -3808,20 +3823,33 @@ msgstr ""
 msgid "Organization"
 msgstr ""
 
-#: templates/contest/ranking-table.html:27
+#: templates/contest/ranking-table.html:26
+msgid "1st virtual participation of this user"
+msgstr ""
+
+#: templates/contest/ranking-table.html:28
+msgid "2nd virtual participation of this user"
+msgstr ""
+
+#: templates/contest/ranking-table.html:30
+#, python-format
+msgid "%(cnt)dth virtual participation of this user"
+msgstr ""
+
+#: templates/contest/ranking-table.html:40
 #, python-brace-format
 msgid "Started on {time}"
 msgstr ""
 
-#: templates/contest/ranking-table.html:30
+#: templates/contest/ranking-table.html:43
 msgid "Participation ended."
 msgstr ""
 
-#: templates/contest/ranking-table.html:40
+#: templates/contest/ranking-table.html:53
 msgid "Un-Disqualify"
 msgstr ""
 
-#: templates/contest/ranking-table.html:43
+#: templates/contest/ranking-table.html:56
 msgid "Disqualify"
 msgstr ""
 

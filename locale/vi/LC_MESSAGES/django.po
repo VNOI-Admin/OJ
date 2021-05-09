@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-06 10:49+0000\n"
+"POT-Creation-Date: 2021-05-09 12:11+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -520,7 +520,8 @@ msgstr "Thời gian làm bài: %(duration)s"
 #: judge/custom_translations.py:32
 #, python-format
 msgid "%(time_limit)s window"
-msgstr "Thời gian làm bài: %(time_limit)s (bắt đầu tính giờ khi nhấn tham gia kỳ thi)"
+msgstr ""
+"Thời gian làm bài: %(time_limit)s (bắt đầu tính giờ khi nhấn tham gia kỳ thi)"
 
 #: judge/forms.py:26
 msgid "Two-factor authentication tokens must be 6 decimal digits."
@@ -1873,7 +1874,7 @@ msgstr ""
 
 #: judge/models/profile.py:118 templates/base.html:255
 #: templates/comments/list.html:99 templates/contest/contest-list-tabs.html:24
-#: templates/contest/ranking-table.html:49
+#: templates/contest/ranking-table.html:62
 #: templates/problem/problem-list-tabs.html:6
 #: templates/submission/info-base.html:13
 #: templates/submission/submission-list-tabs.html:15
@@ -2713,44 +2714,44 @@ msgstr ""
 msgid "%s Statistics"
 msgstr "%s Thống kê"
 
-#: judge/views/contests.py:677
+#: judge/views/contests.py:678
 #, python-format
 msgid "%s Rankings"
 msgstr "%s xếp hạng"
 
-#: judge/views/contests.py:685
+#: judge/views/contests.py:686
 msgid "???"
 msgstr ""
 
-#: judge/views/contests.py:701
+#: judge/views/contests.py:702
 #, python-format
 msgid "Your participation in %s"
 msgstr "Sự tham gia của bạn vào %s"
 
-#: judge/views/contests.py:702
+#: judge/views/contests.py:703
 #, python-format
 msgid "%s's participation in %s"
 msgstr "%s tham gia vào %s"
 
-#: judge/views/contests.py:709
+#: judge/views/contests.py:710
 msgid "Live"
 msgstr "Trực tuyến"
 
-#: judge/views/contests.py:721 templates/contest/contest-tabs.html:13
+#: judge/views/contests.py:722 templates/contest/contest-tabs.html:13
 msgid "Participation"
 msgstr "Tham gia"
 
-#: judge/views/contests.py:765
+#: judge/views/contests.py:766
 #, python-format
 msgid "%s MOSS Results"
 msgstr ""
 
-#: judge/views/contests.py:792
+#: judge/views/contests.py:793
 #, python-format
 msgid "Running MOSS for %s..."
 msgstr ""
 
-#: judge/views/contests.py:815
+#: judge/views/contests.py:816
 #, python-format
 msgid "Contest tag: %s"
 msgstr "Thẻ kỳ thi %s"
@@ -3465,19 +3466,19 @@ msgstr "Kỳ thi đang diễn ra"
 msgid "Upcoming contests"
 msgstr "Kỳ thi sắp tới"
 
-#: templates/blog/list.html:189
+#: templates/blog/list.html:190
 msgid "Comment stream"
 msgstr "Dòng bình luận"
 
-#: templates/blog/list.html:209
+#: templates/blog/list.html:216
 msgid "New problems"
 msgstr "Bài mới"
 
-#: templates/blog/list.html:226
+#: templates/blog/list.html:233
 msgid "My open tickets"
 msgstr "Báo cáo của tôi"
 
-#: templates/blog/list.html:247
+#: templates/blog/list.html:254
 msgid "New tickets"
 msgstr "Báo cáo mới"
 
@@ -3871,20 +3872,33 @@ msgstr "Chỉ có các tổ chức sau có thể truy cập vào kỳ thi này:"
 msgid "Organization"
 msgstr "Tổ chức"
 
-#: templates/contest/ranking-table.html:27
+#: templates/contest/ranking-table.html:26
+msgid "1st virtual participation of this user"
+msgstr "Lần tham gia ảo đầu tiên của người dùng"
+
+#: templates/contest/ranking-table.html:28
+msgid "2nd virtual participation of this user"
+msgstr "Lần tham gia ảo thứ 2 của người dùng"
+
+#: templates/contest/ranking-table.html:30
+#, python-format
+msgid "%(cnt)dth virtual participation of this user"
+msgstr "Lần tham gia ảo thứ %(cnt)d của người dùng"
+
+#: templates/contest/ranking-table.html:40
 #, python-brace-format
 msgid "Started on {time}"
 msgstr "Bắt đầu vào {time}"
 
-#: templates/contest/ranking-table.html:30
+#: templates/contest/ranking-table.html:43
 msgid "Participation ended."
 msgstr "Thời gian tham gia đã kết thúc."
 
-#: templates/contest/ranking-table.html:40
+#: templates/contest/ranking-table.html:53
 msgid "Un-Disqualify"
 msgstr ""
 
-#: templates/contest/ranking-table.html:43
+#: templates/contest/ranking-table.html:56
 msgid "Disqualify"
 msgstr ""
 
