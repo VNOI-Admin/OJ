@@ -8,7 +8,11 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
+<<<<<<< HEAD
 "POT-Creation-Date: 2021-05-09 12:03+0000\n"
+=======
+"POT-Creation-Date: 2021-05-05 11:19+0000\n"
+>>>>>>> master
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -2588,12 +2592,21 @@ msgstr ""
 
 #: judge/views/comment.py:48
 msgid "You cannot vote your own comment"
+<<<<<<< HEAD
 msgstr ""
 
 #: judge/views/comment.py:65
 msgid "You cannot vote twice."
 msgstr ""
 
+=======
+msgstr ""
+
+#: judge/views/comment.py:65
+msgid "You cannot vote twice."
+msgstr ""
+
+>>>>>>> master
 #: judge/views/comment.py:126 judge/views/organization.py:299
 msgid "Edited from site"
 msgstr ""
@@ -2685,25 +2698,42 @@ msgstr ""
 msgid "%s Statistics"
 msgstr ""
 
+<<<<<<< HEAD
 #: judge/views/contests.py:678
+=======
+#: judge/views/contests.py:677
+>>>>>>> master
 #, python-format
 msgid "%s Rankings"
 msgstr ""
 
+<<<<<<< HEAD
 #: judge/views/contests.py:686
 msgid "???"
 msgstr ""
 
 #: judge/views/contests.py:702
+=======
+#: judge/views/contests.py:685
+msgid "???"
+msgstr ""
+
+#: judge/views/contests.py:701
+>>>>>>> master
 #, python-format
 msgid "Your participation in %s"
 msgstr ""
 
+<<<<<<< HEAD
 #: judge/views/contests.py:703
+=======
+#: judge/views/contests.py:702
+>>>>>>> master
 #, python-format
 msgid "%s's participation in %s"
 msgstr ""
 
+<<<<<<< HEAD
 #: judge/views/contests.py:710
 msgid "Live"
 msgstr ""
@@ -2713,16 +2743,35 @@ msgid "Participation"
 msgstr ""
 
 #: judge/views/contests.py:766
+=======
+#: judge/views/contests.py:709
+msgid "Live"
+msgstr ""
+
+#: judge/views/contests.py:721 templates/contest/contest-tabs.html:13
+msgid "Participation"
+msgstr ""
+
+#: judge/views/contests.py:765
+>>>>>>> master
 #, python-format
 msgid "%s MOSS Results"
 msgstr ""
 
+<<<<<<< HEAD
 #: judge/views/contests.py:793
+=======
+#: judge/views/contests.py:792
+>>>>>>> master
 #, python-format
 msgid "Running MOSS for %s..."
 msgstr ""
 
+<<<<<<< HEAD
 #: judge/views/contests.py:816
+=======
+#: judge/views/contests.py:815
+>>>>>>> master
 #, python-format
 msgid "Contest tag: %s"
 msgstr ""
@@ -5291,7 +5340,11 @@ msgstr ""
 
 #: templates/user/user-base.html:55
 msgid "Contribution points:"
+<<<<<<< HEAD
 msgstr ""
+=======
+msgstr "Contribution points:"
+>>>>>>> master
 
 #: templates/user/user-base.html:69
 #, python-format
@@ -5368,7 +5421,11 @@ msgstr ""
 
 #: templates/user/users-table.html:31
 msgid "Contribution points"
+<<<<<<< HEAD
 msgstr ""
+=======
+msgstr "Contrib."
+>>>>>>> master
 
 #: templates/widgets/select_all.html:8
 msgid "Check all"
