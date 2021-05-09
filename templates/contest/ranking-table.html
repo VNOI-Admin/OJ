@@ -20,6 +20,10 @@
     </td>
 {% endblock %}
 
+{% block user_name_display scoped %} 
+    {{ link_user(user) }} {% for _ in range(user.virtual) %}*{% endfor %}
+{% endblock %} 
+
 {% block user_data %}
     {% if not contest.ended %}
         {% if not user.participation.ended %}
