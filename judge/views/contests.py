@@ -619,7 +619,7 @@ def base_contest_ranking_list(contest, problems, queryset):
 
 
 def contest_ranking_list(contest, problems):
-    return base_contest_ranking_list(contest, problems, contest.users.filter(user__is_unlisted=False)
+    return base_contest_ranking_list(contest, problems, contest.users.filter()
                                      .prefetch_related('user__organizations')
                                      .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker'))
 
