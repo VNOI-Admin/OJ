@@ -20,8 +20,17 @@
     </td>
 {% endblock %}
 
+<!-- How to apply ordinal in jinja2 ??? -->  
 {% block user_name_display scoped %} 
-    {{ link_user(user) }} {% for _ in range(user.virtual) %}*{% endfor %}
+    {% if user.virtual == 1 %}
+        {{ link_user(user) }}<sup style="color:grey;" title="{{ _("1st virtual participation of this user") }}">[{{user.virtual}}]</sup>
+    {% elif user.virtual == 2 %}
+        {{ link_user(user) }}<sup style="color:grey;" title="{{ _("2nd virtual participation of this user") }}">[{{user.virtual}}]</sup>
+    {% elif user.virtual > 2 %}
+        {{ link_user(user) }}<sup style="color:grey;" title="{{ _("%(cnt)dth virtual participation of this user", cnt=user.virtual) }}">[{{user.virtual}}]</sup>
+    {% else %}
+        {{ link_user(user) }}
+    {% endif %}
 {% endblock %} 
 
 {% block user_data %}
