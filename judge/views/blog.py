@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.conf import settings
 from django.db.models import Count, Max
 from django.http import Http404
@@ -80,15 +81,8 @@ class PostList(ListView):
         context['current_contests'] = visible_contests.filter(start_time__lte=now, end_time__gt=now)
         context['future_contests'] = visible_contests.filter(start_time__gt=now)
 
-        context['top_pp_users'] = (Profile.objects.order_by('-performance_points')
-                                   .filter(performance_points__gt=0)
-                                   .values_list('user__username', 'performance_points')
-                                   [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
-
-        context['top_contrib'] = (Profile.objects.order_by('-contribution_points')
-                                  .filter(contribution_points__gt=0)
-                                  .values_list('user__username', 'contribution_points')
-                                  [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
+        context['top_pp_users'] = self.get_top_pp_users()
+        context['top_contrib'] = self.get_top_contributors()
 
         if self.request.user.is_authenticated:
             context['own_open_tickets'] = (
@@ -106,6 +100,30 @@ class PostList(ListView):
         else:
             context['open_tickets'] = []
         return context
+
+    def get_top_pp_users(self, update_interval=24 * 60 * 60):
+        key = 'homepage_top_pp_users'
+        result = cache.get(key)
+        if result:
+            return result
+        result = (Profile.objects.order_by('-performance_points')
+                  .filter(performance_points__gt=0)
+                  .values_list('user__username', 'performance_points')
+                  [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
+        cache.set(key, result, update_interval)
+        return result
+
+    def get_top_contributors(self, update_interval=24 * 60 * 60):
+        key = 'homepage_top_contributors'
+        result = cache.get(key)
+        if result:
+            return result
+        result = (Profile.objects.order_by('-contribution_points')
+                  .filter(contribution_points__gt=0)
+                  .values_list('user__username', 'contribution_points')
+                  [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
+        cache.set(key, result, update_interval)
+        return result
 
 
 class PostView(TitleMixin, CommentedDetailView):
