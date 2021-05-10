@@ -122,6 +122,7 @@ class Contest(models.Model):
                                                        'inside the contest.'))
     tags = models.ManyToManyField(ContestTag, verbose_name=_('contest tags'), blank=True, related_name='contests')
     user_count = models.IntegerField(verbose_name=_('the amount of live participants'), default=0)
+    virtual_count = models.IntegerField(verbose_name=_('the amount of virtual participants'), default=0)
     summary = models.TextField(blank=True, verbose_name=_('contest summary'),
                                help_text=_('Plain-text, shown in meta description tag, e.g. for social media.'))
     access_code = models.CharField(verbose_name=_('access code'), blank=True, default='', max_length=255,
@@ -278,6 +279,7 @@ class Contest(models.Model):
 
     def update_user_count(self):
         self.user_count = self.users.filter(virtual=0).count()
+        self.virtual_count = self.users.count()
         self.save()
 
     update_user_count.alters_data = True
