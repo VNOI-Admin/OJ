@@ -535,7 +535,8 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
         return context
 
     def _get_result_data(self, queryset=None):
-        if queryset is not None or self.in_contest or self.selected_languages or self.selected_statuses or self.selected_organization:
+        if queryset is not None or self.in_contest or self.selected_languages or \
+           self.selected_statuses or self.selected_organization:
             return super(AllSubmissions, self)._get_result_data(queryset)
 
         key = 'global_submission_result_data'
@@ -621,7 +622,7 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
     def get_queryset(self):
         queryset = super().get_queryset()
         # FIXME: fix this line of code when #1509 is implemented
-        if not self.in_contest or not self.request.user.is_authenticated or self.request.profile.id not in self.contest.editor_ids:
+        if not self.in_contest:
             filter_submissions_by_visible_problems(queryset, self.request.user)
         return queryset
 
