@@ -56,6 +56,8 @@ VNOJ_ORG_PP_SCALE = 1
 VNOJ_CP_COMMENT = 1  # Each comment vote equals 1 CP
 VNOJ_CP_TICKET = 10  # Each good ticket equals CP
 
+VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
+
 NODEJS = '/usr/bin/node'
 EXIFTOOL = '/usr/bin/exiftool'
 ACE_URL = '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3'

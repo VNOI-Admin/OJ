@@ -1,0 +1,30 @@
+<div class="blog-sidebox sidebox">
+    <h3>{{ _('Top user') }} <i class="fa fa-trophy"></i></h3>
+    <div class="sidebox-content" style="padding: unset; border: unset;">
+        <table id="users-table" class="table">
+            <thead>
+                <tr>
+                    <th class="header rank" style="border-top-left-radius: unset; padding: 4px 9px 4px 9px;"> # </th>
+                    <th class="header username">{{ _('Username') }}</th>
+                    <th class="header points" style="border-top-right-radius: unset;"> {{ _('Points') }} </th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for username, pp in top_pp_users %}
+                    <tr id="user-{{ username }}">
+                        <td>{{ loop.index }}</td>
+                        <td class="user-name"> 
+                            <div style="float:left"> 
+                                <a href="{{ url('user_page', username) }}">{{ username }}</a>
+                            </div> 
+                        </td>
+                        
+                        <td class="user-points">
+                            {{ pp|floatformat(2) }}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>

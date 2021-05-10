@@ -185,6 +185,12 @@
                 </div>
             {% endif %}
 
+            {% if top_pp_users %}
+                {% include "blog/top-pp.html" %}
+            {% endif %}
+            {% if top_contrib %}
+                {% include "blog/top-contrib.html" %}
+            {% endif %}
             <div class="blog-sidebox sidebox">
                 <h3>
                     {{ _('Comment stream') }} 
