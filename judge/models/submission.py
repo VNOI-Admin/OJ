@@ -5,6 +5,7 @@ from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
@@ -79,11 +80,11 @@ class Submission(models.Model):
     judged_on = models.ForeignKey('Judge', verbose_name=_('judged on'), null=True, blank=True,
                                   on_delete=models.SET_NULL)
     judged_date = models.DateTimeField(verbose_name=_('submission judge time'), default=None, null=True)
-    was_rejudged = models.BooleanField(verbose_name=_('was rejudged by admin'), default=False)
+    rejudged_date = models.DateTimeField(verbose_name=_('last rejudge date by admin'), null=True, blank=True)
     is_pretested = models.BooleanField(verbose_name=_('was ran on pretests only'), default=False)
     contest_object = models.ForeignKey('Contest', verbose_name=_('contest'), null=True, blank=True,
                                        on_delete=models.SET_NULL, related_name='+')
-    is_locked = models.BooleanField(verbose_name=_('lock submission'), default=False)
+    locked_after = models.DateTimeField(verbose_name=_('submission lock'), null=True, blank=True)
 
     objects = TranslatedProblemForeignKeyQuerySet.as_manager()
 
@@ -114,8 +115,12 @@ class Submission(models.Model):
     def long_status(self):
         return Submission.USER_DISPLAY_CODES.get(self.short_status, '')
 
-    def judge(self, *args, **kwargs):
-        if not self.is_locked:
+    @cached_property
+    def is_locked(self):
+        return self.locked_after is not None and self.locked_after < timezone.now()
+
+    def judge(self, *args, force_judge=False, **kwargs):
+        if force_judge or not self.is_locked:
             judge_submission(self, *args, **kwargs)
 
     judge.alters_data = True
@@ -135,10 +140,21 @@ class Submission(models.Model):
             return True
         elif self.user_id == profile.id:
             return True
-        elif (self.problem.is_public or self.problem.testers.filter(id=profile.id).exists()) and \
+        elif settings.DMOJ_SUBMISSION_SOURCE_VISIBILITY == 'all':
+            return True
+        elif settings.DMOJ_SUBMISSION_SOURCE_VISIBILITY == 'all-solved' and \
+                (self.problem.is_public or self.problem.testers.filter(id=profile.id).exists()) and \
                 self.problem.submission_set.filter(user_id=profile.id, result='AC',
                                                    points=self.problem.points).exists():
             return True
+        elif settings.DMOJ_SUBMISSION_SOURCE_VISIBILITY == 'only-own' and \
+                self.problem.testers.filter(id=profile.id).exists():
+            return True
+
+        # If user is an author or curator of the contest the submission was made in
+        if self.contest_object is not None and user.profile.id in self.contest_object.editor_ids:
+            return True
+
         return False
 
     def update_contest(self):

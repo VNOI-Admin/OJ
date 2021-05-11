@@ -32,7 +32,9 @@ def submission_related(queryset):
     return queryset.select_related('user__user', 'problem', 'language') \
         .only('id', 'user__user__username', 'user__display_rank', 'user__rating', 'problem__name',
               'problem__code', 'problem__is_public', 'language__short_name', 'language__key', 'date', 'time', 'memory',
-              'points', 'result', 'status', 'case_points', 'case_total', 'current_testcase', 'contest_object')
+              'points', 'result', 'status', 'case_points', 'case_total', 'current_testcase', 'contest_object',
+              'locked_after') \
+        .prefetch_related('contest_object__authors', 'contest_object__curators')
 
 
 class SubmissionMixin(object):
@@ -179,8 +181,8 @@ class SubmissionSourceRaw(SubmissionSource):
 @require_POST
 def abort_submission(request, submission):
     submission = get_object_or_404(Submission, id=int(submission))
-    if (not request.user.is_authenticated or (submission.was_rejudged or (request.profile != submission.user)) and
-            not request.user.has_perm('judge.abort_any_submission')):
+    if (not request.user.has_perm('judge.abort_any_submission') and
+       (submission.rejudged_date is not None or request.profile != submission.user)):
         raise PermissionDenied()
     submission.abort()
     return HttpResponseRedirect(reverse('submission_status', args=(submission.id,)))
@@ -213,8 +215,10 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
             category['name'] = _(category['name'])
         return result
 
-    def _get_result_data(self):
-        return get_result_data(self.get_queryset().order_by())
+    def _get_result_data(self, queryset=None):
+        if queryset is None:
+            queryset = self.get_queryset()
+        return get_result_data(queryset.order_by())
 
     def access_check(self, request):
         pass
@@ -244,7 +248,8 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
 
             if not self.request.user.has_perm('judge.see_private_contest'):
                 # Show submissions for any contest you can edit or visible scoreboard
-                contest_queryset = Contest.objects.filter(Q(organizers=self.request.profile) |
+                contest_queryset = Contest.objects.filter(Q(authors=self.request.profile) |
+                                                          Q(curators=self.request.profile) |
                                                           Q(scoreboard_visibility=Contest.SCOREBOARD_VISIBLE) |
                                                           Q(end_time__lt=timezone.now())).distinct()
                 queryset = queryset.filter(Q(user=self.request.profile) |
@@ -406,6 +411,10 @@ class ProblemSubmissionsBase(SubmissionsListBase):
             raise Http404()
 
     def access_check(self, request):
+        # FIXME: This should be rolled into the `is_accessible_by` check when implementing #1509
+        if self.in_contest and request.user.is_authenticated and request.profile.id in self.contest.editor_ids:
+            return
+
         if not self.in_contest and not self.problem.is_accessible_by(request.user):
             raise Http404()
 
@@ -525,15 +534,16 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
         context['stats_update_interval'] = self.stats_update_interval
         return context
 
-    def _get_result_data(self):
-        if self.in_contest or self.selected_languages or self.selected_statuses or self.selected_organization:
-            return super(AllSubmissions, self)._get_result_data()
+    def _get_result_data(self, queryset=None):
+        if queryset is not None or self.in_contest or self.selected_languages or \
+           self.selected_statuses or self.selected_organization:
+            return super(AllSubmissions, self)._get_result_data(queryset)
 
         key = 'global_submission_result_data'
         result = cache.get(key)
         if result:
             return result
-        result = super(AllSubmissions, self)._get_result_data()
+        result = super(AllSubmissions, self)._get_result_data(Submission.objects.all())
         cache.set(key, result, self.stats_update_interval)
         return result
 
@@ -611,6 +621,7 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
 
     def get_queryset(self):
         queryset = super().get_queryset()
+        # FIXME: fix this line of code when #1509 is implemented
         if not self.in_contest:
             filter_submissions_by_visible_problems(queryset, self.request.user)
         return queryset

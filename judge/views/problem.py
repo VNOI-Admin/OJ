@@ -23,6 +23,7 @@ from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import ListView, View
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin
+from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.forms import ProblemCloneForm, ProblemSubmitForm
@@ -565,7 +566,7 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
     def form_valid(self, form):
         if (
             not self.request.user.has_perm('judge.spam_submission') and
-            Submission.objects.filter(user=self.request.profile, was_rejudged=False)
+            Submission.objects.filter(user=self.request.profile, rejudged_date__isnull=True)
                               .exclude(status__in=['D', 'IE', 'CE', 'AB']).count() >= settings.DMOJ_SUBMISSION_LIMIT
         ):
             return HttpResponse('<h1>You submitted too many submissions.</h1>', status=429)
@@ -581,24 +582,30 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
                                    _('You have exceeded the submission limit for this problem.'))
 
         with transaction.atomic():
-            self.new_submission = form.save()
+            self.new_submission = form.save(commit=False)
 
             contest_problem = self.contest_problem
             if contest_problem is not None:
-                self.new_submission.contest_object_id = contest_problem.contest_id
+                # Use the contest object from current_contest.contest because we already use it
+                # in profile.update_contest().
+                self.new_submission.contest_object = self.request.profile.current_contest.contest
+                if self.request.profile.current_contest.live:
+                    self.new_submission.locked_after = self.new_submission.contest_object.locked_after
+                self.new_submission.save()
                 ContestSubmission(
                     submission=self.new_submission,
                     problem=contest_problem,
                     participation=self.request.profile.current_contest,
                 ).save()
+            else:
+                self.new_submission.save()
 
             source = SubmissionSource(submission=self.new_submission, source=form.cleaned_data['source'])
             source.save()
-            self.request.profile.update_contest()
 
         # Save a query.
         self.new_submission.source = source
-        self.new_submission.judge(judge_id=form.cleaned_data['judge'])
+        self.new_submission.judge(force_judge=True, judge_id=form.cleaned_data['judge'])
 
         return super().form_valid(form)
 
@@ -652,16 +659,21 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         language_limits = problem.language_limits.all()
         organizations = problem.organizations.all()
         types = problem.types.all()
+        old_code = problem.code
+
         problem.pk = None
         problem.is_public = False
         problem.ac_rate = 0
         problem.user_count = 0
         problem.code = form.cleaned_data['code']
-        problem.save()
-        problem.authors.add(self.request.profile)
-        problem.allowed_languages.set(languages)
-        problem.language_limits.set(language_limits)
-        problem.organizations.set(organizations)
-        problem.types.set(types)
+        with revisions.create_revision(atomic=True):
+            problem.save()
+            problem.authors.add(self.request.profile)
+            problem.allowed_languages.set(languages)
+            problem.language_limits.set(language_limits)
+            problem.organizations.set(organizations)
+            problem.types.set(types)
+            revisions.set_user(self.request.user)
+            revisions.set_comment(_('Cloned problem from %s') % old_code)
 
         return HttpResponseRedirect(reverse('admin:judge_problem_change', args=(problem.id,)))

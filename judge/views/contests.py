@@ -26,6 +26,7 @@ from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import ListView, TemplateView
 from django.views.generic.detail import BaseDetailView, DetailView, SingleObjectMixin, View
+from reversion import revisions
 
 from judge import event_poster as event
 from judge.comments import CommentedDetailView
@@ -78,7 +79,7 @@ class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestL
         return timezone.now()
 
     def _get_queryset(self):
-        return super(ContestList, self).get_queryset().prefetch_related('tags', 'organizations', 'organizers')
+        return super().get_queryset().prefetch_related('tags', 'organizations', 'authors', 'curators', 'testers')
 
     def get_queryset(self):
         return self._get_queryset().order_by(self.order, 'key').filter(end_time__lt=self._now)
@@ -95,7 +96,8 @@ class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestL
         if self.request.user.is_authenticated:
             for participation in ContestParticipation.objects.filter(virtual=0, user=self.request.profile,
                                                                      contest_id__in=present) \
-                    .select_related('contest').prefetch_related('contest__organizers') \
+                    .select_related('contest') \
+                    .prefetch_related('contest__authors', 'contest__curators', 'contest__testers') \
                     .annotate(key=F('contest__key')):
                 if not participation.ended:
                     active.append(participation)
@@ -130,10 +132,16 @@ class ContestMixin(object):
     slug_url_kwarg = 'contest'
 
     @cached_property
-    def is_organizer(self):
+    def is_editor(self):
         if not self.request.user.is_authenticated:
             return False
-        return self.object.organizers.filter(id=self.request.profile.id).exists()
+        return self.request.profile.id in self.object.editor_ids
+
+    @cached_property
+    def is_tester(self):
+        if not self.request.user.is_authenticated:
+            return False
+        return self.request.profile.id in self.object.tester_ids
 
     @cached_property
     def can_edit(self):
@@ -159,7 +167,8 @@ class ContestMixin(object):
             context['has_joined'] = False
 
         context['now'] = timezone.now()
-        context['is_organizer'] = self.is_organizer
+        context['is_editor'] = self.is_editor
+        context['is_tester'] = self.is_tester
         context['can_edit'] = self.can_edit
 
         if not self.object.og_image or not self.object.summary:
@@ -260,24 +269,28 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         private_contestants = contest.private_contestants.all()
         view_contest_scoreboard = contest.view_contest_scoreboard.all()
         contest_problems = contest.contest_problems.all()
+        old_key = contest.key
 
         contest.pk = None
         contest.is_visible = False
         contest.user_count = 0
-        contest.is_locked = False
+        contest.locked_after = None
         contest.key = form.cleaned_data['key']
-        contest.save()
+        with revisions.create_revision(atomic=True):
+            contest.save()
+            contest.tags.set(tags)
+            contest.organizations.set(organizations)
+            contest.private_contestants.set(private_contestants)
+            contest.view_contest_scoreboard.set(view_contest_scoreboard)
+            contest.authors.add(self.request.profile)
 
-        contest.tags.set(tags)
-        contest.organizations.set(organizations)
-        contest.private_contestants.set(private_contestants)
-        contest.view_contest_scoreboard.set(view_contest_scoreboard)
-        contest.organizers.add(self.request.profile)
+            for problem in contest_problems:
+                problem.contest = contest
+                problem.pk = None
+            ContestProblem.objects.bulk_create(contest_problems)
 
-        for problem in contest_problems:
-            problem.contest = contest
-            problem.pk = None
-        ContestProblem.objects.bulk_create(contest_problems)
+            revisions.set_user(self.request.user)
+            revisions.set_comment(_('Cloned contest from %s') % old_key)
 
         return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest.id,)))
 
@@ -312,7 +325,7 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
     def join_contest(self, request, access_code=None):
         contest = self.object
 
-        if not contest.can_join and not self.is_organizer:
+        if not contest.can_join and not (self.is_editor or self.is_tester):
             return generic_message(request, _('Contest not ongoing'),
                                    _('"%s" is not currently ongoing.') % contest.name)
 
@@ -349,14 +362,14 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
             LIVE = ContestParticipation.LIVE
             try:
                 participation = ContestParticipation.objects.get(
-                    contest=contest, user=profile, virtual=(SPECTATE if self.is_organizer else LIVE),
+                    contest=contest, user=profile, virtual=(SPECTATE if self.is_editor or self.is_tester else LIVE),
                 )
             except ContestParticipation.DoesNotExist:
                 if requires_access_code:
                     raise ContestAccessDenied()
 
                 participation = ContestParticipation.objects.create(
-                    contest=contest, user=profile, virtual=(SPECTATE if self.is_organizer else LIVE),
+                    contest=contest, user=profile, virtual=(SPECTATE if self.is_editor or self.is_tester else LIVE),
                     real_start=timezone.now(),
                 )
             else:
@@ -606,7 +619,7 @@ def base_contest_ranking_list(contest, problems, queryset):
 
 
 def contest_ranking_list(contest, problems):
-    return base_contest_ranking_list(contest, problems, contest.users.filter(user__is_unlisted=False)
+    return base_contest_ranking_list(contest, problems, contest.users.filter()
                                      .prefetch_related('user__organizations')
                                      .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker'))
 
