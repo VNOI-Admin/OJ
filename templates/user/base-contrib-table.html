@@ -10,7 +10,6 @@
             {{ _('Contribution points') }}
             {%- if sort_links %}{{ sort_order.contribution_points }}</a>{% endif %}
         </th>
-        {% block after_point_head %}{% endblock %}
         {% block contribution_head %}{% endblock %}
     </tr>
 </thead>
@@ -24,8 +23,6 @@
             <div style="float:left"> {% block user_name_display scoped %} {{ link_user(user) }} {% endblock %} </div> 
             <div style="float:right"> {% block user_data scoped %}{% endblock %} </div>
         </td>
-        {% block before_point scoped %}{% endblock %}
-        {% block after_point scoped %}{% endblock %}
         {% block contribution scoped %}{% endblock %}
     </tr>
 {% endfor %}
