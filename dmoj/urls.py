@@ -230,7 +230,7 @@ urlpatterns = [
 
         url(r'^/$', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),
-    
+
     url(r'^contributions/$', user.ContribList.as_view(), name='contribution_list'),
 
     url(r'^organizations/$', organization.OrganizationList.as_view(), name='organization_list'),
