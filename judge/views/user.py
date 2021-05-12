@@ -479,9 +479,9 @@ class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView
     model = Profile
     title = gettext_lazy('Contribution')
     context_object_name = 'contributors'
-    template_name = 'user/contrib_list.html'
+    template_name = 'user/contrib-list.html'
     paginate_by = 100
-    all_sorts = frozenset(('contribution_points'))
+    all_sorts = frozenset(('*', 'contribution_points'))
     default_desc = all_sorts
     default_sort = '-contribution_points'
 
