@@ -450,20 +450,20 @@ class UserList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
     context_object_name = 'users'
     template_name = 'user/list.html'
     paginate_by = 100
-    all_sorts = frozenset(('points', 'problem_count', 'rating', 'performance_points', 'contribution_points'))
+    all_sorts = frozenset(('points', 'problem_count', 'rating', 'performance_points'))
     default_desc = all_sorts
     default_sort = '-performance_points'
 
     def get_queryset(self):
         return (Profile.objects.filter(is_unlisted=False).order_by(self.order).select_related('user')
                 .only('display_rank', 'user__username', 'points', 'rating', 'performance_points',
-                      'problem_count', 'contribution_points'))
+                      'problem_count'))
 
     def get_context_data(self, **kwargs):
         context = super(UserList, self).get_context_data(**kwargs)
         context['users'] = ranker(
             context['users'],
-            key=attrgetter('performance_points', 'problem_count', 'contribution_points'),
+            key=attrgetter('performance_points', 'problem_count'),
             rank=self.paginate_by * (context['page_obj'].number - 1),
         )
         context['first_page_href'] = '.'
@@ -473,6 +473,36 @@ class UserList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
 
 
 user_list_view = UserList.as_view()
+
+
+class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
+    model = Profile
+    title = gettext_lazy('Contributors')
+    context_object_name = 'contributors'
+    template_name = 'user/contrib-list.html'
+    paginate_by = 100
+    all_sorts = frozenset(('contribution_points', ))
+    default_desc = all_sorts
+    default_sort = '-contribution_points'
+
+    def get_queryset(self):
+        return (Profile.objects.filter(is_unlisted=False).order_by(self.order).select_related('user')
+                .only('display_rank', 'user__username', 'contribution_points'))
+
+    def get_context_data(self, **kwargs):
+        context = super(ContribList, self).get_context_data(**kwargs)
+        context['contributors'] = ranker(
+            context['contributors'],
+            key=attrgetter('contribution_points'),
+            rank=self.paginate_by * (context['page_obj'].number - 1),
+        )
+        context['first_page_href'] = '.'
+        context.update(self.get_sort_context())
+        context.update(self.get_sort_paginate_context())
+        return context
+
+
+contrib_list_view = ContribList.as_view()
 
 
 class FixedContestRanking(ContestRanking):

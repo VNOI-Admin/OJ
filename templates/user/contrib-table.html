@@ -1,0 +1,16 @@
+{% extends "user/base-contrib-table.html" %}
+
+{% block contribution %}
+    <td>{{ user.contribution_points }}</td>
+{% endblock %}
+
+{% block user_data scoped %}
+    {% if user.organizations.all() %}  
+        <em style="font-size: 0.75em; color:grey;"> 
+        {{ user.organizations.all()[0].name }}
+        {% for organization in user.organizations.all()[1:] %}
+            | {{ organization.name }}
+        {% endfor %}
+        </em> 
+    {% endif %}
+{% endblock %}
