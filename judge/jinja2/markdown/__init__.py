@@ -63,13 +63,11 @@ def fragment_tree_to_str(tree):
 
 
 def inc_header(text, level):
-    s = '#' * level
     pattern = re.compile(
-        r'^\#{1,10}',
+        r'<(\/?)h([1-9][0-9]*)>',
         re.X | re.M,
     )
-
-    return re.sub(pattern, lambda x: x.group() + s, text)
+    return re.sub(pattern, lambda x: '<' + x.group(1) + 'h' + str(int(x.group(2)) + level) + '>', text)
 
 
 def add_table_class(text):
@@ -87,11 +85,11 @@ def markdown(text, style, math_engine=None, lazy_load=False):
     if lazy_load:
         post_processors.append(lazy_load_processor)
 
-    value = inc_header(text, 2)
-    string, latexeqs = extractLatexeq(value)
+    string, latexeqs = extractLatexeq(text)
     string = markdown2.markdown(string, extras=['spoiler', 'fenced-code-blocks', 'cuddled-lists', 'tables'])
     result = recontructString(string, latexeqs)
     result = add_table_class(result)
+    result = inc_header(result, 2)
 
     if post_processors:
         tree = fragments_to_tree(result)
