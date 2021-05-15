@@ -52,9 +52,7 @@ def profile_update(sender, instance, **kwargs):
         return
 
     cache.delete_many([make_template_fragment_key('user_about', (instance.id, engine))
-                       for engine in EFFECTIVE_MATH_ENGINES] +
-                      [make_template_fragment_key('org_member_count', (org_id,))
-                       for org_id in instance.organizations.values_list('id', flat=True)])
+                       for engine in EFFECTIVE_MATH_ENGINES])
 
 
 @receiver(post_save, sender=Contest)
