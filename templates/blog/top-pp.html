@@ -1,7 +1,7 @@
 <div class="blog-sidebox sidebox">
     <h3>{{ _('Top user') }} <i class="fa fa-trophy"></i></h3>
     <div class="sidebox-content" style="padding: unset; border: unset;">
-        <table id="users-table" class="table">
+        <table id="users-table" class="table" style="margin-bottom: unset;">
             <thead>
                 <tr>
                     <th class="header rank" style="border-top-left-radius: unset; padding: 4px 9px 4px 9px;"> # </th>
@@ -26,5 +26,15 @@
                 {% endfor %}
             </tbody>
         </table>
+        <div style="position: relative; font-size: smaller; padding: unset;">
+            <table class="table" style="width: 100%;">
+                <tbody>
+                    <tr>
+                        <td style="text-align: left; border-right: none;"><a href="/organizations/">Organizations</a></td>
+                        <td style="text-align: right;"><a href="/users/">View all >>></a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
