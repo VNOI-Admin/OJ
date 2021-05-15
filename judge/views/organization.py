@@ -2,8 +2,6 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.cache import cache
-from django.core.cache.utils import make_template_fragment_key
 from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.forms import Form, modelformset_factory
