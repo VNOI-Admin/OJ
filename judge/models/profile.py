@@ -56,6 +56,7 @@ class Organization(models.Model):
                                            help_text=_('This image will replace the default site logo for users '
                                                        'viewing the organization.'))
     performance_points = models.FloatField(default=0)
+    member_count = models.IntegerField(default=0)
 
     _pp_table = [pow(settings.VNOJ_ORG_PP_STEP, i) for i in range(settings.VNOJ_ORG_PP_ENTRIES)]
 
