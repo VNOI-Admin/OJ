@@ -69,6 +69,13 @@ class Organization(models.Model):
             self.save(update_fields=['performance_points'])
         return pp
 
+    def on_user_changes(self):
+        self.calculate_points()
+        member_count = self.members.count()
+        if self.member_count != member_count:
+            self.member_count = member_count
+            self.save(update_fields=['member_count'])
+
     def __contains__(self, item):
         if isinstance(item, int):
             return self.members.filter(id=item).exists()
