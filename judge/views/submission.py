@@ -369,7 +369,7 @@ class AllUserSubmissions(ConditionalUserTabMixin, UserMixin, SubmissionsListBase
     def get_title(self):
         if self.is_own:
             return _('All my submissions')
-        return _('All submissions by') + self.username
+        return _('All submissions by %s') % self.username
 
     def get_content_title(self):
         if self.is_own:
