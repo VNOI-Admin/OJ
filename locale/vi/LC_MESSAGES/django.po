@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-16 09:09+0000\n"
+"POT-Creation-Date: 2021-05-16 09:11+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -639,8 +639,7 @@ msgstr "id kỳ thi phải bao gồm ^[a-z0-9_] + $"
 msgid "Contest with key already exists."
 msgstr "Mã kỳ thi đã tồn tại."
 
-#: judge/jinja2/datetime.py:26 templates/blog/content.html:27
-#: templates/blog/dashboard.html:21
+#: judge/jinja2/datetime.py:26 templates/blog/dashboard.html:21
 msgid "N j, Y, g:i a"
 msgstr "j, M, Y, g:i a"
 
@@ -3432,15 +3431,13 @@ msgid "Edit"
 msgstr "Soạn thảo"
 
 #: templates/blog/content.html:27
+msgid "N j, Y, G:i"
+msgstr "j, M, Y, G:i"
+
+#: templates/blog/content.html:27
 #, python-format
-msgid ""
-"\n"
-"                    posted on %(time)s\n"
-"                "
-msgstr ""
-"\n"
-"                    đăng vào lúc %(time)s\n"
-"                "
+msgid "posted on %(time)s"
+msgstr "đã đăng vào %(time)s"
 
 #: templates/blog/dashboard.html:21
 #, python-format
@@ -5521,3 +5518,12 @@ msgstr "Số bài"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+#~ msgid ""
+#~ "\n"
+#~ "                    posted on %(time)s\n"
+#~ "                "
+#~ msgstr ""
+#~ "\n"
+#~ "                    đăng vào lúc %(time)s\n"
+#~ "                "
