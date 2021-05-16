@@ -3334,7 +3334,6 @@ msgstr "Bảng xếp hạng"
 
 #: judge/views/user.py:480 templates/user/contrib-list.html:19
 #: templates/user/user-list-tabs.html:5
-#, fuzzy
 #| msgid "Contribution points"
 msgid "Contributors"
 msgstr "Đóng góp"
@@ -5184,49 +5183,49 @@ msgstr "Đóng góp"
 
 #: templates/user/base-users.html:14 templates/user/base-users.html:71
 msgid "Search by handle..."
-msgstr ""
+msgstr "Tìm kiến bằng username"
 
 #: templates/user/edit-profile.html:109
 msgid "Are you sure you want to generate or regenerate your API token?"
-msgstr ""
+msgstr "Bạn có chắc muốn tạo mới / tạo lại API token?"
 
 #: templates/user/edit-profile.html:110
 msgid "This will invalidate any previous API tokens."
-msgstr ""
+msgstr "Việc này sẽ làm mọi API token trước trở nên không hợp lệ."
 
 #: templates/user/edit-profile.html:111
 msgid ""
 "It also allows access to your account without Two-factor Authentication."
-msgstr ""
+msgstr "Việc này sẽ khiến tài khoản của bạn có thể truy cập mà không cần xác thực 2 bước."
 
 #: templates/user/edit-profile.html:112
 msgid "You will not be able to view your api token after you leave this page!"
-msgstr ""
+msgstr "Bạn sẽ không thể xem API token nếu thoát trang này"
 
 #: templates/user/edit-profile.html:113 templates/user/edit-profile.html:207
 msgid "Generating..."
-msgstr ""
+msgstr "Đang tạo..."
 
 #: templates/user/edit-profile.html:121 templates/user/edit-profile.html:243
 #: templates/user/edit-profile.html:358
 msgid "Regenerate"
-msgstr ""
+msgstr "Tạo lại"
 
 #: templates/user/edit-profile.html:127
 msgid "Remove"
-msgstr ""
+msgstr "Xoá"
 
 #: templates/user/edit-profile.html:137
 msgid "Are you sure you want to remove your API token?"
-msgstr ""
+msgstr "Bạn có chắc muốn xoá API token?"
 
 #: templates/user/edit-profile.html:144 templates/user/edit-profile.html:362
 msgid "Generate"
-msgstr ""
+msgstr "Tạo"
 
 #: templates/user/edit-profile.html:190
 msgid "Are you sure you want to delete this security key?"
-msgstr ""
+msgstr "Bạn có chắc muốn xoá khoá bảo mật này?"
 
 #: templates/user/edit-profile.html:280
 msgid "Self-description"
@@ -5234,7 +5233,7 @@ msgstr "Tự giới thiệu"
 
 #: templates/user/edit-profile.html:287
 msgid "Select your closest major city"
-msgstr ""
+msgstr "Chọn thành phố của bạn"
 
 #: templates/user/edit-profile.html:296
 msgid "Editor theme"
@@ -5254,15 +5253,15 @@ msgstr "Đổi mật khẩu của bạn"
 
 #: templates/user/edit-profile.html:343
 msgid "Two-factor Authentication is enabled"
-msgstr ""
+msgstr "Xác thực 2 yếu tố đã bật"
 
 #: templates/user/edit-profile.html:345
 msgid "Two-factor Authentication is disabled"
-msgstr ""
+msgstr "Xác thực 2 yếu tố đã tắt"
 
 #: templates/user/edit-profile.html:350 templates/user/edit-profile.html:352
 msgid "Disable"
-msgstr ""
+msgstr "Tắt"
 
 #: templates/user/edit-profile.html:355
 msgid "Scratch Codes:"
@@ -5270,27 +5269,27 @@ msgstr ""
 
 #: templates/user/edit-profile.html:359
 msgid "Hidden"
-msgstr ""
+msgstr "Ẩn"
 
 #: templates/user/edit-profile.html:368
 msgid "Enable"
-msgstr ""
+msgstr "Bật"
 
 #: templates/user/edit-profile.html:387
 msgid "Security keys"
-msgstr ""
+msgstr "Khoá bảo mật"
 
 #: templates/user/edit-profile.html:397
 msgid "Delete"
-msgstr ""
+msgstr "Xoá"
 
 #: templates/user/edit-profile.html:404
 msgid "Enter a name for this key"
-msgstr ""
+msgstr "Đặt tên cho khoá này"
 
 #: templates/user/edit-profile.html:405
 msgid "Add"
-msgstr ""
+msgstr "Thêm"
 
 #: templates/user/edit-profile.html:414
 msgid "Update profile"
