@@ -119,11 +119,11 @@
     {% else %}
         {{ contest.user_count }}
     {% endif %}
-    <span title="{% trans count=contest.virtual_count %}
+    <span title="{%- trans count=contest.virtual_count -%}
         This contest has {{count}} virtual participation
-        {% pluralize %}
+        {%- pluralize -%}
         This contest has {{count}} virtual participations
-        {% endtrans %}"
+        {%- endtrans -%}"
         style="opacity: 50%;">({{ contest.virtual_count }})</span>
 {% endmacro %}
 
