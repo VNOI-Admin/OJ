@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-16 09:11+0000\n"
+"POT-Creation-Date: 2021-05-16 09:21+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -3738,13 +3738,43 @@ msgstr "Tham gia kỳ thi"
 msgid "Log in to participate"
 msgstr "Đăng nhập để tham gia"
 
+#: templates/contest/contest.html:33
+#, python-format
+msgid "Spectating, contest ends in %(countdown)s."
+msgstr "Đang theo dõi, kỳ thi sẽ kết thúc trong %(countdown)s."
+
+#: templates/contest/contest.html:35
+#, python-format
+msgid "Participating virtually, %(countdown)s remaining."
+msgstr "Đang tham gia ảo, còn lại %(countdown)s thời gian."
+
 #: templates/contest/contest.html:37
 msgid "Participating virtually."
-msgstr "Tham gia ảo"
+msgstr "Đang tham gia ảo"
+
+#: templates/contest/contest.html:41 templates/contest/list.html:243
+#, python-format
+msgid "Starting in %(countdown)s."
+msgstr "Bắt đầu trong %(countdown)s."
 
 #: templates/contest/contest.html:43
 msgid "Contest is over."
 msgstr "Kỳ thi đã kết thúc."
+
+#: templates/contest/contest.html:47
+#, python-format
+msgid "Your time is up! Contest ends in %(countdown)s."
+msgstr "Thời gian làm bài của bạn đã hết! Kỳ thi sẽ kết thúc sau %(countdown)s."
+
+#: templates/contest/contest.html:49
+#, python-format
+msgid "You have %(countdown)s remaining."
+msgstr "Bạn còn lại %(countdown)s thời gian."
+
+#: templates/contest/contest.html:52
+#, python-format
+msgid "Contest ends in %(countdown)s"
+msgstr "Kỳ thi sẽ kết thúc sau %(countdown)s."
 
 #: templates/contest/contest.html:59 templates/contest/contest.html:63
 msgid "F j, Y, G:i T"
@@ -3853,11 +3883,6 @@ msgstr "Bắt đầu trong %(countdown)s."
 #: templates/contest/list.html:226
 msgid "Upcoming Contests"
 msgstr "Các kỳ thi sắp tới"
-
-#: templates/contest/list.html:243
-#, python-format
-msgid "Starting in %(countdown)s."
-msgstr "Bắt đầu trong %(countdown)s."
 
 #: templates/contest/list.html:254
 msgid "There are no scheduled contests at this time."
