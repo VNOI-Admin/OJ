@@ -2,10 +2,8 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.cache import cache
-from django.core.cache.utils import make_template_fragment_key
 from django.core.exceptions import PermissionDenied
-from django.db.models import Count, Q
+from django.db.models import Q
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.urls import reverse
@@ -71,9 +69,6 @@ class OrganizationList(TitleMixin, ListView):
     template_name = 'organization/list.html'
     title = gettext_lazy('Organizations')
 
-    def get_queryset(self):
-        return super(OrganizationList, self).get_queryset().annotate(member_count=Count('member'))
-
 
 class OrganizationHome(OrganizationDetailView):
     template_name = 'organization/home.html'
@@ -129,7 +124,6 @@ class JoinOrganization(OrganizationMembershipChange):
 
         profile.organizations.add(org)
         profile.save()
-        cache.delete(make_template_fragment_key('org_member_count', (org.id,)))
 
 
 class LeaveOrganization(OrganizationMembershipChange):
@@ -137,7 +131,6 @@ class LeaveOrganization(OrganizationMembershipChange):
         if not profile.organizations.filter(id=org.id).exists():
             return generic_message(request, _('Leaving organization'), _('You are not in "%s".') % org.short_name)
         profile.organizations.remove(org)
-        cache.delete(make_template_fragment_key('org_member_count', (org.id,)))
 
 
 class OrganizationRequestForm(Form):
@@ -250,7 +243,6 @@ class OrganizationRequestView(OrganizationRequestBaseView):
             messages.success(request,
                              ungettext('Approved %d user.', 'Approved %d users.', approved) % approved + '\n' +
                              ungettext('Rejected %d user.', 'Rejected %d users.', rejected) % rejected)
-            cache.delete(make_template_fragment_key('org_member_count', (organization.id,)))
             return HttpResponseRedirect(request.get_full_path())
         return self.render_to_response(self.get_context_data(object=organization))
 
