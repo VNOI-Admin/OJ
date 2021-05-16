@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-16 09:30+0000\n"
+"POT-Creation-Date: 2021-05-16 09:42+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -3479,9 +3479,21 @@ msgstr "Chưa có làm rõ nào được đưa ra ở thời điểm này."
 msgid "Ongoing contests"
 msgstr "Kỳ thi đang diễn ra"
 
+#: templates/blog/list.html:173 templates/contest/list.html:170
+#: templates/contest/list.html:209
+#, python-format
+msgid "Ends in %(countdown)s"
+msgstr "Kết thúc trong %(countdown)s."
+
 #: templates/blog/list.html:183
 msgid "Upcoming contests"
 msgstr "Kỳ thi sắp tới"
+
+#: templates/blog/list.html:191 templates/contest/contest.html:41
+#: templates/contest/list.html:243
+#, python-format
+msgid "Starting in %(countdown)s."
+msgstr "Bắt đầu trong %(countdown)s."
 
 #: templates/blog/list.html:207
 msgid "Comment stream"
@@ -3752,11 +3764,6 @@ msgstr "Đang tham gia ảo, còn lại %(countdown)s thời gian."
 msgid "Participating virtually."
 msgstr "Đang tham gia ảo"
 
-#: templates/contest/contest.html:41 templates/contest/list.html:243
-#, python-format
-msgid "Starting in %(countdown)s."
-msgstr "Bắt đầu trong %(countdown)s."
-
 #: templates/contest/contest.html:43
 msgid "Contest is over."
 msgstr "Kỳ thi đã kết thúc."
@@ -3875,11 +3882,6 @@ msgstr "Thành viên"
 #, python-format
 msgid "Window ends in %(countdown)s"
 msgstr "Thời gian làm bài kết thúc trong %(countdown)s."
-
-#: templates/contest/list.html:170 templates/contest/list.html:209
-#, python-format
-msgid "Ends in %(countdown)s"
-msgstr "Kết thúc trong %(countdown)s."
 
 #: templates/contest/list.html:189
 msgid "Ongoing Contests"
