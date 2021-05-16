@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-16 08:41+0000\n"
+"POT-Creation-Date: 2021-05-16 09:09+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -512,12 +512,12 @@ msgstr "đã đăng {time}"
 msgid "commented {time}"
 msgstr "đã bình luận {time}"
 
-#: judge/custom_translations.py:31
+#: judge/custom_translations.py:31 templates/contest/list.html:110
 #, python-format
 msgid "%(duration)s long"
 msgstr "Thời gian làm bài: %(duration)s"
 
-#: judge/custom_translations.py:32
+#: judge/custom_translations.py:32 templates/contest/list.html:109
 #, python-format
 msgid "%(time_limit)s window"
 msgstr ""
@@ -3721,7 +3721,7 @@ msgstr ""
 msgid "Leave contest"
 msgstr "Rời khỏi kỳ thi"
 
-#: templates/contest/contest-tabs.html:46 templates/contest/list.html:296
+#: templates/contest/contest-tabs.html:46 templates/contest/list.html:294
 msgid "Virtual join"
 msgstr "Tham gia ảo"
 
@@ -3815,47 +3815,58 @@ msgstr "riêng tư"
 msgid "rated"
 msgstr ""
 
-#: templates/contest/list.html:122
+#: templates/contest/list.html:120
 #, python-format
 msgid "This contest has %(count)s virtual participation"
 msgid_plural "This contest has %(count)s virtual participations"
 msgstr[0] "Kỳ thi này có %(count)s lượt tham gia ảo"
 
-#: templates/contest/list.html:133
+#: templates/contest/list.html:131
 msgid "Spectate"
 msgstr "Theo dõi"
 
-#: templates/contest/list.html:139
+#: templates/contest/list.html:137
 msgid "Join"
 msgstr "Tham gia"
 
-#: templates/contest/list.html:149
+#: templates/contest/list.html:147
 msgid "Active Contests"
 msgstr "Các kỳ thi đang diễn ra"
 
-#: templates/contest/list.html:153 templates/contest/list.html:195
-#: templates/contest/list.html:233 templates/contest/list.html:270
+#: templates/contest/list.html:151 templates/contest/list.html:193
+#: templates/contest/list.html:231 templates/contest/list.html:268
 msgid "Contest"
 msgstr "Kỳ thi"
 
-#: templates/contest/list.html:154 templates/contest/list.html:196
-#: templates/contest/list.html:273
+#: templates/contest/list.html:152 templates/contest/list.html:194
+#: templates/contest/list.html:271
 msgid "Users"
 msgstr "Thành viên"
 
-#: templates/contest/list.html:191
+#: templates/contest/list.html:189
 msgid "Ongoing Contests"
 msgstr "Kỳ thi đang diễn ra"
 
-#: templates/contest/list.html:228
+#: templates/contest/list.html:209
+#, fuzzy, python-format
+#| msgid "Starting in %(countdown)s."
+msgid "Ends in %(countdown)s"
+msgstr "Bắt đầu trong %(countdown)s."
+
+#: templates/contest/list.html:226
 msgid "Upcoming Contests"
 msgstr "Các kỳ thi sắp tới"
 
-#: templates/contest/list.html:256
+#: templates/contest/list.html:243
+#, python-format
+msgid "Starting in %(countdown)s."
+msgstr "Bắt đầu trong %(countdown)s."
+
+#: templates/contest/list.html:254
 msgid "There are no scheduled contests at this time."
 msgstr "Chưa có kỳ thi được lên lịch trong tương lai."
 
-#: templates/contest/list.html:262
+#: templates/contest/list.html:260
 msgid "Past Contests"
 msgstr "Các kỳ thi đã qua"
 
