@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-16 06:56+0000\n"
+"POT-Creation-Date: 2021-05-16 08:33+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -781,30 +781,20 @@ msgid "contest name"
 msgstr "tên kỳ thi"
 
 #: judge/models/contest.py:68
-#, fuzzy
-#| msgid "These people will be able to edit the contest."
 msgid "These users will be able to edit the contest."
-msgstr "Những người này sẽ có thể chỉnh sửa các kỳ thi."
+msgstr "Những người này sẽ có thể chỉnh sửa kỳ thi."
 
 #: judge/models/contest.py:70
-#, fuzzy
-#| msgid ""
-#| "These users will be able to edit the problem, but not be listed as "
-#| "authors."
 msgid ""
 "These users will be able to edit the contest, but will not be listed as "
 "authors."
 msgstr ""
-"Những người này có thể chỉnh sửa bài tập nhưng không được liệt kê trong danh "
+"Những người này có thể chỉnh sửa kỳ thi nhưng không được liệt kê trong danh "
 "sách tác giả."
 
 #: judge/models/contest.py:73
-#, fuzzy
-#| msgid ""
-#| "These users will be able to view the private problem, but not edit it."
 msgid "These users will be able to view the contest, but not edit it."
-msgstr ""
-"Những người này có thể xem bài tập riêng tư nhưng không thể chỉnh sửa chúng."
+msgstr "Những người này có thể xem kỳ thi nhưng không thể chỉnh sửa chúng."
 
 #: judge/models/contest.py:76 judge/models/runtime.py:136
 msgid "description"
@@ -956,10 +946,8 @@ msgid "the amount of live participants"
 msgstr "số lượng người tham gia trực tiếp"
 
 #: judge/models/contest.py:125
-#, fuzzy
-#| msgid "the amount of live participants"
 msgid "the amount of virtual participants"
-msgstr "số lượng người tham gia trực tiếp"
+msgstr "số lượng tham gia ảo"
 
 #: judge/models/contest.py:126
 msgid "contest summary"
@@ -2335,24 +2323,20 @@ msgid "submission judge time"
 msgstr "thời gian chấm"
 
 #: judge/models/submission.py:83
-#, fuzzy
-#| msgid "was rejudged by admin"
 msgid "last rejudge date by admin"
-msgstr "được chấm lại bởi admin"
+msgstr "ngày được chấm lại bởi admin"
 
 #: judge/models/submission.py:84
 msgid "was ran on pretests only"
 msgstr "chỉ được chạy pretest"
 
 #: judge/models/submission.py:87
-#, fuzzy
-#| msgid "submission"
 msgid "submission lock"
-msgstr "nộp bài"
+msgstr "khoá bài nộp"
 
 #: judge/models/submission.py:209
 msgid "Abort any submission"
-msgstr "Nhưng chấm bài nộp"
+msgstr "Ngưng chấm bài nộp"
 
 #: judge/models/submission.py:210
 msgid "Rejudge the submission"
@@ -2674,10 +2658,9 @@ msgid "Clone Contest"
 msgstr ""
 
 #: judge/views/contests.py:293
-#, fuzzy, python-format
-#| msgid "Clone contest"
+#, python-format
 msgid "Cloned contest from %s"
-msgstr "Nhân bản kỳ thi"
+msgstr "Kỳ thi được clone từ %s"
 
 #: judge/views/contests.py:329
 msgid "Contest not ongoing"
@@ -3334,7 +3317,6 @@ msgstr "Bảng xếp hạng"
 
 #: judge/views/user.py:480 templates/user/contrib-list.html:19
 #: templates/user/user-list-tabs.html:5
-#| msgid "Contribution points"
 msgid "Contributors"
 msgstr "Đóng góp"
 
@@ -3823,18 +3805,17 @@ msgstr ""
 
 #: templates/contest/list.html:65
 msgid "hidden"
-msgstr ""
+msgstr "ẩn"
 
 #: templates/contest/list.html:78
 msgid "private"
-msgstr ""
+msgstr "riêng tư"
 
 #: templates/contest/list.html:83
 msgid "rated"
 msgstr ""
 
 #: templates/contest/list.html:122
-#, python-format
 msgid ""
 "\n"
 "        This contest has %(count)s virtual participation\n"
@@ -4555,11 +4536,10 @@ msgstr ""
 "không chấm được ở bài này."
 
 #: templates/problem/submit.html:215
-#, fuzzy, python-format
-#| msgid "You have 0 submissions left"
+#, python-format
 msgid "You have %(left)s submission left"
 msgid_plural "You have %(left)s submissions left"
-msgstr[0] "Bạn còn 0 lần nộp"
+msgstr[0] "Bạn còn %(left)s lần nộp"
 
 #: templates/problem/submit.html:220
 msgid "You have 0 submissions left"
@@ -5196,7 +5176,9 @@ msgstr "Việc này sẽ làm mọi API token trước trở nên không hợp l
 #: templates/user/edit-profile.html:111
 msgid ""
 "It also allows access to your account without Two-factor Authentication."
-msgstr "Việc này sẽ khiến tài khoản của bạn có thể truy cập mà không cần xác thực 2 bước."
+msgstr ""
+"Việc này sẽ khiến tài khoản của bạn có thể truy cập mà không cần xác thực 2 "
+"bước."
 
 #: templates/user/edit-profile.html:112
 msgid "You will not be able to view your api token after you leave this page!"
