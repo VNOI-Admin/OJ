@@ -70,7 +70,7 @@ class ContestMiddleware(object):
         self.get_response = get_response
 
     def __call__(self, request):
-        request.has_official_contest = settings.VNOJ_OFFICIAL_CONTEST_MODE
+        request.official_contest_mode = settings.VNOJ_OFFICIAL_CONTEST_MODE
         profile = request.profile
         if profile:
             profile.update_contest()

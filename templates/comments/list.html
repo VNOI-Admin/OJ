@@ -1,4 +1,4 @@
-{% if not request.has_official_contest or request.user.is_superuser %}
+{% if not request.official_contest_mode or request.user.is_superuser %}
     <div id="comments" class="comment-area">
         <h2><i style="padding-right: 0.3em" class="fa fa-comments"></i>{{ _('Comments') }}</h2>
         {% if has_comments %}
