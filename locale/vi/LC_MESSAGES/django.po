@@ -4284,7 +4284,7 @@ msgstr ""
 "Chỉ dùng lời giải này khi không có ý tưởng, và <b>đừng copy-paste code từ "
 "lời giải này</b>. Hãy tôn trọng người ra đề và người làm lời giải.<br><br> "
 "<b>Nộp một lời giải chính thức trước khi tự giải là một hành động có thể bị "
-"ban."
+"ban.</b>"
 
 #: templates/problem/editorial.html:27 templates/problem/problem.html:209
 msgid "Author:"
