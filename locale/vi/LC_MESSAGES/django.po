@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-16 08:33+0000\n"
+"POT-Creation-Date: 2021-05-16 09:42+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -512,12 +512,12 @@ msgstr "đã đăng {time}"
 msgid "commented {time}"
 msgstr "đã bình luận {time}"
 
-#: judge/custom_translations.py:31
+#: judge/custom_translations.py:31 templates/contest/list.html:110
 #, python-format
 msgid "%(duration)s long"
 msgstr "Thời gian làm bài: %(duration)s"
 
-#: judge/custom_translations.py:32
+#: judge/custom_translations.py:32 templates/contest/list.html:109
 #, python-format
 msgid "%(time_limit)s window"
 msgstr ""
@@ -639,8 +639,7 @@ msgstr "id kỳ thi phải bao gồm ^[a-z0-9_] + $"
 msgid "Contest with key already exists."
 msgstr "Mã kỳ thi đã tồn tại."
 
-#: judge/jinja2/datetime.py:26 templates/blog/content.html:27
-#: templates/blog/dashboard.html:21
+#: judge/jinja2/datetime.py:26 templates/blog/dashboard.html:21
 msgid "N j, Y, g:i a"
 msgstr "j, M, Y, g:i a"
 
@@ -3432,15 +3431,13 @@ msgid "Edit"
 msgstr "Soạn thảo"
 
 #: templates/blog/content.html:27
+msgid "N j, Y, G:i"
+msgstr "j, M, Y, G:i"
+
+#: templates/blog/content.html:27
 #, python-format
-msgid ""
-"\n"
-"                    posted on %(time)s\n"
-"                "
-msgstr ""
-"\n"
-"                    đăng vào lúc %(time)s\n"
-"                "
+msgid "posted on %(time)s"
+msgstr "đã đăng vào %(time)s"
 
 #: templates/blog/dashboard.html:21
 #, python-format
@@ -3482,9 +3479,21 @@ msgstr "Chưa có làm rõ nào được đưa ra ở thời điểm này."
 msgid "Ongoing contests"
 msgstr "Kỳ thi đang diễn ra"
 
+#: templates/blog/list.html:173 templates/contest/list.html:170
+#: templates/contest/list.html:209
+#, python-format
+msgid "Ends in %(countdown)s"
+msgstr "Kết thúc trong %(countdown)s."
+
 #: templates/blog/list.html:183
 msgid "Upcoming contests"
 msgstr "Kỳ thi sắp tới"
+
+#: templates/blog/list.html:191 templates/contest/contest.html:41
+#: templates/contest/list.html:243
+#, python-format
+msgid "Starting in %(countdown)s."
+msgstr "Bắt đầu trong %(countdown)s."
 
 #: templates/blog/list.html:207
 msgid "Comment stream"
@@ -3721,7 +3730,7 @@ msgstr ""
 msgid "Leave contest"
 msgstr "Rời khỏi kỳ thi"
 
-#: templates/contest/contest-tabs.html:46 templates/contest/list.html:300
+#: templates/contest/contest-tabs.html:46 templates/contest/list.html:294
 msgid "Virtual join"
 msgstr "Tham gia ảo"
 
@@ -3741,13 +3750,39 @@ msgstr "Tham gia kỳ thi"
 msgid "Log in to participate"
 msgstr "Đăng nhập để tham gia"
 
+#: templates/contest/contest.html:33
+#, python-format
+msgid "Spectating, contest ends in %(countdown)s."
+msgstr "Đang theo dõi, kỳ thi sẽ kết thúc trong %(countdown)s."
+
+#: templates/contest/contest.html:35
+#, python-format
+msgid "Participating virtually, %(countdown)s remaining."
+msgstr "Đang tham gia ảo, còn lại %(countdown)s thời gian."
+
 #: templates/contest/contest.html:37
 msgid "Participating virtually."
-msgstr "Tham gia ảo"
+msgstr "Đang tham gia ảo"
 
 #: templates/contest/contest.html:43
 msgid "Contest is over."
 msgstr "Kỳ thi đã kết thúc."
+
+#: templates/contest/contest.html:47
+#, python-format
+msgid "Your time is up! Contest ends in %(countdown)s."
+msgstr ""
+"Thời gian làm bài của bạn đã hết! Kỳ thi sẽ kết thúc sau %(countdown)s."
+
+#: templates/contest/contest.html:49
+#, python-format
+msgid "You have %(countdown)s remaining."
+msgstr "Bạn còn lại %(countdown)s thời gian."
+
+#: templates/contest/contest.html:52
+#, python-format
+msgid "Contest ends in %(countdown)s"
+msgstr "Kỳ thi sẽ kết thúc sau %(countdown)s."
 
 #: templates/contest/contest.html:59 templates/contest/contest.html:63
 msgid "F j, Y, G:i T"
@@ -3815,52 +3850,52 @@ msgstr "riêng tư"
 msgid "rated"
 msgstr ""
 
-#: templates/contest/list.html:122
-msgid ""
-"\n"
-"        This contest has %(count)s virtual participation\n"
-"        "
-msgid_plural ""
-"\n"
-"        This contest has %(count)s virtual participations\n"
-"        "
-msgstr[0] ""
+#: templates/contest/list.html:120
+#, python-format
+msgid "This contest has %(count)s virtual participation"
+msgid_plural "This contest has %(count)s virtual participations"
+msgstr[0] "Kỳ thi này có %(count)s lượt tham gia ảo"
 
-#: templates/contest/list.html:137
+#: templates/contest/list.html:131
 msgid "Spectate"
 msgstr "Theo dõi"
 
-#: templates/contest/list.html:143
+#: templates/contest/list.html:137
 msgid "Join"
 msgstr "Tham gia"
 
-#: templates/contest/list.html:153
+#: templates/contest/list.html:147
 msgid "Active Contests"
-msgstr "Các kỳ thi đang diễn ra"
+msgstr "Các kỳ thi đang tham gia"
 
-#: templates/contest/list.html:157 templates/contest/list.html:199
-#: templates/contest/list.html:237 templates/contest/list.html:274
+#: templates/contest/list.html:151 templates/contest/list.html:193
+#: templates/contest/list.html:231 templates/contest/list.html:268
 msgid "Contest"
 msgstr "Kỳ thi"
 
-#: templates/contest/list.html:158 templates/contest/list.html:200
-#: templates/contest/list.html:277
+#: templates/contest/list.html:152 templates/contest/list.html:194
+#: templates/contest/list.html:271
 msgid "Users"
 msgstr "Thành viên"
 
-#: templates/contest/list.html:195
-msgid "Ongoing Contests"
-msgstr "Kỳ thi đang diễn ra"
+#: templates/contest/list.html:168
+#, python-format
+msgid "Window ends in %(countdown)s"
+msgstr "Thời gian làm bài kết thúc trong %(countdown)s."
 
-#: templates/contest/list.html:232
+#: templates/contest/list.html:189
+msgid "Ongoing Contests"
+msgstr "Các kỳ thi đang diễn ra"
+
+#: templates/contest/list.html:226
 msgid "Upcoming Contests"
 msgstr "Các kỳ thi sắp tới"
 
-#: templates/contest/list.html:260
+#: templates/contest/list.html:254
 msgid "There are no scheduled contests at this time."
 msgstr "Chưa có kỳ thi được lên lịch trong tương lai."
 
-#: templates/contest/list.html:266
+#: templates/contest/list.html:260
 msgid "Past Contests"
 msgstr "Các kỳ thi đã qua"
 
@@ -5515,3 +5550,12 @@ msgstr "Số bài"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+#~ msgid ""
+#~ "\n"
+#~ "                    posted on %(time)s\n"
+#~ "                "
+#~ msgstr ""
+#~ "\n"
+#~ "                    đăng vào lúc %(time)s\n"
+#~ "                "

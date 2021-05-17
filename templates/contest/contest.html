@@ -30,26 +30,26 @@
                 {{- contest.start_time|utc|date('Y-m-d\TH:i:s') }}" class="date">
             {%- if contest.is_in_contest(request.user) and not request.participation.live -%}
                 {% if request.participation.spectate %}
-                    {{- _('Spectating, contest ends in %(countdown)s.', countdown=contest.time_before_end|as_countdown) -}}
+                    {%- trans countdown=contest.time_before_end|as_countdown -%} Spectating, contest ends in {{countdown}}. {%- endtrans -%}
                 {% elif request.participation.end_time %}
-                    {{- _('Participating virtually, %(countdown)s remaining.', countdown=request.participation.time_remaining|as_countdown) -}}
+                    {%- trans countdown=request.participation.time_remaining|as_countdown -%} Participating virtually, {{countdown}} remaining. {%- endtrans -%}
                 {% else %}
                     {{- _('Participating virtually.') -}}
                 {% endif %}
             {%- else -%}
                 {% if contest.start_time > now %}
-                    {{- _('Starting in %(countdown)s', countdown=contest.time_before_start|as_countdown) -}}
+                    {%- trans countdown=contest.time_before_start|as_countdown -%} Starting in {{countdown}}. {%- endtrans -%}
                 {% elif contest.end_time < now %}
                     {{- _('Contest is over.') -}}
                 {% else %}
                     {%- if has_joined -%}
                         {% if live_participation.ended %}
-                            {{- _('Your time is up! Contest ends in %(countdown)s.', countdown=contest.time_before_end|as_countdown) -}}
+                            {%- trans countdown=contest.time_before_end|as_countdown -%} Your time is up! Contest ends in {{countdown}}. {%- endtrans -%}
                         {% else %}
-                            {{- _('You have %(countdown)s remaining.', countdown=live_participation.time_remaining|as_countdown) -}}
+                            {%- trans countdown=live_participation.time_remaining|as_countdown -%} You have {{countdown}} remaining. {%- endtrans -%}
                         {% endif %}
                     {%- else -%}
-                        {{ _('Contest ends in %(countdown)s.', countdown=contest.time_before_end|as_countdown) }}
+                        {%- trans countdown=contest.time_before_end|as_countdown -%} Contest ends in {{countdown}} {%- endtrans -%}
                     {%- endif -%}
                 {% endif %}
             {%- endif -%}
