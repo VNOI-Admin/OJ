@@ -32,7 +32,7 @@ from judge import event_poster as event
 from judge.comments import CommentedDetailView
 from judge.forms import ContestCloneForm
 from judge.models import Contest, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
-    Problem, Profile, Submission
+    Problem, ProblemClarification, Profile, Submission
 from judge.tasks import run_moss
 from judge.utils.celery import redirect_to_task_status
 from judge.utils.opengraph import generate_opengraph
@@ -252,6 +252,10 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['contest_has_public_editorials'] = any(
             problem.is_public and problem.has_public_editorial for problem in context['contest_problems']
         )
+
+        clarifications = ProblemClarification.objects.filter(problem__in=self.object.problems.all())
+        context['has_clarifications'] = clarifications.count() > 0
+        context['clarifications'] = clarifications.order_by('-date')
         return context
 
 
