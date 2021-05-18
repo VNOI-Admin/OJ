@@ -44,11 +44,6 @@
             margin-left: 1em;
         }
 
-        .no-clarifications-message {
-            font-style: italic;
-            text-align: center;
-        }
-
         table.bottom td.left {
             text-align: left;
             border-right: none !important;
@@ -136,30 +131,6 @@
         </div>
 
         <div class="blog-sidebar">
-            {% if request.in_contest and request.participation.contest.use_clarifications %}
-                <div class="blog-sidebox sidebox">
-                    <h3>{{ _('Clarifications') }} <i class="fa fa-question-circle"></i></h3>
-                    <div class="sidebox-content">
-                        {% if has_clarifications %}
-                            <ul>
-                                {% for clarification in clarifications %}
-                                    <li class="clarification">
-                                        <a href="{{ url('problem_detail', clarification.problem.code) }}"
-                                           class="problem">
-                                            {{ clarification.problem.name }}
-                                        </a>
-                                        <span class="time">{{ relative_time(clarification.date) }}</span>
-                                    </li>
-                                {% endfor %}
-                            </ul>
-                        {% else %}
-                            <p class="no-clarifications-message">
-                                {{ _('No clarifications have been made at this time.') }}
-                            </p>
-                        {% endif %}
-                    </div>
-                </div>
-            {% endif %}
             {% if current_contests %}
                 <div class="blog-sidebox sidebox">
                     <h3>{{ _('Ongoing contests') }} <i class="fa fa-trophy"></i></h3>
