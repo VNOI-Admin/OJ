@@ -81,6 +81,7 @@
             <table id="contest-problems" class="table">
                 <thead>
                 <tr>
+                    <th>#</th>
                     <th>{{ _('Problem') }}</th>
                     <th>{{ _('Points') }}</th>
                     <th>{{ _('AC Rate') }}</th>
@@ -93,7 +94,8 @@
                 <tbody>
                 {% for problem in contest_problems %}
                     <tr>
-                        <td>
+                        <td style="width: 1em;">{{loop.index}}</td>
+                        <td style="text-align: left; padding-left: 2em;">
                             {% if in_contest or problem.is_public or request.user.is_superuser or is_editor or is_tester %}
                                 <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
                             {% else %}
