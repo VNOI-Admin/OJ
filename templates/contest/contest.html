@@ -119,7 +119,7 @@
         </div>
         {% if has_clarifications %}
         <div class="contest-clartifications">
-            <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
+            <h2 style="margin-bottom: 0.2em"><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
             <table id="contest-clartifications" class="table">
                 <thead>
                     <tr>
@@ -131,14 +131,14 @@
                 <tbody>
                 {% for clarification in clarifications %}
                     <tr>
-                        <td class="when">{{ clarification.date|date(_("F j, Y, G:i")) }}</td>
-                        <td>
+                        <td style="width: 15%;">{{ clarification.date|date(_("F j, Y, G:i")) }}</td>
+                        <td style="width: 20%; text-align: left; padding-left: 2em;">
                             <a href="{{ url('problem_detail', clarification.problem.code) }}"
                                 class="problem">
                                 {{ clarification.problem.name }}
                             </a>
                         </td>
-                        <td class="body">
+                        <td style="text-align: left; padding-left: 2em;">
                             {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
                         </td> 
                     </tr>
