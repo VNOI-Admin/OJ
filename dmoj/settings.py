@@ -51,6 +51,8 @@ VNOJ_ORG_PP_STEP = 0.95
 VNOJ_ORG_PP_ENTRIES = 100
 VNOJ_ORG_PP_SCALE = 1
 
+VNOJ_OFFICIAL_CONTEST_MODE = False
+
 # Contribution points function
 # Both should be int
 VNOJ_CP_COMMENT = 1  # Each comment vote equals 1 CP
