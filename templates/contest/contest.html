@@ -117,6 +117,36 @@
                 </tbody>
             </table>
         </div>
+        {% if has_clarifications %}
+        <div class="contest-clartifications">
+            <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
+            <table id="contest-clartifications" class="table">
+                <thead>
+                    <tr>
+                        <th>{{ _('When') }}</th>
+                        <th>{{ _('Problem') }}</th>
+                        <th>{{ _('Description') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for clarification in clarifications %}
+                    <tr>
+                        <td class="when">{{ clarification.date|date(_("F j, Y, G:i")) }}</td>
+                        <td>
+                            <a href="{{ url('problem_detail', clarification.problem.code) }}"
+                                class="problem">
+                                {{ clarification.problem.name }}
+                            </a>
+                        </td>
+                        <td class="body">
+                            {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
+                        </td> 
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
     {% endif %}
 
     <hr>
