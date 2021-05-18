@@ -43,7 +43,6 @@ class PostList(ListView):
                                          .order_by('-date', 'code')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
         context['page_titles'] = CacheDict(lambda page: Comment.get_page_title(page))
 
-
         context['user_count'] = Profile.objects.count
         context['problem_count'] = Problem.get_public_problems().count
         context['submission_count'] = lambda: Submission.objects.aggregate(max_id=Max('id'))['max_id'] or 0
