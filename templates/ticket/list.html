@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block media %}
     <style>
-        #ticket-list .fa-check-circle-o {
+        #ticket-list .fa-check-circle-o, .fa-arrow-up {
             color: #00a900;
         }
 
@@ -255,6 +255,7 @@
                 <table id="ticket-list" class="table">
                     <thead>
                     <tr>
+                        <th></th>
                         <th></th>
                         <th>{{ _('ID') }}</th>
                         <th>{{ _('Title') }}</th>

@@ -35,3 +35,6 @@ custom_script_*
 websocket/config.js
 node_modules/
 package-lock.json
+db.json
+tmp.sh
+nani.sql
