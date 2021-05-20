@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-20 15:47+0000\n"
+"POT-Creation-Date: 2021-05-20 16:10+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -642,7 +642,7 @@ msgstr "Mã kỳ thi đã tồn tại."
 
 #: judge/jinja2/datetime.py:26 templates/blog/dashboard.html:21
 msgid "N j, Y, g:i a"
-msgstr "j, M, Y, g:i a"
+msgstr "j, M, Y, G:i"
 
 #: judge/jinja2/datetime.py:26
 #, python-brace-format
@@ -3141,7 +3141,8 @@ msgstr "Danh sách bài nộp của tôi trong <a href=\"{3}\">{2}</a>"
 #: judge/views/submission.py:484
 #, python-brace-format
 msgid "<a href=\"{1}\">{0}</a>'s submissions for <a href=\"{3}\">{2}</a>"
-msgstr "Danh sách bài nộp của <a href=\"{1}\">{0}</a> trong <a href=\"{3}\">{2}</a>"
+msgstr ""
+"Danh sách bài nộp của <a href=\"{1}\">{0}</a> trong <a href=\"{3}\">{2}</a>"
 
 #: judge/views/submission.py:577
 msgid "Must pass a contest"
@@ -3170,7 +3171,8 @@ msgstr "Danh sách bài nộp của tôi trong <a href=\"{1}\">{0}</a>"
 #: judge/views/submission.py:618
 #, python-brace-format
 msgid "<a href=\"{1}\">{0}</a>'s submissions in <a href=\"{3}\">{2}</a>"
-msgstr "Danh sách bài nộp của <a href=\"{1}\">{0}</a> trong <a href=\"{3}\">{2}</a>"
+msgstr ""
+"Danh sách bài nộp của <a href=\"{1}\">{0}</a> trong <a href=\"{3}\">{2}</a>"
 
 #: judge/views/submission.py:644
 #, python-brace-format
@@ -3178,8 +3180,8 @@ msgid ""
 "<a href=\"{1}\">{0}</a>'s submissions for <a href=\"{3}\">{2}</a> in <a href="
 "\"{5}\">{4}</a>"
 msgstr ""
-"Danh sách bài nộp của <a href=\"{1}\">{0}</a> cho bài <a href=\"{3}\">{2}</a> "
-"trong <a href=\"{5}\">{4}</a>"
+"Danh sách bài nộp của <a href=\"{1}\">{0}</a> cho bài <a href=\"{3}\">{2}</"
+"a> trong <a href=\"{5}\">{4}</a>"
 
 #: judge/views/submission.py:649
 #, python-brace-format
@@ -3187,8 +3189,8 @@ msgid ""
 "<a href=\"{1}\">{0}</a>'s submissions for problem {2} in <a href=\"{4}\">{3}"
 "</a>"
 msgstr ""
-"Danh sách bài nộp của <a href=\"{1}\">{0}</a> cho bài {2} trong <a href=\"{4}\">{3}"
-"</a>"
+"Danh sách bài nộp của <a href=\"{1}\">{0}</a> cho bài {2} trong <a href="
+"\"{4}\">{3}</a>"
 
 #: judge/views/ticket.py:34 judge/views/ticket.py:40
 msgid "Ticket title"
@@ -4938,6 +4940,11 @@ msgstr "Máy chấm"
 #: templates/status/status-tabs.html:6
 msgid "Version Matrix"
 msgstr "Phiên bản của trình chấm"
+
+#: templates/submission/info-base.html:8
+#, python-format
+msgid "on judge %(name)s"
+msgstr "ở máy chấm %(name)s"
 
 #: templates/submission/internal-error-message.html:3
 #, python-format
