@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-20 15:15+0000\n"
+"POT-Creation-Date: 2021-05-20 15:41+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -433,7 +433,7 @@ msgstr "Bình luận"
 msgid "Your part is silent, little toad."
 msgstr "Không có phần nói của ngươi, đồ cóc ghẻ."
 
-#: judge/comments.py:49 templates/comments/list.html:143
+#: judge/comments.py:49 templates/comments/list.html:141
 msgid ""
 "You need to have solved at least one problem before your voice can be heard."
 msgstr "Bạn cần giải được ít nhất một bài trước khi bình luận."
@@ -2412,23 +2412,23 @@ msgstr "các test case của bài"
 
 #: judge/models/ticket.py:10
 msgid "ticket title"
-msgstr ""
+msgstr "tên vấn đề"
 
 #: judge/models/ticket.py:11
 msgid "ticket creator"
-msgstr ""
+msgstr "người báo cáo vấn đề"
 
 #: judge/models/ticket.py:13
 msgid "creation time"
-msgstr ""
+msgstr "thời gian tạo"
 
 #: judge/models/ticket.py:14
 msgid "assignees"
-msgstr ""
+msgstr "người được phân công"
 
 #: judge/models/ticket.py:16
 msgid "quick notes"
-msgstr ""
+msgstr "ghi chú"
 
 #: judge/models/ticket.py:17
 msgid "Staff notes for this issue to aid in processing."
@@ -2460,7 +2460,7 @@ msgstr ""
 
 #: judge/models/ticket.py:31
 msgid "message body"
-msgstr "nội dung thư"
+msgstr "nội dung"
 
 #: judge/models/ticket.py:32
 msgid "message time"
@@ -2474,7 +2474,7 @@ msgstr "Trang [page] /[topage]"
 #: judge/pdf_problems.py:282
 #, python-format
 msgid "Page %s of %s"
-msgstr ""
+msgstr "Trang %s /%s"
 
 #: judge/tasks/contest.py:19
 msgid "Recalculating contest scores"
@@ -3191,31 +3191,31 @@ msgstr "Mô tả vấn đề"
 #: judge/views/ticket.py:86 judge/views/ticket.py:89
 #, python-format
 msgid "New ticket for %s"
-msgstr ""
+msgstr "Báo cáo vấn đề cho %s"
 
 #: judge/views/ticket.py:143
 #, python-format
 msgid "%(title)s - Ticket %(id)d"
-msgstr ""
+msgstr "%(title)s - Vấn đề %(id)d"
 
 #: judge/views/ticket.py:177
 msgid "You cannot vote your own ticket."
-msgstr ""
+msgstr "Bạn không thể tự đánh giá"
 
 #: judge/views/ticket.py:257
 #, python-format
 msgid "Tickets - Page %(number)d of %(total)d"
-msgstr ""
+msgstr "Các vấn đề - Trang  %(number)d /%(total)d"
 
 #: judge/views/ticket.py:306
 #, python-format
 msgid "New Ticket: %s"
-msgstr ""
+msgstr "Vấn đề mới: %s"
 
 #: judge/views/ticket.py:307
 #, python-format
 msgid "#%(id)d, assigned to: %(users)s"
-msgstr ""
+msgstr "#%(id)d, phân công cho: %(users)s"
 
 #: judge/views/ticket.py:309
 msgid ", "
@@ -3223,12 +3223,12 @@ msgstr ", "
 
 #: judge/views/ticket.py:309
 msgid "no one"
-msgstr ""
+msgstr "không ai cả"
 
 #: judge/views/ticket.py:329
 #, python-format
 msgid "New Ticket Message For: %s"
-msgstr ""
+msgstr "Tin nhắn mới cho vấn đề: %s"
 
 #: judge/views/two_factor.py:49
 msgid "Enable Two-factor Authentication"
@@ -3517,8 +3517,6 @@ msgid "View all"
 msgstr "Xem đầy đủ"
 
 #: templates/blog/top-pp.html:2
-#, fuzzy
-#| msgid "Top user"
 msgid "Top users"
 msgstr "Top thành viên"
 
@@ -3561,46 +3559,34 @@ msgid "Hide"
 msgstr "Ẩn"
 
 #: templates/comments/list.html:112
-#, fuzzy, python-format
-#| msgid ""
-#| "\n"
-#| "                                                This comment is hidden "
-#| "due to too much negative feedback.\n"
-#| "                                                Click <a href="
-#| "\"javascript:comment_show_content(%(id)s)\">here</a> to view it.\n"
-#| "                                            "
+#, python-format
 msgid ""
-"\n"
-"                                                    This comment is hidden "
-"due to too much negative feedback.\n"
+"This comment is hidden due to too much negative feedback.\n"
 "                                                    Click <a href="
-"\"javascript:comment_show_content(%(id)s)\">here</a> to view it.\n"
-"                                                "
+"\"javascript:comment_show_content(%(id)s)\">here</a> to view it."
 msgstr ""
-"\n"
-"                                                Bình luận này đã bị ảnh vì "
-"có quá nhiều phản ứng tiêu cực.\n"
-"                                                Nhán vào <a href="
+"Bình luận này đã bị ẩn vì có quá nhiều phản ứng tiêu cực.\n"
+"                                                Nhấn vào <a href="
 "\"javascript:comment_show_content(%(id)s)\">đây</a> để xem.\n"
 "                                            "
 
-#: templates/comments/list.html:132
+#: templates/comments/list.html:130
 msgid "There are no comments at the moment."
 msgstr "Không có bình luận tại thời điểm này."
 
-#: templates/comments/list.html:138
+#: templates/comments/list.html:136
 msgid "New comment"
 msgstr "Bình luận mới"
 
-#: templates/comments/list.html:152
+#: templates/comments/list.html:150
 msgid "Invalid comment body."
 msgstr "Bình luận không hợp lệ."
 
-#: templates/comments/list.html:160
+#: templates/comments/list.html:158
 msgid "Post!"
 msgstr "Đăng!"
 
-#: templates/comments/list.html:168
+#: templates/comments/list.html:166
 msgid "Comments are disabled on this page."
 msgstr "Bình luận đã bị vô hiệu hóa trên trang này."
 
@@ -5141,7 +5127,7 @@ msgstr "Filing user"
 #: templates/ticket/list.html:240 templates/ticket/ticket.html:388
 msgid "Assignee"
 msgid_plural "Assignees"
-msgstr[0] ""
+msgstr[0] "Người được phân công"
 
 #: templates/ticket/list.html:260
 msgid "Title"
@@ -5149,7 +5135,7 @@ msgstr "Tiêu đề"
 
 #: templates/ticket/list.html:262
 msgid "Assignees"
-msgstr ""
+msgstr "Phân công"
 
 #: templates/ticket/new_problem.html:7
 msgid "Thanks for opening a ticket!"
@@ -5171,15 +5157,15 @@ msgstr "Bài viết"
 
 #: templates/ticket/ticket.html:381
 msgid "Associated object"
-msgstr ""
+msgstr "Đối tượng"
 
 #: templates/ticket/ticket.html:398
 msgid "No one is assigned."
-msgstr ""
+msgstr "Chưa có ai được phân công"
 
 #: templates/ticket/ticket.html:405
 msgid "Assignee notes"
-msgstr ""
+msgstr "Ghi chú"
 
 #: templates/ticket/ticket.html:412 templates/widgets/select_all.html:4
 msgid "Nothing here."
@@ -5195,11 +5181,11 @@ msgstr ""
 
 #: templates/ticket/ticket.html:425
 msgid "Close ticket"
-msgstr ""
+msgstr "Đóng vấn đề"
 
 #: templates/ticket/ticket.html:427
 msgid "Reopen ticket"
-msgstr ""
+msgstr "Mở lại vấn đề"
 
 #: templates/user/base-contrib-table.html:3
 #: templates/user/base-users-table.html:3
