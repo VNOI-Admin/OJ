@@ -5,7 +5,7 @@
         <span class="submission-date">{{ submission.date|date(_("N j, Y, g:i a")) }}
             {% with can_edit=submission.problem.is_editable_by(request.user) %}
                 {%- if can_edit and submission.judged_on %}
-                    on {{ submission.judged_on.name }}
+                    {%- trans name=submission.judged_on.name-%} on judge {{ name }} {%- endtrans -%}
                 {% endif %}
                 <br>
                 <span>{{ submission.language }}</span>
