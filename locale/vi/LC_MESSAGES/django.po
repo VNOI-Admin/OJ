@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-20 15:41+0000\n"
+"POT-Creation-Date: 2021-05-20 15:47+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -3126,12 +3126,22 @@ msgstr "Phải giải được 1 bài"
 #: judge/views/submission.py:476
 #, python-format
 msgid "My submissions for %(problem)s"
-msgstr "Các bài nộp của tôi cho %(problem)s"
+msgstr "Danh sách bài nộp của tôi trong %(problem)s"
 
 #: judge/views/submission.py:477
 #, python-format
 msgid "%(user)s's submissions for %(problem)s"
-msgstr "bài nộp của %(user)s cho %(problem)s"
+msgstr "Danh sách bài nộp của %(user)s trong %(problem)s"
+
+#: judge/views/submission.py:481
+#, python-brace-format
+msgid "My submissions for <a href=\"{3}\">{2}</a>"
+msgstr "Danh sách bài nộp của tôi trong <a href=\"{3}\">{2}</a>"
+
+#: judge/views/submission.py:484
+#, python-brace-format
+msgid "<a href=\"{1}\">{0}</a>'s submissions for <a href=\"{3}\">{2}</a>"
+msgstr "Danh sách bài nộp của <a href=\"{1}\">{0}</a> trong <a href=\"{3}\">{2}</a>"
 
 #: judge/views/submission.py:577
 msgid "Must pass a contest"
@@ -3150,17 +3160,17 @@ msgstr "Bài nộp của tôi trong %(contest)s"
 #: judge/views/submission.py:597
 #, python-format
 msgid "%(user)s's submissions in %(contest)s"
-msgstr "Bài nộp của %(user)s trong %(contest)s"
+msgstr "Danh sách bài nộp của %(user)s trong %(contest)s"
 
 #: judge/views/submission.py:616
 #, python-brace-format
 msgid "My submissions in <a href=\"{1}\">{0}</a>"
-msgstr "Các bài nộp của tôi trong <a href=\"{1}\">{0}</a>"
+msgstr "Danh sách bài nộp của tôi trong <a href=\"{1}\">{0}</a>"
 
 #: judge/views/submission.py:618
 #, python-brace-format
 msgid "<a href=\"{1}\">{0}</a>'s submissions in <a href=\"{3}\">{2}</a>"
-msgstr "Các bài nộp của <a href=\"{1}\">{0}</a> trong <a href=\"{3}\">{2}</a>"
+msgstr "Danh sách bài nộp của <a href=\"{1}\">{0}</a> trong <a href=\"{3}\">{2}</a>"
 
 #: judge/views/submission.py:644
 #, python-brace-format
@@ -3168,7 +3178,7 @@ msgid ""
 "<a href=\"{1}\">{0}</a>'s submissions for <a href=\"{3}\">{2}</a> in <a href="
 "\"{5}\">{4}</a>"
 msgstr ""
-"Các bài nộp của <a href=\"{1}\">{0}</a> cho bài <a href=\"{3}\">{2}</a> "
+"Danh sách bài nộp của <a href=\"{1}\">{0}</a> cho bài <a href=\"{3}\">{2}</a> "
 "trong <a href=\"{5}\">{4}</a>"
 
 #: judge/views/submission.py:649
@@ -3177,7 +3187,7 @@ msgid ""
 "<a href=\"{1}\">{0}</a>'s submissions for problem {2} in <a href=\"{4}\">{3}"
 "</a>"
 msgstr ""
-"Các bài nộp của <a href=\"{1}\">{0}</a> cho bài {2} trong <a href=\"{4}\">{3}"
+"Danh sách bài nộp của <a href=\"{1}\">{0}</a> cho bài {2} trong <a href=\"{4}\">{3}"
 "</a>"
 
 #: judge/views/ticket.py:34 judge/views/ticket.py:40
@@ -4487,7 +4497,7 @@ msgid ""
 "In case the statement didn't load correctly, you can download the statement "
 "here: "
 msgstr ""
-"Trong trường hợp đề bài hiện thị không chính xác, bạn có thể tải đề bài tại "
+"Trong trường hợp đề bài hiển thị không chính xác, bạn có thể tải đề bài tại "
 "đây: "
 
 #: templates/problem/problem.html:287
