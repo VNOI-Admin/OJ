@@ -11,7 +11,7 @@ class GeneralIssue(models.Model):
 
     def get_absolute_url(self):
         return self.issue_url
-    
+
     def __str__(self):
         return self.issue_url
 

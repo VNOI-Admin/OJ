@@ -1,5 +1,4 @@
 import json
-from judge.models.ticket import GeneralIssue
 
 from django import forms
 from django.conf import settings
@@ -20,7 +19,7 @@ from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormView
 
 from judge import event_poster as event
-from judge.models import Problem, Profile, Ticket, TicketMessage
+from judge.models import GeneralIssue, Problem, Profile, Ticket, TicketMessage
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.tickets import filter_visible_tickets, own_ticket_filter
 from judge.utils.views import SingleObjectFormView, TitleMixin, paginate_query_context
@@ -83,6 +82,7 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
                 'assignees': list(ticket.assignees.values_list('id', flat=True)),
             })
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
+
 
 class NewIssueTicketView(FormView, LoginRequiredMixin):
     form_class = TicketForm

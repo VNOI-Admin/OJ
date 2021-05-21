@@ -9,7 +9,7 @@ from django.utils.safestring import mark_safe
 from lxml.html import Element
 
 from judge import lxml_tree
-from judge.models import Contest, Problem, Profile, GeneralIssue
+from judge.models import Contest, GeneralIssue, Problem, Profile
 from judge.ratings import rating_class, rating_progress
 from . import registry
 
