@@ -11,7 +11,7 @@
             padding-top: 1em;
         }
 
-        #id_title {
+        #id_title, #id_issue_url {
             width: 100%;
         }
 
@@ -28,10 +28,12 @@
         {% block guideline_message %}{% endblock %}
         {% csrf_token %}
         <div class="title-block{% if form.title.errors %} error{% endif %}">{{ form.title }}</div>
-        {% if form.title.errors or form.body.errors %}
+        {% block issue_url %}{% endblock %}
+        {% if form.title.errors or form.body.errors or form.issue_url.errors%}
             <div class="form-errors">
                 {{ form.title.errors }}
                 {{ form.body.errors }}
+                {{ form.issue_url.errors }}
             </div>
         {% endif %}
         <div class="body-block">{{ form.body }}</div>

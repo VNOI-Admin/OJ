@@ -1,0 +1,5 @@
+{% extends "ticket/new.html" %}
+
+{% block issue_url %}
+    <div style="margin-top: 10px;" class="title-block{% if form.issue_url.errors %} error{% endif %}" >{{ form.issue_url }}</div>
+{% endblock %}
