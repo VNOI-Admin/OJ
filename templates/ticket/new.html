@@ -27,13 +27,23 @@
     <form id="ticket-form" action="" method="POST" class="form-area">
         {% block guideline_message %}{% endblock %}
         {% csrf_token %}
-        <div class="title-block{% if form.title.errors %} error{% endif %}">{{ form.title }}</div>
-        {% block issue_url %}{% endblock %}
-        {% if form.title.errors or form.body.errors or form.issue_url.errors%}
+        {% if form.title.errors %}
             <div class="form-errors">
                 {{ form.title.errors }}
-                {{ form.body.errors }}
+            </div>
+        {% endif %}
+        <div class="title-block{% if form.title.errors %} error{% endif %}">{{ form.title }}</div>
+        
+        {% if form.issue_url.errors %}
+            <div class="form-errors">
                 {{ form.issue_url.errors }}
+            </div>
+        {% endif %}
+        {% block issue_url %}{% endblock %}
+        
+        {% if form.body.errors %}
+            <div class="form-errors">
+                {{ form.body.errors }}
             </div>
         {% endif %}
         <div class="body-block">{{ form.body }}</div>
