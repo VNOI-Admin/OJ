@@ -1,4 +1,5 @@
 import json
+from judge.models.ticket import GeneralIssue
 
 from django import forms
 from django.conf import settings
@@ -16,6 +17,7 @@ from django.utils.translation import gettext as _, gettext_lazy
 from django.views import View
 from django.views.generic import ListView
 from django.views.generic.detail import SingleObjectMixin
+from django.views.generic.edit import FormView
 
 from judge import event_poster as event
 from judge.models import Problem, Profile, Ticket, TicketMessage
@@ -32,12 +34,14 @@ ticket_widget = (forms.Textarea() if HeavyPreviewPageDownWidget is None else
 
 class TicketForm(forms.Form):
     title = forms.CharField(max_length=100, label=gettext_lazy('Ticket title'))
+    issue_url = forms.URLField(max_length=200)
     body = forms.CharField(widget=ticket_widget)
 
     def __init__(self, request, *args, **kwargs):
         self.request = request
         super(TicketForm, self).__init__(*args, **kwargs)
         self.fields['title'].widget.attrs.update({'placeholder': _('Ticket title')})
+        self.fields['issue_url'].widget.attrs.update({'placeholder': _('Link to the issue')})
         self.fields['body'].widget.attrs.update({'placeholder': _('Issue description')})
 
     def clean(self):
@@ -72,6 +76,31 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
                 'type': 'new-ticket', 'id': ticket.id,
                 'message': message.id, 'user': ticket.user_id,
                 'assignees': list(ticket.assignees.values_list('id', flat=True)),
+            })
+        return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
+
+class NewTicketIssueView(FormView, LoginRequiredMixin):
+    form_class = TicketForm
+    template_name = 'ticket/new_issue.html'
+
+    def get_form_kwargs(self):
+        kwargs = super(NewTicketIssueView, self).get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
+    def form_valid(self, form):
+        ticket = Ticket(user=self.request.profile, title=form.cleaned_data['title'])
+        issue_object = GeneralIssue(issue_url=form.cleaned_data['issue_url'])
+        issue_object.save()
+        ticket.linked_item = issue_object
+        ticket.save()
+        message = TicketMessage(ticket=ticket, user=ticket.user, body=form.cleaned_data['body'])
+        message.save()
+        if event.real:
+            event.post('tickets', {
+                'type': 'new-ticket', 'id': ticket.id,
+                'message': message.id, 'user': ticket.user_id,
+                'assignees': [],
             })
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
