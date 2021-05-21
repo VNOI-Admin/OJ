@@ -478,10 +478,10 @@ class UserProblemSubmissions(ConditionalUserTabMixin, UserMixin, ProblemSubmissi
 
     def get_content_title(self):
         if self.request.user.is_authenticated and self.request.profile == self.profile:
-            return format_html('''My submissions for <a href="{3}">{2}</a>''',
+            return format_html(_('''My submissions for <a href="{3}">{2}</a>'''),
                                self.username, reverse('user_page', args=[self.username]),
                                self.problem_name, reverse('problem_detail', args=[self.problem.code]))
-        return format_html('''<a href="{1}">{0}</a>'s submissions for <a href="{3}">{2}</a>''',
+        return format_html(_('''<a href="{1}">{0}</a>'s submissions for <a href="{3}">{2}</a>'''),
                            self.username, reverse('user_page', args=[self.username]),
                            self.problem_name, reverse('problem_detail', args=[self.problem.code]))
 
