@@ -79,12 +79,12 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
             })
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
-class NewTicketIssueView(FormView, LoginRequiredMixin):
+class NewIssueTicketView(FormView, LoginRequiredMixin):
     form_class = TicketForm
     template_name = 'ticket/new_issue.html'
 
     def get_form_kwargs(self):
-        kwargs = super(NewTicketIssueView, self).get_form_kwargs()
+        kwargs = super(NewIssueTicketView, self).get_form_kwargs()
         kwargs['request'] = self.request
         return kwargs
 
