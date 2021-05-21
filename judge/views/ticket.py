@@ -34,15 +34,20 @@ ticket_widget = (forms.Textarea() if HeavyPreviewPageDownWidget is None else
 
 class TicketForm(forms.Form):
     title = forms.CharField(max_length=100, label=gettext_lazy('Ticket title'))
-    issue_url = forms.URLField(max_length=200)
+    issue_url = forms.URLField(max_length=200, required=False)
     body = forms.CharField(widget=ticket_widget)
 
-    def __init__(self, request, *args, **kwargs):
+    def __init__(self, request, issue_url=None, *args, **kwargs):
         self.request = request
         super(TicketForm, self).__init__(*args, **kwargs)
         self.fields['title'].widget.attrs.update({'placeholder': _('Ticket title')})
         self.fields['issue_url'].widget.attrs.update({'placeholder': _('Link to the issue')})
         self.fields['body'].widget.attrs.update({'placeholder': _('Issue description')})
+
+        # if issue_url is not None, then the issue_url field is required
+        if issue_url is not None:
+            self.fields['issue_url'].required = True
+            self.fields['issue_url'].initial = issue_url
 
     def clean(self):
         if self.request is not None and self.request.user.is_authenticated:
@@ -86,6 +91,7 @@ class NewIssueTicketView(FormView, LoginRequiredMixin):
     def get_form_kwargs(self):
         kwargs = super(NewIssueTicketView, self).get_form_kwargs()
         kwargs['request'] = self.request
+        kwargs['issue_url'] = self.request.GET.get('issue_url', '')
         return kwargs
 
     def form_valid(self, form):
