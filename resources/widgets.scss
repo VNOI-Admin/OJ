@@ -74,7 +74,7 @@ button:hover, button:hover, input[type=submit]:hover {
 }
 
 input {
-    &[type=text], &[type=password], &[type=email], &[type=number] {
+    &[type=text], &[type=password], &[type=email], &[type=number], &[type=url] {
         padding: 4px 8px;
         color: #555;
         background: #FFF none;
