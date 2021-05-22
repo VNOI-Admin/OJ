@@ -84,7 +84,7 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
 
-class NewIssueTicketView(FormView, LoginRequiredMixin):
+class NewIssueTicketView(TitleMixin, FormView, LoginRequiredMixin):
     form_class = TicketForm
     template_name = 'ticket/new_issue.html'
 
@@ -93,6 +93,13 @@ class NewIssueTicketView(FormView, LoginRequiredMixin):
         kwargs['request'] = self.request
         kwargs['issue_url'] = self.request.GET.get('issue_url', '')
         return kwargs
+
+    def get_title(self):
+        print("gettitil")
+        return _('Open new issue')
+
+    def get_content_title(self):
+        return _('Open new issue')
 
     def form_valid(self, form):
         ticket = Ticket(user=self.request.profile, title=form.cleaned_data['title'])
