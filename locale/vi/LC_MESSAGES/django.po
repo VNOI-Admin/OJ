@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-05-20 16:10+0000\n"
+"POT-Creation-Date: 2021-05-23 13:19+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -41,7 +41,27 @@ msgstr "Đăng ký thành công"
 msgid "Registration not allowed"
 msgstr "Không được phép đăng ký"
 
-#: dmoj/urls.py:103 templates/base.html:219
+#: dmoj/urls.py:58
+msgid "Password change successful"
+msgstr "Đổi mật khẩu thành công"
+
+#: dmoj/urls.py:64
+msgid "Password reset"
+msgstr "Đặt lại mật khẩu"
+
+#: dmoj/urls.py:69
+msgid "Enter new password"
+msgstr "Nhập mật khẩu mới"
+
+#: dmoj/urls.py:73
+msgid "Password reset complete"
+msgstr "Đặt lại mật khẩu thành công"
+
+#: dmoj/urls.py:77
+msgid "Password reset sent"
+msgstr "Đã gửi email đặt lại mật khẩu"
+
+#: dmoj/urls.py:108 templates/base.html:219
 msgid "Home"
 msgstr "Trang chủ"
 
@@ -3481,40 +3501,40 @@ msgid "posted on {time}"
 msgstr "đã đăng vào {time}"
 
 #: templates/blog/list.html:136
+msgid "My open tickets"
+msgstr "Báo cáo của tôi"
+
+#: templates/blog/list.html:157
+msgid "New tickets"
+msgstr "Báo cáo mới"
+
+#: templates/blog/list.html:178
 msgid "Ongoing contests"
 msgstr "Kỳ thi đang diễn ra"
 
-#: templates/blog/list.html:144 templates/contest/list.html:170
+#: templates/blog/list.html:186 templates/contest/list.html:170
 #: templates/contest/list.html:209
 #, python-format
 msgid "Ends in %(countdown)s"
 msgstr "Kết thúc trong %(countdown)s."
 
-#: templates/blog/list.html:154
+#: templates/blog/list.html:196
 msgid "Upcoming contests"
 msgstr "Kỳ thi sắp tới"
 
-#: templates/blog/list.html:162 templates/contest/contest.html:41
+#: templates/blog/list.html:204 templates/contest/contest.html:41
 #: templates/contest/list.html:243
 #, python-format
 msgid "Starting in %(countdown)s."
 msgstr "Bắt đầu trong %(countdown)s."
 
-#: templates/blog/list.html:178
+#: templates/blog/list.html:220
 msgid "Comment stream"
 msgstr "Dòng bình luận"
 
-#: templates/blog/list.html:204
+#: templates/blog/list.html:246
 msgid "New problems"
 msgstr "Bài mới"
-
-#: templates/blog/list.html:221
-msgid "My open tickets"
-msgstr "Báo cáo của tôi"
-
-#: templates/blog/list.html:242
-msgid "New tickets"
-msgstr "Báo cáo mới"
 
 #: templates/blog/top-contrib.html:2
 msgid "Top contributors"
@@ -4640,18 +4660,14 @@ msgid "Your reply must keep the following text intact for this to work:"
 msgstr "Email reply của bạn cần có đoạn text sau:"
 
 #: templates/registration/activation_email.html:17
-#: templates/registration/password_reset_email.html:17
 msgid "See you soon!"
 msgstr "Hẹn gặp lại!"
 
-#: templates/registration/activation_email.html:20
-#, python-format
+#: templates/registration/activation_email.html:19
 msgid ""
-"If you have problems activating your account, feel free to send us an email "
-"at <a href=\"mailto: %(SITE_ADMIN_EMAIL)s\"> %(SITE_ADMIN_EMAIL)s </a>."
-msgstr ""
-"Nếu bạn có vấn đề về việc kích hoạt tài khoản, hãy email tới <a href="
-"\"mailto: %(SITE_ADMIN_EMAIL)s\"> %(SITE_ADMIN_EMAIL)s </a>."
+"If you have problems activating your account, feel free to shoot us a "
+"message at: "
+msgstr "Nếu bạn có vấn đề với việc kích hoạt tài khoản, hãy liên hệ với chúng mình qua: "
 
 #: templates/registration/activation_email_subject.txt:1
 #, python-format
@@ -4715,7 +4731,14 @@ msgid ""
 "you registered with, and check your spam folder."
 msgstr "Nếu bạn không nhận được email, hãy kiểm tra hòm thư rác."
 
-#: templates/registration/password_reset_email.html:9
+#: templates/registration/password_reset_done.html:6
+#: templates/registration/password_reset_email.html:11
+msgid ""
+"See you soon! If you have problems resetting your password, feel free to "
+"shoot us a message at: "
+msgstr "Nếu bạn có vấn đề với việc đặt lại mật khẩu, hãy liên hệ với chúng mình qua: "
+
+#: templates/registration/password_reset_email.html:6
 #, python-format
 msgid ""
 "<b>Forgot your password on the %(site_name)s? Don't worry!</b><br><br>\n"
@@ -4724,12 +4747,6 @@ msgid ""
 msgstr ""
 "Để đặt lại mật khẩu của tài khoản \"%(username)s\" ở trang web "
 "%(site_name)s, nhấn vào link phía dưới."
-
-#: templates/registration/password_reset_email.html:15
-msgid ""
-"See you soon! If you have problems resetting your email, feel free to shoot "
-"us an email at"
-msgstr "Nếu có vấn đề với việc đặt lại email, hãy liên hệ với chúng tối qua"
 
 #: templates/registration/password_reset_email.txt:1
 #, python-format
@@ -4778,6 +4795,12 @@ msgid ""
 msgstr ""
 "Cảm ơn bạn đã đăng ký. Một email đã được gửi đến cho bạn để xác nhận đăng ký "
 "của bạn."
+
+#: templates/registration/registration_complete.html:4
+msgid ""
+"See you soon! If you have problems activating your account, feel free to "
+"shoot us a message at: "
+msgstr "Nếu bạn có vấn đề với việc kích hoạt tài khoản, hãy liên hệ với chúng mình qua: "
 
 #: templates/registration/registration_form.html:143
 msgid "please choose a popular email provider, e.g. gmail"
