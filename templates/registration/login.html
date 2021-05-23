@@ -31,11 +31,8 @@
         <form action="" method="post" class="form-area">
             {% csrf_token %}
             {% if form.errors %}
-                <div id="form-errors" style="max-width: fit-content;">
+                <div id="form-errors">
                     <p class="error">{{ _('Invalid username or password.') }}</p>
-                    {% for error in form.non_field_errors() %}
-                        <p class="error">{{error}}</p>
-                    {% endfor %}
                 </div>
             {% endif %}
             <table border="0" style="text-align:left">
