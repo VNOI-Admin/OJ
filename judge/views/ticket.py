@@ -95,7 +95,6 @@ class NewIssueTicketView(TitleMixin, FormView, LoginRequiredMixin):
         return kwargs
 
     def get_title(self):
-        print("gettitil")
         return _('Open new issue')
 
     def get_content_title(self):
