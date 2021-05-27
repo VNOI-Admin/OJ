@@ -1,12 +1,20 @@
+import json
 from collections import defaultdict
 from functools import partial
 
+from django.db.models import F
+from django.db.models.aggregates import Count, Min
+from django.db.models.fields import DateField
+from django.db.models.functions import Cast, ExtractYear
+from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 from django.utils import six
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from packaging import version
 
-from judge.models import Judge, Language, RuntimeVersion
+from judge.models import Judge, Language, RuntimeVersion, Submission
+from judge.utils.stats import get_pie_chart
 
 __all__ = ['status_all', 'status_table']
 
@@ -25,6 +33,43 @@ def status_all(request):
         'judges': judges,
         'runtime_version_data': Judge.runtime_versions(),
         'see_all_judges': see_all,
+    })
+
+
+def status_oj(request):
+    if not request.user.is_superuser:
+        return HttpResponseBadRequest(_("You must be admin to view this content."), content_type='text/plain')
+
+    queryset = Submission.objects.all()
+    submissions = (
+        queryset.annotate(date_only=Cast(F('date'), DateField())).values('date_only')
+        .annotate(cnt=Count('id'))
+    )
+
+    submission_data = mark_safe(json.dumps({
+        date_counts['date_only'].isoformat(): date_counts['cnt'] for date_counts in submissions
+    }))
+
+    submission_metadata = mark_safe(json.dumps({
+        'min_year': (
+            queryset.annotate(year_only=ExtractYear('date'))
+            .aggregate(min_year=Min('year_only'))['min_year']
+        ),
+    }))
+
+    stats = {
+        'language_count': get_pie_chart(
+            queryset.values('language__name').annotate(count=Count('language__name'))
+            .filter(count__gt=0).order_by('-count').values_list('language__name', 'count'),
+        )
+    }
+
+    return render(request, 'status/oj-status.html', {
+        'title': _('OJ Status'),
+        'submission': Submission.objects.count(),
+        'stats': mark_safe(json.dumps(stats)),
+        'submission_data': submission_data,
+        'submission_metadata': submission_metadata
     })
 
 
