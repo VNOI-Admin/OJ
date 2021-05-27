@@ -37,7 +37,7 @@ def status_all(request):
 
 
 def status_oj(request):
-    if not request.user.is_superuser or request.user.is_staff:
+    if not request.user.is_superuser or not request.user.is_staff:
         return HttpResponseBadRequest(_("You must be admin to view this content."), content_type='text/plain')
 
     queryset = Submission.objects.all()
