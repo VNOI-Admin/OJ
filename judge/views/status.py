@@ -61,7 +61,7 @@ def status_oj(request):
         'language_count': get_pie_chart(
             queryset.values('language__name').annotate(count=Count('language__name'))
             .filter(count__gt=0).order_by('-count').values_list('language__name', 'count'),
-        )
+        ),
     }
 
     return render(request, 'status/oj-status.html', {
@@ -69,7 +69,7 @@ def status_oj(request):
         'submission': Submission.objects.count(),
         'stats': mark_safe(json.dumps(stats)),
         'submission_data': submission_data,
-        'submission_metadata': submission_metadata
+        'submission_metadata': submission_metadata,
     })
 
 
