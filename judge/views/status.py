@@ -14,7 +14,7 @@ from django.utils.translation import gettext as _
 from packaging import version
 
 from judge.models import Judge, Language, RuntimeVersion, Submission
-from judge.utils.stats import get_pie_chart, get_bar_chart
+from judge.utils.stats import get_bar_chart, get_pie_chart
 
 __all__ = ['status_all', 'status_table']
 
