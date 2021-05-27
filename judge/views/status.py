@@ -14,7 +14,7 @@ from django.utils.translation import gettext as _
 from packaging import version
 
 from judge.models import Judge, Language, RuntimeVersion, Submission
-from judge.utils.stats import get_pie_chart
+from judge.utils.stats import get_pie_chart, get_bar_chart
 
 __all__ = ['status_all', 'status_table']
 
@@ -41,16 +41,19 @@ def status_oj(request):
         return HttpResponseBadRequest(_("You must be admin to view this content."), content_type='text/plain')
 
     queryset = Submission.objects.all()
+
+    context = {'title': _('OJ Status')}
+
     submissions = (
         queryset.annotate(date_only=Cast(F('date'), DateField())).values('date_only')
         .annotate(cnt=Count('id'))
     )
 
-    submission_data = mark_safe(json.dumps({
+    context['submission_data'] = mark_safe(json.dumps({
         date_counts['date_only'].isoformat(): date_counts['cnt'] for date_counts in submissions
     }))
 
-    submission_metadata = mark_safe(json.dumps({
+    context['submission_metadata'] = mark_safe(json.dumps({
         'min_year': (
             queryset.annotate(year_only=ExtractYear('date'))
             .aggregate(min_year=Min('year_only'))['min_year']
@@ -62,15 +65,14 @@ def status_oj(request):
             queryset.values('language__name').annotate(count=Count('language__name'))
             .filter(count__gt=0).order_by('-count').values_list('language__name', 'count'),
         ),
+        'submission_count': get_bar_chart(
+            list({date_counts['date_only'].isoformat(): date_counts['cnt']
+                 for date_counts in submissions}.items())[-30:]
+        ),
     }
+    context['stats'] = mark_safe(json.dumps(stats))
 
-    return render(request, 'status/oj-status.html', {
-        'title': _('OJ Status'),
-        'submission': Submission.objects.count(),
-        'stats': mark_safe(json.dumps(stats)),
-        'submission_data': submission_data,
-        'submission_metadata': submission_metadata,
-    })
+    return render(request, 'status/oj-status.html', context)
 
 
 def status_table(request):
