@@ -67,7 +67,7 @@ def status_oj(request):
         ),
         'submission_count': get_bar_chart(
             list({date_counts['date_only'].isoformat(): date_counts['cnt']
-                 for date_counts in submissions}.items())[-30:]
+                 for date_counts in submissions}.items())[-30:],
         ),
     }
     context['stats'] = mark_safe(json.dumps(stats))
