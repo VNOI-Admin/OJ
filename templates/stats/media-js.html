@@ -49,6 +49,27 @@
         });
     }
 
+    function draw_vertical_bar_chart(data, $chart) {
+        var ctx = $chart.find('canvas')[0].getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'bar',
+            data: data,
+            options: {
+                maintainAspectRatio: false,
+                legend: {
+                    display: false,
+                },
+                scales: {
+                    xAxes: [{
+                        ticks: {
+                            min: 0,
+                        },
+                    }],
+                },
+            },
+        });
+    }
+
     function draw_stacked_bar_chart(data, $chart) {
         var ctx = $chart.find('canvas')[0].getContext('2d');
         ctx.canvas.height = 20 * data.labels.length + 100;
