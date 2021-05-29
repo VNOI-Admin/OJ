@@ -10,6 +10,7 @@
             $(function () {
                 draw_pie_chart(window.stats.language_count, $('#language-count'));
                 draw_vertical_bar_chart(window.stats.submission_count, $('#submission-count'));
+                draw_pie_chart(window.stats.ac_rate, $('#ac-rate'));
             });
         </script>
     {% endcompress %}
@@ -19,6 +20,12 @@
 {% block media %}
     {% include "status/media-css.html" %}
     {% block content_media %}{% endblock %}
+    <style>
+        #stats-table tr td > div {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
 {% endblock %}
 
 {% block title_ruler %}{% endblock %}
@@ -92,21 +99,36 @@
         </div>
     </div>
 
-    <hr>
-
-    <h4>{{ _('Submissions in last 30 days') }}</h4>
-    <br>
-    <div id="submission-count" class="chart">
-        <canvas height="400"></canvas>
-    </div>
-
-    <h4>{{ _('Submissions by Language') }}</h4>
-    <br>
-    <div id="language-count" class="chart">
-        <canvas width="400" height="300"></canvas>
-        <ul class="legend"></ul>
-    </div>
-
+    <table id="stats-table" class="table">
+        <tr>
+            <th colspan="2">{{ _('Submissions in last 30 days') }}</th>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div id="submission-count" class="chart">
+                    <canvas height="400"></canvas>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <th>{{ _('Submissions by Language') }}</th>
+            <th>{{ _('AC Rate') }}</th>
+        </tr>
+        <tr>
+            <td>
+                <div id="language-count" class="chart">
+                    <canvas width="400" height="300"></canvas>
+                    <ul class="legend"></ul>
+                </div>
+            </td>
+            <td >
+                <div id="ac-rate" class="chart">
+                    <canvas width="400" height="300"></canvas>
+                    <ul class="legend"></ul>
+                </div>
+            </td>
+        </tr>
+    </table>
 {% endblock %}
 
 {% block bodyend %}

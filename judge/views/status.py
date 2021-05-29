@@ -2,7 +2,7 @@ import json
 from collections import defaultdict
 from functools import partial
 
-from django.db.models import F
+from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min
 from django.db.models.fields import DateField
 from django.db.models.functions import Cast, ExtractYear
@@ -68,6 +68,10 @@ def status_oj(request):
         'submission_count': get_bar_chart(
             list({date_counts['date_only'].isoformat(): date_counts['cnt']
                  for date_counts in submissions}.items())[-30:],
+        ),
+        'ac_rate': get_pie_chart(
+            queryset.values('result').annotate(count=Count('result'))
+            .order_by('-count').values_list('result', 'count').filter(~Q(result__in=["IR", "AB", "MLE", "OLE", "IE"]))
         ),
     }
     context['stats'] = mark_safe(json.dumps(stats))
