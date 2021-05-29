@@ -71,7 +71,7 @@ def status_oj(request):
         ),
         'ac_rate': get_pie_chart(
             queryset.values('result').annotate(count=Count('result'))
-            .order_by('-count').values_list('result', 'count').filter(~Q(result__in=["IR", "AB", "MLE", "OLE", "IE"]))
+            .order_by('-count').values_list('result', 'count').filter(~Q(result__in=["IR", "AB", "MLE", "OLE", "IE"])),
         ),
     }
     context['stats'] = mark_safe(json.dumps(stats))
