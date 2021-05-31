@@ -84,7 +84,7 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
 
-class NewIssueTicketView(TitleMixin, FormView, LoginRequiredMixin):
+class NewIssueTicketView(LoginRequiredMixin, TitleMixin, FormView):
     form_class = TicketForm
     template_name = 'ticket/new_issue.html'
 
