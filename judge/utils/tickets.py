@@ -1,7 +1,7 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import Q
 
-from judge.models import Problem, GeneralIssue
+from judge.models import GeneralIssue, Problem
 
 
 def own_ticket_filter(profile_id):
