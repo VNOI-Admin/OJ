@@ -131,7 +131,7 @@
         </div>
 
         <div class="blog-sidebar">
-            {% if perms.judge.test_site and own_open_tickets %}
+            {% if own_open_tickets %}
                 <div class="blog-sidebox sidebox">
                     <h3>{{ _('My open tickets') }} <i class="fa fa-question-circle"></i></h3>
                     <div class="sidebox-content">
@@ -152,7 +152,7 @@
                 </div>
             {% endif %}
 
-            {% if perms.judge.test_site and open_tickets %}
+            {% if open_tickets %}
                 <div class="blog-sidebox sidebox">
                     <h3>{{ _('New tickets') }} <i class="fa fa-exclamation-circle"></i></h3>
                     <div class="sidebox-content">
