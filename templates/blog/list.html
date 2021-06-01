@@ -143,7 +143,7 @@
                                     </div>
                                     <div class="object">
                                         <a href="{{ ticket.linked_item.get_absolute_url() }}">
-                                            {{ ticket.linked_item|item_title }}</a>
+                                            {{ ticket.linked_item|item_title|truncatechars_html(30) }}</a>
                                     </div>
                                 </li>
                             {% endfor %}
@@ -164,7 +164,7 @@
                                     </div>
                                     <div class="object">
                                         <a href="{{ ticket.linked_item.get_absolute_url() }}">
-                                            {{ ticket.linked_item|item_title }}</a>
+                                            {{ ticket.linked_item|item_title|truncatechars_html(30) }}</a>
                                     </div>
                                     <div class="author">{{ link_user(ticket.user) }}</div>
                                 </li>
