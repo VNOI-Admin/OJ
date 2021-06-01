@@ -233,10 +233,15 @@
         </ul>
 
         <span id="user-links">
-            <a id="flag_vi" href="#" onclick="submmit_language('vi')" style="margin-right: 3px;">
+            <a href="/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}" style="margin-right: 5px;">
+                <span title="{{ _('Report issue') }}">
+                    <i class="fa fa-exclamation-triangle" style="color: yellow;"></i>
+                </span>
+            </a>
+            <a id="flag_vi" href="#" onclick="submmit_language('vi')" style="margin-right: 5px; margin-top: 4px;">
                 <img src="{{ static('icons/vi_flag.svg') }}" alt="VI" height="24">
             </a>
-            <a id="flag_en" href="#" onclick="submmit_language('en')" style="margin-right: 3px;">
+            <a id="flag_en" href="#" onclick="submmit_language('en')" style="margin-right: 5px; margin-top: 4px;">
                 <img src="{{ static('icons/gb_flag.svg') }}" alt="EN" height="24">
             </a>
             {% if request.user.is_authenticated %}
