@@ -6,6 +6,16 @@ from django.utils.translation import gettext_lazy as _
 from judge.models.profile import Profile
 
 
+class GeneralIssue(models.Model):
+    issue_url = models.URLField(max_length=200, verbose_name=('Link to the issue'))
+
+    def get_absolute_url(self):
+        return self.issue_url
+
+    def __str__(self):
+        return self.issue_url
+
+
 class Ticket(models.Model):
     title = models.CharField(max_length=100, verbose_name=_('ticket title'))
     user = models.ForeignKey(Profile, verbose_name=_('ticket creator'), related_name='tickets',

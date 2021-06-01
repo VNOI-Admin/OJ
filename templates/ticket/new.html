@@ -11,7 +11,7 @@
             padding-top: 1em;
         }
 
-        #id_title {
+        #id_title, #id_issue_url {
             width: 100%;
         }
 
@@ -24,17 +24,29 @@
 {% block js_media %}{{ form.media.js }}{% endblock %}
 
 {% block body %}
-    <form id="ticket-form" action="" method="POST" class="form-area">
+    <form id="ticket-form" action="" method="POST" class="form-area" style="overflow:hidden;">
         {% block guideline_message %}{% endblock %}
         {% csrf_token %}
-        <div class="title-block{% if form.title.errors %} error{% endif %}">{{ form.title }}</div>
-        {% if form.title.errors or form.body.errors %}
+        {% if form.title.errors %}
             <div class="form-errors">
                 {{ form.title.errors }}
+            </div>
+        {% endif %}
+        <div class="title-block{% if form.title.errors %} error{% endif %}">{{ form.title }}</div>
+        
+        {% if form.issue_url.errors %}
+            <div class="form-errors">
+                {{ form.issue_url.errors }}
+            </div>
+        {% endif %}
+        {% block issue_url %}{% endblock %}
+        
+        {% if form.body.errors %}
+            <div class="form-errors">
                 {{ form.body.errors }}
             </div>
         {% endif %}
         <div class="body-block">{{ form.body }}</div>
-        <button type="submit" class="submit">{{ _('Create') }}</button>
+        <input style="float:right" type="submit" value="{{ _('Create!') }}" class="button">
     </form>
 {% endblock %}

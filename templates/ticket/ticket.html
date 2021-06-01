@@ -61,6 +61,7 @@
 
         .info-data {
             padding: 2px 5px;
+            word-break: break-all;
         }
 
         .info-empty {
@@ -162,7 +163,7 @@
             padding: 8px 10px;
         }
 
-        .new-message .submit, #edit-notes .submit {
+        .new-message .button, #edit-notes .submit {
             margin: 10px 0 0 auto;
         }
     </style>
@@ -370,7 +371,7 @@
                             </div>
                         {% endif %}
                         <div class="body-block">{{ form.body }}</div>
-                        <button type="submit" class="submit">{{ _('Post') }}</button>
+                        <input style="float:right" type="submit" value="{{ _('Post') }}" class="button">
                     </form>
                 </div>
             </section>
