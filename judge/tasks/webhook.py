@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from judge.jinja2.gravatar import gravatar
 from judge.models import Ticket
 
-__all__ = ("on_new_ticket")
+__all__ = ("on_new_ticket", )
 
 
 @shared_task
@@ -20,7 +20,10 @@ def on_new_ticket(ticket_id, content_type_id, object_id, message):
     obj = ContentType.objects.get_for_id(content_type_id).get_object_for_this_type(
         pk=object_id,
     )
-    url = site_url + obj.get_absolute_url()
+    url = obj.get_absolute_url()
+    # for internal links, we add the site url
+    if url[0] == '/':
+        url = site_url + url
     webhook = DiscordWebhook(url=webhook)
     ticket_url = site_url + "/ticket/" + str(ticket_id)
     title = f"Title: [{ticket.title}]({ticket_url})"
@@ -37,4 +40,3 @@ def on_new_ticket(ticket_id, content_type_id, object_id, message):
     )
     webhook.add_embed(embed)
     webhook.execute()
-    # embed.set_author()

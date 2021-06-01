@@ -116,6 +116,7 @@ class NewIssueTicketView(LoginRequiredMixin, TitleMixin, FormView):
                 'message': message.id, 'user': ticket.user_id,
                 'assignees': [],
             })
+        on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, form.cleaned_data['body'])
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
 
