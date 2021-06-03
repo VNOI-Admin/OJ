@@ -1,13 +1,13 @@
+import datetime
 import json
 from collections import defaultdict
-import datetime
 from functools import partial
 
 from django.conf import settings
 from django.db.models import F, Q
-from django.db.models.aggregates import Count, Min
+from django.db.models.aggregates import Count
 from django.db.models.fields import DateField
-from django.db.models.functions import Cast, ExtractYear
+from django.db.models.functions import Cast
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 from django.utils import six
@@ -16,7 +16,7 @@ from django.utils.translation import gettext as _
 from packaging import version
 
 from judge.models import Judge, Language, RuntimeVersion, Submission
-from judge.utils.stats import get_bar_chart, get_pie_chart
+from judge.utils.stats import get_pie_chart
 
 __all__ = ['status_all', 'status_table']
 
