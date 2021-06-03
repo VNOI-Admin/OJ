@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    <script type="text/javascript">
+        window.stats = {{ stats }};
+    </script>
+    {% compress js %}
+        {% include "stats/media-js.html" %}
+        <script type="text/javascript">
+            $(function () {
+                draw_pie_chart(window.stats.language_count, $('#language-count'));
+                draw_vertical_stacked_bar_chart(window.stats.submission_count, $('#submission-count'));
+                draw_pie_chart(window.stats.ac_rate, $('#ac-rate'));
+            });
+        </script>
+    {% endcompress %}
+    {% include "contest/media-js.html" %}
+{% endblock %}
+
+{% block media %}
+    {% include "status/media-css.html" %}
+    {% block content_media %}{% endblock %}
+    <style>
+        #stats-table tr td > div {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'OJ' %}
+    {% include "status/status-tabs.html" %}
+{% endblock %}
+
+{% block body %}
+    <table id="stats-table" class="table">
+        <tr>
+            <th colspan="2">{{ _('Submissions in last 30 days') }}</th>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div id="submission-count" class="chart">
+                    <canvas height="400"></canvas>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <th>{{ _('Submissions by Language') }}</th>
+            <th>{{ _('AC Rate') }}</th>
+        </tr>
+        <tr>
+            <td>
+                <div id="language-count" class="chart">
+                    <canvas width="400" height="300"></canvas>
+                    <ul class="legend"></ul>
+                </div>
+            </td>
+            <td >
+                <div id="ac-rate" class="chart">
+                    <canvas width="400" height="300"></canvas>
+                    <ul class="legend"></ul>
+                </div>
+            </td>
+        </tr>
+    </table>
+{% endblock %}
