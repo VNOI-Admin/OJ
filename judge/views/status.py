@@ -1,7 +1,9 @@
 import json
 from collections import defaultdict
+import datetime
 from functools import partial
 
+from django.conf import settings
 from django.db.models import F, Q
 from django.db.models.aggregates import Count, Min
 from django.db.models.fields import DateField
@@ -40,35 +42,42 @@ def status_oj(request):
     if not request.user.is_superuser or not request.user.is_staff:
         return HttpResponseBadRequest(_("You must be admin to view this content."), content_type='text/plain')
 
-    queryset = Submission.objects.all()
+    queryset = Submission.objects.filter(date__gt=datetime.datetime.today() - datetime.timedelta(days=30))
 
     context = {'title': _('OJ Status')}
 
     submissions = (
-        queryset.annotate(date_only=Cast(F('date'), DateField())).values('date_only')
-        .annotate(cnt=Count('id'))
+        queryset.annotate(date_only=Cast(F('date'), DateField())).order_by('date').values('date_only', 'result')
+        .annotate(count=Count('result')).values_list('date_only', 'result', 'count')
     )
 
-    context['submission_data'] = mark_safe(json.dumps({
-        date_counts['date_only'].isoformat(): date_counts['cnt'] for date_counts in submissions
-    }))
+    labels = list(set(item[0].isoformat() for item in submissions.values_list('date_only')))
+    labels.sort()
+    num_date = len(labels)
+    result_order = ["AC", "WA", "TLE", "CE", "ERR"]
+    result_data = defaultdict(partial(list, [0] * num_date))
 
-    context['submission_metadata'] = mark_safe(json.dumps({
-        'min_year': (
-            queryset.annotate(year_only=ExtractYear('date'))
-            .aggregate(min_year=Min('year_only'))['min_year']
-        ),
-    }))
+    for date, result, count in submissions:
+        result_data[result if result in result_order else "ERR"][labels.index(date.isoformat())] += count
+
+    submissions_count = {
+        'labels': labels,
+        'datasets': [
+            {
+                'label': name,
+                'backgroundColor': settings.DMOJ_STATS_SUBMISSION_RESULT_COLORS.get(name, "ERR"),
+                'data': result_data[name],
+            }
+            for name in result_order
+        ],
+    }
 
     stats = {
         'language_count': get_pie_chart(
             queryset.values('language__name').annotate(count=Count('language__name'))
             .filter(count__gt=0).order_by('-count').values_list('language__name', 'count'),
         ),
-        'submission_count': get_bar_chart(
-            list({date_counts['date_only'].isoformat(): date_counts['cnt']
-                 for date_counts in submissions}.items())[-30:],
-        ),
+        'submission_count': submissions_count,
         'ac_rate': get_pie_chart(
             queryset.values('result').annotate(count=Count('result'))
             .order_by('-count').values_list('result', 'count').filter(~Q(result__in=["IR", "AB", "MLE", "OLE", "IE"])),
