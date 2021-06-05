@@ -89,7 +89,7 @@
                 <td>{% if case.status != 'SC' %}{{ case.memory|kbdetailformat }}]{% endif %}</td>
 
                 {% if not batch.id %}
-                    <td>({{ case.points|floatformat(0) }}/{{ case.total|floatformat(0) }})</td>
+                    <td>({{ case.points|floatformat(3) }}/{{ case.total|floatformat(0) }})</td>
                 {% endif %}
             </tr>
 
@@ -144,7 +144,7 @@
                 {% else %}
                     <b>{{ _('Final score:') }}</b>
                 {% endif %}
-                {{ submission.case_points|floatformat(0) }}/{{ submission.case_total|floatformat(0) }}
+                {{ submission.case_points|floatformat(3) }}/{{ submission.case_total|floatformat(0) }}
                 {% if request.in_contest and submission.contest_or_none %}
                     {% with contest=submission.contest_or_none %}
                         ({{ _('%(points)s/%(total)s points', points=contest.points|roundfloat(3),
