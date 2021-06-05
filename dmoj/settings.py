@@ -60,6 +60,9 @@ VNOJ_CP_TICKET = 10  # Each good ticket equals CP
 
 VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
 
+DISCORD_WEBHOOK = None
+SITE_FULL_URL = None  # ie 'https://oj.vnoi.info', please remove the last / if needed
+
 NODEJS = '/usr/bin/node'
 EXIFTOOL = '/usr/bin/exiftool'
 ACE_URL = '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3'
