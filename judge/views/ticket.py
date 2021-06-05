@@ -20,6 +20,7 @@ from django.views.generic.edit import FormView
 
 from judge import event_poster as event
 from judge.models import GeneralIssue, Problem, Profile, Ticket, TicketMessage
+from judge.tasks import on_new_ticket
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.tickets import filter_visible_tickets, own_ticket_filter
 from judge.utils.views import SingleObjectFormView, TitleMixin, paginate_query_context
@@ -81,6 +82,7 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
                 'message': message.id, 'user': ticket.user_id,
                 'assignees': list(ticket.assignees.values_list('id', flat=True)),
             })
+        on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, form.cleaned_data['body'])
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
 
@@ -114,6 +116,7 @@ class NewIssueTicketView(LoginRequiredMixin, TitleMixin, FormView):
                 'message': message.id, 'user': ticket.user_id,
                 'assignees': [],
             })
+        on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, form.cleaned_data['body'])
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
 

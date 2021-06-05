@@ -9,6 +9,7 @@ from django.core.cache.utils import make_template_fragment_key
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 
+from judge.tasks import on_new_comment
 from .caching import finished_submission
 from .models import BlogPost, Comment, Contest, ContestSubmission, EFFECTIVE_MATH_ENGINES, Judge, Language, License, \
     MiscConfig, Organization, Problem, Profile, Submission
@@ -82,8 +83,11 @@ def judge_update(sender, instance, **kwargs):
 
 
 @receiver(post_save, sender=Comment)
-def comment_update(sender, instance, **kwargs):
+def comment_update(sender, instance, created, **kwargs):
     cache.delete('comment_feed:%d' % instance.id)
+    if not created:
+        return
+    on_new_comment.delay(instance.id)
 
 
 @receiver(post_save, sender=BlogPost)
