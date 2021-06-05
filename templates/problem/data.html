@@ -248,12 +248,12 @@
                     if (window.valid_files[i].endsWith(".in") || window.valid_files[i].endsWith(".inp")) {
                         inFiles.push(window.valid_files[i]);
                     }
-                    if (window.valid_files[i].endsWith(".out")) {
+                    if (window.valid_files[i].endsWith(".out") || window.valid_files[i].endsWith(".ans") || window.valid_files[i].endsWith(".ok")) {
                         outFiles.push(window.valid_files[i]);
                     }
                 }
                 if (inFiles.length == 0) {
-                    alert("No input/output files. Make sure your files' suffices are .in(p)/.out");
+                    alert("No input/output files. Make sure your files' suffices are .in(p)/.out/.ans/.ok");
                     return false;
                 }
                 if (inFiles.length != outFiles.length) {
@@ -442,8 +442,8 @@
             <td>
                 Problem type:
                 <select id="problem-type">
-                    <option value="ICPC">ICPC</option>
                     <option value="OI">OI</option>
+                    <option value="ICPC">ICPC</option>
                 </select>
                 <a id="fill-testcases" href="#">
                     <i class="fa fa-circle"></i>
