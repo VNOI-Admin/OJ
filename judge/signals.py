@@ -12,7 +12,7 @@ from django.dispatch import receiver
 from judge.tasks import on_new_comment
 from .caching import finished_submission
 from .models import BlogPost, Comment, Contest, ContestSubmission, EFFECTIVE_MATH_ENGINES, Judge, Language, License, \
-    MiscConfig, Organization, Problem, Profile, Submission
+    MiscConfig, Organization, Problem, Profile, Submission, WebAuthnCredential
 
 
 def get_pdf_path(basename):
@@ -54,6 +54,14 @@ def profile_update(sender, instance, **kwargs):
 
     cache.delete_many([make_template_fragment_key('user_about', (instance.id, engine))
                        for engine in EFFECTIVE_MATH_ENGINES])
+
+
+@receiver(post_delete, sender=WebAuthnCredential)
+def webauthn_delete(sender, instance, **kwargs):
+    profile = instance.user
+    if profile.webauthn_credentials.count() == 0:
+        profile.is_webauthn_enabled = False
+        profile.save(update_fields=['is_webauthn_enabled'])
 
 
 @receiver(post_save, sender=Contest)
