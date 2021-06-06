@@ -521,6 +521,7 @@ class ContestProblem(models.Model):
         unique_together = ('problem', 'contest')
         verbose_name = _('contest problem')
         verbose_name_plural = _('contest problems')
+        ordering = ('order',)
 
 
 class ContestSubmission(models.Model):
