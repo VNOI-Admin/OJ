@@ -233,7 +233,13 @@
         </ul>
 
         <span id="user-links">
-            <a href="/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}" style="margin-right: 5px;">
+            <a href=
+                {% if request.resolver_match.view_name == "problem_detail" %}
+                    "{{ url('new_problem_ticket', problem.code) }}"
+                {% else %}
+                    "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
+                {% endif %}
+            style="margin-right: 5px;">
                 <span title="{{ _('Report issue') }}">
                     <i class="fa fa-exclamation-triangle" style="color: yellow;"></i>
                 </span>
