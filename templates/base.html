@@ -234,7 +234,7 @@
 
         <span id="user-links">
             <a href=
-                {% if request.resolver_match.view_name == "problem_detail" %}
+                {% if request.resolver_match.view_name == "problem_detail" and problem %}
                     "{{ url('new_problem_ticket', problem.code) }}"
                 {% else %}
                     "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
