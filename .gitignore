@@ -38,3 +38,4 @@ package-lock.json
 db.json
 tmp.sh
 *.sql
+fc_*
