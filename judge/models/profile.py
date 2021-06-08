@@ -4,6 +4,7 @@ import json
 import secrets
 import struct
 
+import pyotp
 import webauthn
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -260,6 +261,11 @@ class Profile(models.Model):
 
     update_contest.alters_data = True
 
+    def check_totp_code(self, code):
+        return pyotp.TOTP(self.totp_key).verify(code, valid_window=settings.DMOJ_TOTP_TOLERANCE_HALF_MINUTES)
+
+    check_totp_code.alters_data = True
+
     def get_absolute_url(self):
         return reverse('user_page', args=(self.user.username,))
 
@@ -311,6 +317,13 @@ class WebAuthnCredential(models.Model):
             sign_count=self.counter,
             rp_id=settings.WEBAUTHN_RP_ID,
         )
+
+    def __str__(self):
+        return f'WebAuthn credential: {self.name}'
+
+    class Meta:
+        verbose_name = _('WebAuthn credential')
+        verbose_name_plural = _('WebAuthn credentials')
 
 
 class OrganizationRequest(models.Model):

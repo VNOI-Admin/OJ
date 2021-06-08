@@ -107,6 +107,9 @@ class Contest(models.Model):
     hide_problem_tags = models.BooleanField(verbose_name=_('hide problem tags'),
                                             help_text=_('Whether problem tags should be hidden by default.'),
                                             default=False)
+    hide_problem_authors = models.BooleanField(verbose_name=_('hide problem authors'),
+                                               help_text=_('Whether problem authors should be hidden by default.'),
+                                               default=False)
     run_pretests_only = models.BooleanField(verbose_name=_('run pretests only'),
                                             help_text=_('Whether judges should grade pretests only, versus all '
                                                         'testcases. Commonly set during a contest, then unset '
@@ -385,11 +388,12 @@ class Contest(models.Model):
         return queryset.distinct()
 
     def rate(self):
-        Rating.objects.filter(contest__end_time__range=(self.end_time, self._now)).delete()
-        for contest in Contest.objects.filter(
-            is_rated=True, end_time__range=(self.end_time, self._now),
-        ).order_by('end_time'):
-            rate_contest(contest)
+        with transaction.atomic():
+            Rating.objects.filter(contest__end_time__range=(self.end_time, self._now)).delete()
+            for contest in Contest.objects.filter(
+                is_rated=True, end_time__range=(self.end_time, self._now),
+            ).order_by('end_time'):
+                rate_contest(contest)
 
     class Meta:
         permissions = (
@@ -520,6 +524,7 @@ class ContestProblem(models.Model):
         unique_together = ('problem', 'contest')
         verbose_name = _('contest problem')
         verbose_name_plural = _('contest problems')
+        ordering = ('order',)
 
 
 class ContestSubmission(models.Model):
