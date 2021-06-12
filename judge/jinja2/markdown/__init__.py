@@ -81,7 +81,7 @@ def markdown(text, style, math_engine=None, lazy_load=False):
     else:
         safe_mode = None
 
-    extras = ['latex', 'spoiler', 'fenced-code-blocks', 'cuddled-lists', 'tables']
+    extras = ['latex', 'spoiler', 'fenced-code-blocks', 'cuddled-lists', 'tables', 'strike']
     if styles.get('nofollow', True):
         extras.append('nofollow')
 
