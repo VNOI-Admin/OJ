@@ -77,6 +77,11 @@ def add_table_class(text):
 @registry.filter
 def markdown(text, style, math_engine=None, lazy_load=False):
     styles = settings.MARKDOWN_STYLES.get(style, settings.MARKDOWN_DEFAULT_STYLE)
+    if styles.get('safe_mode', True):
+        safe_mode = 'escape'
+    else:
+        safe_mode = None
+    nofollow = styles.get('nofollow', True)
     bleach_params = styles.get('bleach', {})
 
     post_processors = []
@@ -86,7 +91,10 @@ def markdown(text, style, math_engine=None, lazy_load=False):
         post_processors.append(lazy_load_processor)
 
     string, latexeqs = extractLatexeq(text)
-    string = markdown2.markdown(string, extras=['spoiler', 'fenced-code-blocks', 'cuddled-lists', 'tables'])
+    extras = ['spoiler', 'fenced-code-blocks', 'cuddled-lists', 'tables']
+    if nofollow:
+        extras.append('nofollow')
+    string = markdown2.markdown(string, safe_mode=safe_mode, extras=extras)
     result = recontructString(string, latexeqs)
     result = add_table_class(result)
     result = inc_header(result, 2)
