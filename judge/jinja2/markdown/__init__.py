@@ -15,7 +15,6 @@ from judge.jinja2.markdown.lazy_load import lazy_load as lazy_load_processor
 from judge.utils.camo import client as camo_client
 from judge.utils.texoid import TEXOID_ENABLED, TexoidRenderer
 from .bleach_whitelist import all_styles, mathml_attrs, mathml_tags
-from .math import extractLatexeq, recontructString
 from .. import registry
 
 logger = logging.getLogger('judge.html')
@@ -77,6 +76,15 @@ def add_table_class(text):
 @registry.filter
 def markdown(text, style, math_engine=None, lazy_load=False):
     styles = settings.MARKDOWN_STYLES.get(style, settings.MARKDOWN_DEFAULT_STYLE)
+    if styles.get('safe_mode', True):
+        safe_mode = 'escape'
+    else:
+        safe_mode = None
+
+    extras = ['latex', 'spoiler', 'fenced-code-blocks', 'cuddled-lists', 'tables', 'strike']
+    if styles.get('nofollow', True):
+        extras.append('nofollow')
+
     bleach_params = styles.get('bleach', {})
 
     post_processors = []
@@ -85,9 +93,8 @@ def markdown(text, style, math_engine=None, lazy_load=False):
     if lazy_load:
         post_processors.append(lazy_load_processor)
 
-    string, latexeqs = extractLatexeq(text)
-    string = markdown2.markdown(string, extras=['spoiler', 'fenced-code-blocks', 'cuddled-lists', 'tables'])
-    result = recontructString(string, latexeqs)
+    result = markdown2.markdown(text, safe_mode=safe_mode, extras=extras)
+
     result = add_table_class(result)
     result = inc_header(result, 2)
 
