@@ -160,6 +160,8 @@ class ProblemSubmitTempClass(ProblemMixin, SingleObjectFormView):
 
     @cached_property
     def contest_problem(self):
+        if not self.request.user.is_authenticated:
+            return None
         if self.request.profile.current_contest is None:
             return None
         return get_contest_problem(self.object, self.request.profile)
@@ -184,7 +186,15 @@ class ProblemSubmitTempClass(ProblemMixin, SingleObjectFormView):
         # If the old submission exists, use its language, otherwise use the user's default language.
         if self.old_submission is not None:
             return self.old_submission.language
+        if not self.request.user.is_authenticated:
+            return Language.get_default_language()
         return self.request.profile.language
+
+    @property
+    def ace_theme(self):
+        if not self.request.user.is_authenticated:
+            return 'github'
+        return self.request.profile.ace_theme
 
     def get_initial(self):
         initial = {'language': self.default_language}
@@ -216,7 +226,7 @@ class ProblemSubmitTempClass(ProblemMixin, SingleObjectFormView):
         form_data = getattr(form, 'cleaned_data', form.initial)
         if 'language' in form_data:
             form.fields['source'].widget.mode = form_data['language'].ace
-        form.fields['source'].widget.theme = self.request.profile.ace_theme
+        form.fields['source'].widget.theme = self.ace_theme
 
         return form
 
@@ -271,19 +281,23 @@ class ProblemSubmitTempClass(ProblemMixin, SingleObjectFormView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['langs'] = Language.objects.all()
-        context['no_judges'] = not context['form'].fields['language'].queryset
-        context['submission_limit'] = self.contest_problem and self.contest_problem.max_submissions
-        context['submissions_left'] = self.remaining_submission_count
-        context['ACE_URL'] = settings.ACE_URL
-        context['default_lang'] = self.default_language
+        if self.request.user.is_authenticated:
+            context['langs'] = Language.objects.all()
+            context['no_judges'] = not context['form'].fields['language'].queryset
+            context['submission_limit'] = self.contest_problem and self.contest_problem.max_submissions
+            context['submissions_left'] = self.remaining_submission_count
+            context['ACE_URL'] = settings.ACE_URL
+            context['default_lang'] = self.default_language
         return context
 
     def post(self, request, *args, **kwargs):
+        # This function will raise Internal Error if we use the "login_required" decorator
+        # That is why we use this check instead
+        if not self.request.user.is_authenticated:
+            return HttpResponseForbidden('<h1>Do you want me to ban you?</h1>')
         try:
             return super().post(request, *args, **kwargs)
         except Http404:
-            # Is this really necessary? This entire post() method could be removed if we don't log this.
             user_logger.info(
                 'Naughty user %s wants to submit to %s without permission',
                 request.user.username,
@@ -320,18 +334,14 @@ class ProblemDetail(ProblemSubmitTempClass, SolvedProblemMixin):
         authed = user.is_authenticated
         context['has_submissions'] = authed and Submission.objects.filter(user=user.profile,
                                                                           problem=self.object).exists()
-        contest_problem = (None if not authed or user.profile.current_contest is None else
-                           get_contest_problem(self.object, user.profile))
+
+        contest_problem = self.contest_problem
+
         context['contest_problem'] = contest_problem
         if contest_problem:
             clarifications = self.object.clarifications
             context['has_clarifications'] = clarifications.count() > 0
             context['clarifications'] = clarifications.order_by('-date')
-            context['submission_limit'] = contest_problem.max_submissions
-            if contest_problem.max_submissions:
-                context['submissions_left'] = max(contest_problem.max_submissions -
-                                                  get_contest_submission_count(self.object, user.profile,
-                                                                               user.profile.current_contest.virtual), 0)
 
         context['available_judges'] = Judge.objects.filter(online=True, problems=self.object)
         context['show_languages'] = self.object.allowed_languages.count() != Language.objects.count()
