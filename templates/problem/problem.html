@@ -1,4 +1,5 @@
 {% extends "common-content.html" %}
+{% block title_ruler %}{% endblock %}
 {% block content_media %}
     {% include "comments/media-css.html" %}
     <style>
@@ -49,49 +50,8 @@
 {% endblock %}
 
 {% block title_row %}
-    <div class="problem-title">
-        {% if request.user.is_authenticated %}
-            {% if problem.id in completed_problem_ids %}
-                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
-                    {% if problem.is_public or request.in_contest %}
-                        <i class="solved-problem-color title-state fa fa-check-circle"></i>
-                    {% else %}
-                        <i class="solved-problem-color title-state fa fa-lock"></i>
-                    {% endif %}
-                </a>
-            {% elif problem.id in attempted_problems %}
-                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
-                    {% if problem.is_public or request.in_contest %}
-                        <i class="attempted-problem-color title-state fa fa-frown-o"></i>
-                    {% else %}
-                        <i class="attempted-problem-color title-state fa fa-lock"></i>
-                    {% endif %}
-                </a>
-            {% endif %}
-        {% endif %}
-        <h2 style="color:#393630; display: inline-block">{{ title }}</h2>
-        {% if problem.is_organization_private %}
-            <span class="organization-tags">
-                {% for org in problem.organizations.all() %}
-                    <span class="organization-tag">
-                        <a href="{{ org.get_absolute_url() }}">
-                            <i class="fa fa-lock"></i> {{ org.name }}
-                        </a>
-                    </span>
-                {% endfor %}
-            </span>
-        {% endif %}
-        {% if has_pdf_render %}
-            <span class="spacer"></span>
-            <a href="{{ url('problem_pdf', problem.code) }}" class="view-pdf">
-                <span class="pdf-icon">
-                    <span class="fa fa-file-pdf-o pdf-icon-logo"></span>
-                    <span class="pdf-icon-bar"></span>
-                </span>
-                {{ _('View as PDF') }}
-            </a>
-        {% endif %}
-    </div>
+    {% set tab='statement' %}
+    {% include "problem/problem-tabs.html" %}
 {% endblock %}
 
 {% block info_float %}
