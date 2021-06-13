@@ -1,7 +1,6 @@
 {% extends "common-content.html" %}
 {% block title_ruler %}{% endblock %}
 {% block content_media %}
-    {% include "comments/media-css.html" %}
     <style>
         .title-state {
             font-size: 2em;
@@ -289,8 +288,6 @@
                 <p class="no-comments-message">{{ _('No clarifications have been made at this time.') }}</p>
             {% endif %}
         </div>
-    {% else %}
-        {% include "comments/list.html" %}
     {% endif %}
 {% endblock %}
 
