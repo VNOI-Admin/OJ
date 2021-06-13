@@ -388,7 +388,7 @@ class ProblemComment(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
         TODO
         This class is problem exactly the same as the old ProblemDetial class.
         I haven't edit anything yet to make things work.
-        This class will be fixed later 
+        This class will be fixed later
     """
     context_object_name = 'problem'
     template_name = 'problem/problem-comment.html'
@@ -402,33 +402,11 @@ class ProblemComment(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
         authed = user.is_authenticated
         context['has_submissions'] = authed and Submission.objects.filter(user=user.profile,
                                                                           problem=self.object).exists()
-        contest_problem = (None if not authed or user.profile.current_contest is None else
-                           get_contest_problem(self.object, user.profile))
-        context['contest_problem'] = contest_problem
-        if contest_problem:
-            clarifications = self.object.clarifications
-            context['has_clarifications'] = clarifications.count() > 0
-            context['clarifications'] = clarifications.order_by('-date')
-            context['submission_limit'] = contest_problem.max_submissions
-            if contest_problem.max_submissions:
-                context['submissions_left'] = max(contest_problem.max_submissions -
-                                                  get_contest_submission_count(self.object, user.profile,
-                                                                               user.profile.current_contest.virtual), 0)
 
         context['available_judges'] = Judge.objects.filter(online=True, problems=self.object)
-        context['show_languages'] = self.object.allowed_languages.count() != Language.objects.count()
         context['has_pdf_render'] = HAS_PDF
         context['completed_problem_ids'] = self.get_completed_problems()
         context['attempted_problems'] = self.get_attempted_problems()
-
-        can_edit = self.object.is_editable_by(user)
-        context['can_edit_problem'] = can_edit
-        if user.is_authenticated:
-            tickets = self.object.tickets
-            if not can_edit:
-                tickets = tickets.filter(own_ticket_filter(user.profile.id))
-            context['has_tickets'] = tickets.exists()
-            context['num_open_tickets'] = tickets.filter(is_open=True).values('id').distinct().count()
 
         try:
             context['editorial'] = Solution.objects.get(problem=self.object)
@@ -439,19 +417,12 @@ class ProblemComment(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
         except ProblemTranslation.DoesNotExist:
             context['title'] = self.object.name
             context['language'] = settings.LANGUAGE_CODE
-            context['description'] = self.object.description
             context['translated'] = False
         else:
             context['title'] = translation.name
             context['language'] = self.request.LANGUAGE_CODE
-            context['description'] = translation.description
             context['translated'] = True
 
-        if not self.object.og_image or not self.object.summary:
-            metadata = generate_opengraph('generated-meta-problem:%s:%d' % (context['language'], self.object.id),
-                                          context['description'], 'problem')
-        context['meta_description'] = self.object.summary or metadata[0]
-        context['og_image'] = self.object.og_image or metadata[1]
         return context
 
 
