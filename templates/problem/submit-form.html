@@ -1,0 +1,66 @@
+{% if not no_judges %}
+    {% if default_lang not in form.fields.language.queryset %}
+        <div class="alert alert-warning alert-dismissable">
+            <a class="close">x</a>
+            {% trans trimmed default_language=default_lang.name %}
+                <b>Warning!</b> Your default language, <b>{{ default_language }}</b>,
+                is unavailable for this problem and has been deselected.
+            {% endtrans %}
+        </div>
+    {% endif %}
+
+    {% if request.in_contest and submission_limit %}
+        {% if submissions_left > 0 %}
+            <div class="alert alert-warning alert-dismissable">
+                <a class="close">x</a>
+                {% trans left=submissions_left -%}
+                    You have {{ left }} submission left
+                    {%- pluralize -%}
+                    You have {{ left }} submissions left
+                {%- endtrans %}
+            </div>
+        {% else %}
+            <div class="alert alert-warning alert-dismissable">
+                <a class="close">x</a>
+                {{ _('You have 0 submissions left') }}
+            </div>
+        {% endif %}
+    {% endif %}
+{% endif %}
+<form id="problem_submit" action="" method="post" class="form-area">
+    {% csrf_token %}
+    {{ form.non_field_errors() }}
+    <div id="submit-wrapper">
+        <div id="editor">
+            {{ form.source.errors }}
+            {{ form.source }}
+        </div>
+        {% if not no_judges %}
+            <div id="language">
+                {{ form.language.errors }}
+                <div id="language-select">
+                    <select id="id_language" name="language">
+                        {% for lang in form.fields.language.queryset %}
+                            <option value="{{ lang.id }}" data-id="{{ lang.id }}" data-name="{{ lang.name }}"
+                                    data-info="{{ lang.info }}" data-ace="{{ lang.ace }}"
+                                    data-judge-info="{{ runtime_versions(lang.runtime_versions()) }}"
+                                    {% if lang.id == default_lang.id %}selected{% endif %}>{{ lang.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <hr>
+
+    {% if no_judges %}
+        <span style="color: red">{{ _('No judge is available for this problem.') }}</span>
+    {% else %}
+        <div class="submit-bar">
+            {{ form.judge }}
+            <input type="submit" value="{{ _('Submit!') }}" class="button"
+                    {% if request.in_contest and submission_limit and not submissions_left %}disabled{% endif %}>
+        </div>
+    {% endif %}
+</form>

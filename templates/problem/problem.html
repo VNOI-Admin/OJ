@@ -42,6 +42,15 @@
             padding-top: 0.5em;
         }
     </style>
+    {% if request.user.is_authenticated %}
+        {% include "problem/submit-form-css.html" %}
+    {% endif %}
+{% endblock %}
+
+{% block content_js_media %}
+    {% if request.user.is_authenticated %}
+        {% include "problem/submit-form-js.html" %}
+    {% endif %}
 {% endblock %}
 
 {% block title_row %}
@@ -284,6 +293,9 @@
                 <p class="no-comments-message">{{ _('No clarifications have been made at this time.') }}</p>
             {% endif %}
         </div>
+    {% endif %}
+    {% if request.user.is_authenticated %}
+        {% include "problem/submit-form.html" %}
     {% endif %}
 {% endblock %}
 
