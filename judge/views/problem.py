@@ -403,6 +403,13 @@ class ProblemComment(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
         context['has_submissions'] = authed and Submission.objects.filter(user=user.profile,
                                                                           problem=self.object).exists()
 
+        contest_problem = (None if not authed or user.profile.current_contest is None else
+                           get_contest_problem(self.object, user.profile))
+        context['contest_problem'] = contest_problem
+
+        if contest_problem and contest_problem.contest.use_clarifications:
+            raise PermissionDenied()
+
         context['available_judges'] = Judge.objects.filter(online=True, problems=self.object)
         context['has_pdf_render'] = HAS_PDF
         context['completed_problem_ids'] = self.get_completed_problems()

@@ -2,7 +2,9 @@
 
 {% block tabs %}
     {{ make_tab('statement', 'fa-list', url('problem_detail', problem.code), _('Statement')) }}
-    {{ make_tab('comment', 'fa-comments', url('problem_comment', problem.code), _('Comments')) }}
+    {% if not contest_problem or not contest_problem.contest.use_clarifications %}
+        {{ make_tab('comment', 'fa-comments', url('problem_comment', problem.code), _('Comments')) }}
+    {% endif %}
 {% endblock %}
 
 {% block title %}
