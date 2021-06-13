@@ -215,6 +215,10 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
         return context
 
 
+class ProblemComment(ProblemDetail):
+    template_name = 'problem/problem-comment.html'
+
+
 class LatexError(Exception):
     pass
 

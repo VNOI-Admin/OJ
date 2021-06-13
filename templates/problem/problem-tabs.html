@@ -2,6 +2,7 @@
 
 {% block tabs %}
     {{ make_tab('statement', 'fa-list', url('problem_detail', problem.code), _('Statement')) }}
+    {{ make_tab('comment', 'fa-comments', url('problem_comment', problem.code), _('Comments')) }}
 {% endblock %}
 
 {% block title %}
