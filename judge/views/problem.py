@@ -149,12 +149,7 @@ class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMi
             ))
 
 
-class ProblemSubmitTempClass(ProblemMixin, SingleObjectFormView):
-    """
-        TODO
-        This class is problem almost the same as the old ProblemSubmit class.
-        The ProblemDetail class will inherit from this class
-    """
+class ProblemSubmitBase(ProblemMixin, SingleObjectFormView):
     template_name = 'problem/submit.html'
     form_class = ProblemSubmitForm
 
@@ -320,7 +315,7 @@ class ProblemSubmitTempClass(ProblemMixin, SingleObjectFormView):
         return super().dispatch(request, *args, **kwargs)
 
 
-class ProblemDetail(ProblemSubmitTempClass, SolvedProblemMixin):
+class ProblemDetail(ProblemSubmitBase, SolvedProblemMixin):
     form_class = ProblemSubmitForm
     context_object_name = 'problem'
     template_name = 'problem/problem.html'
@@ -384,12 +379,6 @@ class ProblemDetail(ProblemSubmitTempClass, SolvedProblemMixin):
 
 
 class ProblemComment(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
-    """
-        TODO
-        This class is problem exactly the same as the old ProblemDetial class.
-        I haven't edit anything yet to make things work.
-        This class will be fixed later
-    """
     context_object_name = 'problem'
     template_name = 'problem/problem-comment.html'
 
@@ -705,7 +694,7 @@ class RandomProblem(ProblemList):
 user_logger = logging.getLogger('judge.user')
 
 
-class ProblemSubmit(LoginRequiredMixin, TitleMixin, ProblemSubmitTempClass):
+class ProblemSubmit(LoginRequiredMixin, TitleMixin, ProblemSubmitBase):
     template_name = 'problem/submit.html'
     form_class = ProblemSubmitForm
 
