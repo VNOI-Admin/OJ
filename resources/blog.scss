@@ -7,7 +7,6 @@
     margin-right: 0;
 
     .post {
-        border-bottom: 2px solid $border_gray;
         padding-top: 0.5em;
 
         .title {
@@ -25,7 +24,25 @@
 
         &:last-child {
             border-bottom: none;
+
+            .blog-body {
+                padding-bottom: none;
+            }
         }
+
+        .blog-body {
+            border-left: 4px solid grey;
+            margin: 1em 0;
+            padding-left: 1em;
+            padding-bottom: 0.25em;
+        }
+    }
+
+    .meta {
+        margin: 1em 0 1.5em 0;
+        padding: 0.25em 0.5em;
+        border: 2px solid grey;
+        border-radius: 4px;
     }
 }
 
