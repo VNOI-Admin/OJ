@@ -219,6 +219,14 @@
         {% endcache %}
     {% endif %}
 
+    {% if problem.source %}
+        <div class="problem-info-entry">
+            <i class="fa fa-pencil-square-o fa-fw"></i><span
+                class="pi-name">{{ _('Problem source:') }}</span>
+            <div class="pi-value authors-value">{{ problem.source }}</div>
+        </div>
+    {% endif %}
+
     {% if not contest_problem or not contest_problem.contest.hide_problem_tags %}
         <div id="problem-types">
             {% with types=problem.types_list %}
