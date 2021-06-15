@@ -362,7 +362,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
                     queryset = queryset.search(query, queryset.BOOLEAN).extra(order_by=['-relevance'])
                 else:
                     queryset = queryset.filter(
-                        Q(code__icontains=query) | Q(name__icontains=query) | Q(source__icontains=query) |
+                        Q(code__icontains=query) | Q(name__icontains=query) |
                         Q(translations__name__icontains=query, translations__language=self.request.LANGUAGE_CODE))
         self.prepoint_queryset = queryset
         if self.point_start is not None:
