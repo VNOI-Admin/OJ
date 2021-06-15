@@ -124,7 +124,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
             'fields': (
                 'code', 'name', 'is_public', 'is_manually_managed', 'date', 'authors',
                 'curators', 'testers', 'is_organization_private', 'organizations', 'is_full_markup', 'pdf_url',
-                'description', 'license',
+                'source', 'description', 'license',
             ),
         }),
         (_('Social Media'), {'classes': ('collapse',), 'fields': ('og_image', 'summary')}),
