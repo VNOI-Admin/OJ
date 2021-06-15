@@ -111,7 +111,7 @@ class Problem(models.Model):
     pdf_url = models.CharField(max_length=100, verbose_name=_('PDF statement URL'), blank=True,
                                help_text=_('URL to PDF statement. The PDF file must be embeddable (Mobile web browsers'
                                            'may not support embedding). Fallback included.'))
-    source = models.CharField(max_length=100, verbose_name=_('Problem source'), db_index=True, blank=True,
+    source = models.CharField(max_length=200, verbose_name=_('Problem source'), db_index=True, blank=True,
                               help_text=_('Source of problem. Please credit the source of the problem'
                                           'if it is not yours'))
     description = models.TextField(verbose_name=_('problem body'), blank=True,

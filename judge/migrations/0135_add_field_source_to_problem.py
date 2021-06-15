@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='problem',
             name='source',
-            field=models.CharField(blank=True, db_index=True, help_text='Source of problem. Please credit the source of the problemif it is not yours', max_length=100, verbose_name='Problem source'),
+            field=models.CharField(blank=True, db_index=True, help_text='Source of problem. Please credit the source of the problemif it is not yours', max_length=200, verbose_name='Problem source'),
         ),
     ]
