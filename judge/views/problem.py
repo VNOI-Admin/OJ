@@ -691,3 +691,16 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
 
     def get_title(self):
         return _('Edit problem') + ' ' + self.object.name
+
+    def get_object(self, queryset=None):
+        problem = super(ProblemEdit, self).get_object(queryset)
+        if not problem.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return problem
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super(ProblemEdit, self).dispatch(request, *args, **kwargs)
+        except PermissionDenied:
+            return generic_message(request, _("Can't edit problem"),
+                                   _('You are not allowed to edit this problem.'), status=403)
