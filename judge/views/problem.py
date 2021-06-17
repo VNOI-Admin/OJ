@@ -695,7 +695,7 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
     def get_content_title(self):
         return mark_safe(escape(_('Editing problem %s')) % (
             format_html('<a href="{1}">{0}</a>', self.object.name,
-                        reverse('problem_edit', args=[self.object.code]))))
+                        reverse('problem_detail', args=[self.object.code]))))
 
     def get_object(self, queryset=None):
         problem = super(ProblemEdit, self).get_object(queryset)
