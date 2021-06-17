@@ -17,7 +17,8 @@ from django.utils.translation import gettext_lazy as _
 from django_ace import AceWidget
 from judge.models import Contest, Language, Organization, Problem, Profile, Submission, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
-from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, Select2MultipleWidget, Select2Widget
+from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, MartorWidget, \
+    Select2MultipleWidget, Select2Widget
 
 TOTP_CODE_LENGTH = 6
 
@@ -97,9 +98,12 @@ class ProfileForm(ModelForm):
 class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
-        fields = ['code', 'authors']
+        fields = ['code', 'authors', 'types', 'group', 'description', 'is_public', 'time_limit', 'memory_limit']
         widgets = {
             'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
+            'types': Select2MultipleWidget,
+            'group': Select2Widget,
+            'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
         }
 
 
