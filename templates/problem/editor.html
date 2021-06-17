@@ -9,6 +9,8 @@
 {% endblock %}
 
 {% block body %}
+
+<div><a href="{{ url('admin:judge_problem_change', problem.id) }}">{{ _('Edit problem in admin panel for more options') }}</a></div>
 <div class="centered-form">
     <form action="" method="post" class="form-area">
         {% csrf_token %}
