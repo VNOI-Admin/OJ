@@ -110,7 +110,7 @@ class ProposeProblemSolutionForm(ModelForm):
 class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
-        fields = ['code', 'authors', 'types', 'group', 'description', 'is_public', 'time_limit', 'memory_limit']
+        fields = ['code', 'is_public', 'time_limit', 'memory_limit', 'authors', 'types', 'group', 'description']
         widgets = {
             'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'types': Select2MultipleWidget,

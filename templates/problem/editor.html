@@ -6,6 +6,35 @@
 
 {% block media %}
     {{ form.media.css }}
+    <style>
+        .helptext {
+            font-size: 13px;
+            color: #999;
+            border-width: 0 0 1px 0;
+        }
+        .helptext::before {
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+            content: "\f05a";
+            padding-right: 5px;
+            font-size: 14px;
+        }
+        .django-as-table {
+            border-collapse:collapse;
+        }
+        .django-as-table th, td {
+            padding-bottom: 10px;
+        }
+        .errorlist {
+            background: rgba(255, 0, 0, 0.3);
+            border: 3px solid red;
+            border-right: none;
+            padding: 0 1em 0.1em 1em;
+            margin: 0.3em 0 0.5em 0;
+        }
+    </style>
 {% endblock %}
 
 {% block body %}
