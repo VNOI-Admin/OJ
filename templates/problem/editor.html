@@ -14,6 +14,10 @@
         {% csrf_token %}
         <table class="django-as-table">{{ form.as_table() }}</table>
         <hr>
+
+        <center><h3> Editorial </h3></center>
+        <table class="django-as-table">{{ soulution_formset.as_table() }}</table>
+
         <table>
             <tr><td style="float: left;"><button class="submit-bar" type="button">
                 <a href="{{ url('admin:judge_problem_change', problem.id) }}" style="color: white;">{{ _('Edit problem in admin panel for more options') }}</a>
