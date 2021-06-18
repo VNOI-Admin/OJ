@@ -4,10 +4,9 @@
     <th class="header">{{ _('Username') }}</th>
     <th class="header username">{{ _('Full Name') }}</th>
     {% for problem in problems %}
-        <th class="points header"><a href="{{ url('contest_ranked_submissions', contest.key, problem.problem.code) }}">
-            {{- contest.get_label_for_problem(loop.index0) }}
-            <div class="point-denominator">{{ problem.points }}</div>
-        </a></th>
+        <th class="points header">
+            {{ problem }}
+        </th>
     {% endfor %}
     <th class="header points">{{ _('Points') }}</th>
 </tr>

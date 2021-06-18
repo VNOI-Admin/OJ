@@ -19,4 +19,4 @@ def parse_csv_ranking(raw):
 
     users.sort(key=lambda p: p['total_score'], reverse=True)
 
-    return users
+    return users, problems

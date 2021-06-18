@@ -30,7 +30,6 @@ from reversion import revisions
 
 from judge import event_poster as event
 from judge.comments import CommentedDetailView
-from judge.contest_format.base import BaseContestFormat
 from judge.forms import ContestCloneForm
 from judge.models import Contest, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Problem, ProblemClarification, Profile, Submission
@@ -721,27 +720,17 @@ class ContestOfficialRanking(ContestRankingBase):
         return _('%s Official Rankings') % self.object.name
 
     def get_ranking_list(self):
-        def display_user_problem(points, contest_problem):
-            return format_html(
-                u'<td class="{state}">{points}</td>',
-                state=BaseContestFormat.best_solution_state(points, contest_problem.points),
-                points=floatformat(points),
-            )
-
-        def display_participation_result(points):
+        def display_points(points):
             return format_html(
                 u'<td class="user-points">{points}</td>',
                 points=floatformat(points),
             )
 
-        users = parse_csv_ranking(self.object.csv_ranking)
-        problems = list(self.object.contest_problems.select_related('problem')
-                            .defer('problem__description').order_by('order'))
+        users, problems = parse_csv_ranking(self.object.csv_ranking)
 
         for user in users:
-            user['result_cell'] = display_participation_result(user['total_score'])
-            user['problem_cells'] = [display_user_problem(points, contest_problem)
-                                     for (points, contest_problem) in zip(user['scores'], problems)]
+            user['result_cell'] = display_points(user['total_score'])
+            user['problem_cells'] = [display_points(points) for points in user['scores']]
 
         users = list(zip(range(1, len(users) + 1), users))
 
