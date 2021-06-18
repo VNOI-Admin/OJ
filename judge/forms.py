@@ -10,12 +10,13 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db.models import Q
-from django.forms import BooleanField, CharField, ChoiceField, Form, ModelForm, MultipleChoiceField
+from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, ModelForm, MultipleChoiceField, \
+    inlineformset_factory
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
-from judge.models import Contest, Language, Organization, Problem, Profile, Submission, WebAuthnCredential
+from judge.models import Contest, Language, Organization, Problem, Profile, Solution, Submission, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -95,16 +96,31 @@ class ProfileForm(ModelForm):
             self.fields.pop('organizations')
 
 
+class ProposeProblemSolutionForm(ModelForm):
+    class Meta:
+        model = Solution
+        fields = ('is_public', 'publish_on', 'authors', 'content')
+        widgets = {
+            'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
+            'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('solution_preview')}),
+            'publish_on': DateInput(attrs={'type': 'date'}),
+        }
+
+
 class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
-        fields = ['code', 'authors', 'types', 'group', 'description', 'is_public', 'time_limit', 'memory_limit']
+        fields = ['code', 'is_public', 'time_limit', 'memory_limit', 'authors', 'types', 'group', 'description']
         widgets = {
             'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'types': Select2MultipleWidget,
             'group': Select2Widget,
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
         }
+
+
+class ProposeProblemSolutionFormSet(inlineformset_factory(Problem, Solution, form=ProposeProblemSolutionForm)):
+    pass
 
 
 class DownloadDataForm(Form):
