@@ -233,7 +233,7 @@
                 $('.organization-column').toggle();
                 localStorage.setItem('show-organizations', $('.organization-column').is(':visible') ? 'true' : 'false');
             });
-            
+
             if (localStorage.getItem('show-organizations') == 'true') {
                 $('.organization-column').show();
                 $('#show-organizations-checkbox').prop('checked', true);
@@ -250,8 +250,10 @@
                 <input id="search-contest" type="text" placeholder="{{ _('View user participation') }}">
             {% endif %}
         {% endif %}
-        <input id="show-organizations-checkbox" type="checkbox" style="vertical-align: bottom">
-        <label for="show-organizations-checkbox" style="vertical-align: bottom">{{ _('Show organizations') }}</label>
+        {% if tab != 'official_ranking' %}
+            <input id="show-organizations-checkbox" type="checkbox" style="vertical-align: bottom">
+            <label for="show-organizations-checkbox" style="vertical-align: bottom">{{ _('Show organizations') }}</label>
+        {% endif %}
     </div>
 {% endblock %}
 

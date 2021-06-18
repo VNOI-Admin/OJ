@@ -16,7 +16,7 @@ from django.db.models import Case, Count, F, FloatField, IntegerField, Max, Min,
 from django.db.models.expressions import CombinedExpression
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
-from django.template.defaultfilters import date as date_filter
+from django.template.defaultfilters import date as date_filter, floatformat
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -30,11 +30,13 @@ from reversion import revisions
 
 from judge import event_poster as event
 from judge.comments import CommentedDetailView
+from judge.contest_format.base import BaseContestFormat
 from judge.forms import ContestCloneForm
 from judge.models import Contest, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Problem, ProblemClarification, Profile, Submission
 from judge.tasks import run_moss
 from judge.utils.celery import redirect_to_task_status
+from judge.utils.cms import parse_csv_ranking
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import _get_result_data
 from judge.utils.ranker import ranker
@@ -708,6 +710,46 @@ class ContestRanking(ContestRankingBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['has_rating'] = self.object.ratings.exists()
+        return context
+
+
+class ContestOfficialRanking(ContestRankingBase):
+    template_name = 'contest/official-ranking.html'
+    tab = 'official_ranking'
+
+    def get_title(self):
+        return _('%s Official Rankings') % self.object.name
+
+    def get_ranking_list(self):
+        def display_user_problem(points, contest_problem):
+            return format_html(
+                u'<td class="{state}">{points}</td>',
+                state=BaseContestFormat.best_solution_state(points, contest_problem.points),
+                points=floatformat(points),
+            )
+
+        def display_participation_result(points):
+            return format_html(
+                u'<td class="user-points">{points}</td>',
+                points=floatformat(points),
+            )
+
+        users = parse_csv_ranking(self.object.csv_ranking)
+        problems = list(self.object.contest_problems.select_related('problem')
+                            .defer('problem__description').order_by('order'))
+
+        for user in users:
+            user['result_cell'] = display_participation_result(user['total_score'])
+            user['problem_cells'] = [display_user_problem(points, contest_problem)
+                                     for (points, contest_problem) in zip(user['scores'], problems)]
+
+        users = list(zip(range(1, len(users) + 1), users))
+
+        return users, problems
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['has_rating'] = False
         return context
 
 

@@ -1,0 +1,36 @@
+<thead>
+<tr>
+    <th class="header rank">{{ rank_header or _("Rank") }}</th>
+    <th class="header">{{ _('Username') }}</th>
+    <th class="header username">{{ _('Full Name') }}</th>
+    {% for problem in problems %}
+        <th class="points header"><a href="{{ url('contest_ranked_submissions', contest.key, problem.problem.code) }}">
+            {{- contest.get_label_for_problem(loop.index0) }}
+            <div class="point-denominator">{{ problem.points }}</div>
+        </a></th>
+    {% endfor %}
+    <th class="header points">{{ _('Points') }}</th>
+</tr>
+</thead>
+
+<tbody>
+{% for rank, user in users %}
+    <tr id="user-{{ user.username }}">
+        <td>{{ rank }}</td>
+        <td class="user-name">
+            <div style="float:left">
+                <span class="rating rate-none user">{{ user.username }}</span>
+            </div>
+        </td>
+        <td class="user-name">
+            <div style="float:left">
+                <span class="rating rate-none user">{{ user.full_name|truncatechars(75) }}</span>
+            </div>
+        </td>
+        {% for cell in user.problem_cells %}
+            {{ cell }}
+        {% endfor %}
+        {{ user.result_cell }}
+    </tr>
+{% endfor %}
+</tbody>
