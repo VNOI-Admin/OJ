@@ -172,6 +172,9 @@ class Problem(models.Model):
                                            help_text=_('If private, only these organizations may see the problem.'))
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
 
+    is_suggesting = models.BooleanField(verbose_name=_('is suggest'), default=False,
+                                        help_text=_('Check if this problem is suggested and waiting for revision.'))
+
     def __init__(self, *args, **kwargs):
         super(Problem, self).__init__(*args, **kwargs)
         self._translated_name_cache = {}
@@ -237,6 +240,9 @@ class Problem(models.Model):
         # If user is a tester.
         if self.testers.filter(id=user.profile.id).exists():
             return True
+
+        if self.is_suggesting:
+            return False
 
         return False
 
