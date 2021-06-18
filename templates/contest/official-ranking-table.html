@@ -2,7 +2,7 @@
 <tr>
     <th class="header rank">{{ rank_header or _("Rank") }}</th>
     <th class="header">{{ _('Username') }}</th>
-    <th class="header username">{{ _('Full Name') }}</th>
+    <th class="header">{{ _('Full Name') }}</th>
     {% for problem in problems %}
         <th class="points header">
             {{ problem }}
@@ -18,12 +18,12 @@
         <td>{{ rank }}</td>
         <td class="user-name">
             <div style="float:left">
-                <span class="rating rate-none user">{{ user.username }}</span>
+                <span class="wrap-name">{{ user.username }}</span>
             </div>
         </td>
         <td class="user-name">
             <div style="float:left">
-                <span class="rating rate-none user">{{ user.full_name|truncatechars(75) }}</span>
+                <span class="wrap-name" > {{ user.full_name }} </span>
             </div>
         </td>
         {% for cell in user.problem_cells %}

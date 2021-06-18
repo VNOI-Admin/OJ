@@ -1,5 +1,16 @@
 {% extends "contest/ranking.html" %}
 
+{% block users_media %}
+    {{ super() }}
+    <style>
+        #users-table .wrap-name {
+            display: block;
+            max-width: 20em;
+            word-wrap: break-word;
+        }
+    </style>
+{% endblock %}
+
 {% block users_table %}
     {% include "contest/official-ranking-table.html" %}
 {% endblock %}
