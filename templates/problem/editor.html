@@ -50,7 +50,7 @@
 {% block body %}
 <div>
     <form action="" method="post" class="form-area" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
-        {% if form.errors or soulution_formset.errors %}
+        {% if form.errors or solution_formset.errors %}
             <p class="errornote"> {{ _('Please correct the error below.') }}</p>
         {% endif %}
         {% csrf_token %}
@@ -58,7 +58,7 @@
         <hr>
 
         <center><h3> {{ _('Editorial') }} </h3></center>
-        <table class="django-as-table">{{ soulution_formset.as_table() }}</table>
+        <table class="django-as-table">{{ solution_formset.as_table() }}</table>
 
         <table>
             <tr><td style="float: left;"><button class="submit-bar" type="button">
