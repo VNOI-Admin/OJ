@@ -149,6 +149,8 @@ class Contest(models.Model):
     points_precision = models.IntegerField(verbose_name=_('precision points'), default=3,
                                            validators=[MinValueValidator(0), MaxValueValidator(10)],
                                            help_text=_('Number of digits to round points to.'))
+    csv_ranking = models.TextField(verbose_name=_('official ranking'), blank=True,
+                                   help_text=_('Official ranking exported from CMS in CSV format.'))
 
     @cached_property
     def format_class(self):
