@@ -124,6 +124,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         (_('Access'), {'fields': ('access_code', 'is_private', 'private_contestants', 'is_organization_private',
                                   'organizations', 'view_contest_scoreboard')}),
         (_('Justice'), {'fields': ('banned_users',)}),
+        (_('Ranking'), {'fields': ('csv_ranking',)}),
     )
     list_display = ('key', 'name', 'is_visible', 'is_rated', 'locked_after', 'start_time', 'end_time', 'time_limit',
                     'user_count')
