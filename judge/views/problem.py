@@ -695,7 +695,7 @@ class ProblemSuggest(ProblemMixin, TitleMixin, CreateView):
 
     def get_content_title(self):
         return _('Suggesting new problem')
-    
+
     def post(self, request, *args, **kwargs):
         form = ProblemSuggestForm(request.POST or None)
         if form.is_valid():
