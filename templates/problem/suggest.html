@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {{ form.media.js }}
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+{% endblock %}
+
+{% block body %}
+<div>
+    <div class="alert alert-warning alert-dismissable">
+        <a class="close">x</a>
+        <b>{{ _('Thanks for suggesting problem!') }}</b>
+        <br>
+        {{ _('Please keep in mind that this form is only for creating new problems. Spamming and using for wrong purposes is not allowed.') }}
+    </div>
+    <form action="" method="post" class="form-area" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <hr>
+        <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">{{ _('Create') }}</button></div>
+    </form>
+</div>
+{% endblock %}
