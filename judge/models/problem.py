@@ -210,6 +210,9 @@ class Problem(models.Model):
                 if ContestProblem.objects.filter(problem_id=self.id, contest__users__id=current).exists():
                     return True
 
+        if self.is_suggesting:
+            return False
+
         # Problem is public.
         if self.is_public:
             # Problem is not private to an organization.
@@ -223,9 +226,6 @@ class Problem(models.Model):
             # If the user is in the organization.
             if user.is_authenticated and \
                     self.organizations.filter(id__in=user.profile.organizations.all()):
-                return True
-
-            if not self.is_suggesting:
                 return True
 
         if not user.is_authenticated:

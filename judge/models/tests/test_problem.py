@@ -298,9 +298,6 @@ class SolutionTestCase(CommonDataMixin, TestCase):
             authors=('normal',),
         )
 
-    def test_unpublished_solution(self):
-        self.assertEqual(str(self.unpublished_solution), 'Editorial for Unpublished')
-
     def test_basic_solution_methods(self):
         data = {
             'superuser': {

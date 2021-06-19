@@ -1,5 +1,6 @@
 from django.test import TestCase
 from django.utils import timezone
+from django.utils.translation import gettext_lazy as _
 
 from judge.models import ContestSubmission, Language, Submission, SubmissionSource
 from judge.models.tests.util import CommonDataMixin, create_contest, create_contest_participation, \
@@ -99,8 +100,8 @@ class SubmissionTestCase(CommonDataMixin, TestCase):
     def test_basic_submission(self):
         self.assertEqual(self.basic_submission.result_class, '_AC')
         self.assertEqual(self.basic_submission.memory_bytes, 20 * 1024)
-        self.assertEqual(self.basic_submission.short_status, 'AC')
-        self.assertEqual(self.basic_submission.long_status, 'Accepted')
+        self.assertEqual(self.basic_submission.short_status, _('AC'))
+        self.assertEqual(self.basic_submission.long_status, _('Accepted'))
         self.assertTrue(self.basic_submission.is_graded)
         self.assertIsNone(self.basic_submission.contest_key)
         self.assertIsNone(self.basic_submission.contest_or_none)
@@ -131,7 +132,7 @@ class SubmissionTestCase(CommonDataMixin, TestCase):
         self.assertIsNone(self.queued_submission.result_class)
         self.assertEqual(self.queued_submission.memory_bytes, 0)
         self.assertEqual(self.queued_submission.short_status, 'QU')
-        self.assertEqual(self.queued_submission.long_status, 'Queued')
+        self.assertEqual(self.queued_submission.long_status, _('Queued'))
         self.assertFalse(self.queued_submission.is_graded)
 
         self.assertEqual(self.queued_submission.contest_key, 'queued')
