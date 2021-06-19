@@ -123,6 +123,18 @@ class ProposeProblemSolutionFormSet(inlineformset_factory(Problem, Solution, for
     pass
 
 
+class ProblemSuggestForm(ModelForm):
+    class Meta:
+        model = Problem
+        fields = ['code', 'name', 'points', 'time_limit', 'memory_limit', 'authors', 'types', 'group', 'description']
+        widgets = {
+            'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
+            'types': Select2MultipleWidget,
+            'group': Select2Widget,
+            'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
+        }
+
+
 class DownloadDataForm(Form):
     comment_download = BooleanField(required=False, label=_('Download comments?'))
     submission_download = BooleanField(required=False, label=_('Download submissions?'))

@@ -20,13 +20,14 @@ from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import ListView, UpdateView, View
+from django.views.generic import CreateView, ListView, UpdateView, View
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.forms import ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, ProposeProblemSolutionFormSet
+from judge.forms import ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, ProblemSuggestForm, \
+    ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
@@ -335,7 +336,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         return self.request.profile
 
     def get_normal_queryset(self):
-        filter = Q(is_public=True)
+        filter = Q(is_public=True, is_suggesting=False)
         if self.profile is not None:
             filter |= Q(authors=self.profile)
             filter |= Q(curators=self.profile)
@@ -682,6 +683,27 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             revisions.set_comment(_('Cloned problem from %s') % old_code)
 
         return HttpResponseRedirect(reverse('admin:judge_problem_change', args=(problem.id,)))
+
+
+class ProblemSuggest(ProblemMixin, TitleMixin, CreateView):
+    template_name = 'problem/suggest.html'
+    model = Problem
+    form_class = ProblemSuggestForm
+
+    def get_title(self):
+        return _('Suggesting new problem')
+
+    def get_content_title(self):
+        return _('Suggesting new problem')
+    
+    def post(self, request, *args, **kwargs):
+        form = ProblemSuggestForm(request.POST or None)
+        if form.is_valid():
+            problem = form.save()
+            problem.is_suggesting = True
+            problem.save()
+            return self.form_valid(form)
+        return self.form_invalid(form)
 
 
 class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
