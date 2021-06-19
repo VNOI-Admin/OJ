@@ -211,7 +211,7 @@ class Problem(models.Model):
                     return True
 
         # Problem is public.
-        if self.is_public and not self.is_suggesting:
+        if self.is_public:
             # Problem is not private to an organization.
             if not self.is_organization_private:
                 return True
@@ -223,6 +223,9 @@ class Problem(models.Model):
             # If the user is in the organization.
             if user.is_authenticated and \
                     self.organizations.filter(id__in=user.profile.organizations.all()):
+                return True
+
+            if not self.is_suggesting:
                 return True
 
         if not user.is_authenticated:
