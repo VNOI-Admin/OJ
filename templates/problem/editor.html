@@ -53,6 +53,10 @@
 
 {% block body %}
 <div>
+    <div class="alert alert-warning alert-dismissable">
+        <a class="close">x</a>
+        <a href="{{ url('admin:judge_problem_change', problem.id) }}">{{ _('Edit problem in admin panel for more options') }}</a>
+    </div>
     <form action="" method="post" class="form-area" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
         {% if form.errors or solution_formset.errors %}
             <p class="errornote"> {{ _('Please correct the error below.') }}</p>
@@ -65,10 +69,8 @@
         <table class="django-as-table">{{ solution_formset.as_table() }}</table>
 
         <table>
-            <tr><td style="float: left;"><button class="submit-bar" type="button">
-                <a href="{{ url('admin:judge_problem_change', problem.id) }}" style="color: white;">{{ _('Edit problem in admin panel for more options') }}</a>
-            </button></td>
-            <td style="float: right;"><button class="submit-bar" type="submit">{{ _('Update') }}</button></td></tr>
+            <tr><td style="float: left;">
+            <td style="float: right;"><input type="submit" value="{{ _('Update') }}" class="button"></td></tr>
         </table>
     </form>
 </div>
