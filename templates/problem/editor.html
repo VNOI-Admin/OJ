@@ -29,22 +29,35 @@
         }
         .errorlist {
             background: rgba(255, 0, 0, 0.3);
-            border: 3px solid red;
+            border: 3px dashed red;
             border-right: none;
-            padding: 0 1em 0.1em 1em;
+            border-left: solid red;
+            padding: 0 1em 0.1em 2em;
             margin: 0.3em 0 0.5em 0;
         }
+        .errornote {
+            border: 3px dashed #ffc000;
+            border-left: solid #ffc000;
+            padding: 0.7em 2em;
+            margin: 0 0 8px;
+            font-size: 13px !important;
+            font-weight: 400;
+        }
+
     </style>
 {% endblock %}
 
 {% block body %}
 <div>
     <form action="" method="post" class="form-area" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
+        {% if form.errors or soulution_formset.errors %}
+            <p class="errornote"> {{ _('Please correct the error below.') }}</p>
+        {% endif %}
         {% csrf_token %}
         <table class="django-as-table">{{ form.as_table() }}</table>
         <hr>
 
-        <center><h3> Editorial </h3></center>
+        <center><h3> {{ _('Editorial') }} </h3></center>
         <table class="django-as-table">{{ soulution_formset.as_table() }}</table>
 
         <table>
