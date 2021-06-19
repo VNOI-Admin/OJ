@@ -390,7 +390,7 @@ BLEACH_USER_SAFE_TAGS = [
     'ul', 'ol', 'li', 'dd', 'dl', 'dt', 'address', 'section',
     'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'tfoot',
     'img', 'audio', 'video', 'source',
-    'a',
+    'a', 'strike',
     'style', 'noscript', 'center',
 ]
 
