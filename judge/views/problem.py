@@ -779,7 +779,7 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
-        data['soulution_formset'] = self.get_solution_formset()
+        data['solution_formset'] = self.get_solution_formset()
         return data
 
     def post(self, request, *args, **kwargs):
