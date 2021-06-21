@@ -20,13 +20,13 @@ from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import ListView, View
+from django.views.generic import ListView, UpdateView, View
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.forms import ProblemCloneForm, ProblemSubmitForm
+from judge.forms import ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
@@ -682,3 +682,50 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             revisions.set_comment(_('Cloned problem from %s') % old_code)
 
         return HttpResponseRedirect(reverse('admin:judge_problem_change', args=(problem.id,)))
+
+
+class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
+    template_name = 'problem/editor.html'
+    model = Problem
+    form_class = ProblemEditForm
+
+    def get_title(self):
+        return _('Editing problem {0}').format(self.object.name)
+
+    def get_content_title(self):
+        return mark_safe(escape(_('Editing problem %s')) % (
+            format_html('<a href="{1}">{0}</a>', self.object.name,
+                        reverse('problem_detail', args=[self.object.code]))))
+
+    def get_object(self, queryset=None):
+        problem = super(ProblemEdit, self).get_object(queryset)
+        if not problem.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return problem
+
+    def get_solution_formset(self):
+        if self.request.POST:
+            return ProposeProblemSolutionFormSet(self.request.POST, instance=self.get_object())
+        return ProposeProblemSolutionFormSet(instance=self.get_object())
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['solution_formset'] = self.get_solution_formset()
+        return data
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        form_edit = self.get_solution_formset()
+        if form.is_valid() and form_edit.is_valid():
+            form.save()
+            form_edit.save()
+            return HttpResponseRedirect(reverse('problem_detail', args=[self.object.code]))
+        return self.render_to_response(self.get_context_data(**kwargs))
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super(ProblemEdit, self).dispatch(request, *args, **kwargs)
+        except PermissionDenied:
+            return generic_message(request, _("Can't edit problem"),
+                                   _('You are not allowed to edit this problem.'), status=403)
