@@ -137,7 +137,7 @@
                 {% if num_open_tickets %}<span class="badge">{{ num_open_tickets }}</span>{% endif %}
             </a>
         </div>
-        <div><a href="{{ url('admin:judge_problem_change', problem.id) }}">{{ _('Edit problem') }}</a></div>
+        <div><a href="{{ url('problem_edit', problem.code) }}">{{ _('Edit problem') }}</a></div>
         {% if not problem.is_manually_managed %}
             <div><a href="{{ url('problem_data', problem.code) }}">{{ _('Edit test data') }}</a></div>
         {% endif %}

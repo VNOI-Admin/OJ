@@ -118,6 +118,7 @@ urlpatterns = [
 
     url(r'^problem/(?P<problem>[^/]+)', include([
         url(r'^$', problem.ProblemDetail.as_view(), name='problem_detail'),
+        url(r'^/edit$', problem.ProblemEdit.as_view(), name='problem_edit'),
         url(r'^/editorial$', problem.ProblemSolution.as_view(), name='problem_editorial'),
         url(r'^/raw$', problem.ProblemRaw.as_view(), name='problem_raw'),
         url(r'^/pdf$', problem.ProblemPdfView.as_view(), name='problem_pdf'),
