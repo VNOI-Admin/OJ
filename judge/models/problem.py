@@ -210,11 +210,8 @@ class Problem(models.Model):
                 if ContestProblem.objects.filter(problem_id=self.id, contest__users__id=current).exists():
                     return True
 
-        if self.is_suggesting:
-            return False
-
         # Problem is public.
-        if self.is_public:
+        if self.is_public and not self.is_suggesting:
             # Problem is not private to an organization.
             if not self.is_organization_private:
                 return True
@@ -243,6 +240,9 @@ class Problem(models.Model):
         # If user is a tester.
         if self.testers.filter(id=user.profile.id).exists():
             return True
+
+        if self.is_suggesting:
+            return False
 
         return False
 

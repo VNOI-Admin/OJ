@@ -732,7 +732,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         return HttpResponseRedirect(reverse('admin:judge_problem_change', args=(problem.id,)))
 
 
-class ProblemSuggest(ProblemMixin, TitleMixin, CreateView):
+class ProblemSuggest(TitleMixin, CreateView):
     template_name = 'problem/suggest.html'
     model = Problem
     form_class = ProblemSuggestForm
@@ -746,11 +746,30 @@ class ProblemSuggest(ProblemMixin, TitleMixin, CreateView):
     def post(self, request, *args, **kwargs):
         form = ProblemSuggestForm(request.POST or None)
         if form.is_valid():
+            print("valid vcl")
             problem = form.save()
             problem.is_suggesting = True
+            problem.curators.add(request.user.profile)
             problem.save()
             return self.form_valid(form)
-        return self.form_invalid(form)
+        else:
+            print("form gay")
+            return self.form_invalid(form)
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            if request.user.has_perm('judge.edit_own_problem'):
+                return super(ProblemSuggest, self).dispatch(request, *args, **kwargs)
+            else:
+                raise PermissionDenied
+        except PermissionDenied:
+            return generic_message(
+                request,
+                _("You are not a suggester"),
+                _("Becoming a suggester is such a great honor, but also comes with responsibility. Contact the admins "
+                  "if you want to contribute to the community."),
+                status=403,
+            )
 
 
 class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
