@@ -746,13 +746,11 @@ class ProblemSuggest(TitleMixin, CreateView):
     def post(self, request, *args, **kwargs):
         form = ProblemSuggestForm(request.POST or None)
         if form.is_valid():
-            print("valid vcl")
             problem = form.save()
             problem.suggesters.add(request.user.profile)
             problem.save()
             return self.form_valid(form)
         else:
-            print("form gay")
             return self.form_invalid(form)
 
     def dispatch(self, request, *args, **kwargs):
