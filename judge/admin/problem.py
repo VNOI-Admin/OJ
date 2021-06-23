@@ -23,6 +23,7 @@ class ProblemForm(ModelForm):
         super(ProblemForm, self).__init__(*args, **kwargs)
         self.fields['authors'].widget.can_add_related = False
         self.fields['curators'].widget.can_add_related = False
+        self.fields['suggesters'].widget.can_add_related = False
         self.fields['testers'].widget.can_add_related = False
         self.fields['banned_users'].widget.can_add_related = False
         self.fields['change_message'].widget.attrs.update({
@@ -33,6 +34,7 @@ class ProblemForm(ModelForm):
         widgets = {
             'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'curators': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
+            'suggesters': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'testers': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'banned_users': AdminHeavySelect2MultipleWidget(data_view='profile_select2',
                                                             attrs={'style': 'width: 100%'}),
@@ -122,7 +124,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'code', 'name', 'is_suggesting', 'is_public', 'is_manually_managed', 'date', 'authors',
+                'code', 'name', 'suggesters', 'is_public', 'is_manually_managed', 'date', 'authors',
                 'curators', 'testers', 'is_organization_private', 'organizations', 'is_full_markup', 'pdf_url',
                 'source', 'description', 'license',
             ),
@@ -135,7 +137,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         (_('Justice'), {'fields': ('banned_users',)}),
         (_('History'), {'fields': ('change_message',)}),
     )
-    list_display = ['code', 'name', 'is_suggesting', 'show_authors', 'points', 'is_public', 'show_public']
+    list_display = ['code', 'name', 'show_authors', 'is_suggesting', 'points', 'is_public', 'show_public']
     ordering = ['code']
     search_fields = ('code', 'name', 'authors__user__username', 'curators__user__username')
     inlines = [LanguageLimitInline, ProblemClarificationInline, ProblemSolutionInline, ProblemTranslationInline]

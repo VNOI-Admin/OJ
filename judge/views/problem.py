@@ -336,7 +336,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         return self.request.profile
 
     def get_normal_queryset(self):
-        filter = Q(is_public=True, is_suggesting=False)
+        filter = Q(is_public=True)
         if self.profile is not None:
             filter |= Q(authors=self.profile)
             filter |= Q(curators=self.profile)
@@ -467,7 +467,7 @@ class SuggestList(ProblemList):
     permission_required = "superuser"
 
     def get_normal_queryset(self):
-        filter = Q(is_suggesting=True)
+        filter = ~Q(suggesters=None) & Q(is_public=False)
         if self.profile is not None:
             filter |= Q(authors=self.profile)
             filter |= Q(curators=self.profile)
@@ -748,8 +748,7 @@ class ProblemSuggest(TitleMixin, CreateView):
         if form.is_valid():
             print("valid vcl")
             problem = form.save()
-            problem.is_suggesting = True
-            problem.curators.add(request.user.profile)
+            problem.suggesters.add(request.user.profile)
             problem.save()
             return self.form_valid(form)
         else:
