@@ -126,9 +126,8 @@ class ProposeProblemSolutionFormSet(inlineformset_factory(Problem, Solution, for
 class ProblemSuggestForm(ModelForm):
     class Meta:
         model = Problem
-        fields = ['code', 'name', 'points', 'time_limit', 'memory_limit', 'authors', 'types', 'group', 'description']
+        fields = ['code', 'name', 'points', 'time_limit', 'memory_limit', 'types', 'group', 'description']
         widgets = {
-            'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'types': Select2MultipleWidget,
             'group': Select2Widget,
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
