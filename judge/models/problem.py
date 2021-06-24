@@ -195,6 +195,9 @@ class Problem(models.Model):
     def is_suggesting(self):
         return self.suggesters.exists() and not self.is_public
 
+    def is_suggester(self, profile):
+        return self.suggesters.filter(id=profile.id).exists()
+
     def is_editable_by(self, user):
         if not user.is_authenticated:
             return False
@@ -238,7 +241,7 @@ class Problem(models.Model):
 
         # If the user can edit the problem.
         # We are using self.editor_ids to take advantage of caching.
-        if self.is_editable_by(user) or user.profile.id in self.editor_ids:
+        if self.is_editable_by(user) or user.profile.id in self.editor_ids or self.is_suggester(user):
             return True
 
         # If user is a tester.
@@ -438,6 +441,7 @@ class Problem(models.Model):
             ('edit_own_problem', _('Edit own problems')),
             ('edit_all_problem', _('Edit all problems')),
             ('edit_public_problem', _('Edit all public problems')),
+            ('suggest_new_problem', _('Suggest new problem')),
             ('problem_full_markup', _('Edit problems with full markup')),
             ('clone_problem', _('Clone problem')),
             ('change_public_visibility', _('Change is_public field')),
