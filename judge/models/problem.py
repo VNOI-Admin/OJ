@@ -195,7 +195,7 @@ class Problem(models.Model):
         return self.suggester is not None and not self.is_public
 
     def is_suggester(self, profile):
-        return self.suggester.filter(id=profile.id).exists()
+        return self.suggester.id == profile.id
 
     def is_editable_by(self, user):
         if not user.is_authenticated:
