@@ -467,17 +467,12 @@ class SuggestList(ProblemList):
     permission_required = "superuser"
 
     def get_normal_queryset(self):
-        filter = ~Q(suggesters=None) & Q(is_public=False)
+        filter = ~Q(suggester=None) & Q(is_public=False)
         if self.profile is not None:
             filter |= Q(authors=self.profile)
             filter |= Q(curators=self.profile)
             filter |= Q(testers=self.profile)
         queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
-        if not self.request.user.has_perm('see_organization_problem'):
-            filter = Q(is_organization_private=False)
-            if self.profile is not None:
-                filter |= Q(organizations__in=self.profile.organizations.all())
-            queryset = queryset.filter(filter)
         if self.show_types:
             queryset = queryset.prefetch_related('types')
         if self.category is not None:
@@ -501,7 +496,7 @@ class SuggestList(ProblemList):
         return queryset.distinct()
 
     def get(self, request, *args, **kwargs):
-        if not request.user.is_superuser and not request.user.is_staff:
+        if not request.user.has_perm('judge.suggest_new_problem'):
             raise Http404
         return super(SuggestList, self).get(request, *args, **kwargs)
 
@@ -744,7 +739,7 @@ class ProblemSuggest(TitleMixin, CreateView):
         form = ProblemSuggestForm(request.POST or None)
         if form.is_valid():
             problem = form.save()
-            problem.suggesters.add(request.user.profile)
+            problem.suggester.add(request.user.profile)
             problem.save()
             return self.form_valid(form)
         else:

@@ -172,8 +172,7 @@ class Problem(models.Model):
                                            help_text=_('If private, only these organizations may see the problem.'))
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
 
-    suggesters = models.ManyToManyField(Profile, verbose_name=_('Suggesters'), blank=True, related_name="suggester",
-                                        help_text=_('Suggesters of this problem.'))
+    suggester = models.ForeignKey(Profile, blank=True, null=True, related_name='suggested_problems', on_delete=SET_NULL)
 
     def __init__(self, *args, **kwargs):
         super(Problem, self).__init__(*args, **kwargs)
@@ -193,10 +192,10 @@ class Problem(models.Model):
 
     @property
     def is_suggesting(self):
-        return self.suggesters.exists() and not self.is_public
+        return self.suggester is not None and not self.is_public
 
     def is_suggester(self, profile):
-        return self.suggesters.filter(id=profile.id).exists()
+        return self.suggester.filter(id=profile.id).exists()
 
     def is_editable_by(self, user):
         if not user.is_authenticated:
