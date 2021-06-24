@@ -755,7 +755,7 @@ class ProblemSuggest(TitleMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         try:
-            if request.user.has_perm('judge.edit_own_problem'):
+            if request.user.has_perm('judge.suggest_new_problem'):
                 return super(ProblemSuggest, self).dispatch(request, *args, **kwargs)
             else:
                 raise PermissionDenied
