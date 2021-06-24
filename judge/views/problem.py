@@ -478,9 +478,6 @@ class SuggestList(ProblemList):
             if self.profile is not None:
                 filter |= Q(organizations__in=self.profile.organizations.all())
             queryset = queryset.filter(filter)
-        if self.profile is not None and self.hide_solved:
-            queryset = queryset.exclude(id__in=Submission.objects.filter(user=self.profile, points=F('problem__points'))
-                                        .values_list('problem__id', flat=True))
         if self.show_types:
             queryset = queryset.prefetch_related('types')
         if self.category is not None:
