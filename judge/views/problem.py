@@ -467,11 +467,13 @@ class SuggestList(ProblemList):
     permission_required = "superuser"
 
     def get_normal_queryset(self):
-        filter = ~Q(suggester=None) & Q(is_public=False)
-        if self.profile is not None:
-            filter |= Q(authors=self.profile)
-            filter |= Q(curators=self.profile)
-            filter |= Q(testers=self.profile)
+        filter = Q(is_public=False)
+
+        # Only super user can see all suggesting problems
+        if self.request.user.is_superuser:
+            filter &= ~Q(suggester=None)
+        else:
+            filter &= Q(suggester=self.profile)
         queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
         if self.show_types:
             queryset = queryset.prefetch_related('types')
