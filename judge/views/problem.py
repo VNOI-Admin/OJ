@@ -738,12 +738,13 @@ class ProblemSuggest(TitleMixin, CreateView):
         return _('Suggesting new problem')
 
     def post(self, request, *args, **kwargs):
+        self.object = None
         form = ProblemSuggestForm(request.POST or None)
         if form.is_valid():
             problem = form.save()
-            problem.suggester.add(request.user.profile)
+            problem.suggester = request.user.profile
             problem.save()
-            return self.form_valid(form)
+            return HttpResponseRedirect(self.get_success_url())
         else:
             return self.form_invalid(form)
 
