@@ -498,8 +498,6 @@ class SuggestList(ProblemList):
         return queryset.distinct()
 
     def get(self, request, *args, **kwargs):
-        if not request.user.has_perm('judge.suggest_new_problem'):
-            raise Http404
         return super(SuggestList, self).get(request, *args, **kwargs)
 
 
