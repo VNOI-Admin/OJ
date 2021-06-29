@@ -325,8 +325,12 @@ class Problem(models.Model):
 
     @cached_property
     def editor_ids(self):
-        return self.author_ids.union(
+        editors = self.author_ids.union(
             Problem.curators.through.objects.filter(problem=self).values_list('profile_id', flat=True))
+        if self.suggester is not None:
+            editors = list(editors)
+            editors.append(self.suggester.id)
+        return editors
 
     @cached_property
     def tester_ids(self):
