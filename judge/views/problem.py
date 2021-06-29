@@ -31,6 +31,7 @@ from judge.forms import ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, Pr
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
+from judge.tasks import on_new_suggested_problem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import hot_problems, user_attempted_ids, \
@@ -741,9 +742,9 @@ class ProblemSuggest(TitleMixin, CreateView):
         if form.is_valid():
             self.object = problem = form.save()
             problem.suggester = request.user.profile
-            problem.save()
             problem.allowed_languages.set(Language.objects.all())
             problem.save()
+            on_new_suggested_problem.delay(problem.code)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.form_invalid(form)

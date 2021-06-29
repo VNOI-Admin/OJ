@@ -5,9 +5,9 @@ from django.contrib.contenttypes.models import ContentType
 
 
 from judge.jinja2.gravatar import gravatar
-from judge.models import Comment, Ticket
+from judge.models import Comment, Problem, Ticket
 
-__all__ = ("on_new_ticket", "on_new_comment")
+__all__ = ("on_new_ticket", "on_new_comment", "on_new_suggested_problem")
 
 
 @shared_task
@@ -62,6 +62,33 @@ def on_new_comment(comment_id):
         name=comment.author.user.username,
         url=site_url + "/user/" + comment.author.user.username,
         icon_url=gravatar(comment.author),
+    )
+    webhook.add_embed(embed)
+    webhook.execute()
+
+
+@shared_task
+def on_new_suggested_problem(problem_code):
+    webhook = settings.DISCORD_WEBHOOK
+    site_url = settings.SITE_FULL_URL
+    if webhook is None or site_url is None:
+        return
+
+    problem = Problem.objects.get(code=problem_code)
+    url = site_url + problem.get_absolute_url()
+    description = f"Title: {problem.name}\n"
+    description += f"Statement: {problem.description[:100]}..."
+
+    webhook = DiscordWebhook(url=webhook)
+    embed = DiscordEmbed(
+        title=f"New suggested problem {url}",
+        description=description,
+        color="03b2f8",
+    )
+    embed.set_author(
+        name=problem.suggester.user.username,
+        url=site_url + "/user/" + problem.suggester.user.username,
+        icon_url=gravatar(problem.suggester),
     )
     webhook.add_embed(embed)
     webhook.execute()
