@@ -185,9 +185,9 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
 
     show_public.short_description = ''
 
-    def _rescore(self, request, problem_id):
+    def _rescore(self, request, problem_id, publicy_changed=False):
         from judge.tasks import rescore_problem
-        transaction.on_commit(rescore_problem.s(problem_id).delay)
+        transaction.on_commit(rescore_problem.s(problem_id, publicy_changed).delay)
 
     def update_publish_date(self, request, queryset):
         count = queryset.update(date=timezone.now())
@@ -200,7 +200,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
     def make_public(self, request, queryset):
         count = queryset.update(is_public=True)
         for problem_id in queryset.values_list('id', flat=True):
-            self._rescore(request, problem_id)
+            self._rescore(request, problem_id, True)
         self.message_user(request, ungettext('%d problem successfully marked as public.',
                                              '%d problems successfully marked as public.',
                                              count) % count)
@@ -210,7 +210,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
     def make_private(self, request, queryset):
         count = queryset.update(is_public=False)
         for problem_id in queryset.values_list('id', flat=True):
-            self._rescore(request, problem_id)
+            self._rescore(request, problem_id, True)
         self.message_user(request, ungettext('%d problem successfully marked as private.',
                                              '%d problems successfully marked as private.',
                                              count) % count)
@@ -241,7 +241,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
             form.changed_data and
             any(f in form.changed_data for f in ('is_public', 'is_organization_private', 'points', 'partial'))
         ):
-            self._rescore(request, obj.id)
+            self._rescore(request, obj.id, 'is_public' in form.changed_data)
 
     def construct_change_message(self, request, form, *args, **kwargs):
         if form.cleaned_data.get('change_message'):
