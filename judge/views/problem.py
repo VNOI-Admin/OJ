@@ -742,6 +742,8 @@ class ProblemSuggest(TitleMixin, CreateView):
             self.object = problem = form.save()
             problem.suggester = request.user.profile
             problem.save()
+            problem.allowed_languages.set(Language.objects.all())
+            problem.save()
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.form_invalid(form)
