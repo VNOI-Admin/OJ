@@ -739,7 +739,7 @@ class ProblemSuggest(TitleMixin, CreateView):
         self.object = None
         form = ProblemSuggestForm(request.POST or None)
         if form.is_valid():
-            problem = form.save()
+            self.object = problem = form.save()
             problem.suggester = request.user.profile
             problem.save()
             return HttpResponseRedirect(self.get_success_url())
