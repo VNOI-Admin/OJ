@@ -94,10 +94,11 @@ def oj_data(request):
         .filter(count__gt=0).order_by('-count').values_list('language__name', 'count')
     )
 
-    ac_rate = (
+    results = (
         queryset.values('result').annotate(count=Count('result'))
-        .order_by('-count').values_list('result', 'count').filter(~Q(result__in=["IR", "AB", "MLE", "OLE", "IE"]))
+        .filter(count__gt=0).order_by('-count').values_list('result', 'count')
     )
+    results = [(str(Submission.USER_DISPLAY_CODES[res]), count) for (res, count) in results]
 
     queue_time = (
         queryset.filter(judged_date__isnull=False, rejudged_date__isnull=True)
@@ -153,7 +154,7 @@ def oj_data(request):
     return JsonResponse({
         'by_day': submissions_by_day,
         'by_language': get_pie_chart(languages),
-        'ac_rate': get_pie_chart(ac_rate),
+        'result': get_pie_chart(results),
         'queue_time': get_bar_chart(queue_time_data),
     })
 

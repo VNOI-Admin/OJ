@@ -7,7 +7,7 @@
         <script type="text/javascript">
             var by_day_chart = null;
             var by_language_chart = null;
-            var ac_chart = null;
+            var result_chart = null;
             var queue_time_chart = null;
 
             function draw_charts(start_date, end_date) {
@@ -31,11 +31,11 @@
                             by_language_chart.data = stats.by_language;
                             by_language_chart.update();
                         }
-                        if (ac_chart == null) {
-                            ac_chart = draw_pie_chart(stats.ac_rate, $('#ac-rate'));
+                        if (result_chart == null) {
+                            result_chart = draw_pie_chart(stats.result, $('#result'));
                         } else {
-                            ac_chart.data = stats.ac_rate;
-                            ac_chart.update();
+                            result_chart.data = stats.result;
+                            result_chart.update();
                         }
                         if (queue_time_chart == null) {
                             queue_time_chart = draw_bar_chart(stats.queue_time, $('#queue-time'), false);
@@ -126,7 +126,7 @@
         </tr>
         <tr>
             <th>{{ _('Submissions by Language') }}</th>
-            <th>{{ _('AC Rate') }}</th>
+            <th>{{ _('Submissions Result') }}</th>
         </tr>
         <tr>
             <td>
@@ -136,7 +136,7 @@
                 </div>
             </td>
             <td >
-                <div id="ac-rate" class="chart">
+                <div id="result" class="chart">
                     <canvas width="400" height="300"></canvas>
                     <ul class="legend"></ul>
                 </div>
