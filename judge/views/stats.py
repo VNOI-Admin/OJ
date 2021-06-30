@@ -70,7 +70,7 @@ def ac_rate(request):
 
 
 def oj_data(request):
-    if request.method != 'POST' or not request.user.is_superuser or not request.user.is_staff:
+    if request.method != 'POST' or not request.user.is_superuser:
         return HttpResponseForbidden()
 
     start_date = request.POST.get('start_date')
@@ -108,6 +108,7 @@ def oj_data(request):
     results = [(str(Submission.USER_DISPLAY_CODES[res]), count) for (res, count) in results]
 
     queue_time = (
+        # Divide by 1000000 to convert microseconds to seconds
         queryset.filter(judged_date__isnull=False, rejudged_date__isnull=True)
         .annotate(queue_time=ExpressionWrapper((F('judged_date') - F('date')) / 1000000, output_field=FloatField()))
         .order_by('queue_time').values_list('queue_time', flat=True)
