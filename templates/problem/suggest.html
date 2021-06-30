@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {{ form.media.js }}
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+    <style>
+        .helptext {
+            font-size: 13px;
+            color: #999;
+            border-width: 0 0 1px 0;
+        }
+        .helptext::before {
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+            content: "\f05a";
+            padding-right: 5px;
+            font-size: 14px;
+        }
+        .django-as-table {
+            border-collapse:collapse;
+        }
+        .django-as-table th, td {
+            padding-bottom: 10px;
+        }
+        .django-as-table th {
+            max-width: 10em;
+            width: 10em;
+        }
+        .errorlist {
+            background: rgba(255, 0, 0, 0.3);
+            border: 3px dashed red;
+            border-right: none;
+            border-left: solid red;
+            padding: 0 1em 0.1em 2em;
+            margin: 0.3em 0 0.5em 0;
+        }
+        .errornote {
+            border: 3px dashed #ffc000;
+            border-left: solid #ffc000;
+            padding: 0.7em 2em;
+            margin: 0 0 8px;
+            font-size: 13px !important;
+            font-weight: 400;
+        }
+
+    </style>
+{% endblock %}
+
+{% block body %}
+<div>
+    <div class="alert alert-warning alert-dismissable">
+        <a class="close">x</a>
+        <b>{{ _('Thanks for suggesting problem!') }}</b>
+        <br>
+        {{ _('Please keep in mind that this form is only for creating new problems. Spamming and using for wrong purposes is not allowed.<br>'
+              'If you don\'t know how to suggest a problem, please read <a href="/about/suggest_guide/">this</a>.') }}
+    </div>
+    <form action="" method="post" class="form-area" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <hr>
+        <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">{{ _('Create') }}</button></div>
+    </form>
+</div>
+{% endblock %}

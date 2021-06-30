@@ -1,5 +1,5 @@
 from django.core.exceptions import ValidationError
-from django.test import SimpleTestCase, TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.utils import timezone
 
 from judge.models import Language, LanguageLimit, Problem
@@ -265,6 +265,7 @@ class ProblemTestCase(CommonDataMixin, TestCase):
                     )
 
 
+@override_settings(LANGUAGE_CODE='en-US', LANGUAGES=(('en', 'English'),))
 class SolutionTestCase(CommonDataMixin, TestCase):
     @classmethod
     def setUpTestData(self):
