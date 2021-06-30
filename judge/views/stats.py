@@ -80,7 +80,7 @@ def oj_data(request):
     try:
         start_date = datetime.datetime.fromisoformat(start_date)
         end_date = datetime.datetime.fromisoformat(end_date)
-    except:
+    except ValueError:
         return HttpResponseBadRequest()
 
     queryset = Submission.objects.filter(date__gte=start_date, date__lt=end_date + datetime.timedelta(days=1))
