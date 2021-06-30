@@ -16,7 +16,8 @@
                     type: 'POST',
                     data: {
                         start_date: start_date.toISOString(),
-                        end_date: end_date.toISOString()
+                        end_date: end_date.toISOString(),
+                        utc_offset: moment().utcOffset()
                     },
                     success: function (stats) {
                         if (by_day_chart == null) {

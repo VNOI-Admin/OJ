@@ -1,4 +1,5 @@
 import bisect
+import datetime
 from collections import defaultdict
 from functools import partial
 from itertools import chain, repeat
@@ -74,7 +75,8 @@ def oj_data(request):
 
     start_date = request.POST.get('start_date')
     end_date = request.POST.get('end_date')
-    if not start_date or not end_date:
+    utc_offset = request.POST.get('utc_offset')
+    if not start_date or not end_date or not utc_offset:
         return HttpResponseBadRequest()
 
     start_date = parse_datetime(start_date)
@@ -82,10 +84,15 @@ def oj_data(request):
     if not start_date or not end_date:
         return HttpResponseBadRequest()
 
+    try:
+        utc_offset = datetime.timedelta(minutes=int(utc_offset))
+    except Exception:
+        return HttpResponseBadRequest()
+
     queryset = Submission.objects.filter(date__gte=start_date, date__lte=end_date)
 
     submissions = (
-        queryset.annotate(date_only=Cast(F('date'), DateField())).order_by('date').values('date_only', 'result')
+        queryset.annotate(date_only=Cast(F('date') + utc_offset, DateField())).order_by('date').values('date_only', 'result')
         .annotate(count=Count('result')).values_list('date_only', 'result', 'count')
     )
 
