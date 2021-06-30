@@ -110,7 +110,7 @@ class ProposeProblemSolutionForm(ModelForm):
 class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
-        fields = ['code', 'time_limit', 'memory_limit', 'points', 'authors', 'types', 'group', 'description']
+        fields = ['code', 'name', 'time_limit', 'memory_limit', 'points', 'authors', 'types', 'group', 'description']
         widgets = {
             'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'types': Select2MultipleWidget,
@@ -121,17 +121,6 @@ class ProblemEditForm(ModelForm):
 
 class ProposeProblemSolutionFormSet(inlineformset_factory(Problem, Solution, form=ProposeProblemSolutionForm)):
     pass
-
-
-class ProblemSuggestForm(ModelForm):
-    class Meta:
-        model = Problem
-        fields = ['code', 'name', 'points', 'time_limit', 'memory_limit', 'types', 'group', 'description']
-        widgets = {
-            'types': Select2MultipleWidget,
-            'group': Select2Widget,
-            'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
-        }
 
 
 class DownloadDataForm(Form):

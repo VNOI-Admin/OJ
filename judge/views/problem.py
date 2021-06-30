@@ -26,8 +26,7 @@ from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.forms import ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, ProblemSuggestForm, \
-    ProposeProblemSolutionFormSet
+from judge.forms import ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
@@ -728,7 +727,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 class ProblemSuggest(TitleMixin, CreateView):
     template_name = 'problem/suggest.html'
     model = Problem
-    form_class = ProblemSuggestForm
+    form_class = ProblemEditForm
 
     def get_title(self):
         return _('Suggesting new problem')
@@ -738,7 +737,7 @@ class ProblemSuggest(TitleMixin, CreateView):
 
     def post(self, request, *args, **kwargs):
         self.object = None
-        form = ProblemSuggestForm(request.POST or None)
+        form = ProblemEditForm(request.POST or None)
         if form.is_valid():
             self.object = problem = form.save()
             problem.suggester = request.user.profile
