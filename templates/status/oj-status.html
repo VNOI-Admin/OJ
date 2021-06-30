@@ -56,7 +56,7 @@
                 var end_date = moment().endOf('day');
 
                 function cb(start_date, end_date) {
-                    $('#daterange span').html(start_date.format('hh:mm:ss MMMM D, YYYY') + ' - ' + end_date.format('hh:mm:ss MMMM D, YYYY'));
+                    $('#daterange span').html(start_date.format('HH:mm:ss MMMM D, YYYY') + ' - ' + end_date.format('HH:mm:ss MMMM D, YYYY'));
                 }
 
                 $('#daterange').daterangepicker({

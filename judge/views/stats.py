@@ -6,7 +6,7 @@ from itertools import chain, repeat
 from operator import itemgetter
 
 from django.conf import settings
-from django.db.models import Case, Count, DateField, F, FloatField, IntegerField, Q, Value, When
+from django.db.models import Case, Count, DateField, F, FloatField, IntegerField, Value, When
 from django.db.models.expressions import CombinedExpression, ExpressionWrapper
 from django.db.models.functions import Cast
 from django.http import HttpResponseForbidden, JsonResponse
@@ -92,8 +92,8 @@ def oj_data(request):
     queryset = Submission.objects.filter(date__gte=start_date, date__lte=end_date)
 
     submissions = (
-        queryset.annotate(date_only=Cast(F('date') + utc_offset, DateField())).order_by('date').values('date_only', 'result')
-        .annotate(count=Count('result')).values_list('date_only', 'result', 'count')
+        queryset.annotate(date_only=Cast(F('date') + utc_offset, DateField())).order_by('date')
+        .values('date_only', 'result').annotate(count=Count('result')).values_list('date_only', 'result', 'count')
     )
 
     languages = (
