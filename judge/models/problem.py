@@ -194,11 +194,6 @@ class Problem(models.Model):
     def is_suggesting(self):
         return self.suggester is not None and not self.is_public
 
-    def is_suggester(self, profile):
-        if self.suggester is not None:
-            return self.suggester.id == profile.id
-        return False
-
     def is_editable_by(self, user):
         if not user.is_authenticated:
             return False
@@ -242,7 +237,7 @@ class Problem(models.Model):
 
         # If the user can edit the problem.
         # We are using self.editor_ids to take advantage of caching.
-        if self.is_editable_by(user) or user.profile.id in self.editor_ids or self.is_suggester(user):
+        if self.is_editable_by(user) or user.profile.id in self.editor_ids:
             return True
 
         # If user is a tester.
