@@ -1,3 +1,4 @@
+import bisect
 import datetime
 from collections import defaultdict
 from functools import partial
@@ -5,9 +6,8 @@ from itertools import chain, repeat
 from operator import itemgetter
 
 from django.conf import settings
-from django.db.models import Case, Count, F, FloatField, IntegerField, Q, Value, When
-from django.db.models.expressions import CombinedExpression
-from django.db.models.fields import DateField
+from django.db.models import Case, Count, DateField, F, FloatField, IntegerField, Q, Value, When
+from django.db.models.expressions import CombinedExpression, ExpressionWrapper
 from django.db.models.functions import Cast
 from django.http import HttpResponseForbidden, JsonResponse
 from django.http.response import HttpResponseBadRequest
@@ -90,17 +90,33 @@ def oj_data(request):
         .annotate(count=Count('result')).values_list('date_only', 'result', 'count')
     )
 
-    labels = list(set(item[0].isoformat() for item in submissions.values_list('date_only')))
-    labels.sort()
-    num_date = len(labels)
+    languages = (
+        queryset.values('language__name').annotate(count=Count('language__name'))
+        .filter(count__gt=0).order_by('-count').values_list('language__name', 'count')
+    )
+
+    ac_rate = (
+        queryset.values('result').annotate(count=Count('result'))
+        .order_by('-count').values_list('result', 'count').filter(~Q(result__in=["IR", "AB", "MLE", "OLE", "IE"]))
+    )
+
+    queue_time = (
+        queryset.filter(judged_date__isnull=False, rejudged_date__isnull=True)
+        .annotate(queue_time=ExpressionWrapper((F('judged_date') - F('date')) / 1000000, output_field=FloatField()))
+        .order_by('queue_time').values_list('queue_time', flat=True)
+    )
+
+    days_labels = list(set(item[0].isoformat() for item in submissions.values_list('date_only')))
+    days_labels.sort()
+    num_days = len(days_labels)
     result_order = ["AC", "WA", "TLE", "CE", "ERR"]
-    result_data = defaultdict(partial(list, [0] * num_date))
+    result_data = defaultdict(partial(list, [0] * num_days))
 
     for date, result, count in submissions:
-        result_data[result if result in result_order else "ERR"][labels.index(date.isoformat())] += count
+        result_data[result if result in result_order else "ERR"][days_labels.index(date.isoformat())] += count
 
-    submissions_count = {
-        'labels': labels,
+    submissions_by_day = {
+        'labels': days_labels,
         'datasets': [
             {
                 'label': name,
@@ -111,16 +127,35 @@ def oj_data(request):
         ],
     }
 
+    queue_time_ranges = [0, 1, 2, 5, 10, 30, 60, 120, 300, 600]
+    queue_time_labels = [
+        '',
+        '0s - 1s',
+        '1s - 2s',
+        '2s - 5s',
+        '5s - 10s',
+        '10s - 30s',
+        '30s - 1min',
+        '1min - 2min',
+        '2min - 5min',
+        '5min - 10min',
+        '> 10min',
+    ]
+
+    def binning(x):
+        return bisect.bisect_left(queue_time_ranges, x, lo=0, hi=len(queue_time_ranges))
+
+    queue_time_count = [0] * len(queue_time_labels)
+    for group in map(binning, list(queue_time)):
+        queue_time_count[group] += 1
+
+    queue_time_data = [(queue_time_labels[i], queue_time_count[i]) for i in range(1, len(queue_time_labels))]
+
     return JsonResponse({
-        'language_count': get_pie_chart(
-            queryset.values('language__name').annotate(count=Count('language__name'))
-            .filter(count__gt=0).order_by('-count').values_list('language__name', 'count'),
-        ),
-        'submission_count': submissions_count,
-        'ac_rate': get_pie_chart(
-            queryset.values('result').annotate(count=Count('result'))
-            .order_by('-count').values_list('result', 'count').filter(~Q(result__in=["IR", "AB", "MLE", "OLE", "IE"])),
-        ),
+        'by_day': submissions_by_day,
+        'by_language': get_pie_chart(languages),
+        'ac_rate': get_pie_chart(ac_rate),
+        'queue_time': get_bar_chart(queue_time_data),
     })
 
 

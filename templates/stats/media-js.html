@@ -21,7 +21,7 @@
         return chart;
     }
 
-    function draw_bar_chart(data, $chart) {
+    function draw_bar_chart(data, $chart, show_percentage = true) {
         var ctx = $chart.find('canvas')[0].getContext('2d');
         ctx.canvas.height = 20 * data.labels.length + 100;
         var chart = new Chart(ctx, {
@@ -35,7 +35,7 @@
                 tooltips: {
                     callbacks: {
                         label: function(tooltipItem, data) {
-                            return (Math.round(tooltipItem.value * 100) / 100) + '%';
+                            return show_percentage ? ((Math.round(tooltipItem.value * 100) / 100) + '%') : tooltipItem.value;
                         },
                     },
                 },
