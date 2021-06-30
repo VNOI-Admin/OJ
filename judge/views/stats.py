@@ -1,5 +1,4 @@
 import bisect
-import datetime
 from collections import defaultdict
 from functools import partial
 from itertools import chain, repeat
@@ -12,6 +11,7 @@ from django.db.models.functions import Cast
 from django.http import HttpResponseForbidden, JsonResponse
 from django.http.response import HttpResponseBadRequest
 from django.shortcuts import render
+from django.utils.dateparse import parse_datetime
 from django.utils.translation import gettext as _
 
 from judge.models import Language, Submission
@@ -77,13 +77,12 @@ def oj_data(request):
     if not start_date or not end_date:
         return HttpResponseBadRequest()
 
-    try:
-        start_date = datetime.datetime.fromisoformat(start_date)
-        end_date = datetime.datetime.fromisoformat(end_date)
-    except ValueError:
+    start_date = parse_datetime(start_date)
+    end_date = parse_datetime(end_date)
+    if not start_date or not end_date:
         return HttpResponseBadRequest()
 
-    queryset = Submission.objects.filter(date__gte=start_date, date__lt=end_date + datetime.timedelta(days=1))
+    queryset = Submission.objects.filter(date__gte=start_date, date__lte=end_date)
 
     submissions = (
         queryset.annotate(date_only=Cast(F('date'), DateField())).order_by('date').values('date_only', 'result')
