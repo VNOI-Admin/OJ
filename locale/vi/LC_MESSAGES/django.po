@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-30 15:25+0000\n"
+"POT-Creation-Date: 2021-06-30 15:30+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -1456,6 +1456,8 @@ msgid ""
 "URL to PDF statement. The PDF file must be embeddable (Mobile web "
 "browsersmay not support embedding). Fallback included."
 msgstr ""
+"Đường dẫn tới PDF của đề bài (nếu có). Dường dẫn này phải có thể preview "
+"trực tiếp."
 
 #: judge/models/problem.py:114
 msgid "Problem source"
@@ -3049,7 +3051,9 @@ msgid ""
 "Becoming a suggester is such a great honor, but also comes with "
 "responsibility. Contact the admins if you want to contribute to the "
 "community."
-msgstr "Trở thành "
+msgstr ""
+"Nếu bạn muốn trở thành tình nguyện viên đề xuất bài tập, hãy liên hệ với "
+"admin."
 
 #: judge/views/problem.py:773
 #, python-brace-format
