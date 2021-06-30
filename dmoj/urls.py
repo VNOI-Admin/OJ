@@ -358,6 +358,7 @@ urlpatterns = [
             url('^data/status/$', stats.status_data, name='stats_data_status'),
             url('^data/ac_rate/$', stats.ac_rate, name='language_stats_data_ac_rate'),
         ])),
+        url('^oj/data/all/$', stats.oj_data, name='oj_stats_data_all'),
     ])),
 
     url(r'^tickets/', include([

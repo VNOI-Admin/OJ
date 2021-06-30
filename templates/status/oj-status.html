@@ -1,16 +1,76 @@
 {% extends "base.html" %}
 
 {% block js_media %}
-    <script type="text/javascript">
-        window.stats = {{ stats }};
-    </script>
     {% compress js %}
         {% include "stats/media-js.html" %}
+        <script type="text/javascript" src="{{ static('vnoj/daterangepicker/daterangepicker.min.js') }}"></script>
         <script type="text/javascript">
+            var language_chart = null;
+            var submission_chart = null;
+            var ac_chart = null;
+
+            function draw_charts(start_date, end_date) {
+                $.ajax({
+                    url: '{{ url('oj_stats_data_all') }}',
+                    type: 'POST',
+                    data: {
+                        start_date: start_date.format('YYYY-MM-DD'),
+                        end_date: end_date.format('YYYY-MM-DD')
+                    },
+                    success: function (stats) {
+                        if (language_chart == null) {
+                            language_chart = draw_pie_chart(stats.language_count, $('#language-count'));
+                        } else {
+                            language_chart.data = stats.language_count;
+                            language_chart.update();
+                        }
+                        if (submission_chart == null) {
+                            submission_chart = draw_vertical_stacked_bar_chart(stats.submission_count, $('#submission-count'));
+                        } else {
+                            submission_chart.data = stats.submission_count;
+                            submission_chart.update();
+                        }
+                        if (ac_chart == null) {
+                            ac_chart = draw_pie_chart(stats.ac_rate, $('#ac-rate'));
+                        } else {
+                            ac_chart.data = stats.ac_rate;
+                            ac_chart.update();
+                        }
+                    },
+                    error: function (data) {
+                        console.log('Could not load OJ stats');
+                    }
+                });
+            }
+
             $(function () {
-                draw_pie_chart(window.stats.language_count, $('#language-count'));
-                draw_vertical_stacked_bar_chart(window.stats.submission_count, $('#submission-count'));
-                draw_pie_chart(window.stats.ac_rate, $('#ac-rate'));
+                var start_date = moment().subtract(29, 'days');
+                var end_date = moment();
+
+                function cb(start_date, end_date) {
+                    $('#daterange span').html(start_date.format('MMMM D, YYYY') + ' - ' + end_date.format('MMMM D, YYYY'));
+                }
+
+                $('#daterange').daterangepicker({
+                    startDate: start_date,
+                    endDate: end_date,
+                    ranges: {
+                        'Today': [moment(), moment()],
+                        'Yesterday': [moment().subtract(1, 'days'), moment().subtract(1, 'days')],
+                        'Last 7 Days': [moment().subtract(6, 'days'), moment()],
+                        'Last 14 Days': [moment().subtract(13, 'days'), moment()],
+                        'Last 30 Days': [moment().subtract(29, 'days'), moment()],
+                        'Last 60 Days': [moment().subtract(59, 'days'), moment()],
+                        'Last 90 Days': [moment().subtract(89, 'days'), moment()]
+                    }
+                }, cb);
+
+                $('#daterange').on('apply.daterangepicker', function(ev, picker) {
+                    draw_charts(picker.startDate, picker.endDate);
+                });
+
+                cb(start_date, end_date);
+                draw_charts(start_date, end_date);
             });
         </script>
     {% endcompress %}
@@ -26,6 +86,7 @@
             justify-content: center;
         }
     </style>
+    <link rel="stylesheet" type="text/css" href="{{ static('vnoj/daterangepicker/daterangepicker.css') }}">
 {% endblock %}
 
 {% block title_ruler %}{% endblock %}
@@ -36,9 +97,13 @@
 {% endblock %}
 
 {% block body %}
+    <div id="daterange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+        <i class="fa fa-calendar"></i>&nbsp;
+        <span></span> <i class="fa fa-caret-down"></i>
+    </div>
     <table id="stats-table" class="table">
         <tr>
-            <th colspan="2">{{ _('Submissions in last 30 days') }}</th>
+            <th colspan="2">{{ _('Submissions by Days') }}</th>
         </tr>
         <tr>
             <td colspan="2">

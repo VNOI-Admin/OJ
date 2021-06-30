@@ -1,22 +1,13 @@
-import datetime
-import json
 from collections import defaultdict
 from functools import partial
 
-from django.conf import settings
-from django.db.models import F, Q
-from django.db.models.aggregates import Count
-from django.db.models.fields import DateField
-from django.db.models.functions import Cast
 from django.http import HttpResponseBadRequest
 from django.shortcuts import render
 from django.utils import six
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 from packaging import version
 
-from judge.models import Judge, Language, RuntimeVersion, Submission
-from judge.utils.stats import get_pie_chart
+from judge.models import Judge, Language, RuntimeVersion
 
 __all__ = ['status_all', 'status_table']
 
@@ -42,50 +33,9 @@ def status_oj(request):
     if not request.user.is_superuser or not request.user.is_staff:
         return HttpResponseBadRequest(_("You must be admin to view this content."), content_type='text/plain')
 
-    queryset = Submission.objects.filter(date__gt=datetime.datetime.today() - datetime.timedelta(days=30))
-
-    context = {'title': _('OJ Status')}
-
-    submissions = (
-        queryset.annotate(date_only=Cast(F('date'), DateField())).order_by('date').values('date_only', 'result')
-        .annotate(count=Count('result')).values_list('date_only', 'result', 'count')
-    )
-
-    labels = list(set(item[0].isoformat() for item in submissions.values_list('date_only')))
-    labels.sort()
-    num_date = len(labels)
-    result_order = ["AC", "WA", "TLE", "CE", "ERR"]
-    result_data = defaultdict(partial(list, [0] * num_date))
-
-    for date, result, count in submissions:
-        result_data[result if result in result_order else "ERR"][labels.index(date.isoformat())] += count
-
-    submissions_count = {
-        'labels': labels,
-        'datasets': [
-            {
-                'label': name,
-                'backgroundColor': settings.DMOJ_STATS_SUBMISSION_RESULT_COLORS.get(name, "ERR"),
-                'data': result_data[name],
-            }
-            for name in result_order
-        ],
-    }
-
-    stats = {
-        'language_count': get_pie_chart(
-            queryset.values('language__name').annotate(count=Count('language__name'))
-            .filter(count__gt=0).order_by('-count').values_list('language__name', 'count'),
-        ),
-        'submission_count': submissions_count,
-        'ac_rate': get_pie_chart(
-            queryset.values('result').annotate(count=Count('result'))
-            .order_by('-count').values_list('result', 'count').filter(~Q(result__in=["IR", "AB", "MLE", "OLE", "IE"])),
-        ),
-    }
-    context['stats'] = mark_safe(json.dumps(stats))
-
-    return render(request, 'status/oj-status.html', context)
+    return render(request, 'status/oj-status.html', {
+        'title': _('OJ Status'),
+    })
 
 
 def status_table(request):

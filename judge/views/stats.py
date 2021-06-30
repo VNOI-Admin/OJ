@@ -1,10 +1,16 @@
+import datetime
+from collections import defaultdict
+from functools import partial
 from itertools import chain, repeat
 from operator import itemgetter
 
 from django.conf import settings
-from django.db.models import Case, Count, FloatField, IntegerField, Value, When
+from django.db.models import Case, Count, F, FloatField, IntegerField, Q, Value, When
 from django.db.models.expressions import CombinedExpression
-from django.http import JsonResponse
+from django.db.models.fields import DateField
+from django.db.models.functions import Cast
+from django.http import HttpResponseForbidden, JsonResponse
+from django.http.response import HttpResponseBadRequest
 from django.shortcuts import render
 from django.utils.translation import gettext as _
 
@@ -60,6 +66,62 @@ def ac_rate(request):
     data = Language.objects.annotate(total=Count('submission'), ac_rate=rate).filter(total__gt=0) \
         .order_by('total').values_list('name', 'ac_rate')
     return JsonResponse(get_bar_chart(list(data)))
+
+
+def oj_data(request):
+    if request.method != 'POST' or not request.user.is_superuser or not request.user.is_staff:
+        return HttpResponseForbidden()
+
+    start_date = request.POST.get('start_date')
+    end_date = request.POST.get('end_date')
+    if not start_date or not end_date:
+        return HttpResponseBadRequest()
+
+    try:
+        start_date = datetime.datetime.fromisoformat(start_date)
+        end_date = datetime.datetime.fromisoformat(end_date)
+    except:
+        return HttpResponseBadRequest()
+
+    queryset = Submission.objects.filter(date__gte=start_date, date__lt=end_date + datetime.timedelta(days=1))
+
+    submissions = (
+        queryset.annotate(date_only=Cast(F('date'), DateField())).order_by('date').values('date_only', 'result')
+        .annotate(count=Count('result')).values_list('date_only', 'result', 'count')
+    )
+
+    labels = list(set(item[0].isoformat() for item in submissions.values_list('date_only')))
+    labels.sort()
+    num_date = len(labels)
+    result_order = ["AC", "WA", "TLE", "CE", "ERR"]
+    result_data = defaultdict(partial(list, [0] * num_date))
+
+    for date, result, count in submissions:
+        result_data[result if result in result_order else "ERR"][labels.index(date.isoformat())] += count
+
+    submissions_count = {
+        'labels': labels,
+        'datasets': [
+            {
+                'label': name,
+                'backgroundColor': settings.DMOJ_STATS_SUBMISSION_RESULT_COLORS.get(name, "ERR"),
+                'data': result_data[name],
+            }
+            for name in result_order
+        ],
+    }
+
+    return JsonResponse({
+        'language_count': get_pie_chart(
+            queryset.values('language__name').annotate(count=Count('language__name'))
+            .filter(count__gt=0).order_by('-count').values_list('language__name', 'count'),
+        ),
+        'submission_count': submissions_count,
+        'ac_rate': get_pie_chart(
+            queryset.values('result').annotate(count=Count('result'))
+            .order_by('-count').values_list('result', 'count').filter(~Q(result__in=["IR", "AB", "MLE", "OLE", "IE"])),
+        ),
+    })
 
 
 def language(request):
