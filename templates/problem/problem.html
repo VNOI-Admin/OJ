@@ -288,6 +288,14 @@
 {% endblock %}
 
 {% block description %}
+    {% if problem.is_suggesting %}
+        <div class="alert alert-warning alert-dismissable">
+            <a class="close">x</a>
+            <b>{{ _('This problem is only a suggestion!') }}</b>
+            <br>
+            {{ _('This problem cannot be accessed by normal users until it is approved by an admin or staff. Please make sure that all the data for this problem is correct.') }}
+        </div>
+    {% endif %}
     {% cache 86400 'problem_html' problem.id MATH_ENGINE LANGUAGE_CODE %}
         {{ description|markdown(problem.markdown_style, MATH_ENGINE)|reference|str|safe }}
     {% endcache %}

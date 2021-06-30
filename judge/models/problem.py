@@ -108,9 +108,9 @@ class Problem(models.Model):
     name = models.CharField(max_length=100, verbose_name=_('problem name'), db_index=True,
                             help_text=_('The full name of the problem, '
                                         'as shown in the problem list.'))
-    pdf_url = models.CharField(max_length=100, verbose_name=_('PDF statement URL'), blank=True,
-                               help_text=_('URL to PDF statement. The PDF file must be embeddable (Mobile web browsers'
-                                           'may not support embedding). Fallback included.'))
+    pdf_url = models.URLField(max_length=200, verbose_name=_('PDF statement URL'), blank=True,
+                              help_text=_('URL to PDF statement. The PDF file must be embeddable (Mobile web browsers'
+                                          'may not support embedding). Fallback included.'))
     source = models.CharField(max_length=200, verbose_name=_('Problem source'), db_index=True, blank=True,
                               help_text=_('Source of problem. Please credit the source of the problem'
                                           'if it is not yours'))
@@ -172,6 +172,8 @@ class Problem(models.Model):
                                            help_text=_('If private, only these organizations may see the problem.'))
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
 
+    suggester = models.ForeignKey(Profile, blank=True, null=True, related_name='suggested_problems', on_delete=SET_NULL)
+
     def __init__(self, *args, **kwargs):
         super(Problem, self).__init__(*args, **kwargs)
         self._translated_name_cache = {}
@@ -187,6 +189,10 @@ class Problem(models.Model):
 
     def is_editor(self, profile):
         return (self.authors.filter(id=profile.id) | self.curators.filter(id=profile.id)).exists()
+
+    @property
+    def is_suggesting(self):
+        return self.suggester is not None and not self.is_public
 
     def is_editable_by(self, user):
         if not user.is_authenticated:
@@ -208,7 +214,7 @@ class Problem(models.Model):
                     return True
 
         # Problem is public.
-        if self.is_public:
+        if self.is_public and not self.is_suggesting:
             # Problem is not private to an organization.
             if not self.is_organization_private:
                 return True
@@ -237,6 +243,9 @@ class Problem(models.Model):
         # If user is a tester.
         if self.testers.filter(id=user.profile.id).exists():
             return True
+
+        if self.is_suggesting:
+            return False
 
         return False
 
@@ -311,8 +320,12 @@ class Problem(models.Model):
 
     @cached_property
     def editor_ids(self):
-        return self.author_ids.union(
+        editors = self.author_ids.union(
             Problem.curators.through.objects.filter(problem=self).values_list('profile_id', flat=True))
+        if self.suggester is not None:
+            editors = list(editors)
+            editors.append(self.suggester.id)
+        return editors
 
     @cached_property
     def tester_ids(self):
@@ -428,6 +441,7 @@ class Problem(models.Model):
             ('edit_own_problem', _('Edit own problems')),
             ('edit_all_problem', _('Edit all problems')),
             ('edit_public_problem', _('Edit all public problems')),
+            ('suggest_new_problem', _('Suggest new problem')),
             ('problem_full_markup', _('Edit problems with full markup')),
             ('clone_problem', _('Clone problem')),
             ('change_public_visibility', _('Change is_public field')),

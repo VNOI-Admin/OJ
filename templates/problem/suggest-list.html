@@ -1,0 +1,7 @@
+{% extends 'problem/list.html' %}
+
+{% block title_row %}
+    {% set tab = 'suggest' %}
+    {% set title = _('Suggested problem list') %}
+    {% include "problem/problem-list-tabs.html" %}
+{% endblock %}
