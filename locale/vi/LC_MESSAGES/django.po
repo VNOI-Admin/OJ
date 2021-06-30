@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-30 15:30+0000\n"
+"POT-Creation-Date: 2021-06-30 15:35+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -4324,7 +4324,7 @@ msgstr "Tên"
 msgid "Members"
 msgstr "Các thành viên"
 
-#: templates/organization/new.html:10 templates/problem/suggest.html:67
+#: templates/organization/new.html:10 templates/problem/suggest.html:66
 msgid "Create"
 msgstr "Tạo"
 
@@ -4802,6 +4802,18 @@ msgstr "Đã đề xuất các bài"
 #: templates/problem/suggest.html:58
 msgid "Thanks for suggesting problem!"
 msgstr "Cảm ơn bạn đã đề xuất!"
+
+#: templates/problem/suggest.html:60
+msgid ""
+"Please keep in mind that this form is only for creating new problems. "
+"Spamming and using for wrong purposes is not allowed.<br>If you don't know "
+"how to suggest a problem, please read <a href=\"/about/suggest_guide/"
+"\">this</a>."
+msgstr ""
+"Hãy lưu ý rằng form này chỉ dùng để đề xuất bài tập mới. Spam hoặc dùng nó "
+"không đúng mục đích là không được cho phép.<br> Nếu bạn không biết cách đề "
+"xuất bài tập mới, hãy tham khảo <a href=\"/about/suggest_guide/\">hướng dẫn "
+"này</a>."
 
 #: templates/registration/activate.html:3
 #, python-format
