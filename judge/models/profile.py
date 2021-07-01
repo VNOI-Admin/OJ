@@ -295,6 +295,7 @@ class Profile(models.Model):
         permissions = (
             ('test_site', _('Shows in-progress development stuff')),
             ('totp', _('Edit TOTP settings')),
+            ('can_upload_image', _('Can update image directly to server via martor')),
         )
         verbose_name = _('user profile')
         verbose_name_plural = _('user profiles')
