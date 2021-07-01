@@ -115,6 +115,8 @@ urlpatterns = [
 
     url(r'^problems/$', problem.ProblemList.as_view(), name='problem_list'),
     url(r'^problems/random/$', problem.RandomProblem.as_view(), name='problem_random'),
+    url(r'^problems/suggest_list/$', problem.SuggestList.as_view(), name='problem_suggest_list'),
+    url(r'^problems/suggest$', problem.ProblemSuggest.as_view(), name='problem_suggest'),
 
     url(r'^problem/(?P<problem>[^/]+)', include([
         url(r'^$', problem.ProblemDetail.as_view(), name='problem_detail'),

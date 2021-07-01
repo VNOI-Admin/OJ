@@ -20,7 +20,7 @@ from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import ListView, UpdateView, View
+from django.views.generic import CreateView, ListView, UpdateView, View
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
@@ -30,6 +30,7 @@ from judge.forms import ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, Pr
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
+from judge.tasks import on_new_suggested_problem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import hot_problems, user_attempted_ids, \
@@ -461,6 +462,45 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         return HttpResponseRedirect(request.get_full_path())
 
 
+class SuggestList(ProblemList):
+    template_name = 'problem/suggest-list.html'
+    permission_required = "superuser"
+
+    def get_normal_queryset(self):
+        filter = Q(is_public=False)
+
+        # Only super user can see all suggesting problems
+        if self.request.user.is_superuser:
+            filter &= ~Q(suggester=None)
+        else:
+            filter &= Q(suggester=self.profile)
+        queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
+        if self.show_types:
+            queryset = queryset.prefetch_related('types')
+        if self.category is not None:
+            queryset = queryset.filter(group__id=self.category)
+        if self.selected_types:
+            queryset = queryset.filter(types__in=self.selected_types)
+        if 'search' in self.request.GET:
+            self.search_query = query = ' '.join(self.request.GET.getlist('search')).strip()
+            if query:
+                if settings.ENABLE_FTS and self.full_text:
+                    queryset = queryset.search(query, queryset.BOOLEAN).extra(order_by=['-relevance'])
+                else:
+                    queryset = queryset.filter(
+                        Q(code__icontains=query) | Q(name__icontains=query) | Q(source__icontains=query) |
+                        Q(translations__name__icontains=query, translations__language=self.request.LANGUAGE_CODE))
+        self.prepoint_queryset = queryset
+        if self.point_start is not None:
+            queryset = queryset.filter(points__gte=self.point_start)
+        if self.point_end is not None:
+            queryset = queryset.filter(points__lte=self.point_end)
+        return queryset.distinct()
+
+    def get(self, request, *args, **kwargs):
+        return super(SuggestList, self).get(request, *args, **kwargs)
+
+
 class LanguageTemplateAjax(View):
     def get(self, request, *args, **kwargs):
         try:
@@ -682,6 +722,46 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             revisions.set_comment(_('Cloned problem from %s') % old_code)
 
         return HttpResponseRedirect(reverse('admin:judge_problem_change', args=(problem.id,)))
+
+
+class ProblemSuggest(TitleMixin, CreateView):
+    template_name = 'problem/suggest.html'
+    model = Problem
+    form_class = ProblemEditForm
+
+    def get_title(self):
+        return _('Suggesting new problem')
+
+    def get_content_title(self):
+        return _('Suggesting new problem')
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = ProblemEditForm(request.POST or None)
+        if form.is_valid():
+            self.object = problem = form.save()
+            problem.suggester = request.user.profile
+            problem.allowed_languages.set(Language.objects.all())
+            problem.save()
+            on_new_suggested_problem.delay(problem.code)
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.form_invalid(form)
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            if request.user.has_perm('judge.suggest_new_problem'):
+                return super(ProblemSuggest, self).dispatch(request, *args, **kwargs)
+            else:
+                raise PermissionDenied
+        except PermissionDenied:
+            return generic_message(
+                request,
+                _("You are not a suggester"),
+                _("Becoming a suggester is such a great honor, but also comes with responsibility. Contact the admins "
+                  "if you want to contribute to the community."),
+                status=403,
+            )
 
 
 class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
