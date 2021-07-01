@@ -54,9 +54,10 @@
             $(function () {
                 var start_date = moment().subtract(29, 'days').startOf('day');
                 var end_date = moment().endOf('day');
+                var date_format = '{{ _('HH:mm:ss MMMM D, YYYY') }}';
 
                 function cb(start_date, end_date) {
-                    $('#daterange span').html(start_date.format('HH:mm:ss MMMM D, YYYY') + ' - ' + end_date.format('HH:mm:ss MMMM D, YYYY'));
+                    $('#daterange span').html(start_date.format(date_format) + ' - ' + end_date.format(date_format));
                 }
 
                 $('#daterange').daterangepicker({
@@ -65,16 +66,23 @@
                     timePickerSeconds: true,
                     startDate: start_date,
                     endDate: end_date,
+                    locale: {
+                        customRangeLabel: '{{ _('Custom Range') }}',
+                        applyLabel: '{{ _('Apply') }}',
+                        cancelLabel: '{{ _('Cancel') }}',
+                        fromLabel: '{{ _('From') }}',
+                        toLabel: '{{ _('To') }}'
+                    },
                     ranges: {
-                        'Last Minute': [moment().subtract(1, 'minutes'), moment()],
-                        'Last Hour': [moment().subtract(1, 'hours'), moment()],
-                        'Today': [moment().startOf('day'), moment().endOf('day')],
-                        'Yesterday': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
-                        'Last 7 Days': [moment().subtract(6, 'days').startOf('day'), moment().endOf('day')],
-                        'Last 14 Days': [moment().subtract(13, 'days').startOf('day'), moment().endOf('day')],
-                        'Last 30 Days': [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
-                        'Last 60 Days': [moment().subtract(59, 'days').startOf('day'), moment().endOf('day')],
-                        'Last 90 Days': [moment().subtract(89, 'days').startOf('day'), moment().endOf('day')]
+                        '{{ _('Last Minute') }}': [moment().subtract(1, 'minutes'), moment()],
+                        '{{ _('Last Hour') }}': [moment().subtract(1, 'hours'), moment()],
+                        '{{ _('Today') }}': [moment().startOf('day'), moment().endOf('day')],
+                        '{{ _('Yesterday') }}': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
+                        '{{ _('Last 7 Days') }}': [moment().subtract(6, 'days').startOf('day'), moment().endOf('day')],
+                        '{{ _('Last 14 Days') }}': [moment().subtract(13, 'days').startOf('day'), moment().endOf('day')],
+                        '{{ _('Last 30 Days') }}': [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
+                        '{{ _('Last 60 Days') }}': [moment().subtract(59, 'days').startOf('day'), moment().endOf('day')],
+                        '{{ _('Last 90 Days') }}': [moment().subtract(89, 'days').startOf('day'), moment().endOf('day')]
                     }
                 }, cb);
 
