@@ -12,7 +12,7 @@
 
             function draw_charts(start_date, end_date) {
                 $.ajax({
-                    url: '{{ url('oj_stats_data_all') }}',
+                    url: '{{ url('stats_data_all') }}',
                     type: 'POST',
                     data: {
                         start_date: start_date.toISOString(),

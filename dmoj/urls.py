@@ -350,16 +350,7 @@ urlpatterns = [
         url(r'^blog/atom/$', AtomBlogFeed(), name='blog_atom'),
     ])),
 
-    url(r'^stats/', include([
-        url('^language/', include([
-            url('^$', stats.language, name='language_stats'),
-            url('^data/all/$', stats.language_data, name='language_stats_data_all'),
-            url('^data/ac/$', stats.ac_language_data, name='language_stats_data_ac'),
-            url('^data/status/$', stats.status_data, name='stats_data_status'),
-            url('^data/ac_rate/$', stats.ac_rate, name='language_stats_data_ac_rate'),
-        ])),
-        url('^oj/data/all/$', stats.oj_data, name='oj_stats_data_all'),
-    ])),
+    url(r'^stats/data/all/$', stats.oj_data, name='stats_data_all'),
 
     url(r'^tickets/', include([
         url(r'^$', ticket.TicketList.as_view(), name='ticket_list'),
