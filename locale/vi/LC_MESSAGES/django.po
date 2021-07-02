@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-06-30 15:35+0000\n"
+"POT-Creation-Date: 2021-07-01 14:11+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -259,8 +259,7 @@ msgid "Limits"
 msgstr "Giới hạn"
 
 #: judge/admin/problem.py:136 judge/admin/submission.py:238
-#: templates/stats/base.html:14 templates/submission/list.html:330
-#: templates/user/edit-profile.html:296
+#: templates/submission/list.html:330 templates/user/edit-profile.html:296
 msgid "Language"
 msgstr "Ngôn ngữ"
 
@@ -3201,23 +3200,19 @@ msgstr "Đăng ký"
 msgid "Authentication failure"
 msgstr "Xác thực không thành công"
 
-#: judge/views/stats.py:67
-msgid "Language statistics"
-msgstr "Thống kê theo ngôn ngữ"
-
-#: judge/views/status.py:34 templates/submission/list.html:321
+#: judge/views/status.py:25 templates/submission/list.html:321
 msgid "Status"
 msgstr "Trạng thái"
 
-#: judge/views/status.py:43
+#: judge/views/status.py:34
 msgid "You must be admin to view this content."
 msgstr ""
 
-#: judge/views/status.py:47
+#: judge/views/status.py:37
 msgid "OJ Status"
 msgstr "Trạng thái của OJ"
 
-#: judge/views/status.py:169
+#: judge/views/status.py:119
 msgid "Version matrix"
 msgstr "Phiên bản của trình chấm"
 
@@ -3831,6 +3826,7 @@ msgid "Prev"
 msgstr "Trước"
 
 #: templates/contest/contest-list-tabs.html:10
+#: templates/status/oj-status.html:79
 msgid "Today"
 msgstr "Hôm nay"
 
@@ -3851,8 +3847,8 @@ msgstr "Lịch"
 msgid "Info"
 msgstr "Thông tin"
 
-#: templates/contest/contest-tabs.html:6 templates/stats/base.html:9
-#: templates/submission/list.html:355 templates/user/user-tabs.html:5
+#: templates/contest/contest-tabs.html:6 templates/submission/list.html:355
+#: templates/user/user-tabs.html:5
 msgid "Statistics"
 msgstr "Thống kê"
 
@@ -3960,7 +3956,7 @@ msgstr "<b>%(length)s</b> tính từ <b>%(start_time)s</b>"
 msgid "Problems"
 msgstr "Bài"
 
-#: templates/contest/contest.html:87 templates/status/oj-status.html:52
+#: templates/contest/contest.html:87
 msgid "AC Rate"
 msgstr "Tỷ lệ AC"
 
@@ -4181,12 +4177,11 @@ msgstr "Phân phối theo trạng thái"
 msgid "Problem AC Rate"
 msgstr "Tỉ lệ AC"
 
-#: templates/contest/stats.html:48 templates/stats/language.html:16
-#: templates/status/oj-status.html:51
+#: templates/contest/stats.html:48 templates/status/oj-status.html:137
 msgid "Submissions by Language"
 msgstr "Bài nộp theo ngôn ngữ"
 
-#: templates/contest/stats.html:54 templates/stats/language.html:26
+#: templates/contest/stats.html:54
 msgid "Language AC Rate"
 msgstr "Tỉ lệ AC theo ngôn ngữ"
 
@@ -5157,14 +5152,6 @@ msgid ""
 "codes, please contact us at %(email)s."
 msgstr ""
 
-#: templates/stats/language.html:11
-msgid "Submission Statistics"
-msgstr "Thống kê bài nộp"
-
-#: templates/stats/language.html:21
-msgid "AC Submissions by Language"
-msgstr "Các bài nộp đã AC theo ngôn ngữ"
-
 #: templates/status/judge-status-table.html:2
 msgid "Judge"
 msgstr "Máy chấm"
@@ -5200,9 +5187,73 @@ msgstr "Không có máy chấm nào tại thời điểm này."
 msgid "Runtime Info"
 msgstr "Thông tin trình chấm"
 
-#: templates/status/oj-status.html:41
-msgid "Submissions in last 30 days"
-msgstr "Các bài nộp trong vòng 30 ngày gần đây"
+#: templates/status/oj-status.html:57
+msgid "HH:mm:ss MMMM D, YYYY"
+msgstr "HH:mm:ss D MMMM, YYYY"
+
+#: templates/status/oj-status.html:70
+msgid "Custom Range"
+msgstr "Khoảng tuỳ chọn"
+
+#: templates/status/oj-status.html:71
+msgid "Apply"
+msgstr "Chọn"
+
+#: templates/status/oj-status.html:72
+msgid "Cancel"
+msgstr "Huỷ"
+
+#: templates/status/oj-status.html:73 templates/user/user-about.html:14
+msgid "From"
+msgstr "Từ"
+
+#: templates/status/oj-status.html:74
+msgid "To"
+msgstr "Đến"
+
+#: templates/status/oj-status.html:77
+msgid "Last Minute"
+msgstr "Một phút qua"
+
+#: templates/status/oj-status.html:78
+msgid "Last Hour"
+msgstr "Một giờ qua"
+
+#: templates/status/oj-status.html:80
+msgid "Yesterday"
+msgstr "Hôm qua"
+
+#: templates/status/oj-status.html:81
+msgid "Last 7 Days"
+msgstr "7 ngày qua"
+
+#: templates/status/oj-status.html:82
+msgid "Last 14 Days"
+msgstr "14 ngày qua"
+
+#: templates/status/oj-status.html:83
+msgid "Last 30 Days"
+msgstr "30 ngày qua"
+
+#: templates/status/oj-status.html:84
+msgid "Last 60 Days"
+msgstr "60 ngày qua"
+
+#: templates/status/oj-status.html:85
+msgid "Last 90 Days"
+msgstr "90 ngày qua"
+
+#: templates/status/oj-status.html:127
+msgid "Submissions by Day"
+msgstr "Bài nộp theo ngày"
+
+#: templates/status/oj-status.html:138
+msgid "Submissions Result"
+msgstr "Kết quả bài nộp"
+
+#: templates/status/oj-status.html:155
+msgid "Queue Time"
+msgstr "Thời gian chờ"
 
 #: templates/status/status-tabs.html:4
 msgid "Judges"
@@ -5656,10 +5707,6 @@ msgstr ""
 msgid "Download data"
 msgstr ""
 
-#: templates/user/user-about.html:14
-msgid "From"
-msgstr "Từ"
-
 #: templates/user/user-about.html:25
 msgid "Admin Notes"
 msgstr ""
@@ -5845,6 +5892,18 @@ msgstr "Số bài"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+#~ msgid "Language statistics"
+#~ msgstr "Thống kê theo ngôn ngữ"
+
+#~ msgid "Submission Statistics"
+#~ msgstr "Thống kê bài nộp"
+
+#~ msgid "AC Submissions by Language"
+#~ msgstr "Các bài nộp đã AC theo ngôn ngữ"
+
+#~ msgid "Submissions in last 30 days"
+#~ msgstr "Các bài nộp trong vòng 30 ngày gần đây"
 
 #~ msgid ""
 #~ "\n"
