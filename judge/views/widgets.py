@@ -10,11 +10,12 @@ from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import default_storage
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from django.utils.translation import gettext as _
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import View
 from martor.api import imgur_uploader
 
-from judge.models import Submission
+from judge.judgeapi import check_sync as check_problem_sync
+from judge.models import Problem, Submission
 
 __all__ = ['rejudge_submission', 'DetectTimezone']
 
@@ -38,6 +39,26 @@ def rejudge_submission(request):
     redirect = request.POST.get('path', None)
 
     return HttpResponseRedirect(redirect) if redirect else HttpResponse('success', content_type='text/plain')
+
+
+@login_required
+@require_GET
+def check_sync(request):
+    if 'problem' not in request.GET:
+        return HttpResponseBadRequest()
+
+    try:
+        problem = Problem.objects.get(code=request.GET['problem'])
+    except Problem.DoesNotExist:
+        return HttpResponseBadRequest()
+
+    if not problem.is_subs_manageable_by(request.user):
+        return HttpResponseForbidden()
+
+    if check_problem_sync(request.GET['problem']):
+        return HttpResponse('success', content_type='text/plain')
+    else:
+        return HttpResponse('failed', content_type='text/plain')
 
 
 class DetectTimezone(View):

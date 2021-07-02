@@ -16,6 +16,7 @@ class DjangoHandler(ZlibPacketHandler):
             'submission-request': self.on_submission,
             'terminate-submission': self.on_termination,
             'disconnect-judge': self.on_disconnect_request,
+            'check-sync': self.on_check_sync,
         }
         self.judges = judges
 
@@ -46,6 +47,9 @@ class DjangoHandler(ZlibPacketHandler):
 
     def on_termination(self, data):
         return {'name': 'submission-received', 'judge-aborted': self.judges.abort(data['submission-id'])}
+
+    def on_check_sync(self, data):
+        return self.judges.check_sync(data['problem-id'])
 
     def on_disconnect_request(self, data):
         judge_id = data['judge-id']

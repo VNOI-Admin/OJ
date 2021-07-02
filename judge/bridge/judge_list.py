@@ -100,6 +100,21 @@ class JudgeList(object):
     def check_priority(self, priority):
         return 0 <= priority < self.priorities
 
+    def check_sync(self, problem):
+        logger.info('Check sync problem %s', problem)
+        with self.lock:
+            candidates = [
+                judge for judge in self.judges if problem in judge.problems
+            ]
+            if candidates:
+                judge = candidates[0]
+                logger.info('Dispatched check sync of problem %s to: %s', problem, judge.name)
+                judge.check_sync(problem)
+                return True
+            else:
+                logger.info('Not found any judge')
+                return False
+
     def judge(self, id, problem, language, source, judge_id, priority):
         with self.lock:
             if id in self.submission_map or id in self.node_map:

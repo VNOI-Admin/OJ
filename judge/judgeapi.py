@@ -107,6 +107,17 @@ def judge_submission(submission, rejudge=False, batch_rejudge=False, judge_id=No
     return success
 
 
+def check_sync(problem):
+    try:
+        return judge_request({
+            'name': 'check-sync',
+            'problem-id': problem,
+        })
+    except BaseException:
+        logger.exception('Failed to send request to judge')
+    return False
+
+
 def disconnect_judge(judge, force=False):
     judge_request({'name': 'disconnect-judge', 'judge-id': judge.name, 'force': force}, reply=False)
 

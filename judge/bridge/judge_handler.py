@@ -13,7 +13,7 @@ from django.utils import timezone
 from judge import event_poster as event
 from judge.bridge.base_handler import ZlibPacketHandler, proxy_list
 from judge.caching import finished_submission
-from judge.models import Judge, Language, LanguageLimit, Problem, Profile, \
+from judge.models import Judge, Language, LanguageLimit, Problem, ProblemData, Profile, \
     RuntimeVersion, Submission, SubmissionTestCase
 
 logger = logging.getLogger('judge.bridge')
@@ -52,6 +52,7 @@ class JudgeHandler(ZlibPacketHandler):
             'ping-response': self.on_ping_response,
             'supported-problems': self.on_supported_problems,
             'handshake': self.on_handshake,
+            'check-sync-reponse': self.on_check_sync_response,
         }
         self._working = False
         self._no_response_job = None
@@ -216,6 +217,26 @@ class JudgeHandler(ZlibPacketHandler):
             self.close()
         else:
             self.send({'name': 'disconnect'})
+
+    def check_sync(self, problem):
+        self.send({
+            'name': 'check-sync',
+            'problem-id': problem,
+        })
+
+    def on_check_sync_response(self, packet):
+        problem = packet['problem']
+        try:
+            data = ProblemData.objects.get(problem__code=problem)
+        except ProblemData.DoesNotExist:
+            logger.warning('Problem %s does not have ProblemData', problem)
+            return
+
+        if 'error' in packet:
+            data.hashed_data = str({'error': packet['error']})
+        else:
+            data.hashed_data = packet['hash']
+        data.save()
 
     def submit(self, id, problem, language, source):
         data = self.get_related_submission_data(id)
