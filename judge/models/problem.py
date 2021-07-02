@@ -300,7 +300,7 @@ class Problem(models.Model):
         if user.has_perm('judge.edit_all_problem'):
             return cls.objects.all()
 
-        q = Q(authors=user.profile) | Q(curators=user.profile)
+        q = Q(authors=user.profile) | Q(curators=user.profile) | Q(suggester=user.profile)
         q |= Q(is_organization_private=True, organizations__in=user.profile.admin_of.all())
 
         if user.has_perm('judge.edit_public_problem'):
