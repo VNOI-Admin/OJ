@@ -250,8 +250,7 @@ class Problem(models.Model):
         return False
 
     def is_subs_manageable_by(self, user):
-        return (user.is_staff and user.has_perm('judge.rejudge_submission') and self.is_editable_by(user)) \
-            or (self.suggester is not None and self.suggester.id == user.id)
+        return user.is_staff and user.has_perm('judge.rejudge_submission') and self.is_editable_by(user)
 
     @classmethod
     def get_visible_problems(cls, user):
