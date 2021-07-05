@@ -46,6 +46,7 @@
             <br><br>
         {% endif %}
         {% set test_case_id = counter() %}
+        {% set test_case_counter = counter() %}
         {% for batch in batches %}
             {% if batch.id %}
                 <b>{{ _('Batch ') }}#{{ test_case_id() }}</b>
@@ -54,10 +55,15 @@
                 <div class="batch-cases">
             {% endif %}
         <table class="submissions-status-table">{% for case in batch.cases %}
-            {% set print_case_output = case.status != 'AC' and case.output and (prefix_length is none or prefix_length > 0) %}
+            {% set current_test_case_count = test_case_counter() %}
+            {% set print_case_output = request.user.is_superuser and case.status != 'AC' and case.output and (prefix_length is none or prefix_length > 0) %}
+            {% set print_case_ext_feedback = case.extended_feedback
+                                             and
+                                             ((not request.in_contest and current_test_case_count <= feedback_limit)
+                                              or request.user.is_superuser) %}
             <tr id="{{ case.id }}" class="case-row toggle closed">
                 <td>
-                    {%- if print_case_output or case.extended_feedback -%}
+                    {%- if print_case_output or print_case_ext_feedback -%}
                         <i class="fa fa-chevron-right fa-fw"></i>
                     {%- endif -%}
                     {%- if batch.id -%}
@@ -93,9 +99,9 @@
                 {% endif %}
             </tr>
 
-            {% if print_case_output or case.extended_feedback %}
+            {% if print_case_output or print_case_ext_feedback %}
                 <tr id="{{ case.id }}-output" style="display:none" class="case-feedback toggled">
-                    {% if print_case_output and request.user.is_superuser %}
+                    {% if print_case_output %}
                         <td colspan="5" class="case-output">
                             <div class="case-info">
                                 <strong>{{ _('Your output (clipped)') }}</strong>
@@ -107,7 +113,7 @@
                             </div>
                         </td>
                     {% endif %}
-                    {% if case.extended_feedback and not request.in_contest %}
+                    {% if print_case_ext_feedback %}
                         <td colspan="5" class="case-ext-feedback">
                             <div class="case-info">
                                 <strong>{{ _('Judge feedback') }}</strong>
