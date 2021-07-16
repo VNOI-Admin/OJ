@@ -37,7 +37,7 @@ from judge.tasks import run_moss
 from judge.utils.celery import redirect_to_task_status
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.opengraph import generate_opengraph
-from judge.utils.problems import _get_result_data
+from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_bar_chart, get_pie_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
@@ -264,6 +264,11 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         clarifications = ProblemClarification.objects.filter(problem__in=self.object.problems.all())
         context['has_clarifications'] = clarifications.count() > 0
         context['clarifications'] = clarifications.order_by('-date')
+
+        authenticated = self.request.user.is_authenticated
+        context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
+        context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
+
         return context
 
 
