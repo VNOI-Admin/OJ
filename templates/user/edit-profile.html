@@ -280,6 +280,17 @@ You will not be able to view your scratch codes after you leave this page!') }}"
             {% endif %}
 
             {% csrf_token %}
+            <table>
+                <tr>
+                    <td><div class="block-header">{{ _('First name') }}</div></td>
+                    <td><div class="block-header">{{ _('Last name') }}</div></td>
+                </tr>
+                <tr>
+                    <td>{{ form_user.first_name }}</td>
+                    <td>{{ form_user.last_name }}</td>
+                </tr>
+            </table>
+            <hr>
 
             <div style="padding-top:0.5em" class="block-header">{{ _('Self-description') }}:</div>
             {{ form.about }}

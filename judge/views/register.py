@@ -25,6 +25,10 @@ class CustomRegistrationForm(RegistrationForm):
     username = forms.RegexField(regex=r'^\w+$', max_length=30, label=_('Username'),
                                 error_messages={'invalid': _('A username must contain letters, '
                                                              'numbers, or underscores')})
+    first_name = forms.RegexField(regex=r'^[a-z]+$', max_length=30, label=_('First name'), required=False,
+                                  error_messages={'invalid': _('Name can only contain characters')})
+    last_name = forms.RegexField(regex=r'^[a-z]+$', max_length=30, label=_('Last name'), required=False,
+                                 error_messages={'invalid': _('Name can only contain characters')})
     timezone = ChoiceField(label=_('Timezone'), choices=TIMEZONE,
                            widget=Select2Widget(attrs={'style': 'width:100%'}))
     language = ModelChoiceField(queryset=Language.objects.all(), label=_('Preferred language'), empty_label=None,
