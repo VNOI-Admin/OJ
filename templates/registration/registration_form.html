@@ -134,17 +134,18 @@
         <form id="edit-form" action="" method="post" class="form-area">
             {% csrf_token %}
 
+            <div class="block-header">{{ _('Last name') }}<small>({{ _('can be blank') }})</small></div>
+            <span class="fullwidth{% if form.last_name.errors %}-error{% endif %}">{{ form.last_name }}</span>
+            {% if form.last_name.errors %}
+                <div class="form-field-error">{{ form.last_name.errors }}</div>
+            {% endif %}
+
             <div class="block-header">{{ _('First name') }}<small>({{ _('can be blank') }})</small></div>
             <span class="fullwidth{% if form.first_name.errors %}-error{% endif %}">{{ form.first_name }}</span>
             {% if form.first_name.errors %}
                 <div class="form-field-error">{{ form.first_name.errors }}</div>
             {% endif %}
 
-            <div class="block-header">{{ _('Last name') }}<small>({{ _('can be blank') }})</small></div>
-            <span class="fullwidth{% if form.last_name.errors %}-error{% endif %}">{{ form.last_name }}</span>
-            {% if form.last_name.errors %}
-                <div class="form-field-error">{{ form.last_name.errors }}</div>
-            {% endif %}
 
             <div class="block-header">{{ _('Username') }}</div>
             <span class="fullwidth{% if form.username.errors %}-error{% endif %}">{{ form.username }}</span>
