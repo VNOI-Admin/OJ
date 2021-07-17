@@ -1,0 +1,55 @@
+{% extends "problem/problem.html" %}
+{% block title_ruler %}{% endblock %}
+{% block content_media %}
+    {% include "comments/media-css.html" %}
+    <style>
+        .title-state {
+            font-size: 2em;
+            float: left;
+            width: 1.1em;
+            display: block;
+            margin-top: 0.16em;
+        }
+
+        .info-float a {
+            vertical-align: middle;
+        }
+
+        #content-right {
+            max-width: 12.5em;
+            min-width: 12.5em;
+        }
+
+        #problem-types, #allowed-langs, #available-judges {
+            padding-top: 1em;
+        }
+
+        .problem-info-entry {
+            padding-top: 0.5em;
+        }
+    </style>
+{% endblock %}
+
+{% block content_js_media %}
+    {% include "comments/media-js.html" %}
+{% endblock %}
+
+{% block title_row %}
+    {% set tab='comment' %}
+    {% include "problem/problem-tabs.html" %}
+{% endblock %}
+
+{% block info_float %}{% endblock %}
+
+{% block description %}{% endblock %}
+{% block description_end %}{% endblock %}
+{% block post_description_end %}{% endblock %}
+
+{% block comments %}
+    {% include "comments/list.html" %}
+{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+    {% include "comments/math.html" %}
+{% endblock %}

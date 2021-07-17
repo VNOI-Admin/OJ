@@ -8,7 +8,7 @@
 
 <div class="page-title">
     <div class="tabs">
-        <h2>{{ content_title or title }}</h2>
+        {% block title %}<h2>{{ content_title or title }}</h2>{% endblock %}
         <span class="spacer"></span>
         {% block post_tab_spacer %}{% endblock %}
         <ul>
