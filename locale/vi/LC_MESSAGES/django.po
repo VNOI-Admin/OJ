@@ -591,7 +591,7 @@ msgid ""
 "Points awarded for problem completion. From 0 to 2. You can approximate: 0.5 "
 "is as hard as Problem 1 of VOI; 1 = Problem 2 of VOI; 1.5 = Problem 3 of VOI."
 msgstr ""
-"Điểm của bài, từ 0 tới 2. Có thể xấp xĩ điểm như sau: bài có điểm 0.5 sẽ khó "
+"Điểm của bài, từ 0 tới 2. Có thể xấp xỉ điểm như sau: bài có điểm 0.5 sẽ khó "
 "như bài 1 thi HSG QG; 1 điểm = bài 2; 1.5 điểm = bài 3."
 
 #: judge/forms.py:135
