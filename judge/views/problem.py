@@ -31,6 +31,7 @@ from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGro
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
 from judge.tasks import on_new_suggested_problem
+from judge.template_context import misc_config
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import hot_problems, user_attempted_ids, \
@@ -747,6 +748,12 @@ class ProblemSuggest(TitleMixin, CreateView):
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super(ProblemSuggest, self).get_initial()
+        initial = initial.copy()
+        initial['description'] = misc_config(self.request)['misc_config']['description_example']
+        return initial
 
     def dispatch(self, request, *args, **kwargs):
         try:
