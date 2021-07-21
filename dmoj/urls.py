@@ -241,7 +241,12 @@ urlpatterns = [
         url(r'^/$', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),
 
-    url(r'^contributors/$', user.ContribList.as_view(), name='contributors_list'),
+    url(r'^contributors', include([
+        url(r'^/$', user.ContribList.as_view(), name='contributors_list'),
+        url(r'^/(?P<page>\d+)$', lambda request, page:
+            HttpResponsePermanentRedirect('%s?page=%s' % (reverse('contributors_list'), page))),
+        url(r'^/find$', user.user_contributor_redirect, name='user_contributor_redirect'),
+    ])),
 
     url(r'^organizations/$', organization.OrganizationList.as_view(), name='organization_list'),
     url(r'^organization/(?P<pk>\d+)-(?P<slug>[\w-]*)', include([
