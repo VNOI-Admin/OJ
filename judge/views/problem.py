@@ -470,11 +470,8 @@ class SuggestList(ProblemList):
     def get_normal_queryset(self):
         filter = Q(is_public=False)
 
-        # Only super user can see all suggesting problems
-        if self.request.user.is_superuser:
-            filter &= ~Q(suggester=None)
-        else:
-            filter &= Q(suggester=self.profile)
+        filter &= ~Q(suggester=None)
+
         queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
         if self.show_types:
             queryset = queryset.prefetch_related('types')
@@ -499,6 +496,8 @@ class SuggestList(ProblemList):
         return queryset.distinct()
 
     def get(self, request, *args, **kwargs):
+        if not request.user.has_perm('judge.suggest_new_problem'):
+            raise Http404
         return super(SuggestList, self).get(request, *args, **kwargs)
 
 

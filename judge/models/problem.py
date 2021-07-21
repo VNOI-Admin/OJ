@@ -240,6 +240,10 @@ class Problem(models.Model):
         if self.is_editable_by(user) or user.profile.id in self.editor_ids:
             return True
 
+        # If user is a suggester
+        if user.has_perm('judge.suggest_new_problem'):
+            return True
+
         # If user is a tester.
         if self.testers.filter(id=user.profile.id).exists():
             return True
