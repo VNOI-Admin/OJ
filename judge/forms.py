@@ -110,13 +110,20 @@ class ProposeProblemSolutionForm(ModelForm):
 class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
-        fields = ['code', 'name', 'time_limit', 'memory_limit', 'points', 'authors', 'types', 'group', 'pdf_url',
+        fields = ['code', 'name', 'time_limit', 'memory_limit', 'points', 'source', 'types', 'group', 'pdf_url',
                   'description']
         widgets = {
-            'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'types': Select2MultipleWidget,
             'group': Select2Widget,
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
+        }
+        help_texts = {
+            'code': _('Problem code, e.g: voi19_post'),
+            'name': _('The full name of the problem, '
+                      'as shown in the problem list. For example: VOI19 - A cong B'),
+            'points': _('Points awarded for problem completion. From 0 to 2. '
+                        'You can approximate: 0.5 is as hard as Problem 1 of VOI; 1 = Problem 2 of VOI; '
+                        '1.5 = Problem 3 of VOI.'),
         }
 
 

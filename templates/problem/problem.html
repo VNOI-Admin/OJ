@@ -215,6 +215,13 @@
                         <div class="pi-value authors-value">{{ link_users(authors) }}</div>
                     </div>
                 {% endif %}
+                {% if problem.suggester %} 
+                <div class="problem-info-entry">
+                    <i class="fa fa-pencil-square-o fa-fw"></i><span
+                        class="pi-name"> {{ _("Suggester:") }}</span>
+                        <div class="pi-value authors-value">{{ link_user(problem.suggester) }}</div>
+                    </div>
+                {% endif %}
             {% endwith %}
         {% endcache %}
     {% endif %}
