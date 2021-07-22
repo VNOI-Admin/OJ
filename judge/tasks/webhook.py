@@ -12,7 +12,7 @@ __all__ = ("on_new_ticket", "on_new_comment", "on_new_suggested_problem")
 
 @shared_task
 def on_new_ticket(ticket_id, content_type_id, object_id, message):
-    webhook = settings.DISCORD_WEBHOOK
+    webhook = settings.DISCORD_WEBHOOK.get('on_new_ticket', None)
     site_url = settings.SITE_FULL_URL
     if webhook is None or site_url is None:
         return
@@ -44,7 +44,7 @@ def on_new_ticket(ticket_id, content_type_id, object_id, message):
 
 @shared_task
 def on_new_comment(comment_id):
-    webhook = settings.DISCORD_WEBHOOK
+    webhook = settings.DISCORD_WEBHOOK.get('on_new_comment', None)
     site_url = settings.SITE_FULL_URL
     if webhook is None or site_url is None:
         return
@@ -69,7 +69,7 @@ def on_new_comment(comment_id):
 
 @shared_task
 def on_new_suggested_problem(problem_code):
-    webhook = settings.DISCORD_WEBHOOK
+    webhook = settings.DISCORD_WEBHOOK.get('on_new_suggested_problem')
     site_url = settings.SITE_FULL_URL
     if webhook is None or site_url is None:
         return
