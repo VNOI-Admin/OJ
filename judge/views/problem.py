@@ -31,6 +31,7 @@ from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGro
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
 from judge.tasks import on_new_suggested_problem
+from judge.template_context import misc_config
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import hot_problems, user_attempted_ids, \
@@ -469,11 +470,8 @@ class SuggestList(ProblemList):
     def get_normal_queryset(self):
         filter = Q(is_public=False)
 
-        # Only super user can see all suggesting problems
-        if self.request.user.is_superuser:
-            filter &= ~Q(suggester=None)
-        else:
-            filter &= Q(suggester=self.profile)
+        filter &= ~Q(suggester=None)
+
         queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
         if self.show_types:
             queryset = queryset.prefetch_related('types')
@@ -498,6 +496,8 @@ class SuggestList(ProblemList):
         return queryset.distinct()
 
     def get(self, request, *args, **kwargs):
+        if not request.user.has_perm('judge.suggest_new_problem'):
+            raise Http404
         return super(SuggestList, self).get(request, *args, **kwargs)
 
 
@@ -747,6 +747,12 @@ class ProblemSuggest(TitleMixin, CreateView):
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super(ProblemSuggest, self).get_initial()
+        initial = initial.copy()
+        initial['description'] = misc_config(self.request)['misc_config']['description_example']
+        return initial
 
     def dispatch(self, request, *args, **kwargs):
         try:

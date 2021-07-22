@@ -82,6 +82,9 @@
                 <thead>
                 <tr>
                     <th>#</th>
+                    {% if request.user.is_authenticated %}
+                        <th><i class="fa fa-check"></i></th>
+                    {% endif %}
                     <th>{{ _('Problem') }}</th>
                     <th>{{ _('Points') }}</th>
                     <th>{{ _('AC Rate') }}</th>
@@ -95,6 +98,37 @@
                 {% for problem in contest_problems %}
                     <tr>
                         <td style="width: 1em;">{{loop.index}}</td>
+                        {% if request.user.is_authenticated %}
+                            {% if problem.id in completed_problem_ids %}
+                                <td style="width: 1em;">
+                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                        {% if problem.is_public %}
+                                            <i class="solved-problem-color fa fa-check-circle"></i>
+                                        {% else %}
+                                            <i class="solved-problem-color fa fa-lock"></i>
+                                        {% endif %}
+                                    </a>
+                                </td>
+                            {% elif problem.id in attempted_problem_ids %}
+                                <td style="width: 1em;">
+                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                        {% if problem.is_public %}
+                                            <i class="attempted-problem-color fa fa-frown-o"></i>
+                                        {% else %}
+                                            <i class="attempted-problem-color fa fa-lock"></i>
+                                        {% endif %}
+                                    </a>
+                                </td>
+                            {% else %}
+                                <td style="width: 1em;">
+                                    {% if problem.is_public %}
+                                        <i class="unsolved-problem-color fa"></i>
+                                    {% else %}
+                                        <i class="unsolved-problem-color fa fa-lock"></i>
+                                    {% endif %}
+                                </td>
+                            {% endif %}
+                        {% endif %}
                         <td style="text-align: left; padding-left: 2em;">
                             {% if in_contest or problem.is_public or request.user.is_superuser or is_editor or is_tester %}
                                 <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
@@ -142,7 +176,7 @@
                         </td>
                         <td style="text-align: left; padding-left: 2em;">
                             {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
-                        </td> 
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>

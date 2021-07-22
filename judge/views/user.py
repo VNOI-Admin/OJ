@@ -533,6 +533,21 @@ def user_ranking_redirect(request):
     return HttpResponseRedirect('%s%s#!%s' % (reverse('user_list'), '?page=%d' % (page + 1) if page else '', username))
 
 
+def user_contributor_redirect(request):
+    try:
+        username = request.GET['handle']
+    except KeyError:
+        raise Http404()
+    user = get_object_or_404(Profile, user__username=username)
+    rank = Profile.objects.filter(is_unlisted=False, contribution_points__gt=user.contribution_points).count()
+    rank += Profile.objects.filter(
+        is_unlisted=False, contribution_points__exact=user.contribution_points, id__lt=user.id,
+    ).count()
+    page = rank // ContribList.paginate_by
+    return HttpResponseRedirect('%s%s#!%s' % (reverse('contributors_list'), '?page=%d' % (page + 1) if page else '',
+                                              username))
+
+
 class UserLogoutView(TitleMixin, TemplateView):
     template_name = 'registration/logout.html'
     title = gettext_lazy('You have been successfully logged out.')
