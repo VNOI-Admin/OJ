@@ -30,7 +30,7 @@ def on_new_ticket(ticket_id, content_type_id, object_id, message):
     message = f"Message: {message}"
     embed = DiscordEmbed(
         title=f"New ticket on {url}",
-        description=title + "\n" + message,
+        description=title + "\n" + message[:100],  # Should not too long
         color="03b2f8",
     )
     embed.set_author(
@@ -55,7 +55,7 @@ def on_new_comment(comment_id):
     webhook = DiscordWebhook(url=webhook)
     embed = DiscordEmbed(
         title=f"New comment {url}",
-        description=comment.body,
+        description=comment.body[:200],  # should not too long
         color="03b2f8",
     )
     embed.set_author(
