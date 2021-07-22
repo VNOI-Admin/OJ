@@ -61,7 +61,14 @@ VNOJ_CP_PROBLEM = 20 # Each suggested problem equal 20 CP
 
 VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
 
-DISCORD_WEBHOOK = None
+# Urls of discord webhook.
+# https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
+DISCORD_WEBHOOK = {
+    'on_new_ticket': None,
+    'on_new_comment': None,
+    'on_new_suggested_problem': None,
+}
+
 SITE_FULL_URL = None  # ie 'https://oj.vnoi.info', please remove the last / if needed
 
 NODEJS = '/usr/bin/node'
