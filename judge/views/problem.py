@@ -787,7 +787,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
         form = ProblemEditForm(request.POST or None)
         if form.is_valid():
             self.object = problem = form.save()
-            problem.author.add(request.user.profile)
+            problem.authors.add(request.user.profile)
             problem.allowed_languages.set(Language.objects.all())
             problem.save()
             return HttpResponseRedirect(self.get_success_url())
