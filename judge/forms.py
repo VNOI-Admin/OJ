@@ -371,8 +371,8 @@ class ContestForm(ModelForm):
             'hide_problem_authors',
             'scoreboard_visibility',
             'run_pretests_only',
-            'og_image',
             'logo_override_image',
+            'og_image',
             'description',
             'summary',
         ]
@@ -383,4 +383,8 @@ class ContestForm(ModelForm):
             'end_time': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
             'scoreboard_visibility': Select2Widget(),
+        }
+
+        help_texts = {
+            'og_image': _('This image will appear in link sharing embeds. For example: Facebook, etc'),
         }
