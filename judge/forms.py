@@ -1,10 +1,5 @@
 import json
-from judge.widgets.select2 import HeavySelect2Widget
-
-from django.forms.models import modelformset_factory
-from judge.models.contest import ContestProblem
 from operator import attrgetter, itemgetter
-from django.forms.widgets import DateTimeInput
 
 import pyotp
 import webauthn
@@ -17,13 +12,15 @@ from django.core.validators import RegexValidator
 from django.db.models import Q
 from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, ModelForm, MultipleChoiceField, \
     inlineformset_factory
+from django.forms.widgets import DateTimeInput
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
-from judge.models import Contest, Language, Organization, Problem, Profile, Solution, Submission, WebAuthnCredential
+from judge.models import Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, Submission, \
+    WebAuthnCredential
 from judge.utils.subscription import newsletter_id
-from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, MartorWidget, \
+from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
 
 TOTP_CODE_LENGTH = 6
