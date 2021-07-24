@@ -1,10 +1,24 @@
 {% extends "base.html" %}
 
 {% block js_media %}
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+
+
+    <script>
+        // This code activates flatpickr on fields with the 'datetimefield' class when the document has loaded
+        window.addEventListener("DOMContentLoaded", function () {
+            flatpickr(".datetimefield", {
+                enableTime: true,
+                enableSeconds: true,
+                dateFormat: "Y-m-d H:i:S",
+            });
+        });
+    </script>
     {{ form.media.js }}
 {% endblock %}
 
 {% block media %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     {{ form.media.css }}
     <style>
         .helptext {

@@ -1,5 +1,6 @@
 import json
 from operator import attrgetter, itemgetter
+from django.forms.widgets import DateTimeInput
 
 import pyotp
 import webauthn
@@ -337,4 +338,23 @@ class ContestCloneForm(Form):
 class ContestForm(ModelForm):
     class Meta:
         model = Contest
-        fields = ['key']
+        fields = [
+            'key', 'name', 'authors',
+            'start_time', 'end_time', 'is_visible',
+            'hide_problem_tags',
+            'hide_problem_authors',
+            'run_pretests_only',
+            'og_image',
+            'logo_override_image',
+            'summary',
+            'description',
+            'scoreboard_visibility',
+        ]
+
+        widgets = {
+            'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
+            'start_time': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
+            'end_time': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
+            'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
+            'scoreboard_visibility': Select2Widget(),
+        }

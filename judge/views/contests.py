@@ -877,10 +877,11 @@ class ContestTagDetail(TitleMixin, ContestTagDetailAjax):
         return _('Contest tag: %s') % self.object.name
 
 
-class CreateContest(TitleMixin, CreateView):
+class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
     template_name = 'contest/create.html'
     model = Contest
     form_class = ContestForm
+    permission_required = 'judge.add_contest'
 
     def get_title(self):
         return _('Create new contest')
