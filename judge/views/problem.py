@@ -724,52 +724,6 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         return HttpResponseRedirect(reverse('admin:judge_problem_change', args=(problem.id,)))
 
 
-class ProblemSuggest(TitleMixin, CreateView):
-    template_name = 'problem/suggest.html'
-    model = Problem
-    form_class = ProblemEditForm
-
-    def get_title(self):
-        return _('Suggesting new problem')
-
-    def get_content_title(self):
-        return _('Suggesting new problem')
-
-    def post(self, request, *args, **kwargs):
-        self.object = None
-        form = ProblemEditForm(request.POST or None)
-        if form.is_valid():
-            self.object = problem = form.save()
-            problem.suggester = request.user.profile
-            problem.allowed_languages.set(Language.objects.all())
-            problem.save()
-            on_new_suggested_problem.delay(problem.code)
-            return HttpResponseRedirect(self.get_success_url())
-        else:
-            return self.form_invalid(form)
-
-    def get_initial(self):
-        initial = super(ProblemSuggest, self).get_initial()
-        initial = initial.copy()
-        initial['description'] = misc_config(self.request)['misc_config']['description_example']
-        return initial
-
-    def dispatch(self, request, *args, **kwargs):
-        try:
-            if request.user.has_perm('judge.suggest_new_problem'):
-                return super(ProblemSuggest, self).dispatch(request, *args, **kwargs)
-            else:
-                raise PermissionDenied
-        except PermissionDenied:
-            return generic_message(
-                request,
-                _("You are not a suggester"),
-                _("Becoming a suggester is such a great honor, but also comes with responsibility. Contact the admins "
-                  "if you want to contribute to the community."),
-                status=403,
-            )
-
-
 class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     template_name = 'problem/suggest.html'
     model = Problem
@@ -796,6 +750,35 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
 
     def get_initial(self):
         initial = super(ProblemCreate, self).get_initial()
+        initial = initial.copy()
+        initial['description'] = misc_config(self.request)['misc_config']['description_example']
+        return initial
+
+
+class ProblemSuggest(ProblemCreate):
+    permission_required = 'judge.suggest_new_problem'
+
+    def get_title(self):
+        return _('Suggesting new problem')
+
+    def get_content_title(self):
+        return _('Suggesting new problem')
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = ProblemEditForm(request.POST or None)
+        if form.is_valid():
+            self.object = problem = form.save()
+            problem.suggester = request.user.profile
+            problem.allowed_languages.set(Language.objects.all())
+            problem.save()
+            on_new_suggested_problem.delay(problem.code)
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super(ProblemSuggest, self).get_initial()
         initial = initial.copy()
         initial['description'] = misc_config(self.request)['misc_config']['description_example']
         return initial
