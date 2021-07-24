@@ -2,6 +2,9 @@
 
 {% block js_media %}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script type="text/javascript">
+        window.django = {jQuery: $};
+    </script>
 
 
     <script>
@@ -13,6 +16,15 @@
                 dateFormat: "Y-m-d H:i:S",
             });
         });
+    </script>
+
+    <script src="{{ static('vnoj/jquery.formset.js') }}"></script>
+    <script type="text/javascript">
+        $(function() {
+            $('#form_set tr').formset({
+                prefix: '{{ contest_problem_formset.prefix }}'
+            });
+        })
     </script>
     {{ form.media.js }}
 {% endblock %}
@@ -61,16 +73,56 @@
             font-size: 13px !important;
             font-weight: 400;
         }
+        .points-column {
+            width: 3em;
+        }
 
     </style>
 {% endblock %}
 
 {% block body %}
+
+{% macro from_as_row(form) -%}
+    <td>{{ form.problem.errors }}{{ form.problem }}</td>
+    <td class="points-column">{{ form.points.errors }}{{ form.points }}</td>
+    <td>{{ form.order.errors }}{{ form.order }}</td>
+    <td>{{ form.is_pretested.errors }}{{ form.is_pretested }}</td>
+    <td>{{ form.max_submissions.errors }}{{ form.max_submissions }}</td>
+    <td>
+    {% if contest_problem_formset.can_delete and form.instance.pk %}
+        {{ form.DELETE }}
+    {% endif %}
+    </td>
+{%- endmacro %}
+
 <div>
     <form action="" method="post" class="form-area" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
+        {{ contest_problem_formset.management_form }}
         <table class="django-as-table">{{ form.as_table() }}</table>
         <hr>
+        <center><h3> {{ _('Problems') }} </h3></center>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th> {{ _('Problems') }} </th>
+                    <th class="points-column"> {{ _('Points') }} </th>
+                    <th> {{ _('Order') }} </th>
+                    <th> {{ _('Has pretest?') }} </th>
+                    <th> {{ _('Max submissions') }} </th>
+                    <th> {{ _('Delete') }} </th>
+                </tr>
+            </thead>
+            <tbody id="form_set">
+                {% for form in contest_problem_formset %}
+                    <tr>
+                        {{ from_as_row(form) }}
+                    </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+
         <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">{{ _('Create') }}</button></div>
     </form>
 </div>

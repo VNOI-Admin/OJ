@@ -1,4 +1,8 @@
 import json
+from judge.widgets.select2 import HeavySelect2Widget
+
+from django.forms.models import modelformset_factory
+from judge.models.contest import ContestProblem
 from operator import attrgetter, itemgetter
 from django.forms.widgets import DateTimeInput
 
@@ -333,6 +337,25 @@ class ContestCloneForm(Form):
         if Contest.objects.filter(key=key).exists():
             raise ValidationError(_('Contest with key already exists.'))
         return key
+
+
+class ProposeContestProblemForm(ModelForm):
+    class Meta:
+        model = ContestProblem
+        verbose_name = _('Problem')
+        verbose_name_plural = 'Problems'
+        fields = (
+            'problem', 'points', 'is_pretested',
+            'max_submissions', 'order',
+        )
+
+        widgets = {
+            'problem': HeavySelect2Widget(data_view='problem_select2', attrs={'style': 'width: 100%'}),
+        }
+
+
+class ProposeContestProblemFormSet(inlineformset_factory(Contest, ContestProblem, form=ProposeContestProblemForm)):
+    pass
 
 
 class ContestForm(ModelForm):

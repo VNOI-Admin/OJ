@@ -31,7 +31,7 @@ from reversion import revisions
 
 from judge import event_poster as event
 from judge.comments import CommentedDetailView
-from judge.forms import ContestCloneForm, ContestForm
+from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Problem, ProblemClarification, Profile, Submission
 from judge.tasks import run_moss
@@ -888,3 +888,28 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
 
     def get_content_title(self):
         return _('Create new contest')
+
+    def get_contest_problem_formset(self):
+        if self.request.POST:
+            return ProposeContestProblemFormSet(self.request.POST)
+        return ProposeContestProblemFormSet()
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['contest_problem_formset'] = self.get_contest_problem_formset()
+        return data
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = ContestForm(request.POST or None)
+        form_set = self.get_contest_problem_formset()
+        if form.is_valid() and form_set.is_valid():
+            self.object = form.save()
+            for problem in form_set.save(commit=False):
+                problem.contest = self.object
+                problem.save()
+            for problem in form_set.deleted_objects:
+                problem.delete()
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(*args, **kwargs))
