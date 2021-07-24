@@ -59,7 +59,7 @@ register_patterns = [
         template_name='registration/password_change_done.html',
         title=gettext_lazy('Password change successful'),
     ), name='password_change_done'),
-    url(r'^password/reset/$', auth_views.PasswordResetView.as_view(
+    url(r'^password/reset/$', user.CustomPasswordResetView.as_view(
         template_name='registration/password_reset.html',
         html_email_template_name='registration/password_reset_email.html',
         email_template_name='registration/password_reset_email.txt',
