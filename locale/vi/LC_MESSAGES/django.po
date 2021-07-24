@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-07-24 14:14+0000\n"
+"POT-Creation-Date: 2021-07-24 15:29+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -676,6 +676,11 @@ msgstr "id kỳ thi phải bao gồm ^[a-z0-9_] + $"
 msgid "Contest with key already exists."
 msgstr "Mã kỳ thi đã tồn tại."
 
+#: judge/forms.py:389
+msgid ""
+"This image will appear in link sharing embeds. For example: Facebook, etc"
+msgstr "Hình ảnh hiển thị khi chia sẻ link kì thi. Ví dụ: Facebook, v.v."
+
 #: judge/jinja2/datetime.py:26 templates/blog/dashboard.html:21
 msgid "N j, Y, g:i a"
 msgstr "j, M, Y, G:i"
@@ -862,8 +867,7 @@ msgstr "hiển thị công khai"
 msgid ""
 "Should be set even for organization-private contests, where it determines "
 "whether the contest is visible to members of the specified organizations."
-msgstr ""
-"Công khai kỳ thi."
+msgstr "Công khai kỳ thi."
 
 #: judge/models/contest.py:85
 msgid "contest rated"
@@ -911,7 +915,8 @@ msgstr "Rating tất cả"
 
 #: judge/models/contest.py:100
 msgid "Rate all users who joined."
-msgstr "Tính rating tất cả những người đã tham gia kỳ thi (kể cả không nộp bài nào)."
+msgstr ""
+"Tính rating tất cả những người đã tham gia kỳ thi (kể cả không nộp bài nào)."
 
 #: judge/models/contest.py:101
 msgid "exclude from ratings"
@@ -954,8 +959,7 @@ msgid ""
 "Whether judges should grade pretests only, versus all testcases. Commonly "
 "set during a contest, then unset prior to rejudging user submissions when "
 "the contest ends."
-msgstr ""
-"Trong khi kỳ thi diễn ra, chỉ chấm pretests."
+msgstr "Trong khi kỳ thi diễn ra, chỉ chấm pretests."
 
 #: judge/models/contest.py:118 judge/models/problem.py:173
 msgid "private to organizations"
@@ -981,7 +985,8 @@ msgstr "Logo kỳ thi"
 #: judge/models/contest.py:124
 msgid ""
 "This image will replace the default site logo for users inside the contest."
-msgstr "Link tới logo của kỳ thi. Ví dụ: https://oj.vnoi.info/martor/logo/hoadao.png"
+msgstr ""
+"Link tới logo của kỳ thi. Ví dụ: https://oj.vnoi.info/martor/logo/hoadao.png"
 
 #: judge/models/contest.py:127
 msgid "the amount of live participants"
@@ -998,7 +1003,8 @@ msgstr "tổng kết kỳ thi"
 #: judge/models/contest.py:130 judge/models/problem.py:162
 msgid "Plain-text, shown in meta description tag, e.g. for social media."
 msgstr ""
-"Các thông tin này sẽ hiển thị khi chia sẻ kỳ thi lên mạng xã hội (ví dụ discord, facebook)."
+"Các thông tin này sẽ hiển thị khi chia sẻ kỳ thi lên mạng xã hội (ví dụ "
+"discord, facebook)."
 
 #: judge/models/contest.py:131 judge/models/profile.py:54
 msgid "access code"
@@ -1530,15 +1536,13 @@ msgstr "giới hạn bộ nhớ"
 msgid ""
 "The memory limit for this problem, in kilobytes (e.g. 64mb = 65536 "
 "kilobytes)."
-msgstr ""
-"Giới hạn bộ nhớ theo KILOBYTES. Muốn bài 256MB thì điền 262144."
+msgstr "Giới hạn bộ nhớ theo KILOBYTES. Muốn bài 256MB thì điền 262144."
 
 #: judge/models/problem.py:145
 msgid ""
 "Points awarded for problem completion. Points are displayed with a 'p' "
 "suffix if partial."
-msgstr ""
-"Điểm của bài tập."
+msgstr "Điểm của bài tập."
 
 #: judge/models/problem.py:148
 msgid "allows partial points"
@@ -4726,8 +4730,8 @@ msgid ""
 "admin or staff. Please make sure that all the data for this problem is "
 "correct."
 msgstr ""
-"Người dùng chưa thể truy cập bài tập này đến khi nó được thông qua bởi admin. "
-"Hãy đảm bảo các dữ liệu của đề bài này là chính xác."
+"Người dùng chưa thể truy cập bài tập này đến khi nó được thông qua bởi "
+"admin. Hãy đảm bảo các dữ liệu của đề bài này là chính xác."
 
 #: templates/problem/problem.html:312
 msgid ""
