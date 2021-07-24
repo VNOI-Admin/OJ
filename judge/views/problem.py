@@ -777,12 +777,6 @@ class ProblemSuggest(ProblemCreate):
         else:
             return self.form_invalid(form)
 
-    def get_initial(self):
-        initial = super(ProblemSuggest, self).get_initial()
-        initial = initial.copy()
-        initial['description'] = misc_config(self.request)['misc_config']['description_example']
-        return initial
-
 
 class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
     template_name = 'problem/editor.html'
