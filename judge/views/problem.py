@@ -770,6 +770,37 @@ class ProblemSuggest(TitleMixin, CreateView):
             )
 
 
+class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
+    template_name = 'problem/suggest.html'
+    model = Problem
+    form_class = ProblemEditForm
+    permission_required = 'judge.add_problem'
+
+    def get_title(self):
+        return _('Creating new problem')
+
+    def get_content_title(self):
+        return _('Creating new problem')
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = ProblemEditForm(request.POST or None)
+        if form.is_valid():
+            self.object = problem = form.save()
+            problem.author.add(request.user.profile)
+            problem.allowed_languages.set(Language.objects.all())
+            problem.save()
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.form_invalid(form)
+
+    def get_initial(self):
+        initial = super(ProblemCreate, self).get_initial()
+        initial = initial.copy()
+        initial['description'] = misc_config(self.request)['misc_config']['description_example']
+        return initial
+
+
 class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
     template_name = 'problem/editor.html'
     model = Problem

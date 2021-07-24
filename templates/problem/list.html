@@ -146,9 +146,15 @@
         <div id="content-right" class="problems">
             <div class="info-float">
                 {% include "problem/search-form.html" %}
-                {% with problem_suggest=url('problem_suggest') %}
-                    <input type="button" class="button" style="width: 100%" onclick="location.href='{{ problem_suggest }}'" value="{{ _('Suggest new problem') }}" />
-                {% endwith %}
+                {% if request.user.has_perm('judge.add_problem') %}
+                    {% with problem_create=url('problem_create') %}
+                        <input type="button" class="button" style="width: 100%" onclick="location.href='{{ problem_create }}'" value="{{ _('Create new problem') }}" />
+                    {% endwith %}
+                {% elif request.user.has_perm('judge.suggest_new_problem') %}
+                    {% with problem_suggest=url('problem_suggest') %}
+                        <input type="button" class="button" style="width: 100%" onclick="location.href='{{ problem_suggest }}'" value="{{ _('Suggest new problem') }}" />
+                    {% endwith %}
+                {% endif %}
                 {% if hot_problems %}
                     <div class="sidebox">
                         <h3>{{ _('Hot problems') }} <i class="fa fa-fire"></i></h3>
