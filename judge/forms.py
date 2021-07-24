@@ -359,19 +359,22 @@ class ProposeContestProblemFormSet(inlineformset_factory(Contest, ContestProblem
 
 
 class ContestForm(ModelForm):
+    required_css_class = 'required'
+
     class Meta:
         model = Contest
         fields = [
             'key', 'name', 'authors',
             'start_time', 'end_time', 'is_visible',
+            'use_clarifications',
             'hide_problem_tags',
             'hide_problem_authors',
+            'scoreboard_visibility',
             'run_pretests_only',
             'og_image',
             'logo_override_image',
-            'summary',
             'description',
-            'scoreboard_visibility',
+            'summary',
         ]
 
         widgets = {
