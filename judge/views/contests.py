@@ -26,11 +26,12 @@ from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import ListView, TemplateView
 from django.views.generic.detail import BaseDetailView, DetailView, SingleObjectMixin, View
+from django.views.generic.edit import CreateView
 from reversion import revisions
 
 from judge import event_poster as event
 from judge.comments import CommentedDetailView
-from judge.forms import ContestCloneForm
+from judge.forms import ContestCloneForm, ContestForm
 from judge.models import Contest, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Problem, ProblemClarification, Profile, Submission
 from judge.tasks import run_moss
@@ -874,3 +875,15 @@ class ContestTagDetail(TitleMixin, ContestTagDetailAjax):
 
     def get_title(self):
         return _('Contest tag: %s') % self.object.name
+
+
+class CreateContest(TitleMixin, CreateView):
+    template_name = 'contest/create.html'
+    model = Contest
+    form_class = ContestForm
+
+    def get_title(self):
+        return _('Create new contest')
+
+    def get_content_title(self):
+        return _('Create new contest')
