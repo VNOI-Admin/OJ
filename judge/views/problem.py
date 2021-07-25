@@ -743,6 +743,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
             self.object = problem = form.save()
             problem.authors.add(request.user.profile)
             problem.allowed_languages.set(Language.objects.all())
+            problem.partial = True
             problem.save()
             return HttpResponseRedirect(self.get_success_url())
         else:

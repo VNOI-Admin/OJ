@@ -53,7 +53,7 @@
 
 {% block body %}
 <div>
-    {% if _('Creating new problem') != title %}
+    {% if request.path == url('problem_suggest') %}
         <div class="alert alert-warning alert-dismissable">
             <a class="close">x</a>
             <b>{{ _('Thanks for suggesting problem!') }}</b>
