@@ -92,7 +92,10 @@
         }
         
         .delete-row {
-            color: red;
+            color: white;
+            background-color: red;
+            padding: 3px;
+            border-radius: 3px;
         }
 
     </style>
@@ -148,7 +151,6 @@
                 {% for form in contest_problem_formset %}
                     {{ from_as_row(form) }}
                 {% endfor %}
-
             </tbody>
         </table>
         <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">{{ _('Create') }}</button></div>
