@@ -351,7 +351,13 @@ class ProposeContestProblemForm(ModelForm):
         }
 
 
-class ProposeContestProblemFormSet(inlineformset_factory(Contest, ContestProblem, form=ProposeContestProblemForm)):
+class ProposeContestProblemFormSet(
+        inlineformset_factory(
+            Contest,
+            ContestProblem,
+            form=ProposeContestProblemForm,
+            can_delete=True,
+        )):
     pass
 
 

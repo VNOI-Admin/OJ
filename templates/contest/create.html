@@ -101,16 +101,23 @@
 {% block body %}
 
 {% macro from_as_row(form) -%}
-    <td>{{ form.problem.errors }}{{ form.problem }}</td>
-    <td class="points-column">{{ form.points.errors }}{{ form.points }}</td>
-    <td>{{ form.order.errors }}{{ form.order }}</td>
-    <td>{{ form.is_pretested.errors }}{{ form.is_pretested }}</td>
-    <td>{{ form.max_submissions.errors }}{{ form.max_submissions }}</td>
-    <td>
-    {% if contest_problem_formset.can_delete and form.instance.pk %}
-        {{ form.DELETE }}
+    {% if form.non_field_errors() %}
+    <tr>
+        <td colspan="6">{{ form.non_field_errors() }}</td>
+    </tr>
     {% endif %}
-    </td>
+    <tr>
+        <td>{{ form.id }} {{ form.problem.errors }}{{ form.problem }}</td>
+        <td class="points-column">{{ form.points.errors }}{{ form.points }}</td>
+        <td>{{ form.order.errors }}{{ form.order }}</td>
+        <td>{{ form.is_pretested.errors }}{{ form.is_pretested }}</td>
+        <td>{{ form.max_submissions.errors }}{{ form.max_submissions }}</td>
+        <td>
+        {% if contest_problem_formset.can_delete and form.instance.pk %}
+            {{ form.DELETE }}
+        {% endif %}
+        </td>
+    <tr>
 {%- endmacro %}
 
 <div>
@@ -133,14 +140,11 @@
             </thead>
             <tbody id="form_set">
                 {% for form in contest_problem_formset %}
-                    <tr>
-                        {{ from_as_row(form) }}
-                    </tr>
+                    {{ from_as_row(form) }}
                 {% endfor %}
 
             </tbody>
         </table>
-
         <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">{{ _('Create') }}</button></div>
     </form>
 </div>
