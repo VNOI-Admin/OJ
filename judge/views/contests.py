@@ -878,7 +878,7 @@ class ContestTagDetail(TitleMixin, ContestTagDetailAjax):
 
 
 class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
-    template_name = 'contest/create.html'
+    template_name = 'contest/edit.html'
     model = Contest
     form_class = ContestForm
     permission_required = 'judge.add_contest'
@@ -914,7 +914,7 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
 
 
 class EditContest(ContestMixin, TitleMixin, UpdateView):
-    template_name = 'contest/create.html'
+    template_name = 'contest/edit.html'
     model = Contest
     form_class = ContestForm
 
