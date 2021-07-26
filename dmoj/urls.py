@@ -21,8 +21,8 @@ from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
 from judge.views.register import ActivationView, RegistrationView
 from judge.views.select2 import AssigneeSelect2View, CommentSelect2View, ContestSelect2View, \
-    ContestUserSearchSelect2View, OrganizationSelect2View, ProblemSelect2View, TicketUserSelect2View, \
-    UserSearchSelect2View, UserSelect2View
+    ContestUserSearchSelect2View, OrganizationSelect2View, ProblemSelect2View, TagGroupSelect2View, \
+    TagSelect2View, TicketUserSelect2View, UserSearchSelect2View, UserSelect2View
 from judge.views.widgets import martor_image_uploader
 
 admin.autodiscover()
@@ -397,6 +397,8 @@ urlpatterns = [
         url(r'^problem/$', ProblemSelect2View.as_view(), name='problem_select2'),
         url(r'^contest/$', ContestSelect2View.as_view(), name='contest_select2'),
         url(r'^comment/$', CommentSelect2View.as_view(), name='comment_select2'),
+        url(r'^tag/$', TagSelect2View.as_view(), name='tag_select2'),
+        url(r'^taggroup/$', TagGroupSelect2View.as_view(), name='taggroup_select2'),
     ])),
 
     url(r'^tasks/', include([
