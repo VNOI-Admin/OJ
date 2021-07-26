@@ -199,6 +199,14 @@ else:
                     ],
                 },
                 {
+                    'model': 'judge.TagProblem',
+                    'icon': 'fa-tag',
+                    'children': [
+                        'judge.TagGroup',
+                        'judge.Tag',
+                    ]
+                },
+                {
                     'model': 'judge.Submission',
                     'icon': 'fa-check-square-o',
                     'children': [
