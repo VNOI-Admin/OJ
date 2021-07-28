@@ -55,12 +55,14 @@
                 <div class="batch-cases">
             {% endif %}
         <table class="submissions-status-table">{% for case in batch.cases %}
+            {% set is_suggester = (submission.problem.suggester and request.user.username == submission.problem.suggester.username) %}
             {% set current_test_case_count = test_case_counter() %}
-            {% set print_case_output = request.user.is_superuser and case.status != 'AC' and case.output and (prefix_length is none or prefix_length > 0) %}
+            {% set print_case_output = (request.user.is_superuser or is_suggester) and case.status != 'AC' and case.output and (prefix_length is none or prefix_length > 0) %}
             {% set print_case_ext_feedback = case.extended_feedback
                                              and
                                              ((not request.in_contest and current_test_case_count <= feedback_limit)
-                                              or request.user.is_superuser) %}
+                                              or request.user.is_superuser
+                                              or is_suggester) %}
             <tr id="{{ case.id }}" class="case-row toggle closed">
                 <td>
                     {%- if print_case_output or print_case_ext_feedback -%}
