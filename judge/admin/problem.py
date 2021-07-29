@@ -239,7 +239,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         super(ProblemAdmin, self).save_model(request, obj, form, change)
         if (
             form.changed_data and
-            any(f in form.changed_data for f in ('is_public', 'is_organization_private', 'points', 'partial'))
+            any(f in form.changed_data for f in ('is_public', 'is_organization_private', 'partial'))
         ):
             self._rescore(request, obj.id, 'is_public' in form.changed_data)
 

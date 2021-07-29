@@ -1,5 +1,6 @@
 from operator import attrgetter
 
+import celery
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.cache import cache
@@ -179,6 +180,7 @@ class Problem(models.Model):
         self._translated_name_cache = {}
         self._i18n_name = None
         self.__original_code = self.code
+        self.__original_points = self.points
 
     @cached_property
     def types_list(self):
@@ -436,8 +438,13 @@ class Problem(models.Model):
                 pass
             else:
                 problem_data._update_code(self.__original_code, self.code)
+        if self.points != self.__original_points:
+            self._rescore()
 
     save.alters_data = True
+
+    def _rescore(self):
+        celery.current_app.send_task('judge.tasks.submission.rescore_problem', (self.id, ))
 
     class Meta:
         permissions = (
