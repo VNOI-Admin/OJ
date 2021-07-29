@@ -1,10 +1,12 @@
 from django import forms
+from django.contrib import admin
 from django.forms import ModelForm
+from django.utils.translation import gettext_lazy as _
 from reversion.admin import VersionAdmin
 
 from judge.models import Tag, TagGroup, TagProblem
 from judge.utils.views import NoBatchDeleteMixin
-from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget
+from judge.widgets import AdminHeavySelect2Widget
 
 
 class TagForm(ModelForm):
@@ -26,13 +28,12 @@ class TagGroupForm(ModelForm):
 class TagProblemForm(ModelForm):
     change_message = forms.CharField(max_length=256, label='Edit reason', required=False)
 
-    def __init__(self, *args, **kwargs):
-        super(TagProblemForm, self).__init__(*args, **kwargs)
-        self.fields['tag'].widget.can_add_related = False
 
+class TagDataInlineForm(ModelForm):
     class Meta:
         widgets = {
-            'tag': AdminHeavySelect2MultipleWidget(data_view='tag_select2', attrs={'style': 'width: 100%'}),
+            'assigner': AdminHeavySelect2Widget(data_view='profile_select2', attrs={'style': 'width: 100%;'}),
+            'tag': AdminHeavySelect2Widget(data_view='tag_select2', attrs={'style': 'width: 100%;'}),
         }
 
 
@@ -76,14 +77,24 @@ class TagGroupAdmin(NoBatchDeleteMixin, VersionAdmin):
         return TagGroup.objects.all().distinct()
 
 
+class TagDataInline(admin.TabularInline):
+    model = TagProblem.tag.through
+    verbose_name = _('Tag Data')
+    verbose_name_plural = _('Tag Data')
+    form = TagDataInlineForm
+
+
 class TagProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'code', 'name', 'link', 'tag',
+                'code', 'name', 'link',
             ),
         }),
     )
+    inlines = [
+        TagDataInline,
+    ]
     list_display = ['code', 'name']
     ordering = ['code']
     search_fields = ('code', 'name')
