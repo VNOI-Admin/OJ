@@ -3,6 +3,8 @@ from django.db import models
 from django.db.models import CASCADE
 from django.utils.translation import gettext_lazy as _
 
+from judge.models import Profile
+
 
 class TagGroup(models.Model):
     code = models.CharField(max_length=30, verbose_name=_('Tag group ID'), unique=True)
@@ -15,7 +17,7 @@ class TagGroup(models.Model):
 class Tag(models.Model):
     code = models.CharField(max_length=30, verbose_name=_('Tag group ID'), unique=True)
     name = models.CharField(max_length=100, verbose_name=_('Tag group name'))
-    group = models.OneToOneField(TagGroup, verbose_name=_('Parent tag group'), on_delete=CASCADE)
+    group = models.ForeignKey(TagGroup, verbose_name=_('Parent tag group'), on_delete=CASCADE)
 
     def __str__(self):
         return self.name
@@ -27,7 +29,19 @@ class TagProblem(models.Model):
     name = models.CharField(max_length=100, verbose_name=_('problem name'))
     link = models.URLField(max_length=200, verbose_name=_('Problem URL'))
 
-    tag = models.ManyToManyField(Tag, verbose_name=_('Tag'))
+    tag = models.ManyToManyField(Tag, through='TagData', related_name='tag', verbose_name=_('Tag'))
+
+    def __str__(self):
+        return self.name
 
     def get_absolute_url(self):
         return self.link
+
+
+class TagData(models.Model):
+    assigner = models.ForeignKey(Profile, verbose_name=_('Assigner'), on_delete=CASCADE)
+    tag = models.ForeignKey(Tag, verbose_name=_('Tag'), on_delete=CASCADE)
+    problem = models.ForeignKey(TagProblem, on_delete=CASCADE)
+
+    def __str__(self):
+        return ""

@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
 from judge.models import Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, Submission, \
-    WebAuthnCredential
+    TagProblem, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -182,6 +182,15 @@ class ProblemSubmitForm(ModelForm):
     class Meta:
         model = Submission
         fields = ['language']
+
+
+class TagProblemForm(ModelForm):
+    class Meta:
+        model = TagProblem
+        fields = ['code', 'name', 'link', 'tag']
+        widgets = {
+            'tag': HeavySelect2MultipleWidget(data_view='tag_select2', attrs={'style': 'width: 100%'}),
+        }
 
 
 class EditOrganizationForm(ModelForm):
