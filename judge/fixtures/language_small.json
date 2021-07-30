@@ -158,5 +158,21 @@
             "description": "Compile options: `javac -encoding UTF-8 -profile compact1`",
             "extension": "java"
         }
+    },
+    {
+        "model": "judge.language",
+        "pk": 11,
+        "fields": {
+            "key": "TEXT",
+            "name": "Text",
+            "short_name": null,
+            "common_name": "Text",
+            "ace": "text",
+            "pygments": "text",
+            "template": "",
+            "info": "",
+            "description": "",
+            "extension": "txt"
+        }
     }
 ]
