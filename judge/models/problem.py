@@ -156,6 +156,8 @@ class Problem(models.Model):
                                 help_text=_("Doesn't have magic ability to auto-publish due to backward compatibility"))
     banned_users = models.ManyToManyField(Profile, verbose_name=_('personae non gratae'), blank=True,
                                           help_text=_('Bans the selected users from submitting to this problem.'))
+    banned_judges = models.ManyToManyField('judge.Judge', verbose_name=_('Banned judges'), blank=True,
+                                           help_text=_('Bans the selected judges from judging this problem.'))
     license = models.ForeignKey(License, null=True, blank=True, on_delete=SET_NULL,
                                 help_text=_('The license under which this problem is published.'))
     og_image = models.CharField(verbose_name=_('OpenGraph image'), max_length=150, blank=True)

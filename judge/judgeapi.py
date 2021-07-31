@@ -93,6 +93,7 @@ def judge_submission(submission, rejudge=False, batch_rejudge=False, judge_id=No
             'language': submission.language.key,
             'source': submission.source.source,
             'judge-id': judge_id,
+            'banned-judges': list(submission.problem.banned_judges.values_list('name', flat=True)),
             'priority': BATCH_REJUDGE_PRIORITY if batch_rejudge else (REJUDGE_PRIORITY if rejudge else priority),
         })
     except BaseException:
