@@ -177,12 +177,17 @@ class Problem(models.Model):
 
     suggester = models.ForeignKey(Profile, blank=True, null=True, related_name='suggested_problems', on_delete=SET_NULL)
 
+    __original_points = None
+
     def __init__(self, *args, **kwargs):
         super(Problem, self).__init__(*args, **kwargs)
         self._translated_name_cache = {}
         self._i18n_name = None
         self.__original_code = self.code
-        self.__original_points = self.points
+        # Since `points` may get defer()
+        # We only set original points it is not deferred
+        if 'points' in self.__dict__:
+            self.__original_points = self.points
 
     @cached_property
     def types_list(self):
