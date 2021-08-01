@@ -60,7 +60,7 @@ class ProblemDataForm(ModelForm):
             'checker': Select2Widget(attrs={'style': 'width: 200px'}),
         }
         help_texts = {
-            'output_limit': _('Can be left blank. In case the output can be too long (over 20MB), please set this.')
+            'output_limit': _('Can be left blank. In case the output can be too long (over 20MB), please set this.'),
         }
 
 
