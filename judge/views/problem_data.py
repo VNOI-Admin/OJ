@@ -54,10 +54,13 @@ class ProblemDataForm(ModelForm):
 
     class Meta:
         model = ProblemData
-        fields = ['zipfile', 'checker', 'custom_checker', 'checker_args']
+        fields = ['zipfile', 'checker', 'custom_checker', 'checker_args', 'output_limit']
         widgets = {
             'checker_args': HiddenInput,
             'checker': Select2Widget(attrs={'style': 'width: 200px'}),
+        }
+        help_texts = {
+            'output_limit': _('Can be left blank. In case the output can be too long (over 20MB), please set this.')
         }
 
 
