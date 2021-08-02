@@ -15,7 +15,7 @@ from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed,
 from judge.sitemap import BlogPostSitemap, ContestSitemap, HomePageSitemap, OrganizationSitemap, ProblemSitemap, \
     SolutionSitemap, UrlSitemap, UserSitemap
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
-    preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tasks, ticket, \
+    preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
     two_factor, user, widgets
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
@@ -155,6 +155,10 @@ urlpatterns = [
             url('^/rescore/success/(?P<task_id>[A-Za-z0-9-]*)$', problem_manage.rescore_success,
                 name='problem_submissions_rescore_success'),
         ])),
+    ])),
+
+    url(r'^tags/', include([
+        url(r'^create$', tag.TagProblemCreate.as_view(), name='tagproblem_create'),
     ])),
 
     url(r'^submissions/', paged_list_view(submission.AllSubmissions, 'all_submissions')),

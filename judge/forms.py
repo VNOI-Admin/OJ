@@ -183,13 +183,24 @@ class ProblemSubmitForm(ModelForm):
         fields = ['language']
 
 
-class TagProblemForm(ModelForm):
+class TagProblemCreateForm(ModelForm):
     class Meta:
         model = TagProblem
-        fields = ['code', 'name', 'link', 'tag']
+        fields = ['code', 'name', 'link']
+
+
+class TagProblemEditForm(ModelForm):
+    class Meta:
+        model = TagProblem
+        fields = ['tag']
+
         widgets = {
-            'tag': HeavySelect2MultipleWidget(data_view='tag_select2', attrs={'style': 'width: 100%'}),
+            'tag': HeavySelect2MultipleWidget(data_view='tag_select2', attrs={'style', 'width: 100%;'}),
         }
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.get('user', None)
+        super(TagProblemCreateForm, self).__init__(*args, **kwargs)
 
 
 class EditOrganizationForm(ModelForm):

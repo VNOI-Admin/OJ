@@ -40,7 +40,7 @@ class TagProblem(models.Model):
 
 class TagData(models.Model):
     assigner = models.ForeignKey(Profile, verbose_name=_('Assigner'), on_delete=CASCADE)
-    tag = models.ForeignKey(Tag, verbose_name=_('Tag'), on_delete=CASCADE)
+    tag = models.ForeignKey(Tag, unique=True, verbose_name=_('Tag'), on_delete=CASCADE)
     problem = models.ForeignKey(TagProblem, on_delete=CASCADE)
 
     def __str__(self):
