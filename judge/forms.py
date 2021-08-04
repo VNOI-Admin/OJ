@@ -110,6 +110,8 @@ class ProposeProblemSolutionForm(ModelForm):
 
 
 class ProblemEditForm(ModelForm):
+    required_css_class = 'required'
+
     class Meta:
         model = Problem
         fields = ['code', 'name', 'time_limit', 'memory_limit', 'points', 'source', 'types', 'group', 'pdf_url',
