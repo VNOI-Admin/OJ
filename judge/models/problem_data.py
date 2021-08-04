@@ -22,12 +22,19 @@ def problem_directory_file(data, filename):
 
 CHECKERS = (
     ('standard', _('Standard')),
+    ('bridged', _('Custom checker')),
     ('floats', _('Floats')),
     ('floatsabs', _('Floats (absolute)')),
     ('floatsrel', _('Floats (relative)')),
     ('identical', _('Byte identical')),
     ('linecount', _('Line-by-line')),
-    ('bridged', _('Custom checker')),
+)
+
+CUSTOM_CHECKERS = (
+    ('testlib', _('Testlib checker')),
+    ('cms', _('CMS checker')),
+    ('coci', _('COCI checker')),
+    ('peg', _('PEG checker')),
 )
 
 

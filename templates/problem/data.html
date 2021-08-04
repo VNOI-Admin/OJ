@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block js_media %}
+    {{data_form.media.js}}
     <script type="text/javascript">
         window.valid_files = {{valid_files_json}}.sort();
 
@@ -68,6 +69,13 @@
 
             var $checker = $('#id_problem-data-checker');
             var $args = $('#id_problem-data-checker_args');
+
+            var $custom_checker_file = $('#id_problem-data-custom_checker');
+            var $custom_checker_type = $('#id_problem-data-checker_type');
+            var $tr_custom_checker_file = $custom_checker_file.parent().parent();
+            var $tr_custom_checker_type = $custom_checker_type.parent().parent();
+            var init = true;
+
             (function checker_args_auto_fill() {
                 // auto fill for float checker
                 var $td = $checker.parent();
@@ -82,12 +90,11 @@
                 }).appendTo($td);
 
                 // auto fill for custom checker
-                var $checker_file = $('#id_problem-data-custom_checker');
-                $checker_file.change(function () {
-                    if ($checker.val().startsWith('bridged')) {
-                        $file_name = $checker_file.val().split('\\').pop();
+                $custom_checker_file.change(function () {
+                    if ($checker.val().startsWith('bridged') && !init) {
+                        $file_name = $custom_checker_file.val().split('\\').pop();
                         // Handle case that the current file is null but we have a file in database
-                        $old_file = $checker_file.parent().find('a')[0];
+                        $old_file = $custom_checker_file.parent().find('a')[0];
                         if ($old_file && $file_name == '') {
                             $file_name = $old_file.innerText;
                         }
@@ -100,7 +107,7 @@
                             else {
                                 $lang = $file_ext.toUpperCase();
                                 if ($lang == "CPP") $lang = "CPP17";
-                                $args.val(JSON.stringify({files: $file_name, lang: $lang, type: "testlib"}));
+                                $args.val(JSON.stringify({files: $file_name, lang: $lang, type: $custom_checker_type.find(":selected").val()}));
                                 if ($lang == "PY") 
                                     $args.val('');
                             }
@@ -108,32 +115,41 @@
                     }
                 });
 
+                $custom_checker_type.change(function() {
+                    if (!$args.val() || init)
+                        return;
+                    var old_args = try_parse_json($args.val());
+                    if ("type" in old_args) {
+                        old_args["type"] = $custom_checker_type.find(":selected").val();
+                    }
+                    $args.val(JSON.stringify(old_args));
+                });
+                
+                if (init && $args.val()) {
+                    var old_args = try_parse_json($args.val());
+                    if ("type" in old_args) 
+                        $custom_checker_type.val(old_args["type"]);
+                }
 
                 $checker.change(function () {
-                    $checker_file.toggle($checker.val().startsWith('bridged')).change();
+                    $custom_checker_file.toggle($checker.val().startsWith('bridged')).change();
+                    $custom_checker_type.toggle($checker.val().startsWith('bridged')).change();
+                    $tr_custom_checker_file.toggle($checker.val().startsWith('bridged'));
+                    $tr_custom_checker_type.toggle($checker.val().startsWith('bridged'));
                     $precision.toggle($checker.val().startsWith('floats')).change();
                     if (!($checker.val().startsWith('bridged') || $checker.val().startsWith('floats')))
                         $args.val('');
-                }).change();
-                $checker.change(function () {
+                    init = false;
                 }).change();
             })();
 
-            (function toggle_custom() {
-                let $custom_checker = $('#id_problem-data-custom_checker')
-                $tr_checker = $custom_checker.parent().parent()
-
-                $td = $checker.parent();
-                var $sample = $("<a/>",{
-                    text: "{{_('Instruction')}}",
-                    style: "margin-left:3em;",
-                    target: "_blank",
-                    href: "/custom_checkers"
-                }).appendTo($td);
-                $checker.change(function () {
-                    $tr_checker.toggle($checker.val().startsWith('bridged')).change();
-                }).change();
-            })();
+            $td = $checker.parent();
+            var $sample = $("<a/>",{
+                text: "{{_('Instruction')}}",
+                style: "margin-left:3em;",
+                target: "_blank",
+                href: "/custom_checkers"
+            }).appendTo($td);
 
 
             function swap_row($a, $b) {
@@ -259,7 +275,7 @@
                     return false;
                 }
                 if (inFiles.length != outFiles.length) {
-                    alert("The number of input files do not match the number of output files!");
+                    alert(`The number of input files (${inFiles.length}) do not match the number of output files (${outFiles.length})!`);
                     return false;
                 }
                 // add boxes
@@ -334,6 +350,7 @@
 {% endblock %}
 
 {% block media %}
+    {{data_form.media.css}}
     <style>
         #case-table .select2 {
             text-align: initial;
@@ -449,7 +466,7 @@
                 </a>
             </td>
         </table>
-        <input type="submit" value="{{ _('Apply!') }}" class="button" id="submit-button">
+        <input type="submit" style="float:right" value="{{ _('Please press this button if you have just updated the zip data') }}" class="button" id="submit-button">
         <table id="case-table" class="table">
             <thead>
             <tr>
@@ -459,7 +476,7 @@
                 <th>{{ _('Output file') }}</th>
                 <th>{{ _('Points') }}</th>
                 <th>{{ _('Pretest?') }}</th>
-                <th class="generator-args">{{ _('Generator args') }}</th>
+                <!-- <th class="generator-args">{{ _('Generator args') }}</th> -->
                 {% if cases_formset.can_delete %}
                     <th>{{ _('Delete?') }}
                         <br>
@@ -492,12 +509,12 @@
                     </td>
                     <td>{{ form.points.errors }}{{ form.points }}</td>
                     <td>{{ form.is_pretest.errors }}{{ form.is_pretest }}</td>
-                    <td class="generator-args">{{ form.generator_args.errors }}{{ form.generator_args }}
+                    <!-- <td class="generator-args">{{ form.generator_args.errors }}{{ form.generator_args }}
                         <a href="javascript:void(0)" class="edit-generator-args">
                             <i class="fa fa-pencil"></i>
                             {{ _('Edit generator args') }}
                         </a>
-                    </td>
+                    </td> -->
                     {% if cases_formset.can_delete %}
                         <td>{{ form.DELETE }}</td>
                     {% endif %}
