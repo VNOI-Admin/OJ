@@ -10,7 +10,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.db import IntegrityError
 from django.db.models import Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.expressions import CombinedExpression
@@ -20,17 +20,18 @@ from django.template.defaultfilters import date as date_filter, floatformat
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import ListView, TemplateView
 from django.views.generic.detail import BaseDetailView, DetailView, SingleObjectMixin, View
+from django.views.generic.edit import CreateView, UpdateView
 from reversion import revisions
 
 from judge import event_poster as event
 from judge.comments import CommentedDetailView
-from judge.forms import ContestCloneForm
+from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Problem, ProblemClarification, Profile, Submission
 from judge.tasks import run_moss
@@ -874,3 +875,88 @@ class ContestTagDetail(TitleMixin, ContestTagDetailAjax):
 
     def get_title(self):
         return _('Contest tag: %s') % self.object.name
+
+
+class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
+    template_name = 'contest/edit.html'
+    model = Contest
+    form_class = ContestForm
+    permission_required = 'judge.add_contest'
+
+    def get_title(self):
+        return _('Create new contest')
+
+    def get_content_title(self):
+        return _('Create new contest')
+
+    def get_contest_problem_formset(self):
+        if self.request.POST:
+            return ProposeContestProblemFormSet(self.request.POST)
+        return ProposeContestProblemFormSet()
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['contest_problem_formset'] = self.get_contest_problem_formset()
+        return data
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = ContestForm(request.POST or None)
+        form_set = self.get_contest_problem_formset()
+        if form.is_valid() and form_set.is_valid():
+            self.object = form.save()
+            for problem in form_set.save(commit=False):
+                problem.contest = self.object
+                problem.save()
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(*args, **kwargs))
+
+
+class EditContest(ContestMixin, TitleMixin, UpdateView):
+    template_name = 'contest/edit.html'
+    model = Contest
+    form_class = ContestForm
+
+    def get_object(self, queryset=None):
+        contest = super(EditContest, self).get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return contest
+
+    def get_title(self):
+        return _('Editing contest {0}').format(self.object.name)
+
+    def get_content_title(self):
+        return mark_safe(escape(_('Editing contest %s')) % (
+            format_html('<a href="{1}">{0}</a>', self.object.name,
+                        reverse('contest_view', args=[self.object.key]))))
+
+    def get_contest_problem_formset(self):
+        if self.request.POST:
+            return ProposeContestProblemFormSet(self.request.POST, instance=self.get_object())
+        return ProposeContestProblemFormSet(instance=self.get_object())
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['contest_problem_formset'] = self.get_contest_problem_formset()
+        return data
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        form_set = self.get_contest_problem_formset()
+
+        if form.is_valid() and form_set.is_valid():
+            form.save()
+            problems = form_set.save(commit=False)
+
+            for problem in form_set.deleted_objects:
+                problem.delete()
+
+            for problem in problems:
+                problem.contest = self.object
+                problem.save()
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(*args, **kwargs))

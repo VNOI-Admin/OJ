@@ -1,5 +1,6 @@
 from operator import attrgetter
 
+import celery
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.cache import cache
@@ -155,6 +156,8 @@ class Problem(models.Model):
                                 help_text=_("Doesn't have magic ability to auto-publish due to backward compatibility"))
     banned_users = models.ManyToManyField(Profile, verbose_name=_('personae non gratae'), blank=True,
                                           help_text=_('Bans the selected users from submitting to this problem.'))
+    banned_judges = models.ManyToManyField('judge.Judge', verbose_name=_('Banned judges'), blank=True,
+                                           help_text=_('Bans the selected judges from judging this problem.'))
     license = models.ForeignKey(License, null=True, blank=True, on_delete=SET_NULL,
                                 help_text=_('The license under which this problem is published.'))
     og_image = models.CharField(verbose_name=_('OpenGraph image'), max_length=150, blank=True)
@@ -174,11 +177,17 @@ class Problem(models.Model):
 
     suggester = models.ForeignKey(Profile, blank=True, null=True, related_name='suggested_problems', on_delete=SET_NULL)
 
+    __original_points = None
+
     def __init__(self, *args, **kwargs):
         super(Problem, self).__init__(*args, **kwargs)
         self._translated_name_cache = {}
         self._i18n_name = None
         self.__original_code = self.code
+        # Since `points` may get defer()
+        # We only set original points it is not deferred
+        if 'points' in self.__dict__:
+            self.__original_points = self.points
 
     @cached_property
     def types_list(self):
@@ -436,8 +445,13 @@ class Problem(models.Model):
                 pass
             else:
                 problem_data._update_code(self.__original_code, self.code)
+        if self.points != self.__original_points:
+            self._rescore()
 
     save.alters_data = True
+
+    def _rescore(self):
+        celery.current_app.send_task('judge.tasks.submission.rescore_problem', (self.id, ))
 
     class Meta:
         permissions = (

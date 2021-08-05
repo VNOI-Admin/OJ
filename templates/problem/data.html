@@ -244,11 +244,13 @@
 
             $('a#fill-testcases').click(function () {
                 var inFiles = [], outFiles = [];
+                var inputExts = [".in", ".inp"];
+                var outputExts = [".out", ".ou", ".ans", ".ok"];
                 for (var i = 0; i < window.valid_files.length; i++) {
-                    if (window.valid_files[i].endsWith(".in") || window.valid_files[i].endsWith(".inp")) {
+                    if (inputExts.some(ext => window.valid_files[i].toLowerCase().endsWith(ext))) {
                         inFiles.push(window.valid_files[i]);
                     }
-                    if (window.valid_files[i].endsWith(".out") || window.valid_files[i].endsWith(".ans") || window.valid_files[i].endsWith(".ok")) {
+                    if (outputExts.some(ext => window.valid_files[i].toLowerCase().endsWith(ext))) {
                         outFiles.push(window.valid_files[i]);
                     }
                 }
@@ -272,7 +274,8 @@
                     $("#id_cases-" + i + "-output_file").val(outFiles[i]).change();
                 }
                 // add points
-                if ($('#problem-type').val() == "ICPC") {
+                var problem_type = window.prompt("Problem type (oi or icpc).");
+                if (problem_type.toLowerCase()== "icpc") {
                     for (i = 0; i + 1 < inFiles.length; i++) {
                         $("#id_cases-" + i + "-points").val("0").change();
                     }
@@ -440,11 +443,6 @@
                 <label>Autofill testcases:</label>
             </th>
             <td>
-                Problem type:
-                <select id="problem-type">
-                    <option value="OI">OI</option>
-                    <option value="ICPC">ICPC</option>
-                </select>
                 <a id="fill-testcases" href="#">
                     <i class="fa fa-circle"></i>
                     Fill testcases

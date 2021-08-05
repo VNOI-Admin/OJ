@@ -12,14 +12,15 @@ from django.core.validators import RegexValidator
 from django.db.models import Q
 from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, ModelForm, MultipleChoiceField, \
     inlineformset_factory
+from django.forms.widgets import DateTimeInput
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
-from judge.models import Contest, Language, Organization, Problem, Profile, Solution, Submission, TagProblem, \
-    WebAuthnCredential
+from judge.models import Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, Submission, \
+    TagProblem, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
-from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, MartorWidget, \
+from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
 
 TOTP_CODE_LENGTH = 6
@@ -353,3 +354,60 @@ class ContestCloneForm(Form):
         if Contest.objects.filter(key=key).exists():
             raise ValidationError(_('Contest with key already exists.'))
         return key
+
+
+class ProposeContestProblemForm(ModelForm):
+    class Meta:
+        model = ContestProblem
+        verbose_name = _('Problem')
+        verbose_name_plural = 'Problems'
+        fields = (
+            'problem', 'points', 'is_pretested',
+            'max_submissions', 'order',
+        )
+
+        widgets = {
+            'problem': HeavySelect2Widget(data_view='problem_select2', attrs={'style': 'width: 100%'}),
+        }
+
+
+class ProposeContestProblemFormSet(
+        inlineformset_factory(
+            Contest,
+            ContestProblem,
+            form=ProposeContestProblemForm,
+            can_delete=True,
+        )):
+    pass
+
+
+class ContestForm(ModelForm):
+    required_css_class = 'required'
+
+    class Meta:
+        model = Contest
+        fields = [
+            'key', 'name', 'authors',
+            'start_time', 'end_time', 'is_visible',
+            'use_clarifications',
+            'hide_problem_tags',
+            'hide_problem_authors',
+            'scoreboard_visibility',
+            'run_pretests_only',
+            'logo_override_image',
+            'og_image',
+            'description',
+            'summary',
+        ]
+
+        widgets = {
+            'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
+            'start_time': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
+            'end_time': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
+            'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
+            'scoreboard_visibility': Select2Widget(),
+        }
+
+        help_texts = {
+            'og_image': _('This image will appear in link sharing embeds. For example: Facebook, etc'),
+        }

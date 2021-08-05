@@ -113,10 +113,13 @@ urlpatterns = [
     url(r'^accounts/', include(register_patterns)),
     url(r'^', include('social_django.urls')),
 
-    url(r'^problems/$', problem.ProblemList.as_view(), name='problem_list'),
-    url(r'^problems/random/$', problem.RandomProblem.as_view(), name='problem_random'),
-    url(r'^problems/suggest_list/$', problem.SuggestList.as_view(), name='problem_suggest_list'),
-    url(r'^problems/suggest$', problem.ProblemSuggest.as_view(), name='problem_suggest'),
+    url(r'^problems', include([
+        url(r'^/$', problem.ProblemList.as_view(), name='problem_list'),
+        url(r'^/random/$', problem.RandomProblem.as_view(), name='problem_random'),
+        url(r'^/suggest_list/$', problem.SuggestList.as_view(), name='problem_suggest_list'),
+        url(r'^/suggest$', problem.ProblemSuggest.as_view(), name='problem_suggest'),
+        url(r'/create$', problem.ProblemCreate.as_view(), name='problem_create'),
+    ])),
 
     url(r'^problem/(?P<problem>[^/]+)', include([
         url(r'^$', problem.ProblemDetail.as_view(), name='problem_detail'),
@@ -209,6 +212,7 @@ urlpatterns = [
 
     url(r'^contests/', paged_list_view(contests.ContestList, 'contest_list')),
     url(r'^contests/(?P<year>\d+)/(?P<month>\d+)/$', contests.ContestCalendar.as_view(), name='contest_calendar'),
+    url(r'^contests/new/$', contests.CreateContest.as_view(), name='contest_new'),
     url(r'^contests/tag/(?P<name>[a-z-]+)', include([
         url(r'^$', contests.ContestTagDetail.as_view(), name='contest_tag'),
         url(r'^/ajax$', contests.ContestTagDetailAjax.as_view(), name='contest_tag_ajax'),
@@ -216,6 +220,7 @@ urlpatterns = [
 
     url(r'^contest/(?P<contest>\w+)', include([
         url(r'^$', contests.ContestDetail.as_view(), name='contest_view'),
+        url(r'^/edit$', contests.EditContest.as_view(), name='contest_edit'),
         url(r'^/moss$', contests.ContestMossView.as_view(), name='contest_moss'),
         url(r'^/moss/delete$', contests.ContestMossDelete.as_view(), name='contest_moss_delete'),
         url(r'^/clone$', contests.ContestClone.as_view(), name='contest_clone'),
