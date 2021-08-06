@@ -3,6 +3,15 @@
     font-weight: bold !important;
 }
 
+.setter a, .setter {
+    color: #ff0066 !important;
+    font-weight: bold !important;
+}
+
+.setter a::before {
+    content: "🌸";
+}
+
 @mixin rate-svg-color($color) {
     circle {
         stroke: $color;
