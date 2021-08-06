@@ -199,10 +199,6 @@ class TagProblemEditForm(ModelForm):
             'tag': HeavySelect2MultipleWidget(data_view='tag_select2', attrs={'style', 'width: 100%;'}),
         }
 
-    def __init__(self, *args, **kwargs):
-        self.user = kwargs.get('user', None)
-        super(TagProblemCreateForm, self).__init__(*args, **kwargs)
-
 
 class EditOrganizationForm(ModelForm):
     class Meta:

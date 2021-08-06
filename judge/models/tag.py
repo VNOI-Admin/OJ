@@ -1,6 +1,7 @@
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import CASCADE
+from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
 from judge.models import Profile
@@ -35,7 +36,7 @@ class TagProblem(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return self.link
+        return reverse('tagproblem_detail', args=(self.code,))
 
 
 class TagData(models.Model):

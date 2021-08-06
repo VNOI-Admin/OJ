@@ -164,6 +164,11 @@ urlpatterns = [
         url(r'^create$', tag.TagProblemCreate.as_view(), name='tagproblem_create'),
     ])),
 
+    url(r'^tag/(?P<tagproblem>[^/]+)$', include([
+        url(r'^$', tag.TagProblemDetail.as_view(), name='tagproblem_detail'),
+        url(r'^/$', lambda _, problem: HttpResponsePermanentRedirect(reverse('tagproblem_detail', args=[tag]))),
+    ])),
+
     url(r'^submissions/', paged_list_view(submission.AllSubmissions, 'all_submissions')),
     url(r'^submissions/user/(?P<user>[\w-]+)/', paged_list_view(submission.AllUserSubmissions, 'all_user_submissions')),
 
