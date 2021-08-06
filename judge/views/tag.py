@@ -5,7 +5,7 @@ from django.views.generic import CreateView, ListView, UpdateView
 
 from judge.comments import CommentedDetailView
 from judge.forms import TagProblemCreateForm, TagProblemEditForm
-from judge.models import TagProblem
+from judge.models import TagGroup, TagProblem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.views import TitleMixin, generic_message
 
@@ -39,7 +39,6 @@ class TagProblemList(TitleMixin, ListView):
     paginate_by = 50
     paginator_class = DiggPaginator
 
-
     def get_queryset(self):
         queryset = TagProblem.objects.order_by('code')
 
@@ -50,9 +49,8 @@ class TagProblemList(TitleMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super(TagProblemList, self).get_context_data(**kwargs)
-
-        if self.tag_id is not None:
-            context['tag_id'] = self.tag_id
+        context['selected_tag'] = self.tag_id
+        context['groups'] = TagGroup.objects.all()
 
         return context
 

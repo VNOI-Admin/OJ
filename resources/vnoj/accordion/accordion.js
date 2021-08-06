@@ -2,7 +2,7 @@ $(function () {
     $(document).on('click', '.accordion .card-toggle', function (e) {
         e.preventDefault();
 
-        let $this = $(this);
+        var $this = $(this);
 
         if ($this.next().hasClass('show')) {
             $this.next().removeClass('show');
@@ -11,7 +11,7 @@ $(function () {
             $this.parent().parent().find('.card-body').removeClass('show');
             $this.parent().parent().find('.card-body').slideUp();
             $this.next().toggleClass('show');
-            $this.next().slideToggle();
+            $this.next().slideDown();
         }
     });
 });

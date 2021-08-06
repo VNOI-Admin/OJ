@@ -12,6 +12,19 @@
 
 {% block js_media %}
     <script type="text/javascript" src="{{ static('vnoj/accordion/accordion.js') }}"></script>
+
+    {% if selected_tag is not none %}
+        <script>
+            $(function () {
+                var el = $('.accordion .card-body a[tag_id={{ selected_tag }}]')[0];
+                if (el) {
+                    el = $(el);
+                    el.parent().toggleClass('show');
+                    el.parent().slideDown(0);
+                }
+            });
+        </script>
+    {% endif %}
 {% endblock %}
 
 {% block title_ruler %}{% endblock %}
@@ -32,37 +45,16 @@
         <div id="content-right" class="problems">
             <div class="info-float">
                 <div class="sidebox accordion">
-                    <div class="card">
-                        <a class="card-toggle" href="#">Cấu trúc dữ liệu</a>
-                        <div class="card-body">
-                            <a href="#1">C++ STL (Heap, Set, Map, ..)</a><br>
-                            <a href="#2">Fenwick Tree (Binary Indexed Tree)</a><br>
-                            <a href="#3">Mảng cộng dồn</a><br>
-                            <hr>
-                            <a href="#3">Balanced BST (cây nhị phân cân bằng)</a><br>
+                    {% for group in groups %}
+                        <div class="card">
+                            <a class="card-toggle" href="#">{{ group.name }}</a>
+                            <div class="card-body">
+                                {% for tag in group.tags.all() %}
+                                    <a href="{{ url('tagproblem_list') }}?tag_id={{ tag.code }}" tag_id={{ tag.code }}>{{ tag.name }}</a><br>
+                                {% endfor %}
+                            </div>
                         </div>
-                    </div>
-
-                    <div class="card">
-                        <a class="card-toggle" href=#>Duyệt</a>
-                        <div class="card-body">
-                            Let's make a nice big leafy tree. You have to make those little noises or it won't work. Let's put some happy little clouds in our world. We don't really know where this goes - and I'm not sure we really care. When you do it your way you can go anywhere you choose. No worries. No cares. Just float and wait for the wind to blow you around.
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <a class="card-toggle" href="#">Lý thuyết Đồ thị</a>
-                        <div class="card-body">
-                            Let's make a nice big leafy tree. You have to make those little noises or it won't work. Let's put some happy little clouds in our world. We don't really know where this goes - and I'm not sure we really care. When you do it your way you can go anywhere you choose. No worries. No cares. Just float and wait for the wind to blow you around.
-                        </div>
-                    </div>
-
-                    <div class="card">
-                        <a class="card-toggle" href="#">Quy Hoạch Động</a>
-                        <div class="card-body">
-                            Let's make a nice big leafy tree. You have to make those little noises or it won't work. Let's put some happy little clouds in our world. We don't really know where this goes - and I'm not sure we really care. When you do it your way you can go anywhere you choose. No worries. No cares. Just float and wait for the wind to blow you around.
-                        </div>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>

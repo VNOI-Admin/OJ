@@ -16,9 +16,9 @@ class TagGroup(models.Model):
 
 
 class Tag(models.Model):
-    code = models.CharField(max_length=30, verbose_name=_('Tag group ID'), unique=True)
-    name = models.CharField(max_length=100, verbose_name=_('Tag group name'))
-    group = models.ForeignKey(TagGroup, verbose_name=_('Parent tag group'), on_delete=CASCADE)
+    code = models.CharField(max_length=30, verbose_name=_('Tag ID'), unique=True)
+    name = models.CharField(max_length=100, verbose_name=_('Tag name'))
+    group = models.ForeignKey(TagGroup, related_name='tags', verbose_name=_('Parent tag group'), on_delete=CASCADE)
 
     def __str__(self):
         return self.name
@@ -30,7 +30,7 @@ class TagProblem(models.Model):
     name = models.CharField(max_length=100, verbose_name=_('problem name'))
     link = models.URLField(max_length=200, verbose_name=_('Problem URL'))
 
-    tag = models.ManyToManyField(Tag, through='TagData', related_name='tag', verbose_name=_('Tag'))
+    tag = models.ManyToManyField(Tag, through='TagData', related_name='tags', verbose_name=_('Tag'))
 
     def __str__(self):
         return self.name
