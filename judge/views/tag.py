@@ -1,10 +1,12 @@
+from django.db.utils import ProgrammingError
 from django.http import Http404
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import CreateView, UpdateView
+from django.views.generic import CreateView, ListView, UpdateView
 
 from judge.comments import CommentedDetailView
 from judge.forms import TagProblemCreateForm, TagProblemEditForm
 from judge.models import TagProblem
+from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.views import TitleMixin, generic_message
 
 
@@ -29,16 +31,45 @@ class TagProblemMixin(object):
             return self.no_such_problem()
 
 
-class TagProblemCreate(TitleMixin, CreateView):
-    template_name = 'tag/edit.html'
+class TagProblemList(TitleMixin, ListView):
     model = TagProblem
+    title = _('Tag problem list')
+    context_object_name = 'tagproblems'
+    template_name = 'tag/list.html'
+    paginate_by = 50
+    paginator_class = DiggPaginator
+
+
+    def get_queryset(self):
+        queryset = TagProblem.objects.order_by('code')
+
+        if self.tag_id is not None:
+            queryset = queryset.filter(tag__code=self.tag_id)
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(TagProblemList, self).get_context_data(**kwargs)
+
+        if self.tag_id is not None:
+            context['tag_id'] = self.tag_id
+
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.tag_id = request.GET.get('tag_id', None)
+
+        try:
+            return super(TagProblemList, self).get(request, *args, **kwargs)
+        except ProgrammingError as e:
+            return generic_message(request, 'FTS syntax error', e.args[1], status=400)
+
+
+class TagProblemCreate(TitleMixin, CreateView):
+    model = TagProblem
+    title = _('Creating new tag problem')
+    template_name = 'tag/edit.html'
     form_class = TagProblemCreateForm
-
-    def get_title(self):
-        return _('Creating new tag problem')
-
-    def get_content_title(self):
-        return _('Creating new tag problem')
 
 
 class TagProblemDetail(TagProblemMixin, UpdateView, CommentedDetailView):
