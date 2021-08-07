@@ -188,6 +188,13 @@ class TagProblemCreateForm(ModelForm):
     class Meta:
         model = TagProblem
         fields = ['code', 'name', 'link']
+        help_texts = {
+            'code': _('Problem code, e.g: CF_1000_C'),
+            'name': _('Full name of the problem, as shown in the problem list, '
+                      'e.g: Covered Points Count'),
+            'link': _('Full URL to the problem, '
+                      'e.g: https://codeforces.com/problemset/problem/1000/C'),
+        }
 
 
 class TagProblemEditForm(ModelForm):

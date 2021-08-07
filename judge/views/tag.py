@@ -66,7 +66,7 @@ class TagProblemList(TitleMixin, ListView):
 class TagProblemCreate(TitleMixin, CreateView):
     model = TagProblem
     title = _('Creating new tag problem')
-    template_name = 'tag/edit.html'
+    template_name = 'tag/create.html'
     form_class = TagProblemCreateForm
 
 
