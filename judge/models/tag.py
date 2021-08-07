@@ -51,7 +51,7 @@ class TagData(models.Model):
 
     class Meta:
         constraints = [
-            models.UniqueConstraint(fields=['tag', 'problem'], name='unique_tag_problem')
+            models.UniqueConstraint(fields=['tag', 'problem'], name='unique_tag_problem'),
         ]
 
     def __str__(self):
