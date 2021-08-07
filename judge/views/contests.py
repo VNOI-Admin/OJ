@@ -247,8 +247,11 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         # calculate problem AC rate in contest
         contest_problem_fields = self.object.contest_problems.defer('problem__description') \
             .order_by('order') \
-            .annotate(user_count=Count('submission__submission', filter=Q(submission__submission__result='AC'))) \
-            .annotate(submission_count=Count('submission__submission')) \
+            .annotate(user_count=Count('submission__submission',
+                      filter=Q(submission__submission__result='AC') &
+                      Q(submission__submission__date__gt=self.object.start_time))) \
+            .annotate(submission_count=Count('submission__submission',
+                      filter=Q(submission__submission__date__gt=self.object.start_time))) \
             .values('points', 'user_count', 'submission_count')
 
         for p, contest_p in zip(context['contest_problems'], contest_problem_fields):
@@ -540,7 +543,7 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
         if not (self.object.ended or self.can_edit):
             raise Http404()
 
-        queryset = Submission.objects.filter(contest_object=self.object)
+        queryset = Submission.objects.filter(contest_object=self.object, date__gt=self.object.start_time)
 
         ac_count = Count(Case(When(result='AC', then=Value(1)), output_field=IntegerField()))
         ac_rate = CombinedExpression(ac_count / Count('problem'), '*', Value(100.0), output_field=FloatField())
@@ -637,7 +640,7 @@ def base_contest_ranking_list(contest, problems, queryset):
 
 
 def contest_ranking_list(contest, problems):
-    return base_contest_ranking_list(contest, problems, contest.users.filter()
+    return base_contest_ranking_list(contest, problems, contest.users.filter(virtual__gt=ContestParticipation.SPECTATE)
                                      .prefetch_related('user__organizations')
                                      .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker'))
 
