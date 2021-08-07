@@ -1,5 +1,9 @@
 {% extends "common-content.html" %}
 
+{% macro make_tag_url(tag) -%}
+<a href="{{ url('tagproblem_list') }}?tag_id={{ tag.code }}" tag_id={{ tag.code }}>{{ tag.name }}</a>
+{%- endmacro -%}
+
 {% block media %}
     <link rel="stylesheet" type="text/css" href="{{ static('vnoj/accordion/accordion.css') }}">
 
@@ -14,6 +18,16 @@
 
         #tagproblem-table tr:hover {
             background: #eaeaea;
+        }
+
+        .row-tag-list {
+            font-size: 0.7em;
+            padding-top: 1px;
+            text-align: right;
+        }
+
+        .row-tag-list a {
+            color: #888!important;
         }
     </style>
 {% endblock %}
@@ -58,7 +72,7 @@
                             <a class="card-toggle" href="#">{{ group.name }}</a>
                             <div class="card-body">
                                 {% for tag in group.tags.all() %}
-                                    <a href="{{ url('tagproblem_list') }}?tag_id={{ tag.code }}" tag_id={{ tag.code }}>{{ tag.name }}</a><br>
+                                    {{ make_tag_url(tag) }}<br>
                                 {% endfor %}
                             </div>
                         </div>
@@ -70,15 +84,24 @@
             <table id="tagproblem-table" class="table striped">
                 <thead>
                 <tr>
-                    <th>{{ _('Code') }}</th>
-                    <th>{{ _('Problem') }}</th>
+                    <th style="width:15%">{{ _('Problem code') }}</th>
+                    <th style="width:85%">{{ _('Problem name') }}</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for problem in tagproblems %}
                     <tr>
                         <td><a href="{{ url('tagproblem_detail', problem.code) }}">{{ problem.code }}</a></td>
-                        <td><a href="{{ problem.link }}">{{ problem.name }}</a></td>
+                        <td>
+                            <div style="float: left">
+                                <a href="{{ problem.link }}">{{ problem.name }}</a>
+                            </div>
+                            <div style="float: right" class="row-tag-list">
+                                {% for tag in problem.tag.all() %}
+                                    {{ make_tag_url(tag) }}{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
