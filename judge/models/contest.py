@@ -284,7 +284,7 @@ class Contest(models.Model):
 
     def update_user_count(self):
         self.user_count = self.users.filter(virtual=0).count()
-        self.virtual_count = self.users.count()
+        self.virtual_count = self.users.filter(virtual__gt=ContestParticipation.SPECTATE).count()
         self.save()
 
     update_user_count.alters_data = True
