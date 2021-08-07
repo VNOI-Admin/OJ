@@ -8,13 +8,15 @@
 
 .accordion .card-body {
     display: none;
+    border: 1px solid #000;
+    border-radius: 0 0 0.4em 0.4em;
     overflow: hidden;
     padding: 1em;
 }
 
 .accordion .card-toggle {
     background: #000;
-    border-radius: 0.2em;
+    border-radius: 0.4em 0.4em 0 0;
     color: white;
     display: block;
     font-size: 1.1em;
@@ -24,5 +26,5 @@
 }
 
 .accordion .card-toggle:hover {
-    background: rgba(0, 0, 0, 0.9);
+    background: rgba(0, 0, 0, 0.7);
 }
