@@ -20,6 +20,10 @@
             background: #eaeaea;
         }
 
+        .row-selected {
+            background: #dff0d8;
+        }
+
         .row-tag-list {
             font-size: 0.7em;
             padding-top: 1px;
@@ -41,8 +45,9 @@
                 var el = $('.accordion .card-body a[tag_id={{ selected_tag }}]')[0];
                 if (el) {
                     el = $(el);
-                    el.parent().toggleClass('show');
-                    el.parent().slideDown(0);
+                    el.parent().addClass('row-selected');
+                    el.parent().parent().addClass('show');
+                    el.parent().parent().slideDown(0);
                 }
             });
         </script>
@@ -72,7 +77,9 @@
                             <a class="card-toggle" href="#">{{ group.name }}</a>
                             <div class="card-body">
                                 {% for tag in group.tags.all() %}
-                                    {{ make_tag_url(tag) }}<br>
+                                    <div>
+                                        {{ make_tag_url(tag) }}<br>
+                                    </div>
                                 {% endfor %}
                             </div>
                         </div>

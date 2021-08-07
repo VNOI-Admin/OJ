@@ -10,7 +10,7 @@ $(function () {
         } else {
             $this.parent().parent().find('.card-body').removeClass('show');
             $this.parent().parent().find('.card-body').slideUp();
-            $this.next().toggleClass('show');
+            $this.next().addClass('show');
             $this.next().slideDown();
         }
     });
