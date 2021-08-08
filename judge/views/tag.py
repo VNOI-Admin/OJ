@@ -1,10 +1,11 @@
 from django.db.utils import ProgrammingError
+from django.forms import ModelForm
 from django.http import Http404
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, ListView, UpdateView
 
 from judge.comments import CommentedDetailView
-from judge.forms import TagProblemCreateForm, TagProblemEditForm
+from judge.forms import TagProblemCreateForm
 from judge.models import TagGroup, TagProblem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.views import TitleMixin, generic_message
@@ -68,6 +69,12 @@ class TagProblemCreate(TitleMixin, CreateView):
     title = _('Creating new tag problem')
     template_name = 'tag/create.html'
     form_class = TagProblemCreateForm
+
+
+class TagProblemEditForm(ModelForm):
+    class Meta:
+        model = TagProblem
+        fields = []
 
 
 class TagProblemDetail(TagProblemMixin, UpdateView, CommentedDetailView):

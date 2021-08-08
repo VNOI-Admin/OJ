@@ -197,16 +197,6 @@ class TagProblemCreateForm(ModelForm):
         }
 
 
-class TagProblemEditForm(ModelForm):
-    class Meta:
-        model = TagProblem
-        fields = ['tag']
-
-        widgets = {
-            'tag': HeavySelect2MultipleWidget(data_view='tag_select2', attrs={'style', 'width: 100%;'}),
-        }
-
-
 class EditOrganizationForm(ModelForm):
     class Meta:
         model = Organization

@@ -1,6 +1,7 @@
 {% extends "common-content.html" %}
 {% block content_media %}
     {% include "comments/media-css.html" %}
+    {{ form.media.css }}
     <style>
         .title-state {
             font-size: 2em;
@@ -58,6 +59,18 @@
 {% endblock %}
 
 {% block description %}
+    <table class="table">
+        <tr>
+            <th>Tag</th>
+            <th>Assigner</th>
+        </tr>
+        {% for tag in problem.tagdata_set.all() %}
+            <tr>
+                <td>{{ tag.tag }}</td>
+                <td>{{ tag.assigner }}</td>
+            </tr>
+        {% endfor %}
+    </table>
 {% endblock %}
 
 {% block comments %}
