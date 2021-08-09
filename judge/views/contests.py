@@ -677,7 +677,7 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
 ContestRankingProfile = namedtuple(
     'ContestRankingProfile',
     'id user css_class username points cumtime tiebreaker organization participation '
-    'participation_rating problem_cells result_cell virtual',
+    'participation_rating problem_cells result_cell virtual display_name',
 )
 
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
@@ -707,6 +707,7 @@ def make_contest_ranking_profile(contest, participation, contest_problems, froze
         result_cell=contest.format.display_participation_result(participation, frozen),
         participation=participation,
         virtual=participation.virtual,
+        display_name=user.display_name,
     )
 
 
