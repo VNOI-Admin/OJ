@@ -1,8 +1,24 @@
-{% extends "common-content.html" %}
-{% block content_media %}
+{% extends "base.html" %}
+
+{% macro make_tag_url(tag) -%}
+<a href="{{ url('tagproblem_list') }}?tag_id={{ tag.code }}" tag_id={{ tag.code }}>{{ tag.name }}</a>
+{%- endmacro -%}
+
+{% block media %}
     {% include "comments/media-css.html" %}
-    {{ form.media.css }}
     <style>
+        #tag-table th {
+            padding: 0;
+        }
+
+        #tag-table tr {
+            transition: background-color linear 0.2s;
+        }
+
+        #tag-table tr:hover {
+            background: #eaeaea;
+        }
+
         .title-state {
             font-size: 2em;
             float: left;
@@ -45,57 +61,55 @@
     </style>
 {% endblock %}
 
-{% block content_js_media %}
+{% block js_media %}
     {% include "comments/media-js.html" %}
 {% endblock %}
 
+{% block title_ruler %}{% endblock %}
+
 {% block title_row %}
     <div class="problem-title">
-        <h2 style="color:#393630; display: inline-block">{{ title }}</h2>
+        <div class="tabs">
+            <h2>{{ title }}</h2>
+            <span class="spacer"></span>
+            <ul>
+                <li class="tab">
+                    <a href="{{ url('tagproblem_add_tag', problem.code) }}"><i class="tab-icon fa fa-plus add-problem"></i>{{ _('Add new tag') }}</a>
+                </li>
+                {% if request.user.is_superuser %}
+                    <li class="tab">
+                        <a href="{{ url('admin:judge_tagproblem_change', problem.id) }}"><i class="tab-icon fa fa-edit"></i>{{ _('Admin') }}</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
     </div>
 {% endblock %}
 
-{% block info_float %}
-{% endblock %}
-
-{% block description %}
-    <table class="table">
-        <tr>
-            <th>Tag</th>
-            <th>Assigner</th>
-        </tr>
-        {% for tag in problem.tagdata_set.all() %}
+{% block body %}
+    <table id="tag-table" class="table striped">
+        <thead>
             <tr>
-                <td>{{ tag.tag }}</td>
-                <td>{{ tag.assigner }}</td>
+                <th>Tag</th>
+                <th>Assigner</th>
             </tr>
-        {% endfor %}
+        <thead>
+        <tbody>
+            {% for tag in problem.tagdata_set.all() %}
+                <tr>
+                    <td>{{ make_tag_url(tag.tag) }}</td>
+                    <td>{{ link_user(tag.assigner) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
     </table>
-{% endblock %}
-
-{% block comments %}
-    {% if contest_problem and contest_problem.contest.use_clarifications %}
-        <div class="clarifications-area">
-            <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
-            {% if has_clarifications %}
-                {% for clarification in clarifications %}
-                    <div class="problem-clarification">
-                        <div class="time">{{ relative_time(clarification.date) }}</div>
-                        <span class="body">
-                            {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
-                        </span>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p class="no-comments-message">{{ _('No clarifications have been made at this time.') }}</p>
-            {% endif %}
-        </div>
-    {% else %}
-        {% include "comments/list.html" %}
-    {% endif %}
+    {% include "comments/list.html" %}
 {% endblock %}
 
 {% block bodyend %}
     {{ super() }}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
     {% include "comments/math.html" %}
 {% endblock %}

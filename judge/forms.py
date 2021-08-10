@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
 from judge.models import Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, Submission, \
-    WebAuthnCredential
+    TagProblem, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -189,7 +189,17 @@ class TagProblemCreateForm(Form):
 
     class Meta:
         help_texts = {
+            # FIXME: help text not showing
             'problem_url': _("Link to the problem URL."),
+        }
+
+
+class TagProblemAddTagForm(ModelForm):
+    class Meta:
+        model = TagProblem.tag.through
+        fields = ['tag']
+        widgets = {
+            'tag': Select2Widget(attrs={'style': 'width: 100%;'}),
         }
 
 

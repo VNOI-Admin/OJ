@@ -165,8 +165,9 @@ urlpatterns = [
         url(r'^/create$', tag.TagProblemCreate.as_view(), name='tagproblem_create'),
     ])),
 
-    url(r'^tag/(?P<tagproblem>[^/]+)$', include([
+    url(r'^tag/(?P<tagproblem>[^/]+)', include([
         url(r'^$', tag.TagProblemDetail.as_view(), name='tagproblem_detail'),
+        url(r'^/add_tag$', tag.TagProblemAddTag.as_view(), name='tagproblem_add_tag'),
         url(r'^/$', lambda _, problem: HttpResponsePermanentRedirect(reverse('tagproblem_detail', args=[tag]))),
     ])),
 

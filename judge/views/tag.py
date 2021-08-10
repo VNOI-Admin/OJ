@@ -1,16 +1,18 @@
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
 from django.db.utils import ProgrammingError
-from django.forms import ModelForm
 from django.http import Http404, HttpResponseRedirect
+from django.utils.html import escape, format_html
+from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import FormView, ListView, UpdateView
+from django.views.generic import FormView, ListView
 
 from judge.comments import CommentedDetailView
-from judge.forms import TagProblemCreateForm
-from judge.models import TagGroup, TagProblem
+from judge.forms import TagProblemAddTagForm, TagProblemCreateForm
+from judge.models import TagData, TagGroup, TagProblem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.judge_api import APIError, OJAPI
-from judge.utils.views import TitleMixin, generic_message
+from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message
 
 
 class TagProblemMixin(object):
@@ -67,7 +69,7 @@ class TagProblemList(TitleMixin, ListView):
 
 
 class TagProblemCreate(TitleMixin, FormView):
-    title = _('Creating new tag problem')
+    title = _('Create new tag problem')
     template_name = 'tag/create.html'
     form_class = TagProblemCreateForm
 
@@ -107,16 +109,31 @@ class TagProblemCreate(TitleMixin, FormView):
             return self.form_invalid(form)
 
 
-class TagProblemEditForm(ModelForm):
-    class Meta:
-        model = TagProblem
-        fields = []
+class TagProblemAddTag(LoginRequiredMixin, TagProblemMixin, TitleMixin, SingleObjectFormView):
+    template_name = 'tag/add-tag.html'
+    form_class = TagProblemAddTagForm
+
+    def get_content_title(self):
+        return mark_safe(
+            escape(_('Add new tag for %s')) % format_html(
+                '<a href="{0}">{1}</a>',
+                self.object.get_absolute_url(),
+                self.object.name,
+            ),
+        )
+
+    def get_title(self):
+        return _('Add new tag for %s') % self.object.name
+
+    def form_valid(self, form):
+        tag_data = TagData(assigner=self.request.profile, tag=form.cleaned_data['tag'], problem=self.object)
+        tag_data.save()
+        return HttpResponseRedirect(self.object.get_absolute_url())
 
 
-class TagProblemDetail(TagProblemMixin, UpdateView, CommentedDetailView):
+class TagProblemDetail(TagProblemMixin, CommentedDetailView):
     context_object_name = 'problem'
     template_name = 'tag/problem.html'
-    form_class = TagProblemEditForm
 
     def get_comment_page(self):
         return 'p:%s' % self.object.code
