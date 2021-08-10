@@ -87,7 +87,12 @@ OJ_PROBLEM_PRESET = [
         'regex': r'^https://open\.kattis\.com/problems/(?P<codename>\w+)$',
         'codename': 'KATTIS_%s',
         'judge': 'Kattis',
-    }
+    },
+    {
+        'regex': r'^https://codeforces\.com/gym/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
+        'codename': 'CFGYM_%s_%s',
+        'judge': 'CodeforcesGym',
+    },
 ]
 
 OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data

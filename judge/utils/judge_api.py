@@ -115,3 +115,46 @@ class OJAPI:
             'title': title,
         }
         return data
+
+    @staticmethod
+    def CodeforcesGymProblemAPI(codename):
+        # NOTE: Storing contest list instead of problemset for cache optimization
+
+        contestset = cache.get('OJAPI_data_CodeforcesGym', None)
+
+        if contestset is None:
+            api_url_contestlist = 'https://codeforces.com/api/contest.list?gym=true'
+            contestset_data = requests.get(api_url_contestlist).json()
+
+            if contestset_data['status'] != 'OK':
+                return None
+
+            contestset = []
+
+            for contest in contestset_data["result"]:
+                contestset.append(str(contest['id']))
+            cache.set('OJAPI_data_CodeforcesGym', contestset, settings.OJAPI_CACHE_TIMEOUT)
+
+        prefix, contestid, index = codename.split('_')
+
+        if contestid not in contestset:
+            return None
+
+        api_url = 'https://codeforces.com/api/contest.standings?contestId=%s'
+        problemset_data = requests.get(api_url % contestid).json()
+
+        if problemset_data['status'] != 'OK':
+            return None
+
+        code_template = 'CFGYM_%s_%s'
+
+        problemset = {}
+        for problem in problemset_data['result']['problems']:
+            code = code_template % (problem['contestId'], problem['index'])
+            problemset[code] = {
+                'contestId': problem['contestId'],
+                'index': problem['index'],
+                'title': problem['name'],
+            }
+
+        return problemset.get(codename, None)
