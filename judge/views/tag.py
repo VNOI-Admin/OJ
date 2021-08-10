@@ -68,7 +68,7 @@ class TagProblemList(TitleMixin, ListView):
             return generic_message(request, 'FTS syntax error', e.args[1], status=400)
 
 
-class TagProblemCreate(TitleMixin, FormView):
+class TagProblemCreate(LoginRequiredMixin, TitleMixin, FormView):
     title = _('Create new tag problem')
     template_name = 'tag/create.html'
     form_class = TagProblemCreateForm
@@ -125,9 +125,13 @@ class TagProblemAddTag(LoginRequiredMixin, TagProblemMixin, TitleMixin, SingleOb
     def get_title(self):
         return _('Add new tag for %s') % self.object.name
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['instance'] = TagData(assigner=self.request.profile, problem=self.object)
+        return kwargs
+
     def form_valid(self, form):
-        tag_data = TagData(assigner=self.request.profile, tag=form.cleaned_data['tag'], problem=self.object)
-        tag_data.save()
+        form.save()
         return HttpResponseRedirect(self.object.get_absolute_url())
 
 

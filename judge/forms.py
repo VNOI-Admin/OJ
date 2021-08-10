@@ -202,6 +202,13 @@ class TagProblemAddTagForm(ModelForm):
             'tag': Select2Widget(attrs={'style': 'width: 100%;'}),
         }
 
+    def full_clean(self):
+        super().full_clean()
+        try:
+            self.instance.validate_unique()
+        except forms.ValidationError as e:
+            self._update_errors(e)
+
 
 class EditOrganizationForm(ModelForm):
     class Meta:
