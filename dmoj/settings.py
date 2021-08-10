@@ -61,6 +61,25 @@ VNOJ_CP_PROBLEM = 20 # Each suggested problem equal 20 CP
 
 VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
 
+# List of online judge preset for OJ API
+OJ_PROBLEM_PRESET = [
+    {
+        'regex': r'^https://codeforces\.com/problemset/problem/(?P<contestid>\w+)/(?P<index>\w+)$',
+        'codename': 'CF_%s_%s',
+        'judge': 'Codeforces',
+        },
+    {
+        'regex': r'^https://codeforces\.com/contest/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
+        'codename': 'CF_%s_%s',
+        'judge': 'Codeforces',
+    },
+    {
+        'regex': r'^https://atcoder.jp/contests/(?P<contestId>\w+)/tasks/(?P<index>\w+)$',
+        'codename': 'AC_%s_%s',
+        'judge': 'Atcoder',
+    },
+]
+
 # Urls of discord webhook.
 # https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
 DISCORD_WEBHOOK = {

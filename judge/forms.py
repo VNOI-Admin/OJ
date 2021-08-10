@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
 from judge.models import Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, Submission, \
-    TagProblem, WebAuthnCredential
+    WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -184,16 +184,12 @@ class ProblemSubmitForm(ModelForm):
         fields = ['language']
 
 
-class TagProblemCreateForm(ModelForm):
+class TagProblemCreateForm(Form):
+    problem_url = forms.URLField(max_length=200, label=_('Problem URL'))
+
     class Meta:
-        model = TagProblem
-        fields = ['code', 'name', 'link']
         help_texts = {
-            'code': _('Problem code, e.g: CF_1000_C'),
-            'name': _('Full name of the problem, as shown in the problem list, '
-                      'e.g: Covered Points Count'),
-            'link': _('Full URL to the problem, '
-                      'e.g: https://codeforces.com/problemset/problem/1000/C'),
+            'problem_url': _("Link to the problem URL."),
         }
 
 
