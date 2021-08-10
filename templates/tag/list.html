@@ -51,6 +51,17 @@
                 }
             });
         </script>
+    {% else %}
+        <script>
+            $(function () {
+                var el = $('.accordion .card-toggle')[0];
+                if (el) {
+                    el = $(el);
+                    el.next().addClass('show');
+                    el.next().slideDown(0);
+                }
+            });
+        </script>
     {% endif %}
 {% endblock %}
 
