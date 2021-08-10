@@ -12,7 +12,7 @@ from judge.forms import TagProblemAddTagForm, TagProblemCreateForm
 from judge.models import TagData, TagGroup, TagProblem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.judge_api import APIError, OJAPI
-from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message
+from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message, paginate_query_context
 
 
 class TagProblemMixin(object):
@@ -56,6 +56,7 @@ class TagProblemList(TitleMixin, ListView):
         context = super(TagProblemList, self).get_context_data(**kwargs)
         context['selected_tag'] = self.tag_id
         context['groups'] = TagGroup.objects.all()
+        context.update(paginate_query_context(self.request))
 
         return context
 
