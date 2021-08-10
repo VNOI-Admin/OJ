@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.db.utils import ProgrammingError
 from django.forms import ModelForm
 from django.http import Http404, HttpResponseRedirect
@@ -77,6 +78,13 @@ class TagProblemCreate(TitleMixin, FormView):
                 url = form.cleaned_data.get('problem_url')
                 problem_data = OJAPI.get_problem_data(url)
 
+                # Check if problem is in database or not
+                try:
+                    _ = TagProblem.objects.get(code=problem_data['codename'])
+                    raise IntegrityError('Problem already existed.')
+                except TagProblem.DoesNotExist:
+                    pass
+
                 # Retrive API result from cache
                 # If cache is empty, request API then store the result
                 API = OJAPI()
@@ -92,10 +100,10 @@ class TagProblemCreate(TitleMixin, FormView):
                 problem.save()
                 return HttpResponseRedirect(problem.get_absolute_url())
             else:
-                form.add_error('problem_url', 'Cannot initialize problem')
+                form.add_error('problem_url', 'An error occured during problem initialization. Please try again.')
                 return self.form_invalid(form)
-        except Exception:
-            form.add_error('problem_url', 'Cannot initialize problem')
+        except (APIError, IntegrityError) as e:
+            form.add_error('problem_url', e)
             return self.form_invalid(form)
 
 

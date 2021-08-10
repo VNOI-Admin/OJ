@@ -4,6 +4,8 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 
+from judge.models import Problem
+
 
 class APIError(Exception):
     pass
@@ -25,7 +27,7 @@ class OJAPI:
                 'judge': preset['judge'],
             }
 
-        raise APIError('Problem not found')
+        raise APIError('This link or online judge is not currently supported.')
 
     @staticmethod
     def CodeforcesProblemAPI(codename):
@@ -39,7 +41,6 @@ class OJAPI:
                 return None
 
             code_template = "CF_%s_%s"  # I.e.: contestId = 1000, index = C
-            problem_url_template = "https://codeforces.com/problemset/problem/%s/%s"
 
             problemset = {}
 
@@ -51,7 +52,6 @@ class OJAPI:
                     "contestId": problem["contestId"],
                     "index": problem["index"],
                     "title": problem["name"],
-                    "url": problem_url_template % (problem["contestId"], problem["index"]),
                 }
 
             cache.set('OJAPI_data_Codeforces', problemset, settings.OJAPI_CACHE_TIMEOUT)
@@ -70,7 +70,6 @@ class OJAPI:
                 return None
 
             code_template = "AC_%s_%s"  # I.e.: index = abc064_c
-            problem_url_template = "https://atcoder.jp/contests/%s/tasks/%s"
 
             problemset = {}
 
@@ -82,9 +81,22 @@ class OJAPI:
                     "contestId": problem["contest_id"],
                     "index": problem["id"],
                     "title": problem["title"],
-                    "url": problem_url_template % (problem["contest_id"], problem["id"]),
                 }
 
             cache.set('OJAPI_data_Atcoder', problemset, settings.OJAPI_CACHE_TIMEOUT)
 
         return problemset.get(codename, None)
+
+    @staticmethod
+    def VNOJProblemAPI(codename):
+        try:
+            codename = codename.replace('VNOJ_', '')
+            problem = Problem.objects.get(code=codename)
+        except Problem.DoesNotExist:
+            return None
+
+        data = {
+            'index': problem.code,
+            'title': problem.name,
+        }
+        return data

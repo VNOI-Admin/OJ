@@ -78,6 +78,11 @@ OJ_PROBLEM_PRESET = [
         'codename': 'AC_%s_%s',
         'judge': 'Atcoder',
     },
+    {
+        'regex': r'^https://oj\.vnoi\.info/problem/(?P<codename>\w+)$',
+        'codename': 'VNOJ_%s',
+        'judge': 'VNOJ',
+    }
 ]
 
 OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
