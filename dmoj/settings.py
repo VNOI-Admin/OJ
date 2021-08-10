@@ -80,6 +80,8 @@ OJ_PROBLEM_PRESET = [
     },
 ]
 
+OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
+
 # Urls of discord webhook.
 # https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
 DISCORD_WEBHOOK = {

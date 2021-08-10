@@ -1,4 +1,3 @@
-from django.core.cache import cache
 from django.db.utils import ProgrammingError
 from django.forms import ModelForm
 from django.http import Http404, HttpResponseRedirect
@@ -80,22 +79,17 @@ class TagProblemCreate(TitleMixin, FormView):
 
                 # Retrive API result from cache
                 # If cache is empty, request API then store the result
-                cache_loc = 'OJAPI_data_%s'
-                problemset = cache.get(cache_loc % problem_data['judge'], None)
-                if problemset is None:
-                    API = OJAPI()
-                    api_method = API.__getattribute__(problem_data['judge'] + 'ProblemAPI')
-                    problemset = api_method()
-                    cache.set('OJAPI_data_%s' % problem_data['judge'], problemset, timeout=3600)
-                    print('cache set')
-                api_problem_data = problemset.get(problem_data['codename'], None)
+                API = OJAPI()
+                api_method = API.__getattribute__(problem_data['judge'] + 'ProblemAPI')  # Get method based on judge
+                api_problem_data = api_method(problem_data['codename'])
+
+                # No problem found
                 if api_problem_data is None:
                     raise APIError('Problem not found in problemset')
 
                 # Initialize model
                 problem = TagProblem(code=problem_data['codename'], name=api_problem_data['title'], link=url)
                 problem.save()
-
                 return HttpResponseRedirect(problem.get_absolute_url())
             else:
                 form.add_error('problem_url', 'Cannot initialize problem')

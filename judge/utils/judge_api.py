@@ -2,6 +2,7 @@ import re
 
 import requests
 from django.conf import settings
+from django.core.cache import cache
 
 
 class APIError(Exception):
@@ -27,53 +28,63 @@ class OJAPI:
         raise APIError('Problem not found')
 
     @staticmethod
-    def CodeforcesProblemAPI():
-        api_url = "https://codeforces.com/api/problemset.problems"
-        problemset_data = requests.get(api_url).json()
+    def CodeforcesProblemAPI(codename):
+        problemset = cache.get('OJAPI_data_Codeforces', None)
 
-        if problemset_data['status'] != 'OK':
-            return None
+        if problemset is None:
+            api_url = "https://codeforces.com/api/problemset.problems"
+            problemset_data = requests.get(api_url).json()
 
-        code_template = "CF_%s_%s"  # I.e.: contestId = 1000, index = C
-        problem_url_template = "https://codeforces.com/problemset/problem/%s/%s"
+            if problemset_data['status'] != 'OK':
+                return None
 
-        problemset = {}
+            code_template = "CF_%s_%s"  # I.e.: contestId = 1000, index = C
+            problem_url_template = "https://codeforces.com/problemset/problem/%s/%s"
 
-        for problem in problemset_data["result"]["problems"]:
-            code = code_template % (problem["contestId"], problem["index"])
-            if code in problemset:
-                raise ValueError("Problem code %s appeared twice in the problemset." % code)
-            problemset[code] = {
-                "contestId": problem["contestId"],
-                "index": problem["index"],
-                "title": problem["name"],
-                "url": problem_url_template % (problem["contestId"], problem["index"]),
-            }
+            problemset = {}
 
-        return problemset
+            for problem in problemset_data["result"]["problems"]:
+                code = code_template % (problem["contestId"], problem["index"])
+                if code in problemset:
+                    raise ValueError("Problem code %s appeared twice in the problemset." % code)
+                problemset[code] = {
+                    "contestId": problem["contestId"],
+                    "index": problem["index"],
+                    "title": problem["name"],
+                    "url": problem_url_template % (problem["contestId"], problem["index"]),
+                }
+
+            cache.set('OJAPI_data_Codeforces', problemset, settings.OJAPI_CACHE_TIMEOUT)
+
+        return problemset.get(codename, None)
 
     @staticmethod
-    def AtcoderProblemAPI():
-        api_url = "https://kenkoooo.com/atcoder/resources/problems.json"
-        problemset_data = requests.get(api_url).json()
+    def AtcoderProblemAPI(codename):
+        problemset = cache.get('OJAPI_data_Atcoder', None)
 
-        if problemset_data is None:
-            return None
+        if problemset is None:
+            api_url = "https://kenkoooo.com/atcoder/resources/problems.json"
+            problemset_data = requests.get(api_url).json()
 
-        code_template = "AC_%s_%s"  # I.e.: index = abc064_c
-        problem_url_template = "https://atcoder.jp/contests/%s/tasks/%s"
+            if problemset_data is None:
+                return None
 
-        problemset = {}
+            code_template = "AC_%s_%s"  # I.e.: index = abc064_c
+            problem_url_template = "https://atcoder.jp/contests/%s/tasks/%s"
 
-        for problem in problemset_data:
-            code = code_template % (problem['contest_id'], problem["id"])
-            if code in problemset:
-                raise ValueError("Problem code %s appeared twice in the problemset." % code)
-            problemset[code] = {
-                "contestId": problem["contest_id"],
-                "index": problem["id"],
-                "title": problem["title"],
-                "url": problem_url_template % (problem["contest_id"], problem["id"]),
-            }
+            problemset = {}
 
-        return problemset
+            for problem in problemset_data:
+                code = code_template % (problem['contest_id'], problem["id"])
+                if code in problemset:
+                    raise ValueError("Problem code %s appeared twice in the problemset." % code)
+                problemset[code] = {
+                    "contestId": problem["contest_id"],
+                    "index": problem["id"],
+                    "title": problem["title"],
+                    "url": problem_url_template % (problem["contest_id"], problem["id"]),
+                }
+
+            cache.set('OJAPI_data_Atcoder', problemset, settings.OJAPI_CACHE_TIMEOUT)
+
+        return problemset.get(codename, None)
