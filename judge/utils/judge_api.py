@@ -100,3 +100,18 @@ class OJAPI:
             'title': problem.name,
         }
         return data
+
+    @staticmethod
+    def KattisProblemAPI(codename):
+        codename = codename.replace('KATTIS_', '')
+        verification = requests.get(url='https://open.kattis.com/problems/%s' % codename).status_code
+        if verification != 200:
+            return None
+
+        title = 'Kattis - %s' % codename
+
+        data = {
+            'index': codename,
+            'title': title,
+        }
+        return data

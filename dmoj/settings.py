@@ -82,6 +82,11 @@ OJ_PROBLEM_PRESET = [
         'regex': r'^https://oj\.vnoi\.info/problem/(?P<codename>\w+)$',
         'codename': 'VNOJ_%s',
         'judge': 'VNOJ',
+    },
+    {
+        'regex': r'^https://open\.kattis\.com/problems/(?P<codename>\w+)$',
+        'codename': 'KATTIS_%s',
+        'judge': 'Kattis',
     }
 ]
 
