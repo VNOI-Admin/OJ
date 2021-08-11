@@ -451,11 +451,11 @@ BLEACH_USER_SAFE_TAGS = [
     'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'tfoot',
     'img', 'audio', 'video', 'source',
     'a', 'strike',
-    'style', 'noscript', 'center',
+    'style', 'noscript', 'center', 'object'
 ]
 
 BLEACH_USER_SAFE_ATTRS = {
-    '*': ['id', 'class', 'style'],
+    '*': ['id', 'class', 'style', 'data', 'height'],
     'img': ['src', 'alt', 'title', 'width', 'height', 'data-src'],
     'a': ['href', 'alt', 'title'],
     'abbr': ['title'],

@@ -736,23 +736,19 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     def get_content_title(self):
         return _('Creating new problem')
 
-    def post(self, request, *args, **kwargs):
-        self.object = None
-        form = ProblemEditForm(request.POST or None)
-        if form.is_valid():
-            self.object = problem = form.save()
-            problem.authors.add(request.user.profile)
-            problem.allowed_languages.set(Language.objects.all())
-            problem.partial = True
-            problem.save()
-            return HttpResponseRedirect(self.get_success_url())
-        else:
-            return self.form_invalid(form)
+    def form_valid(self, form):
+        self.object = problem = form.save()
+        problem.authors.add(self.request.user.profile)
+        problem.allowed_languages.set(Language.objects.all())
+        problem.partial = True
+        problem.save()
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_initial(self):
         initial = super(ProblemCreate, self).get_initial()
         initial = initial.copy()
         initial['description'] = misc_config(self.request)['misc_config']['description_example']
+        initial['memory_limit'] = 262144  # 256 MB
         return initial
 
 
@@ -765,18 +761,14 @@ class ProblemSuggest(ProblemCreate):
     def get_content_title(self):
         return _('Suggesting new problem')
 
-    def post(self, request, *args, **kwargs):
-        self.object = None
-        form = ProblemEditForm(request.POST or None)
-        if form.is_valid():
-            self.object = problem = form.save()
-            problem.suggester = request.user.profile
-            problem.allowed_languages.set(Language.objects.all())
-            problem.save()
-            on_new_suggested_problem.delay(problem.code)
-            return HttpResponseRedirect(self.get_success_url())
-        else:
-            return self.form_invalid(form)
+    def form_valid(self, form):
+        self.object = problem = form.save()
+        problem.suggester = self.request.user.profile
+        problem.allowed_languages.set(Language.objects.all())
+        problem.partial = True
+        problem.save()
+        on_new_suggested_problem.delay(problem.code)
+        return HttpResponseRedirect(self.get_success_url())
 
 
 class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
