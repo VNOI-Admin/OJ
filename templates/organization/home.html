@@ -23,6 +23,20 @@
                 {% csrf_token %}
                 <input type="submit" class="unselectable button full leave-organization" value="{{ _('Leave organization') }}">
             </form>
+            <br>
+
+            <form method="post" action="{{ url('list_problem_organization', organization.id, organization.slug) }}">
+                {% csrf_token %}
+                <input type="submit" class="unselectable button full list-problems-organization" value="{{ _('Problems') }}">
+            </form>
+            <br>
+            {% if request.user.is_superuser or request.profile in organization.admins.all() %}
+                <form method="post" action="{{ url('problem_create_organization', organization.id, organization.slug) }}">
+                    {% csrf_token %}
+                    <input type="submit" class="unselectable button full problem-create-organization" value="{{ _('Create Problem') }}">
+                </form>
+            {% endif %}
+
         {% elif organization.is_open %}
             <form method="post" action="{{ url('join_organization', organization.id, organization.slug) }}">
                 {% csrf_token %}
@@ -32,6 +46,7 @@
             <a href="{{ url('request_organization', organization.id, organization.slug) }}"
                class="unselectable button full">{{ _('Request membership') }}</a>
         {% endif %}
+
         <hr>
     {% endif %}
 

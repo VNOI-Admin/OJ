@@ -12,10 +12,13 @@ from django.views.generic import DetailView, FormView, ListView, UpdateView, Vie
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
+from judge.template_context import misc_config
+
 from judge.forms import EditOrganizationForm
-from judge.models import Organization, OrganizationRequest, Profile
+from judge.models import Organization, OrganizationRequest, Profile, Language, Problem, Submission
 from judge.utils.ranker import ranker
 from judge.utils.views import TitleMixin, generic_message
+from judge.views.problem import ProblemCreate, ProblemList
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
@@ -319,3 +322,61 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 
         organization.members.remove(user)
         return HttpResponseRedirect(organization.get_users_url())
+
+class ListProblemOrganization(ProblemList):
+    template_name = 'organization/problem_list.html'
+
+    def get_normal_queryset(self):
+        organization = Organization.objects.get(id=int(self.request.path.split('/')[2].split('-')[0]))
+
+        filter = Q(organizations = organization)
+        queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
+
+        if self.profile is not None and self.hide_solved:
+            queryset = queryset.exclude(id__in=Submission.objects.filter(user=self.profile, points=F('problem__points'))
+                                        .values_list('problem__id', flat=True))
+        if self.show_types:
+            queryset = queryset.prefetch_related('types')
+        if self.category is not None:
+            queryset = queryset.filter(group__id=self.category)
+        if self.selected_types:
+            queryset = queryset.filter(types__in=self.selected_types)
+        if 'search' in self.request.GET:
+            self.search_query = query = ' '.join(self.request.GET.getlist('search')).strip()
+            if query:
+                if settings.ENABLE_FTS and self.full_text:
+                    queryset = queryset.search(query, queryset.BOOLEAN).extra(order_by=['-relevance'])
+                else:
+                    queryset = queryset.filter(
+                        Q(code__icontains=query) | Q(name__icontains=query) | Q(source__icontains=query) |
+                        Q(translations__name__icontains=query, translations__language=self.request.LANGUAGE_CODE))
+        self.prepoint_queryset = queryset
+        if self.point_start is not None:
+            queryset = queryset.filter(points__gte=self.point_start)
+        if self.point_end is not None:
+            queryset = queryset.filter(points__lte=self.point_end)
+        
+        return queryset.distinct()
+    pass
+
+class ProblemCreateOrganization(ProblemCreate):
+    def get_initial(self):
+        initial = super(ProblemCreate, self).get_initial()
+        initial = initial.copy()
+        initial['description'] = misc_config(self.request)['misc_config']['description_example']
+        initial['memory_limit'] = 262144  # 256 MB
+        return initial
+
+    def form_valid(self, form):
+        organization = Organization.objects.get(pk=int(self.get_object().id))
+        self.object = problem = form.save()
+        problem.authors.add(self.request.user.profile)
+        problem.allowed_languages.set(Language.objects.all())
+        problem.partial = True
+        problem.organizations.add(organization)
+        problem.is_public = False
+        problem.is_organization_private = True
+        problem.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+    pass
