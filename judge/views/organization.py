@@ -16,9 +16,9 @@ from judge.forms import EditOrganizationForm
 from judge.models import Language, Organization, OrganizationRequest, Problem, Profile, Submission
 from judge.utils.ranker import ranker
 from judge.utils.views import TitleMixin, generic_message
+from judge.template_context import misc_config
 from judge.views.problem import ProblemCreate, ProblemList
 
-from judge.template_context import misc_config
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
@@ -329,7 +329,7 @@ class ListProblemOrganization(ProblemList):
 
     def get_normal_queryset(self):
         organization = Organization.objects.get(id=int(self.request.path.split('/')[2].split('-')[0]))
-        filter = Q(organizations = organization)
+        filter = Q(organizations=organization)
         queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
 
         if self.profile is not None and self.hide_solved:
