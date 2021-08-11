@@ -2,9 +2,20 @@
     <h3>{{ _('Problem search') }} <i class="fa fa-search"></i></h3>
     <div class="sidebox-content">
         <form id="filter-form" name="form" action="" method="get">
+            {% if selected_tag %}<input type="hidden" name="tag_id" value="{{ selected_tag }}">{% endif %}
             <div>
                 <input id="search" type="text" name="search" value="{{ search_query or '' }}"
                         placeholder="{{ _('Search problems...') }}">
+            </div>
+            <div class="filter-form-group">
+                <label for="judge"><i>{{ _('Judges') }}</i></label>
+                <select id="judges" name="judge" multiple>
+                    {% for judge in judges %}
+                        <option value="{{ judge.id }}"{% if judge.id in selected_judges %} selected{% endif %}>
+                            {{ judge.full_name }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
             <div class="form-submit-group">
                 <a id="go" class="button">{{ _('Go') }}</a>
@@ -15,6 +26,9 @@
     <script>
         $(function () {
             var $form = $('form#filter-form');
+
+            $('#judges').select2({multiple: 1, placeholder: '{{ _('Filter by judge...') }}'})
+                    .css({'visibility': 'visible'});
 
             $('#go').click(function () {
                 $form.submit();

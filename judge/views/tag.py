@@ -1,5 +1,6 @@
 from random import randrange
 
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
 from django.db.models import Q
@@ -50,6 +51,7 @@ class TagProblemList(TitleMixin, ListView):
     def get_queryset(self):
         self.tag_id = None
         self.search_query = None
+        self.selected_judges = []
 
         queryset = TagProblem.objects.order_by('code')
 
@@ -62,6 +64,16 @@ class TagProblemList(TitleMixin, ListView):
             self.search_query = ' '.join(self.request.GET.getlist('search')).strip()
             if self.search_query:
                 queryset = queryset.filter(Q(code__icontains=self.search_query) | Q(name__icontains=self.search_query))
+
+        if 'judge' in self.request.GET:
+            try:
+                self.selected_judges = self.request.GET.getlist('judge')
+            except ValueError:
+                pass
+
+            if self.selected_judges:
+                print(self.selected_judges)
+                queryset = queryset.filter(judge__in=self.selected_judges)
 
         return queryset
 
@@ -78,6 +90,8 @@ class TagProblemList(TitleMixin, ListView):
         context['selected_tag'] = self.tag_id
         context['search_query'] = self.search_query
         context['groups'] = TagGroup.objects.all()
+        context['judges'] = settings.OJ_JUDGES_PRESET
+        context['selected_judges'] = self.selected_judges
 
         context.update(self.get_tag_context())
         context.update(paginate_query_context(self.request))
@@ -90,7 +104,7 @@ class TagRandomProblem(TagProblemList):
         queryset = self.get_queryset()
         count = queryset.count()
         if not count:
-            return HttpResponseRedirect('%s%s%s' % (reverse('problem_list'), request.META['QUERY_STRING'] and '?',
+            return HttpResponseRedirect('%s%s%s' % (reverse('tagproblem_list'), request.META['QUERY_STRING'] and '?',
                                                     request.META['QUERY_STRING']))
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
 

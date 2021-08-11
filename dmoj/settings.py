@@ -95,6 +95,29 @@ OJ_PROBLEM_PRESET = [
     },
 ]
 
+OJ_JUDGES_PRESET = [
+    {
+        'id': 'Atcoder',
+        'full_name': 'Atcoder',
+    },
+    {
+        'id': 'Codeforces',
+        'full_name': 'Codeforces',
+    },
+    {
+        'id': 'CodeforcesGym',
+        'full_name': 'Codeforces (Gym)',
+    },
+    {
+        'id': 'Kattis',
+        'full_name': 'Kattis',
+    },
+    {
+        'id': 'VNOJ',
+        'full_name': 'VNOJ',
+    },
+]
+
 OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
 
 # Urls of discord webhook.
