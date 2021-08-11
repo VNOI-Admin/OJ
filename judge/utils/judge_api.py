@@ -31,30 +31,42 @@ class OJAPI:
 
     @staticmethod
     def CodeforcesProblemAPI(codename):
-        problemset = cache.get('OJAPI_data_Codeforces', None)
+        contestset = cache.get('OJAPI_data_Codeforces', None)
 
-        if problemset is None:
-            api_url = "https://codeforces.com/api/problemset.problems"
-            problemset_data = requests.get(api_url).json()
+        if contestset is None:
+            api_url_contestlist = 'https://codeforces.com/api/contest.list'
+            contestset_data = requests.get(api_url_contestlist).json()
 
-            if problemset_data['status'] != 'OK':
+            if contestset_data['status'] != 'OK':
                 return None
 
-            code_template = "CF_%s_%s"  # I.e.: contestId = 1000, index = C
+            contestset = []
 
-            problemset = {}
+            for contest in contestset_data["result"]:
+                contestset.append(str(contest['id']))
+            cache.set('OJAPI_data_Codeforces', contestset, settings.OJAPI_CACHE_TIMEOUT)
 
-            for problem in problemset_data["result"]["problems"]:
-                code = code_template % (problem["contestId"], problem["index"])
-                if code in problemset:
-                    raise ValueError("Problem code %s appeared twice in the problemset." % code)
-                problemset[code] = {
-                    "contestId": problem["contestId"],
-                    "index": problem["index"],
-                    "title": problem["name"],
-                }
+        prefix, contestid, index = codename.split('_')
 
-            cache.set('OJAPI_data_Codeforces', problemset, settings.OJAPI_CACHE_TIMEOUT)
+        if contestid not in contestset:
+            return None
+
+        api_url = 'https://codeforces.com/api/contest.standings?contestId=%s'
+        problemset_data = requests.get(api_url % contestid).json()
+
+        if problemset_data['status'] != 'OK':
+            return None
+
+        code_template = 'CF_%s_%s'
+
+        problemset = {}
+        for problem in problemset_data['result']['problems']:
+            code = code_template % (problem['contestId'], problem['index'])
+            problemset[code] = {
+                'contestId': problem['contestId'],
+                'index': problem['index'],
+                'title': problem['name'],
+            }
 
         return problemset.get(codename, None)
 
