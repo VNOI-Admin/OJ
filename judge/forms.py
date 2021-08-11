@@ -194,7 +194,7 @@ class TagProblemCreateForm(Form):
         }
 
 
-class TagProblemAddTagForm(ModelForm):
+class TagProblemAssignForm(ModelForm):
     class Meta:
         model = TagProblem.tag.through
         fields = ['tag']

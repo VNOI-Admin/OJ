@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView
 
 from judge.comments import CommentedDetailView
-from judge.forms import TagProblemAddTagForm, TagProblemCreateForm
+from judge.forms import TagProblemAssignForm, TagProblemCreateForm
 from judge.models import TagData, TagGroup, TagProblem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.judge_api import APIError, OJAPI
@@ -127,13 +127,13 @@ class TagProblemCreate(LoginRequiredMixin, TitleMixin, FormView):
             return self.form_invalid(form)
 
 
-class TagProblemAddTag(LoginRequiredMixin, TagProblemMixin, TitleMixin, SingleObjectFormView):
-    template_name = 'tag/add-tag.html'
-    form_class = TagProblemAddTagForm
+class TagProblemAssign(LoginRequiredMixin, TagProblemMixin, TitleMixin, SingleObjectFormView):
+    template_name = 'tag/assign.html'
+    form_class = TagProblemAssignForm
 
     def get_content_title(self):
         return mark_safe(
-            escape(_('Add new tag for %s')) % format_html(
+            escape(_('Assign new tag for %s')) % format_html(
                 '<a href="{0}">{1}</a>',
                 self.object.get_absolute_url(),
                 self.object.name,
@@ -141,7 +141,7 @@ class TagProblemAddTag(LoginRequiredMixin, TagProblemMixin, TitleMixin, SingleOb
         )
 
     def get_title(self):
-        return _('Add new tag for %s') % self.object.name
+        return _('Assign new tag for %s') % self.object.name
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()

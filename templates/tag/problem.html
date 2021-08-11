@@ -74,7 +74,7 @@
             <span class="spacer"></span>
             <ul>
                 <li class="tab">
-                    <a href="{{ url('tagproblem_add_tag', problem.code) }}"><i class="tab-icon fa fa-plus add-problem"></i>{{ _('Add new tag') }}</a>
+                    <a href="{{ url('tagproblem_assign', problem.code) }}"><i class="tab-icon fa fa-plus add-problem"></i>{{ _('Assign new tag') }}</a>
                 </li>
                 {% if request.user.is_superuser %}
                     <li class="tab">
