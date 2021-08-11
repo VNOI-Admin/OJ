@@ -5,6 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
 from django.db.models import Q
 from django.http import Http404, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
@@ -13,7 +14,7 @@ from django.views.generic import FormView, ListView
 
 from judge.comments import CommentedDetailView
 from judge.forms import TagProblemAssignForm, TagProblemCreateForm
-from judge.models import TagData, TagGroup, TagProblem
+from judge.models import Tag, TagData, TagGroup, TagProblem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.judge_api import APIError, OJAPI
 from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message, paginate_query_context
@@ -165,7 +166,7 @@ class TagProblemAssign(LoginRequiredMixin, TagBanningMixin, TagProblemMixin, Tit
 
     def get_content_title(self):
         return mark_safe(
-            escape(_('Assign new tag for %s')) % format_html(
+            escape(_('Assign new tags for %s')) % format_html(
                 '<a href="{0}">{1}</a>',
                 self.object.get_absolute_url(),
                 self.object.name,
@@ -173,15 +174,23 @@ class TagProblemAssign(LoginRequiredMixin, TagBanningMixin, TagProblemMixin, Tit
         )
 
     def get_title(self):
-        return _('Assign new tag for %s') % self.object.name
+        return _('Assign new tags for %s') % self.object.name
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['instance'] = TagData(assigner=self.request.profile, problem=self.object)
-        return kwargs
+    def get_context_data(self, **kwargs):
+        context = super(TagProblemAssign, self).get_context_data(**kwargs)
+        context['groups'] = TagGroup.objects.all()
+        return context
 
     def form_valid(self, form):
-        form.save()
+        tags = form.cleaned_data['tags']
+        for tag in tags:
+            tag = get_object_or_404(Tag, code=tag)
+            try:
+                tag_data = TagData(assigner=self.request.profile, problem=self.object, tag=tag)
+                tag_data.save()
+            except IntegrityError:
+                pass
+
         return HttpResponseRedirect(self.object.get_absolute_url())
 
 

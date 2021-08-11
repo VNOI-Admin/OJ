@@ -18,7 +18,7 @@ from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
 from judge.models import Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, Submission, \
-    TagProblem, WebAuthnCredential
+    Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -199,20 +199,11 @@ class TagProblemCreateForm(Form):
             self.fields['problem_url'].initial = problem_url
 
 
-class TagProblemAssignForm(ModelForm):
-    class Meta:
-        model = TagProblem.tag.through
-        fields = ['tag']
-        widgets = {
-            'tag': Select2Widget(attrs={'style': 'width: 100%;'}),
-        }
-
-    def full_clean(self):
-        super().full_clean()
-        try:
-            self.instance.validate_unique()
-        except forms.ValidationError as e:
-            self._update_errors(e)
+class TagProblemAssignForm(Form):
+    tags = MultipleChoiceField(
+        required=True,
+        choices=list(map(attrgetter('code', 'name'), Tag.objects.all())),
+    )
 
 
 class EditOrganizationForm(ModelForm):
