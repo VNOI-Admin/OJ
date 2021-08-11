@@ -6,6 +6,8 @@ from django.core.cache import cache
 
 from judge.models import Problem
 
+_TIMEOUT = settings.OJ_REQUESTS_TIMEOUT
+
 
 class APIError(Exception):
     pass
@@ -35,7 +37,7 @@ class OJAPI:
 
         if contestset is None:
             api_url_contestlist = 'https://codeforces.com/api/contest.list'
-            contestset_data = requests.get(api_url_contestlist).json()
+            contestset_data = requests.get(api_url_contestlist, timeout=_TIMEOUT).json()
 
             if contestset_data['status'] != 'OK':
                 return None
@@ -52,7 +54,7 @@ class OJAPI:
             return None
 
         api_url = 'https://codeforces.com/api/contest.standings?contestId=%s'
-        problemset_data = requests.get(api_url % contestid).json()
+        problemset_data = requests.get(api_url % contestid, timeout=_TIMEOUT).json()
 
         if problemset_data['status'] != 'OK':
             return None
@@ -76,7 +78,7 @@ class OJAPI:
 
         if problemset is None:
             api_url = "https://kenkoooo.com/atcoder/resources/problems.json"
-            problemset_data = requests.get(api_url).json()
+            problemset_data = requests.get(api_url, timeout=_TIMEOUT).json()
 
             if problemset_data is None:
                 return None
@@ -116,7 +118,7 @@ class OJAPI:
     @staticmethod
     def KattisProblemAPI(codename):
         codename = codename.replace('KATTIS_', '')
-        verification = requests.get(url='https://open.kattis.com/problems/%s' % codename).status_code
+        verification = requests.get(url='https://open.kattis.com/problems/%s' % codename, timeout=_TIMEOUT).status_code
         if verification != 200:
             return None
 
@@ -137,7 +139,7 @@ class OJAPI:
 
         if contestset is None or contestid > max(contestset):
             api_url_contestlist = 'https://codeforces.com/api/contest.list?gym=true'
-            contestset_data = requests.get(api_url_contestlist).json()
+            contestset_data = requests.get(api_url_contestlist, timeout=_TIMEOUT).json()
 
             if contestset_data['status'] != 'OK':
                 return None
@@ -154,7 +156,7 @@ class OJAPI:
             return None
 
         api_url = 'https://codeforces.com/api/contest.standings?contestId=%s'
-        problemset_data = requests.get(api_url % contestid).json()
+        problemset_data = requests.get(api_url % contestid, timeout=_TIMEOUT).json()
 
         if problemset_data['status'] != 'OK':
             return None
