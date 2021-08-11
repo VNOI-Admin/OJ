@@ -10,9 +10,9 @@
             <div class="filter-form-group">
                 <label for="judge"><i>{{ _('Judges') }}</i></label>
                 <select id="judges" name="judge" multiple>
-                    {% for judge in judges %}
-                        <option value="{{ judge.id }}"{% if judge.id in selected_judges %} selected{% endif %}>
-                            {{ judge.full_name }}
+                    {% for id, full_name in judges %}
+                        <option value="{{ id }}"{% if id in selected_judges %} selected{% endif %}>
+                            {{ full_name }}
                         </option>
                     {% endfor %}
                 </select>
