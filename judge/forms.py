@@ -192,8 +192,7 @@ class TagProblemCreateForm(Form):
                                  help_text=_('Full URL to the problem.'),
                                  widget=forms.TextInput(attrs={'style': 'width:100%'}))
 
-    def __init__(self, request, problem_url=None, *args, **kwargs):
-        self.request = request
+    def __init__(self, problem_url=None, *args, **kwargs):
         super(TagProblemCreateForm, self).__init__(*args, **kwargs)
         if problem_url is not None:
             self.fields['problem_url'].required = True

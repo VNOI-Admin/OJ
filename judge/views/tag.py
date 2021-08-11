@@ -24,7 +24,7 @@ class TagBanningMixin(object):
         if request.user.is_authenticated and request.profile.banned_tagging:
             return generic_message(request, _('Banned from tagging'),
                                    _('You are permanently banned from tagging.'))
-        return super().dispatch(request, *args, **kwargs)
+        return super(TagBanningMixin, self).dispatch(request, *args, **kwargs)
 
 
 class TagProblemMixin(object):
@@ -124,42 +124,36 @@ class TagProblemCreate(LoginRequiredMixin, TagBanningMixin, TitleMixin, FormView
 
     def get_form_kwargs(self):
         kwargs = super(TagProblemCreate, self).get_form_kwargs()
-        kwargs['request'] = self.request
         kwargs['problem_url'] = self.request.GET.get('problem_url')
         return kwargs
 
-    def post(self, request, *args, **kwargs):
-        form = TagProblemCreateForm(request.POST or None)
+    def form_valid(self, form):
         try:
-            if form.is_valid():
-                url = form.cleaned_data.get('problem_url')
-                problem_data = OJAPI.get_problem_data(url)
+            url = form.cleaned_data.get('problem_url')
+            problem_data = OJAPI.get_problem_data(url)
 
-                # Check if problem is in database or not
-                try:
-                    problem = TagProblem.objects.get(code=problem_data['codename'])
-                    return HttpResponseRedirect(problem.get_absolute_url())
-                except TagProblem.DoesNotExist:
-                    pass
-
-                # Retrive API result from cache
-                # If cache is empty, request API then store the result
-                API = OJAPI()
-                api_method = API.__getattribute__(problem_data['judge'] + 'ProblemAPI')  # Get method based on judge
-                api_problem_data = api_method(problem_data['codename'])
-
-                # No problem found
-                if api_problem_data is None:
-                    raise APIError('Problem not found in problemset')
-
-                # Initialize model
-                problem = TagProblem(code=problem_data['codename'], name=api_problem_data['title'], link=url,
-                                     judge=problem_data['judge'])
-                problem.save()
+            # Check if problem is in database or not
+            try:
+                problem = TagProblem.objects.get(code=problem_data['codename'])
                 return HttpResponseRedirect(problem.get_absolute_url())
-            else:
-                form.add_error('problem_url', 'An error occurred during problem initialization. Please try again.')
-                return self.form_invalid(form)
+            except TagProblem.DoesNotExist:
+                pass
+
+            # Retrive API result from cache
+            # If cache is empty, request API then store the result
+            API = OJAPI()
+            api_method = API.__getattribute__(problem_data['judge'] + 'ProblemAPI')  # Get method based on judge
+            api_problem_data = api_method(problem_data['codename'])
+
+            # No problem found
+            if api_problem_data is None:
+                raise APIError('Problem not found in problemset')
+
+            # Initialize model
+            problem = TagProblem(code=problem_data['codename'], name=api_problem_data['title'], link=url,
+                                 judge=problem_data['judge'])
+            problem.save()
+            return HttpResponseRedirect(problem.get_absolute_url())
         except (APIError, IntegrityError) as e:
             form.add_error('problem_url', e)
             return self.form_invalid(form)
