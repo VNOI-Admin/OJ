@@ -39,7 +39,7 @@
 {% block js_media %}
     <script type="text/javascript" src="{{ static('vnoj/accordion/accordion.js') }}"></script>
 
-    {% if selected_tag is not none %}
+    {% if selected_tag %}
         <script>
             $(function () {
                 var el = $('.accordion .card-body a[tag_id={{ selected_tag }}]')[0];
@@ -82,7 +82,8 @@
         {% block before_table %}{% endblock %}
         <div id="content-right" class="problems">
             <div class="info-float">
-                <div class="sidebox accordion">
+                {% include "tag/search-form.html" %}
+                <div class="accordion">
                     {% for group in groups %}
                         <div class="card">
                             <a class="card-toggle" href="#">{{ group.name }}</a>

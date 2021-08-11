@@ -1,0 +1,31 @@
+<div class="sidebox">
+    <h3>{{ _('Problem search') }} <i class="fa fa-search"></i></h3>
+    <div class="sidebox-content">
+        <form id="filter-form" name="form" action="" method="get">
+            <div>
+                <input id="search" type="text" name="search" value="{{ search_query or '' }}"
+                        placeholder="{{ _('Search problems...') }}">
+            </div>
+            <div class="form-submit-group">
+                <a id="go" class="button">{{ _('Go') }}</a>
+                <a id="random" class="button">{{ _('Random') }}</a>
+            </div>
+        </form>
+    </div>
+    <script>
+        $(function () {
+            var $form = $('form#filter-form');
+
+            $('#go').click(function () {
+                $form.submit();
+            });
+
+            $('#random').click(function (e) {
+                var action = $form.attr('action');
+                $form.attr('action', '{{ url('tagproblem_random') }}').attr('target', '_blank').submit();
+                $form.attr('action', action).attr('target', '');
+                e.preventDefault();
+            });
+        });
+    </script>
+</div>

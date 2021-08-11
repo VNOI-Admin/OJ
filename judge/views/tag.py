@@ -1,7 +1,10 @@
+from random import randrange
+
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
-from django.db.utils import ProgrammingError
+from django.db.models import Q
 from django.http import Http404, HttpResponseRedirect
+from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
@@ -45,28 +48,41 @@ class TagProblemList(TitleMixin, ListView):
     paginator_class = DiggPaginator
 
     def get_queryset(self):
+        self.tag_id = None
+        self.search_query = None
+
         queryset = TagProblem.objects.order_by('code')
 
-        if self.tag_id is not None:
-            queryset = queryset.filter(tag__code=self.tag_id)
+        if 'tag_id' in self.request.GET:
+            self.tag_id = self.request.GET.get('tag_id')
+            if self.tag_id:
+                queryset = queryset.filter(tag__code=self.tag_id)
+
+        if 'search' in self.request.GET:
+            self.search_query = ' '.join(self.request.GET.getlist('search')).strip()
+            if self.search_query:
+                queryset = queryset.filter(Q(code__icontains=self.search_query) | Q(name__icontains=self.search_query))
 
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super(TagProblemList, self).get_context_data(**kwargs)
         context['selected_tag'] = self.tag_id
+        context['search_query'] = self.search_query
         context['groups'] = TagGroup.objects.all()
         context.update(paginate_query_context(self.request))
 
         return context
 
-    def get(self, request, *args, **kwargs):
-        self.tag_id = request.GET.get('tag_id', None)
 
-        try:
-            return super(TagProblemList, self).get(request, *args, **kwargs)
-        except ProgrammingError as e:
-            return generic_message(request, 'FTS syntax error', e.args[1], status=400)
+class TagRandomProblem(TagProblemList):
+    def get(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        count = queryset.count()
+        if not count:
+            return HttpResponseRedirect('%s%s%s' % (reverse('problem_list'), request.META['QUERY_STRING'] and '?',
+                                                    request.META['QUERY_STRING']))
+        return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
 
 
 class TagProblemCreate(LoginRequiredMixin, TitleMixin, FormView):

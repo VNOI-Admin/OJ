@@ -163,6 +163,7 @@ urlpatterns = [
     url(r'^tags', include([
         url(r'^/$', tag.TagProblemList.as_view(), name='tagproblem_list'),
         url(r'^/create$', tag.TagProblemCreate.as_view(), name='tagproblem_create'),
+        url(r'^/random/$', tag.TagRandomProblem.as_view(), name='tagproblem_random'),
     ])),
 
     url(r'^tag/(?P<tagproblem>[^/]+)', include([
