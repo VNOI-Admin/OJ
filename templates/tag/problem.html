@@ -73,9 +73,11 @@
             <h2>{{ title }}</h2>
             <span class="spacer"></span>
             <ul>
-                <li class="tab">
-                    <a href="{{ url('tagproblem_assign', problem.code) }}"><i class="tab-icon fa fa-plus add-problem"></i>{{ _('Assign new tag') }}</a>
-                </li>
+                {% if request.user.is_authenticated and not request.profile.banned_tagging %}
+                    <li class="tab">
+                        <a href="{{ url('tagproblem_assign', problem.code) }}"><i class="tab-icon fa fa-plus add-problem"></i>{{ _('Assign new tag') }}</a>
+                    </li>
+                {% endif %}
                 {% if request.user.is_superuser %}
                     <li class="tab">
                         <a href="{{ url('admin:judge_tagproblem_change', problem.id) }}"><i class="tab-icon fa fa-edit"></i>{{ _('Admin') }}</a>

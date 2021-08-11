@@ -19,6 +19,14 @@ from judge.utils.judge_api import APIError, OJAPI
 from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message, paginate_query_context
 
 
+class TagBanningMixin(object):
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and request.profile.banned_tagging:
+            return generic_message(request, _('Banned from tagging'),
+                                   _('You are permanently banned from tagging.'))
+        return super().dispatch(request, *args, **kwargs)
+
+
 class TagProblemMixin(object):
     model = TagProblem
     slug_url_kwarg = 'tagproblem'
@@ -109,7 +117,7 @@ class TagRandomProblem(TagProblemList):
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
 
 
-class TagProblemCreate(LoginRequiredMixin, TitleMixin, FormView):
+class TagProblemCreate(LoginRequiredMixin, TagBanningMixin, TitleMixin, FormView):
     title = _('Create new tag problem')
     template_name = 'tag/create.html'
     form_class = TagProblemCreateForm
@@ -151,7 +159,7 @@ class TagProblemCreate(LoginRequiredMixin, TitleMixin, FormView):
             return self.form_invalid(form)
 
 
-class TagProblemAssign(LoginRequiredMixin, TagProblemMixin, TitleMixin, SingleObjectFormView):
+class TagProblemAssign(LoginRequiredMixin, TagBanningMixin, TagProblemMixin, TitleMixin, SingleObjectFormView):
     template_name = 'tag/assign.html'
     form_class = TagProblemAssignForm
 
