@@ -50,9 +50,7 @@ class TagData(models.Model):
     problem = models.ForeignKey(TagProblem, on_delete=CASCADE)
 
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=['tag', 'problem'], name='unique_tag_problem'),
-        ]
+        unique_together = ('tag', 'problem')
 
     def __str__(self):
         return ""
