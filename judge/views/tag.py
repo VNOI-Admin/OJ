@@ -99,7 +99,8 @@ class TagProblemCreate(LoginRequiredMixin, TitleMixin, FormView):
                     raise APIError('Problem not found in problemset')
 
                 # Initialize model
-                problem = TagProblem(code=problem_data['codename'], name=api_problem_data['title'], link=url)
+                problem = TagProblem(code=problem_data['codename'], name=api_problem_data['title'], link=url,
+                                     judge=problem_data['judge'])
                 problem.save()
                 return HttpResponseRedirect(problem.get_absolute_url())
             else:

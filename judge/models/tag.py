@@ -34,6 +34,8 @@ class TagProblem(models.Model):
                                         'as shown in the problem list.'))
     link = models.URLField(max_length=200, verbose_name=_('Problem URL'),
                            help_text=_('Full URL to the problem.'))
+    judge = models.CharField(max_length=30, verbose_name=_('Online Judge'), blank=True, null=True,
+                             help_text=_('Original OJ of the problem'))
 
     tag = models.ManyToManyField(Tag, through='TagData', related_name='tags', verbose_name=_('Tag'))
 

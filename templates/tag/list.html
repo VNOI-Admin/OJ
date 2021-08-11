@@ -103,7 +103,8 @@
                 <thead>
                 <tr>
                     <th style="width:15%">{{ _('Problem code') }}</th>
-                    <th style="width:85%">{{ _('Problem name') }}</th>
+                    <th style="width:65%">{{ _('Problem name') }}</th>
+                    <th style="width:20%;">{{ _('Judge') }}</th>
                 </tr>
                 </thead>
                 <tbody>
@@ -120,6 +121,7 @@
                                 {% endfor %}
                             </div>
                         </td>
+                        <td>{{ problem.judge }}</td>
                     </tr>
                 {% endfor %}
                 </tbody>
