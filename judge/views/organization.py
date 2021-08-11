@@ -381,6 +381,6 @@ class ProblemCreateOrganization(OrganizationMixin, ProblemCreate):
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
         self.object = self.organization
-        if self.organization.is_admin(request.profile):
+        if self.can_edit_organization():
             return super(ProblemCreateOrganization, self).dispatch(request, *args, **kwargs)
         raise PermissionDenied
