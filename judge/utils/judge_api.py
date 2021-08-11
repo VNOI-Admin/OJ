@@ -133,8 +133,9 @@ class OJAPI:
         # NOTE: Storing contest list instead of problemset for cache optimization
 
         contestset = cache.get('OJAPI_data_CodeforcesGym', None)
+        prefix, contestid, index = codename.split('_')
 
-        if contestset is None:
+        if contestset is None or contestid > max(contestset):
             api_url_contestlist = 'https://codeforces.com/api/contest.list?gym=true'
             contestset_data = requests.get(api_url_contestlist).json()
 
