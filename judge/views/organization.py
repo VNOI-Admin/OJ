@@ -2,11 +2,13 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import F, Q
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ungettext
 from django.views.generic import DetailView, FormView, ListView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
@@ -327,36 +329,21 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 class ListProblemOrganization(ProblemList):
     template_name = 'organization/problem_list.html'
 
-    def get_normal_queryset(self):
-        organization = Organization.objects.get(id=int(self.request.path.split('/')[2].split('-')[0]))
-        filter = Q(organizations=organization)
-        queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
+    def get(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            raise ImproperlyConfigured('Must pass a pk')
+        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        return super(ListProblemOrganization, self).get(request, *args, **kwargs)
 
-        if self.profile is not None and self.hide_solved:
-            queryset = queryset.exclude(id__in=Submission.objects.filter(user=self.profile, points=F('problem__points'))
-                                        .values_list('problem__id', flat=True))
-        if self.show_types:
-            queryset = queryset.prefetch_related('types')
-        if self.category is not None:
-            queryset = queryset.filter(group__id=self.category)
-        if self.selected_types:
-            queryset = queryset.filter(types__in=self.selected_types)
-        if 'search' in self.request.GET:
-            self.search_query = query = ' '.join(self.request.GET.getlist('search')).strip()
-            if query:
-                if settings.ENABLE_FTS and self.full_text:
-                    queryset = queryset.search(query, queryset.BOOLEAN).extra(order_by=['-relevance'])
-                else:
-                    queryset = queryset.filter(
-                        Q(code__icontains=query) | Q(name__icontains=query) | Q(source__icontains=query) |
-                        Q(translations__name__icontains=query, translations__language=self.request.LANGUAGE_CODE))
-        self.prepoint_queryset = queryset
-        if self.point_start is not None:
-            queryset = queryset.filter(points__gte=self.point_start)
-        if self.point_end is not None:
-            queryset = queryset.filter(points__lte=self.point_end)
-        return queryset.distinct()
-    pass
+    def get_title(self):
+        return _('Problems list of %s') % self.organization.name
+
+    def get_content_title(self):
+        return format_html(_('Problems list of') + ' <a href="{1}">{0}</a>', self.organization.name,
+                           self.organization.get_absolute_url())
+
+    def get_filter(self):
+        return Q(organizations=self.organization)
 
 
 class ProblemCreateOrganization(ProblemCreate):

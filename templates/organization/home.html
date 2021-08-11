@@ -25,16 +25,10 @@
             </form>
             <br>
 
-            <form method="post" action="{{ url('list_problem_organization', organization.id, organization.slug) }}">
-                {% csrf_token %}
-                <input type="submit" class="unselectable button full list-problems-organization" value="{{ _('Problems') }}">
-            </form>
+            <div><a href="{{ url('list_problem_organization', organization.id, organization.slug) }}">{{ _("Organization's problems") }}</a></div>
             <br>
             {% if request.user.is_superuser or request.profile in organization.admins.all() %}
-                <form method="post" action="{{ url('problem_create_organization', organization.id, organization.slug) }}">
-                    {% csrf_token %}
-                    <input type="submit" class="unselectable button full problem-create-organization" value="{{ _('Create Problem') }}">
-                </form>
+                <div><a href="{{ url('problem_create_organization', organization.id, organization.slug) }}">{{ _('Create Problem') }}</a></div>
             {% endif %}
 
         {% elif organization.is_open %}
