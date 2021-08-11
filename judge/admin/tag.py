@@ -88,7 +88,7 @@ class TagProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'code', 'name', 'link',
+                'code', 'name', 'link', 'judge',
             ),
         }),
     )
