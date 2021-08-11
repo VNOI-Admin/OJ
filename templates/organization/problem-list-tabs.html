@@ -1,9 +1,9 @@
 {% extends "tabs-base.html" %}
 
 {% block tabs %}
-    {{ make_tab('list', 'fa-list', url('list_problem_organization', request.path.split('/')[2].split('-')[0], request.path.split('/')[2].split('-')[1]), _('List')) }}
-
-    {% if request.user.is_superuser %}
-        {{ make_tab('admin', 'fa-edit', url('admin:judge_problem_changelist'), _('Admin')) }}
+    {% if organization.is_admin(request.profile) %}
+        {{ make_tab('create', 'fa-plus add-problem', url('problem_create_organization', organization.id, organization.slug), _('Create new problem')) }}
     {% endif %}
+    {{ make_tab('list', 'fa-list', url('list_problem_organization', organization.pk, organization.slug), _('List')) }}
+    {{ make_tab('submission', 'fa-list', url('all_submissions') + '?organization=' + str(organization.pk), _('Submissions')) }}
 {% endblock %}

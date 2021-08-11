@@ -27,7 +27,7 @@
 
             <div><a href="{{ url('list_problem_organization', organization.id, organization.slug) }}">{{ _("Organization's problems") }}</a></div>
             <br>
-            {% if request.user.is_superuser or request.profile in organization.admins.all() %}
+            {% if organization.is_admin(request.profile) %}
                 <div><a href="{{ url('problem_create_organization', organization.id, organization.slug) }}">{{ _('Create Problem') }}</a></div>
             {% endif %}
 

@@ -342,6 +342,11 @@ class ListProblemOrganization(ProblemList):
         return format_html(_('Problems list of') + ' <a href="{1}">{0}</a>', self.organization.name,
                            self.organization.get_absolute_url())
 
+    def get_context_data(self, **kwargs):
+        context = super(ListProblemOrganization, self).get_context_data(**kwargs)
+        context['organization'] = self.organization
+        return context
+
     def get_filter(self):
         return Q(organizations=self.organization)
 
@@ -354,16 +359,26 @@ class ProblemCreateOrganization(ProblemCreate):
         initial['memory_limit'] = 262144  # 256 MB
         return initial
 
+    def get_permission_required(self):
+        return []
+
     def form_valid(self, form):
         organization = Organization.objects.get(pk=int(self.get_object().id))
         self.object = problem = form.save()
         problem.authors.add(self.request.user.profile)
         problem.allowed_languages.set(Language.objects.all())
         problem.partial = True
-        problem.organizations.add(organization)
-        problem.is_public = False
+        # We have to set it to True, even it is private for a org
+        problem.is_public = True
         problem.is_organization_private = True
+        problem.organizations.add(organization)
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
-
-    pass
+    
+    def dispatch(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            raise ImproperlyConfigured('Must pass a pk')
+        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        if self.organization.is_admin(request.profile):
+            return super(ProblemCreateOrganization, self).dispatch(request, *args, **kwargs)
+        raise PermissionDenied
