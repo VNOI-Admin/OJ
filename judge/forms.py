@@ -187,13 +187,9 @@ class ProblemSubmitForm(ModelForm):
 
 
 class TagProblemCreateForm(Form):
-    problem_url = forms.URLField(max_length=200, label=_('Problem URL'))
-
-    class Meta:
-        help_texts = {
-            # FIXME: help text not showing
-            'problem_url': _("Link to the problem URL."),
-        }
+    problem_url = forms.URLField(max_length=200,
+                                 label=_('Problem URL'),
+                                 help_text=_('Full URL to the problem.'))
 
 
 class TagProblemAssignForm(ModelForm):
