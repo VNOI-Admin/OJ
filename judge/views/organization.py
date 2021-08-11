@@ -326,13 +326,14 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
         return HttpResponseRedirect(organization.get_users_url())
 
 
-class ListProblemOrganization(ProblemList):
+class ListProblemOrganization(OrganizationMixin, ProblemList):
     template_name = 'organization/problem_list.html'
 
     def get(self, request, *args, **kwargs):
         if 'pk' not in kwargs:
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        self.object = self.organization
         return super(ListProblemOrganization, self).get(request, *args, **kwargs)
 
     def get_title(self):
@@ -351,7 +352,7 @@ class ListProblemOrganization(ProblemList):
         return Q(organizations=self.organization)
 
 
-class ProblemCreateOrganization(ProblemCreate):
+class ProblemCreateOrganization(OrganizationMixin, ProblemCreate):
     def get_initial(self):
         initial = super(ProblemCreate, self).get_initial()
         initial = initial.copy()
@@ -379,6 +380,7 @@ class ProblemCreateOrganization(ProblemCreate):
         if 'pk' not in kwargs:
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        self.object = self.organization
         if self.organization.is_admin(request.profile):
             return super(ProblemCreateOrganization, self).dispatch(request, *args, **kwargs)
         raise PermissionDenied
