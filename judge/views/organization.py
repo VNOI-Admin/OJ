@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.db.models import F, Q
+from django.db.models import Q
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -15,7 +15,7 @@ from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateR
 from reversion import revisions
 
 from judge.forms import EditOrganizationForm
-from judge.models import Language, Organization, OrganizationRequest, Problem, Profile, Submission
+from judge.models import Language, Organization, OrganizationRequest, Profile
 from judge.template_context import misc_config
 from judge.utils.ranker import ranker
 from judge.utils.views import TitleMixin, generic_message
@@ -374,7 +374,7 @@ class ProblemCreateOrganization(ProblemCreate):
         problem.organizations.add(organization)
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
-    
+
     def dispatch(self, request, *args, **kwargs):
         if 'pk' not in kwargs:
             raise ImproperlyConfigured('Must pass a pk')
