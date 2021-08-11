@@ -14,9 +14,9 @@ from reversion import revisions
 
 from judge.forms import EditOrganizationForm
 from judge.models import Language, Organization, OrganizationRequest, Problem, Profile, Submission
+from judge.template_context import misc_config
 from judge.utils.ranker import ranker
 from judge.utils.views import TitleMixin, generic_message
-from judge.template_context import misc_config
 from judge.views.problem import ProblemCreate, ProblemList
 
 
