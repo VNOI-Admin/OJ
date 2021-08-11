@@ -65,11 +65,21 @@ class TagProblemList(TitleMixin, ListView):
 
         return queryset
 
+    def get_tag_context(self):
+        # Clear tag_id and page but keep everything else
+        query = self.request.GET.copy()
+        query.pop('tag_id', None)
+        query.pop('page', None)
+        query = query.urlencode()
+        return {'tag_prefix': query}
+
     def get_context_data(self, **kwargs):
         context = super(TagProblemList, self).get_context_data(**kwargs)
         context['selected_tag'] = self.tag_id
         context['search_query'] = self.search_query
         context['groups'] = TagGroup.objects.all()
+
+        context.update(self.get_tag_context())
         context.update(paginate_query_context(self.request))
 
         return context
@@ -120,7 +130,7 @@ class TagProblemCreate(LoginRequiredMixin, TitleMixin, FormView):
                 problem.save()
                 return HttpResponseRedirect(problem.get_absolute_url())
             else:
-                form.add_error('problem_url', 'An error occured during problem initialization. Please try again.')
+                form.add_error('problem_url', 'An error occurred during problem initialization. Please try again.')
                 return self.form_invalid(form)
         except (APIError, IntegrityError) as e:
             form.add_error('problem_url', e)

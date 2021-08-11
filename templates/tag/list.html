@@ -1,7 +1,7 @@
 {% extends "common-content.html" %}
 
 {% macro make_tag_url(tag) -%}
-<a href="{{ url('tagproblem_list') }}?tag_id={{ tag.code }}" tag_id={{ tag.code }}>{{ tag.name }}</a>
+<a href="{{ url('tagproblem_list') }}?tag_id={{ tag.code }}{% if tag_prefix %}&{{ tag_prefix }}{% endif %}" tag_id={{ tag.code }}>{{ tag.name }}</a>
 {%- endmacro -%}
 
 {% block media %}
