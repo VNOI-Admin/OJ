@@ -3,7 +3,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import F, Q
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.urls import reverse
@@ -12,13 +12,13 @@ from django.views.generic import DetailView, FormView, ListView, UpdateView, Vie
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
-from judge.template_context import misc_config
-
 from judge.forms import EditOrganizationForm
-from judge.models import Organization, OrganizationRequest, Profile, Language, Problem, Submission
+from judge.models import Language, Organization, OrganizationRequest, Problem, Profile, Submission
 from judge.utils.ranker import ranker
 from judge.utils.views import TitleMixin, generic_message
 from judge.views.problem import ProblemCreate, ProblemList
+
+from judge.template_context import misc_config
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
@@ -323,12 +323,12 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
         organization.members.remove(user)
         return HttpResponseRedirect(organization.get_users_url())
 
+
 class ListProblemOrganization(ProblemList):
     template_name = 'organization/problem_list.html'
 
     def get_normal_queryset(self):
         organization = Organization.objects.get(id=int(self.request.path.split('/')[2].split('-')[0]))
-
         filter = Q(organizations = organization)
         queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
 
@@ -355,9 +355,9 @@ class ListProblemOrganization(ProblemList):
             queryset = queryset.filter(points__gte=self.point_start)
         if self.point_end is not None:
             queryset = queryset.filter(points__lte=self.point_end)
-        
         return queryset.distinct()
     pass
+
 
 class ProblemCreateOrganization(ProblemCreate):
     def get_initial(self):
