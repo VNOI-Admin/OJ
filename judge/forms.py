@@ -191,6 +191,13 @@ class TagProblemCreateForm(Form):
                                  label=_('Problem URL'),
                                  help_text=_('Full URL to the problem.'))
 
+    def __init__(self, request, problem_url=None, *args, **kwargs):
+        self.request = request
+        super(TagProblemCreateForm, self).__init__(*args, **kwargs)
+        if problem_url is not None:
+            self.fields['problem_url'].required = True
+            self.fields['problem_url'].initial = problem_url
+
 
 class TagProblemAssignForm(ModelForm):
     class Meta:

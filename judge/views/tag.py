@@ -122,6 +122,12 @@ class TagProblemCreate(LoginRequiredMixin, TagBanningMixin, TitleMixin, FormView
     template_name = 'tag/create.html'
     form_class = TagProblemCreateForm
 
+    def get_form_kwargs(self):
+        kwargs = super(TagProblemCreate, self).get_form_kwargs()
+        kwargs['request'] = self.request
+        kwargs['problem_url'] = self.request.GET.get('problem_url')
+        return kwargs
+
     def post(self, request, *args, **kwargs):
         form = TagProblemCreateForm(request.POST or None)
         try:
@@ -131,8 +137,8 @@ class TagProblemCreate(LoginRequiredMixin, TagBanningMixin, TitleMixin, FormView
 
                 # Check if problem is in database or not
                 try:
-                    _ = TagProblem.objects.get(code=problem_data['codename'])
-                    raise IntegrityError('Problem already existed.')
+                    problem = TagProblem.objects.get(code=problem_data['codename'])
+                    return HttpResponseRedirect(problem.get_absolute_url())
                 except TagProblem.DoesNotExist:
                     pass
 
