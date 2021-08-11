@@ -98,7 +98,7 @@ class TagProblemList(TitleMixin, ListView):
         context['selected_tag'] = self.tag_id
         context['search_query'] = self.search_query
         context['groups'] = TagGroup.objects.all()
-        context['judges'] = settings.OJ_JUDGES_PRESET
+        context['judges'] = settings.OJ_LIST
         context['selected_judges'] = self.selected_judges
 
         context.update(self.get_tag_context())

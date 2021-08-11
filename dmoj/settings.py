@@ -95,7 +95,7 @@ OJ_PROBLEM_PRESET = [
     },
 ]
 
-OJ_JUDGES_PRESET = [
+OJ_LIST = [
     ('Atcoder', 'Atcoder'),
     ('Codeforces', 'Codeforces'),
     ('CodeforcesGym', 'Codeforces (Gym)'),
