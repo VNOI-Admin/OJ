@@ -1,0 +1,148 @@
+{% extends "common-content.html" %}
+
+{% macro make_tag_url(tag) -%}
+<a href="{{ url('tagproblem_list') }}?tag_id={{ tag.code }}{% if tag_prefix %}&{{ tag_prefix }}{% endif %}" tag_id={{ tag.code }}>{{ tag.name }}</a>
+{%- endmacro -%}
+
+{% block media %}
+    <link rel="stylesheet" type="text/css" href="{{ static('vnoj/accordion/accordion.css') }}">
+
+    <style>
+        #tagproblem-table th {
+            padding: 0;
+        }
+
+        #tagproblem-table tr {
+            transition: background-color linear 0.2s;
+        }
+
+        #tagproblem-table tr:hover {
+            background: #eaeaea;
+        }
+
+        .row-selected {
+            background: #dff0d8;
+        }
+
+        .row-tag-list {
+            font-size: 0.75em;
+            padding-top: 1px;
+            text-align: right;
+        }
+
+        .row-tag-list a {
+            color: grey !important;
+        }
+
+        #judges {
+            width: 100%;
+        }
+
+        label[for="judge"] {
+            padding-bottom: 0.25em;
+            display: block;
+        }
+        .tag-tab {
+            color: green !important;
+        }
+    </style>
+{% endblock %}
+
+{% block js_media %}
+    <script type="text/javascript" src="{{ static('vnoj/accordion/accordion.js') }}"></script>
+
+    {% if selected_tag %}
+        <script>
+            $(function () {
+                var el = $('.accordion .card-body a[tag_id={{ selected_tag }}]')[0];
+                if (el) {
+                    el = $(el);
+                    el.parent().addClass('row-selected');
+                    el.parent().parent().addClass('show');
+                    el.parent().parent().slideDown(0);
+                }
+            });
+        </script>
+    {% else %}
+        <script>
+            $(function () {
+                var el = $('.accordion .card-toggle')[0];
+                if (el) {
+                    el = $(el);
+                    el.next().addClass('show');
+                    el.next().slideDown(0);
+                }
+            });
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'list' %}
+    {% set title = _('Tag problem list') %}
+    {% include "tag/tag-list-tabs.html" %}
+{% endblock %}
+
+{% block body %}
+    {% if page_obj.has_other_pages() %}
+        <div class="top-pagination-bar">{% include "list-pages.html" %}</div>
+    {% endif %}
+
+    <div id="common-content">
+        {% block before_table %}{% endblock %}
+        <div id="content-right" class="problems">
+            <div>
+                {% include "tag/search-form.html" %}
+                <div class="accordion">
+                    {% for group in groups %}
+                        <div class="card">
+                            <a class="card-toggle" href="#">{{ group.name }}</a>
+                            <div class="card-body">
+                                {% for tag in group.tags.all() %}
+                                    <div>
+                                        {{ make_tag_url(tag) }}<br>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        <div id="content-left" class="problems h-scrollable-table">
+            <table id="tagproblem-table" class="table striped">
+                <thead>
+                <tr>
+                    <th style="width:20%">{{ _('Problem code') }}</th>
+                    <th style="width:65%">{{ _('Problem name') }}</th>
+                    <th style="width:15%;">{{ _('OJ') }}</th>
+                </tr>
+                </thead>
+                <tbody>
+                {% for problem in tagproblems %}
+                {% set detail_link = url('tagproblem_detail', problem.code) %}
+                    <tr>
+                        <td><a href="{{ detail_link }}">{{ problem.code }}</a></td>
+                        <td>
+                            <div style="float: left">
+                                <a href="{{ detail_link }}">{{ problem.name }}</a>
+                            </div>
+                            <div style="float: right" class="row-tag-list">
+                                {% for tag in problem.tag.all() %}
+                                    <em>{{ make_tag_url(tag) }}</em>{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td><a href="{{ problem.link }}">{{ problem.judge }}</a></td>
+                    </tr>
+                {% endfor %}
+                </tbody>
+            </table>
+            {% if page_obj.has_other_pages() %}
+                <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+            {% endif %}
+        </div>
+    </div>
+{% endblock %}

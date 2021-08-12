@@ -1,0 +1,29 @@
+.accordion {
+    padding: 0;
+}
+
+.accordion .card {
+    margin-bottom: 0.25em;
+}
+
+.accordion .card-body {
+    display: none;
+    border: 1px solid #ccc;
+    overflow: hidden;
+    padding: 1em;
+}
+
+.accordion .card-toggle {
+    background: #000;
+    border-radius: 4px 4px 0 0;
+    color: white;
+    display: block;
+    font-size: 1.1em;
+    padding: 0.5em;
+    text-decoration: none;
+    transition: background 0.3s ease;
+}
+
+.accordion .card-toggle:hover {
+    background: rgba(0, 0, 0, 0.7);
+}
