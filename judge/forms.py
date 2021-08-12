@@ -201,9 +201,12 @@ class TagProblemCreateForm(Form):
 
 
 class TagProblemAssignForm(Form):
+    def get_choices():
+        return list(map(attrgetter('code', 'name'), Tag.objects.all()))
+
     tags = MultipleChoiceField(
         required=True,
-        choices=list(map(attrgetter('code', 'name'), Tag.objects.all())),
+        choices=get_choices,
     )
 
 
