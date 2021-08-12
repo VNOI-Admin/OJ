@@ -639,10 +639,14 @@ def base_contest_ranking_list(contest, problems, queryset):
             queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')]
 
 
+def base_contest_ranking_queryset(contest):
+    return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
+        .prefetch_related('user__organizations') \
+        .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker')
+
+
 def contest_ranking_list(contest, problems):
-    return base_contest_ranking_list(contest, problems, contest.users.filter(virtual__gt=ContestParticipation.SPECTATE)
-                                     .prefetch_related('user__organizations')
-                                     .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker'))
+    return base_contest_ranking_list(contest, problems, base_contest_ranking_queryset(contest))
 
 
 def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list,
@@ -707,6 +711,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
 
 class ContestRanking(ContestRankingBase):
     tab = 'ranking'
+    show_virtual = False
 
     def get_title(self):
         return _('%s Rankings') % self.object.name
@@ -720,11 +725,25 @@ class ContestRanking(ContestRankingBase):
                 ranker=lambda users, key: ((_('???'), user) for user in users),
             )
 
+        if 'show_virtual' in self.request.GET:
+            self.show_virtual = self.request.session['show_virtual'] \
+                              = self.request.GET.get('show_virtual').lower() == 'true'
+        else:
+            self.show_virtual = self.request.session.get('show_virtual', False)
+
+        if not self.show_virtual:
+            queryset = base_contest_ranking_queryset(self.object).filter(virtual=ContestParticipation.LIVE)
+            return get_contest_ranking_list(
+                self.request, self.object,
+                ranking_list=partial(base_contest_ranking_list, queryset=queryset),
+            )
+
         return get_contest_ranking_list(self.request, self.object)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['has_rating'] = self.object.ratings.exists()
+        context['show_virtual'] = self.show_virtual
         return context
 
 
