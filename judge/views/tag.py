@@ -11,6 +11,7 @@ from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, View
+from requests.exceptions import ReadTimeout
 
 from judge.comments import CommentedDetailView
 from judge.forms import TagProblemAssignForm, TagProblemCreateForm
@@ -160,9 +161,12 @@ class TagProblemCreate(LoginRequiredMixin, TagBanningMixin, TitleMixin, FormView
 
             # Retrive API result from cache
             # If cache is empty, request API then store the result
-            API = OJAPI()
-            api_method = API.__getattribute__(problem_data['judge'] + 'ProblemAPI')  # Get method based on judge
-            api_problem_data = api_method(problem_data['codename'])
+            try:
+                API = OJAPI()
+                api_method = API.__getattribute__(problem_data['judge'] + 'ProblemAPI')  # Get method based on judge
+                api_problem_data = api_method(problem_data['codename'])
+            except ReadTimeout:
+                raise APIError('Connection timeout')
 
             # No problem found
             if api_problem_data is None:
