@@ -56,10 +56,12 @@
 
 {% block body %}
 <div>
-    <div class="alert alert-warning alert-dismissable">
-        <a class="close">x</a>
-        <a href="{{ url('admin:judge_problem_change', object.id) }}">{{ _('Edit problem in admin panel for more options') }}</a>
-    </div>
+    {% if request.user.is_staff %}
+        <div class="alert alert-warning alert-dismissable">
+            <a class="close">x</a>
+            <a href="{{ url('admin:judge_problem_change', object.id) }}">{{ _('Edit problem in admin panel for more options') }}</a>
+        </div>
+    {% endif %}
     <form action="" method="post" class="form-area" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
         {% if form.errors or solution_formset.errors %}
             <p class="errornote"> {{ _('Please correct the error below.') }}</p>

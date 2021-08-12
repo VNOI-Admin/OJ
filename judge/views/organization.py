@@ -335,10 +335,10 @@ class ListProblemOrganization(OrganizationMixin, ProblemList):
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
         self.object = self.organization
-        if self.profile is None:
-            raise PermissionDenied()
-        if self.organization not in self.profile.organizations.all():
-            raise PermissionDenied()
+        if self.profile is None or self.organization not in self.profile.organizations.all():
+            return generic_message(request, 
+                                   _('You must join the organization first'),
+                                   _('You must join the organization to view its problems.'))
         return super(ListProblemOrganization, self).get(request, *args, **kwargs)
 
     def get_title(self):
@@ -354,7 +354,7 @@ class ListProblemOrganization(OrganizationMixin, ProblemList):
         return context
 
     def get_filter(self):
-        return Q(organizations=self.organization)
+        return Q(organizations=self.organization) & Q(is_public=True)
 
 
 class ProblemCreateOrganization(OrganizationMixin, ProblemCreate):
@@ -364,9 +364,6 @@ class ProblemCreateOrganization(OrganizationMixin, ProblemCreate):
         initial['description'] = misc_config(self.request)['misc_config']['description_example']
         initial['memory_limit'] = 262144  # 256 MB
         return initial
-
-    def get_permission_required(self):
-        return []
 
     def form_valid(self, form):
         organization = Organization.objects.get(pk=int(self.get_object().id))
