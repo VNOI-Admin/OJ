@@ -130,6 +130,8 @@
         <hr>
         <div><a href="{{ url('problem_editorial', problem.code) }}">{{ _('Read editorial') }}</a></div>
     {% endif %}
+    <hr>
+    <div><a href="/tags/find?problem_url={{ request.build_absolute_uri()|urlencode }}">{{ _('Tag this problem') }}</a></div>
     {% if can_edit_problem %}
         <hr>
         <div>
