@@ -4,7 +4,7 @@ from django.db.models import CASCADE
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-from judge.models import Profile
+from judge.models.profile import Profile
 
 
 class TagGroup(models.Model):

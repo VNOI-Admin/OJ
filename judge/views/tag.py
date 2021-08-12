@@ -221,7 +221,7 @@ class TagProblemDetail(TagProblemMixin, CommentedDetailView):
     template_name = 'tag/problem.html'
 
     def get_comment_page(self):
-        return 'tp:%s' % self.object.code
+        return 't:%s' % self.object.code
 
     def get_context_data(self, **kwargs):
         context = super(TagProblemDetail, self).get_context_data(**kwargs)
