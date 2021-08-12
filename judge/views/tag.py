@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
-from django.views.generic import FormView, ListView
+from django.views.generic import FormView, ListView, View
 
 from judge.comments import CommentedDetailView
 from judge.forms import TagProblemAssignForm, TagProblemCreateForm
@@ -116,6 +116,24 @@ class TagRandomProblem(TagProblemList):
             return HttpResponseRedirect('%s%s%s' % (reverse('tagproblem_list'), request.META['QUERY_STRING'] and '?',
                                                     request.META['QUERY_STRING']))
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
+
+
+class TagFindProblem(View):
+    def get(self, request, *args, **kwargs):
+        problem_url = self.request.GET.get('problem_url')
+        if not problem_url:
+            return HttpResponseRedirect(reverse('tagproblem_list'))
+
+        try:
+            problem_data = OJAPI.get_problem_data(problem_url)
+        except APIError:
+            return HttpResponseRedirect(reverse('tagproblem_list'))
+
+        try:
+            problem = TagProblem.objects.get(code=problem_data['codename'])
+            return HttpResponseRedirect(problem.get_absolute_url())
+        except TagProblem.DoesNotExist:
+            return HttpResponseRedirect('%s?problem_url=%s' % (reverse('tagproblem_create'), problem_url))
 
 
 class TagProblemCreate(LoginRequiredMixin, TagBanningMixin, TitleMixin, FormView):
