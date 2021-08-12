@@ -336,7 +336,7 @@ class ListProblemOrganization(OrganizationMixin, ProblemList):
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
         self.object = self.organization
         if self.profile is None or self.organization not in self.profile.organizations.all():
-            return generic_message(request, 
+            return generic_message(request,
                                    _('You must join the organization first'),
                                    _('You must join the organization to view its problems.'))
         return super(ListProblemOrganization, self).get(request, *args, **kwargs)
