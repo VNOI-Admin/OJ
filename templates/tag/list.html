@@ -42,6 +42,9 @@
             padding-bottom: 0.25em;
             display: block;
         }
+        .tag-tab {
+            color: green !important;
+        }
     </style>
 {% endblock %}
 
@@ -119,11 +122,12 @@
                 </thead>
                 <tbody>
                 {% for problem in tagproblems %}
+                {% set detail_link = url('tagproblem_detail', problem.code) %}
                     <tr>
-                        <td><a href="{{ url('tagproblem_detail', problem.code) }}">{{ problem.code }}</a></td>
+                        <td><a href="{{ detail_link }}">{{ problem.code }}</a></td>
                         <td>
                             <div style="float: left">
-                                <a href="{{ problem.link }}">{{ problem.name }}</a>
+                                <a href="{{ detail_link }}">{{ problem.name }}</a>
                             </div>
                             <div style="float: right" class="row-tag-list">
                                 {% for tag in problem.tag.all() %}
@@ -131,7 +135,7 @@
                                 {% endfor %}
                             </div>
                         </td>
-                        <td>{{ problem.judge }}</td>
+                        <td><a href="{{ problem.link }}">{{ problem.judge }}</a></td>
                     </tr>
                 {% endfor %}
                 </tbody>

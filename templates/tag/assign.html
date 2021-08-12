@@ -9,7 +9,11 @@
 
             $('body').on('click', '.select2-results__group', function() {
                 $(this).siblings().toggle();
-            })
+            });
+
+            $('body').on('click', '.select2-selection__rendered', function() {
+                $('.select2-results__group').click();
+            });
         });
     </script>
 {% endblock %}
@@ -48,7 +52,7 @@
         <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
             {% csrf_token %}
             <label for="tags"><b>{{ _('Tags') }}</b></label>
-            <span class="helptext">You can click on a group's name to hide that group.</span>
+            <span class="helptext">You can click on a group's name to show/hide that group.</span>
             <select id="tags" name="tags" multiple>
                 {% for group in groups %}
                     <optgroup label="{{ group.name }}">
