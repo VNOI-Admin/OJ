@@ -327,6 +327,7 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 
 
 class ListProblemOrganization(OrganizationMixin, ProblemList):
+    context_object_name = 'problems'
     template_name = 'organization/problem_list.html'
 
     def get(self, request, *args, **kwargs):
@@ -334,6 +335,10 @@ class ListProblemOrganization(OrganizationMixin, ProblemList):
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
         self.object = self.organization
+        if self.profile is None:
+            raise PermissionDenied()
+        if self.organization not in self.profile.organizations.all():
+            raise PermissionDenied()
         return super(ListProblemOrganization, self).get(request, *args, **kwargs)
 
     def get_title(self):
