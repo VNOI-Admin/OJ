@@ -129,6 +129,9 @@ class Profile(models.Model):
                                default=False)
     is_unlisted = models.BooleanField(verbose_name=_('unlisted user'), help_text=_('User will not be ranked.'),
                                       default=False)
+    banned_tagging = models.BooleanField(verbose_name=_('banned tagging'),
+                                         help_text=_('User will not be allowed to tag problems.'),
+                                         default=False)
     rating = models.IntegerField(null=True, default=None)
     user_script = models.TextField(verbose_name=_('user script'), default='', blank=True, max_length=65536,
                                    help_text=_('User-defined JavaScript for site customization.'))
