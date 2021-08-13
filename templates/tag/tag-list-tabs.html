@@ -1,7 +1,7 @@
 {% extends "tabs-base.html" %}
 
 {% block tabs %}
-    {% if request.user.is_authenticated and not request.profile.banned_tagging %}
+    {% if request.user.is_authenticated and request.profile.allow_tagging %}
         {{ make_tab('create', 'fa-plus tag-tab', url('tagproblem_create'), _('Create new tag problem')) }}
     {% endif %}
     {{ make_tab('list', 'fa-list', url('tagproblem_list'), _('List')) }}
