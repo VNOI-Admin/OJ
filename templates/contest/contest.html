@@ -17,11 +17,21 @@
         });
     </script>
     {% include "contest/media-js.html" %}
-    {% include "comments/media-js.html" %}
+    {% if not comment_lock %}
+        {% include "comments/media-js.html" %}
+    {% endif %}
 {% endblock %}
 
 {% block content_media %}
-    {% include "comments/media-css.html" %}
+    {% if not comment_lock %}
+        {% include "comments/media-css.html" %}
+    {% else %}
+        <style>
+            #content-body {
+                overflow: auto;
+            }
+        </style>
+    {% endif %}
 {% endblock %}
 
 {% block body %}
@@ -191,12 +201,16 @@
         {{ post_to_twitter(request, SITE_NAME + ':', contest, '<i class="fa fa-twitter"></i>') }}
     </span>
 
-    {% include "comments/list.html" %}
+    {% if not comment_lock %}
+        {% include "comments/list.html" %}
+    {% endif %}
 {% endblock %}
 
 {% block description_end %}{% endblock %}
 
 {% block bodyend %}
     {{ super() }}
-    {% include "comments/math.html" %}
+    {% if not comment_lock %}
+        {% include "comments/math.html" %}
+    {% endif %}
 {% endblock %}
