@@ -326,15 +326,36 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
         return HttpResponseRedirect(organization.get_users_url())
 
 
-class ListProblemOrganization(OrganizationMixin, ProblemList):
+# This is almost the same as the OrganizationMixin
+# However, I need to write a new class because the
+# current mixin is for the DetailView.
+class CustomOrganizationMixin(object):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['logo_override_image'] = self.organization.logo_override_image
+        context['meta_description'] = self.organization.about[:settings.DESCRIPTION_MAX_LENGTH]
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            raise ImproperlyConfigured('Must pass a pk')
+        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        return super(CustomOrganizationMixin, self).dispatch(request, *args, **kwargs)
+
+    def can_edit_organization(self, org=None):
+        if org is None:
+            org = self.organization
+        if not self.request.user.is_authenticated:
+            return False
+        profile_id = self.request.profile.id
+        return org.admins.filter(id=profile_id).exists()
+
+
+class ListProblemOrganization(CustomOrganizationMixin, ProblemList):
     context_object_name = 'problems'
     template_name = 'organization/problem_list.html'
 
     def get(self, request, *args, **kwargs):
-        if 'pk' not in kwargs:
-            raise ImproperlyConfigured('Must pass a pk')
-        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
-        self.object = self.organization
         if self.profile is None or self.organization not in self.profile.organizations.all():
             return generic_message(request,
                                    _('You must join the organization first'),
@@ -357,7 +378,7 @@ class ListProblemOrganization(OrganizationMixin, ProblemList):
         return Q(organizations=self.organization) & Q(is_public=True)
 
 
-class ProblemCreateOrganization(OrganizationMixin, ProblemCreate):
+class ProblemCreateOrganization(CustomOrganizationMixin, ProblemCreate):
     def get_initial(self):
         initial = super(ProblemCreate, self).get_initial()
         initial = initial.copy()
@@ -366,7 +387,6 @@ class ProblemCreateOrganization(OrganizationMixin, ProblemCreate):
         return initial
 
     def form_valid(self, form):
-        organization = Organization.objects.get(pk=int(self.get_object().id))
         self.object = problem = form.save()
         problem.authors.add(self.request.user.profile)
         problem.allowed_languages.set(Language.objects.all())
@@ -374,7 +394,7 @@ class ProblemCreateOrganization(OrganizationMixin, ProblemCreate):
         # We have to set it to True, even it is private for a org
         problem.is_public = True
         problem.is_organization_private = True
-        problem.organizations.add(organization)
+        problem.organizations.add(self.organization)
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
 
@@ -382,7 +402,6 @@ class ProblemCreateOrganization(OrganizationMixin, ProblemCreate):
         if 'pk' not in kwargs:
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
-        self.object = self.organization
         if self.can_edit_organization():
             return super(ProblemCreateOrganization, self).dispatch(request, *args, **kwargs)
         raise PermissionDenied
