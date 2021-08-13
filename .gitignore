@@ -39,3 +39,4 @@ db.json
 tmp.sh
 *.sql
 fc_*
+local_urls.py

@@ -21,4 +21,5 @@ per-file-ignores =
     ./judge/widgets/pagedown.py:E303
 exclude =
     ./dmoj/local_settings.py, # belongs to the user
+    ./dmoj/local_urls.py, # belongs to the user
     ./.ci.settings.py, # is actually a fragment to be included by settings.py
