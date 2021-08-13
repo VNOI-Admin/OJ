@@ -77,7 +77,7 @@
             <h2>{{ title }}</h2>
             <span class="spacer"></span>
             <ul>
-                {% if request.user.is_authenticated and not request.profile.banned_tagging %}
+                {% if request.user.is_authenticated and request.profile.allow_tagging %}
                     <li class="tab">
                         <a href="{{ url('tagproblem_assign', problem.code) }}"><i class="tab-icon fa fa-plus tag-tab"></i>{{ _('Assign new tag') }}</a>
                     </li>
