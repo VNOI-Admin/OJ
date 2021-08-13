@@ -8,11 +8,6 @@
     {% include "contest/contest-tabs.html" %}
 {% endblock %}
 
-{%
-    set hide_comments = contest.use_clarifications and
-    (contest.is_in_contest(request.user) or (contest.start_time <= now and now <= contest.end_time))
-%}
-
 {% block content_js_media %}
     <script type="text/javascript">
         $(document).ready(function () {
@@ -22,13 +17,13 @@
         });
     </script>
     {% include "contest/media-js.html" %}
-    {% if not hide_comments %}
+    {% if not comment_lock %}
         {% include "comments/media-js.html" %}
     {% endif %}
 {% endblock %}
 
 {% block content_media %}
-    {% if not hide_comments %}
+    {% if not comment_lock %}
         {% include "comments/media-css.html" %}
     {% else %}
         <style>
@@ -206,7 +201,7 @@
         {{ post_to_twitter(request, SITE_NAME + ':', contest, '<i class="fa fa-twitter"></i>') }}
     </span>
 
-    {% if not hide_comments %}
+    {% if not comment_lock %}
         {% include "comments/list.html" %}
     {% endif %}
 {% endblock %}
@@ -215,7 +210,7 @@
 
 {% block bodyend %}
     {{ super() }}
-    {% if not hide_comments %}
+    {% if not comment_lock %}
         {% include "comments/math.html" %}
     {% endif %}
 {% endblock %}
