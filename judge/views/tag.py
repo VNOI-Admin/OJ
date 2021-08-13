@@ -16,6 +16,7 @@ from requests.exceptions import ReadTimeout
 from judge.comments import CommentedDetailView
 from judge.forms import TagProblemAssignForm, TagProblemCreateForm
 from judge.models import Tag, TagData, TagGroup, TagProblem
+from judge.tasks.webhook import on_new_tag_problem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.judge_api import APIError, OJAPI
 from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message, paginate_query_context
@@ -175,6 +176,7 @@ class TagProblemCreate(LoginRequiredMixin, TagBanningMixin, TitleMixin, FormView
             # Initialize model
             problem = TagProblem(code=problem_data['codename'], name=api_problem_data['title'], link=url,
                                  judge=problem_data['judge'])
+            on_new_tag_problem.delay(problem_data['codename'])
             problem.save()
             return HttpResponseRedirect(problem.get_absolute_url())
         except (APIError, IntegrityError) as e:
