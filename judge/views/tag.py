@@ -226,5 +226,5 @@ class TagProblemDetail(TagProblemMixin, CommentedDetailView):
     def get_context_data(self, **kwargs):
         context = super(TagProblemDetail, self).get_context_data(**kwargs)
 
-        context['title'] = self.object.name
+        context['title'] = mark_safe(format_html('<a href="{0}">{1}</a>', self.object.link, self.object.name))
         return context
