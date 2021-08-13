@@ -238,6 +238,19 @@
                 $('.organization-column').show();
                 $('#show-organizations-checkbox').prop('checked', true);
             }
+
+            {% if tab == 'ranking' %}
+                {% if show_virtual %}
+                    $('#show-virtual-participations-checkbox').prop('checked', true);
+                    $('#show-virtual-participations-checkbox').click(function () {
+                        window.location.href = '{{ url('contest_ranking', contest.key) }}?show_virtual=false';
+                    });
+                {% else %}
+                    $('#show-virtual-participations-checkbox').click(function () {
+                        window.location.href = '{{ url('contest_ranking', contest.key) }}?show_virtual=true';
+                    });
+                {% endif %}
+            {% endif %}
         });
     </script>
     {% include "contest/media-js.html" %}
@@ -253,6 +266,10 @@
         {% if tab != 'official_ranking' %}
             <input id="show-organizations-checkbox" type="checkbox" style="vertical-align: bottom">
             <label for="show-organizations-checkbox" style="vertical-align: bottom">{{ _('Show organizations') }}</label>
+        {% endif %}
+        {% if tab == 'ranking' %}
+            <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
+            <label for="show-virtual-participations-checkbox" style="vertical-align: bottom">{{ _('Show virtual participations') }}</label>
         {% endif %}
     </div>
 {% endblock %}

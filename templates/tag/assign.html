@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    <script>
+        $(function () {
+            $('#tags').select2({
+                closeOnSelect:false
+            });
+
+            $('body').on('click', '.select2-results__group', function() {
+                $(this).siblings().toggle();
+            });
+
+            $('body').on('click', '.select2-selection__rendered', function() {
+                $('.select2-results__group').click();
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block media %}
+    <style>
+        .helptext {
+            font-size: 13px;
+            color: #999;
+            border-width: 0 0 1px 0;
+            padding-bottom: 0.25em;
+        }
+        .helptext::before {
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+            content: "\f05a";
+            padding-right: 5px;
+            font-size: 14px;
+        }
+
+        label[for="tags"] {
+            padding-bottom: 0.25em;
+            display: block;
+        }
+
+        .select2-container--default .select2-results > .select2-results__options {
+            min-height: 50vh;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div>
+        <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+            {% csrf_token %}
+            <label for="tags"><b>{{ _('Tags') }}</b></label>
+            <span class="helptext">You can click on a group's name to show/hide that group.</span>
+            <select id="tags" name="tags" multiple>
+                {% for group in groups %}
+                    <optgroup label="{{ group.name }}">
+                        {% for tag in group.tags.all() %}
+                            <option value={{ tag.code }}>{{ tag.name }}</option>
+                        {% endfor %}
+                    </optgroup>
+                {% endfor %}
+            </select>
+            <hr>
+            <table>
+                <tr><td style="float: left;">
+                <td style="float: right;"><input type="submit" value="{{ _('Assign') }}" class="button"></td></tr>
+            </table>
+        </form>
+    </div>
+{% endblock %}
