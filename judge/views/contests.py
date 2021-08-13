@@ -233,7 +233,7 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
     def is_comment_locked(self):
         if self.object.use_clarifications:
             now = timezone.now()
-            if self.object.is_in_contest(self.request.user) or  \
+            if self.object.is_in_contest(self.request.user) or \
                     (self.object.start_time <= now and now <= self.object.end_time):
                 return True
 
