@@ -358,7 +358,7 @@ class ListProblemOrganization(CustomOrganizationMixin, ProblemList):
     def get(self, request, *args, **kwargs):
         if self.profile is None or self.organization not in self.profile.organizations.all():
             return generic_message(request,
-                                   _('You must join the organization first'),
+                                   _('Cannot view organization\'s problems'),
                                    _('You must join the organization to view its problems.'))
         return super(ListProblemOrganization, self).get(request, *args, **kwargs)
 

@@ -150,7 +150,16 @@
                 target: "_blank",
                 href: "/custom_checkers"
             }).appendTo($td);
-
+            
+            var $file_test = $('#id_problem-data-zipfile');
+            $("<br>").appendTo($file_test.parent());
+            $("<input/>", {
+                type: "submit",
+                value: "{{ _('Please press this button if you have just updated the zip data') }}",
+                class: "button",
+                style: "display: inherit",
+                id: "submit-button",
+            }).appendTo($file_test.parent());
 
             function swap_row($a, $b) {
                 var $a_order = $a.find('input[id$=order]'), $b_order = $b.find('input[id$=order]');
@@ -449,8 +458,6 @@
             {{ data_form.as_table() }}
         </table>
         <div style="float:right">
-            <input type="submit" value="{{ _('Please press this button if you have just updated the zip data') }}" class="button" id="submit-button">
-            
             <a id="fill-testcases" href="#" class="button">
                 {{ _('Click here to set tests points') }}
             </a>
