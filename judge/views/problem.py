@@ -156,7 +156,8 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
     template_name = 'problem/problem.html'
 
     def is_comment_locked(self):
-        if hasattr(self, 'contest_problem') and self.contest_problem.contest.use_clarifications:
+        if hasattr(self, 'contest_problem') \
+           and self.contest_problem and self.contest_problem.contest.use_clarifications:
             return True
 
         return super(ProblemDetail, self).is_comment_locked()
