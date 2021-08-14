@@ -22,12 +22,12 @@ from judge.utils.judge_api import APIError, OJAPI
 from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message, paginate_query_context
 
 
-class TagBanningMixin(object):
+class TagAllowingMixin(object):
     def dispatch(self, request, *args, **kwargs):
-        if request.user.is_authenticated and request.profile.banned_tagging:
-            return generic_message(request, _('Banned from tagging'),
-                                   _('You are permanently banned from tagging.'))
-        return super(TagBanningMixin, self).dispatch(request, *args, **kwargs)
+        if request.user.is_authenticated and not request.profile.allow_tagging:
+            return generic_message(request, _('Cannot tag'),
+                                   _('You are not allowed to tag problem.'))
+        return super(TagAllowingMixin, self).dispatch(request, *args, **kwargs)
 
 
 class TagProblemMixin(object):
@@ -138,7 +138,7 @@ class TagFindProblem(View):
             return HttpResponseRedirect('%s?problem_url=%s' % (reverse('tagproblem_create'), problem_url))
 
 
-class TagProblemCreate(LoginRequiredMixin, TagBanningMixin, TitleMixin, FormView):
+class TagProblemCreate(LoginRequiredMixin, TagAllowingMixin, TitleMixin, FormView):
     title = _('Create new tag problem')
     template_name = 'tag/create.html'
     form_class = TagProblemCreateForm
@@ -184,7 +184,7 @@ class TagProblemCreate(LoginRequiredMixin, TagBanningMixin, TitleMixin, FormView
             return self.form_invalid(form)
 
 
-class TagProblemAssign(LoginRequiredMixin, TagBanningMixin, TagProblemMixin, TitleMixin, SingleObjectFormView):
+class TagProblemAssign(LoginRequiredMixin, TagAllowingMixin, TagProblemMixin, TitleMixin, SingleObjectFormView):
     template_name = 'tag/assign.html'
     form_class = TagProblemAssignForm
 
