@@ -155,6 +155,16 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
     context_object_name = 'problem'
     template_name = 'problem/problem.html'
 
+    def get_object(self, queryset=None):
+        problem = super(ProblemDetail, self).get_object(queryset)
+
+        user = self.request.user
+        authed = user.is_authenticated
+        self.contest_problem = (None if not authed or user.profile.current_contest is None else
+                                get_contest_problem(problem, user.profile))
+
+        return problem
+
     def is_comment_locked(self):
         if self.contest_problem and self.contest_problem.contest.use_clarifications:
             return True
@@ -165,12 +175,10 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
         return 'p:%s' % self.object.code
 
     def get_context_data(self, **kwargs):
+        context = super(ProblemDetail, self).get_context_data(**kwargs)
         user = self.request.user
         authed = user.is_authenticated
-        self.contest_problem = contest_problem = (None if not authed or user.profile.current_contest is None else
-                                                  get_contest_problem(self.object, user.profile))
-
-        context = super(ProblemDetail, self).get_context_data(**kwargs)
+        contest_problem = self.contest_problem
         context['has_submissions'] = authed and Submission.objects.filter(user=user.profile,
                                                                           problem=self.object).exists()
         context['contest_problem'] = contest_problem
