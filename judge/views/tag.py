@@ -219,15 +219,15 @@ class TagProblemAssign(LoginRequiredMixin, TagAllowingMixin, TagProblemMixin, Ti
         return HttpResponseRedirect(self.object.get_absolute_url())
 
 
-class TagProblemDetail(TagProblemMixin, CommentedDetailView):
+class TagProblemDetail(TagProblemMixin, TitleMixin, CommentedDetailView):
     context_object_name = 'problem'
     template_name = 'tag/problem.html'
 
+    def get_title(self):
+        return self.object.name
+
+    def get_content_title(self):
+        return mark_safe(escape(format_html('<a href="{0}">{1}</a>', self.object.link, self.object.name)))
+
     def get_comment_page(self):
         return 't:%s' % self.object.code
-
-    def get_context_data(self, **kwargs):
-        context = super(TagProblemDetail, self).get_context_data(**kwargs)
-
-        context['title'] = mark_safe(format_html('<a href="{0}">{1}</a>', self.object.link, self.object.name))
-        return context

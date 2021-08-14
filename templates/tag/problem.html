@@ -82,9 +82,6 @@
                         <a href="{{ url('tagproblem_assign', problem.code) }}"><i class="tab-icon fa fa-plus tag-tab"></i>{{ _('Assign new tag') }}</a>
                     </li>
                 {% endif %}
-                    <li class="tab">
-                        <a href="{{ problem.link }}"><i class="tab-icon fa fa-arrow-circle-o-right tag-tab"></i>{{ _('Open original problem') }}</a>
-                    </li>
                 {% if request.user.is_superuser %}
                     <li class="tab">
                         <a href="{{ url('admin:judge_tagproblem_change', problem.id) }}"><i class="tab-icon fa fa-edit"></i>{{ _('Admin') }}</a>
