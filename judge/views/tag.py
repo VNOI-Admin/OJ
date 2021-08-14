@@ -227,7 +227,7 @@ class TagProblemDetail(TagProblemMixin, TitleMixin, CommentedDetailView):
         return self.object.name
 
     def get_content_title(self):
-        return mark_safe(escape(format_html('<a href="{0}">{1}</a>', self.object.link, self.object.name)))
+        return mark_safe(format_html('<a href="{0}">{1}</a>', self.object.link, self.object.name))
 
     def get_comment_page(self):
         return 't:%s' % self.object.code

@@ -74,7 +74,7 @@
 {% block title_row %}
     <div class="problem-title">
         <div class="tabs">
-            <h2>{{ title }}</h2>
+            <h2>{{ content_title }}</h2>
             <span class="spacer"></span>
             <ul>
                 {% if request.user.is_authenticated and request.profile.allow_tagging %}
