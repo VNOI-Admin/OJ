@@ -114,6 +114,7 @@ DISCORD_WEBHOOK = {
     'on_new_comment': None,
     'on_new_suggested_problem': None,
     'on_new_tag_problem': None,
+    'on_new_tag': None,
 }
 
 SITE_FULL_URL = None  # ie 'https://oj.vnoi.info', please remove the last / if needed
