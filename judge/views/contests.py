@@ -909,7 +909,7 @@ class ContestTagDetail(TitleMixin, ContestTagDetailAjax):
 
 
 class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
-    template_name = 'contest/edit.html'
+    template_name = 'contest/create.html'
     model = Contest
     form_class = ContestForm
     permission_required = 'judge.add_contest'
@@ -930,12 +930,17 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
         data['contest_problem_formset'] = self.get_contest_problem_formset()
         return data
 
+    def save_contest_form(self, form):
+        self.object = form.save()
+        self.object.authors.add(self.request.profile)
+        self.object.save()
+
     def post(self, request, *args, **kwargs):
         self.object = None
         form = ContestForm(request.POST or None)
         form_set = self.get_contest_problem_formset()
         if form.is_valid() and form_set.is_valid():
-            self.object = form.save()
+            self.save_contest_form(form)
             for problem in form_set.save(commit=False):
                 problem.contest = self.object
                 problem.save()

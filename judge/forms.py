@@ -368,8 +368,7 @@ class ProposeContestProblemForm(ModelForm):
         verbose_name = _('Problem')
         verbose_name_plural = 'Problems'
         fields = (
-            'problem', 'points', 'is_pretested',
-            'max_submissions', 'order',
+            'problem', 'points', 'order',
         )
 
         widgets = {
@@ -393,21 +392,17 @@ class ContestForm(ModelForm):
     class Meta:
         model = Contest
         fields = [
-            'key', 'name', 'authors',
+            'key', 'name',
             'start_time', 'end_time', 'is_visible',
             'use_clarifications',
             'hide_problem_tags',
             'hide_problem_authors',
             'scoreboard_visibility',
             'run_pretests_only',
-            'logo_override_image',
-            'og_image',
             'description',
-            'summary',
         ]
 
         widgets = {
-            'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'start_time': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
             'end_time': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),

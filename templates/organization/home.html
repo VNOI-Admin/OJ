@@ -29,6 +29,7 @@
             <br>
             {% if organization.is_admin(request.profile) %}
                 <div><a href="{{ url('problem_create_organization', organization.id, organization.slug) }}">{{ _('Create Problem') }}</a></div>
+                <div><a href="{{ url('contest_create_organization', organization.id, organization.slug) }}">{{ _('Create Contest') }}</a></div>
             {% endif %}
 
         {% elif organization.is_open %}

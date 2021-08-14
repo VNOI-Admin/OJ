@@ -1,3 +1,4 @@
+from judge.views.contests import CreateContest
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -14,7 +15,7 @@ from django.views.generic import DetailView, FormView, ListView, UpdateView, Vie
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
-from judge.forms import EditOrganizationForm
+from judge.forms import ContestForm, EditOrganizationForm
 from judge.models import Language, Organization, OrganizationRequest, Profile
 from judge.template_context import misc_config
 from judge.utils.ranker import ranker
@@ -404,4 +405,21 @@ class ProblemCreateOrganization(CustomOrganizationMixin, ProblemCreate):
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
         if self.can_edit_organization():
             return super(ProblemCreateOrganization, self).dispatch(request, *args, **kwargs)
+        raise PermissionDenied
+
+
+class ContestCreateOrganization(CustomOrganizationMixin, CreateContest):
+    def save_contest_form(self, form):
+        self.object = form.save()
+        self.object.authors.add(self.request.profile)
+        self.object.is_organization_private = True
+        self.object.organizations.add(self.organization)
+        self.object.save()
+
+    def dispatch(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            raise ImproperlyConfigured('Must pass a pk')
+        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        if self.can_edit_organization():
+            return super(ContestCreateOrganization, self).dispatch(request, *args, **kwargs)
         raise PermissionDenied
