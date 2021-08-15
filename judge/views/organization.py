@@ -343,6 +343,16 @@ class CustomOrganizationMixin(object):
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
         return super(CustomOrganizationMixin, self).dispatch(request, *args, **kwargs)
 
+
+class CustomAdminOrganizationMixin(CustomOrganizationMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            raise ImproperlyConfigured('Must pass a pk')
+        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        if self.can_edit_organization():
+            return super(CustomAdminOrganizationMixin, self).dispatch(request, *args, **kwargs)
+        raise PermissionDenied
+
     def can_edit_organization(self, org=None):
         if org is None:
             org = self.organization
@@ -379,13 +389,8 @@ class ListProblemOrganization(CustomOrganizationMixin, ProblemList):
         return Q(organizations=self.organization) & Q(is_public=True)
 
 
-class ProblemCreateOrganization(CustomOrganizationMixin, ProblemCreate):
-    def get_initial(self):
-        initial = super(ProblemCreate, self).get_initial()
-        initial = initial.copy()
-        initial['description'] = misc_config(self.request)['misc_config']['description_example']
-        initial['memory_limit'] = 262144  # 256 MB
-        return initial
+class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
+    permission_required = 'judge.create_organization_problem'
 
     def form_valid(self, form):
         self.object = problem = form.save()
@@ -399,27 +404,13 @@ class ProblemCreateOrganization(CustomOrganizationMixin, ProblemCreate):
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
 
-    def dispatch(self, request, *args, **kwargs):
-        if 'pk' not in kwargs:
-            raise ImproperlyConfigured('Must pass a pk')
-        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
-        if self.can_edit_organization():
-            return super(ProblemCreateOrganization, self).dispatch(request, *args, **kwargs)
-        raise PermissionDenied
 
+class ContestCreateOrganization(CustomAdminOrganizationMixin, CreateContest):
+    permission_required = 'judge.create_private_contest'
 
-class ContestCreateOrganization(CustomOrganizationMixin, CreateContest):
     def save_contest_form(self, form):
         self.object = form.save()
         self.object.authors.add(self.request.profile)
         self.object.is_organization_private = True
         self.object.organizations.add(self.organization)
         self.object.save()
-
-    def dispatch(self, request, *args, **kwargs):
-        if 'pk' not in kwargs:
-            raise ImproperlyConfigured('Must pass a pk')
-        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
-        if self.can_edit_organization():
-            return super(ContestCreateOrganization, self).dispatch(request, *args, **kwargs)
-        raise PermissionDenied
