@@ -398,7 +398,6 @@ class ContestForm(ModelForm):
             'hide_problem_tags',
             'hide_problem_authors',
             'scoreboard_visibility',
-            'run_pretests_only',
             'description',
         ]
 

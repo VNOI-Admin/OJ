@@ -225,6 +225,9 @@ class OrganizationRequestBaseView(LoginRequiredMixin, SingleObjectTemplateRespon
     def get_context_data(self, **kwargs):
         context = super(OrganizationRequestBaseView, self).get_context_data(**kwargs)
         context['title'] = _('Managing join requests for %s') % self.object.name
+        context['content_title'] = format_html(_('Managing join requests for %s') %
+                                               ' <a href="{1}">{0}</a>', self.object.name,
+                                               self.object.get_absolute_url())
         context['tab'] = self.tab
         return context
 
