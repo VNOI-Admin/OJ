@@ -455,13 +455,14 @@ BLEACH_USER_SAFE_TAGS = [
     'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'tfoot',
     'img', 'audio', 'video', 'source',
     'a', 'strike',
-    'style', 'noscript', 'center', 'object'
+    'style', 'noscript', 'center', 'object', 'iframe',
 ]
 
 BLEACH_USER_SAFE_ATTRS = {
     '*': ['id', 'class', 'style', 'data', 'height'],
     'img': ['src', 'alt', 'title', 'width', 'height', 'data-src'],
     'a': ['href', 'alt', 'title'],
+    'iframe': ['src', 'height', 'width', 'allow'],
     'abbr': ['title'],
     'dfn': ['title'],
     'time': ['datetime'],
