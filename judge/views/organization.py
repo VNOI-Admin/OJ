@@ -1,4 +1,3 @@
-from judge.views.contests import CreateContest
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -15,11 +14,11 @@ from django.views.generic import DetailView, FormView, ListView, UpdateView, Vie
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
-from judge.forms import ContestForm, EditOrganizationForm
+from judge.forms import EditOrganizationForm
 from judge.models import Language, Organization, OrganizationRequest, Profile
-from judge.template_context import misc_config
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
+from judge.views.contests import CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
