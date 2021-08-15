@@ -81,9 +81,11 @@
 
                             <div><a href="{{ url('list_problem_organization', organization.id, organization.slug) }}">{{ _("Organization's problems") }}</a></div>
                             <br>
-                            {% if organization.is_admin(request.profile) %}
+                            {% if organization.is_admin(request.profile) and request.user.has_perm('judge.create_organization_problem') %}
                                 <div><a href="{{ url('problem_create_organization', organization.id, organization.slug) }}">{{ _('Create Problem') }}</a></div>
-                                <div><a href="{{ url('contest_create_organization', organization.id, organization.slug) }}">{{ _('Create Contest') }}</a></div>
+                            {% endif %}
+                            {% if organization.is_admin(request.profile) and request.user.has_perm('judge.create_private_contest') %}
+                            <div><a href="{{ url('contest_create_organization', organization.id, organization.slug) }}">{{ _('Create Contest') }}</a></div>
                             {% endif %}
 
                         {% elif organization.is_open %}
