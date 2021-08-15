@@ -40,25 +40,15 @@
 
 {% block js_media %}
     <script type="text/javascript">
-        $(document).ready(function () {
-            $('.time-remaining').each(function () {
-                count_down($(this));
-            });
-
-            $('.blog-sidebar').hide();
-            $('#blog-tab').find('a').click(function (e) {
-                e.preventDefault();
-                $('#blog-tab').addClass('active');
-                $('#event-tab').removeClass('active');
-                $('.blog-content').show();
-                $('.blog-sidebar').hide();
-            });
-            $('#event-tab').find('a').click(function (e) {
-                e.preventDefault();
-                $('#event-tab').addClass('active');
-                $('#blog-tab').removeClass('active');
-                $('.blog-content').hide();
-                $('.blog-sidebar').show();
+        $(function () {
+            $('.leave-organization').click(function () {
+                return confirm('{{ _('Are you sure you want to leave this organization?') }}\n' +
+                    {% if organization.is_open %}
+                        '{{ _('You will have to rejoin to show up on the organization leaderboard.') }}'
+                    {% else %}
+                        '{{ _('You will have to request membership in order to join again.') }}'
+                    {% endif %}
+                );
             });
         });
     </script>
@@ -66,17 +56,6 @@
 
 {% block body %}
     {% block before_posts %}{% endblock %}
-    <div id="mobile" class="tabs">
-        <ul>
-            <li id="blog-tab" class="tab active"><a href="#">
-                <i class="tab-icon fa fa-info-circle"></i> {{ _('About') }}
-            </a></li>
-            <li id="event-tab" class="tab"><a href="#"><i class="tab-icon fa fa-rss"></i> {{ _('Events') }}</a></li>
-            {% cache 3600 'organization_html' organization.id MATH_ENGINE %}
-                {{ organization.about|markdown('organization-about', MATH_ENGINE)|reference|str|safe }}
-            {% endcache %}
-        </ul>
-    </div>
     <div id="blog-container">
         <div class="blog-content sidebox">
             <h3>{{ _('About') }} {{ organization.name }} <i class="fa fa-info-circle"></i></h3>
