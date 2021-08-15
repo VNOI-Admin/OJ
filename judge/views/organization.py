@@ -1,6 +1,4 @@
 from datetime import datetime
-from judge.models.contest import Contest
-from judge.models.problem import Problem
 
 from django import forms
 from django.conf import settings
@@ -19,7 +17,7 @@ from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateR
 from reversion import revisions
 
 from judge.forms import EditOrganizationForm
-from judge.models import Language, Organization, OrganizationRequest, Profile
+from judge.models import Contest, Language, Organization, OrganizationRequest, Problem, Profile
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.contests import CreateContest
