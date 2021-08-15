@@ -5,7 +5,7 @@ from django.contrib.contenttypes.models import ContentType
 
 
 from judge.jinja2.gravatar import gravatar
-from judge.models import Comment, Problem, Ticket
+from judge.models import Comment, Problem, Tag, TagProblem, Ticket
 
 __all__ = ("on_new_ticket", "on_new_comment", "on_new_suggested_problem")
 
@@ -90,5 +90,57 @@ def on_new_suggested_problem(problem_code):
         url=site_url + "/user/" + problem.suggester.user.username,
         icon_url=gravatar(problem.suggester),
     )
+    webhook.add_embed(embed)
+    webhook.execute()
+
+
+@shared_task
+def on_new_tag_problem(problem_code):
+    webhook = settings.DISCORD_WEBHOOK.get('on_new_tag_problem', None)
+    site_url = settings.SITE_FULL_URL
+    if webhook is None or site_url is None:
+        return
+
+    problem = TagProblem.objects.get(code=problem_code)
+    url = site_url + problem.get_absolute_url()
+    description = f'Title: {problem.name}\n'
+    description += f'Judge: {problem.judge}'
+
+    webhook = DiscordWebhook(url=webhook)
+    embed = DiscordEmbed(
+        title=f"New tag problem {url}",
+        description=description,
+        color="03b2f8",
+    )
+
+    webhook.add_embed(embed)
+    webhook.execute()
+
+
+@shared_task
+def on_new_tag(problem_code, tag_list):
+    webhook = settings.DISCORD_WEBHOOK.get('on_new_tag', None)
+    site_url = settings.SITE_FULL_URL
+    if webhook is None or site_url is None:
+        return
+
+    problem = TagProblem.objects.get(code=problem_code)
+
+    tags = []
+    for tag in tag_list:
+        tags.append(Tag.objects.get(code=tag).name)
+
+    url = site_url + problem.get_absolute_url()
+
+    description = f'Title: {problem.name}\n'
+    description += f'New tag: {", ".join(tags)}'
+
+    webhook = DiscordWebhook(url=webhook)
+    embed = DiscordEmbed(
+        title=f"New tag added for problem {url}",
+        description=description,
+        color="03b2f8",
+    )
+
     webhook.add_embed(embed)
     webhook.execute()
