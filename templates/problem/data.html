@@ -102,7 +102,7 @@
                             $file_name = $file_name.split('/').pop()
                             $file_ext = $file_name.split('.').pop()
                             if (!(['cpp', 'py'].includes($file_ext))) {
-                                alert("Expected checker's extension must be in [cpp, py], found '" + $file_ext + "'");
+                                alert("{{ _('Expected checker\'s extension must be in [cpp, py], found ') }}'" + $file_ext + "'");
                             }
                             else {
                                 $lang = $file_ext.toUpperCase();
@@ -150,7 +150,16 @@
                 target: "_blank",
                 href: "/custom_checkers"
             }).appendTo($td);
-
+            
+            var $file_test = $('#id_problem-data-zipfile');
+            $("<br>").appendTo($file_test.parent());
+            $("<input/>", {
+                type: "submit",
+                value: "{{ _('Please press this button if you have just updated the zip data') }}",
+                class: "button",
+                style: "display: inherit",
+                id: "submit-button",
+            }).appendTo($file_test.parent());
 
             function swap_row($a, $b) {
                 var $a_order = $a.find('input[id$=order]'), $b_order = $b.find('input[id$=order]');
@@ -271,11 +280,11 @@
                     }
                 }
                 if (inFiles.length == 0) {
-                    alert("No input/output files. Make sure your files' suffices are .in(p)/.out/.ans/.ok");
+                    alert("{{_('No input/output files. Make sure your files\' suffices are .in(p)/.out/.ans/.ok')}}");
                     return false;
                 }
                 if (inFiles.length != outFiles.length) {
-                    alert(`The number of input files (${inFiles.length}) do not match the number of output files (${outFiles.length})!`);
+                    alert(`{{_('The number of input files (${inFiles.length}) do not match the number of output files (${outFiles.length})!')}}`);
                     return false;
                 }
                 // add boxes
@@ -289,18 +298,9 @@
                 for (var i = 0; i < outFiles.length; i++) {
                     $("#id_cases-" + i + "-output_file").val(outFiles[i]).change();
                 }
-                // add points
-                var problem_type = window.prompt("Problem type (oi or icpc).");
-                if (problem_type.toLowerCase()== "icpc") {
-                    for (i = 0; i + 1 < inFiles.length; i++) {
-                        $("#id_cases-" + i + "-points").val("0").change();
-                    }
-                    $("#id_cases-" + (inFiles.length - 1) + "-points").val("100").change();
-                }
-                else {
-                    for (i = 0; i < inFiles.length; i++) {
-                        $("#id_cases-" + i + "-points").val("1").change();
-                    }
+                
+                for (i = 0; i < inFiles.length; i++) {
+                    $("#id_cases-" + i + "-points").val("1").change();
                 }
                 return false;
             });
@@ -456,17 +456,12 @@
         {{ cases_formset.management_form }}
         <table class="table">
             {{ data_form.as_table() }}
-            <th>
-                <label>Autofill testcases:</label>
-            </th>
-            <td>
-                <a id="fill-testcases" href="#">
-                    <i class="fa fa-circle"></i>
-                    Fill testcases
-                </a>
-            </td>
         </table>
-        <input type="submit" style="float:right" value="{{ _('Please press this button if you have just updated the zip data') }}" class="button" id="submit-button">
+        <div style="float:right">
+            <a id="fill-testcases" href="#" class="button">
+                {{ _('Click here to set tests points') }}
+            </a>
+        </div>
         <table id="case-table" class="table">
             <thead>
             <tr>

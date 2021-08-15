@@ -113,8 +113,6 @@
         <td>{{ form.id }} {{ form.problem.errors }}{{ form.problem }}</td>
         <td class="points-column">{{ form.points.errors }}{{ form.points }}</td>
         <td>{{ form.order.errors }}{{ form.order }}</td>
-        <td>{{ form.is_pretested.errors }}{{ form.is_pretested }}</td>
-        <td>{{ form.max_submissions.errors }}{{ form.max_submissions }}</td>
         <td>
         {% if contest_problem_formset.can_delete and form.instance.pk %}
             {{ form.DELETE }}
@@ -124,12 +122,14 @@
 {%- endmacro %}
 
 <div>
-    {% if request.path != url('contest_new') %}
-        <div class="alert alert-warning alert-dismissable">
-            <a class="close">x</a>
-            <a href="{{ url('admin:judge_contest_change', contest.id) }}">{{ _('Edit contest in admin panel for more options') }}</a>
-        </div>
-    {% endif %}
+    {% block edit_contest %}
+        {% if request.user.is_staff %}
+            <div class="alert alert-warning alert-dismissable">
+                <a class="close">x</a>
+                <a href="{{ url('admin:judge_contest_change', contest.id) }}">{{ _('Edit contest in admin panel for more options') }}</a>
+            </div>
+        {% endif %}
+    {% endblock %}
     <form action="" method="post" class="form-area" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
         {{ contest_problem_formset.management_form }}
@@ -142,8 +142,6 @@
                     <th class="problem-column"> {{ _('Problems') }} </th>
                     <th class="points-column"> {{ _('Points') }} </th>
                     <th> {{ _('Order in contest') }} </th>
-                    <th> {{ _('Has pretest?') }} </th>
-                    <th> {{ _('Max submissions') }} </th>
                     <th> {{ _('Delete') }} </th>
                 </tr>
             </thead>

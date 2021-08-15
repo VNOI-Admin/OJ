@@ -1,7 +1,7 @@
 import logging
 import os
 import shutil
-from datetime import timedelta
+from datetime import datetime, timedelta
 from operator import itemgetter
 from random import randrange
 
@@ -351,18 +351,18 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
             return None
         return self.request.profile
 
-    def get_normal_queryset(self):
-        filter = Q(is_public=True)
+    def get_filter(self):
+        filter = Q(is_public=True) & Q(is_organization_private=False)
         if self.profile is not None:
             filter |= Q(authors=self.profile)
             filter |= Q(curators=self.profile)
             filter |= Q(testers=self.profile)
+        return filter
+
+    def get_normal_queryset(self):
+        filter = self.get_filter()
         queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
-        if not self.request.user.has_perm('see_organization_problem'):
-            filter = Q(is_organization_private=False)
-            if self.profile is not None:
-                filter |= Q(organizations__in=self.profile.organizations.all())
-            queryset = queryset.filter(filter)
+
         if self.profile is not None and self.hide_solved:
             queryset = queryset.exclude(id__in=Submission.objects.filter(user=self.profile, points=F('problem__points'))
                                         .values_list('problem__id', flat=True))
@@ -482,33 +482,8 @@ class SuggestList(ProblemList):
     template_name = 'problem/suggest-list.html'
     permission_required = "superuser"
 
-    def get_normal_queryset(self):
-        filter = Q(is_public=False)
-
-        filter &= ~Q(suggester=None)
-
-        queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
-        if self.show_types:
-            queryset = queryset.prefetch_related('types')
-        if self.category is not None:
-            queryset = queryset.filter(group__id=self.category)
-        if self.selected_types:
-            queryset = queryset.filter(types__in=self.selected_types)
-        if 'search' in self.request.GET:
-            self.search_query = query = ' '.join(self.request.GET.getlist('search')).strip()
-            if query:
-                if settings.ENABLE_FTS and self.full_text:
-                    queryset = queryset.search(query, queryset.BOOLEAN).extra(order_by=['-relevance'])
-                else:
-                    queryset = queryset.filter(
-                        Q(code__icontains=query) | Q(name__icontains=query) | Q(source__icontains=query) |
-                        Q(translations__name__icontains=query, translations__language=self.request.LANGUAGE_CODE))
-        self.prepoint_queryset = queryset
-        if self.point_start is not None:
-            queryset = queryset.filter(points__gte=self.point_start)
-        if self.point_end is not None:
-            queryset = queryset.filter(points__lte=self.point_end)
-        return queryset.distinct()
+    def get_filter(self):
+        return Q(is_public=False) & ~Q(suggester=None)
 
     def get(self, request, *args, **kwargs):
         if not request.user.has_perm('judge.suggest_new_problem'):
@@ -756,6 +731,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
         problem.authors.add(self.request.user.profile)
         problem.allowed_languages.set(Language.objects.all())
         problem.partial = True
+        problem.date = datetime.now()
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
 

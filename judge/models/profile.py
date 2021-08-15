@@ -77,6 +77,13 @@ class Organization(models.Model):
             self.member_count = member_count
             self.save(update_fields=['member_count'])
 
+    @cached_property
+    def admins_list(self):
+        return self.admins.all()
+
+    def is_admin(self, user):
+        return user in self.admins_list
+
     def __contains__(self, item):
         if isinstance(item, int):
             return self.members.filter(id=item).exists()

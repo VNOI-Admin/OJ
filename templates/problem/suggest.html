@@ -68,7 +68,7 @@
         {% csrf_token %}
         <table class="django-as-table">{{ form.as_table() }}</table>
         <hr>
-        <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">{{ _('Create') }}</button></div>
+        <div style="display: flex; justify-content: flex-end;"><input type="submit" value="{{ _('Create') }}" class="button"></div>
     </form>
 </div>
 {% endblock %}

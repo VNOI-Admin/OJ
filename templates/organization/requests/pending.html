@@ -1,4 +1,13 @@
 {% extends "base.html" %}
+{% block js_media %}
+    <script>
+        $(function () {
+            $('select option:contains("Pending")').text('{{_("Pending")}}');
+            $('select option:contains("Approved")').text('{{_("Approved")}}');
+            $('select option:contains("Rejected")').text('{{_("Rejected")}}');
+        });
+    </script>
+{% endblock %}
 {% block body %}
     {% include "messages.html" %}
     {% include "organization/requests/tabs.html" %}
