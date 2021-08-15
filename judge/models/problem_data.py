@@ -31,6 +31,7 @@ CHECKERS = (
 )
 
 CUSTOM_CHECKERS = (
+    ('themis', _('Themis checker')),
     ('testlib', _('Testlib checker')),
     ('cms', _('CMS checker')),
     ('coci', _('COCI checker')),
