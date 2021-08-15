@@ -1,3 +1,7 @@
+from datetime import datetime
+from judge.models.contest import Contest
+from judge.models.problem import Problem
+
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -81,6 +85,20 @@ class OrganizationHome(OrganizationDetailView):
         context = super(OrganizationHome, self).get_context_data(**kwargs)
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
+        context['is_member'] = False
+
+        if self.request.profile in self.object:
+            context['is_member'] = True
+            context['new_problems'] = Problem.objects.filter(
+                is_public=True, is_organization_private=True,
+                organizations=self.object) \
+                .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
+
+            context['new_contests'] = Contest.objects.filter(
+                is_visible=True, is_organization_private=True,
+                organizations=self.object) \
+                .order_by('-end_time', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
+
         return context
 
 
@@ -403,6 +421,7 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
         problem.is_public = True
         problem.is_organization_private = True
         problem.organizations.add(self.organization)
+        problem.date = datetime.now()
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
 

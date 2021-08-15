@@ -1,7 +1,7 @@
 import logging
 import os
 import shutil
-from datetime import timedelta
+from datetime import datetime, timedelta
 from operator import itemgetter
 from random import randrange
 
@@ -731,6 +731,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
         problem.authors.add(self.request.user.profile)
         problem.allowed_languages.set(Language.objects.all())
         problem.partial = True
+        problem.date = datetime.now()
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
 
