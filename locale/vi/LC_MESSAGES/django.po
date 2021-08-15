@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-15 07:11+0000\n"
+"POT-Creation-Date: 2021-08-15 08:13+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -307,7 +307,7 @@ msgstr "múi giờ"
 
 #: judge/admin/profile.py:98 judge/admin/submission.py:217
 #: templates/organization/requests/log.html:9
-#: templates/organization/requests/pending.html:12
+#: templates/organization/requests/pending.html:17
 #: templates/ticket/list.html:261
 msgid "User"
 msgstr "Thành viên"
@@ -416,7 +416,7 @@ msgid "Problem name"
 msgstr "Tên bài"
 
 #: judge/admin/submission.py:221 templates/organization/requests/log.html:10
-#: templates/organization/requests/pending.html:13
+#: templates/organization/requests/pending.html:18
 msgid "Time"
 msgstr "Thời gian"
 
@@ -531,13 +531,13 @@ msgid "commented {time}"
 msgstr "đã bình luận {time}"
 
 #: judge/custom_translations.py:31 templates/contest/list.html:117
-#: templates/organization/home.html:172
+#: templates/organization/home.html:141
 #, python-format
 msgid "%(duration)s long"
 msgstr "Thời gian làm bài: %(duration)s"
 
 #: judge/custom_translations.py:32 templates/contest/list.html:116
-#: templates/organization/home.html:171
+#: templates/organization/home.html:140
 #, python-format
 msgid "%(time_limit)s window"
 msgstr ""
@@ -690,7 +690,7 @@ msgstr "id kỳ thi phải khớp regex ^[a-z0-9_] + $"
 msgid "Contest with key already exists."
 msgstr "Mã kỳ thi đã tồn tại."
 
-#: judge/forms.py:413
+#: judge/forms.py:412
 msgid ""
 "This image will appear in link sharing embeds. For example: Facebook, etc"
 msgstr "Hình ảnh hiển thị khi chia sẻ link kì thi. Ví dụ: Facebook, v.v."
@@ -1203,7 +1203,7 @@ msgstr "tham gia kỳ thi"
 #: judge/models/contest.py:511 judge/models/contest.py:535
 #: judge/models/contest.py:574 judge/models/problem.py:470
 #: judge/models/problem.py:475 judge/models/problem.py:493
-#: judge/models/problem_data.py:42
+#: judge/models/problem_data.py:43
 msgid "problem"
 msgstr "vấn đề"
 
@@ -1765,98 +1765,102 @@ msgid "Line-by-line"
 msgstr "Dòng với dòng"
 
 #: judge/models/problem_data.py:34
-msgid "Testlib checker"
+msgid "Themis checker"
 msgstr ""
 
 #: judge/models/problem_data.py:35
-msgid "CMS checker"
+msgid "Testlib checker"
 msgstr ""
 
 #: judge/models/problem_data.py:36
-msgid "COCI checker"
+msgid "CMS checker"
 msgstr ""
 
 #: judge/models/problem_data.py:37
+msgid "COCI checker"
+msgstr ""
+
+#: judge/models/problem_data.py:38
 msgid "PEG checker"
 msgstr ""
 
-#: judge/models/problem_data.py:44
+#: judge/models/problem_data.py:45
 msgid "data zip file"
 msgstr "tập tin dữ liệu nén dạng zip"
 
-#: judge/models/problem_data.py:46
+#: judge/models/problem_data.py:47
 msgid "generator file"
 msgstr "trình sinh test"
 
-#: judge/models/problem_data.py:48 judge/models/problem_data.py:105
+#: judge/models/problem_data.py:49 judge/models/problem_data.py:106
 msgid "output prefix length"
 msgstr ""
 
-#: judge/models/problem_data.py:49 judge/models/problem_data.py:106
+#: judge/models/problem_data.py:50 judge/models/problem_data.py:107
 msgid "output limit length"
 msgstr "hạn chế chiều dài đầu ra"
 
-#: judge/models/problem_data.py:50
+#: judge/models/problem_data.py:51
 msgid "init.yml generation feedback"
 msgstr "phản hồi init.yml"
 
-#: judge/models/problem_data.py:51 judge/models/problem_data.py:107
+#: judge/models/problem_data.py:52 judge/models/problem_data.py:108
 msgid "checker"
 msgstr "trình chấm"
 
-#: judge/models/problem_data.py:52 judge/models/problem_data.py:108
+#: judge/models/problem_data.py:53 judge/models/problem_data.py:109
 msgid "checker arguments"
 msgstr "tham số của trình chấm"
 
-#: judge/models/problem_data.py:53 judge/models/problem_data.py:109
+#: judge/models/problem_data.py:54 judge/models/problem_data.py:110
 msgid "checker arguments as a JSON object"
 msgstr "tham số của trình chấm là một JSON"
 
-#: judge/models/problem_data.py:55
+#: judge/models/problem_data.py:56
 msgid "custom checker file"
 msgstr "File trình chấm ngoài"
 
-#: judge/models/problem_data.py:92
+#: judge/models/problem_data.py:93
 msgid "problem data set"
 msgstr "tập dữ liệu bài"
 
-#: judge/models/problem_data.py:94
+#: judge/models/problem_data.py:95
 msgid "case position"
 msgstr "vị trí phép thử"
 
-#: judge/models/problem_data.py:95
+#: judge/models/problem_data.py:96
 msgid "case type"
 msgstr "kiểu test"
 
-#: judge/models/problem_data.py:96
+#: judge/models/problem_data.py:97
 msgid "Normal case"
 msgstr "Test đơn"
 
-#: judge/models/problem_data.py:97
+#: judge/models/problem_data.py:98
 msgid "Batch start"
 msgstr "Bắt đầu nhóm test"
 
-#: judge/models/problem_data.py:98
+#: judge/models/problem_data.py:99
 msgid "Batch end"
 msgstr "Hết nhóm test"
 
-#: judge/models/problem_data.py:100
+#: judge/models/problem_data.py:101
 msgid "input file name"
 msgstr "tên file input"
 
-#: judge/models/problem_data.py:101
+#: judge/models/problem_data.py:102
 msgid "output file name"
 msgstr "tên file output"
 
-#: judge/models/problem_data.py:102
+#: judge/models/problem_data.py:103
 msgid "generator arguments"
 msgstr "tham số trình sinh"
 
-#: judge/models/problem_data.py:103
+#: judge/models/problem_data.py:104
 msgid "point value"
 msgstr "điểm"
 
-#: judge/models/problem_data.py:104
+#: judge/models/problem_data.py:105
 msgid "case is pretest?"
 msgstr "là pretests?"
 
@@ -3773,7 +3777,7 @@ msgstr ""
 msgid "Blog"
 msgstr "Blog"
 
-#: templates/blog/list.html:93 templates/organization/home.html:84
+#: templates/blog/list.html:93
 msgid "Events"
 msgstr "Sự kiện"
 
@@ -3813,7 +3817,7 @@ msgstr "Bắt đầu trong %(countdown)s."
 msgid "Comment stream"
 msgstr "Dòng bình luận"
 
-#: templates/blog/list.html:222 templates/organization/home.html:181
+#: templates/blog/list.html:222 templates/organization/home.html:150
 msgid "New problems"
 msgstr "Bài mới"
 
@@ -4462,8 +4466,8 @@ msgstr ""
 "đã được gửi đến bạn. Trong email đó, bạn sẽ tìm thấy một liên kết mà bạn cần "
 "phải làm theo để cập nhật đăng ký của bạn."
 
-#: templates/organization/edit.html:47
-#: templates/organization/requests/pending.html:34
+#: templates/organization/edit.html:50
+#: templates/organization/requests/pending.html:39
 #: templates/problem/editor.html:78 templates/ticket/edit-notes.html:4
 msgid "Update"
 msgstr "Cập Nhật"
@@ -4480,56 +4484,56 @@ msgstr "Bạn sẽ phải tham gia lại để có hiện trên bảng xếp h�
 msgid "You will have to request membership in order to join again."
 msgstr "Bạn sẽ phải yêu cầu tư cách thành viên nếu muốn tham gia lại."
 
-#: templates/organization/home.html:82 templates/organization/home.html:92
-#: templates/user/user-about.html:33 templates/user/user-tabs.html:4
+#: templates/organization/home.html:61 templates/user/user-about.html:33
+#: templates/user/user-tabs.html:4
 msgid "About"
 msgstr "Thông tin"
 
-#: templates/organization/home.html:103
+#: templates/organization/home.html:72
 msgid "Controls"
 msgstr "Quản lý"
 
-#: templates/organization/home.html:109
+#: templates/organization/home.html:78
 msgid "Leave organization"
 msgstr "Rời khỏi tổ chức"
 
-#: templates/organization/home.html:113
+#: templates/organization/home.html:82
 msgid "Organization's problems"
 msgstr "Danh sách bài tập của tổ chức"
 
-#: templates/organization/home.html:116
+#: templates/organization/home.html:85
 msgid "Create Problem"
 msgstr "Tạo bài tập mới"
 
-#: templates/organization/home.html:117
+#: templates/organization/home.html:86
 msgid "Create Contest"
 msgstr "Tạo kỳ thi mới"
 
-#: templates/organization/home.html:123
+#: templates/organization/home.html:92
 msgid "Join organization"
 msgstr "Tham gia tổ chức"
 
-#: templates/organization/home.html:127
+#: templates/organization/home.html:96
 msgid "Request membership"
 msgstr "Yêu cầu tư cách thành viên"
 
-#: templates/organization/home.html:132
+#: templates/organization/home.html:101
 msgid "Edit organization"
 msgstr "Chỉnh sửa tổ chức"
 
-#: templates/organization/home.html:136
+#: templates/organization/home.html:105
 msgid "View requests"
 msgstr "Xem yêu cầu"
 
-#: templates/organization/home.html:143
+#: templates/organization/home.html:112
 msgid "Admin organization"
 msgstr "Quản trị tổ chức"
 
-#: templates/organization/home.html:148
+#: templates/organization/home.html:117
 msgid "View members"
 msgstr "Xem các thành viên"
 
-#: templates/organization/home.html:155
+#: templates/organization/home.html:124
 msgid "New contests"
 msgstr "Kỳ thi mới"
 
@@ -4563,21 +4567,36 @@ msgid "Reason:"
 msgstr "Lý Do:"
 
 #: templates/organization/requests/log.html:11
-#: templates/organization/requests/pending.html:14
+#: templates/organization/requests/pending.html:19
 msgid "State"
 msgstr "Trạng thái"
 
 #: templates/organization/requests/log.html:12
-#: templates/organization/requests/pending.html:15
+#: templates/organization/requests/pending.html:20
 msgid "Reason"
 msgstr "Lý do"
 
 #: templates/organization/requests/log.html:28
-#: templates/organization/requests/pending.html:37
+#: templates/organization/requests/pending.html:42
 msgid "There are no requests to approve."
 msgstr "Không có yêu cầu để chấp nhận."
 
-#: templates/organization/requests/pending.html:17
+#: templates/organization/requests/pending.html:3
+#: templates/organization/requests/tabs.html:4
+msgid "Pending"
+msgstr "Đang chờ"
+
+#: templates/organization/requests/pending.html:4
+#: templates/organization/requests/tabs.html:10
+msgid "Approved"
+msgstr "Phê duyệt"
+
+#: templates/organization/requests/pending.html:5
+#: templates/organization/requests/tabs.html:13
+msgid "Rejected"
+msgstr "Bị từ chối"
+
+#: templates/organization/requests/pending.html:22
 #: templates/problem/data.html:476
 msgid "Delete?"
 msgstr "Xoá?"
@@ -4590,21 +4609,9 @@ msgstr "Lý do tham gia:"
 msgid "Request"
 msgstr "Yêu cầu"
 
-#: templates/organization/requests/tabs.html:4
-msgid "Pending"
-msgstr "Đang chờ"
-
 #: templates/organization/requests/tabs.html:7
 msgid "Log"
 msgstr "Nhật ký"
-
-#: templates/organization/requests/tabs.html:10
-msgid "Approved"
-msgstr "Phê duyệt"
-
-#: templates/organization/requests/tabs.html:13
-msgid "Rejected"
-msgstr "Bị từ chối"
 
 #: templates/organization/users-table.html:15
 msgid "Kick"
