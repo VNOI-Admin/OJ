@@ -16,6 +16,7 @@ from requests.exceptions import ReadTimeout
 from judge.comments import CommentedDetailView
 from judge.forms import TagProblemAssignForm, TagProblemCreateForm
 from judge.models import Tag, TagData, TagGroup, TagProblem
+from judge.tasks.webhook import on_new_tag, on_new_tag_problem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.judge_api import APIError, OJAPI
 from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message, paginate_query_context
@@ -175,6 +176,7 @@ class TagProblemCreate(LoginRequiredMixin, TagAllowingMixin, TitleMixin, FormVie
             # Initialize model
             problem = TagProblem(code=problem_data['codename'], name=api_problem_data['title'], link=url,
                                  judge=problem_data['judge'])
+            on_new_tag_problem.delay(problem_data['codename'])
             problem.save()
             return HttpResponseRedirect(problem.get_absolute_url())
         except (APIError, IntegrityError) as e:
@@ -212,19 +214,20 @@ class TagProblemAssign(LoginRequiredMixin, TagAllowingMixin, TagProblemMixin, Ti
                 tag_data.save()
             except IntegrityError:
                 pass
+        on_new_tag.delay(self.object.code, tags)
 
         return HttpResponseRedirect(self.object.get_absolute_url())
 
 
-class TagProblemDetail(TagProblemMixin, CommentedDetailView):
+class TagProblemDetail(TagProblemMixin, TitleMixin, CommentedDetailView):
     context_object_name = 'problem'
     template_name = 'tag/problem.html'
 
+    def get_title(self):
+        return self.object.name
+
+    def get_content_title(self):
+        return mark_safe(format_html('<a href="{0}">{1}</a>', self.object.link, self.object.name))
+
     def get_comment_page(self):
         return 't:%s' % self.object.code
-
-    def get_context_data(self, **kwargs):
-        context = super(TagProblemDetail, self).get_context_data(**kwargs)
-
-        context['title'] = self.object.name
-        return context
