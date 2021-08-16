@@ -236,7 +236,7 @@ You will not be able to view your scratch codes after you leave this page!') }}"
                             showTooltip(e.trigger, fallbackMessage(e.action));
                         });
                     });
- 
+
                     $.ajax({
                         type: 'POST',
                         url: $(this).attr('href'),
@@ -282,11 +282,9 @@ You will not be able to view your scratch codes after you leave this page!') }}"
             {% csrf_token %}
             <table>
                 <tr>
-                    <td><div class="block-header">{{ _('Last name') }}</div></td>
-                    <td><div class="block-header">{{ _('First name') }}</div></td>
+                    <td><div class="block-header">{{ _('Full name') }}:</div></td>
                 </tr>
                 <tr>
-                    <td>{{ form_user.last_name }}</td>
                     <td>{{ form_user.first_name }}</td>
                 </tr>
             </table>
