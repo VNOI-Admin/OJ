@@ -1,0 +1,9 @@
+{% extends "tabs-base.html" %}
+
+{% block tabs %}
+    {% if organization.is_admin(request.profile) and request.user.has_perm('judge.create_organization_problem') %}
+        {{ make_tab('create', 'fa-plus add-problem', url('problem_create_organization', organization.id, organization.slug), _('Create new problem')) }}
+    {% endif %}
+    {{ make_tab('list', 'fa-list', url('list_problem_organization', organization.pk, organization.slug), _('List')) }}
+    {{ make_tab('submission', 'fa-list', url('all_submissions') + '?organization=' + str(organization.pk), _('Submissions')) }}
+{% endblock %}

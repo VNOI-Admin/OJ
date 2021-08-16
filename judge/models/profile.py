@@ -77,7 +77,16 @@ class Organization(models.Model):
             self.member_count = member_count
             self.save(update_fields=['member_count'])
 
+    @cached_property
+    def admins_list(self):
+        return self.admins.all()
+
+    def is_admin(self, user):
+        return user in self.admins_list
+
     def __contains__(self, item):
+        if item is None:
+            return False
         if isinstance(item, int):
             return self.members.filter(id=item).exists()
         elif isinstance(item, Profile):
@@ -129,6 +138,9 @@ class Profile(models.Model):
                                default=False)
     is_unlisted = models.BooleanField(verbose_name=_('unlisted user'), help_text=_('User will not be ranked.'),
                                       default=False)
+    allow_tagging = models.BooleanField(verbose_name=_('Allow tagging'),
+                                        help_text=_('User will be allowed to tag problems.'),
+                                        default=False)
     rating = models.IntegerField(null=True, default=None)
     user_script = models.TextField(verbose_name=_('user script'), default='', blank=True, max_length=65536,
                                    help_text=_('User-defined JavaScript for site customization.'))

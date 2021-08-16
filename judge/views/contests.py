@@ -10,7 +10,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.db import IntegrityError
 from django.db.models import Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.expressions import CombinedExpression
@@ -20,17 +20,18 @@ from django.template.defaultfilters import date as date_filter, floatformat
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.html import format_html
+from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import ListView, TemplateView
 from django.views.generic.detail import BaseDetailView, DetailView, SingleObjectMixin, View
+from django.views.generic.edit import CreateView, UpdateView
 from reversion import revisions
 
 from judge import event_poster as event
 from judge.comments import CommentedDetailView
-from judge.forms import ContestCloneForm
+from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Problem, ProblemClarification, Profile, Submission
 from judge.tasks import run_moss
@@ -229,6 +230,15 @@ class ContestMixin(object):
 class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
     template_name = 'contest/contest.html'
 
+    def is_comment_locked(self):
+        if self.object.use_clarifications:
+            now = timezone.now()
+            if self.object.is_in_contest(self.request.user) or \
+                    (self.object.start_time <= now and now <= self.object.end_time):
+                return True
+
+        return super(ContestDetail, self).is_comment_locked()
+
     def get_comment_page(self):
         return 'c:%s' % self.object.key
 
@@ -246,8 +256,11 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         # calculate problem AC rate in contest
         contest_problem_fields = self.object.contest_problems.defer('problem__description') \
             .order_by('order') \
-            .annotate(user_count=Count('submission__submission', filter=Q(submission__submission__result='AC'))) \
-            .annotate(submission_count=Count('submission__submission')) \
+            .annotate(user_count=Count('submission__submission',
+                      filter=Q(submission__submission__result='AC') &
+                      Q(submission__submission__date__gt=self.object.start_time))) \
+            .annotate(submission_count=Count('submission__submission',
+                      filter=Q(submission__submission__date__gt=self.object.start_time))) \
             .values('points', 'user_count', 'submission_count')
 
         for p, contest_p in zip(context['contest_problems'], contest_problem_fields):
@@ -539,7 +552,7 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
         if not (self.object.ended or self.can_edit):
             raise Http404()
 
-        queryset = Submission.objects.filter(contest_object=self.object)
+        queryset = Submission.objects.filter(contest_object=self.object, date__gt=self.object.start_time)
 
         ac_count = Count(Case(When(result='AC', then=Value(1)), output_field=IntegerField()))
         ac_rate = CombinedExpression(ac_count / Count('problem'), '*', Value(100.0), output_field=FloatField())
@@ -635,10 +648,14 @@ def base_contest_ranking_list(contest, problems, queryset):
             queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')]
 
 
+def base_contest_ranking_queryset(contest):
+    return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
+        .prefetch_related('user__organizations') \
+        .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker')
+
+
 def contest_ranking_list(contest, problems):
-    return base_contest_ranking_list(contest, problems, contest.users.filter()
-                                     .prefetch_related('user__organizations')
-                                     .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker'))
+    return base_contest_ranking_list(contest, problems, base_contest_ranking_queryset(contest))
 
 
 def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list,
@@ -703,6 +720,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
 
 class ContestRanking(ContestRankingBase):
     tab = 'ranking'
+    show_virtual = False
 
     def get_title(self):
         return _('%s Rankings') % self.object.name
@@ -716,11 +734,25 @@ class ContestRanking(ContestRankingBase):
                 ranker=lambda users, key: ((_('???'), user) for user in users),
             )
 
+        if 'show_virtual' in self.request.GET:
+            self.show_virtual = self.request.session['show_virtual'] \
+                              = self.request.GET.get('show_virtual').lower() == 'true'
+        else:
+            self.show_virtual = self.request.session.get('show_virtual', False)
+
+        if not self.show_virtual:
+            queryset = base_contest_ranking_queryset(self.object).filter(virtual=ContestParticipation.LIVE)
+            return get_contest_ranking_list(
+                self.request, self.object,
+                ranking_list=partial(base_contest_ranking_list, queryset=queryset),
+            )
+
         return get_contest_ranking_list(self.request, self.object)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['has_rating'] = self.object.ratings.exists()
+        context['show_virtual'] = self.show_virtual
         return context
 
 
@@ -874,3 +906,93 @@ class ContestTagDetail(TitleMixin, ContestTagDetailAjax):
 
     def get_title(self):
         return _('Contest tag: %s') % self.object.name
+
+
+class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
+    template_name = 'contest/create.html'
+    model = Contest
+    form_class = ContestForm
+    permission_required = 'judge.add_contest'
+
+    def get_title(self):
+        return _('Create new contest')
+
+    def get_content_title(self):
+        return _('Create new contest')
+
+    def get_contest_problem_formset(self):
+        if self.request.POST:
+            return ProposeContestProblemFormSet(self.request.POST)
+        return ProposeContestProblemFormSet()
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['contest_problem_formset'] = self.get_contest_problem_formset()
+        return data
+
+    def save_contest_form(self, form):
+        self.object = form.save()
+        self.object.authors.add(self.request.profile)
+        self.object.save()
+
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        form = ContestForm(request.POST or None)
+        form_set = self.get_contest_problem_formset()
+        if form.is_valid() and form_set.is_valid():
+            self.save_contest_form(form)
+            for problem in form_set.save(commit=False):
+                problem.contest = self.object
+                problem.save()
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(*args, **kwargs))
+
+
+class EditContest(ContestMixin, TitleMixin, UpdateView):
+    template_name = 'contest/edit.html'
+    model = Contest
+    form_class = ContestForm
+
+    def get_object(self, queryset=None):
+        contest = super(EditContest, self).get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return contest
+
+    def get_title(self):
+        return _('Editing contest {0}').format(self.object.name)
+
+    def get_content_title(self):
+        return mark_safe(escape(_('Editing contest %s')) % (
+            format_html('<a href="{1}">{0}</a>', self.object.name,
+                        reverse('contest_view', args=[self.object.key]))))
+
+    def get_contest_problem_formset(self):
+        if self.request.POST:
+            return ProposeContestProblemFormSet(self.request.POST, instance=self.get_object())
+        return ProposeContestProblemFormSet(instance=self.get_object())
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['contest_problem_formset'] = self.get_contest_problem_formset()
+        return data
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        form_set = self.get_contest_problem_formset()
+
+        if form.is_valid() and form_set.is_valid():
+            form.save()
+            problems = form_set.save(commit=False)
+
+            for problem in form_set.deleted_objects:
+                problem.delete()
+
+            for problem in problems:
+                problem.contest = self.object
+                problem.save()
+            return HttpResponseRedirect(self.get_success_url())
+        else:
+            return self.render_to_response(self.get_context_data(*args, **kwargs))

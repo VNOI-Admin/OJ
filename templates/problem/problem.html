@@ -1,6 +1,8 @@
 {% extends "common-content.html" %}
 {% block content_media %}
-    {% include "comments/media-css.html" %}
+    {% if not comment_lock %}
+        {% include "comments/media-css.html" %}
+    {% endif %}
     <style>
         .title-state {
             font-size: 2em;
@@ -45,7 +47,9 @@
 {% endblock %}
 
 {% block content_js_media %}
-    {% include "comments/media-js.html" %}
+    {% if not comment_lock %}
+        {% include "comments/media-js.html" %}
+    {% endif %}
 {% endblock %}
 
 {% block title_row %}
@@ -215,10 +219,10 @@
                         <div class="pi-value authors-value">{{ link_users(authors) }}</div>
                     </div>
                 {% endif %}
-                {% if problem.suggester %} 
+                {% if problem.suggester %}
                 <div class="problem-info-entry">
                     <i class="fa fa-pencil-square-o fa-fw"></i><span
-                        class="pi-name"> {{ _("Suggester:") }}</span>
+                        class="pi-name">{{ _("Suggester:") }}</span>
                         <div class="pi-value authors-value">{{ link_user(problem.suggester) }}</div>
                     </div>
                 {% endif %}
@@ -326,7 +330,7 @@
 {% block post_description_end %}
     {% if request.user.is_authenticated and not request.profile.mute %}
         <a href="{{ url('new_problem_ticket', problem.code) }}" class="button clarify">
-            {%- if contest_problem and contest_problem.contest.use_clarifications and request.profile.current_contest.live -%}
+            {%- if comment_lock and request.profile.current_contest.live -%}
                 {{ _('Request clarification') }}
             {%- else -%}
                 {{ _('Report an issue') }}
@@ -336,7 +340,7 @@
 {% endblock %}
 
 {% block comments %}
-    {% if contest_problem and contest_problem.contest.use_clarifications %}
+    {% if comment_lock %}
         <div class="clarifications-area">
             <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
             {% if has_clarifications %}
@@ -359,5 +363,7 @@
 
 {% block bodyend %}
     {{ super() }}
-    {% include "comments/math.html" %}
+    {% if not comment_lock %}
+        {% include "comments/math.html" %}
+    {% endif %}
 {% endblock %}

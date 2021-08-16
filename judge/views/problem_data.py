@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
-from django.forms import BaseModelFormSet, HiddenInput, ModelForm, NumberInput, Select, formset_factory
+from django.forms import BaseModelFormSet, ChoiceField, HiddenInput, ModelForm, NumberInput, Select, formset_factory
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -19,10 +19,12 @@ from django.views.generic import DetailView
 
 from judge.highlight_code import highlight_code
 from judge.models import Problem, ProblemData, ProblemTestCase, Submission, problem_data_storage
+from judge.models.problem_data import CUSTOM_CHECKERS
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.utils.unicode import utf8text
 from judge.utils.views import TitleMixin, add_file_response
 from judge.views.problem import ProblemMixin
+from judge.widgets import Select2Widget
 
 mimetypes.init()
 mimetypes.add_type('application/x-yaml', '.yml')
@@ -41,6 +43,8 @@ def checker_args_cleaner(self):
 
 
 class ProblemDataForm(ModelForm):
+    checker_type = ChoiceField(choices=CUSTOM_CHECKERS, widget=Select2Widget(attrs={'style': 'width: 200px'}))
+
     def clean_zipfile(self):
         if hasattr(self, 'zip_valid') and not self.zip_valid:
             raise ValidationError(_('Your zip file is invalid!'))
@@ -50,9 +54,13 @@ class ProblemDataForm(ModelForm):
 
     class Meta:
         model = ProblemData
-        fields = ['zipfile', 'generator', 'checker', 'custom_checker', 'checker_args']
+        fields = ['zipfile', 'checker', 'custom_checker', 'checker_args', 'checker_type', 'output_limit']
         widgets = {
             'checker_args': HiddenInput,
+            'checker': Select2Widget(attrs={'style': 'width: 200px'}),
+        }
+        help_texts = {
+            'output_limit': _('Can be left blank. In case the output can be too long (over 20MB), please set this.'),
         }
 
 

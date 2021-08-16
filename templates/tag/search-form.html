@@ -1,0 +1,46 @@
+<div class="sidebox">
+    <h3>{{ _('Problem search') }} <i class="fa fa-search"></i></h3>
+    <div class="sidebox-content">
+        <form id="filter-form" name="form" action="" method="get">
+            {% if selected_tag %}<input type="hidden" name="tag_id" value="{{ selected_tag }}">{% endif %}
+            <div>
+                <input id="search" type="text" name="search" value="{{ search_query or '' }}"
+                        placeholder="{{ _('Search problems...') }}">
+            </div>
+            <div class="filter-form-group">
+                <label for="judge"><i>{{ _('Online judges') }}</i></label>
+                <select id="judges" name="judge" multiple>
+                    {% for id, full_name in judges %}
+                        <option value="{{ id }}"{% if id in selected_judges %} selected{% endif %}>
+                            {{ full_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-submit-group">
+                <a id="go" class="button">{{ _('Go') }}</a>
+                <a id="random" class="button">{{ _('Random') }}</a>
+                <a class="button" href="{{url('tagproblem_list')}}">{{ _('Clear search') }}</a>
+            </div>
+        </form>
+    </div>
+    <script>
+        $(function () {
+            var $form = $('form#filter-form');
+
+            $('#judges').select2({multiple: 1, placeholder: '{{ _('Filter by online judge...') }}'})
+                    .css({'visibility': 'visible'});
+
+            $('#go').click(function () {
+                $form.submit();
+            });
+
+            $('#random').click(function (e) {
+                var action = $form.attr('action');
+                $form.attr('action', '{{ url('tagproblem_random') }}').attr('target', '_blank').submit();
+                $form.attr('action', action).attr('target', '');
+                e.preventDefault();
+            });
+        });
+    </script>
+</div>

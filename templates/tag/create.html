@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {{ form.media.js }}
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+    <style>
+        .helptext {
+            font-size: 13px;
+            color: #999;
+            border-width: 0 0 1px 0;
+        }
+        .helptext::before {
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+            content: "\f05a";
+            padding-right: 5px;
+            font-size: 14px;
+        }
+        .django-as-table {
+            border-collapse:collapse;
+        }
+        .django-as-table th, td {
+            padding-bottom: 10px;
+        }
+        .django-as-table th {
+            max-width: 10em;
+            width: 10em;
+        }
+        .errorlist {
+            background: rgba(255, 0, 0, 0.3);
+            border: 3px dashed red;
+            border-right: none;
+            border-left: solid red;
+            padding: 0 1em 0.1em 2em;
+            margin: 0.3em 0 0.5em 0;
+        }
+        .errornote {
+            border: 3px dashed #ffc000;
+            border-left: solid #ffc000;
+            padding: 0.7em 2em;
+            margin: 0 0 8px;
+            font-size: 13px !important;
+            font-weight: 400;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="alert alert-warning alert-dismissable">
+        <a class="close">x</a>
+        <b>{{ _('Creating new problem can take longer than usual!') }}</b>
+        <br>
+        {{ _('Due to API requests and cache optimization, creating problem can take longer than usual.') }}
+        <br>{{ _('If no problem is created after 2 to 3 minutes, please open a ticket, or contact the admin for further information.') }}
+    </div>
+    <div>
+        <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+            {% csrf_token %}
+            <table class="django-as-table">{{ form.as_table() }}</table>
+            <hr>
+            <table>
+                <tr><td style="float: left;">
+                <td style="float: right;"><input type="submit" value="{{ _('Create') }}" class="button"></td></tr>
+            </table>
+        </form>
+    </div>
+{% endblock %}

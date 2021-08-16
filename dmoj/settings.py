@@ -61,7 +61,62 @@ VNOJ_CP_PROBLEM = 20 # Each suggested problem equal 20 CP
 
 VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
 
-DISCORD_WEBHOOK = None
+# List of online judge preset for OJ API
+OJ_PROBLEM_PRESET = [
+    {
+        'regex': r'^https://codeforces\.com/problemset/problem/(?P<contestid>\w+)/(?P<index>\w+)$',
+        'codename': 'CF_%s_%s',
+        'judge': 'Codeforces',
+        },
+    {
+        'regex': r'^https://codeforces\.com/contest/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
+        'codename': 'CF_%s_%s',
+        'judge': 'Codeforces',
+    },
+    {
+        'regex': r'^https://atcoder.jp/contests/(?P<contestId>\w+)/tasks/(?P<index>\w+)$',
+        'codename': 'AC_%s_%s',
+        'judge': 'Atcoder',
+    },
+    {
+        'regex': r'^https://oj\.vnoi\.info/problem/(?P<codename>\w+)$',
+        'codename': 'VNOJ_%s',
+        'judge': 'VNOJ',
+    },
+    {
+        'regex': r'^https://open\.kattis\.com/problems/(?P<codename>\w+)$',
+        'codename': 'KATTIS_%s',
+        'judge': 'Kattis',
+    },
+    {
+        'regex': r'^https://codeforces\.com/gym/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
+        'codename': 'CFGYM_%s_%s',
+        'judge': 'CodeforcesGym',
+    },
+]
+
+OJ_LIST = [
+    ('Atcoder', 'Atcoder'),
+    ('Codeforces', 'Codeforces'),
+    ('CodeforcesGym', 'Codeforces (Gym)'),
+    ('Kattis', 'Kattis'),
+    ('VNOJ', 'VNOJ'),
+]
+
+OJ_REQUESTS_TIMEOUT = 5  # in seconds
+
+OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
+
+# Urls of discord webhook.
+# https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
+DISCORD_WEBHOOK = {
+    'on_new_ticket': None,
+    'on_new_comment': None,
+    'on_new_suggested_problem': None,
+    'on_new_tag_problem': None,
+    'on_new_tag': None,
+}
+
 SITE_FULL_URL = None  # ie 'https://oj.vnoi.info', please remove the last / if needed
 
 NODEJS = '/usr/bin/node'
@@ -190,6 +245,14 @@ else:
                         'judge.ProblemGroup',
                         'judge.ProblemType',
                     ],
+                },
+                {
+                    'model': 'judge.TagProblem',
+                    'icon': 'fa-tag',
+                    'children': [
+                        'judge.TagGroup',
+                        'judge.Tag',
+                    ]
                 },
                 {
                     'model': 'judge.Submission',
@@ -392,13 +455,14 @@ BLEACH_USER_SAFE_TAGS = [
     'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'tfoot',
     'img', 'audio', 'video', 'source',
     'a', 'strike',
-    'style', 'noscript', 'center',
+    'style', 'noscript', 'center', 'object', 'iframe',
 ]
 
 BLEACH_USER_SAFE_ATTRS = {
-    '*': ['id', 'class', 'style'],
+    '*': ['id', 'class', 'style', 'data', 'height'],
     'img': ['src', 'alt', 'title', 'width', 'height', 'data-src'],
     'a': ['href', 'alt', 'title'],
+    'iframe': ['src', 'height', 'width', 'allow'],
     'abbr': ['title'],
     'dfn': ['title'],
     'time': ['datetime'],

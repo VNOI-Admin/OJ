@@ -1,3 +1,5 @@
+import os
+
 from django.conf import settings
 from django.conf.urls import include, url
 from django.contrib import admin
@@ -15,14 +17,14 @@ from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed,
 from judge.sitemap import BlogPostSitemap, ContestSitemap, HomePageSitemap, OrganizationSitemap, ProblemSitemap, \
     SolutionSitemap, UrlSitemap, UserSitemap
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
-    preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tasks, ticket, \
+    preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
     two_factor, user, widgets
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
 from judge.views.register import ActivationView, RegistrationView
 from judge.views.select2 import AssigneeSelect2View, CommentSelect2View, ContestSelect2View, \
-    ContestUserSearchSelect2View, OrganizationSelect2View, ProblemSelect2View, TicketUserSelect2View, \
-    UserSearchSelect2View, UserSelect2View
+    ContestUserSearchSelect2View, OrganizationSelect2View, ProblemSelect2View, TagGroupSelect2View, \
+    TagSelect2View, TicketUserSelect2View, UserSearchSelect2View, UserSelect2View
 from judge.views.widgets import martor_image_uploader
 
 admin.autodiscover()
@@ -113,10 +115,13 @@ urlpatterns = [
     url(r'^accounts/', include(register_patterns)),
     url(r'^', include('social_django.urls')),
 
-    url(r'^problems/$', problem.ProblemList.as_view(), name='problem_list'),
-    url(r'^problems/random/$', problem.RandomProblem.as_view(), name='problem_random'),
-    url(r'^problems/suggest_list/$', problem.SuggestList.as_view(), name='problem_suggest_list'),
-    url(r'^problems/suggest$', problem.ProblemSuggest.as_view(), name='problem_suggest'),
+    url(r'^problems', include([
+        url(r'^/$', problem.ProblemList.as_view(), name='problem_list'),
+        url(r'^/random/$', problem.RandomProblem.as_view(), name='problem_random'),
+        url(r'^/suggest_list/$', problem.SuggestList.as_view(), name='problem_suggest_list'),
+        url(r'^/suggest$', problem.ProblemSuggest.as_view(), name='problem_suggest'),
+        url(r'^/create$', problem.ProblemCreate.as_view(), name='problem_create'),
+    ])),
 
     url(r'^problem/(?P<problem>[^/]+)', include([
         url(r'^$', problem.ProblemDetail.as_view(), name='problem_detail'),
@@ -155,6 +160,19 @@ urlpatterns = [
             url('^/rescore/success/(?P<task_id>[A-Za-z0-9-]*)$', problem_manage.rescore_success,
                 name='problem_submissions_rescore_success'),
         ])),
+    ])),
+
+    url(r'^tags', include([
+        url(r'^/$', tag.TagProblemList.as_view(), name='tagproblem_list'),
+        url(r'^/create$', tag.TagProblemCreate.as_view(), name='tagproblem_create'),
+        url(r'^/random/$', tag.TagRandomProblem.as_view(), name='tagproblem_random'),
+        url(r'^/find/$', tag.TagFindProblem.as_view(), name='tagproblem_find'),
+    ])),
+
+    url(r'^tag/(?P<tagproblem>[^/]+)', include([
+        url(r'^$', tag.TagProblemDetail.as_view(), name='tagproblem_detail'),
+        url(r'^/assign$', tag.TagProblemAssign.as_view(), name='tagproblem_assign'),
+        url(r'^/$', lambda _, problem: HttpResponsePermanentRedirect(reverse('tagproblem_detail', args=[tag]))),
     ])),
 
     url(r'^submissions/', paged_list_view(submission.AllSubmissions, 'all_submissions')),
@@ -205,6 +223,7 @@ urlpatterns = [
 
     url(r'^contests/', paged_list_view(contests.ContestList, 'contest_list')),
     url(r'^contests/(?P<year>\d+)/(?P<month>\d+)/$', contests.ContestCalendar.as_view(), name='contest_calendar'),
+    url(r'^contests/new/$', contests.CreateContest.as_view(), name='contest_new'),
     url(r'^contests/tag/(?P<name>[a-z-]+)', include([
         url(r'^$', contests.ContestTagDetail.as_view(), name='contest_tag'),
         url(r'^/ajax$', contests.ContestTagDetailAjax.as_view(), name='contest_tag_ajax'),
@@ -212,6 +231,7 @@ urlpatterns = [
 
     url(r'^contest/(?P<contest>\w+)', include([
         url(r'^$', contests.ContestDetail.as_view(), name='contest_view'),
+        url(r'^/edit$', contests.EditContest.as_view(), name='contest_edit'),
         url(r'^/moss$', contests.ContestMossView.as_view(), name='contest_moss'),
         url(r'^/moss/delete$', contests.ContestMossDelete.as_view(), name='contest_moss_delete'),
         url(r'^/clone$', contests.ContestClone.as_view(), name='contest_clone'),
@@ -256,6 +276,9 @@ urlpatterns = [
         url(r'^/leave$', organization.LeaveOrganization.as_view(), name='leave_organization'),
         url(r'^/edit$', organization.EditOrganization.as_view(), name='edit_organization'),
         url(r'^/kick$', organization.KickUserWidgetView.as_view(), name='organization_user_kick'),
+        url(r'^/problems$', organization.ListProblemOrganization.as_view(), name='list_problem_organization'),
+        url(r'^/problem-create$', organization.ProblemCreateOrganization.as_view(), name='problem_create_organization'),
+        url(r'^/contest-create$', organization.ContestCreateOrganization.as_view(), name='contest_create_organization'),
 
         url(r'^/request$', organization.RequestJoinOrganization.as_view(), name='request_organization'),
         url(r'^/request/(?P<rpk>\d+)$', organization.OrganizationRequestDetail.as_view(),
@@ -392,6 +415,8 @@ urlpatterns = [
         url(r'^problem/$', ProblemSelect2View.as_view(), name='problem_select2'),
         url(r'^contest/$', ContestSelect2View.as_view(), name='contest_select2'),
         url(r'^comment/$', CommentSelect2View.as_view(), name='comment_select2'),
+        url(r'^tag/$', TagSelect2View.as_view(), name='tag_select2'),
+        url(r'^taggroup/$', TagGroupSelect2View.as_view(), name='taggroup_select2'),
     ])),
 
     url(r'^tasks/', include([
@@ -427,3 +452,9 @@ if 'newsletter' in settings.INSTALLED_APPS:
     urlpatterns.append(url(r'^newsletter/', include('newsletter.urls')))
 if 'impersonate' in settings.INSTALLED_APPS:
     urlpatterns.append(url(r'^impersonate/', include('impersonate.urls')))
+
+try:
+    with open(os.path.join(os.path.dirname(__file__), 'local_urls.py')) as f:
+        exec(f.read(), globals())
+except IOError:
+    pass

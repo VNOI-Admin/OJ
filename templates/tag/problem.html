@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% macro make_tag_url(tag) -%}
+<a href="{{ url('tagproblem_list') }}?tag_id={{ tag.code }}" tag_id={{ tag.code }}>{{ tag.name }}</a>
+{%- endmacro -%}
+
+{% block media %}
+    {% include "comments/media-css.html" %}
+    <style>
+        #tag-table th {
+            padding: 0;
+        }
+
+        #tag-table tr {
+            transition: background-color linear 0.2s;
+        }
+
+        #tag-table tr:hover {
+            background: #eaeaea;
+        }
+
+        .title-state {
+            font-size: 2em;
+            float: left;
+            width: 1.1em;
+            display: block;
+            margin-top: 0.16em;
+        }
+
+        .info-float a {
+            vertical-align: middle;
+        }
+
+        .problem-clarification {
+            border-bottom: 1px solid #ccc;
+            margin-top: 1em;
+            margin-bottom: 1em;
+        }
+
+        .clarifications-area h2 {
+            margin-bottom: 20px;
+        }
+
+        .problem-clarification .body {
+            display: inline-block;
+            padding-left: 3em;
+        }
+
+        #content-right {
+            max-width: 12.5em;
+            min-width: 12.5em;
+        }
+
+        #problem-types, #allowed-langs, #available-judges {
+            padding-top: 1em;
+        }
+
+        .problem-info-entry {
+            padding-top: 0.5em;
+        }
+
+        .tag-tab {
+            color: green !important;
+        }
+    </style>
+{% endblock %}
+
+{% block js_media %}
+    {% include "comments/media-js.html" %}
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    <div class="problem-title">
+        <div class="tabs">
+            <h2>{{ content_title }}</h2>
+            <span class="spacer"></span>
+            <ul>
+                {% if request.user.is_authenticated and request.profile.allow_tagging %}
+                    <li class="tab">
+                        <a href="{{ url('tagproblem_assign', problem.code) }}"><i class="tab-icon fa fa-plus tag-tab"></i>{{ _('Assign new tag') }}</a>
+                    </li>
+                {% endif %}
+                {% if request.user.is_superuser %}
+                    <li class="tab">
+                        <a href="{{ url('admin:judge_tagproblem_change', problem.id) }}"><i class="tab-icon fa fa-edit"></i>{{ _('Admin') }}</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+{% endblock %}
+
+{% block body %}
+    <table id="tag-table" class="table striped">
+        <thead>
+            <tr>
+                <th>Tag</th>
+                <th>Assigner</th>
+            </tr>
+        <thead>
+        <tbody>
+            {% for tag in problem.tagdata_set.all() %}
+                <tr>
+                    <td>{{ make_tag_url(tag.tag) }}</td>
+                    <td>{{ link_user(tag.assigner) }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% include "comments/list.html" %}
+{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
+    {% include "comments/math.html" %}
+{% endblock %}

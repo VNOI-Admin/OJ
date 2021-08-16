@@ -1,21 +1,27 @@
+from datetime import datetime
+
 from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.exceptions import PermissionDenied
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Q
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ungettext
 from django.views.generic import DetailView, FormView, ListView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
 from judge.forms import EditOrganizationForm
-from judge.models import Organization, OrganizationRequest, Profile
+from judge.models import Contest, Language, Organization, OrganizationRequest, Problem, Profile
 from judge.utils.ranker import ranker
-from judge.utils.views import TitleMixin, generic_message
+from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
+from judge.views.contests import CreateContest
+from judge.views.problem import ProblemCreate, ProblemList
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
@@ -77,21 +83,39 @@ class OrganizationHome(OrganizationDetailView):
         context = super(OrganizationHome, self).get_context_data(**kwargs)
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
+        context['is_member'] = False
+
+        if self.request.profile in self.object:
+            context['is_member'] = True
+            context['new_problems'] = Problem.objects.filter(
+                is_public=True, is_organization_private=True,
+                organizations=self.object) \
+                .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
+
+            context['new_contests'] = Contest.objects.filter(
+                is_visible=True, is_organization_private=True,
+                organizations=self.object) \
+                .order_by('-end_time', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
+
         return context
 
 
-class OrganizationUsers(OrganizationDetailView):
+class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
     template_name = 'organization/users.html'
+    all_sorts = frozenset(('points', 'problem_count', 'rating', 'performance_points'))
+    default_desc = all_sorts
+    default_sort = '-performance_points'
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationUsers, self).get_context_data(**kwargs)
         context['title'] = _('%s Members') % self.object.name
         context['users'] = \
-            ranker(self.object.members.filter(is_unlisted=False).order_by('-performance_points', '-problem_count')
+            ranker(self.object.members.filter(is_unlisted=False).order_by(self.order)
                    .select_related('user').defer('about', 'user_script', 'notes'))
         context['partial'] = True
         context['is_admin'] = self.can_edit_organization()
         context['kick_url'] = reverse('organization_user_kick', args=[self.object.id, self.object.slug])
+        context.update(self.get_sort_context())
         return context
 
 
@@ -199,6 +223,9 @@ class OrganizationRequestBaseView(LoginRequiredMixin, SingleObjectTemplateRespon
     def get_context_data(self, **kwargs):
         context = super(OrganizationRequestBaseView, self).get_context_data(**kwargs)
         context['title'] = _('Managing join requests for %s') % self.object.name
+        context['content_title'] = format_html(_('Managing join requests for %s') %
+                                               ' <a href="{1}">{0}</a>', self.object.name,
+                                               self.object.get_absolute_url())
         context['tab'] = self.tab
         return context
 
@@ -319,3 +346,93 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 
         organization.members.remove(user)
         return HttpResponseRedirect(organization.get_users_url())
+
+
+# This is almost the same as the OrganizationMixin
+# However, I need to write a new class because the
+# current mixin is for the DetailView.
+class CustomOrganizationMixin(object):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['logo_override_image'] = self.organization.logo_override_image
+        context['meta_description'] = self.organization.about[:settings.DESCRIPTION_MAX_LENGTH]
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            raise ImproperlyConfigured('Must pass a pk')
+        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        return super(CustomOrganizationMixin, self).dispatch(request, *args, **kwargs)
+
+
+class CustomAdminOrganizationMixin(CustomOrganizationMixin):
+    def dispatch(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            raise ImproperlyConfigured('Must pass a pk')
+        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        if self.can_edit_organization():
+            return super(CustomAdminOrganizationMixin, self).dispatch(request, *args, **kwargs)
+        raise PermissionDenied
+
+    def can_edit_organization(self, org=None):
+        if org is None:
+            org = self.organization
+        if not self.request.user.is_authenticated:
+            return False
+        profile_id = self.request.profile.id
+        return org.admins.filter(id=profile_id).exists()
+
+
+class ListProblemOrganization(CustomOrganizationMixin, ProblemList):
+    context_object_name = 'problems'
+    template_name = 'organization/problem_list.html'
+
+    def get(self, request, *args, **kwargs):
+        if self.profile is None or self.organization not in self.profile.organizations.all():
+            return generic_message(request,
+                                   _('Cannot view organization\'s problems'),
+                                   _('You must join the organization to view its problems.'))
+        return super(ListProblemOrganization, self).get(request, *args, **kwargs)
+
+    def get_title(self):
+        return _('Problems list of %s') % self.organization.name
+
+    def get_content_title(self):
+        return format_html(_('Problems list of') + ' <a href="{1}">{0}</a>', self.organization.name,
+                           self.organization.get_absolute_url())
+
+    def get_context_data(self, **kwargs):
+        context = super(ListProblemOrganization, self).get_context_data(**kwargs)
+        context['organization'] = self.organization
+        return context
+
+    def get_filter(self):
+        return Q(organizations=self.organization) & Q(is_public=True)
+
+
+class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
+    permission_required = 'judge.create_organization_problem'
+
+    def form_valid(self, form):
+        self.object = problem = form.save()
+        problem.authors.add(self.request.user.profile)
+        problem.allowed_languages.set(Language.objects.all())
+        problem.partial = True
+        # We have to set it to True, even it is private for a org
+        problem.is_public = True
+        problem.is_organization_private = True
+        problem.organizations.add(self.organization)
+        problem.date = datetime.now()
+        problem.save()
+        return HttpResponseRedirect(self.get_success_url())
+
+
+class ContestCreateOrganization(CustomAdminOrganizationMixin, CreateContest):
+    permission_required = 'judge.create_private_contest'
+
+    def save_contest_form(self, form):
+        self.object = form.save()
+        self.object.authors.add(self.request.profile)
+        self.object.is_organization_private = True
+        self.object.organizations.add(self.organization)
+        self.object.save()
