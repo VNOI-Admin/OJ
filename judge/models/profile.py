@@ -85,6 +85,8 @@ class Organization(models.Model):
         return user in self.admins_list
 
     def __contains__(self, item):
+        if item is None:
+            return False
         if isinstance(item, int):
             return self.members.filter(id=item).exists()
         elif isinstance(item, Profile):
