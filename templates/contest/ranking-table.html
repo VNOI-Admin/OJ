@@ -1,27 +1,19 @@
 {% extends "user/base-users-table.html" %}
 
-{% block after_rank_head %}
+{% block after_point_head %}
     {% if has_rating %}
         <th class="rating-column">{{ _('Rating') }}</th>
     {% endif %}
-    <th class="organization-column">{{ _('Organization') }}</th>
 {% endblock %}
 
-{% block after_rank %}
+{% block after_point %}
     {% if has_rating %}
         <td class="rating-column">{% if user.participation_rating %}{{ rating_number(user.participation_rating) }}{% endif %}</td>
     {% endif %}
-    <td class="organization-column">
-        {% if user.organization %}
-            <span class="organization"><a href="{{ user.organization.get_absolute_url() }}">
-                {{- user.organization.short_name -}}
-            </a></span>
-        {% endif %}
-    </td>
 {% endblock %}
 
-<!-- How to apply ordinal in jinja2 ??? -->  
-{% block user_name_display scoped %} 
+<!-- How to apply ordinal in jinja2 ??? -->
+{% block user_name_display scoped %}
     {% if user.virtual == 1 %}
         {{ link_user(user) }}<sup style="color:grey;" title="{{ _("1st virtual participation of this user") }}">[{{user.virtual}}]</sup>
     {% elif user.virtual == 2 %}
@@ -31,9 +23,9 @@
     {% else %}
         {{ link_user(user) }}
     {% endif %}
-{% endblock %} 
+{% endblock %}
 
-{% block user_data %}
+{% block user_name_data %}
     {% if not contest.ended %}
         {% if not user.participation.ended %}
             <div class="start-time active">
@@ -62,6 +54,14 @@
                    title="{{ _('Admin') }}" class="edit-participation"><i class="fa fa-cog fa-fw"></i></a>
             {% endif %}
         </span>
+    {% endif %}
+{% endblock %}
+
+{% block full_name_data scoped %}
+    {% if user.organization %}
+        <span class="organization"><a href="{{ user.organization.get_absolute_url() }}">
+            {{- user.organization.short_name -}}
+        </a></span>
     {% endif %}
 {% endblock %}
 

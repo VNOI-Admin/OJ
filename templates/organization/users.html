@@ -1,11 +1,6 @@
 {% extends "user/base-users.html" %}
 {% block users_media %}
     <style>
-        #users-table td:nth-child(2), #users-table th:nth-child(2),
-        #users-table td:nth-child(3), #users-table th:nth-child(3) {
-            border-right: none;
-        }
-
         .kick-form .button {
             margin: -8px 0;
         }
@@ -21,7 +16,7 @@
 
     {% if is_admin %}
         <style>
-            #users-table td:nth-child(4), #users-table th:nth-child(4) {
+            th.fullname-column, td.fullname-column {
                 border-right: none;
             }
         </style>

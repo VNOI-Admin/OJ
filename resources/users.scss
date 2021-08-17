@@ -6,21 +6,12 @@
     }
 }
 
-td.user-name, td.organization-name {
-    padding-left: 2em;
-    text-align: left;
-}
-
 tr {
     padding-bottom: 96px;
 
     &:target {
         background: #fff897;
     }
-}
-
-th.header.rank {
-    padding-left: 5px;
 }
 
 #search-handle {
@@ -37,23 +28,6 @@ th.header.rank {
 }
 
 #users-table, #organization-table {
-    .username {
-        width: 100%;
-    }
-
-    .header {
-        vertical-align: middle;
-    }
-
-    .rank, .points, .problems, .fullname, .username {
-        white-space: nowrap;
-    }
-
-    .full-name {
-        color: gray;
-        font-weight: 600;
-    }
-
     th a {
         color: white;
     }
