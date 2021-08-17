@@ -1,18 +1,20 @@
 <thead>
-<tr>
-    <th class="header rank" style="width: 5%;">{{ rank_header or _("Rank") }}</th>
-    {% block after_rank_head %}{% endblock %}
-    <th class="header username" style="width: 30%;">{{ _('Username') }}</th>
-    <th class="header fullname" style="width: 70%;">{{ _('Full name') }}</th>
-    {% block before_point_head %}{% endblock %}
+    <tr>
+        <th class="header rank" style="width: 5%;">{{ rank_header or _("Rank") }}</th>
+        {% block after_rank_head %}{% endblock %}
+        <th class="header username" style="width: 30%;">{{ _('Username') }}</th>
+        <th class="header fullname" style="width: 70%;">{{ _('Full name') }}</th>
+        {% block before_point_head %}{% endblock %}
 
-    <th class="header points">
-        {% if sort_links %}<a href="{{ sort_links.performance_points }}">{% endif %}
-        {{ _('Points') }}
-        {%- if sort_links %}{{ sort_order.performance_points }}</a>{% endif %}
-    </th>
-    {% block after_point_head %}{% endblock %}
-</tr>
+        <th class="header points">
+            {% block point_head %}
+                {% if sort_links %}<a href="{{ sort_links.performance_points }}">{% endif %}
+                {{ _('Points') }}
+                {%- if sort_links %}{{ sort_order.performance_points }}</a>{% endif %}
+            {% endblock %}
+        </th>
+        {% block after_point_head %}{% endblock %}
+    </tr>
 </thead>
 
 <tbody>
@@ -30,7 +32,17 @@
                     <span style="font-weight: 600; color: gray;">{{ user.user.first_name }}</span>
                 {% endblock %}
             </div>
-            <div style="float:right; text-align: right;">{% block full_name_data scoped %}{% endblock %}</div>
+            <div style="float:right; text-align: right;">
+                {% block full_name_data scoped %}
+                    {% if user.organizations.all() %}
+                        <em style="font-size: 0.75em; color:grey;">
+                        {% for organization in user.organizations.all() %}
+                            {% if not loop.first %}| {% endif %}{{ organization.name }}
+                        {% endfor %}
+                        </em>
+                    {% endif %}
+                {% endblock %}
+            </div>
         </td>
         {% block before_point scoped %}{% endblock %}
         {% block point scoped %}

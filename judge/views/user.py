@@ -481,7 +481,7 @@ user_list_view = UserList.as_view()
 class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
     model = Profile
     title = gettext_lazy('Contributors')
-    context_object_name = 'contributors'
+    context_object_name = 'users'
     template_name = 'user/contrib-list.html'
     paginate_by = 100
     all_sorts = frozenset(('contribution_points', ))
@@ -494,8 +494,8 @@ class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView
 
     def get_context_data(self, **kwargs):
         context = super(ContribList, self).get_context_data(**kwargs)
-        context['contributors'] = ranker(
-            context['contributors'],
+        context['users'] = ranker(
+            context['users'],
             key=attrgetter('contribution_points'),
             rank=self.paginate_by * (context['page_obj'].number - 1),
         )
