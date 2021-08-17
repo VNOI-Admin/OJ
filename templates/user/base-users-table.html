@@ -36,7 +36,7 @@
                 {% block full_name_data scoped %}
                     <em style="font-size: 0.75em; color:grey;">
                         {% for organization in user.organizations.all() %}
-                            {{ organization.name }}{% if not loop.last %} | {% endif %}
+                            <a style="color:grey;" href="{{ organization.get_absolute_url() }}">{{ organization.name }}</a>{% if not loop.last %} | {% endif %}
                         {% endfor %}
                     </em>
                 {% endblock %}
