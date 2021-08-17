@@ -94,11 +94,11 @@
             display: none;
         }
 
-        th.fullname, td.full-name {
+        th.personal-info, td.personal-info {
             display: none;
         }
 
-        td.full-name a {
+        td.personal-info a {
             color: gray !important;
             font-weight: 600;
         }
@@ -198,14 +198,14 @@
                 window.location.href = url.replace('__username__', $(this).val());
             });
 
-            $('#show-fullname-checkbox').click(function () {
-                $('th.fullname, td.full-name').toggle();
-                localStorage.setItem('show-fullname', $('th.fullname, td.full-name').is(':visible') ? 'true' : 'false');
+            $('#show-personal-info-checkbox').click(function () {
+                $('th.personal-info, td.personal-info').toggle();
+                localStorage.setItem('show-personal-info', $('th.personal-info, td.personal-info').is(':visible') ? 'true' : 'false');
             });
 
-            if (localStorage.getItem('show-fullname') == 'true') {
-                $('th.fullname, td.full-name').show();
-                $('#show-fullname-checkbox').prop('checked', true);
+            if (localStorage.getItem('show-personal-info') == 'true') {
+                $('th.personal-info, td.personal-info').show();
+                $('#show-personal-info-checkbox').prop('checked', true);
             }
 
             {% if tab == 'ranking' %}
@@ -233,8 +233,8 @@
             {% endif %}
         {% endif %}
         {% if tab != 'official_ranking' %}
-            <input id="show-fullname-checkbox" type="checkbox" style="vertical-align: bottom">
-            <label for="show-fullname-checkbox" style="vertical-align: bottom">{{ _('Show full name/organization') }}</label>
+            <input id="show-personal-info-checkbox" type="checkbox" style="vertical-align: bottom">
+            <label for="show-personal-info-checkbox" style="vertical-align: bottom">{{ _('Show full name/organization') }}</label>
         {% endif %}
         {% if tab == 'ranking' %}
             <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
