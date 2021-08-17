@@ -94,15 +94,11 @@
             display: none;
         }
 
-        .user-name {
-            position: relative;
-        }
-
-        .fullname-column {
+        th.fullname, td.full-name {
             display: none;
         }
 
-        .fullname-column a {
+        td.full-name a {
             color: gray !important;
             font-weight: 600;
         }
@@ -220,12 +216,12 @@
             });
 
             $('#show-fullname-checkbox').click(function () {
-                $('.fullname-column').toggle();
-                localStorage.setItem('show-fullname', $('.fullname-column').is(':visible') ? 'true' : 'false');
+                $('th.fullname, td.full-name').toggle();
+                localStorage.setItem('show-fullname', $('th.fullname, td.full-name').is(':visible') ? 'true' : 'false');
             });
 
             if (localStorage.getItem('show-fullname') == 'true') {
-                $('.fullname-column').show();
+                $('th.fullname, td.full-name').show();
                 $('#show-fullname-checkbox').prop('checked', true);
             }
 

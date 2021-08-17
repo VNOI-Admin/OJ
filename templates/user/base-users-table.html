@@ -3,7 +3,7 @@
     <th class="header rank" style="width: 5%;">{{ rank_header or _("Rank") }}</th>
     {% block after_rank_head %}{% endblock %}
     <th class="header username" style="width: 20%;">{{ _('Username') }}</th>
-    <th class="header fullname-column" style="width: 70%;">{{ _('Full name') }}</th>
+    <th class="header fullname" style="width: 70%;">{{ _('Full name') }}</th>
     {% block before_point_head %}{% endblock %}
 
     <th class="header points">
@@ -24,7 +24,7 @@
             <div style="float:left">{% block user_name_display scoped %} {{ link_user(user) }} {% endblock %}</div>
             <div style="float:right">{% block user_name_data scoped %}{% endblock %}</div>
         </td>
-        <td class="fullname-column">
+        <td class="full-name">
             <div style="float:left">
                 {% block full_name_display scoped %}
                     <span style="font-weight: 600; color: gray;">{{ user.user.first_name }}</span>
