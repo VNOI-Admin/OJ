@@ -1,9 +1,9 @@
 <thead>
     <tr>
-        <th class="header rank">{{ rank_header or _("Rank") }}</th>
+        <th class="header rank" style="width: 5%;">{{ rank_header or _("Rank") }}</th>
         {% block after_rank_head %}{% endblock %}
-        <th class="header username">{{ _('Username') }}</th>
-        <th class="header fullname">{{ _('Full name') }}</th>
+        <th class="header username" style="width: 30%;">{{ _('Username') }}</th>
+        <th class="header fullname" style="width: 70%;">{{ _('Full name') }}</th>
         {% block before_point_head %}{% endblock %}
 
         <th class="header points">
