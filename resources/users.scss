@@ -45,8 +45,17 @@ th.header.rank {
         vertical-align: middle;
     }
 
-    .rank, .points, .problems, .username {
+    .rank, .points, .problems, .fullname, .username {
         white-space: nowrap;
+    }
+
+    .full-name {
+        color: gray;
+        font-weight: 600;
+    }
+
+    th a {
+        color: white;
     }
 
     tr {

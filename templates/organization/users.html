@@ -1,13 +1,9 @@
 {% extends "user/base-users.html" %}
 {% block users_media %}
     <style>
-        #users-table td:nth-child(2), #users-table th:nth-child(2) {
+        #users-table td:nth-child(2), #users-table th:nth-child(2),
+        #users-table td:nth-child(3), #users-table th:nth-child(3) {
             border-right: none;
-            text-align: left;
-        }
-
-        #users-table th a {
-            color: white;
         }
 
         .kick-form .button {
@@ -24,9 +20,10 @@
     </style>
 
     {% if is_admin %}
-        <style>#users-table td:nth-child(3), #users-table th:nth-child(3) {
-            border-right: none;
-        }
+        <style>
+            #users-table td:nth-child(4), #users-table th:nth-child(4) {
+                border-right: none;
+            }
         </style>
     {% endif %}
 {% endblock %}
