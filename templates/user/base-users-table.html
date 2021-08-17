@@ -34,13 +34,11 @@
             </div>
             <div style="float:right; text-align: right;">
                 {% block full_name_data scoped %}
-                    {% if user.organizations.all() %}
-                        <em style="font-size: 0.75em; color:grey;">
+                    <em style="font-size: 0.75em; color:grey;">
                         {% for organization in user.organizations.all() %}
-                            {% if not loop.first %}| {% endif %}{{ organization.name }}
+                            {{ organization.name }}{% if not loop.last %} | {% endif %}
                         {% endfor %}
-                        </em>
-                    {% endif %}
+                    </em>
                 {% endblock %}
             </div>
         </td>
