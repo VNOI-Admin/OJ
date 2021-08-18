@@ -1,7 +1,7 @@
 {% extends "user/base-users-table.html" %}
 
 {% block after_rank_head %}
-    <th class="header rank">
+    <th class="header rank" style="width: 5%;">
         {% if sort_links %}<a href="{{ sort_links.rating }}">{% endif %}
         <span class="rate-group">
             <svg class="rate-box" viewBox="0 0 16 16">
@@ -27,15 +27,4 @@
 
 {% block after_point %}
     <td>{{ user.problem_count }}</td>
-{% endblock %}
-
-{% block user_data scoped %}
-    {% if user.organizations.all() %}  
-        <em style="font-size: 0.75em; color:grey;"> 
-        {{ user.organizations.all()[0].name }}
-        {% for organization in user.organizations.all()[1:] %}
-            | {{ organization.name }}
-        {% endfor %}
-        </em> 
-    {% endif %}
 {% endblock %}

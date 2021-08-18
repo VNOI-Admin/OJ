@@ -1,17 +1,20 @@
 <thead>
-<tr>
-    <th class="header rank">{{ rank_header or _("Rank") }}</th>
-    {% block after_rank_head %}{% endblock %}
-    <th class="header username">{{ _('Username') }}</th>
-    {% block before_point_head %}{% endblock %}
+    <tr>
+        <th class="header rank" style="width: 5%;">{{ rank_header or _("Rank") }}</th>
+        {% block after_rank_head %}{% endblock %}
+        <th class="header username" style="width: 30%;">{{ _('Username') }}</th>
+        <th class="header personal-info" style="width: 70%;">{{ _('Personal Info') }}</th>
+        {% block before_point_head %}{% endblock %}
 
-    <th class="header points">
-        {% if sort_links %}<a href="{{ sort_links.performance_points }}">{% endif %}
-        {{ _('Points') }}
-        {%- if sort_links %}{{ sort_order.performance_points }}</a>{% endif %}
-    </th>
-    {% block after_point_head %}{% endblock %}
-</tr>
+        <th class="header points">
+            {% block point_head %}
+                {% if sort_links %}<a href="{{ sort_links.performance_points }}">{% endif %}
+                {{ _('Points') }}
+                {%- if sort_links %}{{ sort_order.performance_points }}</a>{% endif %}
+            {% endblock %}
+        </th>
+        {% block after_point_head %}{% endblock %}
+    </tr>
 </thead>
 
 <tbody>
@@ -19,9 +22,25 @@
     <tr id="user-{{ user.user.username }}" {% block row_extra scoped %}{% endblock %}>
         <td>{{ rank }}</td>
         {% block after_rank scoped %}{% endblock %}
-        <td class="user-name"> 
-            <div style="float:left"> {% block user_name_display scoped %} {{ link_user(user) }} {% endblock %} </div> 
-            <div style="float:right"> {% block user_data scoped %}{% endblock %} </div>
+        <td class="user-name">
+            <div style="float:left">{% block user_name_display scoped %} {{ link_user(user) }} {% endblock %}</div>
+            <div style="float:right">{% block user_name_data scoped %}{% endblock %}</div>
+        </td>
+        <td class="personal-info">
+            <div style="float:left">
+                {% block personal_info_display scoped %}
+                    <span style="font-weight: 600; color: gray;">{{ user.user.first_name }}</span>
+                {% endblock %}
+            </div>
+            <div style="float:right; text-align: right;">
+                {% block personal_info_data scoped %}
+                    <em style="font-size: 0.75em; color:grey;">
+                        {% for organization in user.organizations.all() %}
+                            <a style="color:grey;" href="{{ organization.get_absolute_url() }}">{{ organization.name }}</a>{% if not loop.last %} | {% endif %}
+                        {% endfor %}
+                    </em>
+                {% endblock %}
+            </div>
         </td>
         {% block before_point scoped %}{% endblock %}
         {% block point scoped %}
