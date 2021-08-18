@@ -45,6 +45,9 @@ class Language(models.Model):
     extension = models.CharField(max_length=10, verbose_name=_('extension'),
                                  help_text=_('The extension of source files, e.g., "py" or "cpp".'))
 
+    file_only = models.BooleanField(verbose_name=_('File-only language'), default=False,
+                                    help_text=_('If this language is submitted using file or not'))
+
     def runtime_versions(self):
         runtimes = OrderedDict()
         # There be dragons here if two judges specify different priorities
