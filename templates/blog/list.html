@@ -192,11 +192,13 @@
                 {% include "blog/top-contrib.html" %}
             {% endif %}
             <div class="blog-sidebox sidebox">
-                <h3>
-                    {{ _('Comment stream') }} 
-                    <span style="margin-bottom: -6px;display: inline-block;float: right;padding-right: 0.3em;padding-top: 0.1em;">
+                <h3 style="display: flex; justify-content: space-between; white-space: nowrap;">
+                    <span style="margin-right: 10px;">
+                        {{ _('Comment stream') }}
+                    </span>
+                    <span style="margin: 0.1em 0.3em -6px;">
                         <a href="https://discord.com/invite/TDyYVyd">
-                            <img src="https://img.shields.io/discord/660930260405190688?color=%237289DA&amp;label=Discord&amp;logo=Discord" alt="Discord">
+                            <img style="max-width: none;" src="https://img.shields.io/discord/660930260405190688?color=%237289DA&amp;label=Discord&amp;logo=Discord" alt="Discord">
                         </a>
                     </span>
                 </h3>
