@@ -3,7 +3,7 @@ from random import randrange
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import IntegrityError
-from django.db.models import Q
+from django.db.models import Prefetch, Q
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
@@ -64,7 +64,7 @@ class TagProblemList(TitleMixin, ListView):
         self.search_query = None
         self.selected_judges = []
 
-        queryset = TagProblem.objects.order_by('code')
+        queryset = TagProblem.objects.order_by('code').prefetch_related('tag')
 
         if 'tag_id' in self.request.GET:
             self.tag_id = self.request.GET.get('tag_id')
@@ -100,7 +100,7 @@ class TagProblemList(TitleMixin, ListView):
         context = super(TagProblemList, self).get_context_data(**kwargs)
         context['selected_tag'] = self.tag_id
         context['search_query'] = self.search_query
-        context['groups'] = TagGroup.objects.all()
+        context['groups'] = TagGroup.objects.prefetch_related('tags').all()
         context['judges'] = settings.OJ_LIST
         context['selected_judges'] = self.selected_judges
 
@@ -202,7 +202,7 @@ class TagProblemAssign(LoginRequiredMixin, TagAllowingMixin, TagProblemMixin, Ti
 
     def get_context_data(self, **kwargs):
         context = super(TagProblemAssign, self).get_context_data(**kwargs)
-        context['groups'] = TagGroup.objects.all()
+        context['groups'] = TagGroup.objects.prefetch_related('tags').all()
         return context
 
     def form_valid(self, form):
@@ -231,3 +231,11 @@ class TagProblemDetail(TagProblemMixin, TitleMixin, CommentedDetailView):
 
     def get_comment_page(self):
         return 't:%s' % self.object.code
+
+    def get_queryset(self):
+        queryset = TagData.objects.select_related('tag', 'assigner__user') \
+            .only('id', 'problem', 'tag', 'assigner__user__username',
+                  'assigner__display_rank', 'assigner__rating')
+
+        return super(TagProblemDetail, self).get_queryset() \
+            .prefetch_related(Prefetch('tagdata_set', queryset=queryset))
