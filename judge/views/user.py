@@ -10,12 +10,12 @@ from django.conf import settings
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Permission, User
 from django.contrib.auth.views import LoginView, PasswordChangeView, redirect_to_login
 from django.contrib.contenttypes.models import ContentType
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied, ValidationError
-from django.db.models import Count, F, Max, Min
+from django.db.models import Count, F, Max, Min, Prefetch
 from django.db.models.fields import DateField
 from django.db.models.functions import Cast, ExtractYear
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
@@ -31,7 +31,7 @@ from django.views.generic import DetailView, FormView, ListView, TemplateView, V
 from reversion import revisions
 
 from judge.forms import CustomAuthenticationForm, DownloadDataForm, ProfileForm, UserForm, newsletter_id
-from judge.models import Profile, Rating, Submission
+from judge.models import Organization, Profile, Rating, Submission
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
@@ -458,9 +458,11 @@ class UserList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
     default_sort = '-performance_points'
 
     def get_queryset(self):
-        return (Profile.objects.filter(is_unlisted=False).order_by(self.order).select_related('user')
-                .only('display_rank', 'user__username', 'points', 'rating', 'performance_points',
-                      'problem_count'))
+        return (Profile.objects.filter(is_unlisted=False).order_by(self.order)
+                .prefetch_related(Prefetch('user', queryset=User.objects.only('username', 'first_name')))
+                .prefetch_related(Prefetch('organizations', queryset=Organization.objects.only('name', 'id', 'slug')))
+                .only('display_rank', 'user', 'points', 'rating', 'performance_points',
+                      'problem_count', 'organizations'))
 
     def get_context_data(self, **kwargs):
         context = super(UserList, self).get_context_data(**kwargs)
@@ -489,8 +491,10 @@ class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView
     default_sort = '-contribution_points'
 
     def get_queryset(self):
-        return (Profile.objects.filter(is_unlisted=False).order_by(self.order).select_related('user')
-                .only('display_rank', 'user__username', 'contribution_points'))
+        return (Profile.objects.filter(is_unlisted=False).order_by(self.order)
+                .prefetch_related(Prefetch('user', queryset=User.objects.only('username', 'first_name')))
+                .prefetch_related(Prefetch('organizations', queryset=Organization.objects.only('name', 'id', 'slug')))
+                .only('display_rank', 'user', 'organizations', 'rating', 'contribution_points'))
 
     def get_context_data(self, **kwargs):
         context = super(ContribList, self).get_context_data(**kwargs)
