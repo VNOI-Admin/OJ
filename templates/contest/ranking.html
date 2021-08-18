@@ -9,14 +9,6 @@
 
 {% block users_media %}
     <style>
-        #users-table .username {
-            min-width: 20em;
-        }
-
-        #users-table .rating-column {
-            min-width: 3em;
-        }
-
         #users-table td {
             height: 2.5em;
         }
@@ -102,38 +94,15 @@
             display: none;
         }
 
-        .user-name {
-            position: relative;
-        }
-
-        .organization-column {
+        th.personal-info, td.personal-info {
             display: none;
-            text-align: left !important;
-            border-right: none !important;
         }
 
-        .organization-column a {
+        td.personal-info a {
             color: gray !important;
             font-weight: 600;
         }
     </style>
-
-    {% if has_rating %}
-        <style>#users-table .rate-box {
-            font-size: 0.85em;
-            float: left;
-        }
-
-        #users-table td:nth-child(1) .rating {
-            margin-left: 1.25em;
-            display: block;
-        }
-
-        #users-table td:nth-child(2) a {
-            display: block;
-        }
-        </style>
-    {% endif %}
 
     <style>
         .select2-selection__arrow {
@@ -229,14 +198,14 @@
                 window.location.href = url.replace('__username__', $(this).val());
             });
 
-            $('#show-organizations-checkbox').click(function () {
-                $('.organization-column').toggle();
-                localStorage.setItem('show-organizations', $('.organization-column').is(':visible') ? 'true' : 'false');
+            $('#show-personal-info-checkbox').click(function () {
+                $('th.personal-info, td.personal-info').toggle();
+                localStorage.setItem('show-personal-info', $('th.personal-info, td.personal-info').is(':visible') ? 'true' : 'false');
             });
 
-            if (localStorage.getItem('show-organizations') == 'true') {
-                $('.organization-column').show();
-                $('#show-organizations-checkbox').prop('checked', true);
+            if (localStorage.getItem('show-personal-info') == 'true') {
+                $('th.personal-info, td.personal-info').show();
+                $('#show-personal-info-checkbox').prop('checked', true);
             }
 
             {% if tab == 'ranking' %}
@@ -264,8 +233,8 @@
             {% endif %}
         {% endif %}
         {% if tab != 'official_ranking' %}
-            <input id="show-organizations-checkbox" type="checkbox" style="vertical-align: bottom">
-            <label for="show-organizations-checkbox" style="vertical-align: bottom">{{ _('Show organizations') }}</label>
+            <input id="show-personal-info-checkbox" type="checkbox" style="vertical-align: bottom">
+            <label for="show-personal-info-checkbox" style="vertical-align: bottom">{{ _('Show full name/organization') }}</label>
         {% endif %}
         {% if tab == 'ranking' %}
             <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">

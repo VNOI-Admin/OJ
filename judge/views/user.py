@@ -30,7 +30,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from reversion import revisions
 
-from judge.forms import CustomAuthenticationForm, DownloadDataForm, ProfileForm, newsletter_id
+from judge.forms import CustomAuthenticationForm, DownloadDataForm, ProfileForm, UserForm, newsletter_id
 from judge.models import Profile, Rating, Submission
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
@@ -366,8 +366,10 @@ def edit_profile(request):
         raise Http404()
     if request.method == 'POST':
         form = ProfileForm(request.POST, instance=request.profile, user=request.user)
-        if form.is_valid():
+        form_user = UserForm(request.POST, instance=request.user)
+        if form.is_valid() and form_user.is_valid():
             with revisions.create_revision(atomic=True):
+                form_user.save()
                 form.save()
                 revisions.set_user(request.user)
                 revisions.set_comment(_('Updated on site'))
@@ -391,6 +393,7 @@ def edit_profile(request):
             return HttpResponseRedirect(request.path)
     else:
         form = ProfileForm(instance=request.profile, user=request.user)
+        form_user = UserForm(instance=request.user)
         if newsletter_id is not None:
             try:
                 subscription = Subscription.objects.get(user=request.user, newsletter_id=newsletter_id)
@@ -402,7 +405,7 @@ def edit_profile(request):
 
     tzmap = settings.TIMEZONE_MAP
     return render(request, 'user/edit-profile.html', {
-        'require_staff_2fa': settings.DMOJ_REQUIRE_STAFF_2FA,
+        'require_staff_2fa': settings.DMOJ_REQUIRE_STAFF_2FA, 'form_user': form_user,
         'form': form, 'title': _('Edit profile'), 'profile': request.profile,
         'can_download_data': bool(settings.DMOJ_USER_DATA_DOWNLOAD),
         'has_math_config': bool(settings.MATHOID_URL),
@@ -478,7 +481,7 @@ user_list_view = UserList.as_view()
 class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
     model = Profile
     title = gettext_lazy('Contributors')
-    context_object_name = 'contributors'
+    context_object_name = 'users'
     template_name = 'user/contrib-list.html'
     paginate_by = 100
     all_sorts = frozenset(('contribution_points', ))
@@ -491,8 +494,8 @@ class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView
 
     def get_context_data(self, **kwargs):
         context = super(ContribList, self).get_context_data(**kwargs)
-        context['contributors'] = ranker(
-            context['contributors'],
+        context['users'] = ranker(
+            context['users'],
             key=attrgetter('contribution_points'),
             rank=self.paginate_by * (context['page_obj'].number - 1),
         )

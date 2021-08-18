@@ -98,6 +98,12 @@ class ProfileForm(ModelForm):
             self.fields.pop('organizations')
 
 
+class UserForm(ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name']
+
+
 class ProposeProblemSolutionForm(ModelForm):
     class Meta:
         model = Solution
