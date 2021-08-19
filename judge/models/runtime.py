@@ -16,7 +16,7 @@ __all__ = ['Language', 'RuntimeVersion', 'Judge']
 
 
 class Language(models.Model):
-    key = models.CharField(max_length=6, verbose_name=_('short identifier'),
+    key = models.CharField(max_length=10, verbose_name=_('short identifier'),
                            help_text=_('The identifier for this language; the same as its executor id for judges.'),
                            unique=True)
     name = models.CharField(max_length=20, verbose_name=_('long name'),
