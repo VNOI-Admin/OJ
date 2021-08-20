@@ -91,8 +91,6 @@ def django_uploader(image):
 
 def pdf_statement_uploader(statement):
     ext = os.path.splitext(statement.name)[1]
-    if ext not in settings.PDF_STATEMENT_SAFE_EXTS:
-        ext = '.pdf'
     name = str(uuid.uuid4()) + ext
     default_storage.save(os.path.join(settings.PDF_STATEMENT_UPLOAD_MEDIA_DIR, name), statement)
     url_base = getattr(settings, 'PDF_STATEMENT_UPLOAD_URL_PREFIX',
