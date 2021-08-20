@@ -276,7 +276,8 @@ urlpatterns = [
         url(r'^/leave$', organization.LeaveOrganization.as_view(), name='leave_organization'),
         url(r'^/edit$', organization.EditOrganization.as_view(), name='edit_organization'),
         url(r'^/kick$', organization.KickUserWidgetView.as_view(), name='organization_user_kick'),
-        url(r'^/problems$', organization.ListProblemOrganization.as_view(), name='list_problem_organization'),
+        url(r'^/problems$', organization.ProblemListOrganization.as_view(), name='problem_list_organization'),
+        url(r'^/contests$', organization.ContestListOrganization.as_view(), name='contest_list_organization'),
         url(r'^/problem-create$', organization.ProblemCreateOrganization.as_view(), name='problem_create_organization'),
         url(r'^/contest-create$', organization.ContestCreateOrganization.as_view(), name='contest_create_organization'),
 
