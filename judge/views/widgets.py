@@ -89,6 +89,19 @@ def django_uploader(image):
     return json.dumps({'status': 200, 'name': '', 'link': urljoin(url_base, name)})
 
 
+def pdf_statement_uploader(statement):
+    ext = os.path.splitext(statement.name)[1]
+    if ext not in settings.PDF_STATEMENT_SAFE_EXTS:
+        ext = '.png'
+    name = str(uuid.uuid4()) + ext
+    default_storage.save(os.path.join(settings.PDF_STATEMENT_UPLOAD_MEDIA_DIR, name), statement)
+    url_base = getattr(settings, 'PDF_STATEMENT_UPLOAD_URL_PREFIX',
+                       urljoin(settings.MEDIA_URL, settings.PDF_STATEMENT_UPLOAD_MEDIA_DIR))
+    if not url_base.endswith('/'):
+        url_base += '/'
+    return urljoin(url_base, name)
+
+
 @login_required
 def martor_image_uploader(request):
     if request.method != 'POST' or not request.is_ajax() or 'markdown-image-upload' not in request.FILES:

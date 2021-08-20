@@ -544,6 +544,10 @@ MARTOR_UPLOAD_URL_PREFIX = '/martor'
 MARTOR_UPLOAD_MEDIA_DIR = 'martor'
 MARTOR_UPLOAD_SAFE_EXTS = {'.jpg', '.png', '.gif'}
 
+PDF_STATEMENT_UPLOAD_URL_PREFIX = '/pdf'
+PDF_STATEMENT_UPLOAD_MEDIA_DIR = 'pdf'
+PDF_STATEMENT_SAFE_EXTS = {'.pdf', '.doc', '.docx'}
+
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 

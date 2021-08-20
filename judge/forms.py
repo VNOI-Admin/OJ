@@ -116,11 +116,12 @@ class ProposeProblemSolutionForm(ModelForm):
 
 
 class ProblemEditForm(ModelForm):
+    statement_file = forms.FileField(required=False)
     required_css_class = 'required'
 
     class Meta:
         model = Problem
-        fields = ['code', 'name', 'time_limit', 'memory_limit', 'points', 'source', 'types', 'group', 'pdf_url',
+        fields = ['code', 'name', 'time_limit', 'memory_limit', 'points', 'statement_file', 'source', 'types', 'group',
                   'description']
         widgets = {
             'types': Select2MultipleWidget,
