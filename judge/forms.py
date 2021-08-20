@@ -13,7 +13,7 @@ from django.db.models import Q
 from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, ModelForm, MultipleChoiceField, \
     inlineformset_factory
 from django.forms.widgets import DateTimeInput
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
@@ -417,3 +417,16 @@ class ContestForm(ModelForm):
         help_texts = {
             'og_image': _('This image will appear in link sharing embeds. For example: Facebook, etc'),
         }
+
+
+class ContestFormOrganization(ContestForm):
+    def __init__(self, *args, **kwargs):
+        org_pk = kwargs.pop('org_pk', None)
+        super(ContestFormOrganization, self).__init__(*args, **kwargs)
+        self.fields['private_contestants'].widget = HeavySelect2MultipleWidget(
+            data_url=reverse('organization_profile_select2', args=(org_pk, )),
+            attrs={'style': 'width: 100%'},
+        )
+
+    class Meta(ContestForm.Meta):
+        fields = ContestForm.Meta.fields + ['private_contestants', 'is_private']

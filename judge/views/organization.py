@@ -16,7 +16,7 @@ from django.views.generic import DetailView, FormView, ListView, UpdateView, Vie
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
-from judge.forms import EditOrganizationForm
+from judge.forms import ContestFormOrganization, EditOrganizationForm
 from judge.models import Contest, Language, Organization, OrganizationRequest, Problem, Profile
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
@@ -449,7 +449,14 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
 
 
 class ContestCreateOrganization(CustomAdminOrganizationMixin, CreateContest):
+    form_class = ContestFormOrganization
+
     permission_required = 'judge.create_private_contest'
+
+    def get_form_kwargs(self):
+        kwargs = super(ContestCreateOrganization, self).get_form_kwargs()
+        kwargs['org_pk'] = self.organization.pk
+        return kwargs
 
     def save_contest_form(self, form):
         self.object = form.save()
