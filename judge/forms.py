@@ -119,7 +119,7 @@ class ProposeProblemSolutionForm(ModelForm):
 class ProblemEditForm(ModelForm):
     statement_file = forms.FileField(
         required=False,
-        validators=[FileExtensionValidator(allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS)]
+        validators=[FileExtensionValidator(allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS)],
     )
     required_css_class = 'required'
 
