@@ -20,7 +20,7 @@ from judge.forms import EditOrganizationForm
 from judge.models import Contest, Language, Organization, OrganizationRequest, Problem, Profile
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
-from judge.views.contests import CreateContest
+from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
@@ -362,7 +362,19 @@ class CustomOrganizationMixin(object):
         if 'pk' not in kwargs:
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        if self.request.profile not in self.organization:
+            return generic_message(request,
+                                   _('Cannot view organization\'s private data'),
+                                   _('You must join the organization to view its private data.'))
         return super(CustomOrganizationMixin, self).dispatch(request, *args, **kwargs)
+
+    def can_edit_organization(self, org=None):
+        if org is None:
+            org = self.organization
+        if not self.request.user.is_authenticated:
+            return False
+        profile_id = self.request.profile.id
+        return org.admins.filter(id=profile_id).exists()
 
 
 class CustomAdminOrganizationMixin(CustomOrganizationMixin):
@@ -374,25 +386,10 @@ class CustomAdminOrganizationMixin(CustomOrganizationMixin):
             return super(CustomAdminOrganizationMixin, self).dispatch(request, *args, **kwargs)
         raise PermissionDenied
 
-    def can_edit_organization(self, org=None):
-        if org is None:
-            org = self.organization
-        if not self.request.user.is_authenticated:
-            return False
-        profile_id = self.request.profile.id
-        return org.admins.filter(id=profile_id).exists()
 
-
-class ListProblemOrganization(CustomOrganizationMixin, ProblemList):
+class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
     context_object_name = 'problems'
-    template_name = 'organization/problem_list.html'
-
-    def get(self, request, *args, **kwargs):
-        if self.profile is None or self.organization not in self.profile.organizations.all():
-            return generic_message(request,
-                                   _('Cannot view organization\'s problems'),
-                                   _('You must join the organization to view its problems.'))
-        return super(ListProblemOrganization, self).get(request, *args, **kwargs)
+    template_name = 'organization/problem-list.html'
 
     def get_title(self):
         return _('Problems list of %s') % self.organization.name
@@ -402,12 +399,36 @@ class ListProblemOrganization(CustomOrganizationMixin, ProblemList):
                            self.organization.get_absolute_url())
 
     def get_context_data(self, **kwargs):
-        context = super(ListProblemOrganization, self).get_context_data(**kwargs)
+        context = super(ProblemListOrganization, self).get_context_data(**kwargs)
         context['organization'] = self.organization
         return context
 
     def get_filter(self):
-        return Q(organizations=self.organization) & Q(is_public=True)
+        filter = Q(organizations=self.organization)
+        if not self.can_edit_organization():
+            filter &= Q(is_public=True)
+        return filter
+
+
+class ContestListOrganization(CustomOrganizationMixin, ContestList):
+    template_name = 'organization/contest-list.html'
+
+    def get_title(self):
+        return _('Contests list of %s') % self.organization.name
+
+    def get_content_title(self):
+        return format_html(_('Contests list of') + ' <a href="{1}">{0}</a>', self.organization.name,
+                           self.organization.get_absolute_url())
+
+    def get_queryset(self):
+        query_set = super(ContestListOrganization, self).get_queryset()
+        query_set = query_set.filter(Q(is_organization_private=True))
+        return query_set
+
+    def get_context_data(self, **kwargs):
+        context = super(ContestListOrganization, self).get_context_data(**kwargs)
+        context['organization'] = self.organization
+        return context
 
 
 class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
@@ -429,6 +450,11 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
 
 class ContestCreateOrganization(CustomAdminOrganizationMixin, CreateContest):
     permission_required = 'judge.create_private_contest'
+
+    def get_form_kwargs(self):
+        kwargs = super(ContestCreateOrganization, self).get_form_kwargs()
+        kwargs['org_pk'] = self.organization.pk
+        return kwargs
 
     def save_contest_form(self, form):
         self.object = form.save()

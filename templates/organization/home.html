@@ -79,7 +79,8 @@
                             </form>
                             <br>
 
-                            <div><a href="{{ url('list_problem_organization', organization.id, organization.slug) }}">{{ _("Organization's problems") }}</a></div>
+                            <div><a href="{{ url('problem_list_organization', organization.id, organization.slug) }}">{{ _("Organization's problems") }}</a></div>
+                            <div><a href="{{ url('contest_list_organization', organization.id, organization.slug) }}">{{ _("Organization's contests") }}</a></div>
                             <br>
                             {% if organization.is_admin(request.profile) and request.user.has_perm('judge.create_organization_problem') %}
                                 <div><a href="{{ url('problem_create_organization', organization.id, organization.slug) }}">{{ _('Create Problem') }}</a></div>

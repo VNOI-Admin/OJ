@@ -14,7 +14,7 @@ from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, 
     inlineformset_factory
 from django.forms.widgets import DateTimeInput
 from django.template.defaultfilters import filesizeformat
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
@@ -413,6 +413,21 @@ class ProposeContestProblemFormSet(
 class ContestForm(ModelForm):
     required_css_class = 'required'
 
+    def __init__(self, *args, **kwargs):
+        org_pk = kwargs.pop('org_pk', None)
+        super(ContestForm, self).__init__(*args, **kwargs)
+
+        # cannot use fields[].widget = ...
+        # because it will remove the old values
+        # just update the data url is fine
+        if org_pk:
+            self.fields['private_contestants'].widget.data_view = None
+            self.fields['private_contestants'].widget.data_url = reverse('organization_profile_select2',
+                                                                         args=(org_pk, ))
+        else:
+            self.fields.pop('private_contestants')
+            self.fields.pop('is_private')
+
     class Meta:
         model = Contest
         fields = [
@@ -423,6 +438,8 @@ class ContestForm(ModelForm):
             'hide_problem_authors',
             'scoreboard_visibility',
             'description',
+            'is_private',
+            'private_contestants',
         ]
 
         widgets = {
@@ -430,8 +447,8 @@ class ContestForm(ModelForm):
             'end_time': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
             'scoreboard_visibility': Select2Widget(),
-        }
-
-        help_texts = {
-            'og_image': _('This image will appear in link sharing embeds. For example: Facebook, etc'),
+            'private_contestants': HeavySelect2MultipleWidget(
+                data_view='profile_select2',
+                attrs={'style': 'width: 100%'},
+            ),
         }
