@@ -956,15 +956,15 @@ msgstr "những người không xếp hạng"
 
 #: judge/models/contest.py:103
 msgid "private to specific users"
-msgstr "riêng tư cho thành viên cụ thể"
+msgstr "Kỳ thi riêng tư cho một số thành viên"
 
 #: judge/models/contest.py:104
 msgid "private contestants"
-msgstr "thí sinh riêng tư"
+msgstr "Các thành viên có thể tham gia kỳ thi"
 
 #: judge/models/contest.py:105
 msgid "If private, only these users may see the contest"
-msgstr "Nếu kỳ thi private, chỉ những người dùng này có thể xem kỳ thi"
+msgstr "Nếu kỳ thi riêng tư, chỉ người thành viên này có thể tham gia kỳ thi"
 
 #: judge/models/contest.py:107
 msgid "hide problem tags"
