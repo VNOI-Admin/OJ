@@ -8,11 +8,12 @@ from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
-from django.core.validators import RegexValidator
+from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db.models import Q
 from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, ModelForm, MultipleChoiceField, \
     inlineformset_factory
 from django.forms.widgets import DateTimeInput
+from django.template.defaultfilters import filesizeformat
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
@@ -98,6 +99,12 @@ class ProfileForm(ModelForm):
             self.fields.pop('organizations')
 
 
+class UserForm(ModelForm):
+    class Meta:
+        model = User
+        fields = ['first_name']
+
+
 class ProposeProblemSolutionForm(ModelForm):
     class Meta:
         model = Solution
@@ -110,11 +117,28 @@ class ProposeProblemSolutionForm(ModelForm):
 
 
 class ProblemEditForm(ModelForm):
+    statement_file = forms.FileField(
+        required=False,
+        validators=[FileExtensionValidator(allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS)],
+        help_text=_('Maximum file size is %s.') % filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE),
+        widget=forms.FileInput(attrs={'accept': 'application/pdf'}),
+    )
     required_css_class = 'required'
+
+    def clean(self):
+        self.check_file()
+        return self.cleaned_data
+
+    def check_file(self):
+        content = self.files.get('statement_file', None)
+        if content is not None and content.size > settings.PDF_STATEMENT_MAX_FILE_SIZE:
+            raise forms.ValidationError(_("File size is too big! Maximum file size is %s") %
+                                        filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE))
+        return content
 
     class Meta:
         model = Problem
-        fields = ['code', 'name', 'time_limit', 'memory_limit', 'points', 'source', 'types', 'group', 'pdf_url',
+        fields = ['code', 'name', 'time_limit', 'memory_limit', 'points', 'statement_file', 'source', 'types', 'group',
                   'description']
         widgets = {
             'types': Select2MultipleWidget,

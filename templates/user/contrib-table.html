@@ -1,16 +1,11 @@
-{% extends "user/base-contrib-table.html" %}
+{% extends "user/base-users-table.html" %}
 
-{% block contribution %}
-    <td>{{ user.contribution_points }}</td>
+{% block point_head %}
+    {% if sort_links %}<a href="{{ sort_links.contribution_points }}">{% endif %}
+    {{ _('Contribution points') }}
+    {%- if sort_links %}{{ sort_order.contribution_points }}</a>{% endif %}
 {% endblock %}
 
-{% block user_data scoped %}
-    {% if user.organizations.all() %}  
-        <em style="font-size: 0.75em; color:grey;"> 
-        {{ user.organizations.all()[0].name }}
-        {% for organization in user.organizations.all()[1:] %}
-            | {{ organization.name }}
-        {% endfor %}
-        </em> 
-    {% endif %}
+{% block point %}
+    <td>{{ user.contribution_points }}</td>
 {% endblock %}
