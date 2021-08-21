@@ -1,3 +1,4 @@
+from django.core.exceptions import ImproperlyConfigured
 from django.db.models import F, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -14,6 +15,12 @@ def _get_user_queryset(term):
         qs = qs.filter(user__username=term.strip())
     else:
         qs = qs.filter(user__username__icontains=term)
+    return qs
+
+
+def _get_organization_user_queryset(org_pk, term):
+    qs = get_object_or_404(Organization, pk=org_pk).members
+    qs = qs.filter(Q(user__username__icontains=term.strip()) | Q(user__first_name__icontains=term.strip()))
     return qs
 
 
@@ -45,6 +52,23 @@ class UserSelect2View(Select2View):
 
     def get_name(self, obj):
         return obj.username
+
+
+class OrganizationUserSelect2View(Select2View):
+    def dispatch(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            raise ImproperlyConfigured('Must pass a pk')
+        self.org_pk = kwargs['pk']
+        return super(OrganizationUserSelect2View, self).dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return _get_organization_user_queryset(self.org_pk, self.term).annotate(
+            username=F('user__username'),
+            name=F('user__first_name'),
+        ).only('id')
+
+    def get_name(self, obj):
+        return obj.username + (f' | {obj.name}' if obj.name else '')
 
 
 class TagGroupSelect2View(Select2View):

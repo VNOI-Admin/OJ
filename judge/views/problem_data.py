@@ -82,7 +82,7 @@ class ProblemCaseForm(ModelForm):
         }
 
 
-class ProblemCaseFormSet(formset_factory(ProblemCaseForm, formset=BaseModelFormSet, extra=1, max_num=1,
+class ProblemCaseFormSet(formset_factory(ProblemCaseForm, formset=BaseModelFormSet, extra=0, max_num=1,
                                          can_delete=True)):
     model = ProblemTestCase
 

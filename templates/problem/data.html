@@ -267,7 +267,7 @@
                 return false;
             });
 
-            $('a#fill-testcases').click(function () {
+            function fill_testcases() {
                 var inFiles = [], outFiles = [];
                 var inputExts = [".in", ".inp"];
                 var outputExts = [".out", ".ou", ".ans", ".ok"];
@@ -303,7 +303,7 @@
                     $("#id_cases-" + i + "-points").val("1").change();
                 }
                 return false;
-            });
+            };
 
             var oldIndex;
             $table.sortable({
@@ -345,6 +345,10 @@
                     $("input[name$='DELETE']").attr('checked', false);
                 }
             });
+            if (parseInt($total.val()) == 0) {
+                console.log("Filling testcase...");
+                fill_testcases();
+            }
         }).change();
     </script>
 {% endblock %}
@@ -457,11 +461,6 @@
         <table class="table">
             {{ data_form.as_table() }}
         </table>
-        <div style="float:right">
-            <a id="fill-testcases" href="#" class="button">
-                {{ _('Click here to set tests points') }}
-            </a>
-        </div>
         <table id="case-table" class="table">
             <thead>
             <tr>
