@@ -960,6 +960,16 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
             raise PermissionDenied()
         return contest
 
+    def get_form_kwargs(self):
+        kwargs = super(EditContest, self).get_form_kwargs()
+        # Due to some limitation with query set in select2
+        # We only support this if the contest is private for only
+        # 1 organization
+        if self.object.organizations.count() == 1:
+            kwargs['org_pk'] = self.object.organizations.values_list('pk', flat=True)[0]
+
+        return kwargs
+
     def get_title(self):
         return _('Editing contest {0}').format(self.object.name)
 
