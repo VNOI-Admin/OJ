@@ -9,7 +9,7 @@ import judge.models.runtime
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0144_add_create_org_problem_permission'),
+        ('judge', '0145_alter_problem_pdf_url'),
     ]
 
     operations = [
