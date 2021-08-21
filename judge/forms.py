@@ -121,6 +121,7 @@ class ProblemEditForm(ModelForm):
         required=False,
         validators=[FileExtensionValidator(allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS)],
         help_text=_('Maximum file size is %s.') % filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE),
+        widget=forms.FileInput(attrs={'accept': 'application/pdf'}),
     )
     required_css_class = 'required'
 
