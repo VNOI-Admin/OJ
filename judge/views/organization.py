@@ -386,6 +386,11 @@ class CustomAdminOrganizationMixin(CustomOrganizationMixin):
             return super(CustomAdminOrganizationMixin, self).dispatch(request, *args, **kwargs)
         raise PermissionDenied
 
+    def get_form_kwargs(self):
+        kwargs = super(CustomAdminOrganizationMixin, self).get_form_kwargs()
+        kwargs['org_pk'] = self.organization.pk
+        return kwargs
+
 
 class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
     context_object_name = 'problems'
@@ -450,11 +455,6 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
 
 class ContestCreateOrganization(CustomAdminOrganizationMixin, CreateContest):
     permission_required = 'judge.create_private_contest'
-
-    def get_form_kwargs(self):
-        kwargs = super(ContestCreateOrganization, self).get_form_kwargs()
-        kwargs['org_pk'] = self.organization.pk
-        return kwargs
 
     def save_contest_form(self, form):
         self.object = form.save()
