@@ -23,6 +23,9 @@ def submission_layout(submission, profile_id, user, completed_problem_ids, edita
         can_view = True
     elif profile_id == submission.user_id:
         can_view = True
+    elif not submission.problem.is_public and user.has_perm('judge.suggest_new_problem') and \
+            submission.problem.is_suggesting:
+        can_view = True
     elif settings.DMOJ_SUBMISSION_SOURCE_VISIBILITY == 'all':
         can_view = True
     elif submission.contest_object is not None and profile_id in get_editor_ids(submission.contest_object):
