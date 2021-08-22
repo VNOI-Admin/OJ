@@ -184,7 +184,7 @@ def rate_elo_mmr(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0122_username_display_override'),
+        ('judge', '0121_per_problem_sub_access_control'),
     ]
 
     operations = [
