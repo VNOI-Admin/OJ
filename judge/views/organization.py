@@ -449,6 +449,9 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
         problem.is_organization_private = True
         problem.organizations.add(self.organization)
         problem.date = datetime.now()
+        result = self.save_statement(form, problem)
+        if result is not None:
+            return result
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
 

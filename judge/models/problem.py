@@ -250,7 +250,7 @@ class Problem(models.Model):
             return True
 
         # If user is a suggester
-        if user.has_perm('judge.suggest_new_problem'):
+        if user.has_perm('judge.suggest_new_problem') and self.is_suggesting:
             return True
 
         # If user is a tester.

@@ -727,18 +727,23 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     def get_content_title(self):
         return _('Creating new problem')
 
-    def form_valid(self, form):
-        self.object = problem = form.save()
-        problem.authors.add(self.request.user.profile)
-        problem.allowed_languages.set(Language.objects.all())
-        problem.partial = True
-        problem.date = datetime.now()
+    def save_statement(self, form, problem):
         statement_file = form.files.get('statement_file', None)
         if statement_file is not None:
             if not self.request.user.has_perm('judge.upload_file_statement'):
                 form.add_error('statement_file', 'You don\'t have permission to upload file-type statement.')
                 return self.form_invalid(form)
             problem.pdf_url = pdf_statement_uploader(statement_file)
+
+    def form_valid(self, form):
+        self.object = problem = form.save()
+        problem.authors.add(self.request.user.profile)
+        problem.allowed_languages.set(Language.objects.all())
+        problem.partial = True
+        problem.date = datetime.now()
+        result = self.save_statement(form, problem)
+        if result is not None:
+            return result
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
 
@@ -764,12 +769,9 @@ class ProblemSuggest(ProblemCreate):
         problem.suggester = self.request.user.profile
         problem.allowed_languages.set(Language.objects.all())
         problem.partial = True
-        statement_file = form.files.get('statement_file', None)
-        if statement_file is not None:
-            if not self.request.user.has_perm('judge.upload_file_statement'):
-                form.add_error('statement_file', 'You don\'t have permission to upload file-type statement.')
-                return self.form_invalid(form)
-            problem.pdf_url = pdf_statement_uploader(statement_file)
+        result = self.save_statement(form, problem)
+        if result is not None:
+            return result
         problem.save()
         on_new_suggested_problem.delay(problem.code)
         return HttpResponseRedirect(self.get_success_url())
@@ -814,18 +816,23 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
 
         return kwargs
 
+    def save_statement(self, form, problem):
+        statement_file = form.files.get('statement_file', None)
+        if statement_file is not None:
+            if not self.request.user.has_perm('judge.upload_file_statement'):
+                form.add_error('statement_file', 'You don\'t have permission to upload file-type statement.')
+                return self.form_invalid(form)
+            problem.pdf_url = pdf_statement_uploader(statement_file)
+
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
         form_edit = self.get_solution_formset()
         if form.is_valid() and form_edit.is_valid():
             problem = form.save()
-            statement_file = form.files.get('statement_file', None)
-            if statement_file is not None:
-                if not self.request.user.has_perm('judge.upload_file_statement'):
-                    form.add_error('statement_file', 'You don\'t have permission to upload file-type statement.')
-                    return self.form_invalid(form)
-                problem.pdf_url = pdf_statement_uploader(statement_file)
+            result = self.save_statement(form, problem)
+            if result is not None:
+                return result
             problem.save()
             form_edit.save()
             return HttpResponseRedirect(reverse('problem_detail', args=[self.object.code]))
