@@ -345,7 +345,7 @@
                     $("input[name$='DELETE']").attr('checked', false);
                 }
             });
-            if (parseInt($total.val()) == 0) {
+            if (parseInt($total.val()) == 0 && window.valid_files.length) {
                 console.log("Filling testcase...");
                 fill_testcases();
             }
