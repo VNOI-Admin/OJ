@@ -122,8 +122,17 @@ class ProblemEditForm(ModelForm):
         validators=[FileExtensionValidator(allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS)],
         help_text=_('Maximum file size is %s.') % filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE),
         widget=forms.FileInput(attrs={'accept': 'application/pdf'}),
+        label=_('Statement file'),
     )
     required_css_class = 'required'
+
+    def __init__(self, *args, **kwargs):
+        org_pk = kwargs.pop('org_pk', None)
+        super(ProblemEditForm, self).__init__(*args, **kwargs)
+
+        # Only allow to public/private problem in organization
+        if org_pk is None:
+            self.fields.pop('is_public')
 
     def clean(self):
         self.check_file()
@@ -138,14 +147,18 @@ class ProblemEditForm(ModelForm):
 
     class Meta:
         model = Problem
-        fields = ['code', 'name', 'time_limit', 'memory_limit', 'points', 'statement_file', 'source', 'types', 'group',
-                  'description']
+        fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points',
+                  'statement_file', 'source', 'types', 'group', 'description']
         widgets = {
             'types': Select2MultipleWidget,
             'group': Select2Widget,
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
         }
         help_texts = {
+            'is_public': _(
+                'If public, all members in organization can view it. Set it as private '
+                'if you want to use it in a contest, otherwise, users can see the problem '
+                'even if they do not join the contest!'),
             'code': _('Problem code, e.g: voi19_post'),
             'name': _('The full name of the problem, '
                       'as shown in the problem list. For example: VOI19 - A cong B'),

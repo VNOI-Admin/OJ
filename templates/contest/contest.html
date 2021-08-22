@@ -6,6 +6,17 @@
     {% set tab = 'detail' %}
     {% set title = contest.name %}
     {% include "contest/contest-tabs.html" %}
+    {% if contest.is_organization_private %}
+        <span class="organization-tags">
+            {% for org in contest.organizations.all() %}
+                <span class="organization-tag">
+                    <a href="{{ org.get_absolute_url() }}">
+                        <i class="fa fa-lock"></i> {{ org.name }}
+                    </a>
+                </span>
+            {% endfor %}
+        </span>
+    {% endif %}
 {% endblock %}
 
 {% block content_js_media %}
