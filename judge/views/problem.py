@@ -39,7 +39,7 @@ from judge.utils.problems import hot_problems, user_attempted_ids, \
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
-from judge.views.widgets import pdf_statement_uploader
+from judge.views.widgets import pdf_statement_uploader, submission_uploader
 
 
 def get_contest_problem(problem, profile):
@@ -636,7 +636,15 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
             else:
                 self.new_submission.save()
 
-            source = SubmissionSource(submission=self.new_submission, source=form.cleaned_data['source'])
+            submission_file = form.files.get('submission_file', None)
+            if submission_file is not None:
+                source_url = submission_uploader(submission_file)
+            else:
+                source_url = ''
+
+            print(source_url)
+
+            source = SubmissionSource(submission=self.new_submission, source=form.cleaned_data['source'] + source_url)
             source.save()
 
         # Save a query.

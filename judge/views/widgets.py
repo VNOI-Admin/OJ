@@ -100,6 +100,17 @@ def pdf_statement_uploader(statement):
     return urljoin(url_base, name)
 
 
+def submission_uploader(submission_file):
+    ext = os.path.splitext(submission_file.name)[1]
+    name = str(uuid.uuid4()) + ext
+    default_storage.save(os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, name), submission_file)
+    url_base = getattr(settings, 'SUBMISSION_FILE_UPLOAD_URL_PREFIX',
+                       urljoin(settings.MEDIA_URL, settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR))
+    if not url_base.endswith('/'):
+        url_base += '/'
+    return urljoin(url_base, name)
+
+
 @login_required
 def martor_image_uploader(request):
     if request.method != 'POST' or not request.is_ajax() or 'markdown-image-upload' not in request.FILES:

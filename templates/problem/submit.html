@@ -119,7 +119,39 @@
                         $('#problem_submit').find(':submit').attr('disabled', false);
                     }
                 });
+
+                function on_language_change() {
+                    obj = document.getElementById('id_language');
+                    fileonly = obj.options[obj.selectedIndex].getAttribute('data-fileonly');
+                    if (fileonly == 'True') {
+                        if (!$('#editor').hasClass('hidden')) {
+                            $('#editor').addClass('hidden');
+                        }
+                        if ($('#file-submit').hasClass('hidden')) {
+                            $('#file-submit').removeClass('hidden');
+                        }
+                    } else {
+                        if ($('#editor').hasClass('hidden')) {
+                            $('#editor').removeClass('hidden');
+                        }
+                        if (!$('#file-submit').hasClass('hidden')) {
+                            $('#file-submit').addClass('hidden');
+                        }
+                    }
+                };
+
+                $("#id_language").change( function() {
+                    on_language_change();
+                });
             });
+
+            function getFile(input) {
+                if (input.files && input.files[0]) {
+                    $('#id_file_custom').attr('data-filename', input.files[0].name);
+                } else {
+                    $('#id_file_custom').attr('data-filename', 'No file chosen');
+                }
+            };
         </script>
     {% endcompress %}
 {% endblock %}
@@ -128,6 +160,10 @@
     {{ form.media.css }}
     {% compress css %}
         <style media="screen">
+            .hidden {
+                display: none;
+            }
+
             #submit-wrapper {
                 margin-top: 0.7em;
             }
@@ -191,6 +227,50 @@
                 padding-left: 1.5em;
                 padding-top: 0.5em;
             }
+            .helptext {
+                font-size: 13px;
+                color: #999;
+                border-width: 0 0 1px 0;
+            }
+            .helptext::before {
+                font-family: FontAwesome;
+                font-style: normal;
+                font-weight: normal;
+                line-height: 1;
+                content: "\f05a";
+                padding-right: 5px;
+                font-size: 14px;
+            }
+            .django-as-table {
+                border-collapse:collapse;
+            }
+            .django-as-table th, td {
+                padding-bottom: 10px;
+            }
+            .django-as-table th {
+                max-width: 10em;
+                width: 10em;
+            }
+            .errorlist {
+                background: rgba(255, 0, 0, 0.3);
+                border: 3px dashed red;
+                border-right: none;
+                border-left: solid red;
+                padding: 0 1em 0.1em 2em;
+                margin: 0.3em 0 0.5em 0;
+            }
+            .errornote {
+                border: 3px dashed #ffc000;
+                border-left: solid #ffc000;
+                padding: 0.7em 2em;
+                margin: 0 0 8px;
+                font-size: 13px !important;
+                font-weight: 400;
+            }
+            .required th::after {
+                content: "*";
+                color: red;
+            }
         </style>
     {% endcompress %}
 {% endblock %}
@@ -227,14 +307,26 @@
         {% endif %}
     {% endif %}
 
-    <form id="problem_submit" action="" method="post" class="form-area">
+    <form id="problem_submit" action="" method="post" class="form-area" enctype="multipart/form-data">
         {% csrf_token %}
         {{ form.non_field_errors() }}
         <div id="submit-wrapper">
-            <div id="editor">
+            <div id="editor" class="{% if default_lang.file_only %}hidden{% endif %}">
                 {{ form.source.errors }}
                 {{ form.source }}
             </div>
+            <div id="file-submit" class="{% if not default_lang.file_only %}hidden{% endif %}">
+                <div class="alert alert-warning alert-dismissable">
+                    <a class="close">x</a>
+                    {{ _('You can only submit file for this language.')}}
+                </div>
+                {{ form.submission_file.errors }}
+                <label class="file" style="width: 100%;">
+                    <input type="file" name="submission_file" id="id_submission_file" onchange="getFile(this)">
+                    <span id="id_file_custom" class="file-custom" data-filename="No file chosen"></span>
+                </label>
+            </div>
+            <hr>
             {% if not no_judges %}
                 <div id="language">
                     {{ form.language.errors }}
@@ -242,7 +334,7 @@
                         <select id="id_language" name="language">
                             {% for lang in form.fields.language.queryset %}
                                 <option value="{{ lang.id }}" data-id="{{ lang.id }}" data-name="{{ lang.name }}"
-                                        data-info="{{ lang.info }}" data-ace="{{ lang.ace }}"
+                                        data-info="{{ lang.info }}" data-ace="{{ lang.ace }}" data-fileonly="{{ lang.file_only }}"
                                         data-judge-info="{{ runtime_versions(lang.runtime_versions()) }}"
                                         {% if lang.id == default_lang.id %}selected{% endif %}>{{ lang.name }}</option>
                             {% endfor %}
