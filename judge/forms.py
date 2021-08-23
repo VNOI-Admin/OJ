@@ -15,7 +15,7 @@ from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, 
     inlineformset_factory
 from django.forms.widgets import DateTimeInput
 from django.template.defaultfilters import filesizeformat
-from django.urls import reverse_lazy
+from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
@@ -123,8 +123,17 @@ class ProblemEditForm(ModelForm):
         validators=[FileExtensionValidator(allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS)],
         help_text=_('Maximum file size is %s.') % filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE),
         widget=forms.FileInput(attrs={'accept': 'application/pdf'}),
+        label=_('Statement file'),
     )
     required_css_class = 'required'
+
+    def __init__(self, *args, **kwargs):
+        org_pk = kwargs.pop('org_pk', None)
+        super(ProblemEditForm, self).__init__(*args, **kwargs)
+
+        # Only allow to public/private problem in organization
+        if org_pk is None:
+            self.fields.pop('is_public')
 
     def clean(self):
         self.check_file()
@@ -139,14 +148,18 @@ class ProblemEditForm(ModelForm):
 
     class Meta:
         model = Problem
-        fields = ['code', 'name', 'time_limit', 'memory_limit', 'points', 'statement_file', 'source', 'types', 'group',
-                  'description']
+        fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points',
+                  'statement_file', 'source', 'types', 'group', 'description']
         widgets = {
             'types': Select2MultipleWidget,
             'group': Select2Widget,
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
         }
         help_texts = {
+            'is_public': _(
+                'If public, all members in organization can view it. Set it as private '
+                'if you want to use it in a contest, otherwise, users can see the problem '
+                'even if they do not join the contest!'),
             'code': _('Problem code, e.g: voi19_post'),
             'name': _('The full name of the problem, '
                       'as shown in the problem list. For example: VOI19 - A cong B'),
@@ -445,6 +458,21 @@ class ProposeContestProblemFormSet(
 class ContestForm(ModelForm):
     required_css_class = 'required'
 
+    def __init__(self, *args, **kwargs):
+        org_pk = kwargs.pop('org_pk', None)
+        super(ContestForm, self).__init__(*args, **kwargs)
+
+        # cannot use fields[].widget = ...
+        # because it will remove the old values
+        # just update the data url is fine
+        if org_pk:
+            self.fields['private_contestants'].widget.data_view = None
+            self.fields['private_contestants'].widget.data_url = reverse('organization_profile_select2',
+                                                                         args=(org_pk, ))
+        else:
+            self.fields.pop('private_contestants')
+            self.fields.pop('is_private')
+
     class Meta:
         model = Contest
         fields = [
@@ -455,6 +483,8 @@ class ContestForm(ModelForm):
             'hide_problem_authors',
             'scoreboard_visibility',
             'description',
+            'is_private',
+            'private_contestants',
         ]
 
         widgets = {
@@ -462,8 +492,8 @@ class ContestForm(ModelForm):
             'end_time': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
             'scoreboard_visibility': Select2Widget(),
-        }
-
-        help_texts = {
-            'og_image': _('This image will appear in link sharing embeds. For example: Facebook, etc'),
+            'private_contestants': HeavySelect2MultipleWidget(
+                data_view='profile_select2',
+                attrs={'style': 'width: 100%'},
+            ),
         }
