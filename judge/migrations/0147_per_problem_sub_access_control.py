@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0120_totp_no_reuse'),
+        ('judge', '0146_totp_no_reuse'),
     ]
 
     operations = [
