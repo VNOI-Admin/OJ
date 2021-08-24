@@ -242,8 +242,8 @@ class JudgeHandler(ZlibPacketHandler):
                 'in-contest': data.contest_no,
                 'attempt-no': data.attempt_no,
                 'user': data.user_id,
-                'file_only': data.file_only,
-                'file_size_limit': data.file_size_limit,
+                'file-only': data.file_only,
+                'file-size-limit': data.file_size_limit,
             },
         })
 
