@@ -136,8 +136,9 @@ class ProblemEditForm(ModelForm):
             self.fields.pop('is_public')
 
     def clean(self):
+        cleaned_data = super(ProblemEditForm, self).clean()
         self.check_file()
-        return self.cleaned_data
+        return cleaned_data
 
     def check_file(self):
         content = self.files.get('statement_file', None)
@@ -453,7 +454,21 @@ class ProposeContestProblemFormSet(
             form=ProposeContestProblemForm,
             can_delete=True,
         )):
-    pass
+
+    def clean(self) -> None:
+        """Checks that no Contest problems have the same order."""
+        super(ProposeContestProblemFormSet, self).clean()
+        if any(self.errors):
+            # Don't bother validating the formset unless each form is valid on its own
+            return
+        orders = []
+        for form in self.forms:
+            if self.can_delete and self._should_delete_form(form):
+                continue
+            order = form.cleaned_data.get('order')
+            if order and order in orders:
+                raise ValidationError(_("Problems must have distinct order."))
+            orders.append(order)
 
 
 class ContestForm(ModelForm):
