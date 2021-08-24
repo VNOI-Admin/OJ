@@ -230,9 +230,6 @@ class ProblemSubmitForm(ModelForm):
             max_file_size = lang_obj.file_size_limit * 1024 * 1024
             ext = os.path.splitext(content.name)[1][1:]
 
-            if content is None or language is None:
-                pass
-
             if ext.lower() != lang_obj.extension.lower():
                 raise forms.ValidationError(_('Wrong file type for language %(lang)s, expected %(lang_ext)s'
                                               ', found %(ext)s')
