@@ -549,8 +549,8 @@ PDF_STATEMENT_UPLOAD_MEDIA_DIR = 'pdf'
 PDF_STATEMENT_SAFE_EXTS = {'pdf'}
 PDF_STATEMENT_MAX_FILE_SIZE = 5242880
 
-SUBMISSION_FILE_UPLOAD_URL_PREFIX = '/submission'
-SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission'
+SUBMISSION_FILE_UPLOAD_URL_PREFIX = '/submission_file'
+SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission_file'
 
 # Database
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases

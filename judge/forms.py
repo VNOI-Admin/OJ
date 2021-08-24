@@ -212,11 +212,12 @@ class ProblemSubmitForm(ModelForm):
     judge = ChoiceField(choices=(), widget=forms.HiddenInput(), required=False)
 
     def clean(self):
+        cleaned_data = super(ProblemSubmitForm, self).clean()
         self.check_submission()
-        return self.cleaned_data
+        return cleaned_data
 
     def check_submission(self):
-        source = self.cleaned_data.get('source', None)
+        source = self.cleaned_data.get('source', '')
         content = self.files.get('submission_file', None)
         language = self.cleaned_data.get('language', None)
         lang_obj = Language.objects.get(name=language)
@@ -227,13 +228,16 @@ class ProblemSubmitForm(ModelForm):
 
         if content:
             max_file_size = lang_obj.file_size_limit * 1024 * 1024
-            ext = os.path.splitext(content.name)[1]
+            ext = os.path.splitext(content.name)[1][1:]
 
             if content is None or language is None:
                 pass
 
-            if ext not in lang_obj.extension:
-                raise forms.ValidationError(_('Wrong file type for language %s') % language)
+            if ext.lower() != lang_obj.extension.lower():
+                raise forms.ValidationError(_('Wrong file type for language %(lang)s, expected %(lang_ext)s'
+                                              ', found %(ext)s')
+                                            % {'lang': language, 'lang_ext': lang_obj.extension, 'ext': ext})
+
             elif content.size > max_file_size:
                 raise forms.ValidationError(_("File size is too big! Maximum file size is %s")
                                             % filesizeformat(max_file_size))

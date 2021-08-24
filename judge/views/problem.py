@@ -638,11 +638,13 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
 
             submission_file = form.files.get('submission_file', None)
             if submission_file is not None:
-                source_url = submission_uploader(submission_file)
+                source_url = submission_uploader(
+                    submission_file=submission_file,
+                    problem_code=self.new_submission.problem.code,
+                    user_id=self.new_submission.user.user.id,
+                )
             else:
                 source_url = ''
-
-            print(source_url)
 
             source = SubmissionSource(submission=self.new_submission, source=form.cleaned_data['source'] + source_url)
             source.save()
