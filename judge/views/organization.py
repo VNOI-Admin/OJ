@@ -439,6 +439,12 @@ class ContestListOrganization(CustomOrganizationMixin, ContestList):
 class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
     permission_required = 'judge.create_organization_problem'
 
+    def get_initial(self):
+        initial = super(ProblemCreateOrganization, self).get_initial()
+        initial = initial.copy()
+        initial['code'] = ''.join(x for x in self.organization.slug.lower() if x.isalpha()) + '_'
+        return initial
+
     def form_valid(self, form):
         self.object = problem = form.save()
         problem.authors.add(self.request.user.profile)

@@ -135,8 +135,9 @@ class ProblemEditForm(ModelForm):
             self.fields.pop('is_public')
 
     def clean(self):
+        cleaned_data = super(ProblemEditForm, self).clean()
         self.check_file()
-        return self.cleaned_data
+        return cleaned_data
 
     def check_file(self):
         content = self.files.get('statement_file', None)
