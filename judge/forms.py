@@ -424,7 +424,7 @@ class ProposeContestProblemFormSet(
 
     def clean(self) -> None:
         """Checks that no Contest problems have the same order."""
-        super(ProposeContestProblemFormSet).clean()
+        super(ProposeContestProblemFormSet, self).clean()
         if any(self.errors):
             # Don't bother validating the formset unless each form is valid on its own
             return
