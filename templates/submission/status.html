@@ -69,7 +69,7 @@
 
 {% block body %}
     <br>
-    {% if submission.language.file_only and request.user.is_superuser %}
+    {% if not submission.langue.file_only or request.user.is_superuser %}
         <div><a href="{{ url('submission_source', submission.id) }}">{{ _('View source') }}</a></div>
     {% endif %}
     {% if request.user == submission.user.user or perms.judge.resubmit_other %}
