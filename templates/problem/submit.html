@@ -130,6 +130,11 @@
                         if ($('#file-submit').hasClass('hidden')) {
                             $('#file-submit').removeClass('hidden');
                         }
+                        
+                        file_ext = '.' + obj.options[obj.selectedIndex].getAttribute('data-ext');
+                        file_size_limit = obj.options[obj.selectedIndex].getAttribute('data-file-size');
+                        $("#id_submission_file").attr({accept: file_ext})
+                        $("#file_size_help_text").text({{ _("`Only accept \"${file_ext}\". Maximum file size is ${file_size_limit}MB.`")}})
                     } else {
                         if ($('#editor').hasClass('hidden')) {
                             $('#editor').removeClass('hidden');
@@ -243,16 +248,6 @@
                 padding-right: 5px;
                 font-size: 14px;
             }
-            .django-as-table {
-                border-collapse:collapse;
-            }
-            .django-as-table th, td {
-                padding-bottom: 10px;
-            }
-            .django-as-table th {
-                max-width: 10em;
-                width: 10em;
-            }
             .errorlist {
                 background: rgba(255, 0, 0, 0.3);
                 border: 3px dashed red;
@@ -327,6 +322,7 @@
                     <input type="file" name="submission_file" id="id_submission_file" onchange="getFile(this)">
                     <span id="id_file_custom" class="file-custom" data-filename="No file chosen"></span>
                 </label>
+                <p id="file_size_help_text" class="helptext"> </p>
             </div>
             <hr>
             {% if not no_judges %}
@@ -337,6 +333,7 @@
                             {% for lang in form.fields.language.queryset %}
                                 <option value="{{ lang.id }}" data-id="{{ lang.id }}" data-name="{{ lang.name }}"
                                         data-info="{{ lang.info }}" data-ace="{{ lang.ace }}" data-fileonly="{{ lang.file_only }}"
+                                        data-ext="{{ lang.extension }}" data-file-size="{{ lang.file_size_limit }}"
                                         data-judge-info="{{ runtime_versions(lang.runtime_versions()) }}"
                                         {% if lang.id == default_lang.id %}selected{% endif %}>{{ lang.name }}</option>
                             {% endfor %}
