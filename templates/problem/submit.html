@@ -143,6 +143,8 @@
                 $("#id_language").change( function() {
                     on_language_change();
                 });
+
+                on_language_change();
             });
 
             function getFile(input) {
@@ -311,11 +313,11 @@
         {% csrf_token %}
         {{ form.non_field_errors() }}
         <div id="submit-wrapper">
-            <div id="editor" class="{% if default_lang.file_only %}hidden{% endif %}">
+            <div id="editor" class="hidden">
                 {{ form.source.errors }}
                 {{ form.source }}
             </div>
-            <div id="file-submit" class="{% if not default_lang.file_only %}hidden{% endif %}">
+            <div id="file-submit" class="hidden">
                 <div class="alert alert-warning alert-dismissable">
                     <a class="close">x</a>
                     {{ _('You can only submit file for this language.')}}
