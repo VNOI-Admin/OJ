@@ -176,7 +176,7 @@
                 $('#file_drag').on('drop', fileDropHandler);
             });
 
-            function handleFileChange(target) {
+            function handleFileChange() {
                 var file = $('#file_upload')[0].files[0];
                 if (file) {
                     $('#file_drag').html(
