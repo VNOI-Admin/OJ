@@ -108,6 +108,10 @@ class ProblemData(models.Model):
             self.generator.name = _problem_directory_file(new, self.generator.name)
         if self.custom_checker:
             self.custom_checker.name = _problem_directory_file(new, self.custom_checker.name)
+        if self.custom_grader:
+            self.custom_grader.name = _problem_directory_file(new, self.custom_grader.name)
+        if self.custom_header:
+            self.custom_header.name = _problem_directory_file(new, self.custom_header.name)
         self.save()
     _update_code.alters_data = True
 
