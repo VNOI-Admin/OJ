@@ -135,7 +135,7 @@
                         file_size_limit = obj.options[obj.selectedIndex].getAttribute('data-file-size');
                         $('#file_upload').attr({accept: file_ext})
                         $('#file_drag').html(
-                            '<b>Select a file to upload or drag a file into this box</b><br>' +
+                            '<b>' + {{ _("'Click to select a file or drag a file into this box'") }} + '</b><br>' +
                             {{ _('`Only accept "${file_ext}". Maximum file size is ${file_size_limit}MB.`') }}
                         );
                     } else {
