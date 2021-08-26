@@ -56,7 +56,7 @@ class ProblemDataForm(ModelForm):
         model = ProblemData
         fields = [
             'zipfile',
-            'grader', 'custom_grader', 'grader_args', 'custom_header',
+            'grader', 'custom_grader', 'custom_header', 'grader_args',
             'checker', 'custom_checker', 'checker_args', 'checker_type',
             'output_limit',
         ]

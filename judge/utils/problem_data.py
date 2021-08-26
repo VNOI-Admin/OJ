@@ -105,9 +105,9 @@ class ProblemDataCompiler(object):
             # We don't need to do anything if it is standard grader
             if case.grader == 'standard':
                 return
-            checker_args = {}
-            if case.checker_args:
-                checker_args = json.loads(case.checker_args)
+            grader_args = {}
+            if case.grader_args:
+                grader_args = json.loads(case.grader_args)
             if case.grader == 'interactive':
                 file_name, file_ext = get_file_name_n_ext(case.custom_grader.name)
                 if file_ext != 'cpp':
@@ -124,7 +124,7 @@ class ProblemDataCompiler(object):
                 if file_ext != 'cpp':
                     raise ProblemDataError(_("Only accept `.cpp` entry"))
                 header_name, file_ext = get_file_name_n_ext(case.custom_header.name)
-                if file_ext != 'cpp':
+                if file_ext != 'h':
                     raise ProblemDataError(_("Only accept `.h` header"))
                 init['signature_grader'] = {
                     'entry': file_name,
@@ -133,7 +133,8 @@ class ProblemDataCompiler(object):
                 # Most of the time, we don't want user to write their own main function
                 # but user have to write the main function themself
                 # Check: https://github.com/DMOJ/judge-server/issues/730
-                if checker_args.get('allow_main', False):
+                print(grader_args)
+                if grader_args.get('allow_main', False):
                     init['signature_grader']['allow_main'] = True
                 return
             if case.grader == 'custom_judge':
