@@ -684,6 +684,8 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
                 Submission.objects.select_related('source', 'language'),
                 id=submission_id,
             )
+            if self.old_submission.language.file_only:
+                raise Http404()
             if not request.user.has_perm('judge.resubmit_other') and self.old_submission.user != request.profile:
                 raise PermissionDenied()
         else:
