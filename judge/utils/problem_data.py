@@ -108,6 +108,7 @@ class ProblemDataCompiler(object):
             grader_args = {}
             if case.grader_args:
                 grader_args = json.loads(case.grader_args)
+
             if case.grader == 'interactive':
                 file_name, file_ext = get_file_name_n_ext(case.custom_grader.name)
                 if file_ext != 'cpp':
@@ -119,6 +120,7 @@ class ProblemDataCompiler(object):
                     'lang': 'CPP17',
                 }
                 return
+
             if case.grader == 'signature':
                 file_name, file_ext = get_file_name_n_ext(case.custom_grader.name)
                 if file_ext != 'cpp':
@@ -131,12 +133,13 @@ class ProblemDataCompiler(object):
                     'header': header_name,
                 }
                 # Most of the time, we don't want user to write their own main function
-                # but user have to write the main function themself
+                # However, some problem require user to  write the main function themself
+                # *cough* *cough* olympic super cup 2020 MXOR *cough* *cough*
                 # Check: https://github.com/DMOJ/judge-server/issues/730
-                print(grader_args)
                 if grader_args.get('allow_main', False):
                     init['signature_grader']['allow_main'] = True
                 return
+
             if case.grader == 'custom_judge':
                 file_name, file_ext = get_file_name_n_ext(case.custom_grader.name)
                 if file_ext != 'py':
