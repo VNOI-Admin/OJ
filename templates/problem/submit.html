@@ -130,11 +130,14 @@
                         if ($('#file-submit').hasClass('hidden')) {
                             $('#file-submit').removeClass('hidden');
                         }
-                        
+
                         file_ext = '.' + obj.options[obj.selectedIndex].getAttribute('data-ext');
                         file_size_limit = obj.options[obj.selectedIndex].getAttribute('data-file-size');
-                        $("#id_submission_file").attr({accept: file_ext})
-                        $("#file_size_help_text").text({{ _("`Only accept \"${file_ext}\". Maximum file size is ${file_size_limit}MB.`")}})
+                        $('#file_upload').attr({accept: file_ext})
+                        $('#file_drag').html(
+                            '<b>Select a file to upload or drag a file into this box</b><br>' +
+                            {{ _('`Only accept "${file_ext}". Maximum file size is ${file_size_limit}MB.`') }}
+                        );
                     } else {
                         if ($('#editor').hasClass('hidden')) {
                             $('#editor').removeClass('hidden');
@@ -150,15 +153,38 @@
                 });
 
                 on_language_change();
+
+                function fileDragHover(e) {
+                    e.stopPropagation();
+                    e.preventDefault();
+
+                    if (e.type === 'dragover') {
+                        $('#file_drag').addClass('hover');
+                    } else {
+                        $('#file_drag').removeClass('hover');
+                    }
+                }
+
+                function fileDropHandler(e) {
+                    fileDragHover(e);
+                    $('#file_upload').prop('files', e.originalEvent.dataTransfer.files);
+                    handleFileChange()
+                }
+
+                $('#file_drag').on('dragover', fileDragHover);
+                $('#file_drag').on('dragleave', fileDragHover);
+                $('#file_drag').on('drop', fileDropHandler);
             });
 
-            function getFile(input) {
-                if (input.files && input.files[0]) {
-                    $('#id_file_custom').attr('data-filename', input.files[0].name);
-                } else {
-                    $('#id_file_custom').attr('data-filename', 'No file chosen');
+            function handleFileChange(target) {
+                var file = $('#file_upload')[0].files[0];
+                if (file) {
+                    $('#file_drag').html(
+                        '<b>' + {{ _("'File name'") }} + ':</b> ' + file.name + '<br>' +
+                        '<b>' + {{ _("'File size'") }} + ':</b> ' + (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+                    );
                 }
-            };
+            }
         </script>
     {% endcompress %}
 {% endblock %}
@@ -181,6 +207,23 @@
 
             #id_language {
                 width: 100%;
+            }
+
+            #file_drag {
+                border: 2px dashed #999;
+                border-radius : 7px;
+                color: #999;
+                cursor: pointer;
+                display: block;
+                padding: 1.5em;
+                text-align: center;
+                transition: background 0.3s, color 0.3s;
+            }
+
+            #file_drag:hover, #file_drag.hover {
+                background: #ddd;
+                border-style: solid;
+                box-shadow: inset 0 3px 4px #999;
             }
 
             #result-version-info {
@@ -318,11 +361,8 @@
                     {{ _('You can only submit file for this language.')}}
                 </div>
                 {{ form.submission_file.errors }}
-                <label class="file" style="width: 100%;">
-                    <input type="file" name="submission_file" id="id_submission_file" onchange="getFile(this)">
-                    <span id="id_file_custom" class="file-custom" data-filename="No file chosen"></span>
-                </label>
-                <p id="file_size_help_text" class="helptext"> </p>
+                <input id="file_upload" type="file" name="submission_file" style="display: none;" onchange="handleFileChange()">
+                <label for="file_upload" id="file_drag"></label>
             </div>
             <hr>
             {% if not no_judges %}
