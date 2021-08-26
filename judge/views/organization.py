@@ -425,8 +425,8 @@ class ContestListOrganization(CustomOrganizationMixin, ContestList):
         return format_html(_('Contests list of') + ' <a href="{1}">{0}</a>', self.organization.name,
                            self.organization.get_absolute_url())
 
-    def get_queryset(self):
-        query_set = super(ContestListOrganization, self).get_queryset()
+    def _get_queryset(self):
+        query_set = super(ContestListOrganization, self)._get_queryset()
         query_set = query_set.filter(Q(is_organization_private=True))
         return query_set
 
