@@ -16,7 +16,7 @@ __all__ = ['Language', 'RuntimeVersion', 'Judge']
 
 
 class Language(models.Model):
-    key = models.CharField(max_length=6, verbose_name=_('short identifier'),
+    key = models.CharField(max_length=10, verbose_name=_('short identifier'),
                            help_text=_('The identifier for this language; the same as its executor id for judges.'),
                            unique=True)
     name = models.CharField(max_length=20, verbose_name=_('long name'),
@@ -44,6 +44,12 @@ class Language(models.Model):
                                                'additional restrictions, etc.'), blank=True)
     extension = models.CharField(max_length=10, verbose_name=_('extension'),
                                  help_text=_('The extension of source files, e.g., "py" or "cpp".'))
+
+    file_only = models.BooleanField(verbose_name=_('File-only language'), default=False,
+                                    help_text=_('If this language is submitted using file or not'))
+
+    file_size_limit = models.IntegerField(verbose_name=_('Limit of file size'), default=0, blank=True,
+                                          help_text=_('Limit of file size (in MB) if allow submit via file'))
 
     def runtime_versions(self):
         runtimes = OrderedDict()
