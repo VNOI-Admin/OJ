@@ -1,15 +1,16 @@
 import logging
 import os
 import shutil
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from operator import itemgetter
 from random import randrange
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.paginator import PageNotAnInteger
 from django.db import transaction
-from django.db.models import F, Prefetch, Q
+from django.db.models import F, Prefetch, Q, query
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -343,7 +344,14 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
                 queryset = list(queryset)
                 queryset.sort(key=lambda problem: problem.types_list[0] if problem.types_list else '',
                               reverse=self.order.startswith('-'))
+
+        #sort by date
+        queryset = list(queryset)
+        fill_none = queryset[0].date
+        queryset.sort(key=lambda problem: problem.date if problem.date != None else fill_none, reverse=True)
+        
         paginator.object_list = queryset
+
         return paginator
 
     @cached_property
@@ -714,6 +722,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         problem.ac_rate = 0
         problem.user_count = 0
         problem.code = form.cleaned_data['code']
+        problem.date = datetime.now()
         with revisions.create_revision(atomic=True):
             problem.save()
             problem.authors.add(self.request.profile)
@@ -780,6 +789,7 @@ class ProblemSuggest(ProblemCreate):
         self.object = problem = form.save()
         problem.suggester = self.request.user.profile
         problem.allowed_languages.set(Language.objects.all())
+        problem.date = datetime.now()
         problem.partial = True
         result = self.save_statement(form, problem)
         if result is not None:
