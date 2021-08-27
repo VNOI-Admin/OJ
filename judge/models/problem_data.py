@@ -34,6 +34,7 @@ GRADERS = (
     ('standard', _('Standard')),
     ('interactive', _('Interactive')),
     ('signature', _('Function Signature Grading (IOI-style)')),
+    ('output_only', _('Output Only')),
     ('custom_judge', _('Custom Grader')),
 )
 
