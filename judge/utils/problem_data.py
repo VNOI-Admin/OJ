@@ -91,7 +91,7 @@ class ProblemDataCompiler(object):
                 }
             return case.checker
 
-        def get_file_name_n_ext(file):
+        def get_file_name_and_ext(file):
             file_path = split_path_first(file)
             if len(file_path) != 2:
                 raise ProblemDataError(_('How did you corrupt the custom grader path?'))
@@ -110,7 +110,7 @@ class ProblemDataCompiler(object):
                 grader_args = json.loads(case.grader_args)
 
             if case.grader == 'interactive':
-                file_name, file_ext = get_file_name_n_ext(case.custom_grader.name)
+                file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
                 if file_ext != 'cpp':
                     raise ProblemDataError(_("Only accept `.cpp` interactor"))
 
@@ -122,10 +122,10 @@ class ProblemDataCompiler(object):
                 return
 
             if case.grader == 'signature':
-                file_name, file_ext = get_file_name_n_ext(case.custom_grader.name)
+                file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
                 if file_ext != 'cpp':
                     raise ProblemDataError(_("Only accept `.cpp` entry"))
-                header_name, file_ext = get_file_name_n_ext(case.custom_header.name)
+                header_name, file_ext = get_file_name_and_ext(case.custom_header.name)
                 if file_ext != 'h':
                     raise ProblemDataError(_("Only accept `.h` header"))
                 init['signature_grader'] = {
@@ -133,7 +133,7 @@ class ProblemDataCompiler(object):
                     'header': header_name,
                 }
                 # Most of the time, we don't want user to write their own main function
-                # However, some problem require user to  write the main function themself
+                # However, some problem require user to write the main function themself
                 # *cough* *cough* olympic super cup 2020 MXOR *cough* *cough*
                 # Check: https://github.com/DMOJ/judge-server/issues/730
                 if grader_args.get('allow_main', False):
@@ -141,7 +141,7 @@ class ProblemDataCompiler(object):
                 return
 
             if case.grader == 'custom_judge':
-                file_name, file_ext = get_file_name_n_ext(case.custom_grader.name)
+                file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
                 if file_ext != 'py':
                     raise ProblemDataError(_("Only accept `.py` custom judge"))
                 init['custom_judge'] = file_name

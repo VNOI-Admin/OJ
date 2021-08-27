@@ -42,6 +42,18 @@ def checker_args_cleaner(self):
     return data
 
 
+def grader_args_cleaner(self):
+    data = self.cleaned_data['grader_args']
+    if not data or data.isspace():
+        return ''
+    try:
+        if not isinstance(json.loads(data), dict):
+            raise ValidationError(_('Grader arguments must be a JSON object'))
+    except ValueError:
+        raise ValidationError(_('Grader arguments is invalid JSON'))
+    return data
+
+
 class ProblemDataForm(ModelForm):
     checker_type = ChoiceField(choices=CUSTOM_CHECKERS, widget=Select2Widget(attrs={'style': 'width: 200px'}))
 
@@ -51,6 +63,7 @@ class ProblemDataForm(ModelForm):
         return self.cleaned_data['zipfile']
 
     clean_checker_args = checker_args_cleaner
+    clean_grader_args = grader_args_cleaner
 
     class Meta:
         model = ProblemData
