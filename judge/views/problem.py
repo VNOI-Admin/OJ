@@ -1,16 +1,15 @@
 import logging
 import os
 import shutil
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from operator import itemgetter
 from random import randrange
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
-from django.core.paginator import PageNotAnInteger
 from django.db import transaction
-from django.db.models import F, Prefetch, Q, query
+from django.db.models import F, Prefetch, Q
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -344,14 +343,11 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
                 queryset = list(queryset)
                 queryset.sort(key=lambda problem: problem.types_list[0] if problem.types_list else '',
                               reverse=self.order.startswith('-'))
-
-        #sort by date
+        # Sort by date
         queryset = list(queryset)
         fill_none = queryset[0].date
-        queryset.sort(key=lambda problem: problem.date if problem.date != None else fill_none, reverse=True)
-        
+        queryset.sort(key=lambda problem: problem.date if problem.date is not None else fill_none, reverse=True)
         paginator.object_list = queryset
-
         return paginator
 
     @cached_property
