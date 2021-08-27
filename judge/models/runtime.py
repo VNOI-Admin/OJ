@@ -51,6 +51,9 @@ class Language(models.Model):
     file_size_limit = models.IntegerField(verbose_name=_('Limit of file size'), default=0, blank=True,
                                           help_text=_('Limit of file size (in MB) if allow submit via file'))
 
+    include_in_problem = models.BooleanField(verbose_name=_('Include in problems'), default=False,
+                                             help_text=_('If true, this language will be added to all problems'))
+
     def runtime_versions(self):
         runtimes = OrderedDict()
         # There be dragons here if two judges specify different priorities

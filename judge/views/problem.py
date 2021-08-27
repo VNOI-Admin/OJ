@@ -750,7 +750,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     def form_valid(self, form):
         self.object = problem = form.save()
         problem.authors.add(self.request.user.profile)
-        problem.allowed_languages.set(Language.objects.all())
+        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
         problem.partial = True
         problem.date = datetime.now()
         result = self.save_statement(form, problem)
@@ -779,7 +779,7 @@ class ProblemSuggest(ProblemCreate):
     def form_valid(self, form):
         self.object = problem = form.save()
         problem.suggester = self.request.user.profile
-        problem.allowed_languages.set(Language.objects.all())
+        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
         problem.partial = True
         result = self.save_statement(form, problem)
         if result is not None:
