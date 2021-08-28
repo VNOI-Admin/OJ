@@ -4,6 +4,7 @@
 
 {% block title_row %}
     {% set tab = 'about' %}
+    {% set title = link_user(user) %}
     {% include "user/user-tabs.html" %}
 {% endblock %}
 
