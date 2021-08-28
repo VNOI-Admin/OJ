@@ -42,6 +42,18 @@ def checker_args_cleaner(self):
     return data
 
 
+def grader_args_cleaner(self):
+    data = self.cleaned_data['grader_args']
+    if not data or data.isspace():
+        return ''
+    try:
+        if not isinstance(json.loads(data), dict):
+            raise ValidationError(_('Grader arguments must be a JSON object'))
+    except ValueError:
+        raise ValidationError(_('Grader arguments is invalid JSON'))
+    return data
+
+
 class ProblemDataForm(ModelForm):
     checker_type = ChoiceField(choices=CUSTOM_CHECKERS, widget=Select2Widget(attrs={'style': 'width: 200px'}))
 
@@ -51,13 +63,20 @@ class ProblemDataForm(ModelForm):
         return self.cleaned_data['zipfile']
 
     clean_checker_args = checker_args_cleaner
+    clean_grader_args = grader_args_cleaner
 
     class Meta:
         model = ProblemData
-        fields = ['zipfile', 'checker', 'custom_checker', 'checker_args', 'checker_type', 'output_limit']
+        fields = [
+            'zipfile',
+            'grader', 'custom_grader', 'custom_header', 'grader_args',
+            'checker', 'custom_checker', 'checker_args', 'checker_type',
+            'output_limit',
+        ]
         widgets = {
             'checker_args': HiddenInput,
             'checker': Select2Widget(attrs={'style': 'width: 200px'}),
+            'grader': Select2Widget(attrs={'style': 'width: 200px'}),
         }
         help_texts = {
             'output_limit': _('Can be left blank. In case the output can be too long (over 20MB), please set this.'),

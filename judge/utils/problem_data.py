@@ -91,6 +91,65 @@ class ProblemDataCompiler(object):
                 }
             return case.checker
 
+        def get_file_name_and_ext(file):
+            file_path = split_path_first(file)
+            if len(file_path) != 2:
+                raise ProblemDataError(_('How did you corrupt the custom grader path?'))
+            try:
+                file_ext = file_path[1].split('.')[-1]
+            except Exception as e:
+                raise ProblemDataError(e)
+            return file_path[1], file_ext
+
+        def make_grader(init, case):
+            # We don't need to do anything if it is standard grader
+            if case.grader == 'standard':
+                return
+            if case.grader == 'output_only':
+                init['output_only'] = True
+                return
+            grader_args = {}
+            if case.grader_args:
+                grader_args = json.loads(case.grader_args)
+
+            if case.grader == 'interactive':
+                file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
+                if file_ext != 'cpp':
+                    raise ProblemDataError(_("Only accept `.cpp` interactor"))
+
+                init['interactive'] = {
+                    'files': file_name,
+                    'type': 'testlib',  # Assume that we only use testlib interactor
+                    'lang': 'CPP17',
+                }
+                return
+
+            if case.grader == 'signature':
+                file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
+                if file_ext != 'cpp':
+                    raise ProblemDataError(_("Only accept `.cpp` entry"))
+                header_name, file_ext = get_file_name_and_ext(case.custom_header.name)
+                if file_ext != 'h':
+                    raise ProblemDataError(_("Only accept `.h` header"))
+                init['signature_grader'] = {
+                    'entry': file_name,
+                    'header': header_name,
+                }
+                # Most of the time, we don't want user to write their own main function
+                # However, some problem require user to write the main function themself
+                # *cough* *cough* olympic super cup 2020 MXOR *cough* *cough*
+                # Check: https://github.com/DMOJ/judge-server/issues/730
+                if grader_args.get('allow_main', False):
+                    init['signature_grader']['allow_main'] = True
+                return
+
+            if case.grader == 'custom_judge':
+                file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
+                if file_ext != 'py':
+                    raise ProblemDataError(_("Only accept `.py` custom judge"))
+                init['custom_judge'] = file_name
+                return
+
         for i, case in enumerate(self.cases, 1):
             if case.type == 'C':
                 data = {}
@@ -195,6 +254,8 @@ class ProblemDataCompiler(object):
             init['checker'] = make_checker(self.data)
         else:
             self.data.checker_args = ''
+        if self.data.grader:
+            make_grader(init, self.data)
         return init
 
     def compile(self):

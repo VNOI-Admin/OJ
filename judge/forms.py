@@ -1,4 +1,5 @@
 import json
+import os
 from operator import attrgetter, itemgetter
 
 import pyotp
@@ -135,8 +136,9 @@ class ProblemEditForm(ModelForm):
             self.fields.pop('is_public')
 
     def clean(self):
+        cleaned_data = super(ProblemEditForm, self).clean()
         self.check_file()
-        return self.cleaned_data
+        return cleaned_data
 
     def check_file(self):
         content = self.files.get('statement_file', None)
@@ -203,8 +205,40 @@ class DownloadDataForm(Form):
 
 
 class ProblemSubmitForm(ModelForm):
-    source = CharField(max_length=65536, widget=AceWidget(theme='twilight', no_ace_media=True))
+    source = CharField(max_length=65536, required=False, widget=AceWidget(theme='twilight', no_ace_media=True))
+    submission_file = forms.FileField(
+        label=_('Source file'),
+        required=False,
+    )
     judge = ChoiceField(choices=(), widget=forms.HiddenInput(), required=False)
+
+    def clean(self):
+        cleaned_data = super(ProblemSubmitForm, self).clean()
+        self.check_submission()
+        return cleaned_data
+
+    def check_submission(self):
+        source = self.cleaned_data.get('source', '')
+        content = self.files.get('submission_file', None)
+        language = self.cleaned_data.get('language', None)
+        lang_obj = Language.objects.get(name=language)
+
+        if (source != '' and content is not None) or (source == '' and content is None) or \
+                (source != '' and lang_obj.file_only) or (content == '' and not lang_obj.file_only):
+            raise forms.ValidationError(_("Source code/file is missing or redundant. Please try again"))
+
+        if content:
+            max_file_size = lang_obj.file_size_limit * 1024 * 1024
+            ext = os.path.splitext(content.name)[1][1:]
+
+            if ext.lower() != lang_obj.extension.lower():
+                raise forms.ValidationError(_('Wrong file type for language %(lang)s, expected %(lang_ext)s'
+                                              ', found %(ext)s')
+                                            % {'lang': language, 'lang_ext': lang_obj.extension, 'ext': ext})
+
+            elif content.size > max_file_size:
+                raise forms.ValidationError(_("File size is too big! Maximum file size is %s")
+                                            % filesizeformat(max_file_size))
 
     def __init__(self, *args, judge_choices=(), **kwargs):
         super(ProblemSubmitForm, self).__init__(*args, **kwargs)
@@ -420,7 +454,21 @@ class ProposeContestProblemFormSet(
             form=ProposeContestProblemForm,
             can_delete=True,
         )):
-    pass
+
+    def clean(self) -> None:
+        """Checks that no Contest problems have the same order."""
+        super(ProposeContestProblemFormSet, self).clean()
+        if any(self.errors):
+            # Don't bother validating the formset unless each form is valid on its own
+            return
+        orders = []
+        for form in self.forms:
+            if self.can_delete and self._should_delete_form(form):
+                continue
+            order = form.cleaned_data.get('order')
+            if order and order in orders:
+                raise ValidationError(_("Problems must have distinct order."))
+            orders.append(order)
 
 
 class ContestForm(ModelForm):

@@ -3,11 +3,14 @@ import json
 import logging
 import threading
 import time
+import urllib.parse
 from collections import deque, namedtuple
 from operator import itemgetter
 
 from django import db
 from django.conf import settings
+from django.core.exceptions import ValidationError
+from django.core.validators import URLValidator
 from django.utils import timezone
 
 from judge import event_poster as event
@@ -19,9 +22,13 @@ from judge.models import Judge, Language, LanguageLimit, Problem, Profile, \
 logger = logging.getLogger('judge.bridge')
 json_log = logging.getLogger('judge.json.bridge')
 
+URL_VALIDATOR = URLValidator()
 UPDATE_RATE_LIMIT = 5
 UPDATE_RATE_TIME = 0.5
-SubmissionData = namedtuple('SubmissionData', 'time memory short_circuit pretests_only contest_no attempt_no user_id')
+SubmissionData = namedtuple(
+    'SubmissionData',
+    'time memory short_circuit pretests_only contest_no attempt_no user_id file_only file_size_limit',
+)
 
 
 def _ensure_connection():
@@ -29,6 +36,20 @@ def _ensure_connection():
         db.connection.cursor().execute('SELECT 1').fetchall()
     except Exception:
         db.connection.close()
+
+
+def get_submission_file_url(source):
+    """ Get absolute URL to submission file
+    We cannot simply return domain + source, because
+    in the future, we might want to serve this by MEDIA_URL
+    """
+    try:
+        # If source is a valid url,
+        # it might be serve by a MEDIA_URL
+        URL_VALIDATOR(source)
+        return source
+    except ValidationError:
+        return urllib.parse.urljoin(settings.SITE_FULL_URL, source)
 
 
 class JudgeHandler(ZlibPacketHandler):
@@ -178,11 +199,13 @@ class JudgeHandler(ZlibPacketHandler):
         _ensure_connection()
 
         try:
-            pid, time, memory, short_circuit, lid, is_pretested, sub_date, uid, part_virtual, part_id = (
-                Submission.objects.filter(id=submission)
-                          .values_list('problem__id', 'problem__time_limit', 'problem__memory_limit',
-                                       'problem__short_circuit', 'language__id', 'is_pretested', 'date', 'user__id',
-                                       'contest__participation__virtual', 'contest__participation__id')).get()
+            pid, time, memory, short_circuit, lid, is_pretested, sub_date, uid, part_virtual, part_id, \
+                file_only, file_size_limit = (
+                    Submission.objects.filter(id=submission)
+                              .values_list('problem__id', 'problem__time_limit', 'problem__memory_limit',
+                                           'problem__short_circuit', 'language__id', 'is_pretested', 'date',
+                                           'user__id', 'contest__participation__virtual', 'contest__participation__id',
+                                           'language__file_only', 'language__file_size_limit')).get()
         except Submission.DoesNotExist:
             logger.error('Submission vanished: %s', submission)
             json_log.error(self._make_json_log(
@@ -208,6 +231,8 @@ class JudgeHandler(ZlibPacketHandler):
             contest_no=part_virtual,
             attempt_no=attempt_no,
             user_id=uid,
+            file_only=file_only,
+            file_size_limit=file_size_limit,
         )
 
     def disconnect(self, force=False):
@@ -226,7 +251,7 @@ class JudgeHandler(ZlibPacketHandler):
             'submission-id': id,
             'problem-id': problem,
             'language': language,
-            'source': source,
+            'source': source if not data.file_only else get_submission_file_url(source),
             'time-limit': data.time,
             'memory-limit': data.memory,
             'short-circuit': data.short_circuit,
@@ -235,6 +260,8 @@ class JudgeHandler(ZlibPacketHandler):
                 'in-contest': data.contest_no,
                 'attempt-no': data.attempt_no,
                 'user': data.user_id,
+                'file-only': data.file_only,
+                'file-size-limit': data.file_size_limit,
             },
         })
 
