@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0145_alter_problem_pdf_url'),
+        ('judge', '0148_add_output_only'),
     ]
 
     operations = [
