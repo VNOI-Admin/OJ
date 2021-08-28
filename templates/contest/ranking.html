@@ -234,7 +234,7 @@
                     // Escape double-quote with double-double-quote
                     text = text.replace(/"/g, '""');
 
-                    return text;
+                    return '"' + text + '"';
                 }
 
                 var csv = [];
