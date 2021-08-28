@@ -30,6 +30,14 @@ CHECKERS = (
     ('linecount', _('Line-by-line')),
 )
 
+GRADERS = (
+    ('standard', _('Standard')),
+    ('interactive', _('Interactive')),
+    ('signature', _('Function Signature Grading (IOI-style)')),
+    ('output_only', _('Output Only')),
+    ('custom_judge', _('Custom Grader')),
+)
+
 CUSTOM_CHECKERS = (
     ('themis', _('Themis checker')),
     ('testlib', _('Testlib checker')),
@@ -50,6 +58,7 @@ class ProblemData(models.Model):
     output_limit = models.IntegerField(verbose_name=_('output limit length'), blank=True, null=True)
     feedback = models.TextField(verbose_name=_('init.yml generation feedback'), blank=True)
     checker = models.CharField(max_length=10, verbose_name=_('checker'), choices=CHECKERS, blank=True)
+    grader = models.CharField(max_length=30, verbose_name=_('Grader'), choices=GRADERS, blank=True)
     checker_args = models.TextField(verbose_name=_('checker arguments'), blank=True,
                                     help_text=_('checker arguments as a JSON object'))
 
@@ -58,6 +67,21 @@ class ProblemData(models.Model):
                                       blank=True,
                                       upload_to=problem_directory_file,
                                       validators=[FileExtensionValidator(allowed_extensions=['cpp', 'py'])])
+
+    custom_grader = models.FileField(verbose_name=_('custom grader file'), storage=problem_data_storage,
+                                     null=True,
+                                     blank=True,
+                                     upload_to=problem_directory_file,
+                                     validators=[FileExtensionValidator(allowed_extensions=['cpp', 'py'])])
+
+    custom_header = models.FileField(verbose_name=_('custom header file'), storage=problem_data_storage,
+                                     null=True,
+                                     blank=True,
+                                     upload_to=problem_directory_file,
+                                     validators=[FileExtensionValidator(allowed_extensions=['h'])])
+
+    grader_args = models.TextField(verbose_name=_('grader arguments'), blank=True,
+                                   help_text=_('grader arguments as a JSON object'))
 
     __original_zipfile = None
 
@@ -85,6 +109,10 @@ class ProblemData(models.Model):
             self.generator.name = _problem_directory_file(new, self.generator.name)
         if self.custom_checker:
             self.custom_checker.name = _problem_directory_file(new, self.custom_checker.name)
+        if self.custom_grader:
+            self.custom_grader.name = _problem_directory_file(new, self.custom_grader.name)
+        if self.custom_header:
+            self.custom_header.name = _problem_directory_file(new, self.custom_header.name)
         self.save()
     _update_code.alters_data = True
 

@@ -39,7 +39,7 @@ from judge.utils.problems import hot_problems, user_attempted_ids, \
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
-from judge.views.widgets import pdf_statement_uploader
+from judge.views.widgets import pdf_statement_uploader, submission_uploader
 
 
 def get_contest_problem(problem, profile):
@@ -301,11 +301,12 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
     context_object_name = 'problems'
     template_name = 'problem/list.html'
     paginate_by = 50
-    sql_sort = frozenset(('points', 'ac_rate', 'user_count', 'code'))
+    sql_sort = frozenset(('points', 'ac_rate', 'user_count', 'code', 'date'))
     manual_sort = frozenset(('name', 'group', 'solved', 'type'))
     all_sorts = sql_sort | manual_sort
     default_desc = frozenset(('points', 'ac_rate', 'user_count'))
-    default_sort = 'points'
+    # Default sort by date
+    default_sort = '-date'
 
     def get_paginator(self, queryset, per_page, orphans=0,
                       allow_empty_first_page=True, **kwargs):
@@ -636,7 +637,17 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
             else:
                 self.new_submission.save()
 
-            source = SubmissionSource(submission=self.new_submission, source=form.cleaned_data['source'])
+            submission_file = form.files.get('submission_file', None)
+            if submission_file is not None:
+                source_url = submission_uploader(
+                    submission_file=submission_file,
+                    problem_code=self.new_submission.problem.code,
+                    user_id=self.new_submission.user.user.id,
+                )
+            else:
+                source_url = ''
+
+            source = SubmissionSource(submission=self.new_submission, source=form.cleaned_data['source'] + source_url)
             source.save()
 
         # Save a query.
@@ -674,6 +685,8 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
                 Submission.objects.select_related('source', 'language'),
                 id=submission_id,
             )
+            if self.old_submission.language.file_only:
+                raise Http404()
             if not request.user.has_perm('judge.resubmit_other') and self.old_submission.user != request.profile:
                 raise PermissionDenied()
         else:
@@ -702,6 +715,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         problem.ac_rate = 0
         problem.user_count = 0
         problem.code = form.cleaned_data['code']
+        problem.date = datetime.now()
         with revisions.create_revision(atomic=True):
             problem.save()
             problem.authors.add(self.request.profile)
@@ -738,7 +752,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     def form_valid(self, form):
         self.object = problem = form.save()
         problem.authors.add(self.request.user.profile)
-        problem.allowed_languages.set(Language.objects.all())
+        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
         problem.partial = True
         problem.date = datetime.now()
         result = self.save_statement(form, problem)
@@ -767,8 +781,9 @@ class ProblemSuggest(ProblemCreate):
     def form_valid(self, form):
         self.object = problem = form.save()
         problem.suggester = self.request.user.profile
-        problem.allowed_languages.set(Language.objects.all())
+        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
         problem.partial = True
+        problem.date = datetime.now()
         result = self.save_statement(form, problem)
         if result is not None:
             return result

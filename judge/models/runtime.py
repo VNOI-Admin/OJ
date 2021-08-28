@@ -16,7 +16,7 @@ __all__ = ['Language', 'RuntimeVersion', 'Judge']
 
 
 class Language(models.Model):
-    key = models.CharField(max_length=6, verbose_name=_('short identifier'),
+    key = models.CharField(max_length=10, verbose_name=_('short identifier'),
                            help_text=_('The identifier for this language; the same as its executor id for judges.'),
                            unique=True)
     name = models.CharField(max_length=20, verbose_name=_('long name'),
@@ -26,7 +26,7 @@ class Language(models.Model):
                                               '"C++11". If left blank, it will default to the '
                                               'short identifier.'),
                                   null=True, blank=True)
-    common_name = models.CharField(max_length=10, verbose_name=_('common name'),
+    common_name = models.CharField(max_length=20, verbose_name=_('common name'),
                                    help_text=_('Common name for the language. For example, the common name for C++03, '
                                                'C++11, and C++14 would be "C++"'))
     ace = models.CharField(max_length=20, verbose_name=_('ace mode name'),
@@ -44,6 +44,15 @@ class Language(models.Model):
                                                'additional restrictions, etc.'), blank=True)
     extension = models.CharField(max_length=10, verbose_name=_('extension'),
                                  help_text=_('The extension of source files, e.g., "py" or "cpp".'))
+
+    file_only = models.BooleanField(verbose_name=_('File-only language'), default=False,
+                                    help_text=_('If this language is submitted using file or not'))
+
+    file_size_limit = models.IntegerField(verbose_name=_('Limit of file size'), default=0, blank=True,
+                                          help_text=_('Limit of file size (in MB) if allow submit via file'))
+
+    include_in_problem = models.BooleanField(verbose_name=_('Include in problems'), default=False,
+                                             help_text=_('If true, this language will be added to all problems'))
 
     def runtime_versions(self):
         runtimes = OrderedDict()

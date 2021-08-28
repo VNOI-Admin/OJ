@@ -69,8 +69,10 @@
 
 {% block body %}
     <br>
-    <div><a href="{{ url('submission_source', submission.id) }}">{{ _('View source') }}</a></div>
-    {% if request.user == submission.user.user or perms.judge.resubmit_other %}
+    {% if not submission.language.file_only or request.user.is_superuser %}
+        <div><a href="{{ url('submission_source', submission.id) }}">{{ _('View source') }}</a></div>
+    {% endif %}
+    {% if (request.user == submission.user.user or perms.judge.resubmit_other) and not submission.language.file_only %}
         <div><a href="{{ url('problem_submit', submission.problem.code, submission.id) }}">{{ _('Resubmit') }}</a></div>
     {% endif %}
     {% if perms.judge.rejudge_submission and not submission.is_locked %}

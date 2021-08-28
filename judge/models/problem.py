@@ -223,6 +223,8 @@ class Problem(models.Model):
     def is_editable_by(self, user):
         if not user.is_authenticated:
             return False
+        if user.has_perm('judge.suggest_new_problem') and self.is_suggesting:
+            return True
         if user.has_perm('judge.edit_all_problem') or user.has_perm('judge.edit_public_problem') and self.is_public:
             return True
         return user.has_perm('judge.edit_own_problem') and \

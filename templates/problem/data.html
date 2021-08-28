@@ -143,6 +143,23 @@
                 }).change();
             })();
 
+            var $grader = $('#id_problem-data-grader');
+            var $custom_grader_file = $('#id_problem-data-custom_grader');
+            var $custom_header_file = $('#id_problem-data-custom_header');
+            var $grader_args = $('#id_problem-data-grader_args');
+
+            var $tr_custom_grader_file = $custom_grader_file.parent().parent();
+            var $tr_custom_header_file = $custom_header_file.parent().parent();
+            var $tr_grader_args = $grader_args.parent().parent();
+
+            $grader.change(function () {
+                $tr_custom_grader_file.toggle(!$grader.val().startsWith('standard') &&
+                                              !$grader.val().startsWith('output_only') &&
+                                              !!$grader.val());
+                $tr_custom_header_file.toggle($grader.val().startsWith('signature'));
+                $tr_grader_args.toggle($grader.val().startsWith('signature'));
+            }).change();
+
             $td = $checker.parent();
             var $sample = $("<a/>",{
                 text: "{{_('Instruction')}}",
@@ -442,6 +459,17 @@
 {% endblock %}
 
 {% block header %}
+    {% if problem.is_organization_private %}
+        <span class="organization-tags">
+            {% for org in problem.organizations.all() %}
+                <span class="organization-tag">
+                    <a href="{{ org.get_absolute_url() }}">
+                        <i class="fa fa-lock"></i> {{ org.name }}
+                    </a>
+                </span>
+            {% endfor %}
+        </span>
+    {% endif %}
     {% if data_form.instance.has_yml() %}
         <div class="title-line-action">
             [<a href="{{ url('problem_data_init', problem.code) }}">{{ _('View YAML') }}</a>]
