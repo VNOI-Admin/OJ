@@ -26,7 +26,7 @@ class Language(models.Model):
                                               '"C++11". If left blank, it will default to the '
                                               'short identifier.'),
                                   null=True, blank=True)
-    common_name = models.CharField(max_length=10, verbose_name=_('common name'),
+    common_name = models.CharField(max_length=20, verbose_name=_('common name'),
                                    help_text=_('Common name for the language. For example, the common name for C++03, '
                                                'C++11, and C++14 would be "C++"'))
     ace = models.CharField(max_length=20, verbose_name=_('ace mode name'),

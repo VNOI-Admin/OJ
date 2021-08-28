@@ -105,6 +105,9 @@ class ProblemDataCompiler(object):
             # We don't need to do anything if it is standard grader
             if case.grader == 'standard':
                 return
+            if case.grader == 'output_only':
+                init['output_only'] = True
+                return
             grader_args = {}
             if case.grader_args:
                 grader_args = json.loads(case.grader_args)
