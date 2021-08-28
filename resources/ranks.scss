@@ -3,12 +3,34 @@
     font-weight: bold !important;
 }
 
-.setter a, .setter {
+.admin a::before {
+    content: "💪";
+}
+
+.banned a, .banned {
+    color: black !important;
+    text-decoration: line-through !important; 
+}
+
+.banned a::before {
+    content: "🚫";
+}
+
+.staff a, .staff {
+    color: #ff888a !important;
+    font-weight: bold !important;
+}
+
+.staff a::before {
+    content: "🔥";
+}
+
+.daor a, .daor {
     color: #ff0066 !important;
     font-weight: bold !important;
 }
 
-.setter a::before {
+.daor a::before {
     content: "🌸";
 }
 
