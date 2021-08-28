@@ -78,8 +78,14 @@
                 </td>
 
                 <td>
-                    <span title="{{ case.long_status }}" class="case-{{ case.status }}">
-                        {%- if case.status == 'SC' %}&mdash;{% else %}{{ case.status }}{% endif -%}
+                    <span title="{{ case.long_status }}" class="case-
+                        {%- if case.status == 'AC' and  case.points < case.total -%}
+                        _AC
+                        {% else %}
+                        {{- case.status -}}
+                        {%- endif -%}
+                    ">
+                        {%- if case.status == 'SC' %}&mdash;{% else %}{{ case.long_status }}{% endif -%}
                     </span>
                     {%- if case.feedback %}&nbsp;({{ case.feedback }}){% endif -%}
                 </td>
