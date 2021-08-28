@@ -227,7 +227,6 @@
                 return this.clone().find(sel || '>*').remove().end();
             };
 
-            // Quick and simple export target #table_id into a csv
             function download_table_as_csv() {
                 function clean_text(text) {
                     // Remove new line and leading/trailing spaces
