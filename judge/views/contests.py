@@ -667,7 +667,8 @@ def base_contest_ranking_list(contest, problems, queryset):
 def base_contest_ranking_queryset(contest):
     return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
         .prefetch_related('user__organizations') \
-        .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker')
+        .annotate(submission_count=Count('submission')) \
+        .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker', '-submission_count')
 
 
 def contest_ranking_list(contest, problems):
