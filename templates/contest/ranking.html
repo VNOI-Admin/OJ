@@ -221,6 +221,84 @@
                 {% endif %}
             {% endif %}
         });
+
+        {% if tab == 'ranking' %}
+            $.fn.ignore = function(sel) {
+                return this.clone().find(sel || '>*').remove().end();
+            };
+
+            function download_table_as_csv() {
+                function clean_text(text) {
+                    // Remove new line and leading/trailing spaces
+                    text = text.replace(/(\r\n|\n|\r)/gm, '').trim();
+                    // Escape double-quote with double-double-quote
+                    text = text.replace(/"/g, '""');
+
+                    return '"' + text + '"';
+                }
+
+                var csv = [];
+
+                $('table#users-table thead tr').each(function () {
+                    var header = [];
+                    $(this).find('th').each(function () {
+                        var $col = $(this);
+
+                        if ($col.hasClass('rating-column')) {
+                            // Skip rating
+                            return;
+                        } else if ($col.hasClass('personal-info')) {
+                            // Full name
+                            header.push('Full name');
+                        } else if ($col.hasClass('username') || $col.hasClass('rank')) {
+                            // Username or rank
+                            header.push(clean_text($col.text()));
+                        } else {
+                            // Point
+                            var name = $col.find('.problem-code').text();
+                            if (name == '') {
+                                name = $col.text();
+                            }
+                            header.push(clean_text(name));
+                        }
+                    });
+                    csv.push(header.join(','));
+                });
+
+                $('table#users-table tbody tr').each(function () {
+                    var row_data = [];
+                    $(this).find('td').each(function () {
+                        var $col = $(this);
+
+                        if ($col.hasClass('rating-column')) {
+                            // Skip rating
+                            return;
+                        } else if ($col.hasClass('personal-info')) {
+                            // Full name
+                            row_data.push(clean_text($col.children().first().text()));
+                        } else if ($col.hasClass('user-name')) {
+                            // Username
+                            row_data.push(clean_text($col.text()));
+                        } else {
+                            // Point or rank
+                            row_data.push(clean_text($col.ignore('.solving-time').text()));
+                        }
+                    });
+                    csv.push(row_data.join(','));
+                });
+
+                var csv_string = csv.join('\n');
+                var filename = 'ranking_{{ contest.key }}_' + moment().format('YYYY-MM-DD-HH-mm-ss') + '.csv';
+                var link = document.createElement('a');
+                link.style.display = 'none';
+                link.setAttribute('target', '_blank');
+                link.setAttribute('href', 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv_string));
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        {% endif %}
     </script>
     {% include "contest/media-js.html" %}
 {% endblock %}
@@ -239,6 +317,7 @@
         {% if tab == 'ranking' %}
             <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
             <label for="show-virtual-participations-checkbox" style="vertical-align: bottom">{{ _('Show virtual participations') }}</label>
+            <a href="#" onclick="download_table_as_csv()" style="float: right;">{{ _('Download as CSV') }}</a>
         {% endif %}
     </div>
 {% endblock %}
