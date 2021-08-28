@@ -288,7 +288,7 @@
                 });
 
                 var csv_string = csv.join('\n');
-                var filename = 'ranking_export_' + new Date().toLocaleDateString() + '.csv';
+                var filename = 'ranking_{{ contest.key }}_' + moment().format('YYYY-MM-DD-HH-mm-ss') + '.csv';
                 var link = document.createElement('a');
                 link.style.display = 'none';
                 link.setAttribute('target', '_blank');
