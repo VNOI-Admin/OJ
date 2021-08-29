@@ -189,10 +189,12 @@ def rate_contest(contest):
                             .order_by('-contest__end_time').values('rating')[:1]))
 
 
-RATING_LEVELS = ['Newbie', 'Amateur', 'Expert', 'Candidate Master', 'Master', 'Grandmaster', 'Target']
-RATING_VALUES = [1000, 1300, 1600, 1900, 2400, 3000]
-RATING_CLASS = ['rate-newbie', 'rate-amateur', 'rate-expert', 'rate-candidate-master',
-                'rate-master', 'rate-grandmaster', 'rate-target']
+RATING_LEVELS = ['Newbie', 'Pupil', 'Specialist', 'Expert', 'Candidate Master', 'Master', 'International Master',
+                 'Grandmaster', 'International Grandmaster', 'Legendary Grandmaster']
+RATING_VALUES = [1200, 1400, 1600, 1900, 2200, 2300, 2400, 2600, 2900]
+RATING_CLASS = ['rate-newbie', 'rate-pupil', 'rate-specialist', 'rate-expert', 'rate-candidate-master', 'rate-master',
+                'rate-international-master', 'rate-grandmaster', 'rate-international-grandmaster',
+                'rate-legendary-grandmaster']
 
 
 def rating_level(rating):
