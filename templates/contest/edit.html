@@ -26,29 +26,28 @@
             });
 
             $(document).on('keyup', '#id_private_contestants + .select2 .select2-search__field', function (e) {
-                var $id_private_contestants = $('#id_private_contestants');
                 if (e.keyCode === 13) {
-                    var contestants = $(this).val().split(',').map(s => s.trim());
-
-                    function process(contestant) {
-                        $id_private_contestants.data().select2.dataAdapter.query(
-                            { term: contestant },
-                            function (b) {
-                                for (const r of b.results) {
-                                    if (r.text === contestant) {
-                                        $id_private_contestants.select2('trigger', 'select', {
-                                            data: r,
-                                        });
-                                    }
-                                }
-                                if (contestants.length > 0) {
-                                    process(contestants.shift());
-                                }
-                            }
-                        )
+                    var $id_private_contestants = $('#id_private_contestants');
+                    var contestants = $(this).val().split(',').map(s => s.trim()).filter(s => s != '');
+                    if (contestants.length <= 1) {
+                        // Skip to let select2 handle this
+                        return;
                     }
 
-                    process(contestants.shift());
+                    $.ajax({
+                        type: 'GET',
+                        url: $id_private_contestants.data().select2.dataAdapter.ajaxOptions.url,
+                        data: {
+                            multiple_terms: contestants,
+                        },
+                        success: function(response) {
+                            for (const contestant of response.results) {
+                                $id_private_contestants.select2('trigger', 'select', {
+                                    data: contestant,
+                                });
+                            }
+                        },
+                    });
                 }
             });
         })
