@@ -1,6 +1,7 @@
 import json
 import os
 from operator import attrgetter, itemgetter
+from django.shortcuts import get_object_or_404
 
 import pyotp
 import webauthn
@@ -13,7 +14,7 @@ from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db.models import Q
 from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, ModelForm, MultipleChoiceField, \
     inlineformset_factory
-from django.forms.widgets import DateTimeInput
+from django.forms.widgets import DateTimeInput, TextInput
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -473,20 +474,36 @@ class ProposeContestProblemFormSet(
 
 class ContestForm(ModelForm):
     required_css_class = 'required'
+    private_contestants_plain_text = CharField(required=False)
+
+    def clean_private_contestants_plain_text(self):
+        contestants = self.cleaned_data['private_contestants_plain_text']
+        if not contestants:
+            return
+        usernames = set(x.strip() for x in self.cleaned_data['private_contestants_plain_text'].split(','))
+        qs = get_object_or_404(Organization, pk=self.org_pk).members.filter(user__username__in=usernames)
+
+        not_found = usernames ^ set(qs.values_list('user__username', flat=True))
+
+        if not_found:
+            raise ValidationError(_("Users %(user)s not found in organization") % {'user': not_found})
+
+        self.cleaned_data['private_contestants'] = self.cleaned_data['private_contestants'].union(qs)
 
     def __init__(self, *args, **kwargs):
-        org_pk = kwargs.pop('org_pk', None)
+        self.org_pk = kwargs.pop('org_pk', None)
         super(ContestForm, self).__init__(*args, **kwargs)
 
         # cannot use fields[].widget = ...
         # because it will remove the old values
         # just update the data url is fine
-        if org_pk:
+        if self.org_pk:
             self.fields['private_contestants'].widget.data_view = None
             self.fields['private_contestants'].widget.data_url = reverse('organization_profile_select2',
-                                                                         args=(org_pk, ))
+                                                                         args=(self.org_pk, ))
         else:
             self.fields.pop('private_contestants')
+            self.fields.pop('private_contestants_plain_text')
             self.fields.pop('is_private')
 
     class Meta:
