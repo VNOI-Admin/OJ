@@ -273,12 +273,9 @@
                         if ($col.hasClass('rating-column')) {
                             // Skip rating
                             return;
-                        } else if ($col.hasClass('personal-info')) {
-                            // Full name
+                        } else if ($col.hasClass('user-name') || $col.hasClass('personal-info')) {
+                            // Username or Full name
                             row_data.push(clean_text($col.children().first().text()));
-                        } else if ($col.hasClass('user-name')) {
-                            // Username
-                            row_data.push(clean_text($col.text()));
                         } else {
                             // Point or rank
                             row_data.push(clean_text($col.ignore('.solving-time').text()));
