@@ -25,6 +25,14 @@
                 prefix: '{{ contest_problem_formset.prefix }}'
             });
 
+            var noResults = function () {
+                return '{{ _('Press Enter to select multiple users...') }}';
+            };
+
+            $(document).one('click', '#id_private_contestants + .select2', function (e) {
+                $('#id_private_contestants').data().select2.options.get('translations').dict['noResults'] = noResults;
+            });
+
             $(document).on('keyup', '#id_private_contestants + .select2 .select2-search__field', function (e) {
                 if (e.keyCode === 13) {
                     var $id_private_contestants = $('#id_private_contestants');

@@ -5,6 +5,14 @@
 
     <script>
         $(function() {
+            var noResults = function () {
+                return '{{ _('Press Enter to select multiple users...') }}';
+            };
+
+            $(document).one('click', '#id_testers + .select2', function (e) {
+                $('#id_testers').data().select2.options.get('translations').dict['noResults'] = noResults;
+            });
+
             $(document).on('keyup', '#id_testers + .select2 .select2-search__field', function (e) {
                 if (e.keyCode === 13) {
                     var $id_testers = $('#id_testers');
