@@ -134,6 +134,10 @@ class ProblemEditForm(ModelForm):
         # Only allow to public/private problem in organization
         if org_pk is None:
             self.fields.pop('is_public')
+        else:
+            self.fields['testers'].widget.data_view = None
+            self.fields['testers'].widget.data_url = reverse('organization_profile_select2',
+                                                             args=(org_pk, ))
 
     def clean(self):
         cleaned_data = super(ProblemEditForm, self).clean()
@@ -150,11 +154,15 @@ class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
         fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points',
-                  'statement_file', 'source', 'types', 'group', 'description']
+                  'statement_file', 'source', 'types', 'group', 'description', 'testers']
         widgets = {
             'types': Select2MultipleWidget,
             'group': Select2Widget,
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
+            'testers': HeavySelect2MultipleWidget(
+                data_view='profile_select2',
+                attrs={'style': 'width: 100%'},
+            ),
         }
         help_texts = {
             'is_public': _(
