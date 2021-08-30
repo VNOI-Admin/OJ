@@ -135,6 +135,8 @@ class ProblemEditForm(ModelForm):
         if org_pk is None:
             self.fields.pop('is_public')
         else:
+            self.fields['testers'].label = _('Private users')
+            self.fields['testers'].help_text = _('If private, only these users may see the problem.')
             self.fields['testers'].widget.data_view = None
             self.fields['testers'].widget.data_url = reverse('organization_profile_select2',
                                                              args=(org_pk, ))
