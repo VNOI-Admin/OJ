@@ -136,11 +136,12 @@ class ProblemEditForm(ModelForm):
             self.fields.pop('is_public')
         else:
             self.fields['testers'].label = _('Private users')
-            self.fields['testers'].help_text = _('If private, only these users may see the problem. '
-                                                 'You can paste a list of usernames into this box.')
+            self.fields['testers'].help_text = _('If private, only these users may see the problem.')
             self.fields['testers'].widget.data_view = None
             self.fields['testers'].widget.data_url = reverse('organization_profile_select2',
                                                              args=(org_pk, ))
+
+        self.fields['testers'].help_text = str(self.fields['testers'].help_text) + ' ' + str(_('You can paste a list of usernames into this box.'))
 
     def clean(self):
         cleaned_data = super(ProblemEditForm, self).clean()
@@ -178,8 +179,6 @@ class ProblemEditForm(ModelForm):
             'points': _('Points awarded for problem completion. From 0 to 2. '
                         'You can approximate: 0.5 is as hard as Problem 1 of VOI; 1 = Problem 2 of VOI; '
                         '1.5 = Problem 3 of VOI.'),
-            'testers': _('These users will be able to view the private problem, but not edit it. '
-                         'You can paste a list of usernames into this box.'),
         }
 
 
@@ -498,6 +497,7 @@ class ContestForm(ModelForm):
             self.fields['private_contestants'].widget.data_view = None
             self.fields['private_contestants'].widget.data_url = reverse('organization_profile_select2',
                                                                          args=(org_pk, ))
+            self.fields['private_contestants'].help_text = str(self.fields['private_contestants'].help_text) + ' ' + str(_('You can paste a list of usernames into this box.'))
         else:
             self.fields.pop('private_contestants')
             self.fields.pop('is_private')
@@ -525,9 +525,4 @@ class ContestForm(ModelForm):
                 data_view='profile_select2',
                 attrs={'style': 'width: 100%'},
             ),
-        }
-
-        help_texts = {
-            'private_contestants': _('If private, only these users may see the contest. '
-                                     'You can paste a list of usernames into this box.'),
         }
