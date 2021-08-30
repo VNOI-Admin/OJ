@@ -36,7 +36,7 @@
             $(document).on('keyup', '#id_private_contestants + .select2 .select2-search__field', function (e) {
                 if (e.keyCode === 13) {
                     var $id_private_contestants = $('#id_private_contestants');
-                    var contestants = $(this).val().split(',').map(s => s.trim()).filter(s => s != '');
+                    var contestants = $(this).val().split(/[\s,]+/);
                     if (contestants.length <= 1) {
                         // Skip to let select2 handle this
                         return;

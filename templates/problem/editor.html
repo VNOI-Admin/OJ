@@ -16,8 +16,8 @@
             $(document).on('keyup', '#id_testers + .select2 .select2-search__field', function (e) {
                 if (e.keyCode === 13) {
                     var $id_testers = $('#id_testers');
-                    var contestants = $(this).val().split(',').map(s => s.trim()).filter(s => s != '');
-                    if (contestants.length <= 1) {
+                    var testers = $(this).val().split(/[\s,]+/);
+                    if (testers.length <= 1) {
                         // Skip to let select2 handle this
                         return;
                     }
@@ -26,12 +26,12 @@
                         type: 'GET',
                         url: $id_testers.data().select2.dataAdapter.ajaxOptions.url,
                         data: {
-                            multiple_terms: contestants,
+                            multiple_terms: testers,
                         },
                         success: function (response) {
-                            for (const contestant of response.results) {
+                            for (const tester of response.results) {
                                 $id_testers.select2('trigger', 'select', {
-                                    data: contestant,
+                                    data: tester,
                                 });
                             }
                         },
