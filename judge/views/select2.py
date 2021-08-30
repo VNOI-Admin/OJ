@@ -47,6 +47,21 @@ class Select2View(BaseListView):
 
 
 class UserSelect2View(Select2View):
+    def get(self, request, *args, **kwargs):
+        if 'multiple_terms[]' not in request.GET:
+            return super().get(request, args, kwargs)
+
+        terms = request.GET.getlist('multiple_terms[]')
+        qs = Profile.objects.filter(user__username__in=terms).annotate(username=F('user__username')).only('id')
+
+        return JsonResponse({
+            'results': [
+                {
+                    'text': smart_text(self.get_name(obj)),
+                    'id': obj.pk,
+                } for obj in qs],
+        })
+
     def get_queryset(self):
         return _get_user_queryset(self.term).annotate(username=F('user__username')).only('id')
 
