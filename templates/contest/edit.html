@@ -180,7 +180,13 @@
                 {% endfor %}
             </tbody>
         </table>
-        <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">{{ _('Create') }}</button></div>
+        <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">
+            {% if request.resolver_match.url_name == 'contest_edit' %}
+                {{ _('Update') }}
+            {% else %}
+                {{ _('Create') }}
+            {% endif %}
+        </button></div>
     </form>
 </div>
 {% endblock %}
