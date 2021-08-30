@@ -27,7 +27,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='contest',
             name='private_contestants',
-            field=models.ManyToManyField(blank=True, help_text='If private, only these users may see the contest', related_name='_contest_private_contestants_+', to='judge.Profile', verbose_name='private contestants'),
+            field=models.ManyToManyField(blank=True, help_text='If private, only these users may see the contest.', related_name='_contest_private_contestants_+', to='judge.Profile', verbose_name='private contestants'),
         ),
         migrations.AlterField(
             model_name='contest',

@@ -134,6 +134,16 @@ class ProblemEditForm(ModelForm):
         # Only allow to public/private problem in organization
         if org_pk is None:
             self.fields.pop('is_public')
+        else:
+            self.fields['testers'].label = _('Private users')
+            self.fields['testers'].help_text = _('If private, only these users may see the problem.')
+            self.fields['testers'].widget.data_view = None
+            self.fields['testers'].widget.data_url = reverse('organization_profile_select2',
+                                                             args=(org_pk, ))
+
+        self.fields['testers'].help_text = \
+            str(self.fields['testers'].help_text) + ' ' + \
+            str(_('You can paste a list of usernames into this box.'))
 
     def clean(self):
         cleaned_data = super(ProblemEditForm, self).clean()
@@ -150,11 +160,15 @@ class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
         fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points',
-                  'statement_file', 'source', 'types', 'group', 'description']
+                  'statement_file', 'source', 'types', 'group', 'description', 'testers']
         widgets = {
             'types': Select2MultipleWidget,
             'group': Select2Widget,
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
+            'testers': HeavySelect2MultipleWidget(
+                data_view='profile_select2',
+                attrs={'style': 'width: 100%'},
+            ),
         }
         help_texts = {
             'is_public': _(
@@ -485,6 +499,9 @@ class ContestForm(ModelForm):
             self.fields['private_contestants'].widget.data_view = None
             self.fields['private_contestants'].widget.data_url = reverse('organization_profile_select2',
                                                                          args=(org_pk, ))
+            self.fields['private_contestants'].help_text = \
+                str(self.fields['private_contestants'].help_text) + ' ' + \
+                str(_('You can paste a list of usernames into this box.'))
         else:
             self.fields.pop('private_contestants')
             self.fields.pop('is_private')
