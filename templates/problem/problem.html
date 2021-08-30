@@ -43,6 +43,14 @@
         .problem-info-entry {
             padding-top: 0.5em;
         }
+
+        #raw_problem {
+            visibility: hidden;
+            width: 0;
+            height: 0;
+            position: absolute;
+            left: -999em;
+        }
     </style>
 {% endblock %}
 
@@ -50,6 +58,20 @@
     {% if not comment_lock %}
         {% include "comments/media-js.html" %}
     {% endif %}
+    <script type="text/javascript">
+        $(function() {
+            $('#pdf_button').click(async function(e) {
+                e.preventDefault();
+                if (!$('#raw_problem').attr("src"))
+                    $('#raw_problem').attr("src", "{{problem.code}}/raw");
+
+                while(!$('.math-loaded', frames['raw_problem'].document).length) {
+                    await new Promise(r => setTimeout(r, 200));
+                }
+                frames['raw_problem'].print();
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block title_row %}
@@ -85,16 +107,18 @@
                 {% endfor %}
             </span>
         {% endif %}
+        <span class="spacer"></span>
         {% if has_pdf_render %}
-            <span class="spacer"></span>
             <a href="{{ url('problem_pdf', problem.code) }}" class="view-pdf">
-                <span class="pdf-icon">
-                    <span class="fa fa-file-pdf-o pdf-icon-logo"></span>
-                    <span class="pdf-icon-bar"></span>
-                </span>
-                {{ _('View as PDF') }}
-            </a>
+        {% else %}
+        <a id="pdf_button" class="view-pdf" href='#'>
         {% endif %}
+            <span class="pdf-icon">
+                <span class="fa fa-file-pdf-o pdf-icon-logo"></span>
+                <span class="pdf-icon-bar"></span>
+            </span>
+            {{ _('View as PDF') }}
+        </a>
     </div>
 {% endblock %}
 
@@ -299,6 +323,7 @@
 {% endblock %}
 
 {% block description %}
+    <iframe name="raw_problem" id="raw_problem"></iframe>
     {% if problem.is_suggesting %}
         <div class="alert alert-warning alert-dismissable">
             <a class="close">x</a>
