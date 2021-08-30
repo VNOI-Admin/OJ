@@ -141,7 +141,9 @@ class ProblemEditForm(ModelForm):
             self.fields['testers'].widget.data_url = reverse('organization_profile_select2',
                                                              args=(org_pk, ))
 
-        self.fields['testers'].help_text = str(self.fields['testers'].help_text) + ' ' + str(_('You can paste a list of usernames into this box.'))
+        self.fields['testers'].help_text = \
+            str(self.fields['testers'].help_text) + ' ' + \
+            str(_('You can paste a list of usernames into this box.'))
 
     def clean(self):
         cleaned_data = super(ProblemEditForm, self).clean()
@@ -497,7 +499,9 @@ class ContestForm(ModelForm):
             self.fields['private_contestants'].widget.data_view = None
             self.fields['private_contestants'].widget.data_url = reverse('organization_profile_select2',
                                                                          args=(org_pk, ))
-            self.fields['private_contestants'].help_text = str(self.fields['private_contestants'].help_text) + ' ' + str(_('You can paste a list of usernames into this box.'))
+            self.fields['private_contestants'].help_text = \
+                str(self.fields['private_contestants'].help_text) + ' ' + \
+                str(_('You can paste a list of usernames into this box.'))
         else:
             self.fields.pop('private_contestants')
             self.fields.pop('is_private')
