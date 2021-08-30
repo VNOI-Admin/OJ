@@ -40,7 +40,7 @@
                         data: {
                             multiple_terms: contestants,
                         },
-                        success: function(response) {
+                        success: function (response) {
                             for (const contestant of response.results) {
                                 $id_private_contestants.select2('trigger', 'select', {
                                     data: contestant,
