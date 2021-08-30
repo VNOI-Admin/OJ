@@ -1,8 +1,15 @@
+{% set is_pdf_render = math_engine is string %}
+{% set math_engine = math_engine or 'jax' %}
 <!DOCTYPE html>
 <html>
 <head>
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="pygment-github.css" type="text/css">
+    {% if is_pdf_render %}
+        <link rel="stylesheet" href="style.css">
+        <link rel="stylesheet" href="pygment-github.css" type="text/css">
+    {% else %}
+        <link rel="stylesheet" href="{{ static('style.css') }}">
+        <link rel="stylesheet" href="{{ static('pygment-github.css') }}" type="text/css">
+    {% endif %}
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <style>
         html {
@@ -82,7 +89,11 @@
     {{ description|markdown(problem.markdown_style, 'tex' if math_engine == 'jax' else math_engine)|reference|absolutify(url)|str|safe }}
 </div>
 {% if math_engine == 'jax' %}
-    <script type="text/javascript" src="mathjax_config.js"></script>
+    {% if is_pdf_render %}
+        <script type="text/javascript" src="mathjax_config.js"></script>
+    {% else %}
+        <script type="text/javascript" src="{{ static('mathjax_config.js') }}"></script>
+    {% endif %}
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-AMS_HTML"></script>
     <script type="text/javascript">
         MathJax.Hub.Register.StartupHook("End", function () {
