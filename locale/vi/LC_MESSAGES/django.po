@@ -500,7 +500,7 @@ msgid_plural ""
 "**penalty of %d minutes**."
 msgstr[0] ""
 "Các lần nộp bài trước lần nộp bài có điểm lớn nhất sẽ tính **penalty %d "
-"phút**"
+"phút**."
 
 #: judge/contest_format/atcoder.py:127
 msgid "Ties will be broken by the last score altering submission time."
@@ -537,7 +537,7 @@ msgid ""
 "There is a **%d bonus** for fully solving on your first non-CE submission."
 msgstr ""
 "Sẽ có **%d điểm thưởng** nếu bạn AC ở lần nộp đầu tiên không bị Biên dịch "
-"gặp lỗi (Compile Error)"
+"gặp lỗi (Compile Error)."
 
 #: judge/contest_format/ecoo.py:141
 #, python-format
@@ -557,7 +557,7 @@ msgid ""
 "problems."
 msgstr ""
 "Các thí sinh bằng điểm sẽ được phân định bằng tổng thời gian của lần nộp bài "
-"cuối cùng trong **tất cả*** bài tập"
+"cuối cùng trong **tất cả*** bài tập."
 
 #: judge/contest_format/ecoo.py:149 judge/contest_format/ioi.py:102
 #: judge/contest_format/legacy_ioi.py:103
@@ -577,7 +577,7 @@ msgstr ""
 "Các thí sinh bằng điểm sẽ được phân định bằng tổng thời gian của **lần nộp "
 "bài cuối cùng làm thay đổi kết quả** trong các bài tập có điểm lớn hơn 0. "
 "Nếu vẫn bằng nhau, phân định bằng **lần nộp bài cuối cùng làm thay đổi kết "
-"quả**"
+"quả**."
 
 #: judge/contest_format/ioi.py:11
 msgid "IOI"
@@ -593,7 +593,7 @@ msgid ""
 "problems with a non-zero score."
 msgstr ""
 "Các thí sinh bằng điểm sẽ được phân định bằng tổng thời gian của **lần nộp "
-"bài cuối cùng làm thay đổi kết quả** trong các bài tập có điểm lớn hơn 0"
+"bài cuối cùng làm thay đổi kết quả** trong các bài tập có điểm lớn hơn 0."
 
 #: judge/contest_format/legacy_ioi.py:18
 msgid "IOI (pre-2016)"
@@ -715,7 +715,7 @@ msgstr "Nếu bài tập này không công khai, chỉ những thành viên này
 
 #: judge/forms.py:146 judge/forms.py:504
 msgid "You can paste a list of usernames into this box."
-msgstr "Có thể gán một danh sách các username vào đây thay vì gõ tay (phân cách bằng khoảng trắng hoặc dấu phẩy)"
+msgstr "Có thể gán một danh sách các username vào đây thay vì gõ tay (phân cách bằng khoảng trắng hoặc dấu phẩy)."
 
 #: judge/forms.py:156 judge/forms.py:254
 #, python-format
@@ -1149,7 +1149,7 @@ msgstr "Hiển thị các cài đặt của kỳ thi"
 msgid ""
 "Whether to show a section containing contest settings on the contest page or "
 "not."
-msgstr "Hiển hiện cacasc cài đặt của kỳ thi ở trang kỳ thi."
+msgstr "Hiện tóm tắt các cài đặt của kỳ thi ở trang kỳ thi."
 
 #: judge/models/contest.py:122 judge/models/problem.py:193
 msgid "private to organizations"
@@ -4432,7 +4432,7 @@ msgid ""
 "between **%(rating_floor)d** and **%(rating_ceiling)d**, inclusive."
 msgstr ""
 "Kỳ thi này **tính rating** với **tất cả** thành viên tham gia kỳ thi, có "
-"rating từ **%(rating_floor)d** đến **%(rating_ceiling)d**"
+"rating từ **%(rating_floor)d** đến **%(rating_ceiling)d**."
 
 #: templates/contest/contest.html:120
 #, python-format
@@ -4465,7 +4465,7 @@ msgid ""
 "inclusive."
 msgstr ""
 "Kỳ thi này **tính rating** với các thành viên nộp bài ít nhất một lần trong "
-"kỳ thi, có rating từ **%(rating_floor)d** đến **%(rating_ceiling)d**"
+"kỳ thi, có rating từ **%(rating_floor)d** đến **%(rating_ceiling)d**."
 
 #: templates/contest/contest.html:130
 #, python-format
@@ -6600,7 +6600,7 @@ msgstr "Đóng góp:"
 #, python-format
 msgid "%(counter)s contest written"
 msgid_plural "%(counter)s contests written"
-msgstr[0] "Đã tạo %(counter)s kỳ thi"
+msgstr[0] "Đã tham gia %(counter)s kỳ thi"
 
 #: templates/user/user-base.html:76
 msgid "Rank by rating:"
