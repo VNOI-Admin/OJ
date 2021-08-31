@@ -4582,7 +4582,7 @@ msgstr ""
 
 #: templates/contest/edit.html:29 templates/problem/editor.html:9
 msgid "Press Enter to select multiple users..."
-msgstr ""
+msgstr "Nhấn Enter để chọn nhiều thành viên..."
 
 #: templates/contest/edit.html:125
 msgid "Add new problem"
