@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-08-30 14:31+0000\n"
+"POT-Creation-Date: 2021-09-01 03:09+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -278,7 +278,7 @@ msgstr "Phân loại"
 #: judge/admin/problem.py:136 templates/blog/top-pp.html:9
 #: templates/contest/contest.html:219 templates/contest/edit.html:180
 #: templates/contest/official-ranking-table.html:11
-#: templates/organization/list.html:24 templates/problem/data.html:499
+#: templates/organization/list.html:24 templates/problem/data.html:510
 #: templates/problem/list.html:191 templates/user/base-users-table.html:12
 #: templates/user/user-problems.html:60
 msgid "Points"
@@ -711,11 +711,15 @@ msgstr "Các thành viên riêng tư"
 
 #: judge/forms.py:139
 msgid "If private, only these users may see the problem."
-msgstr "Nếu bài tập này không công khai, chỉ những thành viên này có thể thấy được bài tập."
+msgstr ""
+"Nếu bài tập này không công khai, chỉ những thành viên này có thể thấy được "
+"bài tập."
 
 #: judge/forms.py:146 judge/forms.py:504
 msgid "You can paste a list of usernames into this box."
-msgstr "Có thể gán một danh sách các username vào đây thay vì gõ tay (phân cách bằng khoảng trắng hoặc dấu phẩy)."
+msgstr ""
+"Có thể gán một danh sách các username vào đây thay vì gõ tay (phân cách bằng "
+"khoảng trắng hoặc dấu phẩy)."
 
 #: judge/forms.py:156 judge/forms.py:254
 #, python-format
@@ -4607,7 +4611,7 @@ msgid "Update"
 msgstr "Cập Nhật"
 
 #: templates/contest/edit.html:195 templates/organization/new.html:10
-#: templates/problem/suggest.html:71 templates/tag/create.html:68
+#: templates/problem/suggest.html:17 templates/tag/create.html:68
 msgid "Create"
 msgstr "Tạo"
 
@@ -5031,7 +5035,7 @@ msgid "Rejected"
 msgstr "Bị từ chối"
 
 #: templates/organization/requests/pending.html:26
-#: templates/problem/data.html:503
+#: templates/problem/data.html:514
 msgid "Delete?"
 msgstr "Xoá?"
 
@@ -5090,11 +5094,11 @@ msgstr "Nhấn nút này nếu bạn mới thay đổi file test"
 
 #: templates/problem/data.html:300
 msgid ""
-"No input/output files. Make sure your files' suffices are .in(p)/.out/.ans/."
-"ok"
+"No input/output files. Make sure your files are following themis/cms test "
+"format"
 msgstr ""
-"Không tìm thấy file input/output. Hãy chắc chắn rằng các file có đuôi file "
-"là .inp/.in/.out/.ans/.ok"
+"Không tìm thấy file input/output. Hãy chắc chắn rằng file test sử dụng "
+"format của themis hoặc cms"
 
 #: templates/problem/data.html:304
 #, python-brace-format
@@ -5105,43 +5109,59 @@ msgstr ""
 "Số lượng file input (${inFiles.length}) không khớp với số lượng file output "
 "(${outFiles.length})!"
 
-#: templates/problem/data.html:475
+#: templates/problem/data.html:478
 msgid "View YAML"
 msgstr "Xem YAML"
 
-#: templates/problem/data.html:496
+#: templates/problem/data.html:497
+msgid "Test cases have been filled automatically!"
+msgstr "Các test đã được điền tự động!"
+
+#: templates/problem/data.html:499
+msgid ""
+"Test cases have been filled automatically and <strong>not saved yet</"
+"strong>.\n"
+"                <br>\n"
+"                Please modify the table below if needed and press the "
+"`Apply` button to save!"
+msgstr ""
+"Các test dưới đây được điền tự động và <strong>chưa được lưu lại</strong>. "
+"<br>\n"
+" Hãy chỉnh sửa bảng dưới đây nếu cần thiết, và nhấn nút `Apply` để lưu."
+
+#: templates/problem/data.html:507
 msgid "Type"
 msgstr "Kiểu"
 
-#: templates/problem/data.html:497
+#: templates/problem/data.html:508
 msgid "Input file"
 msgstr "Tập tin đầu vào"
 
-#: templates/problem/data.html:498
+#: templates/problem/data.html:509
 msgid "Output file"
 msgstr "Tập tin đầu ra"
 
-#: templates/problem/data.html:500
+#: templates/problem/data.html:511
 msgid "Pretest?"
 msgstr ""
 
-#: templates/problem/data.html:501
+#: templates/problem/data.html:512
 msgid "Generator args"
 msgstr "Tham số trình sinh tests"
 
-#: templates/problem/data.html:537
+#: templates/problem/data.html:548
 msgid "Edit generator args"
 msgstr "Sửa tham số trình sinh test"
 
-#: templates/problem/data.html:547
+#: templates/problem/data.html:558
 msgid "Apply!"
 msgstr ""
 
-#: templates/problem/data.html:548
+#: templates/problem/data.html:559
 msgid "Add new case"
 msgstr "Thêm test mới"
 
-#: templates/problem/data.html:550
+#: templates/problem/data.html:561
 msgid "Save"
 msgstr "Lưu"
 
@@ -5524,11 +5544,11 @@ msgstr "Nộp bài!"
 msgid "Suggested problem list"
 msgstr "Đã đề xuất các bài"
 
-#: templates/problem/suggest.html:62
+#: templates/problem/suggest.html:8
 msgid "Thanks for suggesting problem!"
 msgstr "Cảm ơn bạn đã đề xuất!"
 
-#: templates/problem/suggest.html:64
+#: templates/problem/suggest.html:10
 msgid ""
 "Please keep in mind that this form is only for creating new problems. "
 "Spamming and using for wrong purposes is not allowed.<br>If you don't know "
