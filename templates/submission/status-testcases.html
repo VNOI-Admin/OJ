@@ -44,6 +44,12 @@
                 <span class="fa fa-spinner fa-pulse"></span>
             {% endif %}
             <br><br>
+        {% else %}
+            <div>
+                <div class="alert alert-warning comment-lock">
+                    {{ _('Your submission is successfully stored. Currently, there are no tests available, or this is an offline task, so please consider waiting for further evaluation.') }}
+                </div>
+            </div>
         {% endif %}
         {% set test_case_id = counter() %}
         {% set test_case_counter = counter() %}
@@ -132,7 +138,7 @@
         {% if batch.id %}</div>{% endif %}
             <br>
         {% endfor %}
-        {% if submission.is_graded %}
+        {% if statuses and submission.is_graded %}
             <br>
             {% if submission.result != "AB" %}
                 <b>{{ _('Resources:') }}</b>
