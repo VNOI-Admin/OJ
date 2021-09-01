@@ -9,7 +9,7 @@
 
 .banned a, .banned {
     color: black !important;
-    text-decoration: line-through !important; 
+    text-decoration: line-through !important;
 }
 
 .banned a::before {
@@ -120,16 +120,15 @@ svg.rate-box {
     color: #AA00AA;
 }
 
-.rate-master, .rate-master a, .rate-international-master, .rate-international-master a {
+.rate-master, .rate-master a,
+.rate-international-master, .rate-international-master a {
     color: #FF8C00;
 }
 
-.rate-grandmaster, .rate-grandmaster a, .rate-international-grandmaster, .rate-international-grandmaster a {
-    color: #FF0000;
-}
-
+.rate-grandmaster, .rate-grandmaster a,
+.rate-international-grandmaster, .rate-international-grandmaster a,
 .rate-legendary-grandmaster, .rate-legendary-grandmaster a {
-    color: #b30000;
+    color: #FF0000;
 }
 
 .rate-legendary-grandmaster a::first-letter {
