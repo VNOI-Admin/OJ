@@ -1,6 +1,12 @@
 {% if not request.official_contest_mode or request.user.is_superuser %}
     <div id="comments" class="comment-area">
         <h2><i style="padding-right: 0.3em" class="fa fa-comments"></i>{{ _('Comments') }}</h2>
+        {% if not comment_lock %}
+            <div class="alert alert-warning" style="width: 100%">
+                {{_('Please read the <a href="/about/comment/">guidelines</a> before commenting.')}}
+            </div>
+            <hr><br>
+        {% endif %}
         {% if has_comments %}
             <ul class="comments top-level-comments new-comments">
                 {% set logged_in = request.user.is_authenticated %}
