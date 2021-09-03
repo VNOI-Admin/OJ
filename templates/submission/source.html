@@ -17,7 +17,48 @@
         a:active .line .highlighter {
             background: rgba(255, 212, 0, 0.48);
         }
+
+        .copy-clipboard {
+            margin-top: 0 !important;
+        }
     </style>
+{% endblock %}
+
+{% block js_media %}
+    {% compress js %}
+        <script src="{{ static('libs/clipboard/clipboard.js') }}"></script>
+        <script src="{{ static('libs/clipboard/tooltip.js') }}"></script>
+        <script type="text/javascript">
+            $(function () {
+                $(document).find('pre code').each(function () {
+                    var copyButton;
+                    $(this).parent().before($('<div>', {'class': 'copy-clipboard'})
+                        .append(copyButton = $('<span>', {
+                            'class': 'btn-clipboard',
+                            'data-clipboard-text': $(this).text(),
+                            'title': 'Click to copy'
+                        }).text('Copy')));
+
+                    $(copyButton.get(0)).mouseleave(function () {
+                        $(this).attr('class', 'btn-clipboard');
+                        $(this).removeAttr('aria-label');
+                    });
+
+                    var curClipboard = new Clipboard(copyButton.get(0));
+
+                    curClipboard.on('success', function (e) {
+                        e.clearSelection();
+                        showTooltip(e.trigger, 'Copied!');
+                    });
+
+                    curClipboard.on('error', function (e) {
+                        showTooltip(e.trigger, fallbackMessage(e.action));
+                    });
+                });
+            });
+        </script>
+    {% endcompress %}
+    {% block content_js_media %}{% endblock %}
 {% endblock %}
 
 {% block body %}
@@ -38,10 +79,9 @@
         </div>
     {% endif %}
     <br>
-    <hr class="half-hr">
-    <br>
+    <hr>
     <div class="source-wrap">
-        <table>
+        <table style="width: 100%">
             <tr>
                 <td class="source-ln">
                     <div>
