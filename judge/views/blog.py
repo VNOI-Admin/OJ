@@ -100,7 +100,8 @@ class PostList(ListView):
             return result
         result = (Profile.objects.order_by('-performance_points')
                   .filter(performance_points__gt=0, is_unlisted=False)
-                  .values_list('user__username', 'performance_points')
+                  .only('user', 'performance_points', 'display_rank', 'rating')
+                  .select_related('user')
                   [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
         cache.set(key, result, update_interval)
         return result
@@ -112,7 +113,8 @@ class PostList(ListView):
             return result
         result = (Profile.objects.order_by('-contribution_points')
                   .filter(contribution_points__gt=0, is_unlisted=False)
-                  .values_list('user__username', 'contribution_points')
+                  .only('user', 'contribution_points', 'display_rank', 'rating')
+                  .select_related('user')
                   [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
         cache.set(key, result, update_interval)
         return result
