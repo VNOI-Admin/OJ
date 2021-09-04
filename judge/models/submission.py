@@ -31,19 +31,25 @@ SUBMISSION_RESULT = (
     ('AB', _('Aborted')),
 )
 
+SUBMISSION_STATUS = (
+    ('QU', _('Queued')),
+    ('P', _('Processing')),
+    ('G', _('Grading')),
+    ('D', _('Completed')),
+    ('IE', _('Internal Error')),
+    ('CE', _('Compile Error')),
+    ('AB', _('Aborted')),
+)
+
+SUBMISSION_SEARCHABLE_STATUS = \
+    SUBMISSION_RESULT + tuple([status for status in SUBMISSION_STATUS if status not in SUBMISSION_RESULT])
+
 
 class Submission(models.Model):
-    STATUS = (
-        ('QU', _('Queued')),
-        ('P', _('Processing')),
-        ('G', _('Grading')),
-        ('D', _('Completed')),
-        ('IE', _('Internal Error')),
-        ('CE', _('Compile Error')),
-        ('AB', _('Aborted')),
-    )
-    IN_PROGRESS_GRADING_STATUS = ('QU', 'P', 'G')
     RESULT = SUBMISSION_RESULT
+    STATUS = SUBMISSION_STATUS
+    SEARCHABLE_STATUS = SUBMISSION_SEARCHABLE_STATUS
+    IN_PROGRESS_GRADING_STATUS = ('QU', 'P', 'G')
     USER_DISPLAY_CODES = {
         'AC': _('Accepted'),
         'WA': _('Wrong Answer'),
