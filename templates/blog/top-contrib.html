@@ -10,17 +10,17 @@
                 </tr>
             </thead>
             <tbody>
-                {% for username, contrib in top_contrib %}
-                    <tr id="user-{{ username }}">
+                {% for user in top_contrib %}
+                    <tr id="user-{{ loop.index }}">
                         <td>{{ loop.index }}</td>
                         <td class="user-name"> 
                             <div style="float:left"> 
-                                <a href="{{ url('user_page', username) }}">{{ username }}</a>
+                                {{ link_user(user) }}
                             </div> 
                         </td>
                         
                         <td class="user-contrib">
-                            {{ contrib }}
+                            {{ user.contribution_points }}
                         </td>
                     </tr>
                 {% endfor %}
