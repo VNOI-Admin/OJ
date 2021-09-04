@@ -11,7 +11,7 @@ from django.utils import timezone
 BETA2 = 328.33 ** 2
 RATING_INIT = 1200      # Newcomer's rating when applying the rating floor/ceiling
 MEAN_INIT = 1500.
-VAR_INIT = 350**2 * (BETA2 / 212**2)
+VAR_INIT = 200**2 * (BETA2 / 212**2)
 SD_INIT = sqrt(VAR_INIT)
 VALID_RANGE = MEAN_INIT - 20 * SD_INIT, MEAN_INIT + 20 * SD_INIT
 VAR_PER_CONTEST = 1219.047619 * (BETA2 / 212**2)
