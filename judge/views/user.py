@@ -562,6 +562,8 @@ class UserLogoutView(TitleMixin, TemplateView):
 
 
 class CustomPasswordResetView(PasswordResetView):
+    from_email = settings.SERVER_EMAIL
+
     def post(self, request, *args, **kwargs):
         key = f'pwreset!{request.META["REMOTE_ADDR"]}'
         cache.add(key, 0, timeout=settings.DMOJ_PASSWORD_RESET_LIMIT_WINDOW)
