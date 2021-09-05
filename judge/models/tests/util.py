@@ -67,6 +67,7 @@ class CreateBlogPost(CreateModel):
         return {
             'slug': required_kwargs['title'],
             'publish_on': _now - timezone.timedelta(days=100),
+            'global_post': True,
         }
 
 

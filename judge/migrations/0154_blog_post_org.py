@@ -33,6 +33,6 @@ class Migration(migrations.Migration):
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='post_author_org', to='judge.Organization', verbose_name='organization', db_index=True),
         ),
         migrations.RunPython(
-            apply_global_post, migrations.RunPython.noop, atomic=True
+            apply_global_post, migrations.RunPython.noop, atomic=True,
         ),
     ]
