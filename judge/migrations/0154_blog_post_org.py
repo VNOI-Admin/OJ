@@ -4,6 +4,13 @@ import django.db.models.deletion
 from django.db import migrations, models
 
 
+def apply_global_post(apps, schema_editor):
+    BlogPost = apps.get_model('judge', 'BlogPost')
+    for post in BlogPost.objects.filter(visible=True).iterator():
+        post.global_post = True
+        post.save(update_fields=['global_post'])
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -24,5 +31,8 @@ class Migration(migrations.Migration):
             model_name='blogpost',
             name='organization',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='post_author_org', to='judge.Organization', verbose_name='organization'),
+        ),
+        migrations.RunPython(
+            apply_global_post, migrations.RunPython.noop, atomic=True
         ),
     ]
