@@ -30,7 +30,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='blogpost',
             name='organization',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='post_author_org', to='judge.Organization', verbose_name='organization'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='post_author_org', to='judge.Organization', verbose_name='organization', db_index=True),
         ),
         migrations.RunPython(
             apply_global_post, migrations.RunPython.noop, atomic=True

@@ -488,17 +488,12 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
 class BlogPostCreateOrganization(CustomAdminOrganizationMixin, PermissionRequiredMixin, BlogPostCreate):
     permission_required = 'judge.edit_organization_post'
 
-    def get_initial(self):
-        initial = super(BlogPostCreateOrganization, self).get_initial()
-        initial = initial.copy()
-        initial['slug'] = ''.join(x for x in self.organization.slug.lower() if x.isalpha()) + '_'
-        return initial
-
     def form_valid(self, form):
         self.get_object = post = form.save(commit=False)
         post.publish_on = datetime.now()
         post.save()   # Presave to initialize the object id before using Many-to-Many relationship.
         post.authors.add(self.request.user.profile)
+        post.slug = ''.join(x for x in self.organization.slug.lower() if x.isalpha())  # Initial post slug
         post.organization = self.organization
         post.save()
         return HttpResponseRedirect(post.get_absolute_url())

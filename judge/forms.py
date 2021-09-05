@@ -492,7 +492,7 @@ class BlogPostForm(ModelForm):
 
     class Meta:
         model = BlogPost
-        fields = ['title', 'slug', 'visible', 'content', 'summary', 'og_image']
+        fields = ['title', 'visible', 'content']
         widgets = {
             'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'summary': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),

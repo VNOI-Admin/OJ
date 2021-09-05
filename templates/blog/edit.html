@@ -2,44 +2,6 @@
 
 {% block js_media %}
     {{ form.media.js }}
-
-    <script>
-        $(function() {
-            var noResults = function () {
-                return '{{ _('Press Enter to select multiple users...') }}';
-            };
-
-            $(document).one('click', '#id_testers + .select2', function (e) {
-                $('#id_testers').data().select2.options.get('translations').dict['noResults'] = noResults;
-            });
-
-            $(document).on('keyup', '#id_testers + .select2 .select2-search__field', function (e) {
-                if (e.keyCode === 13) {
-                    var $id_testers = $('#id_testers');
-                    var testers = $(this).val().split(/[\s,]+/);
-                    if (testers.length <= 1) {
-                        // Skip to let select2 handle this
-                        return;
-                    }
-
-                    $.ajax({
-                        type: 'GET',
-                        url: $id_testers.data().select2.dataAdapter.ajaxOptions.url,
-                        data: {
-                            multiple_terms: testers,
-                        },
-                        success: function (response) {
-                            for (const tester of response.results) {
-                                $id_testers.select2('trigger', 'select', {
-                                    data: tester,
-                                });
-                            }
-                        },
-                    });
-                }
-            });
-        })
-    </script>
 {% endblock %}
 
 {% block media %}
