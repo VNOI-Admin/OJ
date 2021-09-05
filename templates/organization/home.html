@@ -105,7 +105,10 @@
 
                         {% if not organization.is_open %}
                             <div>
-                                <a href="{{ url('organization_requests_pending', organization.id, organization.slug) }}">{{ _('View requests') }}</a>
+                                <a href="{{ url('organization_requests_pending', organization.id, organization.slug) }}">
+                                    {{ _('View requests') }}
+                                    {% if num_requests %}<span class="badge">{{ num_requests }}</span>{% endif %}
+                                </a>
                             </div>
                         {% endif %}
                     {% endif %}
