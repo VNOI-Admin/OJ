@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.core.cache import cache
 from django.db.models import Count, Max
 from django.http import Http404
 from django.urls import reverse
@@ -93,29 +92,19 @@ class PostList(ListView):
             context['open_tickets'] = []
         return context
 
-    def get_top_pp_users(self, update_interval=24 * 60 * 60):
-        key = 'homepage_top_pp_users'
-        result = cache.get(key)
-        if result:
-            return result
-        result = (Profile.objects.order_by('-performance_points')
-                  .filter(performance_points__gt=0)
-                  .values_list('user__username', 'performance_points')
-                  [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
-        cache.set(key, result, update_interval)
-        return result
+    def get_top_pp_users(self):
+        return (Profile.objects.order_by('-performance_points')
+                .filter(performance_points__gt=0, is_unlisted=False)
+                .only('user', 'performance_points', 'display_rank', 'rating')
+                .select_related('user')
+                [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
 
-    def get_top_contributors(self, update_interval=24 * 60 * 60):
-        key = 'homepage_top_contributors'
-        result = cache.get(key)
-        if result:
-            return result
-        result = (Profile.objects.order_by('-contribution_points')
-                  .filter(contribution_points__gt=0)
-                  .values_list('user__username', 'contribution_points')
-                  [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
-        cache.set(key, result, update_interval)
-        return result
+    def get_top_contributors(self):
+        return (Profile.objects.order_by('-contribution_points')
+                .filter(contribution_points__gt=0, is_unlisted=False)
+                .only('user', 'contribution_points', 'display_rank', 'rating')
+                .select_related('user')
+                [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
 
 
 class PostView(TitleMixin, CommentedDetailView):

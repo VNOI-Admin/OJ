@@ -274,7 +274,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         if self.selected_languages:
             queryset = queryset.filter(language__in=Language.objects.filter(key__in=self.selected_languages))
         if self.selected_statuses:
-            queryset = queryset.filter(result__in=self.selected_statuses)
+            queryset = queryset.filter(Q(result__in=self.selected_statuses) | Q(status__in=self.selected_statuses))
         if self.selected_organization:
             organization_object = get_object_or_404(Organization, pk=self.selected_organization)
             queryset = queryset.filter(user__organizations=organization_object)
@@ -302,8 +302,8 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
     def get_searchable_status_codes(self):
         hidden_codes = ['SC']
         if not self.request.user.is_superuser and not self.request.user.is_staff:
-            hidden_codes += ['IE']
-        return [(key, value) for key, value in Submission.RESULT if key not in hidden_codes]
+            hidden_codes += ['IE', 'QU', 'P', 'G', 'D']
+        return [(key, value) for key, value in Submission.SEARCHABLE_STATUS if key not in hidden_codes]
 
     def get_context_data(self, **kwargs):
         context = super(SubmissionsListBase, self).get_context_data(**kwargs)
