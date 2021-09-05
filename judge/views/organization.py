@@ -21,7 +21,7 @@ from judge.forms import EditOrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, Problem, Profile
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
-from judge.views.blog import CustomPostList, BlogPostCreate
+from judge.views.blog import BlogPostCreate, CustomPostList
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
 
