@@ -32,7 +32,7 @@
             $(function () {
                 $(document).find('pre code').each(function () {
                     var copyButton;
-                    $(this).parent().before($('<div>', {'class': 'copy-clipboard'})
+                    $(this).closest('.source-wrap').before($('<div>', {'class': 'copy-clipboard'})
                         .append(copyButton = $('<span>', {
                             'class': 'btn-clipboard',
                             'data-clipboard-text': $(this).text(),
@@ -81,7 +81,7 @@
     <br>
     <hr>
     <div class="source-wrap">
-        <table style="width: 100%">
+        <table>
             <tr>
                 <td class="source-ln">
                     <div>

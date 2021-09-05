@@ -16,7 +16,7 @@
             $(function () {
                 $(document).find('pre code').each(function () {
                     var copyButton;
-                    $(this).parent().before($('<div>', {'class': 'copy-clipboard'})
+                    $(this).closest('.source-wrap').before($('<div>', {'class': 'copy-clipboard'})
                         .append(copyButton = $('<span>', {
                             'class': 'btn-clipboard',
                             'data-clipboard-text': $(this).text(),
