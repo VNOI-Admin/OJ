@@ -293,6 +293,10 @@ urlpatterns = [
                 name='organization_requests_rejected'),
         ])),
 
+        url(r'^/post/', include([
+            url('^new$', organization.BlogPostCreateOrganization.as_view(), name='blog_post_create_organization'),
+        ])),
+
         url(r'^/$', lambda _, pk, slug: HttpResponsePermanentRedirect(reverse('organization_home', args=[pk, slug]))),
     ])),
 
@@ -326,8 +330,11 @@ urlpatterns = [
         ])),
     ])),
 
-    url(r'^blog/', paged_list_view(blog.PostList, 'blog_post_list')),
-    url(r'^post/(?P<id>\d+)-(?P<slug>.*)$', blog.PostView.as_view(), name='blog_post'),
+    url(r'^post/', include([
+        url(r'^', paged_list_view(blog.PostList, 'blog_post_list')),
+        url(r'^(?P<id>\d+)-(?P<slug>.*)$', blog.PostView.as_view(), name='blog_post'),
+        url(r'^new$', blog.BlogPostCreate.as_view(), name='blog_post_new'),
+    ])),
 
     url(r'^license/(?P<key>[-\w.]+)$', license.LicenseDetail.as_view(), name='license'),
 

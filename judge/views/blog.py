@@ -1,13 +1,16 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.core.cache import cache
 from django.db.models import Count, Max
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext as _
-from django.views.generic import ListView
+from django.views.generic import CreateView, ListView
 
 from judge.comments import CommentedDetailView
+from judge.forms import BlogPostForm
 from judge.models import BlogPost, Comment, Contest, Language, Problem, Profile, Submission, \
     Ticket
 from judge.utils.cachedict import CacheDict
@@ -30,8 +33,8 @@ class PostList(ListView):
                              orphans=orphans, allow_empty_first_page=allow_empty_first_page, **kwargs)
 
     def get_queryset(self):
-        return (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now()).order_by('-sticky', '-publish_on')
-                .prefetch_related('authors__user'))
+        return (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now(), global_post=True)
+                .order_by('-sticky', '-publish_on').prefetch_related('authors__user'))
 
     def get_context_data(self, **kwargs):
         context = super(PostList, self).get_context_data(**kwargs)
@@ -140,3 +143,24 @@ class PostView(TitleMixin, CommentedDetailView):
         if not post.can_see(self.request.user):
             raise Http404()
         return post
+
+
+class BlogPostCreate(TitleMixin, CreateView):
+    template_name = 'blog/edit.html'
+    model = BlogPost
+    form_class = BlogPostForm
+
+    def get_title(self):
+        return _('Creating new blog post')
+
+    def get_content_title(self):
+        return _('Creating new blog post')
+
+    def form_valid(self, form):
+        self.get_object = post = form.save(commit=False)
+        post.publish_on = datetime.now()
+        post.save()  # Presave to initialize the object id before using Many-to-Many relationship.
+        post.authors.add(self.request.user.profile)
+        post.save()
+        print(post)
+        return HttpResponseRedirect(post.get_absolute_url())

@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
-from judge.models.profile import Profile
+from judge.models.profile import Organization, Profile
 
 __all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost']
 
@@ -73,6 +73,11 @@ class BlogPost(models.Model):
     summary = models.TextField(verbose_name=_('post summary'), blank=True)
     og_image = models.CharField(verbose_name=_('openGraph image'), default='', max_length=150, blank=True)
 
+    global_post = models.BooleanField(verbose_name=_('global post'), default=False,
+                                      help_text=_('Display this blog post at the homepage.'))
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name=_('organization'),
+                                     related_name=_('post_author_org'), blank=True, null=True)
+
     def __str__(self):
         return self.title
 
@@ -80,6 +85,12 @@ class BlogPost(models.Model):
         return reverse('blog_post', args=(self.id, self.slug))
 
     def can_see(self, user):
+        if self.global_post:
+            # Everyone can see this post at the homepage
+            return True
+        if self.organization and user.profile.organizations.filter(name=self.organization.name).exists():
+            # Not global, and user is inside the same organization
+            return True
         if self.visible and self.publish_on <= timezone.now():
             return True
         return self.is_editable_by(user)
@@ -94,6 +105,7 @@ class BlogPost(models.Model):
     class Meta:
         permissions = (
             ('edit_all_post', _('Edit all posts')),
+            ('edit_organization_post', _('Edit organization posts')),
         )
         verbose_name = _('blog post')
         verbose_name_plural = _('blog posts')

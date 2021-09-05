@@ -66,6 +66,13 @@
                     {% endcache %}
                 </div>
             </div>
+            <hr>
+            <h3>{{ _('Latest blogs') }} <i class="fa fa-terminal"></i></h3>
+            <div class="sidebox-content" style="border: unset;">
+                {% for post in posts %}
+                    {% include "blog/blog-post.html" %}
+                {% endfor %}
+            </div>
         </div>
         <div class="blog-sidebar">
             <div class="blog-sidebox sidebox">
@@ -87,6 +94,9 @@
                             {% endif %}
                             {% if organization.is_admin(request.profile) and request.user.has_perm('judge.create_private_contest') %}
                             <div><a href="{{ url('contest_create_organization', organization.id, organization.slug) }}">{{ _('Create Contest') }}</a></div>
+                            {% endif %}
+                            {% if organization.is_admin(request.profile) and request.user.has_perm('judge.edit_organization_post') %}
+                            <div><a href="{{ url('blog_post_create_organization', organization.id, organization.slug) }}">{{ _('Create Blog Post') }}</a></div>
                             {% endif %}
 
                         {% elif organization.is_open %}

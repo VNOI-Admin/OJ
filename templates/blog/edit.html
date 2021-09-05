@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {{ form.media.js }}
+
+    <script>
+        $(function() {
+            var noResults = function () {
+                return '{{ _('Press Enter to select multiple users...') }}';
+            };
+
+            $(document).one('click', '#id_testers + .select2', function (e) {
+                $('#id_testers').data().select2.options.get('translations').dict['noResults'] = noResults;
+            });
+
+            $(document).on('keyup', '#id_testers + .select2 .select2-search__field', function (e) {
+                if (e.keyCode === 13) {
+                    var $id_testers = $('#id_testers');
+                    var testers = $(this).val().split(/[\s,]+/);
+                    if (testers.length <= 1) {
+                        // Skip to let select2 handle this
+                        return;
+                    }
+
+                    $.ajax({
+                        type: 'GET',
+                        url: $id_testers.data().select2.dataAdapter.ajaxOptions.url,
+                        data: {
+                            multiple_terms: testers,
+                        },
+                        success: function (response) {
+                            for (const tester of response.results) {
+                                $id_testers.select2('trigger', 'select', {
+                                    data: tester,
+                                });
+                            }
+                        },
+                    });
+                }
+            });
+        })
+    </script>
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+    <style>
+        .helptext {
+            font-size: 13px;
+            color: #999;
+            border-width: 0 0 1px 0;
+        }
+        .helptext::before {
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+            content: "\f05a";
+            padding-right: 5px;
+            font-size: 14px;
+        }
+        .django-as-table {
+            border-collapse:collapse;
+        }
+        .django-as-table th, td {
+            padding-bottom: 10px;
+        }
+        .django-as-table th {
+            max-width: 10em;
+            width: 10em;
+        }
+        .errorlist {
+            background: rgba(255, 0, 0, 0.3);
+            border: 3px dashed red;
+            border-right: none;
+            border-left: solid red;
+            padding: 0 1em 0.1em 2em;
+            margin: 0.3em 0 0.5em 0;
+        }
+        .errornote {
+            border: 3px dashed #ffc000;
+            border-left: solid #ffc000;
+            padding: 0.7em 2em;
+            margin: 0 0 8px;
+            font-size: 13px !important;
+            font-weight: 400;
+        }
+        .required th::after {
+            content: "*";
+            color: red;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div>
+    <form action="" method="post" class="form-area" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <hr>
+        <div style="display: flex; justify-content: flex-end;"><input type="submit" value="{{ _('Create') }}" class="button"></div>
+    </form>
+</div>
+{% endblock %}

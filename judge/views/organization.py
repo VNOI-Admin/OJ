@@ -3,13 +3,14 @@ from datetime import datetime
 from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ungettext
 from django.views.generic import DetailView, FormView, ListView, UpdateView, View
@@ -17,9 +18,10 @@ from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateR
 from reversion import revisions
 
 from judge.forms import EditOrganizationForm
-from judge.models import Contest, Language, Organization, OrganizationRequest, Problem, Profile
+from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, Problem, Profile
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
+from judge.views.blog import BlogPostCreate
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
 
@@ -84,6 +86,17 @@ class OrganizationHome(OrganizationDetailView):
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
         context['is_member'] = False
+
+        context['posts'] = BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now(),
+                                                   organization=self.object) \
+            .order_by('-sticky', '-publish_on').prefetch_related('authors__user')
+
+        context['post_comment_counts'] = {
+            int(page[2:]): count for page, count in
+            Comment.objects
+                   .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
+                   .values_list('page').annotate(count=Count('page')).order_by()
+        }
 
         if self.request.profile in self.object:
             context['is_member'] = True
@@ -460,6 +473,25 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
             return result
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
+
+
+class BlogPostCreateOrganization(CustomAdminOrganizationMixin, PermissionRequiredMixin, BlogPostCreate):
+    permission_required = 'judge.edit_organization_post'
+
+    def get_initial(self):
+        initial = super(BlogPostCreateOrganization, self).get_initial()
+        initial = initial.copy()
+        initial['code'] = ''.join(x for x in self.organization.slug.lower() if x.isalpha()) + '_'
+        return initial
+
+    def form_valid(self, form):
+        self.get_object = post = form.save(commit=False)
+        post.publish_on = datetime.now()
+        post.save()   # Presave to initialize the object id before using Many-to-Many relationship.
+        post.authors.add(self.request.user.profile)
+        post.organization = self.organization
+        post.save()
+        return HttpResponseRedirect(post.get_absolute_url())
 
 
 class ContestCreateOrganization(CustomAdminOrganizationMixin, CreateContest):
