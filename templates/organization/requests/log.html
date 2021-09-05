@@ -4,7 +4,7 @@
     {% include "organization/requests/tabs.html" %}
 
     {% if requests %}
-        <table>
+        <table class="table">
             <tr>
                 <th>{{ _('User') }}</th>
                 <th>{{ _('Time') }}</th>
@@ -19,7 +19,7 @@
                             {{- r.time|date(_("N j, Y, H:i")) -}}
                         </a>
                     </td>
-                    <td>{{ r.state }}</td>
+                    <td>{{ r.get_state_display() }}</td>
                     <td>{{ r.reason|truncatechars(50) }}</td>
                 </tr>
             {% endfor %}
