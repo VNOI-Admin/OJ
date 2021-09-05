@@ -491,7 +491,7 @@ class BlogPostCreateOrganization(CustomAdminOrganizationMixin, PermissionRequire
     def get_initial(self):
         initial = super(BlogPostCreateOrganization, self).get_initial()
         initial = initial.copy()
-        initial['code'] = ''.join(x for x in self.organization.slug.lower() if x.isalpha()) + '_'
+        initial['slug'] = ''.join(x for x in self.organization.slug.lower() if x.isalpha()) + '_'
         return initial
 
     def form_valid(self, form):
