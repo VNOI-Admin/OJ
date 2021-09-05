@@ -17,8 +17,8 @@
             display: block;
         }
 
-        .userinfo a, .user-name a, .user-name form {
-            display: inline !important;
+        .user-name a, .user-name form {
+            display: inline-block !important;
         }
 
         #users-table th a, #users-table th a:link, #users-table th a:visited {
@@ -29,7 +29,7 @@
             color: #0F0;
         }
 
-        #users-table td a:hover {
+        #users-table td:not(.user-name, .personal-info) a:hover {
             text-decoration: underline;
         }
 
