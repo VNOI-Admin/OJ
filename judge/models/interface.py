@@ -85,10 +85,12 @@ class BlogPost(models.Model):
         return reverse('blog_post', args=(self.id, self.slug))
 
     def can_see(self, user):
+        if user.is_superuser:
+            return True
         if self.global_post:
             # Everyone can see this post at the homepage
             return True
-        if not (self.organization and user.profile.organizations.filter(name=self.organization.name).exists()):
+        if self.organization and not user.profile.organizations.filter(name=self.organization.name).exists():
             return False
         if self.visible and self.publish_on <= timezone.now():
             return True
