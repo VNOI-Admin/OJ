@@ -93,6 +93,10 @@ svg.rate-box {
 
 .rating {
     font-weight: bold;
+
+    a {
+        display: inline-block;
+    }
 }
 
 .rate-none, .rate-none a {
