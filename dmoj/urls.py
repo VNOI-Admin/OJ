@@ -294,6 +294,7 @@ urlpatterns = [
         ])),
 
         url(r'^/post/', include([
+            url(r'^', paged_list_view(organization.OrganizationCustomPostList, 'blog_post_list_organization')),
             url('^new$', organization.BlogPostCreateOrganization.as_view(), name='blog_post_create_organization'),
         ])),
 

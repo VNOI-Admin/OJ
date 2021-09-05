@@ -121,6 +121,37 @@ class PostList(ListView):
         return result
 
 
+# CustomPostList is similar to PostList, but without elements like open tickets or top pp users
+class CustomPostList(TitleMixin, ListView):
+    model = BlogPost
+    paginate_by = 10
+    context_object_name = 'posts'
+    template_name = 'blog/personal-list.html'
+    title = None
+
+    def get_paginator(self, queryset, per_page, orphans=0,
+                      allow_empty_first_page=True, **kwargs):
+        return DiggPaginator(queryset, per_page, body=6, padding=2,
+                             orphans=orphans, allow_empty_first_page=allow_empty_first_page, **kwargs)
+
+    def get_queryset(self, queryset=None):
+        return (BlogPost.objects.filter(queryset).filter(visible=True, publish_on__lte=timezone.now())
+                .order_by('-sticky', '-publish_on').prefetch_related('authors__user'))
+
+    def get_context_data(self, **kwargs):
+        context = super(CustomPostList, self).get_context_data(**kwargs)
+        context['title'] = self.title or _('Page %d of Posts') % context['page_obj'].number
+
+        context['post_comment_counts'] = {
+            int(page[2:]): count for page, count in
+            Comment.objects
+                   .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
+                   .values_list('page').annotate(count=Count('page')).order_by()
+        }
+
+        return context
+
+
 class PostView(TitleMixin, CommentedDetailView):
     model = BlogPost
     pk_url_kwarg = 'id'

@@ -66,13 +66,15 @@
                     {% endcache %}
                 </div>
             </div>
-            <hr>
-            <h3>{{ _('Latest blogs') }} <i class="fa fa-terminal"></i></h3>
-            <div class="sidebox-content" style="border: unset;">
-                {% for post in posts %}
-                    {% include "blog/blog-post.html" %}
-                {% endfor %}
-            </div>
+            {% if organization.is_open or is_member %}
+                <hr>
+                <h3>{{ _('Latest blogs') }} <i class="fa fa-terminal"></i></h3>
+                <div class="sidebox-content" style="border: unset;">
+                    {% for post in posts %}
+                        {% include "blog/blog-post.html" %}
+                    {% endfor %}
+                </div>
+            {% endif %}
         </div>
         <div class="blog-sidebar">
             <div class="blog-sidebox sidebox">

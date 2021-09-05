@@ -88,9 +88,8 @@ class BlogPost(models.Model):
         if self.global_post:
             # Everyone can see this post at the homepage
             return True
-        if self.organization and user.profile.organizations.filter(name=self.organization.name).exists():
-            # Not global, and user is inside the same organization
-            return True
+        if not (self.organization and user.profile.organizations.filter(name=self.organization.name).exists()):
+            return False
         if self.visible and self.publish_on <= timezone.now():
             return True
         return self.is_editable_by(user)

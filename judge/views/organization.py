@@ -21,7 +21,7 @@ from judge.forms import EditOrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, Problem, Profile
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
-from judge.views.blog import BlogPostCreate
+from judge.views.blog import CustomPostList, BlogPostCreate
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
 
@@ -89,7 +89,7 @@ class OrganizationHome(OrganizationDetailView):
 
         context['posts'] = BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now(),
                                                    organization=self.object) \
-            .order_by('-sticky', '-publish_on').prefetch_related('authors__user')
+            .order_by('-sticky', '-publish_on').prefetch_related('authors__user')[:5]
 
         context['post_comment_counts'] = {
             int(page[2:]): count for page, count in
@@ -403,6 +403,16 @@ class CustomAdminOrganizationMixin(CustomOrganizationMixin):
         kwargs = super(CustomAdminOrganizationMixin, self).get_form_kwargs()
         kwargs['org_pk'] = self.organization.pk
         return kwargs
+
+
+class OrganizationCustomPostList(CustomOrganizationMixin, CustomPostList):
+    def get_content_title(self):
+        return format_html(_(u'<a href="{1}">{0}</a> Blog Post'), self.organization.name,
+                           reverse('organization_home', args=[self.organization.pk, self.organization.slug]))
+
+    def get_queryset(self):
+        queryset = Q(organization=self.organization)
+        return super(OrganizationCustomPostList, self).get_queryset(queryset=queryset)
 
 
 class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
