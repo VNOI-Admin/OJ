@@ -413,8 +413,17 @@ class OrganizationCustomPostList(CustomOrganizationMixin, CustomPostList):
                            reverse('organization_home', args=[self.organization.pk, self.organization.slug]))
 
     def get_queryset(self):
-        queryset = Q(organization=self.organization)
-        return super(OrganizationCustomPostList, self).get_queryset(queryset=queryset)
+        queryset = BlogPost.objects.filter(organization=self.organization,
+                                           publish_on__lte=timezone.now())
+
+        if not self.can_edit_organization():
+            # Normal user can only view public posts
+            queryset = queryset.filter(visible=True)
+        else:
+            # Org admin can view public posts & their own posts
+            queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
+
+        return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
 
 class ProblemListOrganization(CustomOrganizationMixin, ProblemList):

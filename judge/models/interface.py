@@ -88,8 +88,10 @@ class BlogPost(models.Model):
         if self.visible and self.publish_on <= timezone.now():
             if self.global_post:
                 return True
-            if self.organization and not user.profile.organizations.filter(id=self.organization.pk).exists():
+            if not user.is_authenticated:
                 return False
+            if self.organization and user.profile.organizations.filter(id=self.organization.pk).exists():
+                return True
         return self.is_editable_by(user)
 
     def is_editable_by(self, user):
@@ -98,7 +100,8 @@ class BlogPost(models.Model):
         if user.has_perm('judge.edit_all_post'):
             return True
         if self.organization and self.organization.admins.filter(user_id=user.pk).exists() and \
-                user.has_perm('judge.edit_organization_post'):
+                user.has_perm('judge.edit_organization_post') and \
+                self.authors.filter(id=user.profile.id).exists():
             return True
         return user.has_perm('judge.change_blogpost') and self.authors.filter(id=user.profile.id).exists()
 

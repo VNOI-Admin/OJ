@@ -122,9 +122,8 @@ class CustomPostList(TitleMixin, ListView):
         return DiggPaginator(queryset, per_page, body=6, padding=2,
                              orphans=orphans, allow_empty_first_page=allow_empty_first_page, **kwargs)
 
-    def get_queryset(self, queryset=None):
-        # NOTE: I do not want to filter the visible=True for public/private customization
-        return (BlogPost.objects.filter(queryset).filter(publish_on__lte=timezone.now())
+    def get_queryset(self):
+        return (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
                 .order_by('-sticky', '-publish_on').prefetch_related('authors__user'))
 
     def get_context_data(self, **kwargs):

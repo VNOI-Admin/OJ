@@ -18,7 +18,13 @@ class BlogPostTestCase(CommonDataMixin, TestCase):
                 is_staff=True,
                 user_permissions=('change_blogpost', 'edit_all_post'),
             ),
+            'org_member': create_user(
+                username='org_member',
+            ),
         })
+
+        self.users['staff_organization_admin'].profile.organizations.add(self.organizations['open'])
+        self.users['org_member'].profile.organizations.add(self.organizations['open'])
 
         self.basic_blogpost = create_blogpost(
             title='basic',
@@ -28,6 +34,22 @@ class BlogPostTestCase(CommonDataMixin, TestCase):
         self.visible_blogpost = create_blogpost(
             title='visible',
             visible=True,
+        )
+
+        self.visible_blogpost_in_org = create_blogpost(
+            title='visible_org',
+            visible=True,
+            global_post=False,
+            organization=self.organizations['open'],
+            authors=[self.users['staff_organization_admin']],
+        )
+
+        self.non_visible_blogpost_in_org = create_blogpost(
+            title='non_visible_org',
+            visible=False,
+            global_post=False,
+            organization=self.organizations['open'],
+            authors=[self.users['staff_organization_admin']],
         )
 
     def test_basic_blogpost(self):
@@ -78,3 +100,55 @@ class BlogPostTestCase(CommonDataMixin, TestCase):
             },
         }
         self._test_object_methods_with_users(self.visible_blogpost, data)
+
+    def test_visible_blogpost_in_org(self):
+        data = {
+            'superuser': {
+                'can_see': self.assertTrue,
+                'is_editable_by': self.assertTrue,
+            },
+            # Not in org
+            'normal': {
+                'can_see': self.assertFalse,
+                'is_editable_by': self.assertFalse,
+            },
+            'anonymous': {
+                'can_see': self.assertFalse,
+                'is_editable_by': self.assertFalse,
+            },
+            'org_member': {
+                'can_see': self.assertTrue,
+                'is_editable_by': self.assertFalse,
+            },
+            'staff_organization_admin': {
+                'can_see': self.assertTrue,
+                'is_editable_by': self.assertTrue,
+            },
+        }
+        self._test_object_methods_with_users(self.visible_blogpost_in_org, data)
+
+    def test_non_visible_blogpost_in_org(self):
+        data = {
+            'superuser': {
+                'can_see': self.assertTrue,
+                'is_editable_by': self.assertTrue,
+            },
+            # Not in org
+            'normal': {
+                'can_see': self.assertFalse,
+                'is_editable_by': self.assertFalse,
+            },
+            'anonymous': {
+                'can_see': self.assertFalse,
+                'is_editable_by': self.assertFalse,
+            },
+            'org_member': {
+                'can_see': self.assertFalse,
+                'is_editable_by': self.assertFalse,
+            },
+            'staff_organization_admin': {
+                'can_see': self.assertTrue,
+                'is_editable_by': self.assertTrue,
+            },
+        }
+        self._test_object_methods_with_users(self.non_visible_blogpost_in_org, data)

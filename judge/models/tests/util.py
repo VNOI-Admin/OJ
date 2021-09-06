@@ -294,7 +294,7 @@ class CommonDataMixin:
             'staff_organization_admin': create_user(
                 username='staff_organization_admin',
                 is_staff=True,
-                user_permissions=('organization_admin',),
+                user_permissions=('organization_admin', 'edit_organization_post'),
             ),
             'normal': create_user(
                 username='normal',

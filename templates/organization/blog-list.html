@@ -42,9 +42,7 @@
             {% endif %}
             <div class="sidebox-content" style="border: unset;">
                 {% for post in posts %}
-                    {% if post.can_see(request.user) %}
-                        {% include "blog/blog-post.html" %}
-                    {% endif %}
+                    {% include "blog/blog-post.html" %}
                 {% endfor %}
             </div>
             {% if page_obj.has_other_pages() %}
