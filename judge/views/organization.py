@@ -402,6 +402,9 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
     context_object_name = 'problems'
     template_name = 'organization/problem-list.html'
 
+    def get_hot_problems(self):
+        return None
+
     def get_context_data(self, **kwargs):
         context = super(ProblemListOrganization, self).get_context_data(**kwargs)
         context['organization'] = self.organization
