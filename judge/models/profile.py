@@ -358,9 +358,9 @@ class OrganizationRequest(models.Model):
                                      on_delete=models.CASCADE)
     time = models.DateTimeField(verbose_name=_('request time'), auto_now_add=True)
     state = models.CharField(max_length=1, verbose_name=_('state'), choices=(
-        ('P', 'Pending'),
-        ('A', 'Approved'),
-        ('R', 'Rejected'),
+        ('P', _('Pending')),
+        ('A', _('Approved')),
+        ('R', _('Rejected')),
     ))
     reason = models.TextField(verbose_name=_('reason'))
 

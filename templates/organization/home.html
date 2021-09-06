@@ -99,13 +99,16 @@
                             class="unselectable button full">{{ _('Request membership') }}</a>
                         {% endif %}
                     {% endif %}
-
+                    <br>
                     {% if can_edit %}
                         <div><a href="{{ url('edit_organization', organization.id, organization.slug) }}">{{ _('Edit organization') }}</a></div>
 
                         {% if not organization.is_open %}
                             <div>
-                                <a href="{{ url('organization_requests_pending', organization.id, organization.slug) }}">{{ _('View requests') }}</a>
+                                <a href="{{ url('organization_requests_pending', organization.id, organization.slug) }}">
+                                    {{ _('View requests') }}
+                                    {% if num_requests %}<span class="badge">{{ num_requests }}</span>{% endif %}
+                                </a>
                             </div>
                         {% endif %}
                     {% endif %}
