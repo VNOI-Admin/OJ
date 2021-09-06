@@ -113,7 +113,7 @@ class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationUsers, self).get_context_data(**kwargs)
-        context['title'] = _('%s Members') % self.object.name
+        context['title'] = self.object.name
         context['users'] = \
             ranker(self.object.members.filter(is_unlisted=False).order_by(self.order)
                    .select_related('user').defer('about', 'user_script', 'notes'))
@@ -401,16 +401,10 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
     context_object_name = 'problems'
     template_name = 'organization/problem-list.html'
 
-    def get_title(self):
-        return _('Problems list of %s') % self.organization.name
-
-    def get_content_title(self):
-        return format_html(_('Problems list of') + ' <a href="{1}">{0}</a>', self.organization.name,
-                           self.organization.get_absolute_url())
-
     def get_context_data(self, **kwargs):
         context = super(ProblemListOrganization, self).get_context_data(**kwargs)
         context['organization'] = self.organization
+        context['title'] = self.organization.name
         return context
 
     def get_filter(self):
@@ -423,13 +417,6 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
 class ContestListOrganization(CustomOrganizationMixin, ContestList):
     template_name = 'organization/contest-list.html'
 
-    def get_title(self):
-        return _('Contests list of %s') % self.organization.name
-
-    def get_content_title(self):
-        return format_html(_('Contests list of') + ' <a href="{1}">{0}</a>', self.organization.name,
-                           self.organization.get_absolute_url())
-
     def _get_queryset(self):
         query_set = super(ContestListOrganization, self)._get_queryset()
         query_set = query_set.filter(Q(is_organization_private=True))
@@ -438,6 +425,7 @@ class ContestListOrganization(CustomOrganizationMixin, ContestList):
     def get_context_data(self, **kwargs):
         context = super(ContestListOrganization, self).get_context_data(**kwargs)
         context['organization'] = self.organization
+        context['title'] = self.organization.name
         return context
 
 
