@@ -15,7 +15,7 @@
             {{ make_tab('users', 'fa-university', organization.get_users_url(), _('Users')) }}
             {{ make_tab('problem-list', 'fa-puzzle-piece', url('problem_list_organization', organization.pk, organization.slug), _('Problems list')) }}
             {{ make_tab('contest-list', 'fa-trophy', url('contest_list_organization', organization.pk, organization.slug), _('Contests list')) }}
-            {{ make_tab('submission', 'fa-list', url('all_submissions') + '?organization=' + str(organization.pk), _('Submissions')) }}
+            {{ make_tab('submission-list', 'fa-list', url('submission_list_organization', organization.pk, organization.slug), _('Submissions')) }}
         </ul>
         <span class="spacer"></span>
         <ul>
