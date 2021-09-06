@@ -360,6 +360,7 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 class CustomOrganizationMixin(object):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['organization'] = self.organization
         context['logo_override_image'] = self.organization.logo_override_image
         context['meta_description'] = self.organization.about[:settings.DESCRIPTION_MAX_LENGTH]
         return context
@@ -407,7 +408,6 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
 
     def get_context_data(self, **kwargs):
         context = super(ProblemListOrganization, self).get_context_data(**kwargs)
-        context['organization'] = self.organization
         context['title'] = self.organization.name
         return context
 
@@ -432,7 +432,6 @@ class ContestListOrganization(CustomOrganizationMixin, ContestList):
 
     def get_context_data(self, **kwargs):
         context = super(ContestListOrganization, self).get_context_data(**kwargs)
-        context['organization'] = self.organization
         context['title'] = self.organization.name
         return context
 
@@ -447,7 +446,6 @@ class SubmissionListOrganization(CustomOrganizationMixin, AllSubmissions):
 
     def get_context_data(self, **kwargs):
         context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
-        context['organization'] = self.organization
         context['title'] = self.organization.name
         return context
 
