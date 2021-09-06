@@ -411,6 +411,10 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
         filter = Q(organizations=self.organization)
         if not self.can_edit_organization():
             filter &= Q(is_public=True)
+            if self.profile is not None:
+                filter |= Q(authors=self.profile)
+                filter |= Q(curators=self.profile)
+                filter |= Q(testers=self.profile)
         return filter
 
 
