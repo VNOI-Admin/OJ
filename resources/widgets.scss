@@ -180,6 +180,10 @@ input {
         .tab-icon {
             padding-right: 0.3em;
             color: gray;
+
+            &.fa-plus {
+                color: green !important;
+            }
         }
 
         a, span {
