@@ -115,7 +115,6 @@ class CustomPostList(TitleMixin, ListView):
     model = BlogPost
     paginate_by = 10
     context_object_name = 'posts'
-    template_name = 'blog/personal-list.html'
     title = None
 
     def get_paginator(self, queryset, per_page, orphans=0,

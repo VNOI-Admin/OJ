@@ -406,6 +406,8 @@ class CustomAdminOrganizationMixin(CustomOrganizationMixin):
 
 
 class OrganizationCustomPostList(CustomOrganizationMixin, CustomPostList):
+    template_name = 'organization/blog-list.html'
+
     def get_content_title(self):
         return format_html(_(u'<a href="{1}">{0}</a> Blog Post'), self.organization.name,
                            reverse('organization_home', args=[self.organization.pk, self.organization.slug]))
