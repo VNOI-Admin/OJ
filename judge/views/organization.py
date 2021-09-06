@@ -85,6 +85,11 @@ class OrganizationHome(OrganizationDetailView):
         context['can_edit'] = self.can_edit_organization()
         context['is_member'] = False
 
+        if not self.object.is_open:
+            context['num_requests'] = OrganizationRequest.objects.filter(
+                state='P',
+                organization=self.object).count()
+
         if self.request.profile in self.object:
             context['is_member'] = True
             context['new_problems'] = Problem.objects.filter(
