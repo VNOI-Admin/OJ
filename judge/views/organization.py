@@ -423,7 +423,7 @@ class ContestListOrganization(CustomOrganizationMixin, ContestList):
 
     def _get_queryset(self):
         query_set = super(ContestListOrganization, self)._get_queryset()
-        query_set = query_set.filter(Q(is_organization_private=True))
+        query_set = query_set.filter(is_organization_private=True, organizations=self.organization)
         return query_set
 
     def get_context_data(self, **kwargs):
