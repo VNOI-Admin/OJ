@@ -182,5 +182,4 @@ class BlogPostCreate(TitleMixin, CreateView):
         post.save()  # Presave to initialize the object id before using Many-to-Many relationship.
         post.authors.add(self.request.user.profile)
         post.save()
-        print(post)
         return HttpResponseRedirect(post.get_absolute_url())
