@@ -98,6 +98,11 @@ class OrganizationHome(OrganizationDetailView):
                    .values_list('page').annotate(count=Count('page')).order_by()
         }
 
+        if not self.object.is_open:
+            context['num_requests'] = OrganizationRequest.objects.filter(
+                state='P',
+                organization=self.object).count()
+
         if self.request.profile in self.object:
             context['is_member'] = True
             context['new_problems'] = Problem.objects.filter(
