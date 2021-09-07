@@ -16,7 +16,6 @@
             {{ make_tab('problem-list', 'fa-puzzle-piece', url('problem_list_organization', organization.pk, organization.slug), _('Problems list')) }}
             {{ make_tab('contest-list', 'fa-trophy', url('contest_list_organization', organization.pk, organization.slug), _('Contests list')) }}
             {{ make_tab('submission-list', 'fa-list', url('submission_list_organization', organization.pk, organization.slug), _('Submissions')) }}
-            {{ make_tab('blog-list', 'fa-rss',  url('blog_post_list_organization', organization.id, organization.slug), _('Organization\'s blog posts')) }}
         </ul>
         <ul>
             {% if organization.is_admin(request.profile) %}

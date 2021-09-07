@@ -26,7 +26,7 @@ from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
 from judge.views.submission import AllSubmissions
 
-__all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
+__all__ = ['OrganizationList', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
            'KickUserWidgetView']
@@ -77,46 +77,6 @@ class OrganizationList(TitleMixin, ListView):
     context_object_name = 'organizations'
     template_name = 'organization/list.html'
     title = gettext_lazy('Organizations')
-
-
-class OrganizationHome(OrganizationDetailView):
-    template_name = 'organization/home.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(OrganizationHome, self).get_context_data(**kwargs)
-        context['title'] = self.object.name
-        context['can_edit'] = self.can_edit_organization()
-        context['is_member'] = False
-
-        context['posts'] = BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now(),
-                                                   organization=self.object) \
-            .order_by('-sticky', '-publish_on').prefetch_related('authors__user')[:5]
-
-        context['post_comment_counts'] = {
-            int(page[2:]): count for page, count in
-            Comment.objects
-                   .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
-                   .values_list('page').annotate(count=Count('page')).order_by()
-        }
-
-        if not self.object.is_open:
-            context['num_requests'] = OrganizationRequest.objects.filter(
-                state='P',
-                organization=self.object).count()
-
-        if self.request.profile in self.object:
-            context['is_member'] = True
-            context['new_problems'] = Problem.objects.filter(
-                is_public=True, is_organization_private=True,
-                organizations=self.object) \
-                .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
-
-            context['new_contests'] = Contest.objects.filter(
-                is_visible=True, is_organization_private=True,
-                organizations=self.object) \
-                .order_by('-end_time', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
-
-        return context
 
 
 class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
@@ -371,6 +331,10 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 # However, I need to write a new class because the
 # current mixin is for the DetailView.
 class CustomOrganizationMixin(object):
+    # If true, all user can view the current page
+    # event they are not in the org
+    allow_all_users = False
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['organization'] = self.organization
@@ -382,7 +346,8 @@ class CustomOrganizationMixin(object):
         if 'pk' not in kwargs:
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
-        if self.request.profile not in self.organization:
+        self.object = self.organization
+        if not self.allow_all_users and self.request.profile not in self.organization:
             return generic_message(request,
                                    _('Cannot view organization\'s private data'),
                                    _('You must join the organization to view its private data.'))
@@ -413,7 +378,11 @@ class CustomAdminOrganizationMixin(CustomOrganizationMixin):
 
 
 class OrganizationCustomPostList(CustomOrganizationMixin, CustomPostList):
-    template_name = 'organization/blog-list.html'
+    template_name = 'organization/home.html'
+    # Need to set this to true so user can view the org's public
+    # information like name, request join org, ...
+    # However, they cannot see the org blog
+    allow_all_users = True
 
     def get_content_title(self):
         return format_html(_(u'<a href="{1}">{0}</a> Blog Post'), self.organization.name,
@@ -424,13 +393,51 @@ class OrganizationCustomPostList(CustomOrganizationMixin, CustomPostList):
                                            publish_on__lte=timezone.now())
 
         if not self.can_edit_organization():
-            # Normal user can only view public posts
-            queryset = queryset.filter(visible=True)
+            if self.request.profile in self.object:
+                # Normal user can only view public posts
+                queryset = queryset.filter(visible=True)
+            else:
+                # User cannot view organization blog
+                # if they are not in the org
+                # event if the org is public
+                queryset = BlogPost.objects.none()
         else:
             # Org admin can view public posts & their own posts
             queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
+
+    def get_context_data(self, **kwargs):
+        context = super(OrganizationCustomPostList, self).get_context_data(**kwargs)
+        context['first_page_href'] = reverse('organization_home', args=[self.object.pk, self.object.slug])
+        context['title'] = self.object.name
+        context['can_edit'] = self.can_edit_organization()
+
+        context['post_comment_counts'] = {
+            int(page[2:]): count for page, count in
+            Comment.objects
+                   .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
+                   .values_list('page').annotate(count=Count('page')).order_by()
+        }
+
+        if not self.object.is_open:
+            context['num_requests'] = OrganizationRequest.objects.filter(
+                state='P',
+                organization=self.object).count()
+
+        if self.request.profile in self.object:
+            context['is_member'] = True
+            context['new_problems'] = Problem.objects.filter(
+                is_public=True, is_organization_private=True,
+                organizations=self.object) \
+                .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
+
+            context['new_contests'] = Contest.objects.filter(
+                is_visible=True, is_organization_private=True,
+                organizations=self.object) \
+                .order_by('-end_time', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
+
+        return context
 
 
 class ProblemListOrganization(CustomOrganizationMixin, ProblemList):

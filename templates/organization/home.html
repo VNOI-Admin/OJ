@@ -70,14 +70,19 @@
                     {% endcache %}
                 </div>
             </div>
-            {% if posts and (organization.is_open or is_member) %}
-                <br>
+            {% if posts %}
+                {% if page_obj.has_other_pages() %}
+                    <div class="top-pagination-bar">{% include "list-pages.html" %}</div>
+                {% endif %}
                 <h3>{{ _('News') }} <i class="fa fa-terminal"></i></h3>
                 <div class="sidebox-content" style="border: unset;">
                     {% for post in posts %}
                         {% include "blog/blog-post.html" %}
                     {% endfor %}
                 </div>
+                {% if page_obj.has_other_pages() %}
+                    <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+                {% endif %}
             {% endif %}
         </div>
         <div class="blog-sidebar">
