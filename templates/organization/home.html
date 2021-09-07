@@ -71,9 +71,7 @@
                 </div>
             </div>
             {% if posts %}
-                {% if page_obj.has_other_pages() %}
-                    <div class="top-pagination-bar">{% include "list-pages.html" %}</div>
-                {% endif %}
+                <br>
                 <h3>{{ _('News') }} <i class="fa fa-terminal"></i></h3>
                 <div class="sidebox-content" style="border: unset;">
                     {% for post in posts %}
