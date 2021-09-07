@@ -24,6 +24,7 @@ from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, CustomPostList
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
+from judge.views.submission import AllSubmissions
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
@@ -126,7 +127,7 @@ class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationUsers, self).get_context_data(**kwargs)
-        context['title'] = _('%s Members') % self.object.name
+        context['title'] = self.object.name
         context['users'] = \
             ranker(self.object.members.filter(is_unlisted=False).order_by(self.order)
                    .select_related('user').defer('about', 'user_script', 'notes'))
@@ -372,6 +373,7 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 class CustomOrganizationMixin(object):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['organization'] = self.organization
         context['logo_override_image'] = self.organization.logo_override_image
         context['meta_description'] = self.organization.about[:settings.DESCRIPTION_MAX_LENGTH]
         return context
@@ -435,43 +437,50 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
     context_object_name = 'problems'
     template_name = 'organization/problem-list.html'
 
-    def get_title(self):
-        return _('Problems list of %s') % self.organization.name
-
-    def get_content_title(self):
-        return format_html(_('Problems list of') + ' <a href="{1}">{0}</a>', self.organization.name,
-                           self.organization.get_absolute_url())
+    def get_hot_problems(self):
+        return None
 
     def get_context_data(self, **kwargs):
         context = super(ProblemListOrganization, self).get_context_data(**kwargs)
-        context['organization'] = self.organization
+        context['title'] = self.organization.name
         return context
 
     def get_filter(self):
         filter = Q(organizations=self.organization)
         if not self.can_edit_organization():
             filter &= Q(is_public=True)
+            if self.profile is not None:
+                filter |= Q(authors=self.profile)
+                filter |= Q(curators=self.profile)
+                filter |= Q(testers=self.profile)
         return filter
 
 
 class ContestListOrganization(CustomOrganizationMixin, ContestList):
     template_name = 'organization/contest-list.html'
 
-    def get_title(self):
-        return _('Contests list of %s') % self.organization.name
-
-    def get_content_title(self):
-        return format_html(_('Contests list of') + ' <a href="{1}">{0}</a>', self.organization.name,
-                           self.organization.get_absolute_url())
-
     def _get_queryset(self):
         query_set = super(ContestListOrganization, self)._get_queryset()
-        query_set = query_set.filter(Q(is_organization_private=True))
+        query_set = query_set.filter(is_organization_private=True, organizations=self.organization)
         return query_set
 
     def get_context_data(self, **kwargs):
         context = super(ContestListOrganization, self).get_context_data(**kwargs)
-        context['organization'] = self.organization
+        context['title'] = self.organization.name
+        return context
+
+
+class SubmissionListOrganization(CustomOrganizationMixin, AllSubmissions):
+    template_name = 'organization/submission-list.html'
+
+    def _get_queryset(self):
+        query_set = super(SubmissionListOrganization, self)._get_queryset()
+        query_set = query_set.filter(user__organizations=self.organization, problem__organizations=self.organization)
+        return query_set
+
+    def get_context_data(self, **kwargs):
+        context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
+        context['title'] = self.organization.name
         return context
 
 

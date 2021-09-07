@@ -18,9 +18,6 @@
         .top-pagination-bar {
             justify-content: space-between;
         }
-        .add-contest {
-            color: green !important;
-        }
     </style>
 {% endblock %}
 
@@ -270,7 +267,7 @@
         <br>
 
         <h4 id="past-contests">{{ _('Past Contests') }}</h4>
-        {% if page_obj or search_query %}  
+        {% if page_obj or search_query %}
             <div class="top-pagination-bar">
                 {% include "list-pages.html" %}
                 <form id="search-form" name="form" action="" method="get">

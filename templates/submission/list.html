@@ -335,17 +335,19 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="filter-form-group">
-                                <label for="organization"><i>{{ _('Organization') }}</i></label>
-                                <select id="organization" name="organization">
-                                    <option value="">{{ _('All') }}</option>
-                                    <option disabled="disabled">---</option>
-                                    {% for code, name in all_organizations %}
-                                        <option {% if code == selected_organization %}selected{% endif %}
-                                                value="{{ code }}">{{ name }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
+                            {% if not organization %}
+                                <div class="filter-form-group">
+                                    <label for="organization"><i>{{ _('Organization') }}</i></label>
+                                    <select id="organization" name="organization">
+                                        <option value="">{{ _('All') }}</option>
+                                        <option disabled="disabled">---</option>
+                                        {% for code, name in all_organizations %}
+                                            <option {% if code == selected_organization %}selected{% endif %}
+                                                    value="{{ code }}">{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            {% endif %}
                             <div class="form-submit-group">
                                 <a id="go" onclick="form.submit()" class="button">{{ _('Go') }}</a>
                             </div>
