@@ -13,6 +13,7 @@ class Command(BaseCommand):
         ('C', MOSS_LANG_C),
         ('Java', MOSS_LANG_JAVA),
         ('Python', MOSS_LANG_PYTHON),
+        ('Pascal', MOSS_LANG_PASCAL),
     }
 
     def add_arguments(self, parser):
