@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Max
@@ -171,7 +169,7 @@ class BlogPostCreate(TitleMixin, CreateView):
 
     def form_valid(self, form):
         self.get_object = post = form.save(commit=False)
-        post.publish_on = datetime.now()
+        post.publish_on = timezone.now()
         post.save()  # Presave to initialize the object id before using Many-to-Many relationship.
         post.authors.add(self.request.user.profile)
         post.save()
