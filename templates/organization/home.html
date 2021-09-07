@@ -71,8 +71,8 @@
                 </div>
             </div>
             {% if posts and (organization.is_open or is_member) %}
-                <hr>
-                <h3>{{ _('Latest blogs') }} <i class="fa fa-terminal"></i></h3>
+                <br>
+                <h3>{{ _('News') }} <i class="fa fa-terminal"></i></h3>
                 <div class="sidebox-content" style="border: unset;">
                     {% for post in posts %}
                         {% include "blog/blog-post.html" %}

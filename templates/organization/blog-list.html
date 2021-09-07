@@ -31,16 +31,9 @@
 {% block title_ruler %}{% endblock %}
 {% block body %}
     {% block before_posts %}{% endblock %}
-    <div id="mobile" class="tabs">
-        <ul>
-            <li id="blog-tab" class="tab active"><a href="#">
-                <i class="tab-icon fa fa-info-circle"></i> {{ _('Blog') }}
-            </a></li>
-            <li id="event-tab" class="tab"><a href="#"><i class="tab-icon fa fa-rss"></i> {{ _('Events') }}</a></li>
-        </ul>
-    </div>
     <div id="blog-container">
         <div class="blog-content sidebox">
+            <h3>{{ _('News') }} <i class="fa fa-terminal"></i></h3>
             {% if page_obj.has_other_pages() %}
                 <div class="top-pagination-bar">{% include "list-pages.html" %}</div>
             {% endif %}
