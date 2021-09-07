@@ -16,8 +16,8 @@
             {{ make_tab('problem-list', 'fa-puzzle-piece', url('problem_list_organization', organization.pk, organization.slug), _('Problems list')) }}
             {{ make_tab('contest-list', 'fa-trophy', url('contest_list_organization', organization.pk, organization.slug), _('Contests list')) }}
             {{ make_tab('submission-list', 'fa-list', url('submission_list_organization', organization.pk, organization.slug), _('Submissions')) }}
+            {{ make_tab('blog-list', 'fa-rss',  url('blog_post_list_organization', organization.id, organization.slug), _('Organization\'s blog posts')) }}
         </ul>
-        <span class="spacer"></span>
         <ul>
             {% if organization.is_admin(request.profile) %}
                 {% if request.user.has_perm('judge.create_organization_problem') %}
@@ -25,6 +25,9 @@
                 {% endif %}
                 {% if request.user.has_perm('judge.create_private_contest') %}
                     {{ make_tab('create', 'fa-plus', url('contest_create_organization', organization.id, organization.slug), _('Create new contest')) }}
+                {% endif %}
+                {% if request.user.has_perm('judge.edit_organization_post') %}
+                    {{ make_tab('create', 'fa-plus', url('blog_post_create_organization', organization.id, organization.slug), _('Create blog post')) }}
                 {% endif %}
             {% endif %}
         </ul>

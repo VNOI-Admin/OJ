@@ -24,7 +24,11 @@
         }
     </style>
 {% endblock %}
-
+{% block title_row %}
+    {% set tab = 'blog-list' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
 {% block body %}
     {% block before_posts %}{% endblock %}
     <div id="mobile" class="tabs">
