@@ -8,7 +8,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext, gettext_lazy as _
 from jsonfield import JSONField
 from lupa import LuaRuntime
-from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PYTHON
+from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MOSS_LANG_PYTHON
 
 from judge import contest_format
 from judge.models.problem import Problem
@@ -575,6 +575,7 @@ class ContestMoss(models.Model):
         ('C++', MOSS_LANG_CC),
         ('Java', MOSS_LANG_JAVA),
         ('Python', MOSS_LANG_PYTHON),
+        ('Pascal', MOSS_LANG_PASCAL),
     ]
 
     contest = models.ForeignKey(Contest, verbose_name=_('contest'), related_name='moss', on_delete=CASCADE)
