@@ -487,7 +487,7 @@ class ProposeContestProblemFormSet(
 
 class BlogPostForm(ModelForm):
     def __init__(self, *args, **kwargs):
-        kwargs.pop('org_pk')
+        kwargs.pop('org_pk', None)
         super(BlogPostForm, self).__init__(*args, **kwargs)
 
     class Meta:

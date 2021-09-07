@@ -1,12 +1,13 @@
 from datetime import datetime
 
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Max
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext as _
-from django.views.generic import CreateView, ListView
+from django.views.generic import CreateView, ListView, UpdateView
 
 from judge.comments import CommentedDetailView
 from judge.forms import BlogPostForm
@@ -17,6 +18,18 @@ from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.problems import user_completed_ids
 from judge.utils.tickets import filter_visible_tickets
 from judge.utils.views import TitleMixin
+
+
+class BlogPostMixin(object):
+    model = BlogPost
+    pk_url_kwarg = 'id'
+    slug_url_kwarg = 'slug'
+
+    def get_object(self, queryset=None):
+        post = super(BlogPostMixin, self).get_object(queryset)
+        if not post.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return post
 
 
 class PostList(ListView):
@@ -182,3 +195,15 @@ class BlogPostCreate(TitleMixin, CreateView):
         post.authors.add(self.request.user.profile)
         post.save()
         return HttpResponseRedirect(post.get_absolute_url())
+
+
+class BlogPostEdit(BlogPostMixin, TitleMixin, UpdateView):
+    template_name = 'blog/edit.html'
+    model = BlogPost
+    form_class = BlogPostForm
+
+    def get_title(self):
+        return _('Updating blog post')
+
+    def get_content_title(self):
+        return _('Updating blog post')

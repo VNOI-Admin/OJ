@@ -17,7 +17,7 @@
         </span>
     {% endif %}
     {% if post.is_editable_by(request.user) %}
-        <div class="title-line-action">[<a href="{{ url('admin:judge_blogpost_change', post.id) }}">{{ _('Edit') }}</a>]
+        <div class="title-line-action">[<a href="{{ url('blog_post_edit', post.id, post.slug) }}">{{ _('Edit') }}</a>]
         </div>
     {% endif %}
 {% endblock %}

@@ -335,7 +335,10 @@ urlpatterns = [
 
     url(r'^post/', include([
         url(r'^', paged_list_view(blog.PostList, 'blog_post_list')),
-        url(r'^(?P<id>\d+)-(?P<slug>.*)$', blog.PostView.as_view(), name='blog_post'),
+        url(r'^(?P<id>\d+)-(?P<slug>.*)/', include([
+            url(r'^$', blog.PostView.as_view(), name='blog_post'),
+            url(r'^edit$', blog.BlogPostEdit.as_view(), name='blog_post_edit'),
+        ])),
         url(r'^new$', blog.BlogPostCreate.as_view(), name='blog_post_new'),
     ])),
 
