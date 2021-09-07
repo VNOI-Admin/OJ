@@ -19,8 +19,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
-from judge.models import Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, Submission, \
-    Tag, WebAuthnCredential
+from judge.models import BlogPost, Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, \
+    Submission, Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -483,6 +483,21 @@ class ProposeContestProblemFormSet(
             if order and order in orders:
                 raise ValidationError(_("Problems must have distinct order."))
             orders.append(order)
+
+
+class BlogPostForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        kwargs.pop('org_pk', None)
+        super(BlogPostForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = BlogPost
+        fields = ['title', 'publish_on', 'visible', 'content']
+        widgets = {
+            'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
+            'summary': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
+            'publish_on': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
+        }
 
 
 class ContestForm(ModelForm):

@@ -1,12 +1,14 @@
 from django.conf import settings
+from django.core.exceptions import PermissionDenied
 from django.db.models import Count, Max
-from django.http import Http404
+from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import ugettext as _
-from django.views.generic import ListView
+from django.views.generic import CreateView, ListView, UpdateView
 
 from judge.comments import CommentedDetailView
+from judge.forms import BlogPostForm
 from judge.models import BlogPost, Comment, Contest, Language, Problem, Profile, Submission, \
     Ticket
 from judge.utils.cachedict import CacheDict
@@ -16,11 +18,22 @@ from judge.utils.tickets import filter_visible_tickets
 from judge.utils.views import TitleMixin
 
 
-class PostList(ListView):
+class BlogPostMixin(object):
+    model = BlogPost
+    pk_url_kwarg = 'id'
+    slug_url_kwarg = 'slug'
+
+    def get_object(self, queryset=None):
+        post = super(BlogPostMixin, self).get_object(queryset)
+        if not post.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return post
+
+
+class PostListBase(ListView):
     model = BlogPost
     paginate_by = 10
     context_object_name = 'posts'
-    template_name = 'blog/list.html'
     title = None
 
     def get_paginator(self, queryset, per_page, orphans=0,
@@ -29,12 +42,31 @@ class PostList(ListView):
                              orphans=orphans, allow_empty_first_page=allow_empty_first_page, **kwargs)
 
     def get_queryset(self):
-        return (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now()).order_by('-sticky', '-publish_on')
-                .prefetch_related('authors__user'))
+        return (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
+                .order_by('-sticky', '-publish_on').prefetch_related('authors__user'))
+
+    def get_context_data(self, **kwargs):
+        context = super(PostListBase, self).get_context_data(**kwargs)
+        context['title'] = self.title or _('Page %d of Posts') % context['page_obj'].number
+        context['post_comment_counts'] = {
+            int(page[2:]): count for page, count in
+            Comment.objects
+                   .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
+                   .values_list('page').annotate(count=Count('page')).order_by()
+        }
+        return context
+
+
+class PostList(PostListBase):
+    template_name = 'blog/list.html'
+
+    def get_queryset(self):
+        queryset = super(PostList, self).get_queryset()
+        queryset = queryset.filter(global_post=True)
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super(PostList, self).get_context_data(**kwargs)
-        context['title'] = self.title or _('Page %d of Posts') % context['page_obj'].number
         context['first_page_href'] = reverse('home')
         context['page_prefix'] = reverse('blog_post_list')
         context['comments'] = Comment.most_recent(self.request.user, 10)
@@ -46,13 +78,6 @@ class PostList(ListView):
         context['problem_count'] = Problem.get_public_problems().count
         context['submission_count'] = lambda: Submission.objects.aggregate(max_id=Max('id'))['max_id'] or 0
         context['language_count'] = Language.objects.count
-
-        context['post_comment_counts'] = {
-            int(page[2:]): count for page, count in
-            Comment.objects
-                   .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
-                   .values_list('page').annotate(count=Count('page')).order_by()
-        }
 
         now = timezone.now()
 
@@ -129,3 +154,40 @@ class PostView(TitleMixin, CommentedDetailView):
         if not post.can_see(self.request.user):
             raise Http404()
         return post
+
+
+class BlogPostCreate(TitleMixin, CreateView):
+    template_name = 'blog/edit.html'
+    model = BlogPost
+    form_class = BlogPostForm
+
+    def get_title(self):
+        return _('Creating new blog post')
+
+    def get_content_title(self):
+        return _('Creating new blog post')
+
+    def form_valid(self, form):
+        self.get_object = post = form.save(commit=False)
+        post.publish_on = timezone.now()
+        post.save()  # Presave to initialize the object id before using Many-to-Many relationship.
+        post.authors.add(self.request.user.profile)
+        post.save()
+        return HttpResponseRedirect(post.get_absolute_url())
+
+
+class BlogPostEdit(BlogPostMixin, TitleMixin, UpdateView):
+    template_name = 'blog/edit.html'
+    model = BlogPost
+    form_class = BlogPostForm
+
+    def get_title(self):
+        return _('Updating blog post')
+
+    def get_content_title(self):
+        return _('Updating blog post')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['edit'] = True
+        return context

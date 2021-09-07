@@ -58,17 +58,21 @@ class BlogPostForm(ModelForm):
             # self.fields['authors'] does not exist when the user has only view permission on the model.
             self.fields['authors'].widget.can_add_related = False
 
+        self.fields['organization'].widget.can_add_related = False
+
     class Meta:
         widgets = {
             'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'content': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'summary': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
+            'organization': AdminHeavySelect2Widget(data_view='organization_select2', attr={'style': 'width: 100%'}),
         }
 
 
 class BlogPostAdmin(VersionAdmin):
     fieldsets = (
-        (None, {'fields': ('title', 'slug', 'authors', 'visible', 'sticky', 'publish_on')}),
+        (None, {'fields': ('title', 'slug', 'authors', 'organization', 'global_post',
+                           'visible', 'sticky', 'publish_on')}),
         (_('Content'), {'fields': ('content', 'og_image')}),
         (_('Summary'), {'classes': ('collapse',), 'fields': ('summary',)}),
     )
