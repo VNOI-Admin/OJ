@@ -115,6 +115,11 @@
                                 </a>
                             </div>
                         {% endif %}
+                        {% if perms.judge.edit_organization_post %}
+                            <div>
+                                <a href="{{ url('blog_post_create_organization', organization.id, organization.slug) }}">{{ _('Create blog post') }}</a>
+                            </div>
+                        {% endif %}
                         <div>
                             <a href="{{ url('edit_organization', organization.id, organization.slug) }}">{{ _('Edit organization') }}</a>
                         </div>

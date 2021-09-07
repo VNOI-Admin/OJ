@@ -26,9 +26,6 @@
                 {% if request.user.has_perm('judge.create_private_contest') %}
                     {{ make_tab('create', 'fa-plus', url('contest_create_organization', organization.id, organization.slug), _('Create new contest')) }}
                 {% endif %}
-                {% if request.user.has_perm('judge.edit_organization_post') %}
-                    {{ make_tab('create', 'fa-plus', url('blog_post_create_organization', organization.id, organization.slug), _('Create blog post')) }}
-                {% endif %}
             {% endif %}
         </ul>
     </div>
