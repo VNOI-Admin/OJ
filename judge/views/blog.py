@@ -207,3 +207,8 @@ class BlogPostEdit(BlogPostMixin, TitleMixin, UpdateView):
 
     def get_content_title(self):
         return _('Updating blog post')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['edit'] = True
+        return context

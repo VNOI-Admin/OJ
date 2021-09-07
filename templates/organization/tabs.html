@@ -17,6 +17,7 @@
             {{ make_tab('contest-list', 'fa-trophy', url('contest_list_organization', organization.pk, organization.slug), _('Contests list')) }}
             {{ make_tab('submission-list', 'fa-list', url('submission_list_organization', organization.pk, organization.slug), _('Submissions')) }}
         </ul>
+        <span class="spacer"></span>
         <ul>
             {% if organization.is_admin(request.profile) %}
                 {% if request.user.has_perm('judge.create_organization_problem') %}
