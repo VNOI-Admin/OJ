@@ -1,7 +1,7 @@
 import logging
 import os
 import shutil
-from datetime import datetime, timedelta
+from datetime import timedelta
 from operator import itemgetter
 from random import randrange
 
@@ -15,7 +15,7 @@ from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpRespon
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
 from django.urls import reverse
-from django.utils import translation
+from django.utils import timezone, translation
 from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
@@ -717,7 +717,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         problem.ac_rate = 0
         problem.user_count = 0
         problem.code = form.cleaned_data['code']
-        problem.date = datetime.now()
+        problem.date = timezone.now()
         with revisions.create_revision(atomic=True):
             problem.save()
             problem.authors.add(self.request.profile)
@@ -756,7 +756,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
         problem.authors.add(self.request.user.profile)
         problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
         problem.partial = True
-        problem.date = datetime.now()
+        problem.date = timezone.now()
         result = self.save_statement(form, problem)
         if result is not None:
             return result
@@ -785,7 +785,7 @@ class ProblemSuggest(ProblemCreate):
         problem.suggester = self.request.user.profile
         problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
         problem.partial = True
-        problem.date = datetime.now()
+        problem.date = timezone.now()
         result = self.save_statement(form, problem)
         if result is not None:
             return result
