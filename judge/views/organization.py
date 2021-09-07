@@ -19,12 +19,12 @@ from judge.forms import EditOrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, Problem, Profile
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
-from judge.views.blog import BlogPostCreate, CustomPostList
+from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
 from judge.views.submission import AllSubmissions
 
-__all__ = ['OrganizationList', 'OrganizationUsers', 'OrganizationMembershipChange',
+__all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
            'KickUserWidgetView']
@@ -375,7 +375,7 @@ class CustomAdminOrganizationMixin(CustomOrganizationMixin):
         return kwargs
 
 
-class OrganizationCustomPostList(CustomOrganizationMixin, CustomPostList):
+class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
     template_name = 'organization/home.html'
     # Need to set this to true so user can view the org's public
     # information like name, request join org, ...
@@ -406,7 +406,7 @@ class OrganizationCustomPostList(CustomOrganizationMixin, CustomPostList):
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
     def get_context_data(self, **kwargs):
-        context = super(OrganizationCustomPostList, self).get_context_data(**kwargs)
+        context = super(OrganizationHome, self).get_context_data(**kwargs)
         context['first_page_href'] = reverse('organization_home', args=[self.object.pk, self.object.slug])
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()

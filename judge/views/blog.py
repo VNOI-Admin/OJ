@@ -32,11 +32,10 @@ class BlogPostMixin(object):
         return post
 
 
-class PostList(ListView):
+class PostListBase(ListView):
     model = BlogPost
     paginate_by = 10
     context_object_name = 'posts'
-    template_name = 'blog/list.html'
     title = None
 
     def get_paginator(self, queryset, per_page, orphans=0,
@@ -45,12 +44,31 @@ class PostList(ListView):
                              orphans=orphans, allow_empty_first_page=allow_empty_first_page, **kwargs)
 
     def get_queryset(self):
-        return (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now(), global_post=True)
+        return (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
                 .order_by('-sticky', '-publish_on').prefetch_related('authors__user'))
 
     def get_context_data(self, **kwargs):
-        context = super(PostList, self).get_context_data(**kwargs)
+        context = super(PostListBase, self).get_context_data(**kwargs)
         context['title'] = self.title or _('Page %d of Posts') % context['page_obj'].number
+        context['post_comment_counts'] = {
+            int(page[2:]): count for page, count in
+            Comment.objects
+                   .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
+                   .values_list('page').annotate(count=Count('page')).order_by()
+        }
+        return context
+
+
+class PostList(PostListBase):
+    template_name = 'blog/list.html'
+
+    def get_queryset(self):
+        queryset = super(PostList, self).get_queryset()
+        queryset = queryset.filter(global_post=True)
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(PostList, self).get_context_data(**kwargs)
         context['first_page_href'] = reverse('home')
         context['page_prefix'] = reverse('blog_post_list')
         context['comments'] = Comment.most_recent(self.request.user, 10)
@@ -62,13 +80,6 @@ class PostList(ListView):
         context['problem_count'] = Problem.get_public_problems().count
         context['submission_count'] = lambda: Submission.objects.aggregate(max_id=Max('id'))['max_id'] or 0
         context['language_count'] = Language.objects.count
-
-        context['post_comment_counts'] = {
-            int(page[2:]): count for page, count in
-            Comment.objects
-                   .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
-                   .values_list('page').annotate(count=Count('page')).order_by()
-        }
 
         now = timezone.now()
 
@@ -121,36 +132,6 @@ class PostList(ListView):
                 .only('user', 'contribution_points', 'display_rank', 'rating')
                 .select_related('user')
                 [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
-
-
-# CustomPostList is similar to PostList, but without elements like open tickets or top pp users
-class CustomPostList(TitleMixin, ListView):
-    model = BlogPost
-    paginate_by = 10
-    context_object_name = 'posts'
-    title = None
-
-    def get_paginator(self, queryset, per_page, orphans=0,
-                      allow_empty_first_page=True, **kwargs):
-        return DiggPaginator(queryset, per_page, body=6, padding=2,
-                             orphans=orphans, allow_empty_first_page=allow_empty_first_page, **kwargs)
-
-    def get_queryset(self):
-        return (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
-                .order_by('-sticky', '-publish_on').prefetch_related('authors__user'))
-
-    def get_context_data(self, **kwargs):
-        context = super(CustomPostList, self).get_context_data(**kwargs)
-        context['title'] = self.title or _('Page %d of Posts') % context['page_obj'].number
-
-        context['post_comment_counts'] = {
-            int(page[2:]): count for page, count in
-            Comment.objects
-                   .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
-                   .values_list('page').annotate(count=Count('page')).order_by()
-        }
-
-        return context
 
 
 class PostView(TitleMixin, CommentedDetailView):

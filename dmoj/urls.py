@@ -270,7 +270,7 @@ urlpatterns = [
 
     url(r'^organizations/$', organization.OrganizationList.as_view(), name='organization_list'),
     url(r'^organization/(?P<pk>\d+)-(?P<slug>[\w-]*)', include([
-        url(r'^/', paged_list_view(organization.OrganizationCustomPostList, 'organization_home')),
+        url(r'^/', paged_list_view(organization.OrganizationHome, 'organization_home')),
         url(r'^/users$', organization.OrganizationUsers.as_view(), name='organization_users'),
         url(r'^/join$', organization.JoinOrganization.as_view(), name='join_organization'),
         url(r'^/leave$', organization.LeaveOrganization.as_view(), name='leave_organization'),
