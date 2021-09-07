@@ -393,6 +393,9 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
     def get_queryset(self):
         return self.get_normal_queryset()
 
+    def get_hot_problems(self):
+        return hot_problems(timedelta(days=1), settings.DMOJ_PROBLEM_HOT_PROBLEM_COUNT)
+
     def get_context_data(self, **kwargs):
         context = super(ProblemList, self).get_context_data(**kwargs)
         context['hide_solved'] = int(self.hide_solved)
@@ -406,11 +409,10 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         context['search_query'] = self.search_query
         context['completed_problem_ids'] = self.get_completed_problems()
         context['attempted_problems'] = self.get_attempted_problems()
-
-        context.update(self.get_sort_paginate_context())
-        context.update(self.get_sort_context())
-        context['hot_problems'] = hot_problems(timedelta(days=1), settings.DMOJ_PROBLEM_HOT_PROBLEM_COUNT)
+        context['hot_problems'] = self.get_hot_problems()
         context['point_start'], context['point_end'], context['point_values'] = self.get_noui_slider_points()
+        context.update(self.get_sort_context())
+        context.update(self.get_sort_paginate_context())
         return context
 
     def get_noui_slider_points(self):

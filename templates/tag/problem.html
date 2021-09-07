@@ -58,10 +58,6 @@
         .problem-info-entry {
             padding-top: 0.5em;
         }
-
-        .tag-tab {
-            color: green !important;
-        }
     </style>
 {% endblock %}
 
@@ -79,7 +75,7 @@
             <ul>
                 {% if request.user.is_authenticated and request.profile.allow_tagging %}
                     <li class="tab">
-                        <a href="{{ url('tagproblem_assign', problem.code) }}"><i class="tab-icon fa fa-plus tag-tab"></i>{{ _('Assign new tag') }}</a>
+                        <a href="{{ url('tagproblem_assign', problem.code) }}"><i class="tab-icon fa fa-plus"></i>{{ _('Assign new tag') }}</a>
                     </li>
                 {% endif %}
                 {% if request.user.is_superuser %}

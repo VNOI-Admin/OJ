@@ -2,9 +2,9 @@
 
 {% block tabs %}
     {% if request.user.has_perm('judge.add_problem') %}
-        {{ make_tab('create', 'fa-plus add-problem', url('problem_create'), _('Create new problem')) }}
+        {{ make_tab('create', 'fa-plus', url('problem_create'), _('Create new problem')) }}
     {% elif request.user.has_perm('judge.suggest_new_problem') %}
-        {{ make_tab('suggest', 'fa-plus add-problem', url('problem_suggest'), _('Suggest new problem')) }}
+        {{ make_tab('suggest', 'fa-plus', url('problem_suggest'), _('Suggest new problem')) }}
     {% endif %}
     {{ make_tab('list', 'fa-list', url('problem_list'), _('List')) }}
 

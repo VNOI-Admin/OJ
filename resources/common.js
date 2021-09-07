@@ -343,7 +343,7 @@ $.fn.textWidth = function () {
 $(function () {
     $('.tabs').each(function () {
         var $this = $(this), $h2 = $(this).find('h2'), $ul = $(this).find('ul');
-        var cutoff = ($h2.textWidth() || 400) + 20, handler;
+        var cutoff = ($h2.textWidth() || 0) + 20, handler;
         $ul.children().each(function () {
             cutoff += $(this).width();
         });

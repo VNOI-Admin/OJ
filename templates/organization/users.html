@@ -1,4 +1,5 @@
 {% extends "user/base-users.html" %}
+
 {% block users_media %}
     <style>
         .kick-form .button {
@@ -35,5 +36,11 @@
         });
     </script>
 {% endblock %}
+
+{% block title_row %}
+    {% set tab = 'users' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
 
 {% block users_table %}{% include "organization/users-table.html" %}{% endblock %}

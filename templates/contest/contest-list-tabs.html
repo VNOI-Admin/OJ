@@ -19,7 +19,7 @@
 
 {% block tabs %}
     {% if perms.judge.add_contest %}
-        {{ make_tab('new', 'fa-plus add-contest', url('contest_new'), _('Add new contest')) }}
+        {{ make_tab('new', 'fa-plus', url('contest_new'), _('Add new contest')) }}
     {% endif %}
     {{ make_tab('list', 'fa-list', url('contest_list'), _('List')) }}
     {{ make_tab('calendar', 'fa-calendar', url('contest_calendar', now.year, now.month), _('Calendar')) }}

@@ -1,6 +1,4 @@
 {% extends "base.html" %}
-{% block title_row %}{% endblock %}
-{% block title_ruler %}{% endblock %}
 
 {% block media %}
     {% include "blog/media-css.html" %}
@@ -54,6 +52,12 @@
     </script>
 {% endblock %}
 
+{% block title_row %}
+    {% set tab = 'home' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
 {% block body %}
     {% block before_posts %}{% endblock %}
     <div id="blog-container">
@@ -77,18 +81,6 @@
                                 {% csrf_token %}
                                 <input type="submit" class="unselectable button full leave-organization" value="{{ _('Leave organization') }}">
                             </form>
-                            <br>
-
-                            <div><a href="{{ url('problem_list_organization', organization.id, organization.slug) }}">{{ _("Organization's problems") }}</a></div>
-                            <div><a href="{{ url('contest_list_organization', organization.id, organization.slug) }}">{{ _("Organization's contests") }}</a></div>
-                            <br>
-                            {% if organization.is_admin(request.profile) and request.user.has_perm('judge.create_organization_problem') %}
-                                <div><a href="{{ url('problem_create_organization', organization.id, organization.slug) }}">{{ _('Create Problem') }}</a></div>
-                            {% endif %}
-                            {% if organization.is_admin(request.profile) and request.user.has_perm('judge.create_private_contest') %}
-                            <div><a href="{{ url('contest_create_organization', organization.id, organization.slug) }}">{{ _('Create Contest') }}</a></div>
-                            {% endif %}
-
                         {% elif organization.is_open %}
                             <form method="post" action="{{ url('join_organization', organization.id, organization.slug) }}">
                                 {% csrf_token %}
@@ -101,8 +93,6 @@
                     {% endif %}
                     <br>
                     {% if can_edit %}
-                        <div><a href="{{ url('edit_organization', organization.id, organization.slug) }}">{{ _('Edit organization') }}</a></div>
-
                         {% if not organization.is_open %}
                             <div>
                                 <a href="{{ url('organization_requests_pending', organization.id, organization.slug) }}">
@@ -111,17 +101,15 @@
                                 </a>
                             </div>
                         {% endif %}
+                        <div>
+                            <a href="{{ url('edit_organization', organization.id, organization.slug) }}">{{ _('Edit organization') }}</a>
+                        </div>
                     {% endif %}
-
                     {% if perms.judge.change_organization %}
                         <div>
                             <a href="{{ url('admin:judge_organization_change', organization.id) }}">{{ _('Admin organization') }}</a>
                         </div>
                     {% endif %}
-
-                    <div>
-                        <a href="{{ organization.get_users_url() }}">{{ _('View members') }}</a>
-                    </div>
                 </div>
             </div>
 
@@ -169,7 +157,6 @@
                     </div>
                 </div>
             {% endif %}
-           
         </div>
     </div>
 {% endblock %}
