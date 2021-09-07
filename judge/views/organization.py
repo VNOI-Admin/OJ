@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django import forms
 from django.conf import settings
 from django.contrib import messages
@@ -509,7 +507,7 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
         problem.is_public = True
         problem.is_organization_private = True
         problem.organizations.add(self.organization)
-        problem.date = datetime.now()
+        problem.date = timezone.now()
         result = self.save_statement(form, problem)
         if result is not None:
             return result
