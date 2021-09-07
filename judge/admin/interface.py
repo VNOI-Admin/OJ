@@ -58,6 +58,8 @@ class BlogPostForm(ModelForm):
             # self.fields['authors'] does not exist when the user has only view permission on the model.
             self.fields['authors'].widget.can_add_related = False
 
+        self.fields['organization'].widget.can_add_related = False
+
     class Meta:
         widgets = {
             'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
