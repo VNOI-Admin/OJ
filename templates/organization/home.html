@@ -70,6 +70,18 @@
                     {% endcache %}
                 </div>
             </div>
+            {% if posts %}
+                <br>
+                <h3>{{ _('News') }} <i class="fa fa-terminal"></i></h3>
+                <div class="sidebox-content" style="border: unset;">
+                    {% for post in posts %}
+                        {% include "blog/blog-post.html" %}
+                    {% endfor %}
+                </div>
+                {% if page_obj.has_other_pages() %}
+                    <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+                {% endif %}
+            {% endif %}
         </div>
         <div class="blog-sidebar">
             <div class="blog-sidebox sidebox">
@@ -99,6 +111,11 @@
                                     {{ _('View requests') }}
                                     {% if num_requests %}<span class="badge">{{ num_requests }}</span>{% endif %}
                                 </a>
+                            </div>
+                        {% endif %}
+                        {% if perms.judge.edit_organization_post %}
+                            <div>
+                                <a href="{{ url('blog_post_create_organization', organization.id, organization.slug) }}">{{ _('Create blog post') }}</a>
                             </div>
                         {% endif %}
                         <div>

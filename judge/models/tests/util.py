@@ -67,6 +67,7 @@ class CreateBlogPost(CreateModel):
         return {
             'slug': required_kwargs['title'],
             'publish_on': _now - timezone.timedelta(days=100),
+            'global_post': True,
         }
 
 
@@ -293,7 +294,7 @@ class CommonDataMixin:
             'staff_organization_admin': create_user(
                 username='staff_organization_admin',
                 is_staff=True,
-                user_permissions=('organization_admin',),
+                user_permissions=('organization_admin', 'edit_organization_post'),
             ),
             'normal': create_user(
                 username='normal',

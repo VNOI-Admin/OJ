@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script>
+        // This code activates flatpickr on fields with the 'datetimefield' class when the document has loaded
+        window.addEventListener("DOMContentLoaded", function () {
+            flatpickr(".datetimefield", {
+                enableTime: true,
+                enableSeconds: true,
+                dateFormat: "Y-m-d H:i:S",
+                time_24hr: true,
+            });
+        });
+    </script>
+    {{ form.media.js }}
+{% endblock %}
+
+{% block media %}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    {{ form.media.css }}
+    <style>
+        .helptext {
+            font-size: 13px;
+            color: #999;
+            border-width: 0 0 1px 0;
+        }
+        .helptext::before {
+            font-family: FontAwesome;
+            font-style: normal;
+            font-weight: normal;
+            line-height: 1;
+            content: "\f05a";
+            padding-right: 5px;
+            font-size: 14px;
+        }
+        .django-as-table {
+            border-collapse:collapse;
+        }
+        .django-as-table th, td {
+            padding-bottom: 10px;
+        }
+        .django-as-table th {
+            max-width: 10em;
+            width: 10em;
+        }
+        .errorlist {
+            background: rgba(255, 0, 0, 0.3);
+            border: 3px dashed red;
+            border-right: none;
+            border-left: solid red;
+            padding: 0 1em 0.1em 2em;
+            margin: 0.3em 0 0.5em 0;
+        }
+        .errornote {
+            border: 3px dashed #ffc000;
+            border-left: solid #ffc000;
+            padding: 0.7em 2em;
+            margin: 0 0 8px;
+            font-size: 13px !important;
+            font-weight: 400;
+        }
+        .required th::after {
+            content: "*";
+            color: red;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div>
+    {% if edit and request.user.is_staff %}
+        <div class="alert alert-warning alert-dismissable">
+            <a class="close">x</a>
+            <a href="{{ url('admin:judge_blogpost_change', object.id) }}">{{ _('Edit blog post in admin panel for more options') }}</a>
+        </div>
+    {% endif %}
+    <form action="" method="post" class="form-area" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <hr>
+        <div style="display: flex; justify-content: flex-end;">
+            <input type="submit" value="{% if edit %} {{ _('Update') }} {% else %} {{ _('Create') }} {% endif %}" class="button">
+        </div>
+    </form>
+</div>
+{% endblock %}

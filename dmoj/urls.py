@@ -270,7 +270,7 @@ urlpatterns = [
 
     url(r'^organizations/$', organization.OrganizationList.as_view(), name='organization_list'),
     url(r'^organization/(?P<pk>\d+)-(?P<slug>[\w-]*)', include([
-        url(r'^$', organization.OrganizationHome.as_view(), name='organization_home'),
+        url(r'^/', paged_list_view(organization.OrganizationHome, 'organization_home')),
         url(r'^/users$', organization.OrganizationUsers.as_view(), name='organization_users'),
         url(r'^/join$', organization.JoinOrganization.as_view(), name='join_organization'),
         url(r'^/leave$', organization.LeaveOrganization.as_view(), name='leave_organization'),
@@ -293,6 +293,10 @@ urlpatterns = [
                 name='organization_requests_approved'),
             url(r'^rejected$', organization.OrganizationRequestLog.as_view(states=('R',), tab='rejected'),
                 name='organization_requests_rejected'),
+        ])),
+
+        url(r'^/post/', include([
+            url('^new$', organization.BlogPostCreateOrganization.as_view(), name='blog_post_create_organization'),
         ])),
 
         url(r'^/$', lambda _, pk, slug: HttpResponsePermanentRedirect(reverse('organization_home', args=[pk, slug]))),
@@ -328,8 +332,14 @@ urlpatterns = [
         ])),
     ])),
 
-    url(r'^blog/', paged_list_view(blog.PostList, 'blog_post_list')),
-    url(r'^post/(?P<id>\d+)-(?P<slug>.*)$', blog.PostView.as_view(), name='blog_post'),
+    url(r'^post/', include([
+        url(r'^', paged_list_view(blog.PostList, 'blog_post_list')),
+        url(r'^(?P<id>\d+)-(?P<slug>.*)/', include([
+            url(r'^$', blog.PostView.as_view(), name='blog_post'),
+            url(r'^edit$', blog.BlogPostEdit.as_view(), name='blog_post_edit'),
+        ])),
+        url(r'^new$', blog.BlogPostCreate.as_view(), name='blog_post_new'),
+    ])),
 
     url(r'^license/(?P<key>[-\w.]+)$', license.LicenseDetail.as_view(), name='license'),
 
