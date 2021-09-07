@@ -99,10 +99,10 @@ class BlogPost(models.Model):
             return False
         if user.has_perm('judge.edit_all_post'):
             return True
-        if self.organization and self.organization.admins.filter(user_id=user.pk).exists() and \
+        if self.organization:
+            return self.organization.admins.filter(user_id=user.pk).exists() and \
                 user.has_perm('judge.edit_organization_post') and \
-                self.authors.filter(id=user.profile.id).exists():
-            return True
+                self.authors.filter(id=user.profile.id).exists()
         return user.has_perm('judge.change_blogpost') and self.authors.filter(id=user.profile.id).exists()
 
     class Meta:
