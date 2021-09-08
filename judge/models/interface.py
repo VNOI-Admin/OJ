@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
-from judge.models.profile import Profile
+from judge.models.profile import Organization, Profile
 
 __all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost']
 
@@ -73,6 +73,11 @@ class BlogPost(models.Model):
     summary = models.TextField(verbose_name=_('post summary'), blank=True)
     og_image = models.CharField(verbose_name=_('openGraph image'), default='', max_length=150, blank=True)
 
+    global_post = models.BooleanField(verbose_name=_('global post'), default=False,
+                                      help_text=_('Display this blog post at the homepage.'))
+    organization = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name=_('organization'),
+                                     related_name='post_author_org', blank=True, null=True, db_index=True)
+
     def __str__(self):
         return self.title
 
@@ -81,7 +86,12 @@ class BlogPost(models.Model):
 
     def can_see(self, user):
         if self.visible and self.publish_on <= timezone.now():
-            return True
+            if self.global_post:
+                return True
+            if not user.is_authenticated:
+                return False
+            if self.organization and user.profile.organizations.filter(id=self.organization.pk).exists():
+                return True
         return self.is_editable_by(user)
 
     def is_editable_by(self, user):
@@ -89,11 +99,16 @@ class BlogPost(models.Model):
             return False
         if user.has_perm('judge.edit_all_post'):
             return True
+        if self.organization:
+            return self.organization.admins.filter(user_id=user.pk).exists() and \
+                user.has_perm('judge.edit_organization_post') and \
+                self.authors.filter(id=user.profile.id).exists()
         return user.has_perm('judge.change_blogpost') and self.authors.filter(id=user.profile.id).exists()
 
     class Meta:
         permissions = (
             ('edit_all_post', _('Edit all posts')),
+            ('edit_organization_post', _('Edit organization posts')),
         )
         verbose_name = _('blog post')
         verbose_name_plural = _('blog posts')

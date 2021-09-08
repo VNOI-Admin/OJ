@@ -141,6 +141,7 @@ input {
     right: 0;
     display: block;
     font-size: 12px;
+    font-weight: bold;
     color: #767676;
     cursor: pointer;
     background-color: #FFF;
@@ -179,6 +180,10 @@ input {
         .tab-icon {
             padding-right: 0.3em;
             color: gray;
+
+            &.fa-plus {
+                color: green !important;
+            }
         }
 
         a, span {

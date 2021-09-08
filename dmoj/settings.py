@@ -61,6 +61,15 @@ VNOJ_CP_PROBLEM = 20 # Each suggested problem equal 20 CP
 
 VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
 
+VNOJ_DISPLAY_RANKS = (
+    ('user', _('Normal User')),
+    ('setter', _('Problem Setter')),
+    ('daor', _('Bedao Team')),
+    ('staff', _('Staff')),
+    ('banned', _('Banned User')),
+    ('admin', _('Admin')),
+)
+
 # List of online judge preset for OJ API
 OJ_PROBLEM_PRESET = [
     {
@@ -165,6 +174,9 @@ DMOJ_STATS_SUBMISSION_RESULT_COLORS = {
     'ERR': '#ffa71c',
 }
 DMOJ_API_PAGE_SIZE = 1000
+
+DMOJ_PASSWORD_RESET_LIMIT_WINDOW = 3600
+DMOJ_PASSWORD_RESET_LIMIT_COUNT = 10
 
 MARKDOWN_STYLES = {}
 MARKDOWN_DEFAULT_STYLE = {}

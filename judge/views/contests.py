@@ -270,8 +270,24 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
                 p.ac_rate = contest_p['user_count'] / contest_p['submission_count'] * 100
             else:
                 p.ac_rate = 0
-        context['contest_has_public_editorials'] = any(
-            problem.is_public and problem.has_public_editorial for problem in context['contest_problems']
+
+        context['metadata'] = {
+            'has_public_editorials': any(
+                problem.is_public and problem.has_public_editorial for problem in context['contest_problems']
+            ),
+        }
+        context['metadata'].update(
+            **self.object.contest_problems
+            .annotate(
+                partials_enabled=F('partial').bitand(F('problem__partial')),
+                pretests_enabled=F('is_pretested').bitand(F('contest__run_pretests_only')),
+            )
+            .aggregate(
+                has_partials=Sum('partials_enabled'),
+                has_pretests=Sum('pretests_enabled'),
+                has_submission_cap=Sum('max_submissions'),
+                problem_count=Count('id'),
+            ),
         )
 
         clarifications = ProblemClarification.objects.filter(problem__in=self.object.problems.all())
@@ -651,7 +667,8 @@ def base_contest_ranking_list(contest, problems, queryset):
 def base_contest_ranking_queryset(contest):
     return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
         .prefetch_related('user__organizations') \
-        .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker')
+        .annotate(submission_count=Count('submission')) \
+        .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker', '-submission_count')
 
 
 def contest_ranking_list(contest, problems):

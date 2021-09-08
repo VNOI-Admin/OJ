@@ -26,10 +26,12 @@
             <td>{{ object.time|date(_("N j, Y, g:i a")) }}</td>
         </tr>
         <tr>
-            <th colspan="2">{{ _('Reason:') }}</th>
+            <th>{{ _('State:') }}</th>
+            <td>{{ object.get_state_display() }}</td>
         </tr>
         <tr>
-            <td colspan="2" style="padding-left: 2em">{{ object.reason }}</td>
+            <th>{{ _('Reason:') }}</th>
+            <td>{{ object.reason|linebreaks }}</td>
         </tr>
     </table>
 {% endblock %}

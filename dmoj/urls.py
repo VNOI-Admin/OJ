@@ -59,7 +59,7 @@ register_patterns = [
         template_name='registration/password_change_done.html',
         title=gettext_lazy('Password change successful'),
     ), name='password_change_done'),
-    url(r'^password/reset/$', auth_views.PasswordResetView.as_view(
+    url(r'^password/reset/$', user.CustomPasswordResetView.as_view(
         template_name='registration/password_reset.html',
         html_email_template_name='registration/password_reset_email.html',
         email_template_name='registration/password_reset_email.txt',
@@ -271,7 +271,7 @@ urlpatterns = [
 
     url(r'^organizations/$', organization.OrganizationList.as_view(), name='organization_list'),
     url(r'^organization/(?P<pk>\d+)-(?P<slug>[\w-]*)', include([
-        url(r'^$', organization.OrganizationHome.as_view(), name='organization_home'),
+        url(r'^/', paged_list_view(organization.OrganizationHome, 'organization_home')),
         url(r'^/users$', organization.OrganizationUsers.as_view(), name='organization_users'),
         url(r'^/join$', organization.JoinOrganization.as_view(), name='join_organization'),
         url(r'^/leave$', organization.LeaveOrganization.as_view(), name='leave_organization'),
@@ -279,6 +279,8 @@ urlpatterns = [
         url(r'^/kick$', organization.KickUserWidgetView.as_view(), name='organization_user_kick'),
         url(r'^/problems$', organization.ProblemListOrganization.as_view(), name='problem_list_organization'),
         url(r'^/contests$', organization.ContestListOrganization.as_view(), name='contest_list_organization'),
+        url(r'^/submissions/',
+            paged_list_view(organization.SubmissionListOrganization, 'submission_list_organization')),
         url(r'^/problem-create$', organization.ProblemCreateOrganization.as_view(), name='problem_create_organization'),
         url(r'^/contest-create$', organization.ContestCreateOrganization.as_view(), name='contest_create_organization'),
 
@@ -292,6 +294,10 @@ urlpatterns = [
                 name='organization_requests_approved'),
             url(r'^rejected$', organization.OrganizationRequestLog.as_view(states=('R',), tab='rejected'),
                 name='organization_requests_rejected'),
+        ])),
+
+        url(r'^/post/', include([
+            url('^new$', organization.BlogPostCreateOrganization.as_view(), name='blog_post_create_organization'),
         ])),
 
         url(r'^/$', lambda _, pk, slug: HttpResponsePermanentRedirect(reverse('organization_home', args=[pk, slug]))),
@@ -327,8 +333,14 @@ urlpatterns = [
         ])),
     ])),
 
-    url(r'^blog/', paged_list_view(blog.PostList, 'blog_post_list')),
-    url(r'^post/(?P<id>\d+)-(?P<slug>.*)$', blog.PostView.as_view(), name='blog_post'),
+    url(r'^post/', include([
+        url(r'^', paged_list_view(blog.PostList, 'blog_post_list')),
+        url(r'^(?P<id>\d+)-(?P<slug>.*)/', include([
+            url(r'^$', blog.PostView.as_view(), name='blog_post'),
+            url(r'^edit$', blog.BlogPostEdit.as_view(), name='blog_post_edit'),
+        ])),
+        url(r'^new$', blog.BlogPostCreate.as_view(), name='blog_post_new'),
+    ])),
 
     url(r'^license/(?P<key>[-\w.]+)$', license.LicenseDetail.as_view(), name='license'),
 

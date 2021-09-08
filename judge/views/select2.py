@@ -47,6 +47,21 @@ class Select2View(BaseListView):
 
 
 class UserSelect2View(Select2View):
+    def get(self, request, *args, **kwargs):
+        if 'multiple_terms[]' not in request.GET:
+            return super().get(request, args, kwargs)
+
+        terms = request.GET.getlist('multiple_terms[]')
+        qs = Profile.objects.filter(user__username__in=terms).annotate(username=F('user__username')).only('id')
+
+        return JsonResponse({
+            'results': [
+                {
+                    'text': smart_text(self.get_name(obj)),
+                    'id': obj.pk,
+                } for obj in qs],
+        })
+
     def get_queryset(self):
         return _get_user_queryset(self.term).annotate(username=F('user__username')).only('id')
 
@@ -55,6 +70,24 @@ class UserSelect2View(Select2View):
 
 
 class OrganizationUserSelect2View(Select2View):
+    def get(self, request, *args, **kwargs):
+        if 'multiple_terms[]' not in request.GET:
+            return super().get(request, args, kwargs)
+
+        terms = request.GET.getlist('multiple_terms[]')
+        qs = get_object_or_404(Organization, pk=self.org_pk).members \
+            .filter(user__username__in=terms) \
+            .annotate(username=F('user__username'), name=F('user__first_name')) \
+            .only('id')
+
+        return JsonResponse({
+            'results': [
+                {
+                    'text': smart_text(self.get_name(obj)),
+                    'id': obj.pk,
+                } for obj in qs],
+        })
+
     def dispatch(self, request, *args, **kwargs):
         if 'pk' not in kwargs:
             raise ImproperlyConfigured('Must pass a pk')

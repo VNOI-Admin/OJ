@@ -3,12 +3,34 @@
     font-weight: bold !important;
 }
 
-.setter a, .setter {
+.admin a::before {
+    content: "💪";
+}
+
+.banned a, .banned {
+    color: black !important;
+    text-decoration: line-through !important;
+}
+
+.banned a::before {
+    content: "🚫";
+}
+
+.staff a, .staff {
+    color: #ff888a !important;
+    font-weight: bold !important;
+}
+
+.staff a::before {
+    content: "🔥";
+}
+
+.daor a, .daor {
     color: #ff0066 !important;
     font-weight: bold !important;
 }
 
-.setter a::before {
+.daor a::before {
     content: "🌸";
 }
 
@@ -34,39 +56,47 @@ svg.rate-box {
     }
 
     &.rate-newbie {
-        @include rate-svg-color(#999);
+        @include rate-svg-color(#808080);
     }
 
-    &.rate-amateur {
-        @include rate-svg-color(#00a900);
+    &.rate-pupil {
+        @include rate-svg-color(#008000);
+    }
+
+    &.rate-specialist {
+        @include rate-svg-color(#03A89E);
     }
 
     &.rate-expert {
-        @include rate-svg-color(#66f);
+        @include rate-svg-color(#0000FF);
     }
 
     &.rate-candidate-master {
-        @include rate-svg-color(#f6f);
+        @include rate-svg-color(#AA00AA);
     }
 
-    &.rate-master {
-        @include rate-svg-color(#dc0);
+    &.rate-master, &.rate-international-master {
+        @include rate-svg-color(#FF8C00);
     }
 
-    &.rate-grandmaster, &.rate-target {
-        @include rate-svg-color(#e00);
+    &.rate-grandmaster, &.rate-international-grandmaster, &.rate-legendary-grandmaster {
+        @include rate-svg-color(#FF0000);
     }
 
     &.rate-target {
         circle:last-child {
             stroke: none;
-            fill: #e00;
+            fill: #FF0000;
         }
     }
 }
 
 .rating {
     font-weight: bold;
+
+    a {
+        display: inline-block;
+    }
 }
 
 .rate-none, .rate-none a {
@@ -75,27 +105,38 @@ svg.rate-box {
 }
 
 .rate-newbie, .rate-newbie a {
-    color: #999;
+    color: #808080;
 }
 
-.rate-amateur, .rate-amateur a {
-    color: #00a900;
+.rate-pupil, .rate-pupil a {
+    color: #008000;
+}
+
+.rate-specialist, .rate-specialist a {
+    color: #03A89E;
 }
 
 .rate-expert, .rate-expert a {
-    color: blue;
+    color: #0000FF;
 }
 
 .rate-candidate-master, .rate-candidate-master a {
-    color: purple;
+    color: #AA00AA;
 }
 
-.rate-master, .rate-master a {
-    color: #ffb100;
+.rate-master, .rate-master a,
+.rate-international-master, .rate-international-master a {
+    color: #FF8C00;
 }
 
-.rate-grandmaster, .rate-grandmaster a, .rate-target, .rate-target a {
-    color: #e00;
+.rate-grandmaster, .rate-grandmaster a,
+.rate-international-grandmaster, .rate-international-grandmaster a,
+.rate-legendary-grandmaster, .rate-legendary-grandmaster a {
+    color: #FF0000;
+}
+
+.rate-legendary-grandmaster a::first-letter {
+    color: black;
 }
 
 .rate-group {

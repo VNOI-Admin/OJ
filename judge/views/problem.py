@@ -1,7 +1,7 @@
 import logging
 import os
 import shutil
-from datetime import datetime, timedelta
+from datetime import timedelta
 from operator import itemgetter
 from random import randrange
 
@@ -15,7 +15,7 @@ from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpRespon
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
 from django.urls import reverse
-from django.utils import translation
+from django.utils import timezone, translation
 from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
@@ -393,6 +393,9 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
     def get_queryset(self):
         return self.get_normal_queryset()
 
+    def get_hot_problems(self):
+        return hot_problems(timedelta(days=1), settings.DMOJ_PROBLEM_HOT_PROBLEM_COUNT)
+
     def get_context_data(self, **kwargs):
         context = super(ProblemList, self).get_context_data(**kwargs)
         context['hide_solved'] = int(self.hide_solved)
@@ -406,11 +409,10 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         context['search_query'] = self.search_query
         context['completed_problem_ids'] = self.get_completed_problems()
         context['attempted_problems'] = self.get_attempted_problems()
-
-        context.update(self.get_sort_paginate_context())
-        context.update(self.get_sort_context())
-        context['hot_problems'] = hot_problems(timedelta(days=1), settings.DMOJ_PROBLEM_HOT_PROBLEM_COUNT)
+        context['hot_problems'] = self.get_hot_problems()
         context['point_start'], context['point_end'], context['point_values'] = self.get_noui_slider_points()
+        context.update(self.get_sort_context())
+        context.update(self.get_sort_paginate_context())
         return context
 
     def get_noui_slider_points(self):
@@ -517,6 +519,7 @@ class RandomProblem(ProblemList):
 
 
 user_logger = logging.getLogger('judge.user')
+user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
 
 
 class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFormView):
@@ -654,6 +657,18 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         self.new_submission.source = source
         self.new_submission.judge(force_judge=True, judge_id=form.cleaned_data['judge'])
 
+        # In contest mode, we should log the ip
+        if settings.VNOJ_OFFICIAL_CONTEST_MODE:
+            ip = self.request.META['REMOTE_ADDR']
+            # I didn't log the timestamp here because
+            # the logger can handle it.
+            user_submit_ip_logger.info(
+                '%s,%s,%s',
+                self.request.user.username,
+                ip,
+                self.new_submission.problem.code,
+            )
+
         return super().form_valid(form)
 
     def get_context_data(self, **kwargs):
@@ -715,7 +730,8 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         problem.ac_rate = 0
         problem.user_count = 0
         problem.code = form.cleaned_data['code']
-        problem.date = datetime.now()
+        problem.date = timezone.now()
+
         with revisions.create_revision(atomic=True):
             problem.save()
             problem.authors.add(self.request.profile)
@@ -752,9 +768,9 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     def form_valid(self, form):
         self.object = problem = form.save()
         problem.authors.add(self.request.user.profile)
-        problem.allowed_languages.set(Language.objects.all())
+        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
         problem.partial = True
-        problem.date = datetime.now()
+        problem.date = timezone.now()
         result = self.save_statement(form, problem)
         if result is not None:
             return result
@@ -782,8 +798,9 @@ class ProblemSuggest(ProblemCreate):
         self.object = problem = form.save()
         problem.suggester = self.request.user.profile
         problem.allowed_languages.set(Language.objects.all())
-        problem.date = datetime.now()
+        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
         problem.partial = True
+        problem.date = timezone.now()
         result = self.save_statement(form, problem)
         if result is not None:
             return result

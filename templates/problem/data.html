@@ -143,6 +143,23 @@
                 }).change();
             })();
 
+            var $grader = $('#id_problem-data-grader');
+            var $custom_grader_file = $('#id_problem-data-custom_grader');
+            var $custom_header_file = $('#id_problem-data-custom_header');
+            var $grader_args = $('#id_problem-data-grader_args');
+
+            var $tr_custom_grader_file = $custom_grader_file.parent().parent();
+            var $tr_custom_header_file = $custom_header_file.parent().parent();
+            var $tr_grader_args = $grader_args.parent().parent();
+
+            $grader.change(function () {
+                $tr_custom_grader_file.toggle(!$grader.val().startsWith('standard') &&
+                                              !$grader.val().startsWith('output_only') &&
+                                              !!$grader.val());
+                $tr_custom_header_file.toggle($grader.val().startsWith('signature'));
+                $tr_grader_args.toggle($grader.val().startsWith('signature'));
+            }).change();
+
             $td = $checker.parent();
             var $sample = $("<a/>",{
                 text: "{{_('Instruction')}}",
@@ -269,22 +286,25 @@
 
             function fill_testcases() {
                 var inFiles = [], outFiles = [];
-                var inputExts = [".in", ".inp"];
-                var outputExts = [".out", ".ou", ".ans", ".ok"];
+                var input_re = new RegExp(/^(?=.*?\.in|in).*?(?:(?:^|\W)(\d+)[^\d\s]+)?(\d+)[^\d\s]*$/);
+                var output_re = new RegExp(/^(?=.*?\.out|.*?\.ok|.*?\.ans|out|ok|ans).*?(?:(?:^|\W)(\d+)[^\d\s]+)?(\d+)[^\d\s]*$/);
                 for (var i = 0; i < window.valid_files.length; i++) {
-                    if (inputExts.some(ext => window.valid_files[i].toLowerCase().endsWith(ext))) {
+                    if (input_re.test(window.valid_files[i].toLowerCase().replace('/', '.'))) {
                         inFiles.push(window.valid_files[i]);
                     }
-                    if (outputExts.some(ext => window.valid_files[i].toLowerCase().endsWith(ext))) {
+                    if (output_re.test(window.valid_files[i].toLowerCase().replace('/', '.'))) {
                         outFiles.push(window.valid_files[i]);
                     }
                 }
                 if (inFiles.length == 0) {
-                    alert("{{_('No input/output files. Make sure your files\' suffices are .in(p)/.out/.ans/.ok')}}");
+                    alert("{{_('No input/output files. Make sure your files are following themis/cms test format')}}");
                     return false;
                 }
                 if (inFiles.length != outFiles.length) {
-                    alert(`{{_('The number of input files (${inFiles.length}) do not match the number of output files (${outFiles.length})!')}}`);
+                    s = `{{_('The number of input files (${inFiles.length}) do not match the number of output files (${outFiles.length})!')}}`
+                    s = s + `Input: ${inFiles}\n=====================\n`
+                    s = s + `Output: ${outFiles}\n`
+                    alert(s);
                     return false;
                 }
                 // add boxes
@@ -302,6 +322,7 @@
                 for (i = 0; i < inFiles.length; i++) {
                     $("#id_cases-" + i + "-points").val("1").change();
                 }
+                $("#fill-test-case-noti").show();
                 return false;
             };
 
@@ -472,6 +493,16 @@
         <table class="table">
             {{ data_form.as_table() }}
         </table>
+        <div class="alert alert-warning alert-dismissable" id="fill-test-case-noti" style="display: none;">
+            <a class="close">x</a>
+            <b>{{ _('Test cases have been filled automatically!') }}</b>
+            <br>
+            {%- trans -%}
+                Test cases have been filled automatically and <strong>not saved yet</strong>.
+                <br>
+                Please modify the table below if needed and press the `Apply` button to save!
+            {%- endtrans -%}
+        </div>
         <table id="case-table" class="table">
             <thead>
             <tr>

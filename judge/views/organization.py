@@ -1,15 +1,14 @@
-from datetime import datetime
-
 from django import forms
 from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ungettext
 from django.views.generic import DetailView, FormView, ListView, UpdateView, View
@@ -17,11 +16,13 @@ from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateR
 from reversion import revisions
 
 from judge.forms import EditOrganizationForm
-from judge.models import Contest, Language, Organization, OrganizationRequest, Problem, Profile
+from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, Problem, Profile
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
+from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
+from judge.views.submission import AllSubmissions
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
@@ -76,30 +77,6 @@ class OrganizationList(TitleMixin, ListView):
     title = gettext_lazy('Organizations')
 
 
-class OrganizationHome(OrganizationDetailView):
-    template_name = 'organization/home.html'
-
-    def get_context_data(self, **kwargs):
-        context = super(OrganizationHome, self).get_context_data(**kwargs)
-        context['title'] = self.object.name
-        context['can_edit'] = self.can_edit_organization()
-        context['is_member'] = False
-
-        if self.request.profile in self.object:
-            context['is_member'] = True
-            context['new_problems'] = Problem.objects.filter(
-                is_public=True, is_organization_private=True,
-                organizations=self.object) \
-                .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
-
-            context['new_contests'] = Contest.objects.filter(
-                is_visible=True, is_organization_private=True,
-                organizations=self.object) \
-                .order_by('-end_time', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
-
-        return context
-
-
 class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
     template_name = 'organization/users.html'
     all_sorts = frozenset(('points', 'problem_count', 'rating', 'performance_points'))
@@ -108,7 +85,7 @@ class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationUsers, self).get_context_data(**kwargs)
-        context['title'] = _('%s Members') % self.object.name
+        context['title'] = self.object.name
         context['users'] = \
             ranker(self.object.members.filter(is_unlisted=False).order_by(self.order)
                    .select_related('user').defer('about', 'user_script', 'notes'))
@@ -352,8 +329,13 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 # However, I need to write a new class because the
 # current mixin is for the DetailView.
 class CustomOrganizationMixin(object):
+    # If true, all user can view the current page
+    # event they are not in the org
+    allow_all_users = False
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['organization'] = self.organization
         context['logo_override_image'] = self.organization.logo_override_image
         context['meta_description'] = self.organization.about[:settings.DESCRIPTION_MAX_LENGTH]
         return context
@@ -362,7 +344,8 @@ class CustomOrganizationMixin(object):
         if 'pk' not in kwargs:
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
-        if self.request.profile not in self.organization:
+        self.object = self.organization
+        if not self.allow_all_users and self.request.profile not in self.organization:
             return generic_message(request,
                                    _('Cannot view organization\'s private data'),
                                    _('You must join the organization to view its private data.'))
@@ -392,47 +375,117 @@ class CustomAdminOrganizationMixin(CustomOrganizationMixin):
         return kwargs
 
 
+class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
+    template_name = 'organization/home.html'
+    # Need to set this to true so user can view the org's public
+    # information like name, request join org, ...
+    # However, they cannot see the org blog
+    allow_all_users = True
+
+    def get_content_title(self):
+        return format_html(_(u'<a href="{1}">{0}</a> Blog Post'), self.organization.name,
+                           reverse('organization_home', args=[self.organization.pk, self.organization.slug]))
+
+    def get_queryset(self):
+        queryset = BlogPost.objects.filter(organization=self.organization,
+                                           publish_on__lte=timezone.now())
+
+        if not self.can_edit_organization():
+            if self.request.profile in self.object:
+                # Normal user can only view public posts
+                queryset = queryset.filter(visible=True)
+            else:
+                # User cannot view organization blog
+                # if they are not in the org
+                # event if the org is public
+                queryset = BlogPost.objects.none()
+        else:
+            # Org admin can view public posts & their own posts
+            queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
+
+        return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
+
+    def get_context_data(self, **kwargs):
+        context = super(OrganizationHome, self).get_context_data(**kwargs)
+        context['first_page_href'] = reverse('organization_home', args=[self.object.pk, self.object.slug])
+        context['title'] = self.object.name
+        context['can_edit'] = self.can_edit_organization()
+
+        context['post_comment_counts'] = {
+            int(page[2:]): count for page, count in
+            Comment.objects
+                   .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
+                   .values_list('page').annotate(count=Count('page')).order_by()
+        }
+
+        if not self.object.is_open:
+            context['num_requests'] = OrganizationRequest.objects.filter(
+                state='P',
+                organization=self.object).count()
+
+        if self.request.profile in self.object:
+            context['is_member'] = True
+            context['new_problems'] = Problem.objects.filter(
+                is_public=True, is_organization_private=True,
+                organizations=self.object) \
+                .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
+
+            context['new_contests'] = Contest.objects.filter(
+                is_visible=True, is_organization_private=True,
+                organizations=self.object) \
+                .order_by('-end_time', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
+
+        return context
+
+
 class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
     context_object_name = 'problems'
     template_name = 'organization/problem-list.html'
 
-    def get_title(self):
-        return _('Problems list of %s') % self.organization.name
-
-    def get_content_title(self):
-        return format_html(_('Problems list of') + ' <a href="{1}">{0}</a>', self.organization.name,
-                           self.organization.get_absolute_url())
+    def get_hot_problems(self):
+        return None
 
     def get_context_data(self, **kwargs):
         context = super(ProblemListOrganization, self).get_context_data(**kwargs)
-        context['organization'] = self.organization
+        context['title'] = self.organization.name
         return context
 
     def get_filter(self):
         filter = Q(organizations=self.organization)
         if not self.can_edit_organization():
             filter &= Q(is_public=True)
+            if self.profile is not None:
+                filter |= Q(authors=self.profile)
+                filter |= Q(curators=self.profile)
+                filter |= Q(testers=self.profile)
         return filter
 
 
 class ContestListOrganization(CustomOrganizationMixin, ContestList):
     template_name = 'organization/contest-list.html'
 
-    def get_title(self):
-        return _('Contests list of %s') % self.organization.name
-
-    def get_content_title(self):
-        return format_html(_('Contests list of') + ' <a href="{1}">{0}</a>', self.organization.name,
-                           self.organization.get_absolute_url())
-
     def _get_queryset(self):
         query_set = super(ContestListOrganization, self)._get_queryset()
-        query_set = query_set.filter(Q(is_organization_private=True))
+        query_set = query_set.filter(is_organization_private=True, organizations=self.organization)
         return query_set
 
     def get_context_data(self, **kwargs):
         context = super(ContestListOrganization, self).get_context_data(**kwargs)
-        context['organization'] = self.organization
+        context['title'] = self.organization.name
+        return context
+
+
+class SubmissionListOrganization(CustomOrganizationMixin, AllSubmissions):
+    template_name = 'organization/submission-list.html'
+
+    def _get_queryset(self):
+        query_set = super(SubmissionListOrganization, self)._get_queryset()
+        query_set = query_set.filter(user__organizations=self.organization, problem__organizations=self.organization)
+        return query_set
+
+    def get_context_data(self, **kwargs):
+        context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
+        context['title'] = self.organization.name
         return context
 
 
@@ -448,18 +501,37 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
     def form_valid(self, form):
         self.object = problem = form.save()
         problem.authors.add(self.request.user.profile)
-        problem.allowed_languages.set(Language.objects.all())
+        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
         problem.partial = True
         # We have to set it to True, even it is private for a org
         problem.is_public = True
         problem.is_organization_private = True
         problem.organizations.add(self.organization)
-        problem.date = datetime.now()
+        problem.date = timezone.now()
         result = self.save_statement(form, problem)
         if result is not None:
             return result
         problem.save()
         return HttpResponseRedirect(self.get_success_url())
+
+
+class BlogPostCreateOrganization(CustomAdminOrganizationMixin, PermissionRequiredMixin, BlogPostCreate):
+    permission_required = 'judge.edit_organization_post'
+
+    def get_initial(self):
+        initial = super(BlogPostCreateOrganization, self).get_initial()
+        initial = initial.copy()
+        initial['publish_on'] = timezone.now()
+        return initial
+
+    def form_valid(self, form):
+        self.get_object = post = form.save(commit=False)
+        post.save()   # Presave to initialize the object id before using Many-to-Many relationship.
+        post.authors.add(self.request.user.profile)
+        post.slug = ''.join(x for x in self.organization.slug.lower() if x.isalpha())  # Initial post slug
+        post.organization = self.organization
+        post.save()
+        return HttpResponseRedirect(post.get_absolute_url())
 
 
 class ContestCreateOrganization(CustomAdminOrganizationMixin, CreateContest):

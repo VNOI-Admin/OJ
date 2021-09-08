@@ -19,8 +19,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
-from judge.models import Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, Submission, \
-    Tag, WebAuthnCredential
+from judge.models import BlogPost, Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, \
+    Submission, Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -65,6 +65,11 @@ class ProfileForm(ModelForm):
             'ace_theme': Select2Widget(attrs={'style': 'width:200px'}),
         }
 
+        # Make sure that users cannot change their `about` in contest mode
+        # because the user can put the solution in that profile
+        if settings.VNOJ_OFFICIAL_CONTEST_MODE:
+            fields.remove('about')
+
         has_math_config = bool(settings.MATHOID_URL)
         if has_math_config:
             fields.append('math_engine')
@@ -107,6 +112,10 @@ class UserForm(ModelForm):
         model = User
         fields = ['first_name']
 
+        # In contest mode, we don't want user to change their name.
+        if settings.VNOJ_OFFICIAL_CONTEST_MODE:
+            fields.remove('first_name')
+
 
 class ProposeProblemSolutionForm(ModelForm):
     class Meta:
@@ -136,6 +145,16 @@ class ProblemEditForm(ModelForm):
         # Only allow to public/private problem in organization
         if org_pk is None:
             self.fields.pop('is_public')
+        else:
+            self.fields['testers'].label = _('Private users')
+            self.fields['testers'].help_text = _('If private, only these users may see the problem.')
+            self.fields['testers'].widget.data_view = None
+            self.fields['testers'].widget.data_url = reverse('organization_profile_select2',
+                                                             args=(org_pk, ))
+
+        self.fields['testers'].help_text = \
+            str(self.fields['testers'].help_text) + ' ' + \
+            str(_('You can paste a list of usernames into this box.'))
 
     def clean(self):
         cleaned_data = super(ProblemEditForm, self).clean()
@@ -152,11 +171,15 @@ class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
         fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points',
-                  'statement_file', 'source', 'types', 'group', 'description']
+                  'statement_file', 'source', 'types', 'group', 'description', 'testers']
         widgets = {
             'types': Select2MultipleWidget,
             'group': Select2Widget,
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
+            'testers': HeavySelect2MultipleWidget(
+                data_view='profile_select2',
+                attrs={'style': 'width: 100%'},
+            ),
         }
         help_texts = {
             'is_public': _(
@@ -471,6 +494,20 @@ class ProposeContestProblemFormSet(
             if order and order in orders:
                 raise ValidationError(_("Problems must have distinct order."))
             orders.append(order)
+
+class BlogPostForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        kwargs.pop('org_pk', None)
+        super(BlogPostForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = BlogPost
+        fields = ['title', 'publish_on', 'visible', 'content']
+        widgets = {
+            'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
+            'summary': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
+            'publish_on': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
+        }
 
 class ContestForm(ModelForm):
     required_css_class = 'required'

@@ -8,7 +8,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext, gettext_lazy as _
 from jsonfield import JSONField
 from lupa import LuaRuntime
-from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PYTHON
+from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MOSS_LANG_PYTHON
 
 from judge import contest_format
 from judge.models.problem import Problem
@@ -102,7 +102,7 @@ class Contest(models.Model):
                                           related_name='rate_exclude+')
     is_private = models.BooleanField(verbose_name=_('private to specific users'), default=False)
     private_contestants = models.ManyToManyField(Profile, blank=True, verbose_name=_('private contestants'),
-                                                 help_text=_('If private, only these users may see the contest'),
+                                                 help_text=_('If private, only these users may see the contest.'),
                                                  related_name='private_contestants+')
     hide_problem_tags = models.BooleanField(verbose_name=_('hide problem tags'),
                                             help_text=_('Whether problem tags should be hidden by default.'),
@@ -115,6 +115,10 @@ class Contest(models.Model):
                                                         'testcases. Commonly set during a contest, then unset '
                                                         'prior to rejudging user submissions when the contest ends.'),
                                             default=False)
+    show_short_display = models.BooleanField(verbose_name=_('show short form settings display'),
+                                             help_text=_('Whether to show a section containing contest settings '
+                                                         'on the contest page or not.'),
+                                             default=False)
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
     organizations = models.ManyToManyField(Organization, blank=True, verbose_name=_('organizations'),
                                            help_text=_('If private, only these organizations may see the contest'))
@@ -436,7 +440,9 @@ class ContestParticipation(models.Model):
             self.contest.format.update_participation(self)
             if self.is_disqualified:
                 self.score = -9999
-                self.save(update_fields=['score'])
+                self.cumtime = 0
+                self.tiebreaker = 0
+                self.save(update_fields=['score', 'cumtime', 'tiebreaker'])
     recompute_results.alters_data = True
 
     def set_disqualified(self, disqualified):
@@ -553,7 +559,8 @@ class Rating(models.Model):
                                          related_name='rating', on_delete=CASCADE)
     rank = models.IntegerField(verbose_name=_('rank'))
     rating = models.IntegerField(verbose_name=_('rating'))
-    volatility = models.IntegerField(verbose_name=_('volatility'))
+    mean = models.FloatField(verbose_name=_('raw rating'))
+    performance = models.FloatField(verbose_name=_('contest performance'))
     last_rated = models.DateTimeField(db_index=True, verbose_name=_('last rated'))
 
     class Meta:
@@ -568,6 +575,7 @@ class ContestMoss(models.Model):
         ('C++', MOSS_LANG_CC),
         ('Java', MOSS_LANG_JAVA),
         ('Python', MOSS_LANG_PYTHON),
+        ('Pascal', MOSS_LANG_PASCAL),
     ]
 
     contest = models.ForeignKey(Contest, verbose_name=_('contest'), related_name='moss', on_delete=CASCADE)

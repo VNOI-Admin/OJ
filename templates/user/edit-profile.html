@@ -280,19 +280,23 @@ You will not be able to view your scratch codes after you leave this page!') }}"
             {% endif %}
 
             {% csrf_token %}
-            <table>
-                <tr>
-                    <td><div class="block-header">{{ _('Full name') }}:</div></td>
-                </tr>
-                <tr>
-                    <td>{{ form_user.first_name }}</td>
-                </tr>
-            </table>
-            <hr>
+            {% if form_user.first_name %}
+                <table>
+                    <tr>
+                        <td><div class="block-header">{{ _('Full name') }}:</div></td>
+                    </tr>
+                    <tr>
+                        <td>{{ form_user.first_name }}</td>
+                    </tr>
+                </table>
+                <hr>
+            {% endif %}
 
-            <div style="padding-top:0.5em" class="block-header">{{ _('Self-description') }}:</div>
-            {{ form.about }}
-            <hr>
+            {% if form.about %}
+                <div style="padding-top:0.5em" class="block-header">{{ _('Self-description') }}:</div>
+                    {{ form.about }}
+                <hr>
+            {% endif %}
 
             <div class="settings" style="padding-top:0.7em">
                 <div class="pane" style="vertical-align:top">
@@ -333,7 +337,7 @@ You will not be able to view your scratch codes after you leave this page!') }}"
                         </td></tr>
                         <tr><td>
                             <a href="http://www.gravatar.com/" title="{{ _('Change your avatar') }}"
-                               target="_blank" class="inline-header">
+                               target="_blank" class="inline-header" rel="noopener">
                                 {{ _('Change your avatar') }}
                             </a>
                         </td></tr>
