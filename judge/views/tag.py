@@ -83,7 +83,6 @@ class TagProblemList(TitleMixin, ListView):
                 pass
 
             if self.selected_judges:
-                print(self.selected_judges)
                 queryset = queryset.filter(judge__in=self.selected_judges)
 
         return queryset
