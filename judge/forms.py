@@ -25,8 +25,6 @@ from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
 
-from django.db import models
-
 TOTP_CODE_LENGTH = 6
 
 two_factor_validators_by_length = {
@@ -499,7 +497,6 @@ class BlogPostForm(ModelForm):
     def __init__(self, *args, **kwargs):
         kwargs.pop('org_pk', None)
         super(BlogPostForm, self).__init__(*args, **kwargs)
-
     class Meta:
         model = BlogPost
         fields = ['title', 'publish_on', 'visible', 'content']
@@ -511,11 +508,9 @@ class BlogPostForm(ModelForm):
 
 class ContestForm(ModelForm):
     required_css_class = 'required'
-
     def __init__(self, *args, **kwargs):
         org_pk = kwargs.pop('org_pk', None)
         super(ContestForm, self).__init__(*args, **kwargs)
-
         # cannot use fields[].widget = ...
         # because it will remove the old values
         # just update the data url is fine
@@ -559,7 +554,6 @@ class CreateNotificationForm(ModelForm):
     def __init__(self, *args, **kwargs):
         org_pk = kwargs.pop('org_pk', None)
         super(CreateNotificationForm, self).__init__(*args, **kwargs)
-
     class Meta:
         model = Contest
         fields = [
