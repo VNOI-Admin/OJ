@@ -347,7 +347,7 @@ class CustomOrganizationMixin(object):
         self.object = self.organization
         if not self.allow_all_users and self.request.profile not in self.organization:
             return generic_message(request,
-                                   _('Cannot view organization\'s private data'),
+                                   _("Cannot view organization's private data"),
                                    _('You must join the organization to view its private data.'))
         return super(CustomOrganizationMixin, self).dispatch(request, *args, **kwargs)
 

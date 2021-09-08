@@ -99,7 +99,7 @@ class Contest(models.Model):
                                              max_length=1, help_text=_('Scoreboard visibility through the duration '
                                                                        'of the contest'), choices=SCOREBOARD_VISIBILITY)
     use_clarifications = models.BooleanField(verbose_name=_('no comments'),
-                                             help_text=_("Use clarification system instead of comments."),
+                                             help_text=_('Use clarification system instead of comments.'),
                                              default=True)
     push_announcements = models.BooleanField(verbose_name=_('push announcements'),
                                              help_text=_('Notify users when there are new announcements.'),
@@ -564,7 +564,7 @@ class ContestProblem(models.Model):
                                                       'or leave blank for no limit.'),
                                           default=None, null=True, blank=True,
                                           validators=[MinValueOrNoneValidator(1, _('Why include a problem you '
-                                                                                   'can\'t submit to?'))])
+                                                                                   "can't submit to?"))])
 
     class Meta:
         unique_together = ('problem', 'contest')

@@ -7,7 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from judge.jinja2.gravatar import gravatar
 from judge.models import Comment, Problem, Tag, TagProblem, Ticket
 
-__all__ = ("on_new_ticket", "on_new_comment", "on_new_suggested_problem")
+__all__ = ('on_new_ticket', 'on_new_comment', 'on_new_suggested_problem')
 
 
 @shared_task
@@ -25,17 +25,17 @@ def on_new_ticket(ticket_id, content_type_id, object_id, message):
     if url[0] == '/':
         url = site_url + url
     webhook = DiscordWebhook(url=webhook)
-    ticket_url = site_url + "/ticket/" + str(ticket_id)
-    title = f"Title: [{ticket.title}]({ticket_url})"
-    message = f"Message: {message}"
+    ticket_url = site_url + '/ticket/' + str(ticket_id)
+    title = f'Title: [{ticket.title}]({ticket_url})'
+    message = f'Message: {message}'
     embed = DiscordEmbed(
-        title=f"New ticket on {url}",
-        description=title + "\n" + message[:100],  # Should not too long
-        color="03b2f8",
+        title=f'New ticket on {url}',
+        description=title + '\n' + message[:100],  # Should not too long
+        color='03b2f8',
     )
     embed.set_author(
         name=ticket.user.user.username,
-        url=site_url + "/user/" + ticket.user.user.username,
+        url=site_url + '/user/' + ticket.user.user.username,
         icon_url=gravatar(ticket.user),
     )
     webhook.add_embed(embed)
@@ -54,13 +54,13 @@ def on_new_comment(comment_id):
 
     webhook = DiscordWebhook(url=webhook)
     embed = DiscordEmbed(
-        title=f"New comment {url}",
+        title=f'New comment {url}',
         description=comment.body[:200],  # should not too long
-        color="03b2f8",
+        color='03b2f8',
     )
     embed.set_author(
         name=comment.author.user.username,
-        url=site_url + "/user/" + comment.author.user.username,
+        url=site_url + '/user/' + comment.author.user.username,
         icon_url=gravatar(comment.author),
     )
     webhook.add_embed(embed)
@@ -76,18 +76,18 @@ def on_new_suggested_problem(problem_code):
 
     problem = Problem.objects.get(code=problem_code)
     url = site_url + problem.get_absolute_url()
-    description = f"Title: {problem.name}\n"
-    description += f"Statement: {problem.description[:100]}..."
+    description = f'Title: {problem.name}\n'
+    description += f'Statement: {problem.description[:100]}...'
 
     webhook = DiscordWebhook(url=webhook)
     embed = DiscordEmbed(
-        title=f"New suggested problem {url}",
+        title=f'New suggested problem {url}',
         description=description,
-        color="03b2f8",
+        color='03b2f8',
     )
     embed.set_author(
         name=problem.suggester.user.username,
-        url=site_url + "/user/" + problem.suggester.user.username,
+        url=site_url + '/user/' + problem.suggester.user.username,
         icon_url=gravatar(problem.suggester),
     )
     webhook.add_embed(embed)
@@ -108,9 +108,9 @@ def on_new_tag_problem(problem_code):
 
     webhook = DiscordWebhook(url=webhook)
     embed = DiscordEmbed(
-        title=f"New tag problem {url}",
+        title=f'New tag problem {url}',
         description=description,
-        color="03b2f8",
+        color='03b2f8',
     )
 
     webhook.add_embed(embed)
@@ -137,9 +137,9 @@ def on_new_tag(problem_code, tag_list):
 
     webhook = DiscordWebhook(url=webhook)
     embed = DiscordEmbed(
-        title=f"New tag added for problem {url}",
+        title=f'New tag added for problem {url}',
         description=description,
-        color="03b2f8",
+        color='03b2f8',
     )
 
     webhook.add_embed(embed)
