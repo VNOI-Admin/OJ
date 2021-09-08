@@ -31,7 +31,7 @@ def status_all(request):
 
 def status_oj(request):
     if not request.user.is_superuser:
-        return HttpResponseBadRequest(_("You must be admin to view this content."), content_type='text/plain')
+        return HttpResponseBadRequest(_('You must be admin to view this content.'), content_type='text/plain')
 
     return render(request, 'status/oj-status.html', {
         'title': _('OJ Status'),

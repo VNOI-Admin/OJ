@@ -63,18 +63,18 @@ def oj_data(request):
     days_labels = list(set(item[0].isoformat() for item in submissions.values_list('date_only')))
     days_labels.sort()
     num_days = len(days_labels)
-    result_order = ["AC", "WA", "TLE", "CE", "ERR"]
+    result_order = ['AC', 'WA', 'TLE', 'CE', 'ERR']
     result_data = defaultdict(partial(list, [0] * num_days))
 
     for date, result, count in submissions:
-        result_data[result if result in result_order else "ERR"][days_labels.index(date.isoformat())] += count
+        result_data[result if result in result_order else 'ERR'][days_labels.index(date.isoformat())] += count
 
     submissions_by_day = {
         'labels': days_labels,
         'datasets': [
             {
                 'label': name,
-                'backgroundColor': settings.DMOJ_STATS_SUBMISSION_RESULT_COLORS.get(name, "ERR"),
+                'backgroundColor': settings.DMOJ_STATS_SUBMISSION_RESULT_COLORS.get(name, 'ERR'),
                 'data': result_data[name],
             }
             for name in result_order

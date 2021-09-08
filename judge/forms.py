@@ -162,7 +162,7 @@ class ProblemEditForm(ModelForm):
     def check_file(self):
         content = self.files.get('statement_file', None)
         if content is not None and content.size > settings.PDF_STATEMENT_MAX_FILE_SIZE:
-            raise forms.ValidationError(_("File size is too big! Maximum file size is %s") %
+            raise forms.ValidationError(_('File size is too big! Maximum file size is %s') %
                                         filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE))
         return content
 
@@ -248,7 +248,7 @@ class ProblemSubmitForm(ModelForm):
 
         if (source != '' and content is not None) or (source == '' and content is None) or \
                 (source != '' and lang_obj.file_only) or (content == '' and not lang_obj.file_only):
-            raise forms.ValidationError(_("Source code/file is missing or redundant. Please try again"))
+            raise forms.ValidationError(_('Source code/file is missing or redundant. Please try again'))
 
         if content:
             max_file_size = lang_obj.file_size_limit * 1024 * 1024
@@ -260,7 +260,7 @@ class ProblemSubmitForm(ModelForm):
                                             % {'lang': language, 'lang_ext': lang_obj.extension, 'ext': ext})
 
             elif content.size > max_file_size:
-                raise forms.ValidationError(_("File size is too big! Maximum file size is %s")
+                raise forms.ValidationError(_('File size is too big! Maximum file size is %s')
                                             % filesizeformat(max_file_size))
 
     def __init__(self, *args, judge_choices=(), **kwargs):
@@ -490,7 +490,7 @@ class ProposeContestProblemFormSet(
                 continue
             order = form.cleaned_data.get('order')
             if order and order in orders:
-                raise ValidationError(_("Problems must have distinct order."))
+                raise ValidationError(_('Problems must have distinct order.'))
             orders.append(order)
 
 

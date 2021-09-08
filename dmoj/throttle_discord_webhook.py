@@ -64,7 +64,7 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
             exc_info = (None, record.getMessage(), None)
 
         reporter = ExceptionReporter(request, is_email=True, *exc_info)
-        message = "%s\n\n%s" % (self.format(no_exc_record), reporter.get_traceback_text())
+        message = '%s\n\n%s' % (self.format(no_exc_record), reporter.get_traceback_text())
         self.send_webhook(subject, message)
 
     def send_webhook(self, subject, message):
