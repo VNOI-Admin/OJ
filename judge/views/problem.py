@@ -519,6 +519,7 @@ class RandomProblem(ProblemList):
 
 
 user_logger = logging.getLogger('judge.user')
+user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
 
 
 class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFormView):
@@ -655,6 +656,18 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         # Save a query.
         self.new_submission.source = source
         self.new_submission.judge(force_judge=True, judge_id=form.cleaned_data['judge'])
+
+        # In contest mode, we should log the ip
+        if settings.VNOJ_OFFICIAL_CONTEST_MODE:
+            ip = self.request.META['REMOTE_ADDR']
+            # I didn't log the timestamp here because
+            # the logger can handle it.
+            user_submit_ip_logger.info(
+                '%s,%s,%s',
+                self.request.user.username,
+                ip,
+                self.new_submission.problem.code,
+            )
 
         return super().form_valid(form)
 
