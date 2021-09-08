@@ -31,7 +31,7 @@ from reversion import revisions
 
 from judge import event_poster as event
 from judge.comments import CommentedDetailView
-from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
+from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet, CreateNotificationForm
 from judge.models import Contest, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Problem, ProblemClarification, Profile, Submission
 from judge.tasks import run_moss
@@ -922,6 +922,7 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
 
     def get_contest_problem_formset(self):
         if self.request.POST:
+            print(self.request.POST)
             return ProposeContestProblemFormSet(self.request.POST)
         return ProposeContestProblemFormSet()
 
@@ -947,7 +948,6 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(*args, **kwargs))
-
 
 class EditContest(ContestMixin, TitleMixin, UpdateView):
     template_name = 'contest/edit.html'
@@ -1006,3 +1006,59 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(*args, **kwargs))
+
+class CreateNotificationCustomForm(forms.Form):
+    problemcode = forms.CharField()
+    description = forms.CharField()
+    pass
+
+class CreateNotification(ContestMixin, TitleMixin, UpdateView):
+    template_name = 'contest/create-notification.html'
+    model = Contest
+    form_class = CreateNotificationForm
+
+    def get_object(self, queryset=None):
+        contest = super(CreateNotification, self).get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return contest
+
+    def get_form_kwargs(self):
+        kwargs = super(CreateNotification, self).get_form_kwargs()
+        # Due to some limitation with query set in select2
+        # We only support this if the contest is private for only
+        # 1 organization
+        if self.object.organizations.count() == 1:
+            kwargs['org_pk'] = self.object.organizations.values_list('pk', flat=True)[0]
+
+        return kwargs
+
+    def get_title(self):
+        return _('Create Notification').format(self.object.name)
+
+    def get_content_title(self):
+        return mark_safe(escape(_('Create a Notification %s')) % (
+            format_html('<a href="{1}">{0}</a>', self.object.name,
+                        reverse('contest_view', args=[self.object.key]))))
+    
+    def get_contest_problem_code(self):
+        return self.object.problems.values_list('code', flat=True)
+
+    def get_context_data(self, **kwargs):
+        data = super().get_context_data(**kwargs)
+        data['contest_problem_code'] = self.get_contest_problem_code()
+        return data
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = CreateNotificationCustomForm(request.POST)
+
+        if form.is_valid():
+            problem_code = form.cleaned_data['problemcode']
+            description  = form.cleaned_data['description']
+            event.post(self.object.key, {
+                'problem': problem_code,
+                'description': description,
+            })
+
+        return HttpResponseRedirect(self.get_success_url())

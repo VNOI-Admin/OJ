@@ -232,6 +232,7 @@ urlpatterns = [
     url(r'^contest/(?P<contest>\w+)', include([
         url(r'^$', contests.ContestDetail.as_view(), name='contest_view'),
         url(r'^/edit$', contests.EditContest.as_view(), name='contest_edit'),
+        url(r'^/create-notification', contests.CreateNotification.as_view(), name='contest_create_notification'),
         url(r'^/moss$', contests.ContestMossView.as_view(), name='contest_moss'),
         url(r'^/moss/delete$', contests.ContestMossDelete.as_view(), name='contest_moss_delete'),
         url(r'^/clone$', contests.ContestClone.as_view(), name='contest_clone'),

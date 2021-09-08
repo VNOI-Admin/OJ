@@ -25,6 +25,8 @@ from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
 
+from django.db import models
+
 TOTP_CODE_LENGTH = 6
 
 two_factor_validators_by_length = {
@@ -470,7 +472,6 @@ class ProposeContestProblemFormSet(
                 raise ValidationError(_("Problems must have distinct order."))
             orders.append(order)
 
-
 class ContestForm(ModelForm):
     required_css_class = 'required'
 
@@ -485,6 +486,9 @@ class ContestForm(ModelForm):
             self.fields['private_contestants'].widget.data_view = None
             self.fields['private_contestants'].widget.data_url = reverse('organization_profile_select2',
                                                                          args=(org_pk, ))
+            self.fields['private_contestants'].help_text = \
+                str(self.fields['private_contestants'].help_text) + ' ' + \
+                str(_('You can paste a list of usernames into this box.'))
         else:
             self.fields.pop('private_contestants')
             self.fields.pop('is_private')
@@ -513,3 +517,14 @@ class ContestForm(ModelForm):
                 attrs={'style': 'width: 100%'},
             ),
         }
+
+class CreateNotificationForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        org_pk = kwargs.pop('org_pk', None)
+        super(CreateNotificationForm, self).__init__(*args, **kwargs)
+
+    class Meta:
+        model = Contest
+        fields = [
+           'description',
+        ]
