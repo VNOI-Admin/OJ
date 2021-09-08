@@ -109,8 +109,8 @@ class UserForm(ModelForm):
     class Meta:
         model = User
         fields = ['first_name']
-        # In contest mode, we don't want user to change
-        # their name.
+
+        # In contest mode, we don't want user to change their name.
         if settings.VNOJ_OFFICIAL_CONTEST_MODE:
             fields.remove('first_name')
 
