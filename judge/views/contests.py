@@ -29,7 +29,6 @@ from django.views.generic.detail import BaseDetailView, DetailView, SingleObject
 from django.views.generic.edit import CreateView, UpdateView
 from reversion import revisions
 
-from judge import event_poster as event
 from judge.comments import CommentedDetailView
 from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
@@ -730,7 +729,6 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         users, problems = self.get_ranking_list()
         context['users'] = users
         context['problems'] = problems
-        context['last_msg'] = event.last()
         context['tab'] = self.tab
         return context
 

@@ -1,7 +1,7 @@
 {% extends "submission/info-base.html" %}
 {% block js_media %}
     <script type="text/javascript" src="{{ static('event.js') }}"></script>
-    {% if not submission.is_graded and last_msg %}
+    {% if not submission.is_graded and EVENT_LAST_MSG %}
         <script type="text/javascript">
             $(function () {
                 var blocked = false, request = false;
@@ -34,9 +34,7 @@
                         $("html, body").animate({scrollTop: $(document).height()}, 0);
                 }
 
-                var receiver = new EventReceiver(
-                    "{{ EVENT_DAEMON_LOCATION }}", "{{ EVENT_DAEMON_POLL_LOCATION }}",
-                    ['sub_{{ submission.id_secret }}'], {{ last_msg }}, function (message) {
+                event_dispatcher.on('sub_{{ submission.id_secret }}', function (message) {
                         switch (message.type) {
                             case 'internal-error':
                             case 'grading-end':

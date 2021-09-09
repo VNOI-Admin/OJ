@@ -307,10 +307,8 @@
                 });
             }
 
-            window.load_dynamic_update = function (last_msg) {
-                return new EventReceiver(
-                    "{{ EVENT_DAEMON_LOCATION }}", "{{ EVENT_DAEMON_POLL_LOCATION }}",
-                    ['ticket-{{ ticket.id }}'], last_msg, function (message) {
+            window.load_dynamic_update = function () {
+                event_dispatcher.on('ticket-{{ ticket.id }}', function (message) {
                         console.log(message);
                         switch (message.type) {
                             case 'ticket-status':
@@ -326,10 +324,10 @@
         });
     </script>
 
-    {% if last_msg %}
+    {% if EVENT_LAST_MSG %}
         <script type="text/javascript">
             $(function () {
-                load_dynamic_update({{last_msg}});
+                load_dynamic_update();
             });
         </script>
     {% endif %}
