@@ -170,10 +170,6 @@ class Contest(models.Model):
         if not self.problem_label_script:
             return self.format.get_label_for_problem
 
-    @property
-    def announcements(self):
-        return ContestAnnouncement.objects.filter(contest=self)
-
         def DENY_ALL(obj, attr_name, is_setting):
             raise AttributeError()
         lua = LuaRuntime(attribute_filter=DENY_ALL, register_eval=False, register_builtins=False)
