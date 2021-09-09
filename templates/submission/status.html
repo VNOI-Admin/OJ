@@ -1,6 +1,5 @@
 {% extends "submission/info-base.html" %}
 {% block js_media %}
-    <script type="text/javascript" src="{{ static('event.js') }}"></script>
     {% if not submission.is_graded and EVENT_LAST_MSG %}
         <script type="text/javascript">
             $(function () {
