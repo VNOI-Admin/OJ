@@ -5,6 +5,7 @@ function WSEventDispatcher(websocket_path, polling_base, last_msg) {
     this.last_msg = last_msg;
     this.events = {};
     this.channels = [];
+    this.auto_reconnect = false;
 
     var receiver = this;
     var onwsclose_secret = 'wsclose_ZQ4hNB3vUc33q7Y7K1os';
@@ -69,7 +70,10 @@ function WSEventDispatcher(websocket_path, polling_base, last_msg) {
                 receiver.last_msg = data.id;
             };
             receiver.websocket.onclose = function (event) {
-                if (event.code !== 1000 && receiver.onwsclose !== null) {
+                if (receiver.auto_reconnect) {
+                    console.log('Lost websocket connection! Reconnecting...');
+                    setup_connection();
+                } else if (event.code !== 1000 && receiver.onwsclose !== null) {
                     receiver.dispatch(onwsclose_secret, event)
                 }
             }
@@ -100,6 +104,8 @@ function WSEventDispatcher(websocket_path, polling_base, last_msg) {
             init_poll();
         }
     }
+
+    this.autoconnect
 
     this.dispatch = function (event_name, data) {
         var event = this.events[event_name];
