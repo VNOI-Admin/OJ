@@ -14,7 +14,7 @@ from django.utils.translation import gettext_lazy as _, ungettext
 from reversion.admin import VersionAdmin
 
 from django_ace import AceWidget
-from judge.models import Contest, ContestProblem, ContestSubmission, Profile, Rating, Submission
+from judge.models import Contest, ContestAnnouncement, ContestProblem, ContestSubmission, Profile, Rating, Submission
 from judge.ratings import rate_contest
 from judge.utils.views import NoBatchDeleteMixin
 from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, AdminMartorWidget, \
@@ -78,6 +78,18 @@ class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
     rejudge_column.short_description = ''
 
 
+class ContestAnnouncementInlineForm(ModelForm):
+    class Meta:
+        widgets = {'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('comment_preview')})}
+
+
+class ContestAnnouncementInline(admin.StackedInline):
+    model = ContestAnnouncement
+    fields = ('title', 'description')
+    form = ContestAnnouncementInlineForm
+    extra = 0
+
+
 class ContestForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(ContestForm, self).__init__(*args, **kwargs)
@@ -129,7 +141,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
     list_display = ('key', 'name', 'is_visible', 'is_rated', 'locked_after', 'start_time', 'end_time', 'time_limit',
                     'user_count')
     search_fields = ('key', 'name')
-    inlines = [ContestProblemInline]
+    inlines = [ContestProblemInline, ContestAnnouncementInline]
     actions_on_top = True
     actions_on_bottom = True
     form = ContestForm
