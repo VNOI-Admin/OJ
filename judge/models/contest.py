@@ -16,7 +16,8 @@ from judge.models.profile import Organization, Profile
 from judge.models.submission import Submission
 from judge.ratings import rate_contest
 
-__all__ = ['Contest', 'ContestTag', 'ContestParticipation', 'ContestProblem', 'ContestSubmission', 'Rating']
+__all__ = ['Contest', 'ContestTag', 'ContestAnnouncement', 'ContestParticipation', 'ContestProblem',
+           'ContestSubmission', 'Rating']
 
 
 class MinValueOrNoneValidator(MinValueValidator):
@@ -168,6 +169,10 @@ class Contest(models.Model):
     def get_label_for_problem(self):
         if not self.problem_label_script:
             return self.format.get_label_for_problem
+
+    @property
+    def announcements(self):
+        return ContestAnnouncement.objects.filter(contest=self)
 
         def DENY_ALL(obj, attr_name, is_setting):
             raise AttributeError()
@@ -417,6 +422,13 @@ class Contest(models.Model):
         )
         verbose_name = _('contest')
         verbose_name_plural = _('contests')
+
+
+class ContestAnnouncement(models.Model):
+    contest = models.ForeignKey(Contest, verbose_name=_('announced_contest'), on_delete=CASCADE)
+    title = models.TextField(verbose_name=_('announcement title'))
+    description = models.TextField(verbose_name=_('announcement body'))
+    date = models.DateTimeField(verbose_name=_('announcement timestamp'), auto_now_add=True)
 
 
 class ContestParticipation(models.Model):
