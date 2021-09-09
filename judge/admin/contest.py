@@ -85,10 +85,17 @@ class ContestAnnouncementInlineForm(ModelForm):
 
 class ContestAnnouncementInline(admin.StackedInline):
     model = ContestAnnouncement
-    fields = ('title', 'description')
+    fields = ('title', 'description', 'resend')
+    readonly_fields = ('resend',)
     form = ContestAnnouncementInlineForm
     extra = 0
 
+    def resend(self, obj):
+        if obj.id is None:
+            return 'Not available'
+        return format_html('<a class="button resend-link" href="{}">Resend</a>',
+                           reverse('admin:judge_contest_resend', args=(obj.contest.id, obj.id)))
+    resend.short_description = 'Resend announcement'
 
 class ContestForm(ModelForm):
     def __init__(self, *args, **kwargs):
@@ -269,6 +276,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
             url(r'^rate/all/$', self.rate_all_view, name='judge_contest_rate_all'),
             url(r'^(\d+)/rate/$', self.rate_view, name='judge_contest_rate'),
             url(r'^(\d+)/judge/(\d+)/$', self.rejudge_view, name='judge_contest_rejudge'),
+            url(r'^(\d+)/resend/(\d+)/$', self.resend_view, name='judge_contest_resend'),
         ] + super(ContestAdmin, self).get_urls()
 
     def rejudge_view(self, request, contest_id, problem_id):
@@ -279,6 +287,11 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         self.message_user(request, ungettext('%d submission was successfully scheduled for rejudging.',
                                              '%d submissions were successfully scheduled for rejudging.',
                                              len(queryset)) % len(queryset))
+        return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
+
+    def resend_view(self, request, contest_id, announcement_id):
+        announcement = get_object_or_404(ContestAnnouncement, id=announcement_id)
+        announcement.send()
         return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
 
     def rate_all_view(self, request):
