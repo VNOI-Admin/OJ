@@ -98,7 +98,7 @@
             window.event_dispatcher = new WSEventDispatcher(
                 '{{ EVENT_DAEMON_LOCATION }}',
                 '{{ EVENT_DAEMON_POLL_LOCATION }}',
-                '{{ EVENT_LAST_MSG }}'
+                {{ EVENT_LAST_MSG }}
             );
         </script>
     {% endif %}

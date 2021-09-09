@@ -61,7 +61,7 @@ function WSEventDispatcher(websocket_path, polling_base, last_msg) {
                 clearTimeout(timeout);
                 receiver.websocket.send(JSON.stringify({
                     command: 'start-msg',
-                    start: last_msg,
+                    start: receiver.last_msg,
                 }));
             };
             receiver.websocket.onmessage = function (event) {
@@ -73,6 +73,8 @@ function WSEventDispatcher(websocket_path, polling_base, last_msg) {
                 if (receiver.auto_reconnect) {
                     console.log('Lost websocket connection! Reconnecting...');
                     setup_connection();
+
+                    clearTimeout(filter_timeout);
                     set_filters();
                 } else if (event.code !== 1000 && receiver.onwsclose !== null) {
                     receiver.dispatch(onwsclose_secret, event)
