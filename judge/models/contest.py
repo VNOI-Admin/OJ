@@ -290,9 +290,9 @@ class Contest(models.Model):
         return Contest.testers.through.objects.filter(contest=self).values_list('profile_id', flat=True)
 
     @classmethod
-    def get_id_secret(cls, sub_id):
-        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_CONTEST_KEY), b'%d' % sub_id, hashlib.sha512)
-                    .hexdigest()[:16] + '%08x' % sub_id)
+    def get_id_secret(cls, contest_id):
+        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_CONTEST_KEY), b'%d' % contest_id, hashlib.sha512)
+                    .hexdigest()[:16] + '%08x' % contest_id)
 
     @cached_property
     def id_secret(self):
