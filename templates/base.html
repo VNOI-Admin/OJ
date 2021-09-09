@@ -149,6 +149,12 @@
             $(document).mouseup(function () {
                 selected = null;
             })
+
+            $(function () {
+                event_dispatcher.on('contests_{{ request.participation.contest.key }}', function (data) {
+                    alert(data.message)
+                });
+            })
         });
         </script>
     {% endif %}
