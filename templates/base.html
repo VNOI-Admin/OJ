@@ -150,12 +150,14 @@
                 selected = null;
             })
 
-            $(function () {
-                event_dispatcher.auto_reconnect = true;
-                event_dispatcher.on('contest_{{ request.participation.contest.id_secret }}', function (data) {
-                    alert(data.title + '\n\n' + data.message)
-                });
-            })
+            {% if request.participation.contest.push_announcements %}
+                $(function () {
+                    event_dispatcher.auto_reconnect = true;
+                    event_dispatcher.on('contest_{{ request.participation.contest.id_secret }}', function (data) {
+                        alert(data.title + '\n\n' + data.message)
+                    });
+                })
+            {% endif %}
         });
         </script>
     {% endif %}

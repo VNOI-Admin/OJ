@@ -99,6 +99,9 @@ class Contest(models.Model):
     use_clarifications = models.BooleanField(verbose_name=_('no comments'),
                                              help_text=_("Use clarification system instead of comments."),
                                              default=True)
+    push_announcements = models.BooleanField(verbose_name=_('push announcements'),
+                                             help_text=_('Notify users when there are new announcements.'),
+                                             default=False)
     rating_floor = models.IntegerField(verbose_name=('rating floor'), help_text=_('Rating floor for contest'),
                                        null=True, blank=True)
     rating_ceiling = models.IntegerField(verbose_name=('rating ceiling'), help_text=_('Rating ceiling for contest'),
@@ -435,16 +438,17 @@ class Contest(models.Model):
 
 
 class ContestAnnouncement(models.Model):
-    contest = models.ForeignKey(Contest, verbose_name=_('announced_contest'), on_delete=CASCADE)
+    contest = models.ForeignKey(Contest, verbose_name=_('announced contest'), on_delete=CASCADE)
     title = models.CharField(max_length=100, verbose_name=_('announcement title'))
     description = models.TextField(verbose_name=_('announcement body'))
     date = models.DateTimeField(verbose_name=_('announcement timestamp'), auto_now_add=True)
 
     def send(self):
-        event.post(f'contest_{self.contest.id_secret}', {
-            'title': self.title,
-            'message': self.description,
-        })
+        if self.contest.push_announcements:
+            event.post(f'contest_{self.contest.id_secret}', {
+                'title': self.title,
+                'message': self.description,
+            })
 
 
 class ContestParticipation(models.Model):

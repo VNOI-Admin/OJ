@@ -97,6 +97,7 @@ class ContestAnnouncementInline(admin.StackedInline):
                            reverse('admin:judge_contest_resend', args=(obj.contest.id, obj.id)))
     resend.short_description = 'Resend announcement'
 
+
 class ContestForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(ContestForm, self).__init__(*args, **kwargs)
@@ -133,8 +134,9 @@ class ContestForm(ModelForm):
 class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {'fields': ('key', 'name', 'authors', 'curators', 'testers')}),
-        (_('Settings'), {'fields': ('is_visible', 'use_clarifications', 'hide_problem_tags', 'hide_problem_authors',
-                                    'show_short_display', 'run_pretests_only', 'locked_after', 'scoreboard_visibility',
+        (_('Settings'), {'fields': ('is_visible', 'use_clarifications', 'push_announcements',
+                                    'hide_problem_tags', 'hide_problem_authors', 'show_short_display',
+                                    'run_pretests_only', 'locked_after', 'scoreboard_visibility',
                                     'points_precision')}),
         (_('Scheduling'), {'fields': ('start_time', 'end_time', 'time_limit')}),
         (_('Details'), {'fields': ('description', 'og_image', 'logo_override_image', 'tags', 'summary')}),
