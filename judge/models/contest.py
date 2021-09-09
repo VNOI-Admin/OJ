@@ -426,7 +426,7 @@ class Contest(models.Model):
 
 class ContestAnnouncement(models.Model):
     contest = models.ForeignKey(Contest, verbose_name=_('announced_contest'), on_delete=CASCADE)
-    title = models.TextField(verbose_name=_('announcement title'))
+    title = models.CharField(max_length=100, verbose_name=_('announcement title'))
     description = models.TextField(verbose_name=_('announcement body'))
     date = models.DateTimeField(verbose_name=_('announcement timestamp'), auto_now_add=True)
 
