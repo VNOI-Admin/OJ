@@ -1,18 +1,4 @@
-function Event() {
-    this.callbacks = [];
-
-    this.registerCallback = function (callback) {
-        this.callbacks.push(callback);
-    };
-
-    this.fire = function (data) {
-        this.callbacks.forEach((callback) => {
-            callback(data);
-        });
-    }
-}
-
-function EventDispatcher(websocket_path, polling_base, last_msg) {
+function WSEventDispatcher(websocket_path, polling_base, last_msg) {
     this.websocket_path = websocket_path;
     this.polling_path = polling_base;
     this.connected = false;
@@ -22,6 +8,20 @@ function EventDispatcher(websocket_path, polling_base, last_msg) {
 
     var receiver = this;
     var onwsclose_secret = 'wsclose_ZQ4hNB3vUc33q7Y7K1os';
+
+    function Event() {
+        this.callbacks = [];
+
+        this.registerCallback = function (callback) {
+            this.callbacks.push(callback);
+        };
+
+        this.fire = function (data) {
+            this.callbacks.forEach((callback) => {
+                callback(data);
+            });
+        }
+    }
 
     function init_poll() {
         function long_poll() {
