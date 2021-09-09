@@ -9,7 +9,6 @@ from django.core.cache.utils import make_template_fragment_key
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 
-from judge import event_poster as event
 from judge.tasks import on_new_comment
 from .caching import finished_submission
 from .models import BlogPost, Comment, Contest, ContestAnnouncement, ContestSubmission, EFFECTIVE_MATH_ENGINES, \
@@ -186,9 +185,8 @@ def profile_organization_update(sender, instance, action, **kwargs):
 
 
 @receiver(post_save, sender=ContestAnnouncement)
-def contest_announcement_craete(sender, instance, created, **kwargs):
+def contest_announcement_create(sender, instance, created, **kwargs):
     if not created:
         return
-    event.post(f'contests_{instance.contest.key}', {'message': instance.description,
-                                                    'title': instance.title,
-                                                    })
+
+    instance.send()

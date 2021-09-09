@@ -151,7 +151,7 @@
             })
 
             $(function () {
-                event_dispatcher.on('contests_{{ request.participation.contest.key }}', function (data) {
+                event_dispatcher.on('contest_{{ request.participation.contest.id_secret }}', function (data) {
                     alert(data.message)
                 });
             })

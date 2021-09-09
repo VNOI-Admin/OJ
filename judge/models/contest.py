@@ -1,3 +1,7 @@
+import hashlib
+import hmac
+
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
@@ -10,11 +14,12 @@ from jsonfield import JSONField
 from lupa import LuaRuntime
 from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MOSS_LANG_PYTHON
 
-from judge import contest_format
+from judge import contest_format, event_poster as event
 from judge.models.problem import Problem
 from judge.models.profile import Organization, Profile
 from judge.models.submission import Submission
 from judge.ratings import rate_contest
+from judge.utils.unicode import utf8bytes
 
 __all__ = ['Contest', 'ContestTag', 'ContestAnnouncement', 'ContestParticipation', 'ContestProblem',
            'ContestSubmission', 'Rating']
@@ -281,6 +286,15 @@ class Contest(models.Model):
     def tester_ids(self):
         return Contest.testers.through.objects.filter(contest=self).values_list('profile_id', flat=True)
 
+    @classmethod
+    def get_id_secret(cls, sub_id):
+        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_CONTEST_KEY), b'%d' % sub_id, hashlib.sha512)
+                    .hexdigest()[:16] + '%08x' % sub_id)
+
+    @cached_property
+    def id_secret(self):
+        return self.get_id_secret(self.id)
+
     def __str__(self):
         return self.name
 
@@ -425,6 +439,12 @@ class ContestAnnouncement(models.Model):
     title = models.CharField(max_length=100, verbose_name=_('announcement title'))
     description = models.TextField(verbose_name=_('announcement body'))
     date = models.DateTimeField(verbose_name=_('announcement timestamp'), auto_now_add=True)
+
+    def send(self):
+        event.post(f'contest_{self.contest.id_secret}', {
+            'title': self.title,
+            'message': self.description,
+        })
 
 
 class ContestParticipation(models.Model):
