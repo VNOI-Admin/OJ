@@ -73,6 +73,7 @@ function WSEventDispatcher(websocket_path, polling_base, last_msg) {
                 if (receiver.auto_reconnect) {
                     console.log('Lost websocket connection! Reconnecting...');
                     setup_connection();
+                    set_filters();
                 } else if (event.code !== 1000 && receiver.onwsclose !== null) {
                     receiver.dispatch(onwsclose_secret, event)
                 }
@@ -104,8 +105,6 @@ function WSEventDispatcher(websocket_path, polling_base, last_msg) {
             init_poll();
         }
     }
-
-    this.autoconnect
 
     this.dispatch = function (event_name, data) {
         var event = this.events[event_name];
