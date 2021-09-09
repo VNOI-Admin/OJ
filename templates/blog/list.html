@@ -198,7 +198,7 @@
                     </span>
                     {% if misc_config.discord_invite_link and misc_config.discord_invite_shieldio %}
                         <span style="margin: 0.1em 0.3em -6px;">
-                            <a href="https://discord.com/invite/{{ misc_config.discord_invite_link }}">
+                            <a href="{{ misc_config.discord_invite_link }}">
                                 <img style="max-width: none;" src="{{ misc_config.discord_invite_shieldio }}" alt="Discord">
                             </a>
                         </span>
