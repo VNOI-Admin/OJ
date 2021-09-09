@@ -152,7 +152,7 @@
 
             $(function () {
                 event_dispatcher.on('contest_{{ request.participation.contest.id_secret }}', function (data) {
-                    alert(data.message)
+                    alert(data.title + '\n' + data.message)
                 });
             })
         });
