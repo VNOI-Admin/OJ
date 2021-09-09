@@ -162,7 +162,7 @@ require('http').createServer(function (req, res) {
         return;
     }
 
-    var channels = parts.pathname.slice(10).split('|');
+    var channels = decodeURI(parts.pathname).slice(10).split('|');
     if (channels.length == 1 && !channels[0].length) {
         res.writeHead(400, {'Content-Type': 'text/plain'});
         res.end('400 Bad Request');

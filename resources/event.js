@@ -96,7 +96,7 @@ function EventDispatcher(websocket_path, polling_base, last_msg) {
             if (receiver.polling_request) {
                 receiver.polling_request.abort();
             }
-            this.polling_path = polling_base + channels.join('|');
+            receiver.polling_path = polling_base + receiver.channels.join('|');
             init_poll();
         }
     }
