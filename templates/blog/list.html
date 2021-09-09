@@ -196,11 +196,13 @@
                     <span style="margin-right: 10px;">
                         {{ _('Comment stream') }}
                     </span>
-                    <span style="margin: 0.1em 0.3em -6px;">
-                        <a href="https://discord.com/invite/TDyYVyd">
-                            <img style="max-width: none;" src="https://img.shields.io/discord/660930260405190688?color=%237289DA&amp;label=Discord&amp;logo=Discord" alt="Discord">
-                        </a>
-                    </span>
+                    {% if misc_config.discord_invite_link and misc_config.discord_invite_shieldio %}
+                        <span style="margin: 0.1em 0.3em -6px;">
+                            <a href="{{ misc_config.discord_invite_link }}">
+                                <img style="max-width: none;" src="{{ misc_config.discord_invite_shieldio }}" alt="Discord">
+                            </a>
+                        </span>
+                    {% endif %}
                 </h3>
                 <div class="sidebox-content">
                     <ul>
