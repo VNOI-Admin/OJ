@@ -218,8 +218,8 @@
                     <th>{{ _('Problem') }}</th>
                     <th>{{ _('Points') }}</th>
                     {% if contest.show_scoreboard %}
-                    <th>{{ _('AC Rate') }}</th>
-                    <th>{{ _('# AC') }}</th>
+                        <th>{{ _('AC Rate') }}</th>
+                        <th>{{ _('# AC') }}</th>
                     {% endif %}
                     {% if metadata.has_public_editorials %}
                         <th>{{ _('Editorials') }}</th>
@@ -270,10 +270,10 @@
                         </td>
                         <td>{{ problem.points|floatformat(2) }}</td>
                         {% if contest.show_scoreboard %}
-                        <td>{{ problem.ac_rate|floatformat(1) }}%</td>
-                        <td>
-                            <a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ problem.user_count }}</a>
-                        </td>
+                            <td>{{ problem.ac_rate|floatformat(1) }}%</td>
+                            <td>
+                                <a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ problem.user_count }}</a>
+                            </td>
                         {% endif %}
                         {% if metadata.has_public_editorials %}
                             <td>
