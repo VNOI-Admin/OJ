@@ -36,17 +36,16 @@ class Command(BaseCommand):
 
             problems = set()
             submissions = user.submissions.order_by('-id') \
-                .select_related('problem__problem', 'submission__source') \
-                .values_list('problem__problem__code', 'submission__source__source', 'submission__id')
+                .select_related('problem__problem', 'submission__source', 'submission__language') \
+                .values_list('problem__problem__code', 'submission__source__source',
+                             'submission__language__extension', 'submission__id')
 
-            for problem, source, sub_id in submissions:
+            for problem, source, ext, sub_id in submissions:
                 if problem not in problems:  # Last submission
                     problems.add(problem)
-                    with open(os.path.join(user_dir, f'{problem}.cpp'), 'w') as f:
-                        # TODO: extension for other languages
+                    with open(os.path.join(user_dir, f'{problem}.{ext}'), 'w') as f:
                         f.write(source)
                 else:
                     os.makedirs(user_history_dir, exist_ok=True)
-                    with open(os.path.join(user_history_dir, f'{problem}_{sub_id}.cpp'), 'w') as f:
-                        # TODO: extension for other languages
+                    with open(os.path.join(user_history_dir, f'{problem}_{sub_id}.{ext}'), 'w') as f:
                         f.write(source)
