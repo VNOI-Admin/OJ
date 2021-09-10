@@ -208,7 +208,7 @@
                     )
                 } else {
                     $('#submission-activity-header').text(
-                        ngettext("{{ _('#(cnt)d submission in (year)d') }}", "{{ _('#(cnt)d submissions in #(year)d') }}", sum_activity)
+                        ngettext("{{ _('#(cnt)d submission in #(year)d') }}", "{{ _('#(cnt)d submissions in #(year)d') }}", sum_activity)
                             .replace("#(cnt)d", sum_activity)
                             .replace("#(year)d", year)
                     )
