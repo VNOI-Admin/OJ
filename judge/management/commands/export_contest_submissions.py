@@ -27,7 +27,12 @@ class Command(BaseCommand):
 
         users = contest.users.filter(virtual=ContestParticipation.LIVE).select_related('user__user')
 
+        user_count = 0
+        submission_count = 0
+
         for user in users:
+            user_count += 1
+
             username = user.user.user.username
             user_dir = os.path.join(output_dir, username)
             user_history_dir = os.path.join(user_dir, '$History')
@@ -41,6 +46,8 @@ class Command(BaseCommand):
                              'submission__language__extension', 'submission__id')
 
             for problem, source, ext, sub_id in submissions:
+                submission_count += 1
+
                 if problem not in problems:  # Last submission
                     problems.add(problem)
                     with open(os.path.join(user_dir, f'{problem}.{ext}'), 'w') as f:
@@ -49,3 +56,5 @@ class Command(BaseCommand):
                     os.makedirs(user_history_dir, exist_ok=True)
                     with open(os.path.join(user_history_dir, f'{problem}_{sub_id}.{ext}'), 'w') as f:
                         f.write(source)
+
+        print(f'Exported {submission_count} submissions by {user_count} users')
