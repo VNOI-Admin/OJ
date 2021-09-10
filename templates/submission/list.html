@@ -1,7 +1,7 @@
 {% extends "common-content.html" %}
 {% block js_media %}
     <script type="text/javascript">
-        {% if dynamic_update and last_msg %}
+        {% if dynamic_update and EVENT_LAST_MSG %}
             {% if dynamic_contest_id %}
                 window.dynamic_contest_id = {{ dynamic_contest_id }};
             {% else %}
@@ -27,7 +27,6 @@
     </script>
 
     {% compress js %}
-        <script type="text/javascript" src="{{ static('event.js') }}"></script>
         {% if request.user.is_authenticated and perms.judge.rejudge_submission %}
             <script type="text/javascript">
                 window.rejudge_submission = function (id, e) {
@@ -137,7 +136,7 @@
                 stats_graph(window.results_json);
             });
 
-            function load_dynamic_update(last_msg) {
+            function load_dynamic_update() {
                 var _collect = function (e) {
                     return e.value;
                 };
@@ -220,9 +219,7 @@
                 });
 
                 var $body = $(document.body);
-                var receiver = new EventReceiver(
-                    "{{ EVENT_DAEMON_LOCATION }}", "{{ EVENT_DAEMON_POLL_LOCATION }}",
-                    ['submissions'], last_msg, function (message) {
+                event_dispatcher.on('submissions', function (message) {
                         if (dynamic_user_id && message.user != dynamic_user_id ||
                             dynamic_problem_id && message.problem != dynamic_problem_id ||
                             dynamic_contest_id && message.contest != dynamic_contest_id)
@@ -241,7 +238,7 @@
                         }
                     }
                 );
-                receiver.onwsclose = function (event) {
+                event_dispatcher.onwsclose(function (event) {
                     if (event.code == 1001) {
                         console.log('Navigated away');
                         return;
@@ -250,16 +247,15 @@
                     $('.ws-closed').show().find('a').click(function () {
                         window.location.reload();
                     });
-                };
-                return receiver;
+                });
             }
         </script>
     {% endcompress %}
 
-    {% if dynamic_update and last_msg %}
+    {% if dynamic_update and EVENT_LAST_MSG %}
         <script type="text/javascript">
             $(function () {
-                load_dynamic_update({{last_msg}});
+                load_dynamic_update();
             });
         </script>
     {% endif %}

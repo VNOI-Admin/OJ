@@ -19,7 +19,6 @@ from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, ListView
 
-from judge import event_poster as event
 from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -158,7 +157,6 @@ class SubmissionStatus(SubmissionDetailBase):
     def get_context_data(self, **kwargs):
         context = super(SubmissionStatus, self).get_context_data(**kwargs)
         submission = self.object
-        context['last_msg'] = event.last()
 
         context['batches'], statuses, context['max_execution_time'], test_case_count \
             = group_test_cases(submission.test_cases.all())
@@ -401,7 +399,6 @@ class AllUserSubmissions(ConditionalUserTabMixin, UserMixin, SubmissionsListBase
         context = super(AllUserSubmissions, self).get_context_data(**kwargs)
         context['dynamic_update'] = context['page_obj'].number == 1
         context['dynamic_user_id'] = self.profile.id
-        context['last_msg'] = event.last()
         return context
 
 
@@ -454,7 +451,6 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         if self.dynamic_update:
             context['dynamic_update'] = context['page_obj'].number == 1
             context['dynamic_problem_id'] = self.problem.id
-            context['last_msg'] = event.last()
         if hasattr(self, 'contest'):
             context['best_submissions_link'] = reverse('contest_ranked_submissions',
                                                        kwargs={'problem': self.problem.code,
@@ -546,7 +542,6 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
     def get_context_data(self, **kwargs):
         context = super(AllSubmissions, self).get_context_data(**kwargs)
         context['dynamic_update'] = context['page_obj'].number == 1
-        context['last_msg'] = event.last()
         context['stats_update_interval'] = self.stats_update_interval
         return context
 

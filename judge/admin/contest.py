@@ -14,7 +14,7 @@ from django.utils.translation import gettext_lazy as _, ungettext
 from reversion.admin import VersionAdmin
 
 from django_ace import AceWidget
-from judge.models import Contest, ContestProblem, ContestSubmission, Profile, Rating, Submission
+from judge.models import Contest, ContestAnnouncement, ContestProblem, ContestSubmission, Profile, Rating, Submission
 from judge.ratings import rate_contest
 from judge.utils.views import NoBatchDeleteMixin
 from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, AdminMartorWidget, \
@@ -78,6 +78,26 @@ class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
     rejudge_column.short_description = ''
 
 
+class ContestAnnouncementInlineForm(ModelForm):
+    class Meta:
+        widgets = {'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('comment_preview')})}
+
+
+class ContestAnnouncementInline(admin.StackedInline):
+    model = ContestAnnouncement
+    fields = ('title', 'description', 'resend')
+    readonly_fields = ('resend',)
+    form = ContestAnnouncementInlineForm
+    extra = 0
+
+    def resend(self, obj):
+        if obj.id is None:
+            return 'Not available'
+        return format_html('<a class="button resend-link" href="{}">Resend</a>',
+                           reverse('admin:judge_contest_resend', args=(obj.contest.id, obj.id)))
+    resend.short_description = 'Resend announcement'
+
+
 class ContestForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(ContestForm, self).__init__(*args, **kwargs)
@@ -114,8 +134,9 @@ class ContestForm(ModelForm):
 class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {'fields': ('key', 'name', 'authors', 'curators', 'testers')}),
-        (_('Settings'), {'fields': ('is_visible', 'use_clarifications', 'hide_problem_tags', 'hide_problem_authors',
-                                    'show_short_display', 'run_pretests_only', 'locked_after', 'scoreboard_visibility',
+        (_('Settings'), {'fields': ('is_visible', 'use_clarifications', 'push_announcements',
+                                    'hide_problem_tags', 'hide_problem_authors', 'show_short_display',
+                                    'run_pretests_only', 'locked_after', 'scoreboard_visibility',
                                     'points_precision')}),
         (_('Scheduling'), {'fields': ('start_time', 'end_time', 'time_limit')}),
         (_('Details'), {'fields': ('description', 'og_image', 'logo_override_image', 'tags', 'summary')}),
@@ -129,7 +150,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
     list_display = ('key', 'name', 'is_visible', 'is_rated', 'locked_after', 'start_time', 'end_time', 'time_limit',
                     'user_count')
     search_fields = ('key', 'name')
-    inlines = [ContestProblemInline]
+    inlines = [ContestProblemInline, ContestAnnouncementInline]
     actions_on_top = True
     actions_on_bottom = True
     form = ContestForm
@@ -257,6 +278,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
             url(r'^rate/all/$', self.rate_all_view, name='judge_contest_rate_all'),
             url(r'^(\d+)/rate/$', self.rate_view, name='judge_contest_rate'),
             url(r'^(\d+)/judge/(\d+)/$', self.rejudge_view, name='judge_contest_rejudge'),
+            url(r'^(\d+)/resend/(\d+)/$', self.resend_view, name='judge_contest_resend'),
         ] + super(ContestAdmin, self).get_urls()
 
     def rejudge_view(self, request, contest_id, problem_id):
@@ -267,6 +289,11 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         self.message_user(request, ungettext('%d submission was successfully scheduled for rejudging.',
                                              '%d submissions were successfully scheduled for rejudging.',
                                              len(queryset)) % len(queryset))
+        return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
+
+    def resend_view(self, request, contest_id, announcement_id):
+        announcement = get_object_or_404(ContestAnnouncement, id=announcement_id)
+        announcement.send()
         return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
 
     def rate_all_view(self, request):

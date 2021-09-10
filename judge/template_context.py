@@ -6,6 +6,7 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.utils.functional import SimpleLazyObject, new_method_proxy
 
+from judge import event_poster as event
 from judge.utils.caniuse import CanIUse, SUPPORT
 from .models import MiscConfig, NavigationBar, Profile
 
@@ -48,7 +49,8 @@ def comet_location(request):
         websocket = settings.EVENT_DAEMON_GET
         poll = settings.EVENT_DAEMON_POLL
     return {'EVENT_DAEMON_LOCATION': websocket,
-            'EVENT_DAEMON_POLL_LOCATION': poll}
+            'EVENT_DAEMON_POLL_LOCATION': poll,
+            'EVENT_LAST_MSG': event.last()}
 
 
 def __nav_tab(path):

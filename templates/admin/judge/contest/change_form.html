@@ -8,6 +8,9 @@
             $('.rejudge-link').click(function () {
                 return confirm('{{ _('Are you sure you want to rejudge ALL the submissions?') }}');
             });
+            $('.resend-link').click(function () {
+                return confirm('{{ _('Are you sure you want to resend this announcement?') }}');
+            });
         });
     </script>
 {% endblock extrahead %}
