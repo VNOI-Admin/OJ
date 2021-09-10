@@ -61,10 +61,12 @@ class ContestTag(models.Model):
 
 class Contest(models.Model):
     SCOREBOARD_VISIBLE = 'V'
+    SCOREBOARD_HIDDEN = 'H'
     SCOREBOARD_AFTER_CONTEST = 'C'
     SCOREBOARD_AFTER_PARTICIPATION = 'P'
     SCOREBOARD_VISIBILITY = (
         (SCOREBOARD_VISIBLE, _('Visible')),
+        (SCOREBOARD_HIDDEN, _('Always hidden')),
         (SCOREBOARD_AFTER_CONTEST, _('Hidden for duration of contest')),
         (SCOREBOARD_AFTER_PARTICIPATION, _('Hidden for duration of participation')),
     )
@@ -238,6 +240,8 @@ class Contest(models.Model):
 
     @cached_property
     def show_scoreboard(self):
+        if self.scoreboard_visibility == self.SCOREBOARD_HIDDEN:
+            return False
         if not self.can_join:
             return False
         if (self.scoreboard_visibility in (self.SCOREBOARD_AFTER_CONTEST, self.SCOREBOARD_AFTER_PARTICIPATION) and
