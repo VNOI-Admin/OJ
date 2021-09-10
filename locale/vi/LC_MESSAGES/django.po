@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-09-10 09:57+0000\n"
+"POT-Creation-Date: 2021-09-10 12:28+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -1092,7 +1092,7 @@ msgstr "Gửi thông báo đến thí sinh"
 
 #: judge/models/contest.py:103
 msgid "Notify users when there are new announcements."
-msgstr "Gửi các thông báo mới tới thí sinh."
+msgstr "Báo cho thí sinh khi có thông báo mới."
 
 #: judge/models/contest.py:105
 msgid "Rating floor for contest"
@@ -3430,11 +3430,6 @@ msgstr "Không thể xem các dữ liệu riêng tư của tổ chức"
 #: judge/views/organization.py:351
 msgid "You must join the organization to view its private data."
 msgstr "Bạn phải tham gia tổ chức để xem các dữ liệu riêng tư của tổ chức."
-
-#: judge/views/organization.py:386
-#, python-brace-format
-msgid "<a href=\"{1}\">{0}</a> Blog Post"
-msgstr "<a href=\"{1}\">{0}</a> blog"
 
 #: judge/views/problem.py:70 judge/views/tag.py:44
 msgid "No such problem"
@@ -6629,14 +6624,12 @@ msgid "#(cnt)d submissions in the last year"
 msgstr "Số bài nộp trong năm vừa qua: #(cnt)d"
 
 #: templates/user/user-about.html:211
-#, fuzzy
-#| msgid "#(cnt)d submission in #(year)d"
-msgid "#(cnt)d submission in (year)d"
-msgstr "Số bài nộp trong năm (year)d: #(cnt)d"
+msgid "#(cnt)d submission in #(year)d"
+msgstr "Số bài nộp trong năm #(year)d: #(cnt)d"
 
 #: templates/user/user-about.html:211
 msgid "#(cnt)d submissions in #(year)d"
-msgstr "Số bài nộp trong năm #(year)d"
+msgstr "Số bài nộp trong năm #(year)d: #(cnt)d"
 
 #: templates/user/user-about.html:229
 msgid "#(cnt)d submission on #(date)s"
@@ -6733,6 +6726,14 @@ msgstr "Số bài"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+#~ msgid "<a href=\"{1}\">{0}</a> Blog Post"
+#~ msgstr "<a href=\"{1}\">{0}</a> blog"
+
+#, fuzzy
+#~| msgid "#(cnt)d submission in #(year)d"
+#~ msgid "#(cnt)d submission in (year)d"
+#~ msgstr "Số bài nộp trong năm (year)d: #(cnt)d"
 
 #~ msgid "%s Members"
 #~ msgstr "%s thành viên"
