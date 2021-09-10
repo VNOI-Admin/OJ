@@ -483,6 +483,7 @@ class SubmissionListOrganization(CustomOrganizationMixin, AllSubmissions):
         context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
         context['title'] = self.organization.name
         context['content_title'] = self.organization.name
+        context['dynamic_update'] = False
         return context
 
 
