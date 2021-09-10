@@ -25,7 +25,7 @@ class Command(BaseCommand):
 
         os.makedirs(output_dir)
 
-        users = contest.users.filter(virtual=ContestParticipation.LIVE).prefetch_related('submissions').all()
+        users = contest.users.filter(virtual=ContestParticipation.LIVE).select_related('user__user')
 
         for user in users:
             username = user.user.user.username
