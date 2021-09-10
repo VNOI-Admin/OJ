@@ -150,11 +150,12 @@
                 selected = null;
             })
 
-            {% if request.participation.contest.push_announcements %}
+            {# Virtual = 0 is live participation, virtual = 1 is spectating #}
+            {% if request.participation.contest.push_announcements and request.participation.virtual <= 0%}
                 $(function () {
                     event_dispatcher.auto_reconnect = true;
                     event_dispatcher.on('contest_{{ request.participation.contest.id_secret }}', function (data) {
-                        alert(data.title + '\n\n' + data.message)
+                        alert(data.title + '\n\n' + data.message);
                     });
                 })
             {% endif %}
