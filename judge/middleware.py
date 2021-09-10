@@ -32,6 +32,8 @@ class DMOJLoginMiddleware(object):
         self.get_response = get_response
 
     def __call__(self, request):
+        # Don't require user to change their password in contest mode
+        request.official_contest_mode = settings.VNOJ_OFFICIAL_CONTEST_MODE
         if request.user.is_authenticated:
             profile = request.profile = request.user.profile
             logout_path = reverse('auth_logout')
@@ -47,7 +49,8 @@ class DMOJLoginMiddleware(object):
             elif (request.session.get('password_pwned', False) and
                     request.path not in (change_password_path, change_password_done_path,
                                          login_2fa_path, logout_path) and
-                    not request.path.startswith(settings.STATIC_URL)):
+                    not request.path.startswith(settings.STATIC_URL) and
+                    not request.official_contest_mode):
                 return HttpResponseRedirect(change_password_path + '?next=' + urlquote(request.get_full_path()))
         else:
             request.profile = None
@@ -70,7 +73,6 @@ class ContestMiddleware(object):
         self.get_response = get_response
 
     def __call__(self, request):
-        request.official_contest_mode = settings.VNOJ_OFFICIAL_CONTEST_MODE
         profile = request.profile
         if profile:
             profile.update_contest()
