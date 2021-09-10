@@ -29,10 +29,9 @@ from django.views.generic.detail import BaseDetailView, DetailView, SingleObject
 from django.views.generic.edit import CreateView, UpdateView
 from reversion import revisions
 
-from judge import event_poster as event
 from judge.comments import CommentedDetailView
 from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
-from judge.models import Contest, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
+from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Problem, ProblemClarification, Profile, Submission
 from judge.tasks import run_moss
 from judge.utils.celery import redirect_to_task_status
@@ -293,6 +292,9 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         clarifications = ProblemClarification.objects.filter(problem__in=self.object.problems.all())
         context['has_clarifications'] = clarifications.count() > 0
         context['clarifications'] = clarifications.order_by('-date')
+        announcements = ContestAnnouncement.objects.filter(contest=self.object)
+        context['has_announcements'] = announcements.count() > 0
+        context['announcements'] = announcements.order_by('-date')
 
         authenticated = self.request.user.is_authenticated
         context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
@@ -730,7 +732,6 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         users, problems = self.get_ranking_list()
         context['users'] = users
         context['problems'] = problems
-        context['last_msg'] = event.last()
         context['tab'] = self.tab
         return context
 

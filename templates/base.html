@@ -84,6 +84,7 @@
         <script src="{{ static('libs/select2/select2.js') }}"></script>
         {% include "extra_js.html" %}
         <script src="{{ static('common.js') }}"></script>
+        <script src="{{ static('event.js') }}"></script>
         <script>
             moment.locale('{{ LANGUAGE_CODE }}');
             $(function () {
@@ -92,6 +93,15 @@
         </script>
     {% endcompress %}
     {% block js_media %}{% endblock %}
+    {% if EVENT_LAST_MSG %}
+        <script>
+            window.event_dispatcher = new WSEventDispatcher(
+                '{{ EVENT_DAEMON_LOCATION }}',
+                '{{ EVENT_DAEMON_POLL_LOCATION }}',
+                {{ EVENT_LAST_MSG }}
+            );
+        </script>
+    {% endif %}
     {% if request.in_contest %}
         <script>$(function () {
             count_down($("#contest-time-remaining"));
@@ -139,6 +149,16 @@
             $(document).mouseup(function () {
                 selected = null;
             })
+
+            {# Virtual = 0 is live participation, virtual = -1 is spectating #}
+            {% if request.participation.contest.push_announcements and request.participation.virtual <= 0 %}
+                $(function () {
+                    event_dispatcher.auto_reconnect = true;
+                    event_dispatcher.on('contest_{{ request.participation.contest.id_secret }}', function (data) {
+                        alert(data.title + '\n\n' + data.message);
+                    });
+                })
+            {% endif %}
         });
         </script>
     {% endif %}
