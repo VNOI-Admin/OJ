@@ -31,10 +31,12 @@
 
             $('.contest-tag').find('a[data-featherlight]').featherlight();
 
-            $('.join-warning').click(function () {
-                return confirm('{{ _('Are you sure you want to join?') }}\n' +
-                    '{{ _('Joining a contest for the first time starts your timer, after which it becomes unstoppable.') }}');
-            });
+            {% if not request.official_contest_mode %}
+                $('.join-warning').click(function () {
+                    return confirm('{{ _('Are you sure you want to join?') }}\n' +
+                        '{{ _('Joining a contest for the first time starts your timer, after which it becomes unstoppable.') }}');
+                });
+            {% endif %}
 
             // var tooltip_classes = 'tooltipped tooltipped-e';
             //
