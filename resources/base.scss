@@ -299,7 +299,7 @@ nav {
 
                 &.active {
                     color: #FFF;
-                    border: 5px solid transparent; 
+                    border: 5px solid transparent;
                     border-bottom: 5px solid $highlight_blue;
                     padding: 13px 2px;
                 }
@@ -545,6 +545,7 @@ noscript #noscript {
 
 #content-body {
     padding-bottom: 4em;
+    overflow: auto;
 }
 
 // Offset the footer
@@ -586,7 +587,7 @@ math {
         height: 36px;
         background: $widget_black;
     }
-    
+
     #nav-shadow {
         height: 39px;
         background: linear-gradient(rgba(0, 0, 0, 0.5), transparent);

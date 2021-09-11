@@ -36,12 +36,6 @@
 {% block content_media %}
     {% if not comment_lock %}
         {% include "comments/media-css.html" %}
-    {% else %}
-        <style>
-            #content-body {
-                overflow: auto;
-            }
-        </style>
     {% endif %}
 {% endblock %}
 
