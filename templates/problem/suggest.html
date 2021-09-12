@@ -10,7 +10,7 @@
             {{ _('Please keep in mind that this form is only for creating new problems. Spamming and using for wrong purposes is not allowed.<br>If you don\'t know how to suggest a problem, please read <a href="/about/suggest_guide/">this</a>.') }}
         </div>
     {% endif %}
-    <form action="" method="post" class="form-area" enctype="multipart/form-data" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
+    <form action="" method="post" class="form-area" enctype="multipart/form-data" style="display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
         <table class="django-as-table">{{ form.as_table() }}</table>
         <hr>

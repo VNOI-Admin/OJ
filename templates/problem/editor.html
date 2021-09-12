@@ -100,7 +100,7 @@
             <a href="{{ url('admin:judge_problem_change', object.id) }}">{{ _('Edit problem in admin panel for more options') }}</a>
         </div>
     {% endif %}
-    <form action="" method="post" class="form-area" enctype="multipart/form-data" style="width: 100%; display: flex; justify-content: center; flex-direction: column;">
+    <form action="" method="post" class="form-area" enctype="multipart/form-data" style="display: flex; justify-content: center; flex-direction: column;">
         {% if form.errors or solution_formset.errors %}
             <p class="errornote"> {{ _('Please correct the error below.') }}</p>
         {% endif %}
