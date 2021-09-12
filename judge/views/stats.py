@@ -38,7 +38,7 @@ def oj_data(request):
     queryset = Submission.objects.filter(date__gte=start_date, date__lte=end_date)
 
     submissions = (
-        queryset.annotate(date_only=Cast(F('date') + utc_offset, DateField())).order_by('date')
+        queryset.annotate(date_only=Cast(F('date') + utc_offset, DateField()))
         .values('date_only', 'result').annotate(count=Count('result')).values_list('date_only', 'result', 'count')
     )
 
