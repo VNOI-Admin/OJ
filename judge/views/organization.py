@@ -447,14 +447,14 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
         return context
 
     def get_filter(self):
-        filter = Q(organizations=self.organization)
+        filter = Q()
         if not self.can_edit_organization():
-            filter &= Q(is_public=True)
+            filter = Q(is_public=True)
             if self.profile is not None:
                 filter |= Q(authors=self.profile)
                 filter |= Q(curators=self.profile)
                 filter |= Q(testers=self.profile)
-        return filter
+        return filter & Q(organizations=self.organization)
 
 
 class ContestListOrganization(CustomOrganizationMixin, ContestList):
