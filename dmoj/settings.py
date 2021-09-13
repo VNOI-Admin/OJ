@@ -148,6 +148,7 @@ DMOJ_PROBLEM_HOT_PROBLEM_COUNT = 7
 DMOJ_PROBLEM_STATEMENT_DISALLOWED_CHARACTERS = {'“', '”', '‘', '’'}
 DMOJ_RATING_COLORS = True
 DMOJ_EMAIL_THROTTLING = (10, 60)
+VNOJ_DISCORD_WEBHOOK_THROTTLING = (10, 60) # Max 10 messages in 60 seconds
 DMOJ_STATS_LANGUAGE_THRESHOLD = 10
 DMOJ_SUBMISSIONS_REJUDGE_LIMIT = 10
 # Maximum number of submissions a single user can queue without the `spam_submission` permission
