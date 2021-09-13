@@ -222,9 +222,9 @@ class Profile(models.Model):
         # Because the aggregate function can return None
         # So we use `X or 0` to get 0 if X is None
         # Please note that `0 or X` will return None if X is None
-        total_comment_scores = Comment.objects.filter(author=self.user_id) \
+        total_comment_scores = Comment.objects.filter(author=self.id) \
             .aggregate(sum=Sum('score'))['sum'] or 0
-        count_good_tickets = Ticket.objects.filter(user=self.user_id, is_contributive=True) \
+        count_good_tickets = Ticket.objects.filter(user=self.id, is_contributive=True) \
             .count()
         count_suggested_problem = self.suggested_problems.filter(is_public=True).count()
         new_pp = total_comment_scores * settings.VNOJ_CP_COMMENT + \
