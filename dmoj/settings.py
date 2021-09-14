@@ -83,8 +83,8 @@ OJ_PROBLEM_PRESET = [
         'judge': 'Codeforces',
     },
     {
-        'regex': r'^https://atcoder.jp/contests/(?P<contestId>\w+)/tasks/(?P<index>\w+)$',
-        'codename': 'AC_%s_%s',
+        'regex': r'^^https://atcoder.jp/contests/(?:\w*)/tasks/(?P<codename>\w+)$',
+        'codename': 'AC_%s',
         'judge': 'Atcoder',
     },
     {

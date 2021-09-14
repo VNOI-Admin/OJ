@@ -84,12 +84,12 @@ class OJAPI:
             if problemset_data is None:
                 return None
 
-            code_template = "AC_%s_%s"  # I.e.: index = abc064_c
+            code_template = "AC_%s"  # I.e.: index = abc064_c
 
             problemset = {}
 
             for problem in problemset_data:
-                code = code_template % (problem['contest_id'], problem["id"])
+                code = code_template % (problem["id"])
                 if code in problemset:
                     raise ValueError("Problem code %s appeared twice in the problemset." % code)
                 problemset[code] = {
