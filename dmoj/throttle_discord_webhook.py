@@ -51,7 +51,6 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
                 record.getMessage(),
             )
             request = None
-        subject = self.format_subject(subject)
 
         # Since we add a nicely formatted traceback on our own, create a copy
         # of the log record without the exception data.
@@ -77,9 +76,3 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
         # Use 7MB just for safe.
         webhook.add_file(file=message[:7 * 1024 * 1024], filename='log.txt')
         webhook.execute()
-
-    def format_subject(self, subject):
-        """
-        Escape CR and LF characters.
-        """
-        return subject.replace('\n', '\\n').replace('\r', '\\r')
