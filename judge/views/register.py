@@ -69,7 +69,14 @@ class RegistrationView(OldRegistrationView):
         kwargs['tos_url'] = settings.TERMS_OF_SERVICE_URL
         return super(RegistrationView, self).get_context_data(**kwargs)
 
+    @transaction.atomic
     def register(self, form):
+        # We put the entire function inside a transaction
+        # This makes sure that `user` and `profile` are created in the same transaction
+        # It also delays the sending of emails until the transaction is committed
+        # (sending emails can cause error, resulting in an unclean database)
+        # See https://github.com/macropin/django-registration/blob/v2.9/registration/models.py#L188-L193
+
         user = super(RegistrationView, self).register(form)
         profile, _ = Profile.objects.get_or_create(user=user, defaults={
             'language': Language.get_default_language(),
@@ -81,9 +88,8 @@ class RegistrationView(OldRegistrationView):
         profile.language = cleaned_data['language']
         profile.organizations.add(*cleaned_data['organizations'])
 
-        with transaction.atomic():
-            user.save()
-            profile.save()
+        user.save()
+        profile.save()
 
         if newsletter_id is not None and cleaned_data['newsletter']:
             Subscription(user=user, newsletter_id=newsletter_id, subscribed=True).save()
