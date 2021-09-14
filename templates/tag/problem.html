@@ -73,7 +73,7 @@
             <h2>{{ content_title }}</h2>
             <span class="spacer"></span>
             <ul>
-                {% if request.user.is_authenticated and request.profile.allow_tagging %}
+                {% if request.user.is_authenticated and (request.profile.allow_tagging or request.user.is_superuser) %}
                     <li class="tab">
                         <a href="{{ url('tagproblem_assign', problem.code) }}"><i class="tab-icon fa fa-plus"></i>{{ _('Assign new tag') }}</a>
                     </li>
