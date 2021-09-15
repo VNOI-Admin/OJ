@@ -85,6 +85,15 @@ def judge_submission(submission, rejudge=False, batch_rejudge=False, judge_id=No
 
     SubmissionTestCase.objects.filter(submission_id=submission.id).delete()
 
+    banned_judges = []
+    if hasattr(submission, 'contest'):
+        # This is not an actual contest, this is a ContestSubmission
+        contest = submission.contest
+        # ContestParticipation
+        participation = contest.participation
+        if participation.live or participation.spectate:
+            banned_judges = list(participation.contest.banned_judges.values_list('name', flat=True))
+
     try:
         response = judge_request({
             'name': 'submission-request',
@@ -93,7 +102,7 @@ def judge_submission(submission, rejudge=False, batch_rejudge=False, judge_id=No
             'language': submission.language.key,
             'source': submission.source.source,
             'judge-id': judge_id,
-            'banned-judges': list(submission.problem.banned_judges.values_list('name', flat=True)),
+            'banned-judges': banned_judges,
             'priority': BATCH_REJUDGE_PRIORITY if batch_rejudge else (REJUDGE_PRIORITY if rejudge else priority),
         })
     except BaseException:

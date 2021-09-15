@@ -148,6 +148,8 @@ class Contest(models.Model):
                                                'to join the contest. Leave it blank to disable.'))
     banned_users = models.ManyToManyField(Profile, verbose_name=_('personae non gratae'), blank=True,
                                           help_text=_('Bans the selected users from joining this contest.'))
+    banned_judges = models.ManyToManyField('judge.Judge', verbose_name=_('Banned judges'), blank=True,
+                                           help_text=_('Bans the selected judges from judging this contest.'))
     format_name = models.CharField(verbose_name=_('contest format'), default='default', max_length=32,
                                    choices=contest_format.choices(), help_text=_('The contest format module to use.'))
     format_config = JSONField(verbose_name=_('contest format configuration'), null=True, blank=True,

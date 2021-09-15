@@ -109,6 +109,7 @@ class ContestForm(ModelForm):
                 self.fields['rate_exclude'].queryset = Profile.objects.none()
         self.fields['banned_users'].widget.can_add_related = False
         self.fields['view_contest_scoreboard'].widget.can_add_related = False
+        self.fields['banned_judges'].widget.can_add_related = False
 
     def clean(self):
         cleaned_data = super(ContestForm, self).clean()
@@ -128,6 +129,7 @@ class ContestForm(ModelForm):
             'view_contest_scoreboard': AdminHeavySelect2MultipleWidget(data_view='profile_select2',
                                                                        attrs={'style': 'width: 100%'}),
             'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
+            'banned_judges': AdminSelect2MultipleWidget(attrs={'style': 'width: 100%'}),
         }
 
 
@@ -137,7 +139,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         (_('Settings'), {'fields': ('is_visible', 'use_clarifications', 'push_announcements',
                                     'hide_problem_tags', 'hide_problem_authors', 'show_short_display',
                                     'run_pretests_only', 'locked_after', 'scoreboard_visibility',
-                                    'points_precision')}),
+                                    'points_precision', 'banned_judges')}),
         (_('Scheduling'), {'fields': ('start_time', 'end_time', 'time_limit')}),
         (_('Details'), {'fields': ('description', 'og_image', 'logo_override_image', 'tags', 'summary')}),
         (_('Format'), {'fields': ('format_name', 'format_config', 'problem_label_script')}),
