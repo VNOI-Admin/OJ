@@ -26,7 +26,6 @@ class ProblemForm(ModelForm):
         self.fields['suggester'].widget.can_add_related = False
         self.fields['testers'].widget.can_add_related = False
         self.fields['banned_users'].widget.can_add_related = False
-        self.fields['banned_judges'].widget.can_add_related = False
         self.fields['change_message'].widget.attrs.update({
             'placeholder': gettext('Describe the changes you made (optional)'),
         })
@@ -41,7 +40,6 @@ class ProblemForm(ModelForm):
                                                             attrs={'style': 'width: 100%'}),
             'organizations': AdminHeavySelect2MultipleWidget(data_view='organization_select2',
                                                              attrs={'style': 'width: 100%'}),
-            'banned_judges': AdminSelect2MultipleWidget(attrs={'style': 'width: 100%'}),
             'types': AdminSelect2MultipleWidget,
             'group': AdminSelect2Widget,
             'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
@@ -135,7 +133,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         (_('Taxonomy'), {'fields': ('types', 'group')}),
         (_('Points'), {'fields': (('points', 'partial'), 'short_circuit')}),
         (_('Limits'), {'fields': ('time_limit', 'memory_limit')}),
-        (_('Language'), {'fields': ('allowed_languages', 'banned_judges')}),
+        (_('Language'), {'fields': ('allowed_languages',)}),
         (_('Justice'), {'fields': ('banned_users',)}),
         (_('History'), {'fields': ('change_message',)}),
     )
