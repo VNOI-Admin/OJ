@@ -866,7 +866,7 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
             problem.save()
             form_edit.save()
             return HttpResponseRedirect(reverse('problem_detail', args=[self.object.code]))
-        return self.render_to_response(self.get_context_data(**kwargs))
+        return self.render_to_response(self.get_context_data(object=self.object))
 
     def dispatch(self, request, *args, **kwargs):
         try:
