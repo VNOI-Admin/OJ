@@ -383,13 +383,12 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
     allow_all_users = True
 
     def get_queryset(self):
-        queryset = BlogPost.objects.filter(organization=self.organization,
-                                           publish_on__lte=timezone.now())
+        queryset = BlogPost.objects.filter(organization=self.organization)
 
         if not self.can_edit_organization():
             if self.request.profile in self.object:
                 # Normal user can only view public posts
-                queryset = queryset.filter(visible=True)
+                queryset = queryset.filter(publish_on__lte=timezone.now(), visible=True)
             else:
                 # User cannot view organization blog
                 # if they are not in the org
