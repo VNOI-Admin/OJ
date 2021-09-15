@@ -48,6 +48,7 @@
         {{ post_to_twitter(request, SITE_NAME + ':', post, '<i class="fa fa-twitter"></i>') }}
     </span>
     {% include "comments/list.html" %}
+    <div style="clear: both;"></div>
 {% endblock %}
 
 {% block bodyend %}
