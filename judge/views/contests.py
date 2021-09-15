@@ -1023,4 +1023,4 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
                 problem.save()
             return HttpResponseRedirect(self.get_success_url())
         else:
-            return self.render_to_response(self.get_context_data(*args, **kwargs))
+            return self.render_to_response(self.get_context_data(object=self.object))
