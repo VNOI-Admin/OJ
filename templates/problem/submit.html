@@ -102,6 +102,13 @@
                             localStorage.setItem('submit:' + $('#id_language').val(), editor.getSession().getValue());
                         }
                     });
+                    editor.commands.addCommand({
+                        name: 'open',
+                        bindKey: {win: 'Ctrl-O', mac: 'Command-O'},
+                        exec: function () {
+                            $('#file_select').click();
+                        }
+                    });
                     editor.getSession().setUseWrapMode(true);
                     editor.setFontSize(14);
                     editor.setPrintMarginColumn(100);
