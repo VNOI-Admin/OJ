@@ -15,7 +15,7 @@ from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordRes
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
-from django.core.exceptions import PermissionDenied, ValidationError
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.db.models import Count, F, Max, Min, Prefetch
 from django.db.models.fields import DateField
 from django.db.models.functions import Cast, ExtractYear
@@ -32,7 +32,7 @@ from django.views.generic import DetailView, FormView, ListView, TemplateView, V
 from reversion import revisions
 
 from judge.forms import CustomAuthenticationForm, DownloadDataForm, ProfileForm, UserForm, newsletter_id
-from judge.models import Organization, Profile, Rating, Submission
+from judge.models import BlogPost, Organization, Profile, Rating, Submission
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
@@ -44,6 +44,7 @@ from judge.utils.ranker import ranker
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, add_file_response, generic_message
+from judge.views.blog import PostListBase
 from .contests import ContestRanking
 
 __all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserDownloadData', 'UserPrepareData',
@@ -62,6 +63,23 @@ class UserMixin(object):
 
     def render_to_response(self, context, **response_kwargs):
         return super(UserMixin, self).render_to_response(context, **response_kwargs)
+
+
+# This is almost the same as UserMixin
+# However, I need to write a new class because
+# the current mixin is for Profile DetailView.
+class CustomUserMixin(object):
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['user'] = self.user
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if 'user' not in kwargs:
+            raise ImproperlyConfigured('must pass a user pk')
+        self.user = get_object_or_404(Profile, user__username=kwargs['user'])
+        self.object = self.user
+        return super(CustomUserMixin, self).dispatch(request, *args, **kwargs)
 
 
 class UserPage(TitleMixin, UserMixin, DetailView):
@@ -216,6 +234,18 @@ class UserAboutPage(UserPage):
             ),
         }))
         return context
+
+
+class UserBlogPage(CustomUserMixin, PostListBase):
+    template_name = 'user/blog.html'
+
+    def get_queryset(self):
+        queryset = BlogPost.objects.filter(authors=self.user)
+
+        if self.request.user != self.user.user:
+            queryset = queryset.filter(visible=True)
+
+        return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
 
 class UserProblemsPage(UserPage):

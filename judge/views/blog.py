@@ -47,6 +47,7 @@ class PostListBase(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(PostListBase, self).get_context_data(**kwargs)
+        context['first_page_href'] = None
         context['title'] = self.title or _('Page %d of Posts') % context['page_obj'].number
         context['post_comment_counts'] = {
             int(page[2:]): count for page, count in
@@ -168,8 +169,8 @@ class BlogPostCreate(TitleMixin, CreateView):
         return _('Creating new blog post')
 
     def form_valid(self, form):
-        self.get_object = post = form.save(commit=False)
-        post.publish_on = timezone.now()
+        self.object = post = form.save(commit=False)
+        post.slug = self.request.user.username.lower()
         post.save()  # Presave to initialize the object id before using Many-to-Many relationship.
         post.authors.add(self.request.user.profile)
         post.save()
