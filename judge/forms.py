@@ -191,6 +191,11 @@ class ProblemEditForm(ModelForm):
                         'You can approximate: 0.5 is as hard as Problem 1 of VOI; 1 = Problem 2 of VOI; '
                         '1.5 = Problem 3 of VOI.'),
         }
+        error_messages = {
+            'code': {
+                'invalid': _('Only accept alphanumeric characters (a-z, 0-9) and underscore (_)'),
+            },
+        }
 
 
 class ProposeProblemSolutionFormSet(inlineformset_factory(Problem, Solution, form=ProposeProblemSolutionForm)):
@@ -553,4 +558,9 @@ class ContestForm(ModelForm):
                 data_view='profile_select2',
                 attrs={'style': 'width: 100%'},
             ),
+        }
+        error_messages = {
+            'key': {
+                'invalid': _('Only accept alphanumeric characters (a-z, 0-9) and underscore (_)'),
+            },
         }
