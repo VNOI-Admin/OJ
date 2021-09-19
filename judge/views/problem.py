@@ -484,7 +484,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
 
 class SuggestList(ProblemList):
     template_name = 'problem/suggest-list.html'
-    permission_required = "superuser"
+    permission_required = 'superuser'
 
     def get_filter(self):
         return Q(is_public=False) & ~Q(suggester=None)
@@ -760,7 +760,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
         statement_file = form.files.get('statement_file', None)
         if statement_file is not None:
             if not self.request.user.has_perm('judge.upload_file_statement'):
-                form.add_error('statement_file', 'You don\'t have permission to upload file-type statement.')
+                form.add_error('statement_file', "You don't have permission to upload file-type statement.")
                 return self.form_invalid(form)
             problem.pdf_url = pdf_statement_uploader(statement_file)
 
@@ -850,7 +850,7 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         statement_file = form.files.get('statement_file', None)
         if statement_file is not None:
             if not self.request.user.has_perm('judge.upload_file_statement'):
-                form.add_error('statement_file', 'You don\'t have permission to upload file-type statement.')
+                form.add_error('statement_file', "You don't have permission to upload file-type statement.")
                 return self.form_invalid(form)
             problem.pdf_url = pdf_statement_uploader(statement_file)
 

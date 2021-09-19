@@ -45,7 +45,7 @@ class OJAPI:
 
             contestset = []
 
-            for contest in contestset_data["result"]:
+            for contest in contestset_data['result']:
                 contestset.append(str(contest['id']))
             cache.set('OJAPI_data_Codeforces', contestset, settings.OJAPI_CACHE_TIMEOUT)
 
@@ -78,24 +78,24 @@ class OJAPI:
         problemset = cache.get('OJAPI_data_Atcoder', None)
 
         if problemset is None:
-            api_url = "https://kenkoooo.com/atcoder/resources/problems.json"
+            api_url = 'https://kenkoooo.com/atcoder/resources/problems.json'
             problemset_data = requests.get(api_url, timeout=_TIMEOUT).json()
 
             if problemset_data is None:
                 return None
 
-            code_template = "AC_%s"  # I.e.: index = abc064_c
+            code_template = 'AC_%s'  # I.e.: index = abc064_c
 
             problemset = {}
 
             for problem in problemset_data:
-                code = code_template % (problem["id"])
+                code = code_template % (problem['id'])
                 if code in problemset:
-                    raise ValueError("Problem code %s appeared twice in the problemset." % code)
+                    raise ValueError('Problem code %s appeared twice in the problemset.' % code)
                 problemset[code] = {
-                    "contestId": problem["contest_id"],
-                    "index": problem["id"],
-                    "title": problem["title"],
+                    'contestId': problem['contest_id'],
+                    'index': problem['id'],
+                    'title': problem['title'],
                 }
 
             cache.set('OJAPI_data_Atcoder', problemset, settings.OJAPI_CACHE_TIMEOUT)
@@ -147,7 +147,7 @@ class OJAPI:
 
             contestset = []
 
-            for contest in contestset_data["result"]:
+            for contest in contestset_data['result']:
                 contestset.append(str(contest['id']))
             cache.set('OJAPI_data_CodeforcesGym', contestset, settings.OJAPI_CACHE_TIMEOUT)
 

@@ -115,7 +115,7 @@ class ProblemDataCompiler(object):
             if case.grader == 'interactive':
                 file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
                 if file_ext != 'cpp':
-                    raise ProblemDataError(_("Only accept `.cpp` interactor"))
+                    raise ProblemDataError(_('Only accept `.cpp` interactor'))
 
                 init['interactive'] = {
                     'files': file_name,
@@ -127,10 +127,10 @@ class ProblemDataCompiler(object):
             if case.grader == 'signature':
                 file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
                 if file_ext != 'cpp':
-                    raise ProblemDataError(_("Only accept `.cpp` entry"))
+                    raise ProblemDataError(_('Only accept `.cpp` entry'))
                 header_name, file_ext = get_file_name_and_ext(case.custom_header.name)
                 if file_ext != 'h':
-                    raise ProblemDataError(_("Only accept `.h` header"))
+                    raise ProblemDataError(_('Only accept `.h` header'))
                 init['signature_grader'] = {
                     'entry': file_name,
                     'header': header_name,
@@ -146,7 +146,7 @@ class ProblemDataCompiler(object):
             if case.grader == 'custom_judge':
                 file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
                 if file_ext != 'py':
-                    raise ProblemDataError(_("Only accept `.py` custom judge"))
+                    raise ProblemDataError(_('Only accept `.py` custom judge'))
                 init['custom_judge'] = file_name
                 return
 

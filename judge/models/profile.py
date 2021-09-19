@@ -183,6 +183,10 @@ class Profile(models.Model):
         return self.user.username
 
     @cached_property
+    def display_name(self):
+        return self.user.first_name or self.username
+
+    @cached_property
     def has_any_solves(self):
         return self.submission_set.filter(points=F('problem__points')).exists()
 
@@ -257,7 +261,7 @@ class Profile(models.Model):
 
     def generate_scratch_codes(self):
         def generate_scratch_code():
-            return "".join(secrets.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567") for _ in range(16))
+            return ''.join(secrets.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ234567') for _ in range(16))
         codes = [generate_scratch_code() for _ in range(settings.DMOJ_SCRATCH_CODES_COUNT)]
         self.scratch_codes = json.dumps(codes)
         self.save(update_fields=['scratch_codes'])

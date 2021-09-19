@@ -55,4 +55,4 @@ class TagData(models.Model):
         unique_together = ('tag', 'problem')
 
     def __str__(self):
-        return ""
+        return ''
