@@ -53,7 +53,7 @@ class SubmissionDetailBase(LoginRequiredMixin, TitleMixin, SubmissionMixin, Deta
         submission = self.object
         return _('Submission of %(problem)s by %(user)s') % {
             'problem': submission.problem.translated_name(self.request.LANGUAGE_CODE),
-            'user': submission.user.display_name,
+            'user': submission.user.user.username,
         }
 
     def get_content_title(self):
@@ -64,7 +64,7 @@ class SubmissionDetailBase(LoginRequiredMixin, TitleMixin, SubmissionMixin, Deta
                                    submission.problem.translated_name(self.request.LANGUAGE_CODE)),
             'user': format_html('<a href="{0}">{1}</a>',
                                 reverse('user_page', args=[submission.user.user.username]),
-                                submission.user.display_name),
+                                submission.user.user.username),
         })
 
 
@@ -372,7 +372,7 @@ class ConditionalUserTabMixin(object):
             context['tab'] = 'my_submissions_tab'
         else:
             context['tab'] = 'user_submissions_tab'
-            context['tab_username'] = self.profile.display_name
+            context['tab_username'] = self.profile.user.username
         return context
 
 
@@ -383,12 +383,12 @@ class AllUserSubmissions(ConditionalUserTabMixin, UserMixin, SubmissionsListBase
     def get_title(self):
         if self.is_own:
             return _('All my submissions')
-        return _('All submissions by %s') % self.profile.display_name
+        return _('All submissions by %s') % self.username
 
     def get_content_title(self):
         if self.is_own:
             return format_html(_('All my submissions'))
-        return format_html(_('All submissions by') + ' <a href="{1}">{0}</a>', self.profile.display_name,
+        return format_html(_('All submissions by') + ' <a href="{1}">{0}</a>', self.username,
                            reverse('user_page', args=[self.username]))
 
     def get_my_submissions_page(self):
@@ -487,7 +487,7 @@ class UserProblemSubmissions(ConditionalUserTabMixin, UserMixin, ProblemSubmissi
         if self.is_own:
             return _('My submissions for %(problem)s') % {'problem': self.problem_name}
         return _("%(user)s's submissions for %(problem)s") % {
-            'user': self.profile.display_name, 'problem': self.problem_name,
+            'user': self.username, 'problem': self.problem_name,
         }
 
     def get_content_title(self):
@@ -496,7 +496,7 @@ class UserProblemSubmissions(ConditionalUserTabMixin, UserMixin, ProblemSubmissi
                                self.username, reverse('user_page', args=[self.username]),
                                self.problem_name, reverse('problem_detail', args=[self.problem.code]))
         return format_html(_("""<a href="{1}">{0}</a>'s submissions for <a href="{3}">{2}</a>"""),
-                           self.profile.display_name, reverse('user_page', args=[self.username]),
+                           self.username, reverse('user_page', args=[self.username]),
                            self.problem_name, reverse('problem_detail', args=[self.problem.code]))
 
     def get_context_data(self, **kwargs):
@@ -608,7 +608,7 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
         if self.is_own:
             return _('My submissions in %(contest)s') % {'contest': self.contest.name}
         return _("%(user)s's submissions in %(contest)s") % {
-            'user': self.profile.display_name,
+            'user': self.username,
             'contest': self.contest.name,
         }
 
@@ -627,7 +627,7 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
             return format_html(_('My submissions in <a href="{1}">{0}</a>'),
                                self.contest.name, reverse('contest_view', args=[self.contest.key]))
         return format_html(_('<a href="{1}">{0}</a>\'s submissions in <a href="{3}">{2}</a>'),
-                           self.profile.display_name, reverse('user_page', args=[self.username]),
+                           self.username, reverse('user_page', args=[self.username]),
                            self.contest.name, reverse('contest_view', args=[self.contest.key]))
 
     def get_queryset(self):
@@ -641,9 +641,9 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
 class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
     def get_title(self):
         if self.problem.is_accessible_by(self.request.user):
-            return "%s's submissions for %s in %s" % (self.profile.display_name, self.problem_name, self.contest.name)
+            return "%s's submissions for %s in %s" % (self.username, self.problem_name, self.contest.name)
         return "%s's submissions for problem %s in %s" % (
-            self.profile.display_name, self.get_problem_label(self.problem), self.contest.name)
+            self.username, self.get_problem_label(self.problem), self.contest.name)
 
     def access_check(self, request):
         super(UserContestSubmissions, self).access_check(request)
@@ -654,11 +654,11 @@ class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
         if self.problem.is_accessible_by(self.request.user):
             return format_html(_('<a href="{1}">{0}</a>\'s submissions for '
                                  '<a href="{3}">{2}</a> in <a href="{5}">{4}</a>'),
-                               self.profile.display_name, reverse('user_page', args=[self.username]),
+                               self.username, reverse('user_page', args=[self.username]),
                                self.problem_name, reverse('problem_detail', args=[self.problem.code]),
                                self.contest.name, reverse('contest_view', args=[self.contest.key]))
         return format_html(_('<a href="{1}">{0}</a>\'s submissions for '
                              'problem {2} in <a href="{4}">{3}</a>'),
-                           self.profile.display_name, reverse('user_page', args=[self.username]),
+                           self.username, reverse('user_page', args=[self.username]),
                            self.get_problem_label(self.problem),
                            self.contest.name, reverse('contest_view', args=[self.contest.key]))
