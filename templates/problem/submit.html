@@ -106,6 +106,26 @@
                     editor.setFontSize(14);
                     editor.setPrintMarginColumn(100);
                     editor.focus();
+
+                    $(editor.container).on('dragover', function (e) {
+                        var types = e.originalEvent.dataTransfer.types;
+                        if (types && Array.prototype.indexOf.call(types, 'Files') !== -1) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                        }
+                    });
+
+                    $(editor.container).on('drop', function (e) {
+                        e.preventDefault();
+                        var file = e.originalEvent.dataTransfer.files[0];
+                        if (window.FileReader) {
+                            var reader = new FileReader();
+                            reader.onload = function () {
+                                editor.session.setValue(reader.result);
+                            };
+                            reader.readAsText(file);
+                        }
+                    });
                 });
 
                 $(window).resize(function () {
