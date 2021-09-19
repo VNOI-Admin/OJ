@@ -183,10 +183,6 @@ class Profile(models.Model):
         return self.user.username
 
     @cached_property
-    def display_name(self):
-        return self.user.first_name or self.username
-
-    @cached_property
     def has_any_solves(self):
         return self.submission_set.filter(points=F('problem__points')).exists()
 
