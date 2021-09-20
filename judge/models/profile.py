@@ -48,7 +48,7 @@ class Organization(models.Model):
                                     help_text=_('Those who can edit this organization'))
     creation_date = models.DateTimeField(verbose_name=_('creation date'), auto_now_add=True)
     is_open = models.BooleanField(verbose_name=_('is open organization?'),
-                                  help_text=_('Allow joining organization'), default=True)
+                                  help_text=_('Allow joining organization'), default=False)
     is_unlisted = models.BooleanField(verbose_name=_('is unlisted organization?'),
                                       help_text=_('Organization will not be listed'), default=True)
     slots = models.IntegerField(verbose_name=_('maximum size'), null=True, blank=True,
@@ -112,6 +112,8 @@ class Organization(models.Model):
         permissions = (
             ('organization_admin', _('Administer organizations')),
             ('edit_all_organization', _('Edit all organizations')),
+            ('create_private_organization', _('Create private organizations')),
+            ('change_open_organization', _('Change is_open field')),
         )
         verbose_name = _('organization')
         verbose_name_plural = _('organizations')
