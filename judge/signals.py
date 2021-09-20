@@ -131,6 +131,14 @@ def organization_update(sender, instance, **kwargs):
                        for engine in EFFECTIVE_MATH_ENGINES])
 
 
+@receiver(m2m_changed, sender=Organization.admins.through)
+def organization_admin_update(sender, instance, action, **kwargs):
+    if action == 'post_add':
+        pks = kwargs.get('pk_set') or set()
+        for profile in Profile.objects.filter(pk__in=pks):
+            profile.organizations.add(instance)
+
+
 _misc_config_i18n = [code for code, _ in settings.LANGUAGES]
 _misc_config_i18n.append('')
 
