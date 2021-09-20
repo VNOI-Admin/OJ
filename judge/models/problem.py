@@ -314,9 +314,6 @@ class Problem(models.Model):
                     Q(is_organization_private=True, organizations__in=user.profile.organizations.all())
                 )
 
-            if edit_own_problem:
-                q |= Q(is_organization_private=True, organizations__in=user.profile.admin_of.all())
-
             # Authors, curators, and testers should always have access, so OR at the very end.
             q |= Q(authors=user.profile)
             q |= Q(curators=user.profile)
@@ -337,7 +334,6 @@ class Problem(models.Model):
             return cls.objects.all()
 
         q = Q(authors=user.profile) | Q(curators=user.profile) | Q(suggester=user.profile)
-        q |= Q(is_organization_private=True, organizations__in=user.profile.admin_of.all())
 
         if user.has_perm('judge.edit_public_problem'):
             q |= Q(is_public=True)
