@@ -229,8 +229,6 @@ class Problem(models.Model):
             return True
         if user.profile.id in self.editor_ids:
             return True
-        if self.is_organization_private and self.organizations.filter(admins=user.profile).exists():
-            return True
         return False
 
     def is_accessible_by(self, user, skip_contest_problem_check=False):
