@@ -17,22 +17,44 @@
 {% endblock %}
 
 {% block body %}
-    <table id="organization-table" class="table">
-        <thead>
-        <tr>
-            <th style="width:70%">{{ _('Name') }}</th>
-            <th style="width:15%">{{ _('Points') }}</th>
-            <th>{{ _('Members') }}</th>
-        </tr>
-        </thead>
-        <tbody>
-        {% for org in organizations %}
-            <tr>
-                <td class="organization-name"><a href="{{ org.get_absolute_url() }}">{{ org.name }}</a></td>
-                <td><a href="{{ org.get_users_url() }}">{{ org.performance_points|floatformat(2) }}</a></td>
-                <td><a href="{{ org.get_users_url() }}">{{ org.member_count }}</a></td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <div class="content-description">
+        <h4>{{ _('Own organizations') }}</h4>
+        <table id="organization-table" class="table">
+            <thead>
+                <tr>
+                    <th style="width:70%">{{ _('Name') }}</th>
+                    <th style="width:15%">{{ _('Points') }}</th>
+                    <th>{{ _('Members') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for org in own_organizations %}
+                <tr>
+                    <td class="organization-name"><a href="{{ org.get_absolute_url() }}">{{ org.name }}</a></td>
+                    <td><a href="{{ org.get_users_url() }}">{{ org.performance_points|floatformat(2) }}</a></td>
+                    <td><a href="{{ org.get_users_url() }}">{{ org.member_count }}</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <h4>{{ _('All organizations') }}</h4>
+        <table id="organization-table" class="table">
+            <thead>
+                <tr>
+                    <th style="width:70%">{{ _('Name') }}</th>
+                    <th style="width:15%">{{ _('Points') }}</th>
+                    <th>{{ _('Members') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for org in organizations %}
+                <tr>
+                    <td class="organization-name"><a href="{{ org.get_absolute_url() }}">{{ org.name }}</a></td>
+                    <td><a href="{{ org.get_users_url() }}">{{ org.performance_points|floatformat(2) }}</a></td>
+                    <td><a href="{{ org.get_users_url() }}">{{ org.member_count }}</a></td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
 {% endblock %}
