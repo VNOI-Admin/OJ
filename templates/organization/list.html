@@ -40,7 +40,13 @@
 
 {% block body %}
     <div class="content-description">
-        {{ org_table(_('Own organizations'), request.profile.organizations.all()) }}
+        {% if request.user.is_authenticated %}
+            {% with orgs=request.profile.organizations.all() %}
+                {% if orgs %}
+                    {{ org_table(_('Your organizations'), orgs) }}
+                {% endif %}
+            {% endwith %}
+        {% endif %}
         {{ org_table(_('All organizations'), organizations) }}
     </div>
 {% endblock %}
