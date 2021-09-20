@@ -6,7 +6,7 @@ from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Count, Q
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
@@ -298,9 +298,15 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             return HttpResponseRedirect(self.get_success_url())
 
     def dispatch(self, request, *args, **kwargs):
-        try:
+        if self.has_permission():
+            if self.request.user.profile.admin_of.count() >= settings.VNOJ_ORGANIZATION_ADMIN_LIMIT:
+                return render(request, 'organization/create-limit-error.html', {
+                    'admin_of': self.request.user.profile.admin_of.all(),
+                    'admin_limit': settings.VNOJ_ORGANIZATION_ADMIN_LIMIT,
+                    'title': _("Can't create organization"),
+                }, status=403)
             return super(CreateOrganization, self).dispatch(request, *args, **kwargs)
-        except PermissionDenied:
+        else:
             return generic_message(request, _("Can't create organization"),
                                    _('You are not allowed to create new organizations.'), status=403)
 

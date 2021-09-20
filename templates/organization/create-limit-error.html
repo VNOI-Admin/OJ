@@ -1,0 +1,18 @@
+
+{% extends "generic-message.html" %}
+
+{% block body %}
+    {%- trans -%}
+You are not allowed to create new organizations because you are
+the administrator of <strong> more than {{admin_limit}} </strong> organizations.
+Please use existed organizations.
+<br>
+<br>
+Below are list of organizations in which you are the administrator: <br>
+    {%- endtrans -%}
+    {% for org in admin_of %}
+    <ui>
+        <li><a href="{{org.get_absolute_url()}}">{{org.name}}</a></li>
+    </ui>
+    {% endfor %}
+{% endblock %}

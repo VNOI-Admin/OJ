@@ -113,6 +113,7 @@ class Organization(models.Model):
             ('organization_admin', _('Administer organizations')),
             ('edit_all_organization', _('Edit all organizations')),
             ('change_open_organization', _('Change is_open field')),
+            ('spam_organization', _('Create organization without limit')),
         )
         verbose_name = _('organization')
         verbose_name_plural = _('organizations')
