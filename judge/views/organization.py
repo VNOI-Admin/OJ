@@ -276,7 +276,7 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
     template_name = 'organization/edit.html'
     model = Organization
     form_class = OrganizationForm
-    permission_required = 'judge.create_private_organization'
+    permission_required = 'judge.add_organization'
 
     def get_title(self):
         return _('Create new organization')
@@ -292,11 +292,8 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             revisions.set_user(self.request.user)
 
             self.object = org = form.save()
-            user = self.request.user.profile
-            org.admins.add(user)
+            org.admins.add(self.request.user.profile)
             org.save()
-            user.organizations.add(org)
-            user.save()
 
             return HttpResponseRedirect(self.get_success_url())
 
@@ -326,12 +323,6 @@ class EditOrganization(LoginRequiredMixin, TitleMixin, OrganizationMixin, Update
         kwargs = super(EditOrganization, self).get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
-
-    def get_form(self, form_class=None):
-        form = super(EditOrganization, self).get_form(form_class)
-        form.fields['admins'].queryset = \
-            Profile.objects.filter(Q(organizations=self.object) | Q(admin_of=self.object)).distinct()
-        return form
 
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):

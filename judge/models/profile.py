@@ -112,7 +112,6 @@ class Organization(models.Model):
         permissions = (
             ('organization_admin', _('Administer organizations')),
             ('edit_all_organization', _('Edit all organizations')),
-            ('create_private_organization', _('Create private organizations')),
             ('change_open_organization', _('Change is_open field')),
         )
         verbose_name = _('organization')
