@@ -198,8 +198,8 @@ class ProblemTestCase(CommonDataMixin, TestCase):
                 'is_editable_by': self.assertTrue,
             },
             'staff_problem_edit_public': {
-                'is_accessible_by': self.assertTrue,
-                'is_editable_by': self.assertTrue,
+                'is_accessible_by': self.assertFalse,
+                'is_editable_by': self.assertFalse,
             },
             'staff_problem_see_organization': {
                 'is_accessible_by': self.assertFalse,
