@@ -2193,7 +2193,7 @@ msgstr "ngày tạo"
 
 #: judge/models/profile.py:50
 msgid "is open organization?"
-msgstr "Tổ chức công khai"
+msgstr "tổ chức công khai"
 
 #: judge/models/profile.py:51
 msgid "Allow joining organization"
@@ -2201,7 +2201,7 @@ msgstr "Nếu chọn, mọi người đều có thể tham gia tổ chức."
 
 #: judge/models/profile.py:52
 msgid "is unlisted organization?"
-msgstr "ẩn tổ chức khỏi danh sách tổ chức?"
+msgstr "tổ chức ẩn"
 
 #: judge/models/profile.py:53
 msgid "Organization will not be listed"
