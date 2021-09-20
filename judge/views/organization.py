@@ -76,6 +76,9 @@ class OrganizationList(TitleMixin, ListView):
     template_name = 'organization/list.html'
     title = gettext_lazy('Organizations')
 
+    def get_queryset(self):
+        return Organization.objects.filter(is_unlisted=False)
+
 
 class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
     template_name = 'organization/users.html'
