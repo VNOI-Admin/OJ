@@ -281,11 +281,6 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
     def get_title(self):
         return _('Create new organization')
 
-    def get_form_kwargs(self):
-        kwargs = super(CreateOrganization, self).get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             revisions.set_comment(_('Created on site'))
@@ -324,11 +319,6 @@ class EditOrganization(LoginRequiredMixin, TitleMixin, OrganizationMixin, Update
         if not self.can_edit_organization(object):
             raise PermissionDenied()
         return object
-
-    def get_form_kwargs(self):
-        kwargs = super(EditOrganization, self).get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
 
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):

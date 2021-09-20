@@ -312,15 +312,9 @@ class TagProblemAssignForm(Form):
 class OrganizationForm(ModelForm):
     class Meta:
         model = Organization
-        fields = ['name', 'slug', 'is_open', 'is_unlisted', 'about', 'logo_override_image']
+        fields = ['name', 'slug', 'is_open', 'about', 'logo_override_image']
         if HeavyPreviewPageDownWidget is not None:
             widgets = {'about': HeavyPreviewPageDownWidget(preview=reverse_lazy('organization_preview'))}
-
-    def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
-        super(OrganizationForm, self).__init__(*args, **kwargs)
-        if not user.has_perm('judge.change_open_organization'):
-            self.fields.pop('is_open')
 
 
 class CustomAuthenticationForm(AuthenticationForm):
