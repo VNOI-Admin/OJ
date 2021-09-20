@@ -49,6 +49,8 @@ class Organization(models.Model):
     creation_date = models.DateTimeField(verbose_name=_('creation date'), auto_now_add=True)
     is_open = models.BooleanField(verbose_name=_('is open organization?'),
                                   help_text=_('Allow joining organization'), default=True)
+    is_unlisted = models.BooleanField(verbose_name=_('is unlisted organization?'),
+                                      help_text=_('Organization will not be listed'), default=True)
     slots = models.IntegerField(verbose_name=_('maximum size'), null=True, blank=True,
                                 help_text=_('Maximum amount of users in this organization, '
                                             'only applicable to private organizations'))
