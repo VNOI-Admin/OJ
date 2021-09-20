@@ -74,7 +74,7 @@ VNOJ_DISPLAY_RANKS = (
 
 # Maximum number of organization a single user can be admin, to be able to
 # create new organization, without the `spam_organization` permission
-VNOJ_ORGANIZATION_ADMIN_LIMIT = 300
+VNOJ_ORGANIZATION_ADMIN_LIMIT = 3
 
 # List of online judge preset for OJ API
 OJ_PROBLEM_PRESET = [
