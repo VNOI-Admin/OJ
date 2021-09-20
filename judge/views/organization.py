@@ -76,15 +76,6 @@ class OrganizationList(TitleMixin, ListView):
     template_name = 'organization/list.html'
     title = gettext_lazy('Organizations')
 
-    def get_queryset(self, **kwargs):
-        queryset = super(OrganizationList, self).get_queryset(**kwargs)
-        return queryset.filter(Q(is_open=True) | Q(member__user__id=self.request.user.pk)).distinct()
-
-    def get_context_data(self, **kwargs):
-        context = super(OrganizationList, self).get_context_data(**kwargs)
-        context['own_organizations'] = context['organizations'].filter(member__user__id=self.request.user.pk)
-        return context
-
 
 class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
     template_name = 'organization/users.html'
