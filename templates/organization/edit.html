@@ -47,7 +47,13 @@
         <form action="" method="post" class="form-area">
             {% csrf_token %}
             <table border="0" class="django-as-table">{{ form.as_table() }}</table>
-            <button class="submit-bar" type="submit">{{ _('Update') }}</button>
+            <button class="submit-bar" type="submit">
+                {% if request.resolver_match.url_name == 'organization_create' %}
+                    {{ _('Create') }}
+                {% else %}
+                    {{ _('Update') }}
+                {% endif %}
+            </button>
         </form>
     </div>
 {% endblock %}

@@ -1,0 +1,8 @@
+{% extends "user/user-list-tabs.html" %}
+
+{% block tabs %}
+    {% if perms.judge.add_organization %}
+        {{ make_tab('create', 'fa-plus', url('organization_create'), _('Create new organization')) }}
+    {% endif %}
+    {{ super() }}
+{% endblock %}

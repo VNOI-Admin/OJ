@@ -269,6 +269,7 @@ urlpatterns = [
     ])),
 
     url(r'^organizations/$', organization.OrganizationList.as_view(), name='organization_list'),
+    url(r'^organizations/create/$', organization.CreateOrganization.as_view(), name='organization_create'),
     url(r'^organization/(?P<pk>\d+)-(?P<slug>[\w-]*)', include([
         url(r'^/', paged_list_view(organization.OrganizationHome, 'organization_home')),
         url(r'^/users$', organization.OrganizationUsers.as_view(), name='organization_users'),
