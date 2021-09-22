@@ -161,9 +161,15 @@ class ProblemEditForm(ModelForm):
 
     def check_file(self):
         content = self.files.get('statement_file', None)
-        if content is not None and content.size > settings.PDF_STATEMENT_MAX_FILE_SIZE:
-            raise forms.ValidationError(_('File size is too big! Maximum file size is %s') %
-                                        filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE))
+        if content is not None:
+            if content.size > settings.PDF_STATEMENT_MAX_FILE_SIZE:
+                raise forms.ValidationError(_('File size is too big! Maximum file size is %s') %
+                                            filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE),
+                                            'big_file_size')
+            if not self.request.user.has_perm('judge.upload_file_statement'):
+                raise forms.ValidationError(_("You don't have permission to upload file-type statement."),
+                                            'pdf_upload_permission_denined')
+
         return content
 
     class Meta:

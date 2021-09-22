@@ -759,9 +759,6 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     def save_statement(self, form, problem):
         statement_file = form.files.get('statement_file', None)
         if statement_file is not None:
-            if not self.request.user.has_perm('judge.upload_file_statement'):
-                form.add_error('statement_file', "You don't have permission to upload file-type statement.")
-                return self.form_invalid(form)
             problem.pdf_url = pdf_statement_uploader(statement_file)
 
     def form_valid(self, form):
