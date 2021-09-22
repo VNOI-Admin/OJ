@@ -3,12 +3,9 @@
     font-weight: bold !important;
 }
 
-.admin a::before {
-    content: "💪";
-}
-
 .banned a, .banned {
     color: black !important;
+    font-weight: normal !important;
     text-decoration: line-through !important;
 }
 
@@ -32,6 +29,10 @@
 
 .daor a::before {
     content: "🌸";
+}
+
+.teacher a::before {
+    content: "🧑‍🏫";
 }
 
 @mixin rate-svg-color($color) {
