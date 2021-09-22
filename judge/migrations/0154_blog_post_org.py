@@ -18,10 +18,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterModelOptions(
-            name='blogpost',
-            options={'permissions': (('edit_all_post', 'Edit all posts'), ('edit_organization_post', 'Edit organization posts')), 'verbose_name': 'blog post', 'verbose_name_plural': 'blog posts'},
-        ),
         migrations.AddField(
             model_name='blogpost',
             name='global_post',
