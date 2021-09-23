@@ -96,6 +96,9 @@
                 <th>Assigner</th>
             </tr>
         <thead>
+        <div class="alert alert-warning alert-dismissable">
+            Nếu tag chưa chính xác các bạn có thể comment hoặc report bằng nút báo lỗi ở góc phải trên.
+        </div>
         <tbody>
             {% for tag in problem.tagdata_set.all() %}
                 <tr>
@@ -115,3 +118,4 @@
     {% endif %}
     {% include "comments/math.html" %}
 {% endblock %}
+
