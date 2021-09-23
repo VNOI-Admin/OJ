@@ -174,7 +174,7 @@ class ProblemEditForm(ModelForm):
         # Things to do:
         # Check user perms + make the time limit upperbound configuable
         if self.cleaned_data['time_limit'] > 5:
-            raise forms.ValidationError(_("You cannot set time limit higher than 5 seconds"),
+            raise forms.ValidationError(_('You cannot set time limit higher than 5 seconds'),
                                         'time_limit_too_high')
         return self.cleaned_data['time_limit']
 
