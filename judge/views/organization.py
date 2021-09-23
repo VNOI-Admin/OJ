@@ -287,6 +287,9 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             revisions.set_user(self.request.user)
 
             self.object = org = form.save()
+            # slug is show in url
+            # short_name is show in ranking
+            org.short_name = org.slug[:20]
             org.admins.add(self.request.user.profile)
             org.save()
 
@@ -294,7 +297,8 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         if self.has_permission():
-            if self.request.user.profile.admin_of.count() >= settings.VNOJ_ORGANIZATION_ADMIN_LIMIT:
+            if self.request.user.profile.admin_of.count() >= settings.VNOJ_ORGANIZATION_ADMIN_LIMIT and \
+               not self.request.user.has_perm('spam_organization'):
                 return render(request, 'organization/create-limit-error.html', {
                     'admin_of': self.request.user.profile.admin_of.all(),
                     'admin_limit': settings.VNOJ_ORGANIZATION_ADMIN_LIMIT,
