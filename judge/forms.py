@@ -168,6 +168,16 @@ class ProblemEditForm(ModelForm):
 
         return content
 
+    def clean_time_limit(self):
+        # TODO (thuc): Fix this code
+        # This code need to be changed in a near future
+        # Things to do:
+        # Check user perms + make the time limit upperbound configuable
+        if self.cleaned_data['time_limit'] > 5:
+            raise forms.ValidationError(_("You cannot set time limit higher than 5 seconds"),
+                                        'time_limit_too_high')
+        return self.cleaned_data['time_limit']
+
     class Meta:
         model = Problem
         fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points',
