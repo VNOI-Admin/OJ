@@ -530,6 +530,13 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
         initial['code'] = ''.join(x for x in self.organization.slug.lower() if x.isalpha()) + '_'
         return initial
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user,
+        })
+        return kwargs
+
     def form_valid(self, form):
         self.object = problem = form.save()
         problem.authors.add(self.request.user.profile)
