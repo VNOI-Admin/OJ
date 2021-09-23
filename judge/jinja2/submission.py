@@ -11,6 +11,9 @@ def get_editor_ids(contest):
 
 @registry.function
 def submission_layout(submission, profile_id, user, completed_problem_ids, editable_problem_ids, tester_problem_ids):
+    if not user.is_authenticated:
+        return False, False
+
     problem_id = submission.problem_id
     submission_source_visibility = submission.problem.submission_source_visibility
     can_view = False

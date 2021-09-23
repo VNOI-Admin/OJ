@@ -30,7 +30,7 @@ def rejudge_submission(request):
     except Submission.DoesNotExist:
         return HttpResponseBadRequest()
 
-    if not submission.problem.is_subs_manageable_by(request.user):
+    if not submission.problem.is_rejudgeable_by(request.user):
         return HttpResponseForbidden()
 
     submission.judge(rejudge=True)
