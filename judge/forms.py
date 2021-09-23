@@ -138,6 +138,7 @@ class ProblemEditForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         org_pk = kwargs.pop('org_pk', None)
+        self.user = kwargs.pop('user', None)
         super(ProblemEditForm, self).__init__(*args, **kwargs)
 
         # Only allow to public/private problem in organization
@@ -154,18 +155,16 @@ class ProblemEditForm(ModelForm):
             str(self.fields['testers'].help_text) + ' ' + \
             str(_('You can paste a list of usernames into this box.'))
 
-    def clean(self):
-        cleaned_data = super(ProblemEditForm, self).clean()
-        self.check_file()
-        return cleaned_data
-
-    def check_file(self):
+    def clean_statement_file(self):
         content = self.files.get('statement_file', None)
         if content is not None:
             if content.size > settings.PDF_STATEMENT_MAX_FILE_SIZE:
                 raise forms.ValidationError(_('File size is too big! Maximum file size is %s') %
                                             filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE),
                                             'big_file_size')
+            if self.user and not self.user.has_perm('judge.upload_file_statement'):
+                raise forms.ValidationError(_("You don't have permission to upload file-type statement."),
+                                            'pdf_upload_permission_denined')
 
         return content
 
