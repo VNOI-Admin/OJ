@@ -221,10 +221,10 @@ class Problem(models.Model):
     def is_editable_by(self, user):
         if not user.is_authenticated:
             return False
-        if user.has_perm('judge.suggest_new_problem') and self.is_suggesting:
-            return True
         if not user.has_perm('judge.edit_own_problem'):
             return False
+        if user.has_perm('judge.suggest_new_problem') and self.is_suggesting:
+            return True
         if user.has_perm('judge.edit_all_problem') or user.has_perm('judge.edit_public_problem') and self.is_public:
             return True
         if user.profile.id in self.editor_ids:
@@ -276,13 +276,13 @@ class Problem(models.Model):
         if self.testers.filter(id=user.profile.id).exists():
             return True
 
-        if self.is_suggesting:
-            return False
-
         return False
 
+    def is_rejudgeable_by(self, user):
+        return user.has_perm('judge.rejudge_submission') and self.is_editable_by(user)
+
     def is_subs_manageable_by(self, user):
-        return user.is_staff and user.has_perm('judge.rejudge_submission') and self.is_editable_by(user)
+        return user.is_staff and self.is_rejudgeable_by(user)
 
     @classmethod
     def get_visible_problems(cls, user):
@@ -296,6 +296,7 @@ class Problem(models.Model):
         #       - not is_public problems
         #           - author or curator or tester
         #           - is_organization_private and admin of organization
+        #           - is_suggesting and user is a suggester
         #       - is_public problems
         #           - not is_organization_private or in organization or `judge.see_organization_problem`
         #           - author or curator or tester
@@ -304,6 +305,7 @@ class Problem(models.Model):
         edit_own_problem = user.has_perm('judge.edit_own_problem')
         edit_public_problem = edit_own_problem and user.has_perm('judge.edit_public_problem')
         edit_all_problem = edit_own_problem and user.has_perm('judge.edit_all_problem')
+        edit_suggesting_problem = edit_own_problem and user.has_perm('judge.suggest_new_problem')
 
         if not (user.has_perm('judge.see_private_problem') or edit_all_problem):
             q = Q(is_public=True)
@@ -313,6 +315,10 @@ class Problem(models.Model):
                     Q(is_organization_private=False) |
                     Q(is_organization_private=True, organizations__in=user.profile.organizations.all())
                 )
+
+            # Suggesters should be able to view suggesting problems
+            if edit_suggesting_problem:
+                q |= Q(suggester__isnull=False, is_public=False)
 
             # Authors, curators, and testers should always have access, so OR at the very end.
             q |= Q(authors=user.profile)
@@ -337,6 +343,8 @@ class Problem(models.Model):
 
         if user.has_perm('judge.edit_public_problem'):
             q |= Q(is_public=True)
+        if user.has_perm('judge.suggest_new_problem'):
+            q |= Q(suggester__isnull=False, is_public=False)
 
         return cls.objects.filter(q)
 
