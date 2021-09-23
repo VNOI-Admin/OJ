@@ -22,7 +22,7 @@ from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
-from judge.views.submission import AllSubmissions
+from judge.views.submission import SubmissionsListBase
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
@@ -505,19 +505,18 @@ class ContestListOrganization(CustomOrganizationMixin, ContestList):
         return context
 
 
-class SubmissionListOrganization(CustomOrganizationMixin, AllSubmissions):
+class SubmissionListOrganization(CustomOrganizationMixin, SubmissionsListBase):
     template_name = 'organization/submission-list.html'
 
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
-        query_set = query_set.filter(user__organizations=self.organization, problem__organizations=self.organization)
+        query_set = query_set.filter(problem__organizations=self.organization)
         return query_set
 
     def get_context_data(self, **kwargs):
         context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
         context['title'] = self.organization.name
         context['content_title'] = self.organization.name
-        context['dynamic_update'] = False
         return context
 
 
