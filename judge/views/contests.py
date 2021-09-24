@@ -255,9 +255,10 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         # calculate problem AC rate in contest
         contest_problem_fields = self.object.contest_problems.defer('problem__description') \
             .order_by('order') \
-            .annotate(user_count=Count('submission__submission',
+            .annotate(user_count=Count('submission__submission__user',
                       filter=Q(submission__submission__result='AC') &
-                      Q(submission__submission__date__gt=self.object.start_time))) \
+                      Q(submission__submission__date__gt=self.object.start_time),
+                      distinct=True)) \
             .annotate(submission_count=Count('submission__submission',
                       filter=Q(submission__submission__date__gt=self.object.start_time))) \
             .values('points', 'user_count', 'submission_count')
@@ -628,7 +629,7 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
 ContestRankingProfile = namedtuple(
     'ContestRankingProfile',
     'id user css_class username points cumtime tiebreaker organization participation '
-    'participation_rating problem_cells result_cell virtual display_name',
+    'participation_rating problem_cells result_cell virtual',
 )
 
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
@@ -658,7 +659,6 @@ def make_contest_ranking_profile(contest, participation, contest_problems):
         result_cell=contest.format.display_participation_result(participation),
         participation=participation,
         virtual=participation.virtual,
-        display_name=user.display_name,
     )
 
 

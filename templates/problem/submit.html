@@ -102,10 +102,31 @@
                             localStorage.setItem('submit:' + $('#id_language').val(), editor.getSession().getValue());
                         }
                     });
+                    editor.commands.addCommand({
+                        name: 'open',
+                        bindKey: {win: 'Ctrl-O', mac: 'Command-O'},
+                        exec: function () {
+                            $('#file_select').click();
+                        }
+                    });
                     editor.getSession().setUseWrapMode(true);
                     editor.setFontSize(14);
                     editor.setPrintMarginColumn(100);
                     editor.focus();
+
+                    $(editor.container).on('dragover', function (e) {
+                        var types = e.originalEvent.dataTransfer.types;
+                        if (types && Array.prototype.indexOf.call(types, 'Files') !== -1) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                        }
+                    });
+
+                    $(editor.container).on('drop', function (e) {
+                        e.preventDefault();
+                        $('#file_select').prop('files', e.originalEvent.dataTransfer.files);
+                        handleFileSelect();
+                    });
                 });
 
                 $(window).resize(function () {
@@ -176,6 +197,28 @@
                 $('#file_drag').on('dragleave', fileDragHover);
                 $('#file_drag').on('drop', fileDropHandler);
             });
+
+            function handleFileSelect() {
+                var file = $('#file_select')[0].files[0];
+                if (file && window.FileReader) {
+                    var reader = new FileReader();
+                    reader.onload = function () {
+                        ace_source.session.setValue(reader.result);
+
+                        if (file.name.search('.') != -1) {
+                            var ext = file.name.split('.').pop();
+                            var languages = $('#id_language')[0].options;
+                            for (var i = languages.length - 1; i >= 0; i--) {
+                                if (languages[i].getAttribute('data-fileonly') === 'False' && languages[i].getAttribute('data-ext') === ext) {
+                                    $('#id_language').val(i).change();
+                                    break;
+                                }
+                            }
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            }
 
             function handleFileChange() {
                 var file = $('#file_upload')[0].files[0];
@@ -353,6 +396,10 @@
         {{ form.non_field_errors() }}
         <div id="submit-wrapper">
             <div id="editor" class="hidden">
+                <div>
+                    <label for="file_select"><i>{{ _('Paste your source code here or load it from a file:') }}</i></label>
+                    <input id="file_select" type="file" onchange="handleFileSelect()">
+                </div>
                 {{ form.source.errors }}
                 {{ form.source }}
             </div>

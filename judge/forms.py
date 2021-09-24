@@ -138,6 +138,7 @@ class ProblemEditForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         org_pk = kwargs.pop('org_pk', None)
+        self.user = kwargs.pop('user', None)
         super(ProblemEditForm, self).__init__(*args, **kwargs)
 
         # Only allow to public/private problem in organization
@@ -154,17 +155,28 @@ class ProblemEditForm(ModelForm):
             str(self.fields['testers'].help_text) + ' ' + \
             str(_('You can paste a list of usernames into this box.'))
 
-    def clean(self):
-        cleaned_data = super(ProblemEditForm, self).clean()
-        self.check_file()
-        return cleaned_data
-
-    def check_file(self):
+    def clean_statement_file(self):
         content = self.files.get('statement_file', None)
-        if content is not None and content.size > settings.PDF_STATEMENT_MAX_FILE_SIZE:
-            raise forms.ValidationError(_('File size is too big! Maximum file size is %s') %
-                                        filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE))
+        if content is not None:
+            if content.size > settings.PDF_STATEMENT_MAX_FILE_SIZE:
+                raise forms.ValidationError(_('File size is too big! Maximum file size is %s') %
+                                            filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE),
+                                            'big_file_size')
+            if self.user and not self.user.has_perm('judge.upload_file_statement'):
+                raise forms.ValidationError(_("You don't have permission to upload file-type statement."),
+                                            'pdf_upload_permission_denined')
+
         return content
+
+    def clean_time_limit(self):
+        # TODO (thuc): Fix this code
+        # This code need to be changed in a near future
+        # Things to do:
+        # Check user perms + make the time limit upperbound configuable
+        if self.cleaned_data['time_limit'] > 5:
+            raise forms.ValidationError(_('You cannot set time limit higher than 5 seconds'),
+                                        'time_limit_too_high')
+        return self.cleaned_data['time_limit']
 
     class Meta:
         model = Problem
@@ -309,13 +321,12 @@ class TagProblemAssignForm(Form):
     )
 
 
-class EditOrganizationForm(ModelForm):
+class OrganizationForm(ModelForm):
     class Meta:
         model = Organization
-        fields = ['name', 'is_open', 'about', 'logo_override_image', 'admins']
-        widgets = {'admins': Select2MultipleWidget(attrs={'style': 'width: 200px'})}
+        fields = ['name', 'slug', 'is_open', 'about', 'logo_override_image']
         if HeavyPreviewPageDownWidget is not None:
-            widgets['about'] = HeavyPreviewPageDownWidget(preview=reverse_lazy('organization_preview'))
+            widgets = {'about': HeavyPreviewPageDownWidget(preview=reverse_lazy('organization_preview'))}
 
 
 class CustomAuthenticationForm(AuthenticationForm):

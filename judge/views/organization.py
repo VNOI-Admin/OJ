@@ -6,23 +6,23 @@ from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Count, Q
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ungettext
-from django.views.generic import DetailView, FormView, ListView, UpdateView, View
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
-from judge.forms import EditOrganizationForm
+from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, Problem, Profile
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
-from judge.views.submission import AllSubmissions
+from judge.views.submission import SubmissionsListBase
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
@@ -75,6 +75,9 @@ class OrganizationList(TitleMixin, ListView):
     context_object_name = 'organizations'
     template_name = 'organization/list.html'
     title = gettext_lazy('Organizations')
+
+    def get_queryset(self):
+        return Organization.objects.filter(is_unlisted=False)
 
 
 class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
@@ -269,10 +272,48 @@ class OrganizationRequestLog(OrganizationRequestBaseView):
         return context
 
 
+class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
+    template_name = 'organization/edit.html'
+    model = Organization
+    form_class = OrganizationForm
+    permission_required = 'judge.add_organization'
+
+    def get_title(self):
+        return _('Create new organization')
+
+    def form_valid(self, form):
+        with revisions.create_revision(atomic=True):
+            revisions.set_comment(_('Created on site'))
+            revisions.set_user(self.request.user)
+
+            self.object = org = form.save()
+            # slug is show in url
+            # short_name is show in ranking
+            org.short_name = org.slug[:20]
+            org.admins.add(self.request.user.profile)
+            org.save()
+
+            return HttpResponseRedirect(self.get_success_url())
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.has_permission():
+            if self.request.user.profile.admin_of.count() >= settings.VNOJ_ORGANIZATION_ADMIN_LIMIT and \
+               not self.request.user.has_perm('spam_organization'):
+                return render(request, 'organization/create-limit-error.html', {
+                    'admin_of': self.request.user.profile.admin_of.all(),
+                    'admin_limit': settings.VNOJ_ORGANIZATION_ADMIN_LIMIT,
+                    'title': _("Can't create organization"),
+                }, status=403)
+            return super(CreateOrganization, self).dispatch(request, *args, **kwargs)
+        else:
+            return generic_message(request, _("Can't create organization"),
+                                   _('You are not allowed to create new organizations.'), status=403)
+
+
 class EditOrganization(LoginRequiredMixin, TitleMixin, OrganizationMixin, UpdateView):
     template_name = 'organization/edit.html'
     model = Organization
-    form_class = EditOrganizationForm
+    form_class = OrganizationForm
 
     def get_title(self):
         return _('Editing %s') % self.object.name
@@ -282,12 +323,6 @@ class EditOrganization(LoginRequiredMixin, TitleMixin, OrganizationMixin, Update
         if not self.can_edit_organization(object):
             raise PermissionDenied()
         return object
-
-    def get_form(self, form_class=None):
-        form = super(EditOrganization, self).get_form(form_class)
-        form.fields['admins'].queryset = \
-            Profile.objects.filter(Q(organizations=self.object) | Q(admin_of=self.object)).distinct()
-        return form
 
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
@@ -470,19 +505,18 @@ class ContestListOrganization(CustomOrganizationMixin, ContestList):
         return context
 
 
-class SubmissionListOrganization(CustomOrganizationMixin, AllSubmissions):
+class SubmissionListOrganization(CustomOrganizationMixin, SubmissionsListBase):
     template_name = 'organization/submission-list.html'
 
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
-        query_set = query_set.filter(user__organizations=self.organization, problem__organizations=self.organization)
+        query_set = query_set.filter(problem__organizations=self.organization)
         return query_set
 
     def get_context_data(self, **kwargs):
         context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
         context['title'] = self.organization.name
         context['content_title'] = self.organization.name
-        context['dynamic_update'] = False
         return context
 
 
@@ -494,6 +528,13 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
         initial = initial.copy()
         initial['code'] = ''.join(x for x in self.organization.slug.lower() if x.isalpha()) + '_'
         return initial
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.update({
+            'user': self.request.user,
+        })
+        return kwargs
 
     def form_valid(self, form):
         self.object = problem = form.save()

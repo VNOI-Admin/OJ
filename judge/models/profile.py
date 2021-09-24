@@ -48,7 +48,9 @@ class Organization(models.Model):
                                     help_text=_('Those who can edit this organization'))
     creation_date = models.DateTimeField(verbose_name=_('creation date'), auto_now_add=True)
     is_open = models.BooleanField(verbose_name=_('is open organization?'),
-                                  help_text=_('Allow joining organization'), default=True)
+                                  help_text=_('Allow joining organization'), default=False)
+    is_unlisted = models.BooleanField(verbose_name=_('is unlisted organization?'),
+                                      help_text=_('Organization will not be listed'), default=True)
     slots = models.IntegerField(verbose_name=_('maximum size'), null=True, blank=True,
                                 help_text=_('Maximum amount of users in this organization, '
                                             'only applicable to private organizations'))
@@ -110,6 +112,8 @@ class Organization(models.Model):
         permissions = (
             ('organization_admin', _('Administer organizations')),
             ('edit_all_organization', _('Edit all organizations')),
+            ('change_open_organization', _('Change is_open field')),
+            ('spam_organization', _('Create organization without limit')),
         )
         verbose_name = _('organization')
         verbose_name_plural = _('organizations')
@@ -181,10 +185,6 @@ class Profile(models.Model):
     @cached_property
     def username(self):
         return self.user.username
-
-    @cached_property
-    def display_name(self):
-        return self.user.first_name or self.username
 
     @cached_property
     def has_any_solves(self):
