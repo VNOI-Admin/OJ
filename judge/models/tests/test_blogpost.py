@@ -41,7 +41,7 @@ class BlogPostTestCase(CommonDataMixin, TestCase):
             visible=True,
             global_post=False,
             organization=self.organizations['open'],
-            authors=[self.users['staff_organization_admin']],
+            authors=('staff_organization_admin',),
         )
 
         self.non_visible_blogpost_in_org = create_blogpost(
@@ -49,7 +49,7 @@ class BlogPostTestCase(CommonDataMixin, TestCase):
             visible=False,
             global_post=False,
             organization=self.organizations['open'],
-            authors=[self.users['staff_organization_admin']],
+            authors=('staff_organization_admin',),
         )
 
     def test_basic_blogpost(self):
