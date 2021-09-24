@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
+from django.db import transaction
 from django.db.models import Count, Max
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
@@ -169,11 +170,12 @@ class BlogPostCreate(TitleMixin, CreateView):
         return _('Creating new blog post')
 
     def form_valid(self, form):
-        self.object = post = form.save(commit=False)
-        post.slug = self.request.user.username.lower()
-        post.save()  # Presave to initialize the object id before using Many-to-Many relationship.
-        post.authors.add(self.request.user.profile)
-        post.save()
+        with transaction.atomic():
+            self.object = post = form.save(commit=False)
+            post.slug = self.request.user.username.lower()
+            post.save()  # Presave to initialize the object id before using Many-to-Many relationship.
+            post.authors.add(self.request.user.profile)
+            post.save()
         return HttpResponseRedirect(post.get_absolute_url())
 
 

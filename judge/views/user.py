@@ -243,7 +243,7 @@ class UserBlogPage(CustomUserMixin, PostListBase):
         queryset = BlogPost.objects.filter(authors=self.user)
 
         if self.request.user != self.user.user:
-            queryset = queryset.filter(visible=True)
+            queryset = queryset.filter(visible=True, publish_on__lte=timezone.now())
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
