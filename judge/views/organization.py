@@ -380,7 +380,9 @@ class CustomOrganizationMixin(object):
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
         self.object = self.organization
-        if not self.allow_all_users and self.request.profile not in self.organization:
+        if not self.request.user.is_superuser and \
+           not self.allow_all_users \
+           and self.request.profile not in self.organization:
             return generic_message(request,
                                    _("Cannot view organization's private data"),
                                    _('You must join the organization to view its private data.'))
@@ -420,18 +422,19 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
     def get_queryset(self):
         queryset = BlogPost.objects.filter(organization=self.organization)
 
-        if not self.can_edit_organization():
-            if self.request.profile in self.object:
-                # Normal user can only view public posts
-                queryset = queryset.filter(publish_on__lte=timezone.now(), visible=True)
+        if not self.request.user.is_superuser:
+            if not self.can_edit_organization():
+                if self.request.profile in self.object:
+                    # Normal user can only view public posts
+                    queryset = queryset.filter(publish_on__lte=timezone.now(), visible=True)
+                else:
+                    # User cannot view organization blog
+                    # if they are not in the org
+                    # event if the org is public
+                    queryset = BlogPost.objects.none()
             else:
-                # User cannot view organization blog
-                # if they are not in the org
-                # event if the org is public
-                queryset = BlogPost.objects.none()
-        else:
-            # Org admin can view public posts & their own posts
-            queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
+                # Org admin can view public posts & their own posts
+                queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
@@ -440,6 +443,7 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
         context['first_page_href'] = reverse('organization_home', args=[self.object.pk, self.object.slug])
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
+        context['is_member'] = self.request.profile in self.object
 
         context['post_comment_counts'] = {
             int(page[2:]): count for page, count in
@@ -453,8 +457,7 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
                 state='P',
                 organization=self.object).count()
 
-        if self.request.profile in self.object:
-            context['is_member'] = True
+        if self.request.user.is_superuser or context['is_member']:
             context['new_problems'] = Problem.objects.filter(
                 is_public=True, is_organization_private=True,
                 organizations=self.object) \
@@ -482,7 +485,7 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
 
     def get_filter(self):
         filter = Q()
-        if not self.can_edit_organization():
+        if not self.request.user.is_superuser and not self.can_edit_organization():
             filter = Q(is_public=True)
             if self.profile is not None:
                 filter |= Q(authors=self.profile)
