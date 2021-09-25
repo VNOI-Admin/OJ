@@ -255,9 +255,10 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         # calculate problem AC rate in contest
         contest_problem_fields = self.object.contest_problems.defer('problem__description') \
             .order_by('order') \
-            .annotate(user_count=Count('submission__submission',
+            .annotate(user_count=Count('submission__submission__user',
                       filter=Q(submission__submission__result='AC') &
-                      Q(submission__submission__date__gt=self.object.start_time))) \
+                      Q(submission__submission__date__gt=self.object.start_time),
+                      distinct=True)) \
             .annotate(submission_count=Count('submission__submission',
                       filter=Q(submission__submission__date__gt=self.object.start_time))) \
             .values('points', 'user_count', 'submission_count')
