@@ -9,6 +9,7 @@
             var by_language_chart = null;
             var result_chart = null;
             var queue_time_chart = null;
+            var org_by_day_chart = null;
 
             function draw_charts(start_date, end_date) {
                 $.ajax({
@@ -43,6 +44,12 @@
                         } else {
                             queue_time_chart.data = stats.queue_time;
                             queue_time_chart.update();
+                        }
+                        if (org_by_day_chart == null) {
+                            org_by_day_chart = draw_vertical_stacked_bar_chart(stats.org_by_day, $('#org-by-day'));
+                        } else {
+                            org_by_day_chart.data = stats.org_by_day;
+                            org_by_day_chart.update();
                         }
                     },
                     error: function (data) {
@@ -90,8 +97,8 @@
                     draw_charts(picker.startDate, picker.endDate);
                 });
 
-                cb(start_date, end_date);
-                draw_charts(start_date, end_date);
+                //cb(start_date, end_date);
+                //draw_charts(start_date, end_date);
             });
         </script>
     {% endcompress %}
@@ -129,7 +136,7 @@
         <tr>
             <td colspan="2">
                 <div id="by-day" class="chart">
-                    <canvas height="400"></canvas>
+                    <canvas></canvas>
                 </div>
             </td>
         </tr>
@@ -155,6 +162,16 @@
         <tr>
             <td colspan="2">
                 <div id="queue-time" class="chart">
+                    <canvas></canvas>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <th colspan="2">{{ _('Organization Submissions/New Problems by Day') }}</th>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div id="org-by-day" class="chart">
                     <canvas></canvas>
                 </div>
             </td>
