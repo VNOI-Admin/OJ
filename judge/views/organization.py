@@ -365,8 +365,12 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 # current mixin is for the DetailView.
 class CustomOrganizationMixin(object):
     # If true, all user can view the current page
-    # event they are not in the org
+    # even if they are not in the org
     allow_all_users = False
+
+    # If the user has at least one of the following permissions,
+    # they can access the private data even if they are not in the org
+    permission_bypass = []
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -380,12 +384,14 @@ class CustomOrganizationMixin(object):
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
         self.object = self.organization
-        if not self.request.user.is_superuser and \
-           not self.allow_all_users \
-           and self.request.profile not in self.organization:
+
+        if not self.allow_all_users and \
+           self.request.profile not in self.organization and \
+           not any(self.request.user.has_perm(perm) for perm in self.permission_bypass):
             return generic_message(request,
                                    _("Cannot view organization's private data"),
                                    _('You must join the organization to view its private data.'))
+
         return super(CustomOrganizationMixin, self).dispatch(request, *args, **kwargs)
 
     def can_edit_organization(self, org=None):
@@ -422,7 +428,7 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
     def get_queryset(self):
         queryset = BlogPost.objects.filter(organization=self.organization)
 
-        if not self.request.user.is_superuser:
+        if not self.request.user.has_perm('judge.edit_all_post'):
             if not self.can_edit_organization():
                 if self.request.profile in self.object:
                     # Normal user can only view public posts
@@ -430,8 +436,8 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
                 else:
                     # User cannot view organization blog
                     # if they are not in the org
-                    # event if the org is public
-                    queryset = BlogPost.objects.none()
+                    # even if the org is public
+                    return BlogPost.objects.none()
             else:
                 # Org admin can view public posts & their own posts
                 queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
@@ -457,12 +463,17 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
                 state='P',
                 organization=self.object).count()
 
-        if self.request.user.is_superuser or context['is_member']:
+        if context['is_member'] or \
+           self.request.user.has_perm('judge.see_organization_problem') or \
+           self.request.user.has_perm('judge.edit_all_problem'):
             context['new_problems'] = Problem.objects.filter(
                 is_public=True, is_organization_private=True,
                 organizations=self.object) \
                 .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
 
+        if context['is_member'] or \
+           self.request.user.has_perm('judge.see_private_contest') or \
+           self.request.user.has_perm('judge.edit_all_contest'):
             context['new_contests'] = Contest.objects.filter(
                 is_visible=True, is_organization_private=True,
                 organizations=self.object) \
@@ -474,6 +485,7 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
 class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
     context_object_name = 'problems'
     template_name = 'organization/problem-list.html'
+    permission_bypass = ['judge.see_organization_problem', 'judge.edit_all_problem']
 
     def get_hot_problems(self):
         return None
@@ -485,17 +497,23 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
 
     def get_filter(self):
         filter = Q()
-        if not self.request.user.is_superuser and not self.can_edit_organization():
+
+        # Org admin is not allowed to see private problems of other admins
+        if not self.request.user.has_perm('judge.see_private_problem'):
             filter = Q(is_public=True)
-            if self.profile is not None:
-                filter |= Q(authors=self.profile)
-                filter |= Q(curators=self.profile)
-                filter |= Q(testers=self.profile)
+
+        # Authors, curators, and testers should always have access, so OR at the very end.
+        if self.profile is not None:
+            filter |= Q(authors=self.profile)
+            filter |= Q(curators=self.profile)
+            filter |= Q(testers=self.profile)
+
         return filter & Q(organizations=self.organization)
 
 
 class ContestListOrganization(CustomOrganizationMixin, ContestList):
     template_name = 'organization/contest-list.html'
+    permission_bypass = ['judge.see_private_contest', 'judge.edit_all_contest']
 
     def _get_queryset(self):
         query_set = super(ContestListOrganization, self)._get_queryset()
@@ -510,6 +528,7 @@ class ContestListOrganization(CustomOrganizationMixin, ContestList):
 
 class SubmissionListOrganization(CustomOrganizationMixin, SubmissionsListBase):
     template_name = 'organization/submission-list.html'
+    permission_bypass = ['judge.view_all_submission']
 
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
