@@ -496,11 +496,21 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
         return context
 
     def get_filter(self):
-        filter = Q()
+        """Get filter for visible problems in an organization
 
-        # Org admin is not allowed to see private problems of other admins
-        if not self.request.user.has_perm('judge.see_private_problem'):
-            filter = Q(is_public=True)
+        The logic of this is:
+            - If user has perm `see_private_problem`, they
+            can view all org's problem (including private problems)
+            - Otherwise, they can view all public problems and
+            problems that they are authors/curators/testers
+
+        With that logic, Organization admins cannot view private
+        problems of other admins unless they are authors/curators/testers
+        """
+        if self.request.user.has_perm('judge.see_private_problem'):
+            return Q(organizations=self.organization)
+
+        filter = Q(is_public=True)
 
         # Authors, curators, and testers should always have access, so OR at the very end.
         if self.profile is not None:
