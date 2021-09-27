@@ -59,8 +59,6 @@
             }
 
             $(function () {
-                var start_date = moment().subtract(29, 'days').startOf('day');
-                var end_date = moment().endOf('day');
                 var date_format = '{{ _('HH:mm:ss MMMM D, YYYY') }}';
 
                 function cb(start_date, end_date) {
@@ -71,8 +69,6 @@
                     timePicker: true,
                     timePicker24Hour: true,
                     timePickerSeconds: true,
-                    startDate: start_date,
-                    endDate: end_date,
                     locale: {
                         customRangeLabel: '{{ _('Custom Range') }}',
                         applyLabel: '{{ _('Apply') }}',
@@ -96,9 +92,6 @@
                 $('#daterange').on('apply.daterangepicker', function(ev, picker) {
                     draw_charts(picker.startDate, picker.endDate);
                 });
-
-                //cb(start_date, end_date);
-                //draw_charts(start_date, end_date);
             });
         </script>
     {% endcompress %}
