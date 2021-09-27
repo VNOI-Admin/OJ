@@ -14,7 +14,15 @@ from judge.models import Problem, Submission
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 
 
-def get_submission_data(start_date, end_date, utc_offset):
+def generate_day_labels(start_date, end_date, utc_offset):
+    start_date += utc_offset
+    end_date += utc_offset
+    delta = end_date - start_date
+
+    return [(start_date + datetime.timedelta(days=i)).date().isoformat() for i in range(delta.days + 1)]
+
+
+def submission_data(start_date, end_date, utc_offset):
     queryset = Submission.objects.filter(date__gte=start_date, date__lte=end_date)
 
     submissions = (
@@ -40,8 +48,7 @@ def get_submission_data(start_date, end_date, utc_offset):
         .order_by('queue_time').values_list('queue_time', flat=True)
     )
 
-    days_labels = list(set(day.isoformat() for day in submissions.values_list('date_only', flat=True)))
-    days_labels.sort()
+    days_labels = generate_day_labels(start_date, end_date, utc_offset)
     num_days = len(days_labels)
     result_order = ['AC', 'WA', 'TLE', 'CE', 'ERR']
     result_data = {result: [0] * num_days for result in result_order}
@@ -81,7 +88,7 @@ def get_submission_data(start_date, end_date, utc_offset):
     }
 
 
-def get_organization_data(start_date, end_date, utc_offset):
+def organization_data(start_date, end_date, utc_offset):
     submissions = (
         Submission.objects.filter(date__gte=start_date, date__lte=end_date)
         .filter(Q(problem__is_organization_private=True) | Q(contest_object__is_organization_private=True))
@@ -89,8 +96,7 @@ def get_organization_data(start_date, end_date, utc_offset):
         .values('date_only', 'result').annotate(count=Count('result')).values_list('date_only', 'result', 'count')
     )
 
-    days_labels = list(set(day.isoformat() for day in submissions.values_list('date_only', flat=True)))
-    days_labels.sort()
+    days_labels = generate_day_labels(start_date, end_date, utc_offset)
     num_days = len(days_labels)
     result_order = ['AC', 'WA', 'TLE', 'CE', 'ERR']
     result_data = {result: [0] * num_days for result in result_order}
@@ -116,7 +122,6 @@ def get_organization_data(start_date, end_date, utc_offset):
         'yAxisID': 'yRightAxis',
     }
 
-    # FIXME: problems and submissions may not have the same number of days
     for date_only, count in problems:
         problems_dataset['data'][days_labels.index(date_only.isoformat())] += count
 
@@ -127,10 +132,12 @@ def get_organization_data(start_date, end_date, utc_offset):
     }
 
 
-def oj_data(request):
-    if not request.user.is_superuser:
+def all_data(request):
+    if request.method != 'POST' or not request.user.is_superuser:
         return HttpResponseForbidden()
 
+    # start_date and end_date are in UTC timezone
+    # utc_offset is required for properly converting the dates to user's local timezone
     start_date = request.POST.get('start_date')
     end_date = request.POST.get('end_date')
     utc_offset = request.POST.get('utc_offset')
@@ -148,6 +155,6 @@ def oj_data(request):
         return HttpResponseBadRequest()
 
     return JsonResponse({
-        **get_submission_data(start_date, end_date, utc_offset),
-        **get_organization_data(start_date, end_date, utc_offset),
+        **submission_data(start_date, end_date, utc_offset),
+        **organization_data(start_date, end_date, utc_offset),
     })
