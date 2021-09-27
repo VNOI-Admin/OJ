@@ -46,7 +46,7 @@
                             queue_time_chart.update();
                         }
                         if (org_by_day_chart == null) {
-                            org_by_day_chart = draw_vertical_stacked_bar_chart(stats.org_by_day, $('#org-by-day'));
+                            org_by_day_chart = draw_vertical_stacked_bar_chart(stats.org_by_day, $('#org-by-day'), true);
                         } else {
                             org_by_day_chart.data = stats.org_by_day;
                             org_by_day_chart.update();
