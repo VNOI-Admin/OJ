@@ -9,6 +9,7 @@
             var by_language_chart = null;
             var result_chart = null;
             var queue_time_chart = null;
+            var org_by_day_chart = null;
 
             function draw_charts(start_date, end_date) {
                 $.ajax({
@@ -44,6 +45,12 @@
                             queue_time_chart.data = stats.queue_time;
                             queue_time_chart.update();
                         }
+                        if (org_by_day_chart == null) {
+                            org_by_day_chart = draw_vertical_stacked_bar_chart(stats.org_by_day, $('#org-by-day'), true);
+                        } else {
+                            org_by_day_chart.data = stats.org_by_day;
+                            org_by_day_chart.update();
+                        }
                     },
                     error: function (data) {
                         console.log('Could not load OJ stats');
@@ -52,8 +59,6 @@
             }
 
             $(function () {
-                var start_date = moment().subtract(29, 'days').startOf('day');
-                var end_date = moment().endOf('day');
                 var date_format = '{{ _('HH:mm:ss MMMM D, YYYY') }}';
 
                 function cb(start_date, end_date) {
@@ -64,8 +69,6 @@
                     timePicker: true,
                     timePicker24Hour: true,
                     timePickerSeconds: true,
-                    startDate: start_date,
-                    endDate: end_date,
                     locale: {
                         customRangeLabel: '{{ _('Custom Range') }}',
                         applyLabel: '{{ _('Apply') }}',
@@ -89,9 +92,6 @@
                 $('#daterange').on('apply.daterangepicker', function(ev, picker) {
                     draw_charts(picker.startDate, picker.endDate);
                 });
-
-                cb(start_date, end_date);
-                draw_charts(start_date, end_date);
             });
         </script>
     {% endcompress %}
@@ -118,7 +118,7 @@
 {% endblock %}
 
 {% block body %}
-    <div id="daterange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc; width: 100%">
+    <div id="daterange" style="background: #fff; cursor: pointer; padding: 5px 10px; border: 1px solid #ccc;">
         <i class="fa fa-calendar"></i>&nbsp;
         <span></span> <i class="fa fa-caret-down"></i>
     </div>
@@ -129,7 +129,7 @@
         <tr>
             <td colspan="2">
                 <div id="by-day" class="chart">
-                    <canvas height="400"></canvas>
+                    <canvas></canvas>
                 </div>
             </td>
         </tr>
@@ -155,6 +155,16 @@
         <tr>
             <td colspan="2">
                 <div id="queue-time" class="chart">
+                    <canvas></canvas>
+                </div>
+            </td>
+        </tr>
+        <tr>
+            <th colspan="2">{{ _('Organization Submissions/New Problems by Day') }}</th>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div id="org-by-day" class="chart">
                     <canvas></canvas>
                 </div>
             </td>
