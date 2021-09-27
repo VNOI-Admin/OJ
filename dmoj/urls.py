@@ -392,7 +392,7 @@ urlpatterns = [
         url(r'^blog/atom/$', AtomBlogFeed(), name='blog_atom'),
     ])),
 
-    url(r'^stats/data/all/$', stats.oj_data, name='stats_data_all'),
+    url(r'^stats/data/all/$', stats.all_data, name='stats_data_all'),
 
     url(r'^tickets/', include([
         url(r'^$', ticket.TicketList.as_view(), name='ticket_list'),
