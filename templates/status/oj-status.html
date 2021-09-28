@@ -101,12 +101,6 @@
 {% block media %}
     {% include "status/media-css.html" %}
     {% block content_media %}{% endblock %}
-    <style>
-        #stats-table tr td > div {
-            display: flex;
-            justify-content: center;
-        }
-    </style>
     <link rel="stylesheet" type="text/css" href="{{ static('vnoj/daterangepicker/daterangepicker.css') }}">
 {% endblock %}
 
@@ -139,12 +133,12 @@
         </tr>
         <tr>
             <td>
-                <div id="by-language" class="chart">
+                <div id="by-language" class="chart" style="display: flex; justify-content: center;">
                     <canvas width="400" height="300"></canvas>
                 </div>
             </td>
             <td >
-                <div id="result" class="chart">
+                <div id="result" class="chart" style="display: flex; justify-content: center;">
                     <canvas width="550" height="300"></canvas>
                 </div>
             </td>
