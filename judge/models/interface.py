@@ -100,7 +100,7 @@ class BlogPost(models.Model):
         if user.has_perm('judge.edit_all_post'):
             return True
         if self.organization:
-            return self.organization.is_admin(user) and \
+            return self.organization.is_admin(user.profile) and \
                 user.has_perm('judge.edit_organization_post') and \
                 self.authors.filter(id=user.profile.id).exists()
         return user.has_perm('judge.change_blogpost') and self.authors.filter(id=user.profile.id).exists()
