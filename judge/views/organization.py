@@ -446,7 +446,6 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationHome, self).get_context_data(**kwargs)
-        context['admins'] = self.object.admins.prefetch_related("user")
         context['first_page_href'] = reverse('organization_home', args=[self.object.pk, self.object.slug])
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
