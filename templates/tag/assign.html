@@ -19,23 +19,8 @@
 {% endblock %}
 
 {% block media %}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
     <style>
-        .helptext {
-            font-size: 13px;
-            color: #999;
-            border-width: 0 0 1px 0;
-            padding-bottom: 0.25em;
-        }
-        .helptext::before {
-            font-family: FontAwesome;
-            font-style: normal;
-            font-weight: normal;
-            line-height: 1;
-            content: "\f05a";
-            padding-right: 5px;
-            font-size: 14px;
-        }
-
         label[for="tags"] {
             padding-bottom: 0.25em;
             display: block;
