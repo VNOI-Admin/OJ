@@ -77,7 +77,7 @@ VNOJ_DISPLAY_RANKS = (
 # create new organization, without the `spam_organization` permission
 VNOJ_ORGANIZATION_ADMIN_LIMIT = 3
 # Maximum timelimit (second) that a user can set for a problem
-# without the `long_problem_timelimit` permission
+# without the `high_problem_timelimit` permission
 VNOJ_PROBLEM_TIMELIMIT_LIMIT = 5
 # Maximum contest duration (day) that a user can set for a contest
 # without the `long_contest_duration` permission
