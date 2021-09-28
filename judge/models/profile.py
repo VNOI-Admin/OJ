@@ -320,7 +320,7 @@ class Profile(models.Model):
             ('test_site', _('Shows in-progress development stuff')),
             ('totp', _('Edit TOTP settings')),
             ('can_upload_image', _('Can upload image directly to server via martor')),
-            ('long_problem_timelimit', _('Can set long timelimit for problem')),
+            ('high_problem_timelimit', _('Can set high problem timelimit')),
             ('long_contest_duration', _('Can set long contest duration')),
         )
         verbose_name = _('user profile')
