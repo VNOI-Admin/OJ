@@ -17,7 +17,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import TagProblemAssignForm, TagProblemCreateForm
 from judge.models import Tag, TagData, TagGroup, TagProblem
-from judge.tasks.webhook import on_new_tag, on_new_tag_problem
+from judge.tasks import on_new_tag, on_new_tag_problem
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.judge_api import APIError, OJAPI
 from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message, paginate_query_context

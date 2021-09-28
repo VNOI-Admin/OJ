@@ -132,8 +132,10 @@ OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
 # Urls of discord webhook.
 # https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
 DISCORD_WEBHOOK = {
+    'default': None, # use this link if the specific link not found
     'on_new_ticket': None,
     'on_new_comment': None,
+    'on_new_problem': None,
     'on_new_suggested_problem': None,
     'on_new_tag_problem': None,
     'on_new_tag': None,

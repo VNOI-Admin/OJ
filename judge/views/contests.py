@@ -33,7 +33,7 @@ from judge.comments import CommentedDetailView
 from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Problem, ProblemClarification, Profile, Submission
-from judge.tasks import run_moss
+from judge.tasks import on_new_contest, run_moss
 from judge.utils.celery import redirect_to_task_status
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.opengraph import generate_opengraph
@@ -970,7 +970,7 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
 
                 revisions.set_comment(_('Created on site'))
                 revisions.set_user(self.request.user)
-
+            on_new_contest.delay(self.object.key)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(*args, **kwargs))

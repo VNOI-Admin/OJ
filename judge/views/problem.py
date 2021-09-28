@@ -30,7 +30,7 @@ from judge.forms import ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, Pr
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
-from judge.tasks import on_new_suggested_problem
+from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
@@ -811,7 +811,7 @@ class ProblemSuggest(ProblemCreate):
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
 
-        on_new_suggested_problem.delay(problem.code)
+        on_new_problem.delay(problem.code, is_suggested=True)
         return HttpResponseRedirect(self.get_success_url())
 
 
