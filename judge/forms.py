@@ -191,9 +191,9 @@ class ProblemEditForm(ModelForm):
         }
         help_texts = {
             'is_public': _(
-                'If public, all members in organization can view it. Set it as private '
+                'If public, all members in organization can view it. <strong> Set it as private '
                 'if you want to use it in a contest, otherwise, users can see the problem '
-                'even if they do not join the contest!'),
+                'even if they do not join the contest!</strong>'),
             'code': _('Problem code, e.g: voi19_post'),
             'name': _('The full name of the problem, '
                       'as shown in the problem list. For example: VOI19 - A cong B'),
