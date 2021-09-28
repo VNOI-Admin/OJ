@@ -169,8 +169,8 @@ class ProblemEditForm(ModelForm):
         return content
 
     def clean_time_limit(self):
-        has_long_perm = self.user and self.user.has_perm('long_problem_timelimit')
-        if self.cleaned_data['time_limit'] > settings.VNOJ_PROBLEM_TIMELIMIT_LIMIT and not has_long_perm:
+        has_high_perm = self.user and self.user.has_perm('high_problem_timelimit')
+        if self.cleaned_data['time_limit'] > settings.VNOJ_PROBLEM_TIMELIMIT_LIMIT and not has_high_perm:
             raise forms.ValidationError(_('You cannot set time limit higher than %d seconds')
                                         % settings.VNOJ_PROBLEM_TIMELIMIT_LIMIT,
                                         'problem_timelimit_too_long')
