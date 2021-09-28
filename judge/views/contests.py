@@ -925,6 +925,11 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
     form_class = ContestForm
     permission_required = 'judge.add_contest'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_title(self):
         return _('Create new contest')
 
@@ -979,6 +984,7 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
         if self.object.organizations.count() == 1:
             kwargs['org_pk'] = self.object.organizations.values_list('pk', flat=True)[0]
 
+        kwargs['user'] = self.request.user
         return kwargs
 
     def get_title(self):

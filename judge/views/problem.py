@@ -750,6 +750,11 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     form_class = ProblemEditForm
     permission_required = 'judge.add_problem'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_title(self):
         return _('Creating new problem')
 
@@ -841,6 +846,7 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         if self.object.organizations.count() == 1:
             kwargs['org_pk'] = self.object.organizations.values_list('pk', flat=True)[0]
 
+        kwargs['user'] = self.request.user
         return kwargs
 
     def save_statement(self, form, problem):

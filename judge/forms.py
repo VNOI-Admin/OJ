@@ -169,13 +169,11 @@ class ProblemEditForm(ModelForm):
         return content
 
     def clean_time_limit(self):
-        # TODO (thuc): Fix this code
-        # This code need to be changed in a near future
-        # Things to do:
-        # Check user perms + make the time limit upperbound configuable
-        if self.cleaned_data['time_limit'] > 5:
-            raise forms.ValidationError(_('You cannot set time limit higher than 5 seconds'),
-                                        'time_limit_too_high')
+        has_high_perm = self.user and self.user.has_perm('high_problem_timelimit')
+        if self.cleaned_data['time_limit'] > settings.VNOJ_PROBLEM_TIMELIMIT_LIMIT and not has_high_perm:
+            raise forms.ValidationError(_('You cannot set time limit higher than %d seconds')
+                                        % settings.VNOJ_PROBLEM_TIMELIMIT_LIMIT,
+                                        'problem_timelimit_too_long')
         return self.cleaned_data['time_limit']
 
     class Meta:
@@ -193,9 +191,9 @@ class ProblemEditForm(ModelForm):
         }
         help_texts = {
             'is_public': _(
-                'If public, all members in organization can view it. Set it as private '
+                'If public, all members in organization can view it. <strong>Set it as private '
                 'if you want to use it in a contest, otherwise, users can see the problem '
-                'even if they do not join the contest!'),
+                'even if they do not join the contest!</strong>'),
             'code': _('Problem code, e.g: voi19_post'),
             'name': _('The full name of the problem, '
                       'as shown in the problem list. For example: VOI19 - A cong B'),
@@ -530,6 +528,7 @@ class ContestForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         org_pk = kwargs.pop('org_pk', None)
+        self.user = kwargs.pop('user', None)
         super(ContestForm, self).__init__(*args, **kwargs)
 
         # cannot use fields[].widget = ...
@@ -545,6 +544,18 @@ class ContestForm(ModelForm):
         else:
             self.fields.pop('private_contestants')
             self.fields.pop('is_private')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+
+        has_long_perm = self.user and self.user.has_perm('long_contest_duration')
+        if (end_time - start_time).days > settings.VNOJ_CONTEST_DURATION_LIMIT and not has_long_perm:
+            raise forms.ValidationError(_('Contest duration cannot be longer than %d days')
+                                        % settings.VNOJ_CONTEST_DURATION_LIMIT,
+                                        'contest_duration_too_long')
+        return cleaned_data
 
     class Meta:
         model = Contest
@@ -569,6 +580,10 @@ class ContestForm(ModelForm):
                 data_view='profile_select2',
                 attrs={'style': 'width: 100%'},
             ),
+        }
+        help_texts = {
+            'end_time': _('Users are able to pratice contest problems even if the contest has ended, '
+                          "so don't set the contest time too high if you don't really need it."),
         }
         error_messages = {
             'key': {
