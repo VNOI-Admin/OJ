@@ -169,11 +169,11 @@ class ProblemEditForm(ModelForm):
         return content
 
     def clean_time_limit(self):
-        has_high_perm = self.user and self.user.has_perm('high_problem_timelimit')
-        if self.cleaned_data['time_limit'] > settings.VNOJ_TIME_LIMIT and not has_high_perm:
+        has_long_perm = self.user and self.user.has_perm('long_problem_timelimit')
+        if self.cleaned_data['time_limit'] > settings.VNOJ_PROBLEM_TIMELIMIT_LIMIT and not has_long_perm:
             raise forms.ValidationError(_('You cannot set time limit higher than %d seconds')
-                                        % settings.VNOJ_TIME_LIMIT,
-                                        'time_limit_too_high')
+                                        % settings.VNOJ_PROBLEM_TIMELIMIT_LIMIT,
+                                        'problem_timelimit_too_long')
         return self.cleaned_data['time_limit']
 
     class Meta:
@@ -550,11 +550,11 @@ class ContestForm(ModelForm):
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
 
-        has_high_perm = self.user and self.user.has_perm('high_contest_time')
-        if (end_time - start_time).days > settings.VNOJ_CONTEST_TIME_LIMIT and not has_high_perm:
-            raise forms.ValidationError(_('Contest time cannot be longer than %d days')
-                                        % settings.VNOJ_CONTEST_TIME_LIMIT,
-                                        'contest_time_too_high')
+        has_long_perm = self.user and self.user.has_perm('long_contest_duration')
+        if (end_time - start_time).days > settings.VNOJ_CONTEST_DURATION_LIMIT and not has_long_perm:
+            raise forms.ValidationError(_('Contest duration cannot be longer than %d days')
+                                        % settings.VNOJ_CONTEST_DURATION_LIMIT,
+                                        'contest_duration_too_long')
         return cleaned_data
 
     class Meta:
