@@ -12,6 +12,6 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AlterModelOptions(
             name='profile',
-            options={'permissions': (('test_site', 'Shows in-progress development stuff'), ('totp', 'Edit TOTP settings'), ('can_upload_image', 'Can update image directly to server via martor')), 'verbose_name': 'user profile', 'verbose_name_plural': 'user profiles'},
+            options={'permissions': (('test_site', 'Shows in-progress development stuff'), ('totp', 'Edit TOTP settings'), ('can_upload_image', 'Can upload image directly to server via martor')), 'verbose_name': 'user profile', 'verbose_name_plural': 'user profiles'},
         ),
     ]
