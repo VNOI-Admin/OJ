@@ -57,8 +57,7 @@ class OrganizationMixin(object):
             org = self.object
         if not self.request.user.is_authenticated:
             return False
-        profile_id = self.request.profile.id
-        return org.admins.filter(id=profile_id).exists()
+        return org.is_admin(self.request.profile)
 
 
 class OrganizationDetailView(OrganizationMixin, DetailView):
@@ -180,7 +179,7 @@ class OrganizationRequestDetail(LoginRequiredMixin, TitleMixin, DetailView):
     def get_object(self, queryset=None):
         object = super(OrganizationRequestDetail, self).get_object(queryset)
         profile = self.request.profile
-        if object.user_id != profile.id and not object.organization.admins.filter(id=profile.id).exists():
+        if object.user_id != profile.id and not object.organization.is_admin(profile):
             raise PermissionDenied()
         return object
 
@@ -196,7 +195,7 @@ class OrganizationRequestBaseView(LoginRequiredMixin, SingleObjectTemplateRespon
 
     def get_object(self, queryset=None):
         organization = super(OrganizationRequestBaseView, self).get_object(queryset)
-        if not organization.admins.filter(id=self.request.profile.id).exists():
+        if not organization.is_admin(self.request.profile):
             raise PermissionDenied()
         return organization
 
@@ -399,8 +398,7 @@ class CustomOrganizationMixin(object):
             org = self.organization
         if not self.request.user.is_authenticated:
             return False
-        profile_id = self.request.profile.id
-        return org.admins.filter(id=profile_id).exists()
+        return org.is_admin(self.request.profile)
 
 
 class CustomAdminOrganizationMixin(CustomOrganizationMixin):
