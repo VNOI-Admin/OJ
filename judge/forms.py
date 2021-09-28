@@ -169,12 +169,10 @@ class ProblemEditForm(ModelForm):
         return content
 
     def clean_time_limit(self):
-        # TODO (thuc): Fix this code
-        # This code need to be changed in a near future
-        # Things to do:
-        # Check user perms + make the time limit upperbound configuable
-        if self.cleaned_data['time_limit'] > 5:
-            raise forms.ValidationError(_('You cannot set time limit higher than 5 seconds'),
+        has_high_perm = self.user and self.user.has_perm('high_problem_timelimit')
+        if self.cleaned_data['time_limit'] > settings.VNOJ_TIME_LIMIT and not has_high_perm:
+            raise forms.ValidationError(_('You cannot set time limit higher than %d seconds')
+                                        % settings.VNOJ_TIME_LIMIT,
                                         'time_limit_too_high')
         return self.cleaned_data['time_limit']
 
@@ -530,6 +528,7 @@ class ContestForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         org_pk = kwargs.pop('org_pk', None)
+        self.user = kwargs.pop('user', None)
         super(ContestForm, self).__init__(*args, **kwargs)
 
         # cannot use fields[].widget = ...
@@ -545,6 +544,18 @@ class ContestForm(ModelForm):
         else:
             self.fields.pop('private_contestants')
             self.fields.pop('is_private')
+
+    def clean(self):
+        cleaned_data = super().clean()
+        start_time = cleaned_data.get('start_time')
+        end_time = cleaned_data.get('end_time')
+
+        has_high_perm = self.user and self.user.has_perm('high_contest_time')
+        if (end_time - start_time).days > settings.VNOJ_CONTEST_TIME_LIMIT and not has_high_perm:
+            raise forms.ValidationError(_('Contest time cannot be longer than %d days')
+                                        % settings.VNOJ_CONTEST_TIME_LIMIT,
+                                        'contest_time_too_high')
+        return cleaned_data
 
     class Meta:
         model = Contest
@@ -569,6 +580,10 @@ class ContestForm(ModelForm):
                 data_view='profile_select2',
                 attrs={'style': 'width: 100%'},
             ),
+        }
+        help_texts = {
+            'end_time': _('Users are able to pratice contest problems even if the contest has ended, '
+                          "so don't set the contest time too high if you don't really need it."),
         }
         error_messages = {
             'key': {
