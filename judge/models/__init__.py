@@ -27,4 +27,6 @@ revisions.register(Solution)
 revisions.register(Judge, fields=['name', 'created', 'auth_key', 'description'])
 revisions.register(Language)
 revisions.register(Comment, fields=['author', 'time', 'page', 'score', 'body', 'hidden', 'parent'])
+revisions.register(TagProblem)
+revisions.register(TagData, follow=['problem'])
 del revisions

@@ -12,6 +12,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView, ListView, View
 from requests.exceptions import ReadTimeout
+from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.forms import TagProblemAssignForm, TagProblemCreateForm
@@ -173,10 +174,15 @@ class TagProblemCreate(LoginRequiredMixin, TagAllowingMixin, TitleMixin, FormVie
                 raise APIError('Problem not found in problemset')
 
             # Initialize model
-            problem = TagProblem(code=problem_data['codename'], name=api_problem_data['title'], link=url,
-                                 judge=problem_data['judge'])
+            with revisions.create_revision(atomic=True):
+                problem = TagProblem(code=problem_data['codename'], name=api_problem_data['title'], link=url,
+                                     judge=problem_data['judge'])
+                problem.save()
+
+                revisions.set_comment(_('Created on site'))
+                revisions.set_user(self.request.user)
+
             on_new_tag_problem.delay(problem_data['codename'])
-            problem.save()
             return HttpResponseRedirect(problem.get_absolute_url())
         except (APIError, IntegrityError) as e:
             form.add_error('problem_url', e)
@@ -209,8 +215,12 @@ class TagProblemAssign(LoginRequiredMixin, TagAllowingMixin, TagProblemMixin, Ti
         for tag in tags:
             tag = get_object_or_404(Tag, code=tag)
             try:
-                tag_data = TagData(assigner=self.request.profile, problem=self.object, tag=tag)
-                tag_data.save()
+                with revisions.create_revision(atomic=True):
+                    tag_data = TagData(assigner=self.request.profile, problem=self.object, tag=tag)
+                    tag_data.save()
+
+                    revisions.set_comment(_('Assigned new tag %s from site') % tag.name)
+                    revisions.set_user(self.request.user)
             except IntegrityError:
                 pass
         on_new_tag.delay(self.object.code, tags)

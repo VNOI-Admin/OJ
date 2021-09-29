@@ -956,10 +956,15 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
         form = ContestForm(request.POST or None)
         form_set = self.get_contest_problem_formset()
         if form.is_valid() and form_set.is_valid():
-            self.save_contest_form(form)
-            for problem in form_set.save(commit=False):
-                problem.contest = self.object
-                problem.save()
+            with revisions.create_revision(atomic=True):
+                self.save_contest_form(form)
+                for problem in form_set.save(commit=False):
+                    problem.contest = self.object
+                    problem.save()
+
+                revisions.set_comment(_('Created on site'))
+                revisions.set_user(self.request.user)
+
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(*args, **kwargs))
@@ -1011,15 +1016,20 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
         form_set = self.get_contest_problem_formset()
 
         if form.is_valid() and form_set.is_valid():
-            form.save()
-            problems = form_set.save(commit=False)
+            with revisions.create_revision(atomic=True):
+                form.save()
+                problems = form_set.save(commit=False)
 
-            for problem in form_set.deleted_objects:
-                problem.delete()
+                for problem in form_set.deleted_objects:
+                    problem.delete()
 
-            for problem in problems:
-                problem.contest = self.object
-                problem.save()
+                for problem in problems:
+                    problem.contest = self.object
+                    problem.save()
+
+                revisions.set_comment(_('Edited from site'))
+                revisions.set_user(self.request.user)
+
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(object=self.object))
