@@ -767,15 +767,18 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
             problem.pdf_url = pdf_statement_uploader(statement_file)
 
     def form_valid(self, form):
-        self.object = problem = form.save()
-        problem.authors.add(self.request.user.profile)
-        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-        problem.partial = True
-        problem.date = timezone.now()
-        result = self.save_statement(form, problem)
-        if result is not None:
-            return result
-        problem.save()
+        with revisions.create_revision(atomic=True):
+            self.object = problem = form.save()
+            problem.authors.add(self.request.user.profile)
+            problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
+            problem.partial = True
+            problem.date = timezone.now()
+            self.save_statement(form, problem)
+            problem.save()
+
+            revisions.set_comment(_('Created on site'))
+            revisions.set_user(self.request.user)
+
         return HttpResponseRedirect(self.get_success_url())
 
     def get_initial(self):
@@ -796,15 +799,18 @@ class ProblemSuggest(ProblemCreate):
         return _('Suggesting new problem')
 
     def form_valid(self, form):
-        self.object = problem = form.save()
-        problem.suggester = self.request.user.profile
-        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-        problem.partial = True
-        problem.date = timezone.now()
-        result = self.save_statement(form, problem)
-        if result is not None:
-            return result
-        problem.save()
+        with revisions.create_revision(atomic=True):
+            self.object = problem = form.save()
+            problem.suggester = self.request.user.profile
+            problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
+            problem.partial = True
+            problem.date = timezone.now()
+            self.save_statement(form, problem)
+            problem.save()
+
+            revisions.set_comment(_('Created on site'))
+            revisions.set_user(self.request.user)
+
         on_new_suggested_problem.delay(problem.code)
         return HttpResponseRedirect(self.get_success_url())
 
@@ -852,9 +858,6 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
     def save_statement(self, form, problem):
         statement_file = form.files.get('statement_file', None)
         if statement_file is not None:
-            if not self.request.user.has_perm('judge.upload_file_statement'):
-                form.add_error('statement_file', "You don't have permission to upload file-type statement.")
-                return self.form_invalid(form)
             problem.pdf_url = pdf_statement_uploader(statement_file)
 
     def post(self, request, *args, **kwargs):
@@ -862,13 +865,17 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         form = self.get_form()
         form_edit = self.get_solution_formset()
         if form.is_valid() and form_edit.is_valid():
-            problem = form.save()
-            result = self.save_statement(form, problem)
-            if result is not None:
-                return result
-            problem.save()
-            form_edit.save()
+            with revisions.create_revision(atomic=True):
+                problem = form.save()
+                self.save_statement(form, problem)
+                problem.save()
+                form_edit.save()
+
+                revisions.set_comment(_('Edited from site'))
+                revisions.set_user(self.request.user)
+
             return HttpResponseRedirect(reverse('problem_detail', args=[self.object.code]))
+
         return self.render_to_response(self.get_context_data(object=self.object))
 
     def dispatch(self, request, *args, **kwargs):

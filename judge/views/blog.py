@@ -6,6 +6,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, ListView, UpdateView
+from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.forms import BlogPostForm
@@ -168,11 +169,15 @@ class BlogPostCreate(TitleMixin, CreateView):
         return _('Creating new blog post')
 
     def form_valid(self, form):
-        self.get_object = post = form.save(commit=False)
-        post.publish_on = timezone.now()
-        post.save()  # Presave to initialize the object id before using Many-to-Many relationship.
-        post.authors.add(self.request.user.profile)
-        post.save()
+        with revisions.create_revision(atomic=True):
+            self.get_object = post = form.save()
+            post.publish_on = timezone.now()
+            post.authors.add(self.request.user.profile)
+            post.save()
+
+            revisions.set_comment(_('Created on site'))
+            revisions.set_user(self.request.user)
+
         return HttpResponseRedirect(post.get_absolute_url())
 
 
@@ -191,3 +196,9 @@ class BlogPostEdit(BlogPostMixin, TitleMixin, UpdateView):
         context = super().get_context_data(**kwargs)
         context['edit'] = True
         return context
+
+    def form_valid(self, form):
+        with revisions.create_revision(atomic=True):
+            revisions.set_comment(_('Edited from site'))
+            revisions.set_user(self.request.user)
+            return super(BlogPostEdit, self).form_valid(form)
