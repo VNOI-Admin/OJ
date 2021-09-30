@@ -1,6 +1,7 @@
 .idea
 .vscode
 .sass-cache
+.python-version
 *.sqlite3
 *.py[co]
 *.mo
