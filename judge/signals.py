@@ -6,13 +6,17 @@ from django.contrib.flatpages.models import FlatPage
 from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
+from django.db import transaction
 from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
+from registration.models import RegistrationProfile
+from registration.signals import user_registered
 
-from judge.tasks import on_new_comment
-from .caching import finished_submission
-from .models import BlogPost, Comment, Contest, ContestAnnouncement, ContestSubmission, EFFECTIVE_MATH_ENGINES, \
+from judge.caching import finished_submission
+from judge.models import BlogPost, Comment, Contest, ContestAnnouncement, ContestSubmission, EFFECTIVE_MATH_ENGINES, \
     Judge, Language, License, MiscConfig, Organization, Problem, Profile, Submission, WebAuthnCredential
+from judge.tasks import on_new_comment
+from judge.views.register import RegistrationView
 
 
 def get_pdf_path(basename):
@@ -198,3 +202,20 @@ def contest_announcement_create(sender, instance, created, **kwargs):
         return
 
     instance.send()
+
+
+@receiver(user_registered, sender=RegistrationView)
+def registration_user_registered(sender, user, request, **kwargs):
+    """Automatically activate user if SEND_ACTIVATION_EMAIL is False"""
+
+    if not getattr(settings, 'SEND_ACTIVATION_EMAIL', True):
+        # get should never fail here
+        # but if it does, we won't catch it so it can show up in our log
+        profile = RegistrationProfile.objects.get(user=user)
+
+        user.is_active = True
+        profile.activated = True
+
+        with transaction.atomic():
+            user.save()
+            profile.save()
