@@ -57,8 +57,7 @@ class OrganizationMixin(object):
             org = self.object
         if not self.request.user.is_authenticated:
             return False
-        profile_id = self.request.profile.id
-        return org.admins.filter(id=profile_id).exists()
+        return org.is_admin(self.request.profile)
 
 
 class OrganizationDetailView(OrganizationMixin, DetailView):
@@ -180,7 +179,7 @@ class OrganizationRequestDetail(LoginRequiredMixin, TitleMixin, DetailView):
     def get_object(self, queryset=None):
         object = super(OrganizationRequestDetail, self).get_object(queryset)
         profile = self.request.profile
-        if object.user_id != profile.id and not object.organization.admins.filter(id=profile.id).exists():
+        if object.user_id != profile.id and not object.organization.is_admin(profile):
             raise PermissionDenied()
         return object
 
@@ -196,7 +195,7 @@ class OrganizationRequestBaseView(LoginRequiredMixin, SingleObjectTemplateRespon
 
     def get_object(self, queryset=None):
         organization = super(OrganizationRequestBaseView, self).get_object(queryset)
-        if not organization.admins.filter(id=self.request.profile.id).exists():
+        if not organization.is_admin(self.request.profile):
             raise PermissionDenied()
         return organization
 
@@ -365,8 +364,12 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 # current mixin is for the DetailView.
 class CustomOrganizationMixin(object):
     # If true, all user can view the current page
-    # event they are not in the org
+    # even if they are not in the org
     allow_all_users = False
+
+    # If the user has at least one of the following permissions,
+    # they can access the private data even if they are not in the org
+    permission_bypass = []
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -380,10 +383,14 @@ class CustomOrganizationMixin(object):
             raise ImproperlyConfigured('Must pass a pk')
         self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
         self.object = self.organization
-        if not self.allow_all_users and self.request.profile not in self.organization:
+
+        if not self.allow_all_users and \
+           self.request.profile not in self.organization and \
+           not any(self.request.user.has_perm(perm) for perm in self.permission_bypass):
             return generic_message(request,
                                    _("Cannot view organization's private data"),
                                    _('You must join the organization to view its private data.'))
+
         return super(CustomOrganizationMixin, self).dispatch(request, *args, **kwargs)
 
     def can_edit_organization(self, org=None):
@@ -391,8 +398,7 @@ class CustomOrganizationMixin(object):
             org = self.organization
         if not self.request.user.is_authenticated:
             return False
-        profile_id = self.request.profile.id
-        return org.admins.filter(id=profile_id).exists()
+        return org.is_admin(self.request.profile)
 
 
 class CustomAdminOrganizationMixin(CustomOrganizationMixin):
@@ -420,18 +426,19 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
     def get_queryset(self):
         queryset = BlogPost.objects.filter(organization=self.organization)
 
-        if not self.can_edit_organization():
-            if self.request.profile in self.object:
-                # Normal user can only view public posts
-                queryset = queryset.filter(publish_on__lte=timezone.now(), visible=True)
+        if not self.request.user.has_perm('judge.edit_all_post'):
+            if not self.can_edit_organization():
+                if self.request.profile in self.object:
+                    # Normal user can only view public posts
+                    queryset = queryset.filter(publish_on__lte=timezone.now(), visible=True)
+                else:
+                    # User cannot view organization blog
+                    # if they are not in the org
+                    # even if the org is public
+                    return BlogPost.objects.none()
             else:
-                # User cannot view organization blog
-                # if they are not in the org
-                # event if the org is public
-                queryset = BlogPost.objects.none()
-        else:
-            # Org admin can view public posts & their own posts
-            queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
+                # Org admin can view public posts & their own posts
+                queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
@@ -440,6 +447,7 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
         context['first_page_href'] = reverse('organization_home', args=[self.object.pk, self.object.slug])
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
+        context['is_member'] = self.request.profile in self.object
 
         context['post_comment_counts'] = {
             int(page[2:]): count for page, count in
@@ -453,13 +461,17 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
                 state='P',
                 organization=self.object).count()
 
-        if self.request.profile in self.object:
-            context['is_member'] = True
+        if context['is_member'] or \
+           self.request.user.has_perm('judge.see_organization_problem') or \
+           self.request.user.has_perm('judge.edit_all_problem'):
             context['new_problems'] = Problem.objects.filter(
                 is_public=True, is_organization_private=True,
                 organizations=self.object) \
                 .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
 
+        if context['is_member'] or \
+           self.request.user.has_perm('judge.see_private_contest') or \
+           self.request.user.has_perm('judge.edit_all_contest'):
             context['new_contests'] = Contest.objects.filter(
                 is_visible=True, is_organization_private=True,
                 organizations=self.object) \
@@ -471,6 +483,7 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
 class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
     context_object_name = 'problems'
     template_name = 'organization/problem-list.html'
+    permission_bypass = ['judge.see_organization_problem', 'judge.edit_all_problem']
 
     def get_hot_problems(self):
         return None
@@ -481,18 +494,34 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
         return context
 
     def get_filter(self):
-        filter = Q()
-        if not self.can_edit_organization():
-            filter = Q(is_public=True)
-            if self.profile is not None:
-                filter |= Q(authors=self.profile)
-                filter |= Q(curators=self.profile)
-                filter |= Q(testers=self.profile)
+        """Get filter for visible problems in an organization
+
+        The logic of this is:
+            - If user has perm `see_private_problem`, they
+            can view all org's problem (including private problems)
+            - Otherwise, they can view all public problems and
+            problems that they are authors/curators/testers
+
+        With that logic, Organization admins cannot view private
+        problems of other admins unless they are authors/curators/testers
+        """
+        if self.request.user.has_perm('judge.see_private_problem'):
+            return Q(organizations=self.organization)
+
+        filter = Q(is_public=True)
+
+        # Authors, curators, and testers should always have access, so OR at the very end.
+        if self.profile is not None:
+            filter |= Q(authors=self.profile)
+            filter |= Q(curators=self.profile)
+            filter |= Q(testers=self.profile)
+
         return filter & Q(organizations=self.organization)
 
 
 class ContestListOrganization(CustomOrganizationMixin, ContestList):
     template_name = 'organization/contest-list.html'
+    permission_bypass = ['judge.see_private_contest', 'judge.edit_all_contest']
 
     def _get_queryset(self):
         query_set = super(ContestListOrganization, self)._get_queryset()
@@ -507,6 +536,7 @@ class ContestListOrganization(CustomOrganizationMixin, ContestList):
 
 class SubmissionListOrganization(CustomOrganizationMixin, SubmissionsListBase):
     template_name = 'organization/submission-list.html'
+    permission_bypass = ['judge.view_all_submission']
 
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
@@ -537,19 +567,22 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
         return kwargs
 
     def form_valid(self, form):
-        self.object = problem = form.save()
-        problem.authors.add(self.request.user.profile)
-        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-        problem.partial = True
-        # We have to set it to True, even it is private for a org
-        problem.is_public = True
-        problem.is_organization_private = True
-        problem.organizations.add(self.organization)
-        problem.date = timezone.now()
-        result = self.save_statement(form, problem)
-        if result is not None:
-            return result
-        problem.save()
+        with revisions.create_revision(atomic=True):
+            self.object = problem = form.save()
+            problem.authors.add(self.request.user.profile)
+            problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
+            problem.partial = True
+            # We have to set it to True, even it is private for a org
+            problem.is_public = True
+            problem.is_organization_private = True
+            problem.organizations.add(self.organization)
+            problem.date = timezone.now()
+            self.save_statement(form, problem)
+            problem.save()
+
+            revisions.set_comment(_('Created on site'))
+            revisions.set_user(self.request.user)
+
         return HttpResponseRedirect(self.get_success_url())
 
 
@@ -563,12 +596,16 @@ class BlogPostCreateOrganization(CustomAdminOrganizationMixin, PermissionRequire
         return initial
 
     def form_valid(self, form):
-        self.get_object = post = form.save(commit=False)
-        post.save()   # Presave to initialize the object id before using Many-to-Many relationship.
-        post.authors.add(self.request.user.profile)
-        post.slug = ''.join(x for x in self.organization.slug.lower() if x.isalpha())  # Initial post slug
-        post.organization = self.organization
-        post.save()
+        with revisions.create_revision(atomic=True):
+            self.get_object = post = form.save()
+            post.authors.add(self.request.user.profile)
+            post.slug = ''.join(x for x in self.organization.slug.lower() if x.isalpha())  # Initial post slug
+            post.organization = self.organization
+            post.save()
+
+            revisions.set_comment(_('Created on site'))
+            revisions.set_user(self.request.user)
+
         return HttpResponseRedirect(post.get_absolute_url())
 
 

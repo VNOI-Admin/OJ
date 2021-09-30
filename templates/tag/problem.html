@@ -96,6 +96,9 @@
                 <th>Assigner</th>
             </tr>
         <thead>
+        <div class="alert alert-warning alert-dismissable">
+            {{_("The problem tag might not be correct. Please feel free to leave a comment or use the report button at the top right of the navigation bar.")}}
+        </div>
         <tbody>
             {% for tag in problem.tagdata_set.all() %}
                 <tr>
@@ -115,3 +118,4 @@
     {% endif %}
     {% include "comments/math.html" %}
 {% endblock %}
+

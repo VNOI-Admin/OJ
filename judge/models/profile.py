@@ -319,7 +319,9 @@ class Profile(models.Model):
         permissions = (
             ('test_site', _('Shows in-progress development stuff')),
             ('totp', _('Edit TOTP settings')),
-            ('can_upload_image', _('Can update image directly to server via martor')),
+            ('can_upload_image', _('Can upload image directly to server via martor')),
+            ('high_problem_timelimit', _('Can set high problem timelimit')),
+            ('long_contest_duration', _('Can set long contest duration')),
         )
         verbose_name = _('user profile')
         verbose_name_plural = _('user profiles')

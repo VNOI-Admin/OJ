@@ -52,7 +52,7 @@ class OrganizationAdmin(VersionAdmin):
             return False
         if request.user.has_perm('judge.edit_all_organization') or obj is None:
             return True
-        return obj.admins.filter(id=request.profile.id).exists()
+        return obj.is_admin(request.profile)
 
     def recalculate_points(self, request, queryset):
         count = 0

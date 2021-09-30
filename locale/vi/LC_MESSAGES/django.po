@@ -2400,7 +2400,7 @@ msgid "Edit TOTP settings"
 msgstr ""
 
 #: judge/models/profile.py:322
-msgid "Can update image directly to server via martor"
+msgid "Can upload image directly to server via martor"
 msgstr ""
 
 #: judge/models/profile.py:324

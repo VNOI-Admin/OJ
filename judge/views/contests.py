@@ -39,7 +39,7 @@ from judge.utils.cms import parse_csv_ranking
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
 from judge.utils.ranker import ranker
-from judge.utils.stats import get_bar_chart, get_pie_chart
+from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
     generic_message
 
@@ -596,17 +596,9 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
                 result_data[category['code']][i] = category['count']
 
         stats = {
-            'problem_status_count': {
-                'labels': labels,
-                'datasets': [
-                    {
-                        'label': name,
-                        'backgroundColor': settings.DMOJ_STATS_SUBMISSION_RESULT_COLORS[name],
-                        'data': data,
-                    }
-                    for name, data in result_data.items()
-                ],
-            },
+            'problem_status_count': get_stacked_bar_chart(
+                labels, result_data, settings.DMOJ_STATS_SUBMISSION_RESULT_COLORS,
+            ),
             'problem_ac_rate': get_bar_chart(
                 queryset.values('contest__problem__order', 'problem__name').annotate(ac_rate=ac_rate)
                         .order_by('contest__problem__order').values_list('problem__name', 'ac_rate'),
@@ -933,6 +925,11 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
     form_class = ContestForm
     permission_required = 'judge.add_contest'
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
     def get_title(self):
         return _('Create new contest')
 
@@ -959,10 +956,15 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
         form = ContestForm(request.POST or None)
         form_set = self.get_contest_problem_formset()
         if form.is_valid() and form_set.is_valid():
-            self.save_contest_form(form)
-            for problem in form_set.save(commit=False):
-                problem.contest = self.object
-                problem.save()
+            with revisions.create_revision(atomic=True):
+                self.save_contest_form(form)
+                for problem in form_set.save(commit=False):
+                    problem.contest = self.object
+                    problem.save()
+
+                revisions.set_comment(_('Created on site'))
+                revisions.set_user(self.request.user)
+
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(*args, **kwargs))
@@ -987,6 +989,7 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
         if self.object.organizations.count() == 1:
             kwargs['org_pk'] = self.object.organizations.values_list('pk', flat=True)[0]
 
+        kwargs['user'] = self.request.user
         return kwargs
 
     def get_title(self):
@@ -1013,15 +1016,20 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
         form_set = self.get_contest_problem_formset()
 
         if form.is_valid() and form_set.is_valid():
-            form.save()
-            problems = form_set.save(commit=False)
+            with revisions.create_revision(atomic=True):
+                form.save()
+                problems = form_set.save(commit=False)
 
-            for problem in form_set.deleted_objects:
-                problem.delete()
+                for problem in form_set.deleted_objects:
+                    problem.delete()
 
-            for problem in problems:
-                problem.contest = self.object
-                problem.save()
+                for problem in problems:
+                    problem.contest = self.object
+                    problem.save()
+
+                revisions.set_comment(_('Edited from site'))
+                revisions.set_user(self.request.user)
+
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(object=self.object))

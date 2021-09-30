@@ -13,7 +13,7 @@ import datetime
 import os
 import tempfile
 
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django_jinja.builtins import DEFAULT_EXTENSIONS
 from jinja2 import select_autoescape
 
@@ -76,6 +76,12 @@ VNOJ_DISPLAY_RANKS = (
 # Maximum number of organization a single user can be admin, to be able to
 # create new organization, without the `spam_organization` permission
 VNOJ_ORGANIZATION_ADMIN_LIMIT = 3
+# Maximum timelimit (second) that a user can set for a problem
+# without the `high_problem_timelimit` permission
+VNOJ_PROBLEM_TIMELIMIT_LIMIT = 5
+# Maximum contest duration (day) that a user can set for a contest
+# without the `long_contest_duration` permission
+VNOJ_CONTEST_DURATION_LIMIT = 14
 
 # List of online judge preset for OJ API
 OJ_PROBLEM_PRESET = [

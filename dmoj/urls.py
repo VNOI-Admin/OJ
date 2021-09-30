@@ -9,7 +9,7 @@ from django.http import Http404, HttpResponsePermanentRedirect
 from django.templatetags.static import static
 from django.urls import path, reverse
 from django.utils.functional import lazy
-from django.utils.translation import gettext_lazy, ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import RedirectView
 from martor.views import markdown_search_user
 
@@ -57,26 +57,26 @@ register_patterns = [
     url(r'^password/change/$', user.CustomPasswordChangeView.as_view(), name='password_change'),
     url(r'^password/change/done/$', auth_views.PasswordChangeDoneView.as_view(
         template_name='registration/password_change_done.html',
-        title=gettext_lazy('Password change successful'),
+        title=_('Password change successful'),
     ), name='password_change_done'),
     url(r'^password/reset/$', user.CustomPasswordResetView.as_view(
         template_name='registration/password_reset.html',
         html_email_template_name='registration/password_reset_email.html',
         email_template_name='registration/password_reset_email.txt',
-        title=gettext_lazy('Password reset'),
+        title=_('Password reset'),
     ), name='password_reset'),
     url(r'^password/reset/confirm/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$',
         auth_views.PasswordResetConfirmView.as_view(
             template_name='registration/password_reset_confirm.html',
-            title=gettext_lazy('Enter new password'),
+            title=_('Enter new password'),
         ), name='password_reset_confirm'),
     url(r'^password/reset/complete/$', auth_views.PasswordResetCompleteView.as_view(
         template_name='registration/password_reset_complete.html',
-        title=gettext_lazy('Password reset complete'),
+        title=_('Password reset complete'),
     ), name='password_reset_complete'),
     url(r'^password/reset/done/$', auth_views.PasswordResetDoneView.as_view(
         template_name='registration/password_reset_done.html',
-        title=gettext_lazy('Password reset sent'),
+        title=_('Password reset sent'),
     ), name='password_reset_done'),
     url(r'^social/error/$', register.social_auth_error, name='social_auth_error'),
 
@@ -393,7 +393,7 @@ urlpatterns = [
         url(r'^blog/atom/$', AtomBlogFeed(), name='blog_atom'),
     ])),
 
-    url(r'^stats/data/all/$', stats.oj_data, name='stats_data_all'),
+    url(r'^stats/data/all/$', stats.all_data, name='stats_data_all'),
 
     url(r'^tickets/', include([
         url(r'^$', ticket.TicketList.as_view(), name='ticket_list'),
