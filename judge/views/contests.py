@@ -14,7 +14,7 @@ from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, Per
 from django.db import IntegrityError
 from django.db.models import Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.expressions import CombinedExpression
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import date as date_filter, floatformat
 from django.urls import reverse
@@ -451,6 +451,12 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
 
 
 class ContestLeave(LoginRequiredMixin, ContestMixin, BaseDetailView):
+    def dispatch(self, request, *args, **kwargs):
+        if request.method != 'POST':
+            return HttpResponseForbidden()
+
+        return super(ContestLeave, self).dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         contest = self.get_object()
 
