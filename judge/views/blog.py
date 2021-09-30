@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.core.exceptions import PermissionDenied
-from django.db import transaction
 from django.db.models import Count, Max
 from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
