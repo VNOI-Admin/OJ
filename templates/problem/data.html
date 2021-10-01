@@ -2,16 +2,12 @@
 
 {% block js_media %}
     {{data_form.media.js}}
+    <script type="text/javascript" src="{{ static('libs/jquery-sortable.js') }}"></script>
+    <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
     <script type="text/javascript">
         window.valid_files = {{valid_files_json}}.sort();
         window.testcase_limit = {{testcase_limit}};
 
-        $(function () {
-        });
-    </script>
-    <script type="text/javascript" src="{{ static('libs/jquery-sortable.js') }}"></script>
-    <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
-    <script type="text/javascript">
         $(function () {
             function autofill_if_exists($select, file) {
                 if (!$select.val() && ~window.valid_files.indexOf(file))
@@ -109,7 +105,7 @@
                                 $lang = $file_ext.toUpperCase();
                                 if ($lang == "CPP") $lang = "CPP17";
                                 $args.val(JSON.stringify({files: $file_name, lang: $lang, type: $custom_checker_type.find(":selected").val()}));
-                                if ($lang == "PY") 
+                                if ($lang == "PY")
                                     $args.val('');
                             }
                         }
@@ -125,10 +121,10 @@
                     }
                     $args.val(JSON.stringify(old_args));
                 });
-                
+
                 if (init && $args.val()) {
                     var old_args = try_parse_json($args.val());
-                    if ("type" in old_args) 
+                    if ("type" in old_args)
                         $custom_checker_type.val(old_args["type"]);
                 }
 
@@ -168,7 +164,7 @@
                 target: "_blank",
                 href: "/custom_checkers"
             }).appendTo($td);
-            
+
             var $file_test = $('#id_problem-data-zipfile');
             $("<br>").appendTo($file_test.parent());
             $("<input/>", {
@@ -532,7 +528,7 @@
                 {% if cases_formset.can_delete %}
                     <th>{{ _('Delete?') }}
                         <br>
-                        <input type="checkbox" name="delete-all" id="delete-all"> 
+                        <input type="checkbox" name="delete-all" id="delete-all">
                     </th>
                 {% endif %}
             </tr>
