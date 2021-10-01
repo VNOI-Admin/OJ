@@ -273,9 +273,9 @@
             $('a#add-case-row').click(function () {
                 total = parseInt($total.val());
                 if (total >= window.testcase_limit) {
-                    s = `{{'Too many testcases'}}: ${total}`;
+                    s = `{{_('Too many testcases')}}: ${total}`;
                     s += '\n';
-                    s += `{{'Number of testcases must not exceed ${window.testcase_limit}'}}`;
+                    s += `{{_('Number of testcases must not exceed ${window.testcase_limit}')}}`;
                     alert(s);
                     return false;
                 }
@@ -325,11 +325,11 @@
                 }
                 $("#fill-test-case-noti").show();
                 if (inFiles.length > window.testcase_limit) {
-                    s = `{{'Too many testcases'}}: ${inFiles.length}`;
+                    s = `{{_('Too many testcases')}}: ${inFiles.length}`;
                     s += '\n';
-                    s += `{{'Number of testcases must not exceed ${window.testcase_limit}'}}`;
+                    s += `{{_('Number of testcases must not exceed ${window.testcase_limit}')}}`;
                     s += '\n';
-                    s += `{{'Because of that, only the first ${window.testcase_limit} testcases will be saved!'}}`
+                    s += `{{_('Because of that, only the first ${window.testcase_limit} testcases will be saved!')}}`
                     alert(s);
                 }
                 return false;
