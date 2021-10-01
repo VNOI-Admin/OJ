@@ -322,6 +322,7 @@ class Profile(models.Model):
             ('can_upload_image', _('Can upload image directly to server via martor')),
             ('high_problem_timelimit', _('Can set high problem timelimit')),
             ('long_contest_duration', _('Can set long contest duration')),
+            ('create_mass_testcases', _('Can create unlimitted number of testcases for a problem')),
         )
         verbose_name = _('user profile')
         verbose_name_plural = _('user profiles')

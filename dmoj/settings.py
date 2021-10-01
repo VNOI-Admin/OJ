@@ -82,6 +82,9 @@ VNOJ_PROBLEM_TIMELIMIT_LIMIT = 5
 # Maximum contest duration (day) that a user can set for a contest
 # without the `long_contest_duration` permission
 VNOJ_CONTEST_DURATION_LIMIT = 14
+# Maximum number of test cases that a user can create for a problem
+# without the `create_mass_testcases` permission
+VNOJ_TESTCASE_LIMIT = 50
 
 # List of online judge preset for OJ API
 OJ_PROBLEM_PRESET = [
