@@ -4,6 +4,7 @@
     {{data_form.media.js}}
     <script type="text/javascript">
         window.valid_files = {{valid_files_json}}.sort();
+        window.testcase_limit = {{testcase_limit}};
 
         $(function () {
         });
@@ -274,6 +275,14 @@
             var $total = $('#id_cases-TOTAL_FORMS');
 
             $('a#add-case-row').click(function () {
+                total = parseInt($total.val());
+                if (total >= window.testcase_limit) {
+                    s = `{{'Too many testcases'}}: ${total}`;
+                    s += '\n';
+                    s += `{{'Number of testcases must not exceed ${window.testcase_limit}'}}`;
+                    alert(s);
+                    return false;
+                }
                 var $tr;
                 $table.find('tbody:first').append($tr = $($table.find('.extra-row-body').html()
                     .replace(/__prefix__/g, $total.val())));
@@ -307,22 +316,26 @@
                     alert(s);
                     return false;
                 }
+                n_test = Math.min(inFiles.length, window.testcase_limit);
                 // add boxes
-                while ($total.val() < inFiles.length) {
+                while ($total.val() < n_test) {
                     $('a#add-case-row').click();
                 }
                 // fill cases
-                for (var i = 0; i < inFiles.length; i++) {
+                for (var i = 0; i < n_test; i++) {
                     $("#id_cases-" + i + "-input_file").val(inFiles[i]).change();
-                }
-                for (var i = 0; i < outFiles.length; i++) {
                     $("#id_cases-" + i + "-output_file").val(outFiles[i]).change();
-                }
-                
-                for (i = 0; i < inFiles.length; i++) {
                     $("#id_cases-" + i + "-points").val("1").change();
                 }
                 $("#fill-test-case-noti").show();
+                if (inFiles.length > window.testcase_limit) {
+                    s = `{{'Too many testcases'}}: ${inFiles.length}`;
+                    s += '\n';
+                    s += `{{'Number of testcases must not exceed ${window.testcase_limit}'}}`;
+                    s += '\n';
+                    s += `{{'Because of that, only the first ${window.testcase_limit} testcases will be saved!'}}`
+                    alert(s);
+                }
                 return false;
             };
 
@@ -503,6 +516,9 @@
                 Please modify the table below if needed and press the `Apply` button to save!
             {%- endtrans -%}
         </div>
+        {% if cases_formset._non_form_errors %}
+            {{ cases_formset._non_form_errors }}
+        {% endif %}
         <table id="case-table" class="table">
             <thead>
             <tr>
