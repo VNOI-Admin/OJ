@@ -38,15 +38,17 @@
                 });
             {% endif %}
 
-            {% if hide_private_contests %}
-                $('#hide-private-contests-checkbox').prop('checked', true);
-            {% endif %}
+            {% if hide_private_contests is not none %}
+                {% if hide_private_contests %}
+                    $('#hide-private-contests-checkbox').prop('checked', true);
+                {% endif %}
 
-            $('#hide-private-contests-checkbox').click(function () {
-                const parser = new URL(window.location.href);
-                parser.searchParams.set('hide_private_contests', '{{ 'false' if hide_private_contests else 'true' }}');
-                window.location.href = parser.href;
-            });
+                $('#hide-private-contests-checkbox').click(function () {
+                    const parser = new URL(window.location.href);
+                    parser.searchParams.set('hide_private_contests', '{{ 'false' if hide_private_contests else 'true' }}');
+                    window.location.href = parser.href;
+                });
+            {% endif %}
 
             // var tooltip_classes = 'tooltipped tooltipped-e';
             //
@@ -283,10 +285,12 @@
             <div class="top-pagination-bar">
                 {% include "list-pages.html" %}
                 <div style="display: flex; align-items: center;">
-                    <div style="padding-right: 0.5em;">
-                        <input id="hide-private-contests-checkbox" type="checkbox">
-                        <label for="hide-private-contests-checkbox">{{ _('Hide private contests') }}</label>
-                    </div>
+                    {% if hide_private_contests is not none %}
+                        <div style="padding-right: 0.5em;">
+                            <input id="hide-private-contests-checkbox" type="checkbox">
+                            <label for="hide-private-contests-checkbox">{{ _('Hide private contests') }}</label>
+                        </div>
+                    {% endif %}
                     <form id="search-form" name="form" action="" method="get">
                         <input id="search" type="text" name="search" value="{{ search_query or '' }}"
                             placeholder="{{ _('Search contest...') }}">
