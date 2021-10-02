@@ -76,7 +76,7 @@ class CustomUserMixin(object):
 
     def dispatch(self, request, *args, **kwargs):
         if 'user' not in kwargs:
-            raise ImproperlyConfigured('must pass a user pk')
+            raise ImproperlyConfigured('must pass an username')
         self.user = get_object_or_404(Profile, user__username=kwargs['user'])
         self.object = self.user
         return super(CustomUserMixin, self).dispatch(request, *args, **kwargs)
@@ -240,7 +240,7 @@ class UserBlogPage(CustomUserMixin, PostListBase):
     template_name = 'user/blog.html'
 
     def get_queryset(self):
-        queryset = BlogPost.objects.filter(authors=self.user)
+        queryset = BlogPost.objects.filter(authors=self.user, organization=None)
 
         if self.request.user != self.user.user:
             queryset = queryset.filter(visible=True, publish_on__lte=timezone.now())
