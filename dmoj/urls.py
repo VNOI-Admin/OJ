@@ -228,6 +228,7 @@ urlpatterns = [
     ])),
 
     url(r'^contests/', paged_list_view(contests.ContestList, 'contest_list')),
+    path('contests.ics', contests.ContestICal.as_view(), name='contest_ical'),
     url(r'^contests/(?P<year>\d+)/(?P<month>\d+)/$', contests.ContestCalendar.as_view(), name='contest_calendar'),
     url(r'^contests/new/$', contests.CreateContest.as_view(), name='contest_new'),
     url(r'^contests/tag/(?P<name>[a-z-]+)', include([
