@@ -523,6 +523,7 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
 class ContestListOrganization(CustomOrganizationMixin, ContestList):
     template_name = 'organization/contest-list.html'
     permission_bypass = ['judge.see_private_contest', 'judge.edit_all_contest']
+    hide_private_contests = None
 
     def _get_queryset(self):
         query_set = super(ContestListOrganization, self)._get_queryset()
