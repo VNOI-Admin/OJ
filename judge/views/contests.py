@@ -64,14 +64,15 @@ class ContestListMixin(object):
     hide_private_contests = False
 
     def get_queryset(self):
-        if 'hide_private_contests' in self.request.GET:
-            self.hide_private_contests = self.request.session['hide_private_contests'] \
-                                       = self.request.GET.get('hide_private_contests').lower() == 'true'
-        else:
-            self.hide_private_contests = self.request.session.get('hide_private_contests', False)
+        if self.hide_private_contests is not None:
+            if 'hide_private_contests' in self.request.GET:
+                self.hide_private_contests = self.request.session['hide_private_contests'] \
+                                           = self.request.GET.get('hide_private_contests').lower() == 'true'
+            else:
+                self.hide_private_contests = self.request.session.get('hide_private_contests', False)
 
-        if self.hide_private_contests:
-            return Contest.get_public_contests()
+            if self.hide_private_contests:
+                return Contest.get_public_contests()
 
         return Contest.get_visible_contests(self.request.user)
 
