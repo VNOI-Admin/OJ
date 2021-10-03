@@ -592,3 +592,9 @@ class ContestForm(ModelForm):
                 'invalid': _('Only accept alphanumeric characters (a-z, 0-9) and underscore (_)'),
             },
         }
+
+
+class CompareSubmissionsForm(Form):
+    user = forms.ChoiceField(
+        widget=HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
+    )
