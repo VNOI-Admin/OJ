@@ -137,17 +137,20 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
 
     def get_object(self, queryset=None):
         problem = super(ProblemSubmissionDiff, self).get_object(queryset)
-        if self.request.user.is_superuser or problem.is_editable_by(self.request.user):
+        if problem.is_editable_by(self.request.user):
             return problem
         raise Http404()
 
     def get_context_data(self, **kwargs):
         context = super(ProblemSubmissionDiff, self).get_context_data(**kwargs)
-        try:
+
+        if 'username' in self.request.GET:
+            usernames = self.request.GET.getlist('username')
+            subs = Submission.objects.filter(problem=self.object, user__user__username__in=usernames)
+        elif 'id' in self.request.GET:
             ids = self.request.GET.getlist('id')
-            subs = Submission.objects.filter(id__in=ids)
-        except ValueError:
-            raise Http404
+            subs = Submission.objects.filter(problem=self.object, id__in=ids)
+
         if not subs:
             raise Http404
 
