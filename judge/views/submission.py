@@ -4,6 +4,7 @@ from itertools import groupby
 from operator import attrgetter
 
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
@@ -16,7 +17,7 @@ from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
 from django.views.generic import DetailView, ListView
 
 from judge.highlight_code import highlight_code
@@ -87,6 +88,39 @@ class SubmissionSource(SubmissionDetailBase):
             return generic_message(request, 'Access denied', 'This source cannot be viewed by normal users.',
                                    404)
         return super(SubmissionSource, self).dispatch(request, *args, **kwargs)
+
+
+@require_GET
+@login_required
+def SubmissionSourceDiff(request):
+    if 'first_id' not in request.GET or 'second_id' not in request.GET:
+        raise Http404()
+
+    first_id = request.GET['first_id']
+    second_id = request.GET['second_id']
+
+    first_sub = get_object_or_404(Submission, id=first_id)
+    second_sub = get_object_or_404(Submission, id=second_id)
+
+    if not first_sub.can_see_detail(request.user) or not second_sub.can_see_detail(request.user):
+        raise PermissionDenied()
+
+    title = _('Comparing submission %(first)s with %(second)s') % {
+        'first': first_id,
+        'second': second_id,
+    }
+
+    content_title = mark_safe(escape(_('Comparing submission %(first)s with %(second)s')) % {
+        'first': format_html('<a href="{0}">{1}</a>', reverse('submission_source', args=[first_id]), first_id),
+        'second': format_html('<a href="{0}">{1}</a>', reverse('submission_source', args=[second_id]), second_id),
+    })
+
+    return render(request, 'submission/source-diff.html', {
+        'title': title,
+        'content_title': content_title,
+        'first_sub': first_sub,
+        'second_sub': second_sub,
+    })
 
 
 def make_batch(batch, cases):
