@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {% compress js %}
+        <script type="text/javascript" src="{{ static('vnoj/jsdiff/diff.min.js') }}"></script>
+        <script type="text/javascript" src="{{ static('vnoj/diff2html/diff2html-ui.min.js') }}"></script>
+        <script type="text/javascript">
+            $(function () {
+                var first_source = '{{ first_sub.source.source|escapejs }}';
+                var second_source = '{{ second_sub.source.source|escapejs }}';
+
+                var patch = Diff.createTwoFilesPatch('dummy', 'dummy', first_source, second_source);
+                var targetElement = document.getElementById('diffResult');
+                var diff2htmlUi = new Diff2HtmlUI(targetElement, patch, {
+                    drawFileList: false,
+                    outputFormat: 'side-by-side',
+                    fileContentToggle: false,
+                });
+                diff2htmlUi.draw();
+                diff2htmlUi.highlightCode();
+
+                $('.d2h-file-name:first').text('Diff Result');
+                if (first_source === second_source) {
+                    $('.d2h-tag:first').attr('class', 'd2h-tag d2h-added d2h-added-tag');
+                    $('.d2h-tag:first').text('IDENTICAL');
+                }
+            });
+        </script>
+    {% endcompress %}
+{% endblock %}
+
+{% block media %}
+    <link rel="stylesheet" type="text/css" href="{{ static('vnoj/diff2html/diff2html.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ static('vnoj/diff2html/github.min.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div id="diffResult"></div>
+{% endblock %}
