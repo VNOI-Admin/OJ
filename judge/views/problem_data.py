@@ -144,6 +144,7 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super(ProblemSubmissionDiff, self).get_context_data(**kwargs)
 
+        subs = None
         if 'username' in self.request.GET:
             usernames = self.request.GET.getlist('username')
             subs = Submission.objects.filter(problem=self.object, user__user__username__in=usernames)
