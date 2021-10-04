@@ -1,4 +1,5 @@
 <script src="{{ static('libs/featherlight/featherlight.min.js') }}" type="text/javascript"></script>
+<script src="{{ static('vnoj/guesslang.min.js') }}" type="text/javascript"></script>
 {% compress js %}
     {{ comment_form.media.js }}
     {% if not REQUIRE_JAX %}
@@ -226,6 +227,20 @@
                 $comment.find('.comment-body').show();
                 $comment.find('.bad-comment-body').hide();
             };
+
+            var guessLang = new GuessLang();
+            $(document).on('click', 'form.comment-submit-form .button[type=submit]', async function (e) {
+                var form = $(this).parents('form');
+                var text = form.find('#id_body').val();
+                if (text !== '') {
+                    var result = await guessLang.runModel(text);
+                    if (result.length > 0 && result[0].confidence > 0.9) {
+                        if (!confirm("Looks like you're trying to post a source code!\nAre you sure you want to do this?")) {
+                            e.preventDefault();
+                        }
+                    }
+                }
+            });
         });
     </script>
 {% endcompress %}
