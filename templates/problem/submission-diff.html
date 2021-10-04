@@ -42,6 +42,17 @@
 
                 window.location.href = '{{ url('diff_submissions') }}?first_id=' + first_id + '&second_id=' + second_id;
             });
+
+            var highlight_id = (new URL(window.location.href)).searchParams.get('highlight');
+            if (highlight_id) {
+                var row = $('tr[sub-id=' + highlight_id + ']');
+                if (row.length > 0) {
+                    row.addClass('highlighted');
+                    var checkbox = row.find('td:nth-child(2) input.sub-check');
+                    checkbox.attr('checked', true);
+                    checkbox.trigger('change');
+                }
+            }
         });
     </script>
     <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
@@ -83,6 +94,10 @@
 
         .sub-case-status {
             text-decoration: underline;
+        }
+
+        .highlighted {
+            background: lightBlue
         }
     </style>
 {% endblock %}
