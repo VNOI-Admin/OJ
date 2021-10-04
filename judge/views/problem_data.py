@@ -22,7 +22,7 @@ from judge.models import Problem, ProblemData, ProblemTestCase, Submission, prob
 from judge.models.problem_data import CUSTOM_CHECKERS
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.utils.unicode import utf8text
-from judge.utils.views import TitleMixin, add_file_response
+from judge.utils.views import TitleMixin, add_file_response, generic_message
 from judge.views.problem import ProblemMixin
 from judge.widgets import Select2Widget
 
@@ -152,7 +152,7 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
             subs = Submission.objects.filter(problem=self.object, id__in=ids)
 
         if not subs:
-            raise Http404
+            raise Submission.DoesNotExist()
 
         context['submissions'] = subs
 
@@ -164,6 +164,12 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
             num_cases = subs.first().test_cases.count()
         context['num_cases'] = num_cases
         return context
+
+    def get(self, request, *args, **kwargs):
+        try:
+            return super(ProblemSubmissionDiff, self).get(request, *args, **kwargs)
+        except Submission.DoesNotExist:
+            return generic_message(self.request, _('No such submissions'), _('Could not find any submissions.'))
 
 
 class ProblemDataView(TitleMixin, ProblemManagerMixin):
