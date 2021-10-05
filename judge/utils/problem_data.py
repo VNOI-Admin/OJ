@@ -56,6 +56,15 @@ class ProblemDataCompiler(object):
         self.generator = data.generator
 
     def make_init(self):
+        # The judge server has an ability to find the testcase
+        # even if we don't specify it.
+        # That is a good behavior, however, the zip file
+        # could contain a very large number of testcases
+        # and that is not what we want. So in case of user
+        # did not specify testcases, we will not create the init
+        if self.cases.count() == 0:
+            return {}
+
         cases = []
         batch = None
 
@@ -263,7 +272,9 @@ class ProblemDataCompiler(object):
 
         yml_file = '%s/init.yml' % self.problem.code
         try:
-            init = yaml.safe_dump(self.make_init())
+            init = self.make_init()
+            if init:
+                init = yaml.safe_dump(init)
         except ProblemDataError as e:
             self.data.feedback = e.message
             self.data.save()

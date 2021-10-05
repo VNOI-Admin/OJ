@@ -17,6 +17,7 @@ from reversion import revisions
 
 from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, Problem, Profile
+from judge.tasks import on_new_problem
 from judge.utils.ranker import ranker
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
@@ -522,6 +523,7 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
 class ContestListOrganization(CustomOrganizationMixin, ContestList):
     template_name = 'organization/contest-list.html'
     permission_bypass = ['judge.see_private_contest', 'judge.edit_all_contest']
+    hide_private_contests = None
 
     def _get_queryset(self):
         query_set = super(ContestListOrganization, self)._get_queryset()
@@ -583,6 +585,7 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
 
+        on_new_problem.delay(problem.code)
         return HttpResponseRedirect(self.get_success_url())
 
 

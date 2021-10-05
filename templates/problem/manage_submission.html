@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block media %}
+    {{ form_compare.media.css }}
     <style>
         .panes {
             display: flex;
@@ -48,6 +49,7 @@
 {% endblock %}
 
 {% block js_media %}
+    {{ form_compare.media.js }}
     <script>
         $(function () {
             $('#by-lang-filter').select2({
@@ -65,6 +67,18 @@
                 if (confirm(this.dataset.warning)) {
                     $(this).parents('form').submit();
                 }
+            });
+
+            $('#compare').click(function (e) {
+                e.preventDefault();
+                var usernames = $("#id_user option:selected").toArray().map(item => item.text);
+                if (usernames.length === 0) {
+                    alert('{{ _('Please select at least one user.') }}');
+                    return;
+                }
+
+                var qs = usernames.map(item => 'username=' + item).join('&');
+                window.location.href = '{{ url('problem_submission_diff', problem.code) }}?' + qs;
             });
 
             var $use_id = $('#by-range-check');
@@ -163,6 +177,17 @@
                     {{ _('Rescore all submissions') }}
                 </a>
             </form>
+        </div>
+
+        <div class="pane">
+            <h3>{{ _('Compare Submissions') }}</h3>
+            <div class="control-group">
+                <label for="id_user">{{ _('Filter by user:') }}</label>
+                {{ form_compare.user }}
+            </div>
+            <a id="compare" class="unselectable button full" href="#">
+                {{ _('Compare submissions') }}
+            </a>
         </div>
     </div>
 {% endblock %}

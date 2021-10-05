@@ -67,7 +67,10 @@
                 {% endif %}
             {% endif %}
             {% if can_edit %} ·
-                <a href="{{ url('admin:judge_submission_change', submission.id) }}">
+            <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">
+                {{ _('diff') }}
+            </a> ·
+            <a href="{{ url('admin:judge_submission_change', submission.id) }}">
                     <i class="fa fa-cog fa-fw"></i><span class="label">{{ _('admin') }}</span>
                 </a>
             {% endif %}

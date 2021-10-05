@@ -394,10 +394,14 @@ class Contest(models.Model):
         return False
 
     @classmethod
+    def get_public_contests(cls):
+        return cls.objects.filter(is_visible=True, is_organization_private=False, is_private=False) \
+                          .defer('description').distinct()
+
+    @classmethod
     def get_visible_contests(cls, user):
         if not user.is_authenticated:
-            return cls.objects.filter(is_visible=True, is_organization_private=False, is_private=False) \
-                              .defer('description').distinct()
+            return cls.get_public_contests()
 
         queryset = cls.objects.defer('description')
         if not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):

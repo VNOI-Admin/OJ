@@ -211,14 +211,13 @@
             {% if tab == 'ranking' %}
                 {% if show_virtual %}
                     $('#show-virtual-participations-checkbox').prop('checked', true);
-                    $('#show-virtual-participations-checkbox').click(function () {
-                        window.location.href = '{{ url('contest_ranking', contest.key) }}?show_virtual=false';
-                    });
-                {% else %}
-                    $('#show-virtual-participations-checkbox').click(function () {
-                        window.location.href = '{{ url('contest_ranking', contest.key) }}?show_virtual=true';
-                    });
                 {% endif %}
+
+                $('#show-virtual-participations-checkbox').click(function () {
+                    const parser = new URL(window.location.href);
+                    parser.searchParams.set('show_virtual', '{{ 'false' if show_virtual else 'true' }}');
+                    window.location.href = parser.href;
+                });
             {% endif %}
         });
 

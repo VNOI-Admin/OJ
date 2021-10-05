@@ -482,7 +482,12 @@ class Problem(models.Model):
                 pass
             else:
                 problem_data._update_code(self.__original_code, self.code)
-        if self.points != self.__original_points:
+
+        # self.__original_points will be None if:
+        #   - create new instance (should ignore)
+        #   - The `points` field got deferred (not sure about this?)
+        # in both cases, we don't rescore submissions.
+        if self.__original_points is not None and self.points != self.__original_points:
             self._rescore()
 
     save.alters_data = True

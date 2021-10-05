@@ -82,6 +82,9 @@ VNOJ_PROBLEM_TIMELIMIT_LIMIT = 5
 # Maximum contest duration (day) that a user can set for a contest
 # without the `long_contest_duration` permission
 VNOJ_CONTEST_DURATION_LIMIT = 14
+# Maximum number of test cases that a user can create for a problem
+# without the `create_mass_testcases` permission
+VNOJ_TESTCASE_LIMIT = 50
 
 # List of online judge preset for OJ API
 OJ_PROBLEM_PRESET = [
@@ -132,8 +135,10 @@ OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
 # Urls of discord webhook.
 # https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
 DISCORD_WEBHOOK = {
+    'default': None, # use this link if the specific link not found
     'on_new_ticket': None,
     'on_new_comment': None,
+    'on_new_problem': None,
     'on_new_suggested_problem': None,
     'on_new_tag_problem': None,
     'on_new_tag': None,

@@ -11,6 +11,7 @@ from django.utils.translation import gettext as _, ngettext
 from django.views.generic import DetailView
 from django.views.generic.detail import BaseDetailView
 
+from judge.forms import CompareSubmissionsForm
 from judge.models import Language, Submission
 from judge.tasks import apply_submission_filter, rejudge_problem_filter, rescore_problem
 from judge.utils.celery import redirect_to_task_status
@@ -60,6 +61,7 @@ class ManageProblemSubmissionView(TitleMixin, ManageProblemSubmissionMixin, Deta
         context['languages'] = [(lang_id, short_name or key) for lang_id, key, short_name in
                                 Language.objects.values_list('id', 'key', 'short_name')]
         context['results'] = sorted(map(itemgetter(0), Submission.RESULT))
+        context['form_compare'] = CompareSubmissionsForm()
         return context
 
 

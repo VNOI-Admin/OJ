@@ -2,15 +2,12 @@
 
 {% block js_media %}
     {{data_form.media.js}}
-    <script type="text/javascript">
-        window.valid_files = {{valid_files_json}}.sort();
-
-        $(function () {
-        });
-    </script>
     <script type="text/javascript" src="{{ static('libs/jquery-sortable.js') }}"></script>
     <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
     <script type="text/javascript">
+        window.valid_files = {{valid_files_json}}.sort();
+        window.testcase_limit = {{testcase_limit}};
+
         $(function () {
             function autofill_if_exists($select, file) {
                 if (!$select.val() && ~window.valid_files.indexOf(file))
@@ -108,7 +105,7 @@
                                 $lang = $file_ext.toUpperCase();
                                 if ($lang == "CPP") $lang = "CPP17";
                                 $args.val(JSON.stringify({files: $file_name, lang: $lang, type: $custom_checker_type.find(":selected").val()}));
-                                if ($lang == "PY") 
+                                if ($lang == "PY")
                                     $args.val('');
                             }
                         }
@@ -124,10 +121,10 @@
                     }
                     $args.val(JSON.stringify(old_args));
                 });
-                
+
                 if (init && $args.val()) {
                     var old_args = try_parse_json($args.val());
-                    if ("type" in old_args) 
+                    if ("type" in old_args)
                         $custom_checker_type.val(old_args["type"]);
                 }
 
@@ -167,7 +164,7 @@
                 target: "_blank",
                 href: "/custom_checkers"
             }).appendTo($td);
-            
+
             var $file_test = $('#id_problem-data-zipfile');
             $("<br>").appendTo($file_test.parent());
             $("<input/>", {
@@ -274,6 +271,14 @@
             var $total = $('#id_cases-TOTAL_FORMS');
 
             $('a#add-case-row').click(function () {
+                total = parseInt($total.val());
+                if (total >= window.testcase_limit) {
+                    s = `{{_('Too many testcases')}}: ${total}`;
+                    s += '\n';
+                    s += `{{_('Number of testcases must not exceed ${window.testcase_limit}')}}`;
+                    alert(s);
+                    return false;
+                }
                 var $tr;
                 $table.find('tbody:first').append($tr = $($table.find('.extra-row-body').html()
                     .replace(/__prefix__/g, $total.val())));
@@ -307,22 +312,26 @@
                     alert(s);
                     return false;
                 }
+                n_test = Math.min(inFiles.length, window.testcase_limit);
                 // add boxes
-                while ($total.val() < inFiles.length) {
+                while ($total.val() < n_test) {
                     $('a#add-case-row').click();
                 }
                 // fill cases
-                for (var i = 0; i < inFiles.length; i++) {
+                for (var i = 0; i < n_test; i++) {
                     $("#id_cases-" + i + "-input_file").val(inFiles[i]).change();
-                }
-                for (var i = 0; i < outFiles.length; i++) {
                     $("#id_cases-" + i + "-output_file").val(outFiles[i]).change();
-                }
-                
-                for (i = 0; i < inFiles.length; i++) {
                     $("#id_cases-" + i + "-points").val("1").change();
                 }
                 $("#fill-test-case-noti").show();
+                if (inFiles.length > window.testcase_limit) {
+                    s = `{{_('Too many testcases')}}: ${inFiles.length}`;
+                    s += '\n';
+                    s += `{{_('Number of testcases must not exceed ${window.testcase_limit}')}}`;
+                    s += '\n';
+                    s += `{{_('Because of that, only the first ${window.testcase_limit} testcases will be saved!')}}`
+                    alert(s);
+                }
                 return false;
             };
 
@@ -503,6 +512,9 @@
                 Please modify the table below if needed and press the `Apply` button to save!
             {%- endtrans -%}
         </div>
+        {% if cases_formset._non_form_errors %}
+            {{ cases_formset._non_form_errors }}
+        {% endif %}
         <table id="case-table" class="table">
             <thead>
             <tr>
@@ -516,7 +528,7 @@
                 {% if cases_formset.can_delete %}
                     <th>{{ _('Delete?') }}
                         <br>
-                        <input type="checkbox" name="delete-all" id="delete-all"> 
+                        <input type="checkbox" name="delete-all" id="delete-all">
                     </th>
                 {% endif %}
             </tr>

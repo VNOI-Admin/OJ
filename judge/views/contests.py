@@ -14,7 +14,7 @@ from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, Per
 from django.db import IntegrityError
 from django.db.models import Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.expressions import CombinedExpression
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import date as date_filter, floatformat
 from django.urls import reverse
@@ -33,7 +33,7 @@ from judge.comments import CommentedDetailView
 from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Problem, ProblemClarification, Profile, Submission
-from judge.tasks import run_moss
+from judge.tasks import on_new_contest, run_moss
 from judge.utils.celery import redirect_to_task_status
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.opengraph import generate_opengraph
@@ -61,8 +61,25 @@ def _find_contest(request, key, private_check=True):
 
 
 class ContestListMixin(object):
+    hide_private_contests = False
+
     def get_queryset(self):
+        if self.hide_private_contests is not None:
+            if 'hide_private_contests' in self.request.GET:
+                self.hide_private_contests = self.request.session['hide_private_contests'] \
+                                           = self.request.GET.get('hide_private_contests').lower() == 'true'
+            else:
+                self.hide_private_contests = self.request.session.get('hide_private_contests', False)
+
+            if self.hide_private_contests:
+                return Contest.get_public_contests()
+
         return Contest.get_visible_contests(self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['hide_private_contests'] = self.hide_private_contests
+        return context
 
 
 class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestListMixin, ListView):
@@ -451,6 +468,12 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
 
 
 class ContestLeave(LoginRequiredMixin, ContestMixin, BaseDetailView):
+    def dispatch(self, request, *args, **kwargs):
+        if request.method != 'POST':
+            return HttpResponseForbidden()
+
+        return super(ContestLeave, self).dispatch(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
         contest = self.get_object()
 
@@ -964,7 +987,7 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
 
                 revisions.set_comment(_('Created on site'))
                 revisions.set_user(self.request.user)
-
+            on_new_contest.delay(self.object.key)
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(*args, **kwargs))

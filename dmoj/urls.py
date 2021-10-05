@@ -29,6 +29,10 @@ from judge.views.widgets import martor_image_uploader
 
 admin.autodiscover()
 
+SEND_ACTIVATION_EMAIL = getattr(settings, 'SEND_ACTIVATION_EMAIL', True)
+REGISTRATION_COMPLETE_TEMPLATE = 'registration/registration_complete.html' if SEND_ACTIVATION_EMAIL \
+                                 else 'registration/activation_complete.html'
+
 register_patterns = [
     url(r'^activate/complete/$',
         TitledTemplateView.as_view(template_name='registration/activation_complete.html',
@@ -45,7 +49,7 @@ register_patterns = [
         RegistrationView.as_view(),
         name='registration_register'),
     url(r'^register/complete/$',
-        TitledTemplateView.as_view(template_name='registration/registration_complete.html',
+        TitledTemplateView.as_view(template_name=REGISTRATION_COMPLETE_TEMPLATE,
                                    title=_('Registration Completed')),
         name='registration_complete'),
     url(r'^register/closed/$',
@@ -176,6 +180,7 @@ urlpatterns = [
     ])),
 
     url(r'^submissions/', paged_list_view(submission.AllSubmissions, 'all_submissions')),
+    url(r'^submissions/diff$', submission.SubmissionSourceDiff, name='diff_submissions'),
     url(r'^submissions/user/(?P<user>[\w-]+)/', paged_list_view(submission.AllUserSubmissions, 'all_user_submissions')),
 
     url(r'^src/(?P<submission>\d+)$', submission.SubmissionSource.as_view(), name='submission_source'),

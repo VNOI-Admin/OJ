@@ -22,7 +22,7 @@ from judge.models import Problem, ProblemData, ProblemTestCase, Submission, prob
 from judge.models.problem_data import CUSTOM_CHECKERS
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.utils.unicode import utf8text
-from judge.utils.views import TitleMixin, add_file_response
+from judge.utils.views import TitleMixin, add_file_response, generic_message
 from judge.views.problem import ProblemMixin
 from judge.widgets import Select2Widget
 
@@ -137,19 +137,23 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
 
     def get_object(self, queryset=None):
         problem = super(ProblemSubmissionDiff, self).get_object(queryset)
-        if self.request.user.is_superuser or problem.is_editable_by(self.request.user):
+        if problem.is_editable_by(self.request.user):
             return problem
         raise Http404()
 
     def get_context_data(self, **kwargs):
         context = super(ProblemSubmissionDiff, self).get_context_data(**kwargs)
-        try:
+
+        subs = None
+        if 'username' in self.request.GET:
+            usernames = self.request.GET.getlist('username')
+            subs = Submission.objects.filter(problem=self.object, user__user__username__in=usernames)
+        elif 'id' in self.request.GET:
             ids = self.request.GET.getlist('id')
-            subs = Submission.objects.filter(id__in=ids)
-        except ValueError:
-            raise Http404
+            subs = Submission.objects.filter(problem=self.object, id__in=ids)
+
         if not subs:
-            raise Http404
+            raise Submission.DoesNotExist()
 
         context['submissions'] = subs
 
@@ -161,6 +165,12 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
             num_cases = subs.first().test_cases.count()
         context['num_cases'] = num_cases
         return context
+
+    def get(self, request, *args, **kwargs):
+        try:
+            return super(ProblemSubmissionDiff, self).get(request, *args, **kwargs)
+        except Submission.DoesNotExist:
+            return generic_message(self.request, _('No such submissions'), _('Could not find any submissions.'))
 
 
 class ProblemDataView(TitleMixin, ProblemManagerMixin):
@@ -205,7 +215,26 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         context['valid_files_json'] = mark_safe(json.dumps(context['valid_files']))
         context['valid_files'] = set(context['valid_files'])
         context['all_case_forms'] = chain(context['cases_formset'], [context['cases_formset'].empty_form])
+
+        if self.request.user.has_perm('create_mass_testcases'):
+            context['testcase_limit'] = 9999
+        else:
+            context['testcase_limit'] = settings.VNOJ_TESTCASE_LIMIT
         return context
+
+    def check_valid(self, data_form, cases_formset):
+        if not data_form.is_valid() or not cases_formset.is_valid():
+            return False
+        number_of_cases = cases_formset.total_form_count() - len(cases_formset.deleted_forms)
+        if number_of_cases > settings.VNOJ_TESTCASE_LIMIT and \
+           not self.request.user.has_perm('create_mass_testcases'):
+            error = ValidationError(
+                _('Too many testcases, number of testcases must not exceed %s') % settings.VNOJ_TESTCASE_LIMIT,
+                code='too_many_testcases',
+            )
+            cases_formset._non_form_errors.append(error)
+            return False
+        return True
 
     def post(self, request, *args, **kwargs):
         self.object = problem = self.get_object()
@@ -213,7 +242,7 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         valid_files = self.get_valid_files(data_form.instance, post=True)
         data_form.zip_valid = valid_files is not False
         cases_formset = self.get_case_formset(valid_files, post=True)
-        if data_form.is_valid() and cases_formset.is_valid():
+        if self.check_valid(data_form, cases_formset):
             data = data_form.save()
             for case in cases_formset.save(commit=False):
                 case.dataset_id = problem.id
