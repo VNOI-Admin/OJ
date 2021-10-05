@@ -32,7 +32,7 @@ celery
 ansi2html @ git+git://github.com/DMOJ/ansi2html.git
 sqlparse
 lupa
-martor @ git+git://github.com/DMOJ/martor.git
+martor @ git+git://github.com/VNOI-Admin/martor.git
 netaddr
 webauthn
 bleach
