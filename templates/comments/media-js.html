@@ -228,16 +228,13 @@
                 $comment.find('.bad-comment-body').hide();
             };
 
-            var guessLang = new GuessLang();
+            var code_regex = [/#include\s+<.+>/, /using\s+namespace/, /int\s+main/, /print\s+\(.+\)/];
             $(document).on('click', 'form.comment-submit-form .button[type=submit]', async function (e) {
                 var form = $(this).parents('form');
                 var text = form.find('#id_body').val();
-                if (text !== '') {
-                    var result = await guessLang.runModel(text);
-                    if (result.length > 0 && result[0].confidence > 0.9) {
-                        if (!confirm("Looks like you're trying to post a source code!\nAre you sure you want to do this?")) {
-                            e.preventDefault();
-                        }
+                if (code_regex.some(regex => regex.test(text))) {
+                    if (!confirm("Looks like you're trying to post a source code!\nAre you sure you want to do this?")) {
+                        e.preventDefault();
                     }
                 }
             });
