@@ -600,7 +600,7 @@ class BlogPostCreateOrganization(CustomAdminOrganizationMixin, PermissionRequire
 
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
-            self.get_object = post = form.save()
+            post = form.save()
             post.authors.add(self.request.user.profile)
             post.slug = ''.join(x for x in self.organization.slug.lower() if x.isalpha())  # Initial post slug
             post.organization = self.organization
