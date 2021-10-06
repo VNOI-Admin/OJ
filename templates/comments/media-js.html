@@ -232,7 +232,7 @@
                 var form = $(this).parents('form');
                 var text = form.find('#id_body').val();
                 if (code_regex.some(regex => regex.test(text))) {
-                    if (!confirm("Looks like you're trying to post a source code!\nAre you sure you want to do this?")) {
+                    if (!confirm(`{{ _('Looks like you\'re trying to post a source code!\n\nThe comment section are not for posting source code.\nIf you want to submit your solution, please use the "Submit solution" button.\n\nAre you sure you want to post this?') }}`)) {
                         e.preventDefault();
                     }
                 }
