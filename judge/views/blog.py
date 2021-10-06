@@ -48,6 +48,7 @@ class PostListBase(ListView):
 
     def get_context_data(self, **kwargs):
         context = super(PostListBase, self).get_context_data(**kwargs)
+        context['first_page_href'] = None
         context['title'] = self.title or _('Page %d of Posts') % context['page_obj'].number
         context['post_comment_counts'] = {
             int(page[2:]): count for page, count in

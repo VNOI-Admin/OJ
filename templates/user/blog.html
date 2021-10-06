@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block media %}
+    {% include "blog/media-css.html" %}
+    <style>
+        .post {
+            margin: 0 0.5em;
+        }
+
+        .post:first-child {
+            margin-top: 0.6em;
+        }
+
+        .comment-count {
+            font-size: 12px;
+        }
+
+        .comment-icon {
+            padding: 0.1em 0.2em 0 0.5em;
+        }
+
+        .comment-count-link {
+            color: #555;
+        }
+    </style>
+{% endblock %}
+{% block title_row %}
+    {% set tab = 'blogs' %}
+    {% include "user/user-tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+{% block body %}
+    {% block before_posts %}{% endblock %}
+    <div id="blog-container">
+        <div class="blog-content sidebox">
+            <div class="sidebox-content" style="border: unset;">
+                {% for post in posts %}
+                    {% include "blog/blog-post.html" %}
+                {% endfor %}
+            </div>
+            {% if page_obj.has_other_pages() %}
+                <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+            {% endif %}
+        </div>
+    {% block after_posts %}{% endblock %}
+{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
+    {% include "comments/math.html" %}
+{% endblock %}
