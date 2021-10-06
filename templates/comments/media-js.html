@@ -227,7 +227,7 @@
                 $comment.find('.bad-comment-body').hide();
             };
 
-            var code_regex = [/#include\s+<.+>/, /using\s+namespace/, /int\s+main/, /print\s+\(.+\)/];
+            var code_regex = [/#include\s*<.+>/, /using\s+namespace/, /int\s+main/, /print\s*\(.+\)/];
             $(document).on('click', 'form.comment-submit-form .button[type=submit]', async function (e) {
                 var form = $(this).parents('form');
                 var text = form.find('#id_body').val();
