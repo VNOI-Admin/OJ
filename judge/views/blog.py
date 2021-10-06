@@ -171,7 +171,7 @@ class BlogPostCreate(TitleMixin, CreateView):
 
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
-            self.get_object = post = form.save()
+            post = form.save()
             post.publish_on = timezone.now()
             post.authors.add(self.request.user.profile)
             post.save()
