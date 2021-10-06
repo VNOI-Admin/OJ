@@ -1,3 +1,4 @@
+import errno
 from operator import attrgetter
 
 import celery
@@ -16,6 +17,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from judge.fulltext import SearchQuerySet
+from judge.models.problem_data import problem_data_storage
 from judge.models.profile import Organization, Profile
 from judge.models.runtime import Language
 from judge.user_translations import gettext as user_gettext
@@ -479,9 +481,17 @@ class Problem(models.Model):
             try:
                 problem_data = self.data_files
             except AttributeError:
-                pass
+                try:
+                    problem_data_storage.rename(self.__original_code, self.code)
+                except OSError as e:
+                    if e.errno != errno.ENOENT:
+                        raise
             else:
                 problem_data._update_code(self.__original_code, self.code)
+            # Now the instance is saved, we need to update the original code to
+            # new code so that if the user uses .save() multiple time, it will not run
+            # update_code() multiple time
+            self.__original_code = self.code
 
         # self.__original_points will be None if:
         #   - create new instance (should ignore)
@@ -489,6 +499,8 @@ class Problem(models.Model):
         # in both cases, we don't rescore submissions.
         if self.__original_points is not None and self.points != self.__original_points:
             self._rescore()
+            # same reason as update __original_code
+            self.__original_points = self.points
 
     save.alters_data = True
 
