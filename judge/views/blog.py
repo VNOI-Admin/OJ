@@ -17,6 +17,7 @@ from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.problems import user_completed_ids
 from judge.utils.tickets import filter_visible_tickets
 from judge.utils.views import TitleMixin
+from judge.tasks import on_new_blogpost
 
 
 class BlogPostMixin(object):
@@ -172,12 +173,15 @@ class BlogPostCreate(TitleMixin, CreateView):
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             post = form.save()
+            post.slug = self.request.user.username.lower()
             post.publish_on = timezone.now()
             post.authors.add(self.request.user.profile)
             post.save()
 
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
+
+        on_new_blogpost(post.id)
 
         return HttpResponseRedirect(post.get_absolute_url())
 
