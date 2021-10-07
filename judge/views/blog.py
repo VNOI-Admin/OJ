@@ -12,12 +12,12 @@ from judge.comments import CommentedDetailView
 from judge.forms import BlogPostForm
 from judge.models import BlogPost, Comment, Contest, Language, Problem, Profile, Submission, \
     Ticket
+from judge.tasks import on_new_blogpost
 from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.problems import user_completed_ids
 from judge.utils.tickets import filter_visible_tickets
 from judge.utils.views import TitleMixin
-from judge.tasks import on_new_blogpost
 
 
 class BlogPostMixin(object):
