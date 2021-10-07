@@ -481,11 +481,13 @@ class Problem(models.Model):
             try:
                 problem_data = self.data_files
             except AttributeError:
-                try:
-                    problem_data_storage.rename(self.__original_code, self.code)
-                except OSError as e:
-                    if e.errno != errno.ENOENT:
-                        raise
+                # On create, self.__original_code is an empty string
+                if self.__original_code:
+                    try:
+                        problem_data_storage.rename(self.__original_code, self.code)
+                    except OSError as e:
+                        if e.errno != errno.ENOENT:
+                            raise
             else:
                 problem_data._update_code(self.__original_code, self.code)
             # Now the instance is saved, we need to update the original code to
