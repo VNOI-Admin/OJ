@@ -12,6 +12,7 @@ from judge.comments import CommentedDetailView
 from judge.forms import BlogPostForm
 from judge.models import BlogPost, Comment, Contest, Language, Problem, Profile, Submission, \
     Ticket
+from judge.tasks import on_new_blogpost
 from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.problems import user_completed_ids
@@ -172,12 +173,15 @@ class BlogPostCreate(TitleMixin, CreateView):
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             post = form.save()
+            post.slug = self.request.user.username.lower()
             post.publish_on = timezone.now()
             post.authors.add(self.request.user.profile)
             post.save()
 
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
+
+        on_new_blogpost(post.id)
 
         return HttpResponseRedirect(post.get_absolute_url())
 

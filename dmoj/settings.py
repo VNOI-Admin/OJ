@@ -142,6 +142,7 @@ DISCORD_WEBHOOK = {
     'on_new_suggested_problem': None,
     'on_new_tag_problem': None,
     'on_new_tag': None,
+    'on_new_blogpost': None,
     'on_error': None,
 }
 

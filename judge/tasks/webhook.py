@@ -6,9 +6,10 @@ from django.contrib.contenttypes.models import ContentType
 
 
 from judge.jinja2.gravatar import gravatar
-from judge.models import Comment, Contest, Problem, Tag, TagProblem, Ticket
+from judge.models import BlogPost, Comment, Contest, Problem, Tag, TagProblem, Ticket
 
-__all__ = ('on_new_ticket', 'on_new_comment', 'on_new_problem', 'on_new_tag_problem', 'on_new_tag', 'on_new_contest')
+__all__ = ('on_new_ticket', 'on_new_comment', 'on_new_problem', 'on_new_tag_problem', 'on_new_tag', 'on_new_contest',
+           'on_new_blogpost')
 
 
 def get_webhook_url(event_name):
@@ -169,3 +170,17 @@ def on_new_contest(contest_key):
     description = '\n'.join(f'{opt}: {val}' for opt, val in description)
 
     send_webhook(webhook, title, description, author)
+
+
+@shared_task
+def on_new_blogpost(blog_id):
+    webhook = get_webhook_url('on_new_blogpost')
+    if webhook is None or settings.SITE_FULL_URL is None:
+        return
+
+    blog = BlogPost.objects.get(pk=blog_id)
+    url = settings.SITE_FULL_URL + blog.get_absolute_url()
+
+    description = f'Title: {blog.title}\n'
+    description += f'Description: {blog.content[:200]}'
+    send_webhook(webhook, f'New blog post {url}', description, blog.authors.first())
