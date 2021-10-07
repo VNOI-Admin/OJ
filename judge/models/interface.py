@@ -103,7 +103,7 @@ class BlogPost(models.Model):
             return self.organization.is_admin(user.profile) and \
                 user.has_perm('judge.edit_organization_post') and \
                 self.authors.filter(id=user.profile.id).exists()
-        return user.has_perm('judge.change_blogpost') and self.authors.filter(id=user.profile.id).exists()
+        return self.authors.filter(id=user.profile.id).exists()
 
     class Meta:
         permissions = (
