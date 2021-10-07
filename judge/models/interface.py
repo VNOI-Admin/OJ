@@ -85,13 +85,20 @@ class BlogPost(models.Model):
         return reverse('blog_post', args=(self.id, self.slug))
 
     def can_see(self, user):
+        # Post is public
         if self.visible and self.publish_on <= timezone.now():
-            if self.global_post:
-                return True
-            if not user.is_authenticated:
-                return False
-            if self.organization and user.profile.organizations.filter(id=self.organization.pk).exists():
-                return True
+            # Post is private to an organization
+            if self.organization:
+                if not user.is_authenticated:
+                    return False
+                if user.profile.organizations.filter(id=self.organization.pk).exists():
+                    return True
+                return self.is_editable_by(user)
+
+            # Global or personal post should always be visible
+            return True
+
+        # Post is not public
         return self.is_editable_by(user)
 
     def is_editable_by(self, user):
