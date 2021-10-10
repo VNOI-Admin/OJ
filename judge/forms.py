@@ -477,7 +477,7 @@ class ProposeContestProblemForm(ModelForm):
         verbose_name = _('Problem')
         verbose_name_plural = 'Problems'
         fields = (
-            'problem', 'points', 'order',
+            'problem', 'points', 'order', 'max_submissions',
         )
 
         widgets = {

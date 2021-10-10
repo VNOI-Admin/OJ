@@ -81,6 +81,7 @@
         <td>{{ form.id }} {{ form.problem.errors }}{{ form.problem }}</td>
         <td class="points-column">{{ form.points.errors }}{{ form.points }}</td>
         <td>{{ form.order.errors }}{{ form.order }}</td>
+        <td>{{ form.max_submissions.errors }}{{ form.max_submissions }}</td>
         <td>
         {% if contest_problem_formset.can_delete and form.instance.pk %}
             {{ form.DELETE }}
@@ -110,9 +111,18 @@
         <table class="table">
             <thead>
                 <tr>
-                    <th class="problem-column"> {{ _('Problems') }} </th>
+                    <th class="problem-column" style="width: 20em;"> {{ _('Problems') }} </th>
                     <th class="points-column"> {{ _('Points') }} </th>
                     <th> {{ _('Order in contest') }} </th>
+                    <th>
+                        {{ _('Max submission') }}
+                        <br>
+                        <span class="helptext">
+                            {{ _('Maximum number of submissions') }}
+                            <br>
+                            {{_('or leave blank for no limit.') }}
+                        </span>
+                    </th>
                     <th> {{ _('Delete') }} </th>
                 </tr>
             </thead>
