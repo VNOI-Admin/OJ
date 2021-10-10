@@ -732,7 +732,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         problem.code = form.cleaned_data['code']
         problem.date = timezone.now()
         with revisions.create_revision(atomic=True):
-            problem.save()
+            problem.save(is_clone=True)
             problem.authors.add(self.request.profile)
             problem.allowed_languages.set(languages)
             problem.language_limits.set(language_limits)

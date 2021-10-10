@@ -477,6 +477,9 @@ class Problem(models.Model):
 
     def save(self, *args, **kwargs):
         super(Problem, self).save(*args, **kwargs)
+        # Ignore the custom save if we are cloning a problem
+        if kwargs.get('is_clone', False):
+            return True
         if self.code != self.__original_code:
             try:
                 problem_data = self.data_files
