@@ -476,10 +476,11 @@ class Problem(models.Model):
         return 'problem-full' if self.is_full_markup else 'problem'
 
     def save(self, *args, **kwargs):
+        is_clone = kwargs.pop('is_clone', False)
         super(Problem, self).save(*args, **kwargs)
         # Ignore the custom save if we are cloning a problem
-        if kwargs.get('is_clone', False):
-            return True
+        if is_clone:
+            return
         if self.code != self.__original_code:
             try:
                 problem_data = self.data_files
