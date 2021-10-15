@@ -35,7 +35,7 @@
             <div style="float:right; text-align: right;">
                 {% block personal_info_data scoped %}
                     <em style="font-size: 0.75em; color:grey;">
-                        {% for organization in user.organizations.all() %}
+                        {% for organization in user.organizations.filter(is_unlisted=False) %}
                             <a style="color:grey;" href="{{ organization.get_absolute_url() }}">{{ organization.name }}</a>{% if not loop.last %} | {% endif %}
                         {% endfor %}
                     </em>
