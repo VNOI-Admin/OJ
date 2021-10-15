@@ -305,6 +305,7 @@ class CommonDataMixin:
         self.organizations = {
             'open': create_organization(
                 name='open',
+                is_unlisted=False,
                 admins=('staff_organization_admin',),
             ),
         }
