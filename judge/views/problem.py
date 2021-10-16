@@ -741,7 +741,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             revisions.set_user(self.request.user)
             revisions.set_comment(_('Cloned problem from %s') % old_code)
 
-        return HttpResponseRedirect(reverse('admin:judge_problem_change', args=(problem.id,)))
+        return HttpResponseRedirect(problem.get_absolute_url())
 
 
 class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
