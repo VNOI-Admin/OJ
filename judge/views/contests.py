@@ -358,7 +358,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             revisions.set_user(self.request.user)
             revisions.set_comment(_('Cloned contest from %s') % old_key)
 
-        return HttpResponseRedirect(contest.get_absolute_url())
+        return HttpResponseRedirect(reverse('contest_edit', args=(contest.key,)))
 
 
 class ContestAccessDenied(Exception):
