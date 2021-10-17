@@ -25,7 +25,8 @@ from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import ListView, TemplateView
 from django.views.generic.detail import BaseDetailView, DetailView, SingleObjectMixin, View
-from django.views.generic.edit import BaseListView, CreateView, UpdateView
+from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.list import BaseListView
 from icalendar import Calendar as ICalendar, Event
 from reversion import revisions
 
