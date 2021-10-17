@@ -17,7 +17,7 @@ from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.problems import user_completed_ids
 from judge.utils.tickets import filter_visible_tickets
-from judge.utils.views import TitleMixin
+from judge.utils.views import TitleMixin, generic_message
 
 
 class BlogPostMixin(object):
@@ -185,6 +185,12 @@ class BlogPostCreate(TitleMixin, CreateView):
 
         return HttpResponseRedirect(post.get_absolute_url())
 
+    def dispatch(self, request, *args, **kwargs):
+        if request.official_contest_mode:
+            return generic_message(request, _('Permission denied'),
+                                   _('You cannot create blog post.'))
+        return super().dispatch(request, *args, **kwargs)
+
 
 class BlogPostEdit(BlogPostMixin, TitleMixin, UpdateView):
     template_name = 'blog/edit.html'
@@ -207,3 +213,9 @@ class BlogPostEdit(BlogPostMixin, TitleMixin, UpdateView):
             revisions.set_comment(_('Edited from site'))
             revisions.set_user(self.request.user)
             return super(BlogPostEdit, self).form_valid(form)
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.official_contest_mode:
+            return generic_message(request, _('Permission denied'),
+                                   _('You cannot edit blog post.'))
+        return super().dispatch(request, *args, **kwargs)
