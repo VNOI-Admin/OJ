@@ -247,9 +247,7 @@ $(function () {
 
     $('form').submit(function (evt) {
         // Prevent multiple submissions of forms, see #565
-        $(this).submit(function() {
-            return false;
-        });
+        $("button[type=submit], input[type=submit]").prop('disabled', true);
     });
 });
 
