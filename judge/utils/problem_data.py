@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import zipfile
 
 import yaml
 from django.conf import settings
@@ -44,6 +45,65 @@ class ProblemDataError(Exception):
     def __init__(self, message):
         super(ProblemDataError, self).__init__(message)
         self.message = message
+
+
+def get_visible_content(archive, filename):
+    if archive.getinfo(filename).file_size <= settings.VNOJ_TESTCASE_VISIBLE_LENGTH:
+        data = archive.read(filename)
+    else:
+        data = archive.open(filename).read(settings.VNOJ_TESTCASE_VISIBLE_LENGTH) + b'...'
+    return data.decode('utf-8', errors='ignore')
+
+
+def get_testcase_data(archive, case):
+    return {
+        'input': get_visible_content(archive, case.input_file),
+        'answer': get_visible_content(archive, case.output_file),
+    }
+
+
+def get_problem_testcases_data(problem):
+    """ Read test data of a problem and store
+    result in a dictionary.
+
+    If an error occurs, this method will return an empty dict.
+    """
+    from judge.models import problem_data_storage
+
+    init_path = '%s/init.yml' % problem.code
+    if not problem_data_storage.exists(init_path):
+        return {}
+
+    init_content = yaml.safe_load(problem_data_storage.open(init_path).read())
+    archive_path = init_content.get('archive', None)
+    if not archive_path:
+        return {}
+
+    archive_path = '%s/%s' % (problem.code, archive_path)
+    if not problem_data_storage.exists(archive_path):
+        return {}
+
+    try:
+        archive = zipfile.ZipFile(problem_data_storage.open(archive_path))
+    except zipfile.BadZipfile:
+        return {}
+
+    testcases_data = {}
+
+    # TODO:
+    # - Support manually managed problems
+    # - Support pretest
+    order = 0
+    for case in problem.cases.all().order_by('order'):
+        try:
+            if not case.input_file:
+                continue
+            order += 1
+            testcases_data[order] = get_testcase_data(archive, case)
+        except Exception:
+            return {}
+
+    return testcases_data
 
 
 class ProblemDataCompiler(object):

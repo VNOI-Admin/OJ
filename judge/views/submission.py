@@ -23,6 +23,7 @@ from django.views.generic import DetailView, ListView
 from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
 from judge.utils.infinite_paginator import InfinitePaginationMixin
+from judge.utils.problem_data import get_problem_testcases_data
 from judge.utils.problems import get_result_data, user_completed_ids, user_editable_ids, user_tester_ids
 from judge.utils.raw_sql import join_sql_subquery, use_straight_join
 from judge.utils.views import DiggPaginatorMixin, TitleMixin, generic_message
@@ -198,7 +199,11 @@ class SubmissionStatus(SubmissionDetailBase):
         context['feedback_limit'] = min(3, test_case_count - 1)
 
         context['statuses'] = combine_statuses(statuses, submission)
-
+        context['can_view_test'] = submission.problem.is_testcase_accessible_by(self.request.user)
+        if context['can_view_test']:
+            context['cases_data'] = get_problem_testcases_data(submission.problem)
+        else:
+            context['cases_data'] = {}
         context['time_limit'] = submission.problem.time_limit
         try:
             lang_limit = submission.problem.language_limits.get(language=submission.language)
