@@ -86,6 +86,8 @@ VNOJ_CONTEST_DURATION_LIMIT = 14
 # without the `create_mass_testcases` permission
 VNOJ_TESTCASE_LIMIT = 50
 
+VNOJ_TESTCASE_VISIBLE_LENGTH = 60
+
 # List of online judge preset for OJ API
 OJ_PROBLEM_PRESET = [
     {

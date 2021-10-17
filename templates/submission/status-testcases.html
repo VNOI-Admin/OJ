@@ -61,17 +61,18 @@
                 <div class="batch-cases">
             {% endif %}
         <table class="submissions-status-table">{% for case in batch.cases %}
-            {% set is_suggester = (submission.problem.suggester and request.user.username == submission.problem.suggester.username) %}
             {% set current_test_case_count = test_case_counter() %}
-            {% set print_case_output = (request.user.is_superuser or is_suggester) and case.status != 'AC' and case.output and (prefix_length is none or prefix_length > 0) %}
+            {% set print_case_output = can_view_test and case.output and (prefix_length is none or prefix_length > 0) %}
             {% set print_case_ext_feedback = case.extended_feedback
                                              and
                                              ((not request.in_contest and current_test_case_count <= feedback_limit)
-                                              or request.user.is_superuser
-                                              or is_suggester) %}
+                                              or can_view_test) %}
+            {% set curr_data = cases_data.get(case.case, None) %}
+            {% set has_extended_data = print_case_output or print_case_ext_feedback or (can_view_test and curr_data) %}
+
             <tr id="{{ case.id }}" class="case-row toggle closed">
                 <td>
-                    {%- if print_case_output or print_case_ext_feedback -%}
+                    {%- if has_extended_data -%}
                         <i class="fa fa-chevron-right fa-fw"></i>
                     {%- endif -%}
                     {%- if batch.id -%}
@@ -108,28 +109,30 @@
                 {% endif %}
             </tr>
 
-            {% if print_case_output or print_case_ext_feedback %}
+            {% if has_extended_data %}
                 <tr id="{{ case.id }}-output" style="display:none" class="case-feedback toggled">
-                    {% if print_case_output %}
-                        <td colspan="5" class="case-output">
-                            <div class="case-info">
+                    <td colspan="5" class="case-output">
+                        <div class="case-info">
+                            {% if can_view_test and curr_data %}
+                                <strong>{{ _('Input:') }}</strong>
+                                <pre class="case-output">{{ curr_data['input']|linebreaksbr }}</pre>
+                                <strong>{{ _('Answer:') }}</strong>
+                                <pre class="case-output">{{ curr_data['answer']|linebreaksbr }}</pre>
+                            {% endif %}
+                            {% if print_case_output %}
                                 <strong>{{ _('Your output (clipped)') }}</strong>
                                 {% if prefix_length is none %}
                                     <pre class="case-output">{{ case.output|linebreaksbr }}</pre>
                                 {% else %}
                                     <pre class="case-output">{{ case.output[:prefix_length]|linebreaksbr }}</pre>
                                 {% endif %}
-                            </div>
-                        </td>
-                    {% endif %}
-                    {% if print_case_ext_feedback %}
-                        <td colspan="5" class="case-ext-feedback">
-                            <div class="case-info">
+                            {% endif %}
+                            {% if print_case_ext_feedback %}
                                 <strong>{{ _('Judge feedback') }}</strong>
                                 <pre class="case-output">{{ case.extended_feedback|linebreaksbr }}</pre>
-                            </div>
-                        </td>
-                    {% endif %}
+                            {% endif %}
+                        </div>
+                    </td>
                 </tr>
             {% endif %}
         {% endfor %}
