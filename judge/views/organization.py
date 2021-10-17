@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html
-from django.utils.translation import gettext as _, gettext_lazy, ungettext
+from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
@@ -150,6 +150,9 @@ class RequestJoinOrganization(LoginRequiredMixin, SingleObjectMixin, FormView):
 
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
+        if self.object.requests.filter(user=self.request.profile, state='P').exists():
+            return generic_message(self.request, _("Can't request to join %s") % self.object.name,
+                                   _('You already have a pending request to join %s.') % self.object.name)
         return super(RequestJoinOrganization, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -248,8 +251,8 @@ class OrganizationRequestView(OrganizationRequestBaseView):
                 elif obj.state == 'R':
                     rejected += 1
             messages.success(request,
-                             ungettext('Approved %d user.', 'Approved %d users.', approved) % approved + '\n' +
-                             ungettext('Rejected %d user.', 'Rejected %d users.', rejected) % rejected)
+                             ngettext('Approved %d user.', 'Approved %d users.', approved) % approved + '\n' +
+                             ngettext('Rejected %d user.', 'Rejected %d users.', rejected) % rejected)
             return HttpResponseRedirect(request.get_full_path())
         return self.render_to_response(self.get_context_data(object=organization))
 

@@ -1,6 +1,4 @@
-from abc import ABCMeta, abstractmethod, abstractproperty
-
-from django.utils import six
+from abc import ABCMeta, abstractmethod
 
 
 class abstractclassmethod(classmethod):
@@ -11,13 +9,14 @@ class abstractclassmethod(classmethod):
         super(abstractclassmethod, self).__init__(callable)
 
 
-class BaseContestFormat(six.with_metaclass(ABCMeta)):
+class BaseContestFormat(metaclass=ABCMeta):
     @abstractmethod
     def __init__(self, contest, config):
         self.config = config
         self.contest = contest
 
-    @abstractproperty
+    @property
+    @abstractmethod
     def name(self):
         """
         Name of this contest format. Should be invoked with gettext_lazy.
