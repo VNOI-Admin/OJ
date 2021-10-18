@@ -277,7 +277,7 @@
                     s += '\n';
                     s += `{{_('Number of testcases must not exceed ${window.testcase_limit}')}}`;
                     alert(s);
-                    return false;
+                    return true;
                 }
                 var $tr;
                 $table.find('tbody:first').append($tr = $($table.find('.extra-row-body').html()
@@ -285,7 +285,45 @@
                 $tr.find('.type-column select option[value="C"]').attr('selected', true);
                 $total.val(parseInt($total.val()) + 1);
                 $table.trigger('add-row', [$tr]);
-                window.scrollBy(0, $tr.height());
+                return false;
+            });
+
+            function reordering_row(oldIndex, newIndex, $item) {
+                if (newIndex > oldIndex) {
+                    var order = parseInt($item.parent().children().slice(oldIndex, newIndex).each(function () {
+                        var $order = $(this).find('input[id$=order]');
+                        $order.val(parseInt($order.val()) - 1).siblings('span.order').text($order.val());
+                    }).last().after($item).find('input[id$=order]').val());
+                    $item.find('input[id$=order]').val(order + 1).siblings('span.order').text(order + 1);
+                } else if (newIndex < oldIndex) {
+                    var order = parseInt($item.parent().children().slice(newIndex + 1, oldIndex + 1).each(function () {
+                        var $order = $(this).find('input[id$=order]');
+                        $order.val(parseInt($order.val()) + 1).siblings('span.order').text($order.val());
+                    }).first().before($item).find('input[id$=order]').val());
+                    $item.find('input[id$=order]').val(order - 1).siblings('span.order').text(order - 1);
+                }
+                if (newIndex != oldIndex)
+                    handle_table_reorder();
+            };
+
+            $('a#add-case-first-row').click(function () {
+                if ($('a#add-case-row').click())
+                    return true;
+                var newIndex = -1;
+                var oldIndex = parseInt($total.val()) - 1;
+                $item = $($table.find('tbody:first').children()[oldIndex]);
+                reordering_row(oldIndex, newIndex, $item);
+                return false;
+            });
+
+            $('#case-table tbody').on("click", ".add-case-row-below", function (event) {
+                if ($('a#add-case-row').click())
+                    return true;
+                var $current_row = $(this).parent().parent();
+                var newIndex = parseInt($current_row.find('input[id$=order]').val()) - 1;
+                var oldIndex = parseInt($total.val()) - 1;
+                $item = $($current_row.parent().children()[oldIndex]);
+                reordering_row(oldIndex, newIndex, $item);
                 return false;
             });
 
@@ -348,21 +386,7 @@
                 },
                 onDrop: function ($item, container, _super) {
                     var newIndex = $item.index();
-                    if (newIndex > oldIndex) {
-                        var order = parseInt($item.parent().children().slice(oldIndex, newIndex).each(function () {
-                            var $order = $(this).find('input[id$=order]');
-                            $order.val(parseInt($order.val()) - 1).siblings('span.order').text($order.val());
-                        }).last().after($item).find('input[id$=order]').val());
-                        $item.find('input[id$=order]').val(order + 1).siblings('span.order').text(order + 1);
-                    } else if (newIndex < oldIndex) {
-                        var order = parseInt($item.parent().children().slice(newIndex + 1, oldIndex + 1).each(function () {
-                            var $order = $(this).find('input[id$=order]');
-                            $order.val(parseInt($order.val()) + 1).siblings('span.order').text($order.val());
-                        }).first().before($item).find('input[id$=order]').val());
-                        $item.find('input[id$=order]').val(order - 1).siblings('span.order').text(order - 1);
-                    }
-                    if (newIndex != oldIndex)
-                        handle_table_reorder();
+                    reordering_row(oldIndex, newIndex, $item);
                     _super($item, container);
                 }
             });
@@ -518,6 +542,7 @@
         <table id="case-table" class="table">
             <thead>
             <tr>
+                <th><a id="add-case-first-row" href="#"><i class="fa fa-plus"></i></a></th>
                 <th class="order-column"></th>
                 <th class="type-column">{{ _('Type') }}</th>
                 <th>{{ _('Input file') }}</th>
@@ -545,6 +570,7 @@
                     <tbody class="extra-row-body" style="display: none">
                 {% endif %}
                 <tr data-type="{{ form['type'].value() }}">
+                    <td><a class="add-case-row-below" href="#"><i class="fa fa-plus"></i></a></td>
                     <td>{{ form.id }}{{ form.order.errors }}{{ form.order }}</td>
                     <td class="type-column">{{ form.type.errors }}{{ form.type }}</td>
                     <td{% if not (form.empty_permitted or form['type'].value() != 'C' or
@@ -571,7 +597,7 @@
             </tbody>
         </table>
         <input type="submit" value="{{ _('Apply!') }}" class="button" id="submit-button">
-        <a id="add-case-row" href="#"><i class="fa fa-plus"></i> {{ _('Add new case') }}</a>
+        <a id="add-case-row" href="#" style="display: None;"><i class="fa fa-plus"></i> {{ _('Add new case') }}</a>
     </form>
     <div style="display: none" class="generator-args-editor"><textarea></textarea><a class="button">{{ _('Save') }}</a></div>
 {% endblock %}
