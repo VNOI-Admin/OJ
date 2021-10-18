@@ -227,7 +227,7 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
             return False
         number_of_cases = cases_formset.total_form_count() - len(cases_formset.deleted_forms)
         if number_of_cases > settings.VNOJ_TESTCASE_LIMIT and \
-           not self.request.user.has_perm('create_mass_testcases'):
+           not self.request.user.has_perm('judge.create_mass_testcases'):
             error = ValidationError(
                 _('Too many testcases, number of testcases must not exceed %s') % settings.VNOJ_TESTCASE_LIMIT,
                 code='too_many_testcases',
