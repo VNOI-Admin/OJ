@@ -331,6 +331,9 @@
     </noscript>
     <br>
     <main id="content">
+        {% if i18n_config.top_notification %}
+            {{ render_django(i18n_config.top_notification) }}
+        {% endif %}
         {% block title_row %}
             <h2 style="color:#393630; display:inline">
                 {% block content_title %}
