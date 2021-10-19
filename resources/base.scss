@@ -298,8 +298,10 @@ nav {
 
                 &.active {
                     color: #FFF;
-                    background: $highlight_blue;
-                    padding: 14px 2px;
+
+                    border: 5px solid transparent;
+                    border-bottom: 5px solid $highlight_blue;
+                    padding: 9px 2px;
                 }
 
                 .nav-expand {
