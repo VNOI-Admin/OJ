@@ -13,6 +13,7 @@ from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, Per
 from django.db import IntegrityError
 from django.db.models import Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.expressions import CombinedExpression
+from django.db.models.query import Prefetch
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import date as date_filter, floatformat
@@ -33,7 +34,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
-    Problem, ProblemClarification, Profile, Submission
+    Organization, Problem, ProblemClarification, Profile, Submission
 from judge.tasks import on_new_contest, run_moss
 from judge.utils.celery import redirect_to_task_status
 from judge.utils.cms import parse_csv_ranking
@@ -697,7 +698,8 @@ def base_contest_ranking_list(contest, problems, queryset):
 
 def base_contest_ranking_queryset(contest):
     return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
-        .prefetch_related('user__organizations') \
+        .prefetch_related(Prefetch('user__organizations',
+                                   queryset=Organization.objects.filter(is_unlisted=False))) \
         .annotate(submission_count=Count('submission')) \
         .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker', '-submission_count')
 

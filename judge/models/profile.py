@@ -179,7 +179,9 @@ class Profile(models.Model):
     @cached_property
     def organization(self):
         # We do this to take advantage of prefetch_related
-        orgs = self.organizations.filter(is_unlisted=False)
+        # Don't need to filter here, because the prefetch_related has already filtered unlisted
+        # orgs
+        orgs = self.organizations.all()
         return orgs[0] if orgs else None
 
     @cached_property
