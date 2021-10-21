@@ -307,8 +307,10 @@
             };
 
             $('a#add-case-first-row').click(function () {
-                if ($('a#add-case-row').click())
-                    return true;
+                var cntRow = parseInt($total.val());
+                $('a#add-case-row').click();
+                if (cntRow == parseInt($total.val()))
+                    return false;
                 var newIndex = -1;
                 var oldIndex = parseInt($total.val()) - 1;
                 $item = $($table.find('tbody:first').children()[oldIndex]);
@@ -317,8 +319,10 @@
             });
 
             $('#case-table tbody').on("click", ".add-case-row-below", function (event) {
-                if ($('a#add-case-row').click())
-                    return true;
+                var cntRow = parseInt($total.val());
+                $('a#add-case-row').click();
+                if (cntRow == parseInt($total.val()))
+                    return false;
                 var $current_row = $(this).parent().parent();
                 var newIndex = parseInt($current_row.find('input[id$=order]').val()) - 1;
                 var oldIndex = parseInt($total.val()) - 1;
