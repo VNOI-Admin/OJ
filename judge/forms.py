@@ -179,7 +179,7 @@ class ProblemEditForm(ModelForm):
 
     class Meta:
         model = Problem
-        fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points',
+        fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points', 'partial',
                   'statement_file', 'source', 'types', 'group', 'description', 'testers']
         widgets = {
             'types': Select2MultipleWidget,
