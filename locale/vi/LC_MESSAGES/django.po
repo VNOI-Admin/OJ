@@ -1846,7 +1846,7 @@ msgstr "Điểm của bài tập."
 
 #: judge/models/problem.py:163
 msgid "allows partial points"
-msgstr "cho phép cho điểm từng phần"
+msgstr "cho phép nhận điểm với từng test đúng"
 
 #: judge/models/problem.py:164
 msgid "allowed languages"
@@ -4680,11 +4680,11 @@ msgstr[0] "Có **%(count)s** bài tập trong kỳ thi này."
 
 #: templates/contest/contest.html:146
 msgid "**Partial scoring is enabled** for some or all of these problems."
-msgstr "Một số (hoặc tất cả) các bài tập có thể nhận điểm từng phần."
+msgstr "Một số (hoặc tất cả) bài tập cho phép bạn nhận điểm với mỗi test đúng."
 
 #: templates/contest/contest.html:148
 msgid "This contest **will not use partial scoring**."
-msgstr "Kỳ thi này **không chấp nhận điểm từng phần**."
+msgstr "Kỳ thi này yêu cầu bạn phải **đúng hết bộ test** của một bài để có điểm."
 
 #: templates/contest/contest.html:153
 msgid "The pretest system **will be used** for some or all of these problems."
@@ -5538,7 +5538,7 @@ msgstr "Điểm:"
 
 #: templates/problem/problem.html:199 templates/problem/problem.html:201
 msgid "(partial)"
-msgstr "(một phần)"
+msgstr "(OI)"
 
 #: templates/problem/problem.html:206
 msgid "Time limit:"
