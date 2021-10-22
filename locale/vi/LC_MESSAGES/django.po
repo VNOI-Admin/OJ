@@ -4680,7 +4680,7 @@ msgstr[0] "Có **%(count)s** bài tập trong kỳ thi này."
 
 #: templates/contest/contest.html:146
 msgid "**Partial scoring is enabled** for some or all of these problems."
-msgstr "Một số (hoặc tất cả) bài tập cho phép bạn nhận điểm với mỗi test đúng."
+msgstr "Một số (hoặc tất cả) bài tập cho phép bạn nhận điểm mà không cần phải đúng toàn bộ test."
 
 #: templates/contest/contest.html:148
 msgid "This contest **will not use partial scoring**."
