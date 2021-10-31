@@ -36,7 +36,7 @@ martor @ git+git://github.com/VNOI-Admin/martor.git
 netaddr
 webauthn<1
 bleach
-markdown2 @ git+git://github.com/ngkan/python-markdown2.git
+markdown2 @ git+git://github.com/VNOI-Admin/python-markdown2.git
 discord-webhook
 django-admin-sortable2
 icalendar
