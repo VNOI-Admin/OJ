@@ -137,7 +137,7 @@ class ProblemEditForm(ModelForm):
     required_css_class = 'required'
 
     def __init__(self, *args, **kwargs):
-        org_pk = kwargs.pop('org_pk', None)
+        self.org_pk = org_pk = kwargs.pop('org_pk', None)
         self.user = kwargs.pop('user', None)
         super(ProblemEditForm, self).__init__(*args, **kwargs)
 
@@ -154,6 +154,17 @@ class ProblemEditForm(ModelForm):
         self.fields['testers'].help_text = \
             str(self.fields['testers'].help_text) + ' ' + \
             str(_('You can paste a list of usernames into this box.'))
+
+    def clean_code(self):
+        code = self.cleaned_data['code']
+        if self.org_pk is None:
+            return code
+        org = Organization.objects.get(pk=self.org_pk)
+        prefix = ''.join(x for x in org.slug.lower() if x.isalpha()) + '_'
+        if not code.startswith(prefix):
+            raise forms.ValidationError(_('Problem id code must starts with `%s`') % (prefix, ),
+                                        'problem_id_invalid_prefix')
+        return code
 
     def clean_statement_file(self):
         content = self.files.get('statement_file', None)
@@ -530,7 +541,7 @@ class ContestForm(ModelForm):
     required_css_class = 'required'
 
     def __init__(self, *args, **kwargs):
-        org_pk = kwargs.pop('org_pk', None)
+        self.org_pk = org_pk = kwargs.pop('org_pk', None)
         self.user = kwargs.pop('user', None)
         super(ContestForm, self).__init__(*args, **kwargs)
 
@@ -560,6 +571,17 @@ class ContestForm(ModelForm):
                                         % settings.VNOJ_CONTEST_DURATION_LIMIT,
                                         'contest_duration_too_long')
         return cleaned_data
+
+    def clean_key(self):
+        key = self.cleaned_data['key']
+        if self.org_pk is None:
+            return key
+        org = Organization.objects.get(pk=self.org_pk)
+        prefix = ''.join(x for x in org.slug.lower() if x.isalpha()) + '_'
+        if not key.startswith(prefix):
+            raise forms.ValidationError(_('Contest id must starts with `%s`') % (prefix, ),
+                                        'contest_id_invalid_prefix')
+        return key
 
     class Meta:
         model = Contest
