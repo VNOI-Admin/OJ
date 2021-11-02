@@ -757,6 +757,12 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
         return HttpResponseRedirect(reverse('problem_edit', args=(problem.code,)))
 
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.object.is_editable_by(request.user):
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
 
 class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     template_name = 'problem/suggest.html'

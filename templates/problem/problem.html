@@ -184,7 +184,7 @@
         </div>
     {% endif %}
 
-    {% if perms.judge.clone_problem %}
+    {% if perms.judge.clone_problem and can_edit_problem %}
         <div>
             <a href="{{ url('problem_clone', problem.code) }}">{{ _('Clone problem') }}</a>
         </div>

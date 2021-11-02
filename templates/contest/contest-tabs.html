@@ -26,7 +26,7 @@
         {% endif %}
         {{ make_tab('edit', 'fa-edit', url('contest_edit', contest.key), _('Edit')) }}
     {% endif %}
-    {% if perms.judge.clone_contest %}
+    {% if perms.judge.clone_contest and can_edit %}
         {{ make_tab('clone', 'fa-copy', url('contest_clone', contest.key), _('Clone')) }}
     {% endif %}
 
