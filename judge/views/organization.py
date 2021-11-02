@@ -618,6 +618,12 @@ class BlogPostCreateOrganization(CustomAdminOrganizationMixin, PermissionRequire
 class ContestCreateOrganization(CustomAdminOrganizationMixin, CreateContest):
     permission_required = 'judge.create_private_contest'
 
+    def get_initial(self):
+        initial = super(ContestCreateOrganization, self).get_initial()
+        initial = initial.copy()
+        initial['key'] = ''.join(x for x in self.organization.slug.lower() if x.isalpha()) + '_'
+        return initial
+
     def save_contest_form(self, form):
         self.object = form.save()
         self.object.authors.add(self.request.profile)
