@@ -366,6 +366,12 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
         return HttpResponseRedirect(reverse('contest_edit', args=(contest.key,)))
 
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.can_edit:
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
 
 class ContestAccessDenied(Exception):
     pass
