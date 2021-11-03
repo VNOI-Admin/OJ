@@ -31,7 +31,7 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from reversion import revisions
 
-from judge.forms import CustomAuthenticationForm, DownloadDataForm, ProfileForm, UserForm, newsletter_id
+from judge.forms import CustomAuthenticationForm, DownloadDataForm, ProfileForm, UserBanForm, UserForm, newsletter_id
 from judge.models import BlogPost, Organization, Profile, Rating, Submission
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
@@ -43,7 +43,8 @@ from judge.utils.pwned import PwnedPasswordsValidator
 from judge.utils.ranker import ranker
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
-from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, add_file_response, generic_message
+from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
+    add_file_response, generic_message
 from judge.views.blog import PostListBase
 from .contests import ContestRanking
 
@@ -233,6 +234,26 @@ class UserAboutPage(UserPage):
             ),
         }))
         return context
+
+
+class UserBan(UserMixin, TitleMixin, SingleObjectFormView):
+    title = _('Ban user')
+    template_name = 'user/ban.html'
+    form_class = UserBanForm
+
+    def form_valid(self, form):
+        user = self.object
+        with revisions.create_revision(atomic=True):
+            user.ban_user(form.cleaned_data['ban_reason'])
+            revisions.set_user(self.request.user)
+            revisions.set_comment(_('Banned by %s') % self.request.user)
+
+        return HttpResponseRedirect(reverse('user_page', args=(user.user.username,)))
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.user.is_superuser:
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class UserBlogPage(CustomUserMixin, PostListBase):

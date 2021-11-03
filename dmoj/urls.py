@@ -204,6 +204,7 @@ urlpatterns = [
     url(r'^data/download/$', user.UserDownloadData.as_view(), name='user_download_data'),
     url(r'^user/(?P<user>[\w-]+)', include([
         url(r'^$', user.UserAboutPage.as_view(), name='user_page'),
+        url(r'^/ban$', user.UserBan.as_view(), name='user_ban'),
         url(r'^/blog/', paged_list_view(user.UserBlogPage, 'user_blog')),
         url(r'^/solved', include([
             url(r'^$', user.UserProblemsPage.as_view(), name='user_problems'),

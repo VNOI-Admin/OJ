@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-02 03:34+0000\n"
+"POT-Creation-Date: 2021-11-03 13:10+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -128,7 +128,7 @@ msgstr "Trang liên kết"
 msgid "Included contests"
 msgstr "Các kỳ thi"
 
-#: judge/admin/contest.py:66 judge/forms.py:490
+#: judge/admin/contest.py:66 judge/forms.py:502
 #: templates/contest/contest.html:212 templates/contest/contest.html:318
 #: templates/contest/moss.html:43 templates/problem/list.html:177
 #: templates/user/user-problems.html:58 templates/user/user-problems.html:100
@@ -244,8 +244,8 @@ msgid "Summary"
 msgstr "Tóm tắt"
 
 #: judge/admin/interface.py:117 judge/models/contest.py:469
-#: judge/models/contest.py:598 judge/models/profile.py:334
-#: judge/models/profile.py:365
+#: judge/models/contest.py:598 judge/models/profile.py:346
+#: judge/models/profile.py:377
 msgid "user"
 msgstr "thành viên"
 
@@ -679,7 +679,7 @@ msgstr ""
 msgid "Scratch codes must be 16 base32 characters."
 msgstr ""
 
-#: judge/forms.py:42 judge/forms.py:462
+#: judge/forms.py:42 judge/forms.py:474
 msgid "Invalid scratch code."
 msgstr ""
 
@@ -721,7 +721,7 @@ msgstr ""
 "Nếu bài tập này không công khai, chỉ những thành viên này có thể thấy được "
 "bài tập."
 
-#: judge/forms.py:156 judge/forms.py:557
+#: judge/forms.py:156 judge/forms.py:569
 msgid "You can paste a list of usernames into this box."
 msgstr ""
 "Có thể gán một danh sách các username vào đây thay vì gõ tay (phân cách bằng "
@@ -777,7 +777,7 @@ msgstr ""
 "Điểm của bài, từ 0 tới 2. Có thể xấp xỉ điểm như sau: bài có điểm 0.5 sẽ khó "
 "như bài 1 thi HSG QG; 1 điểm = bài 2; 1.5 điểm = bài 3."
 
-#: judge/forms.py:220 judge/forms.py:616
+#: judge/forms.py:220 judge/forms.py:628
 msgid "Only accept alphanumeric characters (a-z, 0-9) and underscore (_)"
 msgstr ""
 "Chỉ có thể chứa các ký tự viết thường (a-z), số (0-9) và dấu gạch dưới (_)"
@@ -847,61 +847,66 @@ msgstr "Tên truy cập"
 msgid "Password"
 msgstr "Mật khẩu"
 
-#: judge/forms.py:390
+#: judge/forms.py:371
+#, python-format
+msgid "This account has been banned. Reason: %s"
+msgstr "Tài khoản này đã bị cấm vì lý do: %s"
+
+#: judge/forms.py:402
 msgid "Invalid code length."
 msgstr ""
 
-#: judge/forms.py:421
+#: judge/forms.py:433
 msgid "Invalid WebAuthn response."
 msgstr ""
 
-#: judge/forms.py:424
+#: judge/forms.py:436
 msgid "No WebAuthn challenge issued."
 msgstr ""
 
-#: judge/forms.py:430
+#: judge/forms.py:442
 msgid "Invalid WebAuthn credential ID."
 msgstr ""
 
-#: judge/forms.py:460
+#: judge/forms.py:472
 msgid "Invalid two-factor authentication token or scratch code."
 msgstr ""
 
-#: judge/forms.py:464
+#: judge/forms.py:476
 msgid "Must specify either totp_token or webauthn_response."
 msgstr ""
 
-#: judge/forms.py:468 judge/models/problem.py:134
+#: judge/forms.py:480 judge/models/problem.py:134
 msgid "Problem code must be ^[a-z0-9_]+$"
 msgstr "Mã bài phải khớp regex ^[a-z0-9_] + $"
 
-#: judge/forms.py:473
+#: judge/forms.py:485
 msgid "Problem with code already exists."
 msgstr "Mã bài tập đã tồn tại."
 
-#: judge/forms.py:478 judge/models/contest.py:74
+#: judge/forms.py:490 judge/models/contest.py:74
 msgid "Contest id must be ^[a-z0-9_]+$"
 msgstr "id kỳ thi phải khớp regex ^[a-z0-9_] + $"
 
-#: judge/forms.py:483
+#: judge/forms.py:495
 msgid "Contest with key already exists."
 msgstr "Mã kỳ thi đã tồn tại."
 
-#: judge/forms.py:521
+#: judge/forms.py:533
 msgid "Problems must have distinct order."
 msgstr "Các bài tập phải có thứ tự khác nhau."
 
-#: judge/forms.py:570
+#: judge/forms.py:582
 #, python-format
 msgid "Contest duration cannot be longer than %d days"
 msgstr "Thời gian diễn ra contest không được kéo dài quá %d ngày"
 
-#: judge/forms.py:582
+#: judge/forms.py:594
 #, python-format
 msgid "Contest id must starts with `%s`"
 msgstr "Mã kỳ thi phải bắt đầu bằng `%s`"
 
-#: judge/forms.py:611
+#: judge/forms.py:623
 msgid ""
 "Users are able to pratice contest problems even if the contest has ended, so "
 "don't set the contest time too high if you don't really need it."
@@ -1638,7 +1643,7 @@ msgid "Display this blog post at the homepage."
 msgstr "Hiển thị bài đăng này ở trang chủ."
 
 #: judge/models/interface.py:78 judge/models/profile.py:118
-#: judge/models/profile.py:136 judge/models/profile.py:366
+#: judge/models/profile.py:136 judge/models/profile.py:378
 msgid "organization"
 msgstr "tổ chức"
 
@@ -2339,193 +2344,197 @@ msgstr "thành viên không được liệt kê"
 msgid "User will not be ranked."
 msgstr "Thành viên không được xếp hạng."
 
-#: judge/models/profile.py:144
+#: judge/models/profile.py:145
+msgid "Show to banned user in login page."
+msgstr ""
+
+#: judge/models/profile.py:146
 msgid "Allow tagging"
 msgstr "Cho phép tag bài"
 
-#: judge/models/profile.py:145
+#: judge/models/profile.py:147
 msgid "User will be allowed to tag problems."
 msgstr "Người dùng có thể tag bài."
 
-#: judge/models/profile.py:148
+#: judge/models/profile.py:150
 msgid "user script"
 msgstr "script tự định nghĩa"
 
-#: judge/models/profile.py:149
+#: judge/models/profile.py:151
 msgid "User-defined JavaScript for site customization."
 msgstr "JavaScript tự định nghĩa bởi người dùng để tùy chỉnh."
 
-#: judge/models/profile.py:150
+#: judge/models/profile.py:152
 msgid "current contest"
 msgstr "kỳ thi hiện tại"
 
-#: judge/models/profile.py:152
+#: judge/models/profile.py:154
 msgid "math engine"
 msgstr ""
 
-#: judge/models/profile.py:154
+#: judge/models/profile.py:156
 msgid "the rendering engine used to render math"
 msgstr "chọn công cụ để hiện công thức toán"
 
-#: judge/models/profile.py:155
+#: judge/models/profile.py:157
 msgid "TOTP 2FA enabled"
 msgstr ""
 
-#: judge/models/profile.py:156
+#: judge/models/profile.py:158
 msgid "check to enable TOTP-based two-factor authentication"
 msgstr ""
 
-#: judge/models/profile.py:157
+#: judge/models/profile.py:159
 msgid "WebAuthn 2FA enabled"
 msgstr ""
 
-#: judge/models/profile.py:158
+#: judge/models/profile.py:160
 msgid "check to enable WebAuthn-based two-factor authentication"
 msgstr ""
 
-#: judge/models/profile.py:159
+#: judge/models/profile.py:161
 msgid "TOTP key"
 msgstr "Mã TOTP"
 
-#: judge/models/profile.py:160
+#: judge/models/profile.py:162
 msgid "32 character base32-encoded key for TOTP"
 msgstr "mã 32 ký tự base32-encoded cho TOTP"
 
-#: judge/models/profile.py:162
+#: judge/models/profile.py:164
 msgid "TOTP key must be empty or base32"
 msgstr "Mã TOTP cần rỗng hoặc base32"
 
-#: judge/models/profile.py:163
+#: judge/models/profile.py:165
 msgid "scratch codes"
 msgstr ""
 
-#: judge/models/profile.py:164
+#: judge/models/profile.py:166
 msgid ""
 "JSON array of 16 character base32-encoded "
 "codes                                                         for scratch "
 "codes"
 msgstr ""
 
-#: judge/models/profile.py:168
+#: judge/models/profile.py:170
 msgid ""
 "Scratch codes must be empty or a JSON array "
 "of                                                                  16-"
 "character base32 codes"
 msgstr ""
 
-#: judge/models/profile.py:170
+#: judge/models/profile.py:172
 msgid "last TOTP timecode"
 msgstr ""
 
-#: judge/models/profile.py:171
+#: judge/models/profile.py:173
 msgid "API token"
 msgstr ""
 
-#: judge/models/profile.py:172
+#: judge/models/profile.py:174
 msgid "64 character hex-encoded API access token"
 msgstr ""
 
-#: judge/models/profile.py:174
+#: judge/models/profile.py:176
 msgid "API token must be None or hexadecimal"
 msgstr ""
 
-#: judge/models/profile.py:175
+#: judge/models/profile.py:177
 msgid "internal notes"
 msgstr "ghi chú nội bộ"
 
-#: judge/models/profile.py:176
+#: judge/models/profile.py:178
 msgid "Notes for administrators regarding this user."
 msgstr "Ghi chú cho quản trị viên chấm lại cho thành viên này."
 
-#: judge/models/profile.py:177
+#: judge/models/profile.py:179
 msgid "last data download time"
 msgstr "thời gian download cuối cùng"
 
-#: judge/models/profile.py:322
+#: judge/models/profile.py:334
 msgid "Shows in-progress development stuff"
 msgstr ""
 
-#: judge/models/profile.py:323
+#: judge/models/profile.py:335
 msgid "Edit TOTP settings"
 msgstr ""
 
-#: judge/models/profile.py:324
+#: judge/models/profile.py:336
 msgid "Can upload image directly to server via martor"
 msgstr ""
 
-#: judge/models/profile.py:325
+#: judge/models/profile.py:337
 msgid "Can set high problem timelimit"
 msgstr ""
 
-#: judge/models/profile.py:326
+#: judge/models/profile.py:338
 msgid "Can set long contest duration"
 msgstr ""
 
-#: judge/models/profile.py:327
+#: judge/models/profile.py:339
 msgid "Can create unlimitted number of testcases for a problem"
 msgstr ""
 
-#: judge/models/profile.py:329
+#: judge/models/profile.py:341
 msgid "user profile"
 msgstr "hồ sơ người dùng"
 
-#: judge/models/profile.py:330
+#: judge/models/profile.py:342
 msgid "user profiles"
 msgstr "hồ sơ người dùng"
 
-#: judge/models/profile.py:336
+#: judge/models/profile.py:348
 msgid "device name"
 msgstr ""
 
-#: judge/models/profile.py:337
+#: judge/models/profile.py:349
 msgid "credential ID"
 msgstr ""
 
-#: judge/models/profile.py:338
+#: judge/models/profile.py:350
 msgid "public key"
 msgstr ""
 
-#: judge/models/profile.py:339
+#: judge/models/profile.py:351
 msgid "sign counter"
 msgstr ""
 
-#: judge/models/profile.py:360
+#: judge/models/profile.py:372
 msgid "WebAuthn credential"
 msgstr ""
 
-#: judge/models/profile.py:361
+#: judge/models/profile.py:373
 msgid "WebAuthn credentials"
 msgstr ""
 
-#: judge/models/profile.py:368
+#: judge/models/profile.py:380
 msgid "request time"
 msgstr "thời gian yêu cầu"
 
-#: judge/models/profile.py:369
+#: judge/models/profile.py:381
 msgid "state"
 msgstr "trạng thái"
 
-#: judge/models/profile.py:370 templates/organization/requests/tabs.html:4
+#: judge/models/profile.py:382 templates/organization/requests/tabs.html:4
 msgid "Pending"
 msgstr "Đang chờ"
 
-#: judge/models/profile.py:371 templates/organization/requests/tabs.html:10
+#: judge/models/profile.py:383 templates/organization/requests/tabs.html:10
 msgid "Approved"
 msgstr "Phê duyệt"
 
-#: judge/models/profile.py:372 templates/organization/requests/tabs.html:13
+#: judge/models/profile.py:384 templates/organization/requests/tabs.html:13
 msgid "Rejected"
 msgstr "Bị từ chối"
 
-#: judge/models/profile.py:374
+#: judge/models/profile.py:386
 msgid "reason"
 msgstr "lý do"
 
-#: judge/models/profile.py:377
+#: judge/models/profile.py:389
 msgid "organization join request"
 msgstr "yêu cầu tham gia tổ chức"
 
-#: judge/models/profile.py:378
+#: judge/models/profile.py:390
 msgid "organization join requests"
 msgstr "yêu cầu tham gia tổ chức"
 
@@ -3209,7 +3218,7 @@ msgstr "Tạo blog mới"
 msgid "Created on site"
 msgstr "Tạo trên trang web"
 
-#: judge/views/blog.py:190 judge/views/blog.py:219 judge/views/user.py:177
+#: judge/views/blog.py:190 judge/views/blog.py:219 judge/views/user.py:178
 msgid "Permission denied"
 msgstr "Từ chối quyền"
 
@@ -4051,77 +4060,86 @@ msgstr ""
 msgid "Perform Two-factor Authentication"
 msgstr ""
 
-#: judge/views/user.py:100
+#: judge/views/user.py:101
 msgid "No such user"
 msgstr "Không có người dùng"
 
-#: judge/views/user.py:100
+#: judge/views/user.py:101
 #, python-format
 msgid "No user handle \"%s\"."
 msgstr "Không có người dùng \"%s\"."
 
-#: judge/views/user.py:104
+#: judge/views/user.py:105
 msgid "My account"
 msgstr "Tài khoản của tôi"
 
-#: judge/views/user.py:105
+#: judge/views/user.py:106
 #, python-format
 msgid "User %s"
 msgstr "Người dùng %s"
 
-#: judge/views/user.py:152
+#: judge/views/user.py:153
 msgid "Login"
 msgstr "Đăng nhập"
 
-#: judge/views/user.py:178
+#: judge/views/user.py:179
 msgid "You cannot change your password."
 msgstr "Bạn không thể thay đổi mật khẩu."
 
-#: judge/views/user.py:199
+#: judge/views/user.py:200
 msgid "M j, Y, G:i"
 msgstr "j M, Y, G:i"
 
-#: judge/views/user.py:350
+#: judge/views/user.py:240
+msgid "Ban user"
+msgstr ""
+
+#: judge/views/user.py:249
+#, python-format
+msgid "Banned by %s"
+msgstr "Ban bởi %s"
+
+#: judge/views/user.py:371
 msgid "Preparing your data..."
 msgstr ""
 
-#: judge/views/user.py:354 templates/user/edit-profile.html:352
+#: judge/views/user.py:375 templates/user/edit-profile.html:352
 msgid "Download your data"
 msgstr ""
 
-#: judge/views/user.py:412
+#: judge/views/user.py:433
 msgid "Updated on site"
 msgstr "Cập Nhật trên trang web"
 
-#: judge/views/user.py:446 templates/admin/auth/user/change_form.html:14
+#: judge/views/user.py:467 templates/admin/auth/user/change_form.html:14
 #: templates/admin/auth/user/change_form.html:17 templates/base.html:285
-#: templates/user/user-tabs.html:22
+#: templates/user/user-tabs.html:23
 msgid "Edit profile"
 msgstr "Chỉnh sửa hồ sơ"
 
-#: judge/views/user.py:461
+#: judge/views/user.py:482
 msgid "Generated API token for user"
 msgstr ""
 
-#: judge/views/user.py:473
+#: judge/views/user.py:494
 msgid "Removed API token for user"
 msgstr ""
 
-#: judge/views/user.py:483
+#: judge/views/user.py:504
 msgid "Generated scratch codes for user"
 msgstr ""
 
-#: judge/views/user.py:489 templates/user/list.html:7
+#: judge/views/user.py:510 templates/user/list.html:7
 #: templates/user/user-list-tabs.html:4
 msgid "Leaderboard"
 msgstr "Bảng xếp hạng"
 
-#: judge/views/user.py:523 templates/user/contrib-list.html:60
+#: judge/views/user.py:544 templates/user/contrib-list.html:60
 #: templates/user/user-list-tabs.html:5
 msgid "Contributors"
 msgstr "Đóng góp"
 
-#: judge/views/user.py:596
+#: judge/views/user.py:617
 msgid "You have been successfully logged out."
 msgstr "Bạn đã đăng xuất thành công."
 
@@ -5915,16 +5933,23 @@ msgstr "Kích hoạt tài khoản %(SITE_NAME)s"
 msgid "Invalid username or password."
 msgstr "Tên người dùng hoặc mật khẩu không hợp lệ."
 
-#: templates/registration/login.html:56
+#: templates/registration/login.html:40
+msgid ""
+"If you have problems with your account, feel free to shoot us a message at: "
+msgstr ""
+"Nếu bạn có vấn đề về tài khoản, hãy liên hệ với chúng mình "
+"qua: "
+
+#: templates/registration/login.html:59
 #: templates/registration/two_factor_auth.html:92
 msgid "Login!"
 msgstr "Đăng nhập!"
 
-#: templates/registration/login.html:59
+#: templates/registration/login.html:62
 msgid "Forgot your password?"
 msgstr "Quên mật khẩu?"
 
-#: templates/registration/login.html:62
+#: templates/registration/login.html:65
 msgid "Or log in with..."
 msgstr "Hoặc đăng nhập bằng..."
 
@@ -6204,11 +6229,12 @@ msgid "Use scratch code"
 msgstr ""
 
 #: templates/registration/two_factor_auth.html:98
-#, python-format
 msgid ""
 "If you lost your authentication device and are unable to use your scratch "
-"codes, please contact us at %(email)s."
+"codes, feel free to shoot us a message at: "
 msgstr ""
+"Nếu bạn mất thiết bị xác thực và không thể sử dụng code, hãy liên hệ với chúng mình "
+"qua: "
 
 #: templates/status/judge-status-table.html:2
 msgid "Judge"
@@ -7025,11 +7051,15 @@ msgstr "Blogs"
 msgid "Impersonate"
 msgstr ""
 
-#: templates/user/user-tabs.html:16
+#: templates/user/user-tabs.html:14
+msgid "Ban this user"
+msgstr "Ban người dùng này"
+
+#: templates/user/user-tabs.html:17
 msgid "Admin User"
 msgstr ""
 
-#: templates/user/user-tabs.html:19
+#: templates/user/user-tabs.html:20
 msgid "Admin Profile"
 msgstr ""
 
