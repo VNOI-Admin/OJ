@@ -403,6 +403,15 @@
                     $("input[name$='DELETE']").attr('checked', false);
                 }
             });
+            $('#problem-data-zipfile-clear_id').change(function(){
+                if (this.checked) {
+                    $('input#delete-all').attr('checked', true);
+                }
+                else {
+                    $('input#delete-all').attr('checked', false);
+                }
+                $('input#delete-all').change();
+            });
             if (parseInt($total.val()) == 0 && window.valid_files.length) {
                 console.log("Filling testcase...");
                 fill_testcases();
