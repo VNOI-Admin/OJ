@@ -362,8 +362,20 @@ class CustomAuthenticationForm(AuthenticationForm):
         except User.DoesNotExist:
             user = None
         if user is not None:
-            super(CustomAuthenticationForm, self).confirm_login_allowed(user)
+            self.confirm_login_allowed(user)
         return super(CustomAuthenticationForm, self).clean()
+
+    def confirm_login_allowed(self, user):
+        if not user.is_active and user.profile.ban_reason:
+            raise forms.ValidationError(
+                _('This account has been banned. Reason: %s') % user.profile.ban_reason,
+                code='banned',
+            )
+        super(CustomAuthenticationForm, self).confirm_login_allowed(user)
+
+
+class UserBanForm(Form):
+    ban_reason = CharField()
 
 
 class NoAutoCompleteCharField(forms.CharField):

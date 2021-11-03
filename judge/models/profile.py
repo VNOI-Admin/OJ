@@ -141,6 +141,8 @@ class Profile(models.Model):
                                default=False)
     is_unlisted = models.BooleanField(verbose_name=_('unlisted user'), help_text=_('User will not be ranked.'),
                                       default=False)
+    ban_reason = models.TextField(null=True, blank=True,
+                                  help_text=_('Show to banned user in login page.'))
     allow_tagging = models.BooleanField(verbose_name=_('Allow tagging'),
                                         help_text=_('User will be allowed to tag problems.'),
                                         default=False)
@@ -296,6 +298,16 @@ class Profile(models.Model):
         return False
 
     check_totp_code.alters_data = True
+
+    def ban_user(self, reason):
+        self.ban_reason = reason
+        self.display_rank = 'banned'
+        self.save(update_fields=['ban_reason', 'display_rank'])
+
+        self.user.is_active = False
+        self.user.save(update_fields=['is_active'])
+
+    ban_user.alters_data = True
 
     def get_absolute_url(self):
         return reverse('user_page', args=(self.user.username,))
