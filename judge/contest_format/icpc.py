@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import connection
-from django.template.defaultfilters import floatformat
+from django.template.defaultfilters import floatformat, pluralize
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
@@ -49,6 +49,13 @@ class ICPCContestFormat(DefaultContestFormat):
         last = 0
         penalty = 0
         score = 0
+
+        frozen_cumtime = 0
+        frozen_last = 0
+        frozen_penalty = 0
+        frozen_score = 0
+        frozen_time = participation.contest.frozen_time
+
         format_data = {}
 
         with connection.cursor() as cursor:
@@ -67,8 +74,12 @@ class ICPCContestFormat(DefaultContestFormat):
 
             for points, time, prob in cursor.fetchall():
                 time = from_database_time(time)
-                dt = (time - participation.start).total_seconds()
+                dt_second = (time - participation.start).total_seconds()
+                dt = int(dt_second // 60)
+                is_frozen_sub = (participation.is_frozen and time >= frozen_time)
 
+                frozen_points = 0
+                frozen_tries = 0
                 # Compute penalty
                 if self.config['penalty']:
                     # An IE can have a submission result of `None`
@@ -76,44 +87,114 @@ class ICPCContestFormat(DefaultContestFormat):
                                                     .exclude(submission__result__in=['IE', 'CE']) \
                                                     .filter(problem_id=prob)
                     if points:
-                        prev = subs.filter(submission__date__lte=time).count() - 1
-                        penalty += prev * self.config['penalty'] * 60
+                        # Submissions after the first AC does not count toward number of tries
+                        tries = subs.filter(submission__date__lte=time).count()
+                        penalty += (tries - 1) * self.config['penalty']
+                        if not is_frozen_sub:
+                            # Because the sub have not frozen yet, we update the frozen_penalty just like
+                            # the normal penalty
+                            frozen_penalty += (tries - 1) * self.config['penalty']
+                            frozen_tries = tries
+                        else:
+                            # For frozen sub, we should always display the number of tries
+                            frozen_tries = subs.count()
                     else:
                         # We should always display the penalty, even if the user has a score of 0
-                        prev = subs.count()
+                        tries = subs.count()
+                        frozen_tries = tries
                 else:
-                    prev = 0
+                    tries = 0
+                    # Don't need to set frozen_tries = 0 because we've initialized it with 0
 
                 if points:
                     cumtime += dt
                     last = max(last, dt)
+                    score += points
 
-                format_data[str(prob)] = {'time': dt, 'points': points, 'penalty': prev}
-                score += points
+                    if not is_frozen_sub:
+                        frozen_points = points
+                        frozen_cumtime += dt
+                        frozen_last = max(frozen_last, dt)
+                        frozen_score += points
+
+                format_data[str(prob)] = {
+                    'time': dt_second,
+                    'points': points,
+                    'frozen_points': frozen_points,
+                    'tries': tries,
+                    'frozen_tries': frozen_tries,
+                    'is_frozen': is_frozen_sub,
+                }
 
         participation.cumtime = cumtime + penalty
         participation.score = round(score, self.contest.points_precision)
         participation.tiebreaker = last  # field is sorted from least to greatest
+
+        participation.frozen_cumtime = frozen_cumtime + frozen_penalty
+        participation.frozen_score = round(frozen_score, self.contest.points_precision)
+        participation.frozen_tiebreaker = frozen_last
+
         participation.format_data = format_data
         participation.save()
 
-    def display_user_problem(self, participation, contest_problem):
+    def display_user_problem(self, participation, contest_problem, frozen=False):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
         if format_data:
-            penalty = format_html('<small style="color:red"> ({penalty})</small>',
-                                  penalty=floatformat(format_data['penalty'])) if format_data['penalty'] else ''
+            # This prefix is used to help get the correct data from the format_data dictionary
+            prefix = 'frozen_' if frozen else ''
+            submissions_count = format_data[prefix + 'tries']
+
+            if submissions_count == 0:
+                return mark_safe('<td></td>')
+
+            tries = format_html(
+                '{tries} {msg}',
+                tries=submissions_count,
+                msg=pluralize(submissions_count, 'try,tries'),
+            )
+
+            # The cell will have `pending` css class if there is a new score-changing submission after the frozen time
+            state = (('pending ' if frozen and format_data['is_frozen'] else '') +
+                     ('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
+                     self.best_solution_state(format_data[prefix + 'points'], contest_problem.points))
+            url = reverse('contest_user_submissions',
+                          args=[self.contest.key, participation.user.user.username, contest_problem.problem.code])
+
+            if not format_data[prefix + 'points']:
+                return format_html(
+                    '<td class="{state}"><a href="{url}">{tries}</a></td>',
+                    state=state,
+                    url=url,
+                    tries=tries,
+                )
+
             return format_html(
-                '<td class="{state}"><a href="{url}">{points}{penalty}<div class="solving-time">{time}</div></a></td>',
-                state=(('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
-                       self.best_solution_state(format_data['points'], contest_problem.points)),
-                url=reverse('contest_user_submissions',
-                            args=[self.contest.key, participation.user.user.username, contest_problem.problem.code]),
-                points=floatformat(format_data['points']),
-                penalty=penalty,
+                ('<td class="{state}">'
+                 '<a href="{url}"><div class="solving-time-minute">{minute}</div>'
+                 '<div class="solving-time">{time}</div>{tries}</a></td>'),
+                state=state,
+                url=url,
+                tries=tries,
+                minute=int(format_data['time'] // 60),
                 time=nice_repr(timedelta(seconds=format_data['time']), 'noday'),
             )
         else:
             return mark_safe('<td></td>')
+
+    def display_participation_result(self, participation, frozen=False):
+        if frozen:
+            points = participation.frozen_score
+            cumtime = participation.frozen_cumtime
+        else:
+            points = participation.score
+            cumtime = participation.cumtime
+        return format_html(
+            '<td class="user-points"><a href="{url}">{points}<div class="solving-time-minute">{cumtime}</div></a></td>',
+            url=reverse('contest_all_user_submissions',
+                        args=[self.contest.key, participation.user.user.username]),
+            points=floatformat(points, -self.contest.points_precision),
+            cumtime=floatformat(cumtime, 0),
+        )
 
     def get_label_for_problem(self, index):
         index += 1
@@ -136,3 +217,10 @@ class ICPCContestFormat(DefaultContestFormat):
 
         yield _('Ties will be broken by the sum of the last score altering submission time on problems with a non-zero '
                 'score, followed by the time of the last score altering submission.')
+
+        if self.contest.frozen_last_minutes:
+            yield ungettext(
+                'Ranking will be frozen in the **last %d minute**.',
+                'Ranking will be frozen in the **last %d minutes**.',
+                self.contest.frozen_last_minutes,
+            ) % self.contest.frozen_last_minutes

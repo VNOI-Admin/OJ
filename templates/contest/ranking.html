@@ -45,46 +45,6 @@
             background-color: #ffa8a8 !important;
         }
 
-        .full-score, .full-score a {
-            font-weight: bold;
-            color: green;
-        }
-
-        .partial-score, .partial-score a {
-            color: green;
-        }
-
-        .failed-score, .failed-score a {
-            font-weight: bold;
-            color: red;
-        }
-
-        .pretest-full-score, .pretest-full-score a {
-            font-weight: bold;
-            color: #2980b9;
-        }
-
-        .pretest-partial-score, .pretest-partial-score a {
-            color: #2980b9;
-        }
-
-        .pretest-failed-score, .pretest-failed-score a {
-            font-weight: bold;
-            color: red;
-        }
-
-        .user-points, .user-points a {
-            font-weight: bold;
-            color: black;
-        }
-
-        .solving-time {
-            color: gray;
-            font-weight: normal;
-            font-size: 0.75em;
-            padding-bottom: -0.75em;
-        }
-
         .point-denominator {
             border-top: 1px solid gray;
             font-size: 0.7em;
@@ -103,6 +63,12 @@
             font-weight: 600;
         }
     </style>
+
+    {% if contest.format.name == "ICPC" %}
+        {% include "contest/media-icpc-css.html" %}
+    {% else %}
+        {% include "contest/media-css.html" %}
+    {% endif %}
 
     <style>
         .select2-selection__arrow {
@@ -320,4 +286,39 @@
 
 {% block users_table %}
     {% include "contest/ranking-table.html" %}
+{% endblock %}
+
+{% block body %}
+    {% if is_frozen %}
+    <div class="alert-warning"><p style="padding: 10px; text-align: center">
+        {%- trans frozen_minutes=contest.frozen_last_minutes -%}
+            The scoreboard was frozen with {{frozen_minutes}} minutes remaining - submissions in the last {{frozen_minutes}} minutes of the contest are still shown as pending.
+        {%- endtrans -%}
+    </p></div>
+    {% endif %}
+    {{ super() }}
+    <table id="cell_legend" class="table" style="width: 10em; margin-left: 0">
+        <thead>
+            <tr>
+                <th scope="col">Cell colours</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="first-solve">
+                <td>{{_('First solved')}}</td>
+            </tr>
+            <tr class="full-score">
+                <td>{{_('Solved')}}</td>
+            </tr>
+            <tr class="failed-score">
+                <td>{{_('Tried, incorrect')}}</td>
+            </tr>
+            <tr class="pending">
+                <td>{{_('Tried, pending')}}</td>
+            </tr>
+            <tr>
+                <td>{{_('Untried')}}</td>
+            </tr>
+        </tbody>
+    </table>
 {% endblock %}
