@@ -26,13 +26,13 @@ from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import ListView, TemplateView
 from django.views.generic.detail import BaseDetailView, DetailView, SingleObjectMixin, View
-from django.views.generic.edit import CreateView, UpdateView
+from django.views.generic.edit import CreateView, FormMixin, UpdateView
 from django.views.generic.list import BaseListView
 from icalendar import Calendar as ICalendar, Event
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
+from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Organization, Problem, ProblemClarification, Profile, Submission
 from judge.tasks import on_new_contest, run_moss
@@ -249,8 +249,9 @@ class ContestMixin(object):
             }, status=403)
 
 
-class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
+class ContestDetail(ContestMixin, TitleMixin, FormMixin, CommentedDetailView):
     template_name = 'contest/contest.html'
+    form_class = ContestAnnouncementForm
 
     def is_comment_locked(self):
         if self.object.use_clarifications:
@@ -319,12 +320,27 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         announcements = ContestAnnouncement.objects.filter(contest=self.object)
         context['has_announcements'] = announcements.count() > 0
         context['announcements'] = announcements.order_by('-date')
+        context['can_announce'] = self.object.is_editable_by(self.request.user)
 
         authenticated = self.request.user.is_authenticated
         context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
         context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
         return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form):
+        announcement = form.save(commit=False)
+        announcement.contest = self.object
+        announcement.save()
+        return self.object.get_absolute_url()
 
 
 class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObjectFormView):
