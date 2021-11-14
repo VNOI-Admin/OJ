@@ -340,7 +340,8 @@ class ContestDetail(ContestMixin, TitleMixin, FormMixin, CommentedDetailView):
         announcement = form.save(commit=False)
         announcement.contest = self.object
         announcement.save()
-        return self.object.get_absolute_url()
+        announcement.send()
+        return HttpResponseRedirect(self.object.get_absolute_url())
 
 
 class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObjectFormView):
