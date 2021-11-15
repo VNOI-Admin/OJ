@@ -298,7 +298,7 @@
                 </tbody>
             </table>
         </div>
-        {% if has_announcements %}
+        {% if has_announcements or can_announce %}
         <div class="contest-clartifications">
             <h2 style="margin-bottom: 0.2em"><i class="fa fa-check"></i> {{ _('Announcements') }}</h2>
             <table id="contest-clartifications" class="table">
