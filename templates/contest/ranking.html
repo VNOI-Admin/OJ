@@ -41,10 +41,6 @@
             min-width: 2.5em;
         }
 
-        .first-solve {
-            background-color: #1daa1d !important;
-        }
-
         .disqualified {
             background-color: #ffa8a8 !important;
         }
@@ -322,7 +318,9 @@
         {% if tab == 'ranking' %}
             <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
             <label for="show-virtual-participations-checkbox" style="vertical-align: bottom">{{ _('Show virtual participations') }}</label>
+            {% if contest.format.name != "ICPC" %}
             <a href="#" onclick="download_table_as_csv()" style="float: right;">{{ _('Download as CSV') }}</a>
+            {% endif %}
         {% endif %}
     </div>
 {% endblock %}
@@ -340,6 +338,7 @@
     </p></div>
     {% endif %}
     {{ super() }}
+    {% if contest.format.name == "ICPC" %}
     <table id="cell_legend" class="table" style="width: 10em; margin-left: 0">
         <thead>
             <tr>
@@ -364,4 +363,5 @@
             </tr>
         </tbody>
     </table>
+    {% endif %}
 {% endblock %}
