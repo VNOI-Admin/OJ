@@ -32,6 +32,7 @@ from icalendar import Calendar as ICalendar, Event
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
+from judge.contest_format import IOIContestFormat, LegacyIOIContestFormat
 from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Organization, Problem, ProblemClarification, Profile, Submission
@@ -840,6 +841,8 @@ class ContestRanking(ContestRankingBase):
         context['has_rating'] = self.object.ratings.exists()
         context['show_virtual'] = self.show_virtual
         context['is_frozen'] = self.object.is_frozen
+        context['display_first_solves'] = self.object.format.name not in \
+            [IOIContestFormat.name, LegacyIOIContestFormat.name]
         return context
 
 
