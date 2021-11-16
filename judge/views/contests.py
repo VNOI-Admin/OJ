@@ -32,7 +32,7 @@ from icalendar import Calendar as ICalendar, Event
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.contest_format import IOIContestFormat, LegacyIOIContestFormat
+from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Organization, Problem, ProblemClarification, Profile, Submission
@@ -766,6 +766,8 @@ def contest_ranking_ajax(request, contest, participation=None):
         'problems': problems,
         'contest': contest,
         'has_rating': contest.ratings.exists(),
+        'is_frozen': is_frozen,
+        'is_ICPC_format': contest.name == IOIContestFormat.name,
     })
 
 
@@ -841,8 +843,7 @@ class ContestRanking(ContestRankingBase):
         context['has_rating'] = self.object.ratings.exists()
         context['show_virtual'] = self.show_virtual
         context['is_frozen'] = self.object.is_frozen
-        context['display_first_solves'] = self.object.format.name not in \
-            [IOIContestFormat.name, LegacyIOIContestFormat.name]
+        context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
         return context
 
 

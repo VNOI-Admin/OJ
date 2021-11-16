@@ -64,7 +64,7 @@
         }
     </style>
 
-    {% if contest.format.name == "ICPC" %}
+    {% if is_ICPC_format %}
         {% include "contest/media-icpc-css.html" %}
     {% else %}
         {% include "contest/media-css.html" %}
@@ -209,7 +209,7 @@
                 }
             }
 
-            {% if display_first_solves %}
+            {% if is_ICPC_format %}
                 firstSolve();
             {% endif %}
 
@@ -318,7 +318,7 @@
         {% if tab == 'ranking' %}
             <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
             <label for="show-virtual-participations-checkbox" style="vertical-align: bottom">{{ _('Show virtual participations') }}</label>
-            {% if contest.format.name != "ICPC" %}
+            {% if not is_ICPC_format %}
             <a href="#" onclick="download_table_as_csv()" style="float: right;">{{ _('Download as CSV') }}</a>
             {% endif %}
         {% endif %}
@@ -338,16 +338,16 @@
     </p></div>
     {% endif %}
     {{ super() }}
-    {% if contest.format.name == "ICPC" %}
+    {% if is_ICPC_format %}
     <table id="cell_legend" class="table" style="width: 10em; margin-left: 0">
         <thead>
             <tr>
-                <th scope="col">Cell colours</th>
+                <th scope="col">{{_('Cell colours')}}</th>
             </tr>
         </thead>
         <tbody>
             <tr class="first-solve">
-                <td>{{_('First solved')}}</td>
+                <td>{{_('Solved first')}}</td>
             </tr>
             <tr class="full-score">
                 <td>{{_('Solved')}}</td>
