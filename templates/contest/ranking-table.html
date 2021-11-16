@@ -1,6 +1,9 @@
 {% extends "user/base-users-table.html" %}
 
 {% block after_point_head %}
+    {% if is_ICPC_format %}
+        <th class="penalty">{{ _('Penalty') }}</th>
+    {% endif %}
     {% if has_rating %}
         <th class="rating-column">{{ _('Rating') }}</th>
     {% endif %}

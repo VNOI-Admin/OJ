@@ -189,7 +189,8 @@ class ICPCContestFormat(DefaultContestFormat):
             points = participation.score
             cumtime = participation.cumtime
         return format_html(
-            '<td class="user-points"><a href="{url}">{points}<div class="solving-time-minute">{cumtime}</div></a></td>',
+            ('<td class="user-points"><a href="{url}">{points}</a></td>'
+             '<td class="user-penalty">{cumtime}</td>'),
             url=reverse('contest_all_user_submissions',
                         args=[self.contest.key, participation.user.user.username]),
             points=floatformat(points, -self.contest.points_precision),
