@@ -37,6 +37,18 @@ tr {
         color: white;
     }
 
+    .username {
+        width: 100%;
+    }
+
+    .header {
+        vertical-align: middle;
+    }
+
+    .rank, .points, .problems, .username {
+        white-space: nowrap;
+    }
+
     tr {
         transition: background-color linear .2s;
 

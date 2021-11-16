@@ -9,6 +9,10 @@
 
 {% block users_media %}
     <style>
+        #users-table .username {
+            min-width: 20em;
+        }
+
         #users-table td {
             height: 2.5em;
         }
@@ -54,11 +58,11 @@
             display: none;
         }
 
-        th.personal-info, td.personal-info {
+        .personal-info {
             display: none;
         }
 
-        td.personal-info a {
+        .personal-info a {
             color: gray !important;
             font-weight: 600;
         }
@@ -165,12 +169,12 @@
             });
 
             $('#show-personal-info-checkbox').click(function () {
-                $('th.personal-info, td.personal-info').toggle();
-                localStorage.setItem('show-personal-info', $('th.personal-info, td.personal-info').is(':visible') ? 'true' : 'false');
+                $('.personal-info').toggle();
+                localStorage.setItem('show-personal-info', $('.personal-info').is(':visible') ? 'true' : 'false');
             });
 
             if (localStorage.getItem('show-personal-info') == 'true') {
-                $('th.personal-info, td.personal-info').show();
+                $('.personal-info').show();
                 $('#show-personal-info-checkbox').prop('checked', true);
             }
 
