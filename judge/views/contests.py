@@ -903,6 +903,7 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
         context['has_rating'] = False
         context['now'] = timezone.now()
         context['rank_header'] = _('Participation')
+        context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
         return context
 
     def get(self, request, *args, **kwargs):
