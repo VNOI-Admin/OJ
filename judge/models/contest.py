@@ -102,6 +102,9 @@ class Contest(models.Model):
     scoreboard_visibility = models.CharField(verbose_name=_('scoreboard visibility'), default=SCOREBOARD_VISIBLE,
                                              max_length=1, help_text=_('Scoreboard visibility through the duration '
                                                                        'of the contest'), choices=SCOREBOARD_VISIBILITY)
+    show_submission_list = models.BooleanField(default=True,
+                                               help_text=_('Allow contestants to view submission list '
+                                                           'of others in contest time'))
     use_clarifications = models.BooleanField(verbose_name=_('no comments'),
                                              help_text=_('Use clarification system instead of comments.'),
                                              default=True)
@@ -241,21 +244,28 @@ class Contest(models.Model):
         """Logic:
             - If scoreboard is not visible -> False
             - If user can edit the contest -> True
-            - If contest is not ended -> False
             - If contest is frozen -> False
-            - Otherwise -> True
+            - If contest is ended -> True
+            - If show_submission_list -> True
+            - Otherwise -> False
         """
+        # If the user cannot view the full scoreboard, then they should not be
+        # able to view the submission list of others.
         if not self.can_see_full_scoreboard(user):
             return False
         if user.is_authenticated and user.profile.id in self.editor_ids:
             return True
         if user.has_perm('judge.edit_all_contest'):
             return True
-        if not self.ended:
-            return False
+        # Because we have not yet implemented the freezing logic for the submission list
+        # so we should disable the submission list if the contest is frozen
         if self.is_frozen:
             return False
-        return True
+        if self.ended:
+            return True
+        if self.show_submission_list:
+            return True
+        return False
 
     def has_completed_contest(self, user):
         if user.is_authenticated:

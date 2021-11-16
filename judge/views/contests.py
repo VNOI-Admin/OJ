@@ -612,7 +612,7 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        if not (self.object.ended or self.can_edit):
+        if not self.object.can_see_full_submission_list(self.request.user):
             raise Http404()
 
         queryset = Submission.objects.filter(contest_object=self.object, date__gt=self.object.start_time)
