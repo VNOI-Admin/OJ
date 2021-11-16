@@ -767,7 +767,7 @@ def contest_ranking_ajax(request, contest, participation=None):
         'contest': contest,
         'has_rating': contest.ratings.exists(),
         'is_frozen': is_frozen,
-        'is_ICPC_format': contest.name == IOIContestFormat.name,
+        'is_ICPC_format': contest.name == ICPCContestFormat.name,
     })
 
 
