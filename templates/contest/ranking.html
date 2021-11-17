@@ -330,7 +330,9 @@
 {% endblock %}
 
 {% block users_table %}
-    {% include "contest/ranking-table.html" %}
+    {% cache cache_time template_cache_key %}
+        {% include "contest/ranking-table.html" %}
+    {% endcache %}
 {% endblock %}
 
 {% block body %}
