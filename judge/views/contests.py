@@ -32,6 +32,7 @@ from icalendar import Calendar as ICalendar, Event
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
+from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestCloneForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Organization, Problem, ProblemClarification, Profile, Submission
@@ -611,7 +612,7 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        if not (self.object.ended or self.can_edit):
+        if not self.object.can_see_full_submission_list(self.request.user):
             raise Http404()
 
         queryset = Submission.objects.filter(contest_object=self.object, date__gt=self.object.start_time)
@@ -670,12 +671,12 @@ ContestRankingProfile = namedtuple(
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
 
 
-def make_contest_ranking_profile(contest, participation, contest_problems):
+def make_contest_ranking_profile(contest, participation, contest_problems, frozen=False):
     def display_user_problem(contest_problem):
         # When the contest format is changed, `format_data` might be invalid.
         # This will cause `display_user_problem` to error, so we display '???' instead.
         try:
-            return contest.format.display_user_problem(participation, contest_problem)
+            return contest.format.display_user_problem(participation, contest_problem, frozen)
         except (KeyError, TypeError, ValueError):
             return mark_safe('<td>???</td>')
 
@@ -685,20 +686,20 @@ def make_contest_ranking_profile(contest, participation, contest_problems):
         user=user.user,
         css_class=user.css_class,
         username=user.username,
-        points=participation.score,
-        cumtime=participation.cumtime,
-        tiebreaker=participation.tiebreaker,
+        points=participation.score if not frozen else participation.frozen_score,
+        cumtime=participation.cumtime if not frozen else participation.frozen_cumtime,
+        tiebreaker=participation.tiebreaker if not frozen else participation.frozen_tiebreaker,
         organization=user.organization,
         participation_rating=participation.rating.rating if hasattr(participation, 'rating') else None,
         problem_cells=[display_user_problem(contest_problem) for contest_problem in contest_problems],
-        result_cell=contest.format.display_participation_result(participation),
+        result_cell=contest.format.display_participation_result(participation, frozen),
         participation=participation,
         virtual=participation.virtual,
     )
 
 
-def base_contest_ranking_list(contest, problems, queryset):
-    return [make_contest_ranking_profile(contest, participation, problems) for participation in
+def base_contest_ranking_list(contest, problems, queryset, frozen=False):
+    return [make_contest_ranking_profile(contest, participation, problems, frozen) for participation in
             queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')]
 
 
@@ -710,8 +711,16 @@ def base_contest_ranking_queryset(contest):
         .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker', '-submission_count')
 
 
-def contest_ranking_list(contest, problems):
-    return base_contest_ranking_list(contest, problems, base_contest_ranking_queryset(contest))
+def base_contest_frozen_ranking_queryset(contest):
+    return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
+        .prefetch_related(Prefetch('user__organizations',
+                                   queryset=Organization.objects.filter(is_unlisted=False))) \
+        .annotate(submission_count=Count('submission')) \
+        .order_by('is_disqualified', '-frozen_score', 'frozen_cumtime', 'frozen_tiebreaker', '-submission_count')
+
+
+def contest_ranking_list(contest, problems, frozen=False):
+    return base_contest_ranking_list(contest, problems, base_contest_ranking_queryset(contest), frozen=frozen)
 
 
 def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list,
@@ -738,12 +747,27 @@ def contest_ranking_ajax(request, contest, participation=None):
     if not contest.can_see_full_scoreboard(request.user):
         raise Http404()
 
-    users, problems = get_contest_ranking_list(request, contest, participation)
+    is_frozen = contest.is_frozen and not contest.is_editable_by(request.user)
+
+    if is_frozen:
+        queryset = base_contest_frozen_ranking_queryset(contest)
+    else:
+        queryset = base_contest_ranking_queryset(contest)
+
+    queryset = queryset.filter(virtual=ContestParticipation.LIVE)
+
+    users, problems = get_contest_ranking_list(
+        request, contest, participation,
+        ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=is_frozen),
+    )
+
     return render(request, 'contest/ranking-table.html', {
         'users': users,
         'problems': problems,
         'contest': contest,
         'has_rating': contest.ratings.exists(),
+        'is_frozen': is_frozen,
+        'is_ICPC_format': contest.name == ICPCContestFormat.name,
     })
 
 
@@ -780,6 +804,18 @@ class ContestRanking(ContestRankingBase):
     def get_title(self):
         return _('%s Rankings') % self.object.name
 
+    @cached_property
+    def show_frozen_ranking(self):
+        return self.object.is_frozen and not self.can_edit
+
+    def get_ranking_queryset(self):
+        if self.show_frozen_ranking:
+            queryset = base_contest_frozen_ranking_queryset(self.object)
+        queryset = base_contest_ranking_queryset(self.object)
+        if not self.show_virtual:
+            queryset = queryset.filter(virtual=ContestParticipation.LIVE)
+        return queryset
+
     def get_ranking_list(self):
         if not self.object.can_see_full_scoreboard(self.request.user):
             queryset = self.object.users.filter(user=self.request.profile, virtual=ContestParticipation.LIVE)
@@ -795,19 +831,19 @@ class ContestRanking(ContestRankingBase):
         else:
             self.show_virtual = self.request.session.get('show_virtual', False)
 
-        if not self.show_virtual:
-            queryset = base_contest_ranking_queryset(self.object).filter(virtual=ContestParticipation.LIVE)
-            return get_contest_ranking_list(
-                self.request, self.object,
-                ranking_list=partial(base_contest_ranking_list, queryset=queryset),
-            )
+        queryset = self.get_ranking_queryset()
 
-        return get_contest_ranking_list(self.request, self.object)
+        return get_contest_ranking_list(
+            self.request, self.object,
+            ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=self.show_frozen_ranking),
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['has_rating'] = self.object.ratings.exists()
         context['show_virtual'] = self.show_virtual
+        context['is_frozen'] = self.object.is_frozen
+        context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
         return context
 
 
@@ -867,6 +903,7 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
         context['has_rating'] = False
         context['now'] = timezone.now()
         context['rank_header'] = _('Participation')
+        context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
         return context
 
     def get(self, request, *args, **kwargs):

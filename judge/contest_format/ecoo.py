@@ -98,7 +98,7 @@ class ECOOContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def display_user_problem(self, participation, contest_problem):
+    def display_user_problem(self, participation, contest_problem, frozen=False):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
         if format_data:
             bonus = format_html('<small> +{bonus}</small>',
@@ -117,7 +117,7 @@ class ECOOContestFormat(DefaultContestFormat):
         else:
             return mark_safe('<td></td>')
 
-    def display_participation_result(self, participation):
+    def display_participation_result(self, participation, frozen=False):
         return format_html(
             '<td class="user-points"><a href="{url}">{points}<div class="solving-time">{cumtime}</div></a></td>',
             url=reverse('contest_all_user_submissions',

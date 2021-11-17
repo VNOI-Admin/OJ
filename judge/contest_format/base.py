@@ -48,24 +48,26 @@ class BaseContestFormat(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def display_user_problem(self, participation, contest_problem):
+    def display_user_problem(self, participation, contest_problem, frozen=False):
         """
         Returns the HTML fragment to show a user's performance on an individual problem. This is expected to use
         information from the format_data field instead of computing it from scratch.
 
         :param participation: The ContestParticipation object linking the user to the contest.
         :param contest_problem: The ContestProblem object representing the problem in question.
+        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC format.
         :return: An HTML fragment, marked as safe for Jinja2.
         """
         raise NotImplementedError()
 
     @abstractmethod
-    def display_participation_result(self, participation):
+    def display_participation_result(self, participation, frozen=False):
         """
         Returns the HTML fragment to show a user's performance on the whole contest. This is expected to use
         information from the format_data field instead of computing it from scratch.
 
         :param participation: The ContestParticipation object.
+        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC format.
         :return: An HTML fragment, marked as safe for Jinja2.
         """
         raise NotImplementedError()
