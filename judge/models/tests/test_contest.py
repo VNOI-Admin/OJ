@@ -257,6 +257,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_edit_own': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertTrue,
                 'is_in_contest': self.assertFalse,
@@ -264,6 +265,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_see_all': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -271,6 +273,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_edit_all': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertTrue,
                 'is_in_contest': self.assertFalse,
@@ -279,6 +282,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
                 # scoreboard checks don't do accessibility checks
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -286,6 +290,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'non_staff_tester': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -293,6 +298,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'anonymous': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -305,6 +311,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_edit_own': {
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -312,6 +319,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_see_all': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -319,6 +327,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_edit_all': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertTrue,
                 'is_in_contest': self.assertFalse,
@@ -326,6 +335,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'normal': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertTrue,
@@ -333,6 +343,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'anonymous': {
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -345,6 +356,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_edit_own': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertTrue,
                 'is_in_contest': self.assertFalse,
@@ -352,6 +364,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'non_staff_author': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -364,21 +377,25 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'normal_before_window': {
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertFalse,
             },
             'normal_during_window': {
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertFalse,
             },
             'normal_after_window': {
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertTrue,
             },
             'non_staff_tester': {
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertFalse,
             },
         }
@@ -389,26 +406,31 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'normal_before_window': {
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertFalse,
             },
             'normal_during_window': {
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertFalse,
             },
             'normal_after_window': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertTrue,
             },
             'normal': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertTrue,
             },
             'non_staff_tester': {
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertFalse,
             },
         }
@@ -419,21 +441,25 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'normal_before_window': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertFalse,
             },
             'normal_during_window': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertFalse,
             },
             'normal_after_window': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertTrue,
             },
             'non_staff_tester': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertFalse,
             },
         }
@@ -452,6 +478,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'normal': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -459,6 +486,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_see_all': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -466,6 +494,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'anonymous': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -473,6 +502,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'non_staff_tester': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -486,6 +516,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
                 # scoreboard checks don't do accessibility checks
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -493,6 +524,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_see_all': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -500,6 +532,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_edit_all': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertTrue,
                 'is_in_contest': self.assertFalse,
@@ -507,6 +540,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'normal': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -514,6 +548,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'non_staff_tester': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -521,6 +556,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'anonymous': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -533,6 +569,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_edit_own': {
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -540,6 +577,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_see_all': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -547,6 +585,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'staff_contest_edit_all': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertTrue,
                 'is_in_contest': self.assertFalse,
@@ -554,6 +593,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'normal': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -562,6 +602,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
                 # False because contest has not begun
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -570,6 +611,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
                 # False because contest has not begun
                 'can_see_own_scoreboard': self.assertFalse,
                 'can_see_full_scoreboard': self.assertFalse,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -582,6 +624,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'superuser': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertTrue,
                 'is_in_contest': self.assertFalse,
@@ -589,6 +632,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'normal': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -596,6 +640,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'non_staff_tester': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -603,6 +648,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'anonymous': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -615,6 +661,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'superuser': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertTrue,
                 'is_in_contest': self.assertFalse,
@@ -622,6 +669,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'normal': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -630,6 +678,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'non_staff_tester': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -637,6 +686,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'anonymous': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -649,6 +699,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'superuser': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertTrue,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertTrue,
                 'is_in_contest': self.assertFalse,
@@ -656,6 +707,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'normal': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -663,6 +715,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'non_staff_tester': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertTrue,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,
@@ -670,6 +723,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             'anonymous': {
                 'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertTrue,
+                'can_see_full_submission_list': self.assertFalse,
                 'is_accessible_by': self.assertFalse,
                 'is_editable_by': self.assertFalse,
                 'is_in_contest': self.assertFalse,

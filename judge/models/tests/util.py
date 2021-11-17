@@ -208,6 +208,7 @@ class CreateContest(CreateModel):
             'description': '',
             'start_time': _now - timezone.timedelta(days=100),
             'end_time': _now + timezone.timedelta(days=100),
+            'show_submission_list': False,
         }
 
 
