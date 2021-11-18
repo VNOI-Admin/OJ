@@ -25,27 +25,15 @@
             $('.time-remaining').each(function () {
                 count_down($(this));
             });
-
-            $('#openAnnouncementForm').click(function () {
-                $(this).addClass('hidden');
-                $('#announcementForm').removeClass('hidden');
-            });
         });
     </script>
     {% include "contest/media-js.html" %}
-    {% if can_announce %}
-        {{ form.media.js }}
-    {% endif %}
     {% if not comment_lock %}
         {% include "comments/media-js.html" %}
     {% endif %}
 {% endblock %}
 
 {% block content_media %}
-    {% if can_announce %}
-        {{ form.media.css }}
-        <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
-    {% endif %}
     {% if not comment_lock %}
         {% include "comments/media-css.html" %}
     {% endif %}
@@ -298,7 +286,7 @@
                 </tbody>
             </table>
         </div>
-        {% if has_announcements or can_announce %}
+        {% if has_announcements or can_edit %}
         <div class="contest-clartifications">
             <h2 style="margin-bottom: 0.2em"><i class="fa fa-check"></i> {{ _('Announcements') }}</h2>
             <table id="contest-clartifications" class="table">
@@ -321,18 +309,10 @@
                         </td>
                     </tr>
                 {% endfor %}
-                {% if can_announce %}
+                {% if can_edit %}
                     <tr>
                         <td colspan="3">
-                            <button style="width: 100%" id="openAnnouncementForm">Create new announcement</button>
-                            <form id="announcementForm" method="POST" class="hidden" style="display: flex; justify-content: center; flex-direction: column;">
-                                {% csrf_token %}
-                                <table class="django-as-table">{{ form.as_table() }}</table>
-                                <hr>
-                                <div style="display: flex; justify-content: flex-end;"><button type="submit" class="submit-bar">
-                                    {{ _('Announce') }}
-                                </button></div>
-                            </form>
+                            <a class="button" href="{{ url('contest_announce', contest.key) }}">{{ _('Add an announcement') }}</a>
                         </td>
                     </tr>
                 {% endif %}

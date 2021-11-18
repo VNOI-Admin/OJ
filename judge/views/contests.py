@@ -390,6 +390,28 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         return super().dispatch(request, *args, **kwargs)
 
 
+class ContestAnnounce(ContestMixin, TitleMixin, SingleObjectFormView):
+    title = _('Create contest announcement')
+    template_name = 'contest/announcement.html'
+    form_class = ContestAnnouncementForm
+
+    def form_valid(self, form):
+        contest = self.object
+
+        announcement = form.save(commit=False)
+        announcement.contest = contest
+        announcement.save()
+        announcement.send()
+
+        return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.can_edit:
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
+
 class ContestAccessDenied(Exception):
     pass
 

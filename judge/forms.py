@@ -491,7 +491,7 @@ class ContestAnnouncementForm(forms.ModelForm):
         model = ContestAnnouncement
         fields = ['title', 'description']
         widgets = {
-            'description': MartorWidget,
+            'description': MartorWidget(attrs={'style': 'width: 100%'}),
         }
 
 
