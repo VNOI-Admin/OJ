@@ -352,9 +352,7 @@
 {% endblock %}
 
 {% block users_table %}
-    {% cache cache_time template_cache_key %}
-        {% include "contest/ranking-table.html" %}
-    {% endcache %}
+    {{ rendered_ranking_table }}
 {% endblock %}
 
 {% block body %}

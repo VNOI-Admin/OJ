@@ -3,6 +3,7 @@ from calendar import Calendar, SUNDAY
 from collections import defaultdict, namedtuple
 from datetime import date, datetime, time, timedelta
 from functools import partial
+from itertools import chain
 from operator import attrgetter, itemgetter
 
 from django import forms
@@ -16,6 +17,7 @@ from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
+from django.template import loader
 from django.template.defaultfilters import date as date_filter, floatformat
 from django.urls import reverse
 from django.utils import timezone
@@ -668,13 +670,6 @@ ContestRankingProfile = namedtuple(
     'participation_rating problem_cells result_cell virtual',
 )
 
-# Alternative to ContestParticipation model
-ParticipationRanking = namedtuple(
-    'ParticipationRanking',
-    'id start ended is_disqualified',
-)
-
-
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
 
 
@@ -688,14 +683,6 @@ def make_contest_ranking_profile(contest, participation, contest_problems, froze
             return mark_safe('<td>???</td>')
 
     user = participation.user
-    # using ParticipationRanking instead of the `participation` because
-    # the ContestParticipation model cannot be cached
-    participation_ranking = ParticipationRanking(
-        id=participation.id,
-        start=participation.start,
-        ended=participation.ended,
-        is_disqualified=participation.is_disqualified,
-    )
     return ContestRankingProfile(
         id=user.id,
         user=user.user,
@@ -708,55 +695,14 @@ def make_contest_ranking_profile(contest, participation, contest_problems, froze
         participation_rating=participation.rating.rating if hasattr(participation, 'rating') else None,
         problem_cells=[display_user_problem(contest_problem) for contest_problem in contest_problems],
         result_cell=contest.format.display_participation_result(participation, frozen),
-        participation=participation_ranking,
+        participation=participation,
         virtual=participation.virtual,
     )
 
 
-def base_contest_ranking_list(contest, problems, queryset, frozen=False, cache_key=None, bypass_cache_ranking=False):
-    """Make ranking profiles to show in the ranking table
-
-    Parameters:
-        - contest: contest object
-        - problems: all problem in the contest
-        - queryset: queryset that returns all the needed data
-        - frozen: true if this is for frozen ranking
-        - cache_key: the cache key for storing the result
-        - bypass_cache_ranking: if true, this function will always generate the new data (instead of fetching
-    from cache)
-
-    Let me explain the cache here:
-
-    We have 2 things that we can cache:
-        (1) The data that we will use to render the ranking table
-        (2) The rendered ranking table
-
-    Although the first option is pretty is easy to cache, the second one is hard because:
-        - If (1) has been updated, we need to update (2) as well
-
-    Because I can't find a way to tell whether (1) has been updated or not,
-    so I save the last timestamp when (1) updated to the cache.
-    That timestamp will become a cache key for the (2). By doing that,
-    whenever (1) updated, (2) will use a new cache key.
-    """
-    cache_time = settings.VNOJ_CONTEST_RANKING_CACHE_INTERVAL
-
-    def get_ranking_profiles():
-        cache.set(f'{cache_key}_timestamp', datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'), cache_time)
-        return [
-            make_contest_ranking_profile(contest, participation, problems, frozen) for participation in
-            queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')
-        ]
-
-    if cache_key:
-        ranking_profile = cache.get(cache_key)
-        if not ranking_profile or bypass_cache_ranking:
-            ranking_profile = get_ranking_profiles()
-
-        cache.set(cache_key, ranking_profile, cache_time)
-    else:
-        ranking_profile = get_ranking_profiles()
-    return ranking_profile
+def base_contest_ranking_list(contest, problems, queryset, frozen=False):
+    return [make_contest_ranking_profile(contest, participation, problems, frozen) for participation in
+            queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')]
 
 
 def base_contest_ranking_queryset(contest):
@@ -775,25 +721,23 @@ def base_contest_frozen_ranking_queryset(contest):
         .order_by('is_disqualified', '-frozen_score', 'frozen_cumtime', 'frozen_tiebreaker', '-submission_count')
 
 
-def contest_ranking_list(contest, problems, frozen=False, cache_key=None, bypass_cache_ranking=False):
-    return base_contest_ranking_list(
-        contest,
-        problems,
-        base_contest_ranking_queryset(contest),
-        frozen=frozen,
-        cache_key=cache_key,
-        bypass_cache_ranking=bypass_cache_ranking,
-    )
+def contest_ranking_list(contest, problems, frozen=False):
+    return base_contest_ranking_list(contest, problems, base_contest_ranking_queryset(contest), frozen=frozen)
 
 
 def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list,
-                             ranker=ranker, cache_key=None, bypass_cache_ranking=False):
+                             show_current_virtual=True, ranker=ranker):
     problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
 
-    users = ranker(
-        ranking_list(contest, problems, cache_key=cache_key, bypass_cache_ranking=bypass_cache_ranking),
-        key=attrgetter('points', 'cumtime', 'tiebreaker'),
-    )
+    users = ranker(ranking_list(contest, problems), key=attrgetter('points', 'cumtime', 'tiebreaker'))
+
+    if show_current_virtual:
+        if participation is None and request.user.is_authenticated:
+            participation = request.profile.current_contest
+            if participation is None or participation.contest_id != contest.id:
+                participation = None
+        if participation is not None and participation.virtual:
+            users = chain([('-', make_contest_ranking_profile(contest, participation, problems))], users)
     return users, problems
 
 
@@ -813,14 +757,10 @@ def contest_ranking_ajax(request, contest, participation=None):
         queryset = base_contest_ranking_queryset(contest)
 
     queryset = queryset.filter(virtual=ContestParticipation.LIVE)
-    cache_key = f'contest_ranking_cache_{contest.key}_False_{is_frozen}'
-    bypass_cache_ranking = contest.is_editable_by(request.user) and not contest.ended
 
     users, problems = get_contest_ranking_list(
         request, contest, participation,
         ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=is_frozen),
-        cache_key=cache_key,
-        bypass_cache_ranking=bypass_cache_ranking,
     )
 
     return render(request, 'contest/ranking-table.html', {
@@ -846,15 +786,29 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     def get_ranking_list(self):
         raise NotImplementedError()
 
+    @property
+    def is_frozen(self):
+        return False
+
+    def get_rendered_ranking_table(self):
+        users, problems = self.get_ranking_list()
+
+        return loader.render_to_string('contest/ranking-table.html', {
+            'users': users,
+            'problems': problems,
+            'contest': self.object,
+            'has_rating': self.object.ratings.exists(),
+            'is_frozen': self.is_frozen,
+            'is_ICPC_format': self.object.name == ICPCContestFormat.name,
+        })
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         if not self.object.can_see_own_scoreboard(self.request.user):
             raise Http404()
 
-        users, problems = self.get_ranking_list()
-        context['users'] = users
-        context['problems'] = problems
+        context['rendered_ranking_table'] = self.get_rendered_ranking_table()
         context['tab'] = self.tab
         return context
 
@@ -867,30 +821,19 @@ class ContestRanking(ContestRankingBase):
         return _('%s Rankings') % self.object.name
 
     @cached_property
-    def show_frozen_ranking(self):
+    def is_frozen(self):
         return self.object.is_frozen and not self.can_edit
 
     @property
     def cache_key(self):
-        return f'contest_ranking_cache_{self.object.key}_{self.show_virtual}_{self.show_frozen_ranking}'
+        return f'contest_ranking_cache_{self.object.key}_{self.show_virtual}_{self.is_frozen}'
 
     @property
-    def template_cache_key(self):
-        """Return the cache key use for rendered ranking table
-        """
-        # For better understanding, read comment in base_contest_ranking_list
-        latest_key = cache.get(f'{self.cache_key}_timestamp', '0')
-        has_perm = self.request.user.has_perm('judge.change_contestparticipation')
-        # Because can_edit and has_perm will effect the result of ranking table
-        # we need put that information into the cache key
-        return f'template_{self.cache_key}_{self.can_edit}_{has_perm}_{latest_key}'
-
     def bypass_cache_ranking(self):
-        # Contest authors should view the latest ranking
-        return self.can_edit and not self.object.ended
+        return self.object.scoreboard_cache_timeout == 0 or (self.can_edit and not self.object.ended)
 
     def get_ranking_queryset(self):
-        if self.show_frozen_ranking:
+        if self.is_frozen:
             queryset = base_contest_frozen_ranking_queryset(self.object)
         queryset = base_contest_ranking_queryset(self.object)
         if not self.show_virtual:
@@ -916,19 +859,26 @@ class ContestRanking(ContestRankingBase):
 
         return get_contest_ranking_list(
             self.request, self.object,
-            ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=self.show_frozen_ranking),
-            cache_key=self.cache_key,
-            bypass_cache_ranking=self.bypass_cache_ranking(),
+            ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=self.is_frozen),
         )
+
+    def get_rendered_ranking_table(self):
+        if self.bypass_cache_ranking:
+            return super().get_rendered_ranking_table()
+
+        rendered_ranking_table = cache.get(self.cache_key, None)
+        if rendered_ranking_table is None:
+            rendered_ranking_table = super().get_rendered_ranking_table()
+            cache.set(self.cache_key, rendered_ranking_table, self.object.scoreboard_cache_timeout)
+
+        return rendered_ranking_table
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['has_rating'] = self.object.ratings.exists()
         context['show_virtual'] = self.show_virtual
-        context['is_frozen'] = self.object.is_frozen
+        context['is_frozen'] = self.is_frozen
         context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
-        context['template_cache_key'] = self.template_cache_key
-        context['cache_time'] = settings.VNOJ_CONTEST_RANKING_CACHE_INTERVAL
         return context
 
 
@@ -979,7 +929,7 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
                                 reverse('contest_ranking', args=[self.object.key]))
 
         return get_contest_ranking_list(
-            self.request, self.object,
+            self.request, self.object, show_current_virtual=False,
             ranking_list=partial(base_contest_ranking_list, queryset=queryset),
             ranker=lambda users, key: ((user.participation.virtual or live_link, user) for user in users))
 
