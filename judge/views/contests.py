@@ -26,7 +26,7 @@ from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import ListView, TemplateView
 from django.views.generic.detail import BaseDetailView, DetailView, SingleObjectMixin, View
-from django.views.generic.edit import CreateView, FormMixin, UpdateView
+from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import BaseListView
 from icalendar import Calendar as ICalendar, Event
 from reversion import revisions
@@ -249,9 +249,8 @@ class ContestMixin(object):
             }, status=403)
 
 
-class ContestDetail(ContestMixin, TitleMixin, FormMixin, CommentedDetailView):
+class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
     template_name = 'contest/contest.html'
-    form_class = ContestAnnouncementForm
 
     def is_comment_locked(self):
         if self.object.use_clarifications:
@@ -327,21 +326,6 @@ class ContestDetail(ContestMixin, TitleMixin, FormMixin, CommentedDetailView):
         context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
         return context
-
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        form = self.get_form()
-        if form.is_valid():
-            return self.form_valid(form)
-        else:
-            return self.form_invalid(form)
-
-    def form_valid(self, form):
-        announcement = form.save(commit=False)
-        announcement.contest = self.object
-        announcement.save()
-        announcement.send()
-        return HttpResponseRedirect(self.object.get_absolute_url())
 
 
 class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObjectFormView):
