@@ -11,7 +11,7 @@
         $(function () {
             function autofill_if_exists($select, file) {
                 if (!$select.val() && ~window.valid_files.indexOf(file))
-                    $select.val(file).trigger('change');
+                    $select.append(new Option(file, file, true, true)).change();
             }
 
             var valid_files_options = window.valid_files.map(function (file) {
@@ -37,7 +37,7 @@
                         style: 'width: 100%'
                     })).val();
                     var option = new Option(val, val, true, true);
-                    $select.select2(select2_settings).append(option).trigger('change').on('change', function () {
+                    $select.select2(select2_settings).append(option).change().on('change', function () {
                         var val = $select.val();
                         if (val) {
                             if ($select.attr('id').endsWith('input_file'))
@@ -372,8 +372,8 @@
                 }
                 // fill cases
                 for (var i = 0; i < n_test; i++) {
-                    $("#id_cases-" + i + "-input_file").val(inFiles[i]).change();
-                    $("#id_cases-" + i + "-output_file").val(outFiles[i]).change();
+                    $("#id_cases-" + i + "-input_file").append(new Option(inFiles[i], inFiles[i], true, true)).change();
+                    $("#id_cases-" + i + "-output_file").append(new Option(outFiles[i], outFiles[i], true, true)).change();
                     $("#id_cases-" + i + "-points").val("1").change();
                 }
                 $("#fill-test-case-noti").show();
