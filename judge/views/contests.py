@@ -768,6 +768,7 @@ def contest_ranking_ajax(request, contest, participation=None):
 
 class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/ranking.html'
+    ranking_table_template_name = 'contest/ranking-table.html'
     tab = None
 
     def get_title(self):
@@ -786,7 +787,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     def get_rendered_ranking_table(self):
         users, problems = self.get_ranking_list()
 
-        return loader.render_to_string('contest/ranking-table.html', {
+        return loader.render_to_string(self.ranking_table_template_name, {
             'users': users,
             'problems': problems,
             'contest': self.object,
@@ -880,6 +881,7 @@ class ContestRanking(ContestRankingBase):
 
 class ContestOfficialRanking(ContestRankingBase):
     template_name = 'contest/official-ranking.html'
+    ranking_table_template_name = 'contest/official-ranking-table.html'
     tab = 'official_ranking'
 
     def get_title(self):
