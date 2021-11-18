@@ -3,7 +3,6 @@ from calendar import Calendar, SUNDAY
 from collections import defaultdict, namedtuple
 from datetime import date, datetime, time, timedelta
 from functools import partial
-from itertools import chain
 from operator import attrgetter, itemgetter
 
 from django import forms
@@ -726,19 +725,10 @@ def contest_ranking_list(contest, problems, frozen=False):
     return base_contest_ranking_list(contest, problems, base_contest_ranking_queryset(contest), frozen=frozen)
 
 
-def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list,
-                             show_current_virtual=True, ranker=ranker):
+def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list, ranker=ranker):
     problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
-
     users = ranker(ranking_list(contest, problems), key=attrgetter('points', 'cumtime', 'tiebreaker'))
 
-    if show_current_virtual:
-        if participation is None and request.user.is_authenticated:
-            participation = request.profile.current_contest
-            if participation is None or participation.contest_id != contest.id:
-                participation = None
-        if participation is not None and participation.virtual:
-            users = chain([('-', make_contest_ranking_profile(contest, participation, problems))], users)
     return users, problems
 
 
@@ -935,7 +925,7 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
                                 reverse('contest_ranking', args=[self.object.key]))
 
         return get_contest_ranking_list(
-            self.request, self.object, show_current_virtual=False,
+            self.request, self.object,
             ranking_list=partial(base_contest_ranking_list, queryset=queryset),
             ranker=lambda users, key: ((user.participation.virtual or live_link, user) for user in users))
 
