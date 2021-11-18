@@ -8,6 +8,7 @@ from operator import attrgetter, itemgetter
 
 from django import forms
 from django.conf import settings
+from django.contrib.auth.context_processors import PermWrapper
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
@@ -770,6 +771,8 @@ def contest_ranking_ajax(request, contest, participation=None):
         'has_rating': contest.ratings.exists(),
         'is_frozen': is_frozen,
         'is_ICPC_format': contest.name == ICPCContestFormat.name,
+        'perms': PermWrapper(request.user),
+        'can_edit': contest.is_editable_by(request.user),
     })
 
 
@@ -800,6 +803,8 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             'has_rating': self.object.ratings.exists(),
             'is_frozen': self.is_frozen,
             'is_ICPC_format': self.object.name == ICPCContestFormat.name,
+            'perms': PermWrapper(self.request.user),
+            'can_edit': self.can_edit,
         })
 
     def get_context_data(self, **kwargs):
@@ -830,7 +835,7 @@ class ContestRanking(ContestRankingBase):
 
     @property
     def bypass_cache_ranking(self):
-        return self.object.scoreboard_cache_timeout == 0 or (self.can_edit and not self.object.ended)
+        return self.object.scoreboard_cache_timeout == 0 or self.can_edit
 
     def get_ranking_queryset(self):
         if self.is_frozen:
@@ -879,6 +884,7 @@ class ContestRanking(ContestRankingBase):
         context['show_virtual'] = self.show_virtual
         context['is_frozen'] = self.is_frozen
         context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
+        context['cache_timeout'] = self.object.scoreboard_cache_timeout
         return context
 
 
