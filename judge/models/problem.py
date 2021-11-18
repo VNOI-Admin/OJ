@@ -508,6 +508,9 @@ class Problem(models.Model):
 
     def save(self, *args, **kwargs):
         is_clone = kwargs.pop('is_clone', False)
+        # if short_circuit = true the judge will stop judging
+        # as soon as the submission failed a test case
+        self.short_circuit = not self.partial
         super(Problem, self).save(*args, **kwargs)
         # Ignore the custom save if we are cloning a problem
         if is_clone:
