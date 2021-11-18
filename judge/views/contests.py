@@ -760,7 +760,7 @@ def contest_ranking_ajax(request, contest, participation=None):
         'contest': contest,
         'has_rating': contest.ratings.exists(),
         'is_frozen': is_frozen,
-        'is_ICPC_format': contest.name == ICPCContestFormat.name,
+        'is_ICPC_format': contest.format.name == ICPCContestFormat.name,
         'perms': PermWrapper(request.user),
         'can_edit': contest.is_editable_by(request.user),
     })
@@ -793,7 +793,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             'contest': self.object,
             'has_rating': self.object.ratings.exists(),
             'is_frozen': self.is_frozen,
-            'is_ICPC_format': self.object.name == ICPCContestFormat.name,
+            'is_ICPC_format': self.object.format.name == ICPCContestFormat.name,
             'perms': PermWrapper(self.request.user),
             'can_edit': self.can_edit,
         })
