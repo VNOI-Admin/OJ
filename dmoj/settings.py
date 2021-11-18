@@ -88,6 +88,10 @@ VNOJ_TESTCASE_LIMIT = 50
 
 VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
+# Some problems have a lot of testcases, and each testcase
+# has about 5~6 fields, so we need to raise this
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 3000
+
 # List of online judge preset for OJ API
 OJ_PROBLEM_PRESET = [
     {
