@@ -6,10 +6,10 @@ from django.contrib.contenttypes.models import ContentType
 
 
 from judge.jinja2.gravatar import gravatar
-from judge.models import BlogPost, Comment, Contest, Problem, Tag, TagProblem, Ticket
+from judge.models import BlogPost, Comment, Contest, Problem, Tag, TagProblem, Ticket, TicketMessage
 
 __all__ = ('on_new_ticket', 'on_new_comment', 'on_new_problem', 'on_new_tag_problem', 'on_new_tag', 'on_new_contest',
-           'on_new_blogpost')
+           'on_new_blogpost', 'on_new_ticket_message')
 
 
 def get_webhook_url(event_name):
@@ -57,6 +57,20 @@ def on_new_ticket(ticket_id, content_type_id, object_id, message):
     title = f'Title: [{ticket.title}]({ticket_url})'
     message = f'Message: {message}'
     send_webhook(webhook, f'New ticket on {url}', title + '\n' + message[:100], ticket.user)
+
+
+@shared_task
+def on_new_ticket_message(message_id, ticket_id, message):
+    webhook = get_webhook_url('on_new_ticket_message')
+    if webhook is None or settings.SITE_FULL_URL is None:
+        return
+
+    ticket_message = TicketMessage.objects.get(pk=message_id)
+
+    ticket_url = settings.SITE_FULL_URL + '/ticket/' + str(ticket_id)
+    message = f'Message: {message}'
+
+    send_webhook(webhook, f'New ticket reply on {ticket_url}', message[:100], ticket_message.user)
 
 
 @shared_task

@@ -20,7 +20,7 @@ from django.views.generic.edit import FormView
 
 from judge import event_poster as event
 from judge.models import GeneralIssue, Problem, Profile, Ticket, TicketMessage
-from judge.tasks import on_new_ticket
+from judge.tasks import on_new_ticket, on_new_ticket_message
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.tickets import filter_visible_tickets, own_ticket_filter
 from judge.utils.views import SingleObjectFormView, TitleMixin, paginate_query_context
@@ -185,6 +185,7 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
             event.post('ticket-%d' % self.object.id, {
                 'type': 'ticket-message', 'message': message.id,
             })
+        on_new_ticket_message.delay(message.pk, message.ticket.pk, message.body)
         return HttpResponseRedirect('%s#message-%d' % (reverse('ticket', args=[self.object.id]), message.id))
 
     def get_title(self):
