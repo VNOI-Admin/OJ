@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block media %}
+    {{ form.media.css }}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+{% endblock %}
+
+{% block js_media %}
+    {{ form.media.js }}
+{% endblock %}
+
+{% block body %}
+    <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <hr>
+        <div style="display: flex; justify-content: flex-end;"><button type="submit" class="submit-bar">
+            {{ _('Announce') }}
+        </button></div>
+    </form>
+{% endblock %}

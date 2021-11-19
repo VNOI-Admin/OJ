@@ -281,7 +281,7 @@
                 </tbody>
             </table>
         </div>
-        {% if has_announcements %}
+        {% if has_announcements or can_edit %}
         <div class="contest-clartifications">
             <h2 style="margin-bottom: 0.2em"><i class="fa fa-check"></i> {{ _('Announcements') }}</h2>
             <table id="contest-clartifications" class="table">
@@ -304,6 +304,13 @@
                         </td>
                     </tr>
                 {% endfor %}
+                {% if can_edit %}
+                    <tr>
+                        <td colspan="3">
+                            <a class="button" href="{{ url('contest_announce', contest.key) }}">{{ _('Add an announcement') }}</a>
+                        </td>
+                    </tr>
+                {% endif %}
                 </tbody>
             </table>
         </div>
