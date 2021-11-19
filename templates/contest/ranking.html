@@ -21,6 +21,10 @@
             display: block;
         }
 
+        #users-table {
+            font-size: 14px;
+        }
+
         .user-name a, .user-name form {
             display: inline-block !important;
         }
@@ -38,11 +42,11 @@
         }
 
         .rank {
-            min-width: 2.5em
+            min-width: 2.4em
         }
 
         .points {
-            min-width: 2.5em;
+            min-width: 2.4em;
         }
 
         .disqualified {
@@ -277,12 +281,13 @@
                         if ($col.hasClass('rating-column')) {
                             // Skip rating
                             return;
-                        } else if ($col.hasClass('personal-info')) {
-                            // Full name
-                            header.push('Full name');
-                        } else if ($col.hasClass('username') || $col.hasClass('rank')) {
-                            // Username or rank
+                        } else if ($col.hasClass('rank')) {
+                            // Rank
                             header.push(clean_text($col.text()));
+                        } else if ($col.hasClass('username')) {
+                            // Username and Full name
+                            header.push(clean_text('{{ _('Username') }}'));
+                            header.push(clean_text('{{ _('Full Name') }}'));
                         } else {
                             // Point
                             var name = $col.find('.problem-code').text();
@@ -303,9 +308,10 @@
                         if ($col.hasClass('rating-column')) {
                             // Skip rating
                             return;
-                        } else if ($col.hasClass('user-name') || $col.hasClass('personal-info')) {
-                            // Username or Full name
-                            row_data.push(clean_text($col.children().first().text()));
+                        } else if ($col.hasClass('user-name')) {
+                            // Username and Full name
+                            row_data.push(clean_text($col.find('.rating').first().text()));
+                            row_data.push(clean_text($col.find('.personal-info').first().text()));
                         } else {
                             // Point or rank
                             row_data.push(clean_text($col.ignore('.solving-time').text()));
