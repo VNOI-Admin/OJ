@@ -875,7 +875,7 @@ class ContestRanking(ContestRankingBase):
         context['show_virtual'] = self.show_virtual
         context['is_frozen'] = self.is_frozen
         context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
-        context['cache_timeout'] = self.object.scoreboard_cache_timeout
+        context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
         return context
 
 
