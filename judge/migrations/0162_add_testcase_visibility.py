@@ -13,6 +13,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='problem',
             name='testcase_visibility_mode',
-            field=models.CharField(choices=[('O', 'Visiable for authors'), ('C', 'Visiable if user is not in a contest'), ('A', 'Always visible')], default='O', max_length=1, verbose_name='Testcase visibility'),
+            field=models.CharField(choices=[('O', 'Visible for authors'), ('C', 'Visible if user is not in a contest'), ('A', 'Always visible')], default='O', max_length=1, verbose_name='Testcase visibility'),
         ),
     ]
