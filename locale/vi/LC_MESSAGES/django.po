@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-19 04:20+0000\n"
+"POT-Creation-Date: 2021-11-19 13:41+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -128,8 +128,8 @@ msgstr "Trang liên kết"
 msgid "Included contests"
 msgstr "Các kỳ thi"
 
-#: judge/admin/contest.py:66 judge/forms.py:502
-#: templates/contest/contest.html:212 templates/contest/contest.html:318
+#: judge/admin/contest.py:66 judge/forms.py:511
+#: templates/contest/contest.html:212 templates/contest/contest.html:325
 #: templates/contest/moss.html:43 templates/problem/list.html:177
 #: templates/user/user-problems.html:58 templates/user/user-problems.html:100
 msgid "Problem"
@@ -378,7 +378,7 @@ msgid "Recalulate contribution points"
 msgstr "Tính lại điểm đóng góp"
 
 #: judge/admin/runtime.py:72 templates/contest/contest.html:292
-#: templates/contest/contest.html:319
+#: templates/contest/contest.html:326
 msgid "Description"
 msgstr "Mô tả"
 
@@ -508,6 +508,14 @@ msgstr[0] ""
 "Các lần nộp bài trước lần nộp bài có điểm lớn nhất sẽ tính **penalty %d "
 "phút**."
 
+#: judge/contest_format/atcoder.py:126
+msgid ""
+"Ties will be broken by the last score altering submission time (including "
+"penalty)."
+msgstr ""
+"Các thí sinh bằng điểm sẽ được phân định bằng thời gian của **lần nộp bài "
+"cuối cùng làm thay đổi kết quả** (cộng với penalty)."
+
 #: judge/contest_format/atcoder.py:127
 msgid "Ties will be broken by the last score altering submission time."
 msgstr ""
@@ -518,13 +526,14 @@ msgstr ""
 msgid "Default"
 msgstr "Mặc định"
 
-#: judge/contest_format/default.py:80
+#: judge/contest_format/default.py:80 judge/contest_format/ioi.py:99
+#: judge/contest_format/legacy_ioi.py:100
 msgid ""
-"Ties will be broken by the sum of the last submission time on problems with "
-"a non-zero score."
+"Ties will be broken by the sum of the last score altering submission time on "
+"problems with a non-zero score."
 msgstr ""
 "Các thí sinh bằng điểm sẽ được phân định bằng tổng thời gian của **lần nộp "
-"bài cuối cùng** trong các bài tập có điểm lớn hơn 0."
+"bài cuối cùng làm thay đổi kết quả** trong các bài tập có điểm lớn hơn 0."
 
 #: judge/contest_format/ecoo.py:18
 msgid "ECOO"
@@ -568,13 +577,24 @@ msgstr ""
 #: judge/contest_format/ecoo.py:149 judge/contest_format/ioi.py:102
 #: judge/contest_format/legacy_ioi.py:103
 msgid "Ties by score will **not** be broken."
-msgstr "Những người bằng điểm sẽ có cùng thứ hạng."
+msgstr "Các thí sinh bằng điểm bằng điểm sẽ có cùng thứ hạng."
 
 #: judge/contest_format/icpc.py:19
 msgid "ICPC"
 msgstr ""
 
-#: judge/contest_format/icpc.py:219
+#: judge/contest_format/icpc.py:218
+msgid ""
+"Ties will be broken by the sum of the last score altering submission time on "
+"problems with a non-zero score (including penalty), followed by the time of "
+"the last score altering submission."
+msgstr ""
+"Các thí sinh bằng điểm sẽ được phân định bằng tổng thời gian của **lần nộp "
+"bài cuối cùng làm thay đổi kết quả** trong các bài tập có điểm lớn hơn 0 "
+"(cộng với penalty). Nếu vẫn bằng nhau, phân định bằng **thời gian của lần "
+"nộp bài cuối cùng làm thay đổi kết quả**."
+
+#: judge/contest_format/icpc.py:221
 msgid ""
 "Ties will be broken by the sum of the last score altering submission time on "
 "problems with a non-zero score, followed by the time of the last score "
@@ -585,7 +605,7 @@ msgstr ""
 "Nếu vẫn bằng nhau, phân định bằng **lần nộp bài cuối cùng làm thay đổi kết "
 "quả**."
 
-#: judge/contest_format/icpc.py:224
+#: judge/contest_format/icpc.py:226
 #, python-format
 msgid "Ranking will be frozen in the **last %d minute**."
 msgid_plural "Ranking will be frozen in the **last %d minutes**."
@@ -598,14 +618,6 @@ msgstr "IOI"
 #: judge/contest_format/ioi.py:96
 msgid "The maximum score for each problem batch will be used."
 msgstr "Điểm của bài là tổng điểm của các subtask."
-
-#: judge/contest_format/ioi.py:99 judge/contest_format/legacy_ioi.py:100
-msgid ""
-"Ties will be broken by the sum of the last score altering submission time on "
-"problems with a non-zero score."
-msgstr ""
-"Các thí sinh bằng điểm sẽ được phân định bằng tổng thời gian của **lần nộp "
-"bài cuối cùng làm thay đổi kết quả** trong các bài tập có điểm lớn hơn 0."
 
 #: judge/contest_format/legacy_ioi.py:18
 msgid "IOI (pre-2016)"
@@ -727,7 +739,7 @@ msgstr ""
 "Nếu bài tập này không công khai, chỉ những thành viên này có thể thấy được "
 "bài tập."
 
-#: judge/forms.py:156 judge/forms.py:569
+#: judge/forms.py:156 judge/forms.py:578
 msgid "You can paste a list of usernames into this box."
 msgstr ""
 "Có thể gán một danh sách các username vào đây thay vì gõ tay (phân cách bằng "
@@ -783,7 +795,7 @@ msgstr ""
 "Điểm của bài, từ 0 tới 2. Có thể xấp xỉ điểm như sau: bài có điểm 0.5 sẽ khó "
 "như bài 1 thi HSG QG; 1 điểm = bài 2; 1.5 điểm = bài 3."
 
-#: judge/forms.py:220 judge/forms.py:628
+#: judge/forms.py:220 judge/forms.py:637
 msgid "Only accept alphanumeric characters (a-z, 0-9) and underscore (_)"
 msgstr ""
 "Chỉ có thể chứa các ký tự viết thường (a-z), số (0-9) và dấu gạch dưới (_)"
@@ -843,6 +855,7 @@ msgstr "Link tới bài tập, ví dụ: https://oj.vnoi.info/problem/post"
 #: judge/forms.py:347 judge/views/register.py:26
 #: templates/blog/top-contrib.html:8 templates/blog/top-pp.html:8
 #: templates/contest/official-ranking-table.html:4
+#: templates/contest/ranking.html:289
 #: templates/registration/registration_form.html:144
 #: templates/user/base-users-table.html:5
 msgid "Username"
@@ -890,29 +903,29 @@ msgstr "Mã bài phải khớp regex ^[a-z0-9_]+$"
 msgid "Problem with code already exists."
 msgstr "Mã bài tập đã tồn tại."
 
-#: judge/forms.py:490 judge/models/contest.py:75
+#: judge/forms.py:499 judge/models/contest.py:75
 msgid "Contest id must be ^[a-z0-9_]+$"
 msgstr "id kỳ thi phải khớp regex ^[a-z0-9_]+$"
 
-#: judge/forms.py:495
+#: judge/forms.py:504
 msgid "Contest with key already exists."
 msgstr "Mã kỳ thi đã tồn tại."
 
-#: judge/forms.py:533
+#: judge/forms.py:542
 msgid "Problems must have distinct order."
 msgstr "Các bài tập phải có thứ tự khác nhau."
 
-#: judge/forms.py:582
+#: judge/forms.py:591
 #, python-format
 msgid "Contest duration cannot be longer than %d days"
 msgstr "Thời gian diễn ra contest không được kéo dài quá %d ngày"
 
-#: judge/forms.py:594
+#: judge/forms.py:603
 #, python-format
 msgid "Contest id must starts with `%s`"
 msgstr "Mã kỳ thi phải bắt đầu bằng `%s`"
 
-#: judge/forms.py:623
+#: judge/forms.py:632
 msgid ""
 "Users are able to pratice contest problems even if the contest has ended, so "
 "don't set the contest time too high if you don't really need it."
@@ -3258,7 +3271,7 @@ msgstr "Trang %d của bài viết"
 msgid "Creating new blog post"
 msgstr "Tạo blog mới"
 
-#: judge/views/blog.py:181 judge/views/contests.py:1079
+#: judge/views/blog.py:181 judge/views/contests.py:1102
 #: judge/views/organization.py:289 judge/views/organization.py:588
 #: judge/views/organization.py:612 judge/views/problem.py:798
 #: judge/views/problem.py:830 judge/views/tag.py:182
@@ -3278,7 +3291,7 @@ msgid "Updating blog post"
 msgstr "Cập nhật blog"
 
 #: judge/views/blog.py:213 judge/views/comment.py:130
-#: judge/views/contests.py:1144 judge/views/organization.py:332
+#: judge/views/contests.py:1167 judge/views/organization.py:332
 #: judge/views/problem.py:893
 msgid "Edited from site"
 msgstr "Biên tập từ trang web"
@@ -3312,7 +3325,7 @@ msgid "Editing comment"
 msgstr "Đang chỉnh sửa bình luận"
 
 #: judge/views/contests.py:63 judge/views/contests.py:244
-#: judge/views/contests.py:247 judge/views/contests.py:494
+#: judge/views/contests.py:247 judge/views/contests.py:517
 msgid "No such contest"
 msgstr "Không có kỳ thi nào"
 
@@ -3334,120 +3347,124 @@ msgstr "Không thể tìm thấy kỳ thi nào."
 msgid "Access to contest \"%s\" denied"
 msgstr "Bị từ chối truy cập vào kỳ thi \"%s\""
 
-#: judge/views/contests.py:334
+#: judge/views/contests.py:335
 msgid "Clone Contest"
 msgstr ""
 
-#: judge/views/contests.py:368
+#: judge/views/contests.py:369
 #, python-format
 msgid "Cloned contest from %s"
 msgstr "Kỳ thi được clone từ %s"
 
-#: judge/views/contests.py:410
+#: judge/views/contests.py:381
+msgid "Create contest announcement"
+msgstr "Tạo thông báo kỳ thi"
+
+#: judge/views/contests.py:433
 msgid "Contest not ongoing"
 msgstr "Kỳ thi đang không diễn ra"
 
-#: judge/views/contests.py:411
+#: judge/views/contests.py:434
 #, python-format
 msgid "\"%s\" is not currently ongoing."
 msgstr "\"%s\" đang không diễn ra."
 
-#: judge/views/contests.py:416
+#: judge/views/contests.py:439
 msgid "Banned from joining"
 msgstr "Không thể tham gia"
 
-#: judge/views/contests.py:417
+#: judge/views/contests.py:440
 msgid ""
 "You have been declared persona non grata for this contest. You are "
 "permanently barred from joining this contest."
 msgstr "Bạn đã được coi là cá nhận không tham gia kỳ thi này."
 
-#: judge/views/contests.py:478
+#: judge/views/contests.py:501
 #, python-format
 msgid "Enter access code for \"%s\""
 msgstr "Nhập access code của \"%s\""
 
-#: judge/views/contests.py:495
+#: judge/views/contests.py:518
 #, python-format
 msgid "You are not in contest \"%s\"."
 msgstr "Bạn đang không tham gia kỳ thi \"%s\"."
 
-#: judge/views/contests.py:514
+#: judge/views/contests.py:537
 msgid "ContestCalendar requires integer year and month"
 msgstr "Tháng và năm phải là số nguyên"
 
-#: judge/views/contests.py:554
+#: judge/views/contests.py:577
 #, python-format
 msgid "Contests in %(month)s"
 msgstr "Kỳ thi trong tháng %(month)s"
 
-#: judge/views/contests.py:554
+#: judge/views/contests.py:577
 msgid "F Y"
 msgstr ""
 
-#: judge/views/contests.py:612
+#: judge/views/contests.py:635
 #, python-format
 msgid "%s Statistics"
 msgstr "%s Thống kê"
 
-#: judge/views/contests.py:817
+#: judge/views/contests.py:840
 #, python-format
 msgid "%s Rankings"
 msgstr "Bảng xếp hạng của %s"
 
-#: judge/views/contests.py:845
+#: judge/views/contests.py:868
 msgid "???"
 msgstr ""
 
-#: judge/views/contests.py:888
+#: judge/views/contests.py:911
 #, python-format
 msgid "%s Official Rankings"
 msgstr "Bảng xếp hạng chính thức của %s"
 
-#: judge/views/contests.py:918
+#: judge/views/contests.py:941
 #, python-format
 msgid "Your participation in %s"
 msgstr "Sự tham gia của bạn vào %s"
 
-#: judge/views/contests.py:919
+#: judge/views/contests.py:942
 #, python-format
 msgid "%s's participation in %s"
 msgstr "%s tham gia vào %s"
 
-#: judge/views/contests.py:926
+#: judge/views/contests.py:949
 msgid "Live"
 msgstr "Trực tuyến"
 
-#: judge/views/contests.py:938 templates/contest/contest-tabs.html:16
+#: judge/views/contests.py:961 templates/contest/contest-tabs.html:16
 msgid "Participation"
 msgstr "Tham gia"
 
-#: judge/views/contests.py:983
+#: judge/views/contests.py:1006
 #, python-format
 msgid "%s MOSS Results"
 msgstr ""
 
-#: judge/views/contests.py:1010
+#: judge/views/contests.py:1033
 #, python-format
 msgid "Running MOSS for %s..."
 msgstr ""
 
-#: judge/views/contests.py:1033
+#: judge/views/contests.py:1056
 #, python-format
 msgid "Contest tag: %s"
 msgstr "Thẻ kỳ thi %s"
 
-#: judge/views/contests.py:1048 judge/views/contests.py:1051
+#: judge/views/contests.py:1071 judge/views/contests.py:1074
 #: templates/organization/tabs.html:27
 msgid "Create new contest"
 msgstr "Tạo kỳ thi mới"
 
-#: judge/views/contests.py:1110
+#: judge/views/contests.py:1133
 #, python-brace-format
 msgid "Editing contest {0}"
 msgstr "Sửa kỳ thi {0}"
 
-#: judge/views/contests.py:1113
+#: judge/views/contests.py:1136
 #, python-format
 msgid "Editing contest %s"
 msgstr "Sửa kỳ thi %s"
@@ -4884,7 +4901,7 @@ msgstr "Lời giải"
 msgid "Announcements"
 msgstr "Thông báo"
 
-#: templates/contest/contest.html:290 templates/contest/contest.html:317
+#: templates/contest/contest.html:290 templates/contest/contest.html:324
 msgid "When"
 msgstr "Thời gian"
 
@@ -4892,9 +4909,17 @@ msgstr "Thời gian"
 msgid "Title"
 msgstr "Tiêu đề"
 
-#: templates/contest/contest.html:313 templates/problem/problem.html:370
+#: templates/contest/contest.html:310
+msgid "Add an announcement"
+msgstr "Tạo thông báo"
+
+#: templates/contest/contest.html:320 templates/problem/problem.html:370
 msgid "Clarifications"
 msgstr "Làm rõ"
+
+#: templates/contest/create-announcement.html:18
+msgid "Announce"
+msgstr "Thông báo"
 
 #: templates/contest/edit.html:29 templates/problem/editor.html:9
 msgid "Press Enter to select multiple users..."
@@ -5065,6 +5090,7 @@ msgid "Rank"
 msgstr "Hạng"
 
 #: templates/contest/official-ranking-table.html:5
+#: templates/contest/ranking.html:290
 msgid "Full Name"
 msgstr "Tên đầy đủ"
 
@@ -5106,31 +5132,31 @@ msgstr ""
 msgid "Disqualify"
 msgstr ""
 
-#: templates/contest/ranking.html:112
+#: templates/contest/ranking.html:116
 msgid "Are you sure you want to disqualify this participation?"
 msgstr ""
 
-#: templates/contest/ranking.html:117
+#: templates/contest/ranking.html:121
 msgid "Are you sure you want to un-disqualify this participation?"
 msgstr ""
 
-#: templates/contest/ranking.html:337
+#: templates/contest/ranking.html:343
 msgid "View user participation"
 msgstr "Xem thành viên tham gia"
 
-#: templates/contest/ranking.html:342
+#: templates/contest/ranking.html:348
 msgid "Show full name/organization"
 msgstr "Hiển thị tên/tổ chức"
 
-#: templates/contest/ranking.html:346
+#: templates/contest/ranking.html:352
 msgid "Show virtual participations"
 msgstr "Hiển thị xếp hạng của virtual"
 
-#: templates/contest/ranking.html:348
+#: templates/contest/ranking.html:354
 msgid "Download as CSV"
 msgstr "Tải bảng xếp hạng dưới dạng CSV"
 
-#: templates/contest/ranking.html:363
+#: templates/contest/ranking.html:369
 #, python-format
 msgid ""
 "The scoreboard was frozen with %(frozen_minutes)s minutes remaining - "
@@ -5141,7 +5167,7 @@ msgstr ""
 "bài nộp trong %(frozen_minutes)s phút cuối của kỳ thi vẫn được hiển thị là "
 "đang chấm."
 
-#: templates/contest/ranking.html:370
+#: templates/contest/ranking.html:376
 #, python-format
 msgid ""
 "The scoreboard is cached for %(cache_timeout)s seconds, your submission "
@@ -5150,27 +5176,27 @@ msgstr ""
 "Bảng xếp hạng được lưu trữ trong %(cache_timeout)s giây, bài nộp của bạn có "
 "thể cần một thời gian nhất định trước khi nó xuất hiện ở đây."
 
-#: templates/contest/ranking.html:379
+#: templates/contest/ranking.html:385
 msgid "Cell colours"
 msgstr "Màu ô"
 
-#: templates/contest/ranking.html:384
+#: templates/contest/ranking.html:390
 msgid "Solved first"
 msgstr "Giải đầu tiên"
 
-#: templates/contest/ranking.html:387
+#: templates/contest/ranking.html:393
 msgid "Solved"
 msgstr "Đã giải"
 
-#: templates/contest/ranking.html:390
+#: templates/contest/ranking.html:396
 msgid "Tried, incorrect"
 msgstr "Đã thử, sai"
 
-#: templates/contest/ranking.html:393
+#: templates/contest/ranking.html:399
 msgid "Tried, pending"
 msgstr "Đã thử, đang chấm"
 
-#: templates/contest/ranking.html:396
+#: templates/contest/ranking.html:402
 msgid "Untried"
 msgstr "Chưa thử"
 
@@ -7151,6 +7177,13 @@ msgstr "Số bài"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+#~ msgid ""
+#~ "Ties will be broken by the sum of the last submission time on problems "
+#~ "with a non-zero score."
+#~ msgstr ""
+#~ "Các thí sinh bằng điểm sẽ được phân định bằng tổng thời gian của **lần "
+#~ "nộp bài cuối cùng** trong các bài tập có điểm lớn hơn 0."
 
 #~ msgid "1st virtual participation of this user"
 #~ msgstr "Lần tham gia ảo đầu tiên của người dùng"
