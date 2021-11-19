@@ -379,7 +379,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
 class ContestAnnounce(ContestMixin, TitleMixin, SingleObjectFormView):
     title = _('Create contest announcement')
-    template_name = 'contest/announcement.html'
+    template_name = 'contest/create-announcement.html'
     form_class = ContestAnnouncementForm
 
     def form_valid(self, form):
