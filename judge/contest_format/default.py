@@ -77,4 +77,5 @@ class DefaultContestFormat(BaseContestFormat):
 
     def get_short_form_display(self):
         yield _('The maximum score submission for each problem will be used.')
-        yield _('Ties will be broken by the sum of the last submission time on problems with a non-zero score.')
+        yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
+                'a non-zero score.')

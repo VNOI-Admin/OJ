@@ -125,8 +125,8 @@ class Problem(models.Model):
     )
 
     PROBLEM_TESTCASE_ACCESS = (
-        (ProblemTestcaseAccess.AUTHOR_ONLY, _('Visiable for authors')),
-        (ProblemTestcaseAccess.OUT_CONTEST, _('Visiable if user is not in a contest')),
+        (ProblemTestcaseAccess.AUTHOR_ONLY, _('Visible for authors')),
+        (ProblemTestcaseAccess.OUT_CONTEST, _('Visible if user is not in a contest')),
         (ProblemTestcaseAccess.ALWAYS, _('Always visible')),
     )
 
