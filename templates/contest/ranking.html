@@ -9,6 +9,10 @@
 
 {% block users_media %}
     <style>
+        #users-table .username {
+            min-width: 20em;
+        }
+
         #users-table td {
             height: 2.5em;
         }
@@ -38,51 +42,11 @@
         }
 
         .points {
-            min-width: 4em;
+            min-width: 2.5em;
         }
 
         .disqualified {
             background-color: #ffa8a8 !important;
-        }
-
-        .full-score, .full-score a {
-            font-weight: bold;
-            color: green;
-        }
-
-        .partial-score, .partial-score a {
-            color: green;
-        }
-
-        .failed-score, .failed-score a {
-            font-weight: bold;
-            color: red;
-        }
-
-        .pretest-full-score, .pretest-full-score a {
-            font-weight: bold;
-            color: #2980b9;
-        }
-
-        .pretest-partial-score, .pretest-partial-score a {
-            color: #2980b9;
-        }
-
-        .pretest-failed-score, .pretest-failed-score a {
-            font-weight: bold;
-            color: red;
-        }
-
-        .user-points, .user-points a {
-            font-weight: bold;
-            color: black;
-        }
-
-        .solving-time {
-            color: gray;
-            font-weight: normal;
-            font-size: 0.75em;
-            padding-bottom: -0.75em;
         }
 
         .point-denominator {
@@ -94,15 +58,21 @@
             display: none;
         }
 
-        th.personal-info, td.personal-info {
+        .personal-info {
             display: none;
         }
 
-        td.personal-info a {
+        .personal-info a {
             color: gray !important;
             font-weight: 600;
         }
     </style>
+
+    {% if is_ICPC_format %}
+        {% include "contest/media-icpc-css.html" %}
+    {% else %}
+        {% include "contest/media-css.html" %}
+    {% endif %}
 
     <style>
         .select2-selection__arrow {
@@ -199,14 +169,75 @@
             });
 
             $('#show-personal-info-checkbox').click(function () {
-                $('th.personal-info, td.personal-info').toggle();
-                localStorage.setItem('show-personal-info', $('th.personal-info, td.personal-info').is(':visible') ? 'true' : 'false');
+                $('.personal-info').toggle();
+                localStorage.setItem('show-personal-info', $('.personal-info').is(':visible') ? 'true' : 'false');
             });
 
             if (localStorage.getItem('show-personal-info') == 'true') {
-                $('th.personal-info, td.personal-info').show();
+                $('.personal-info').show();
                 $('#show-personal-info-checkbox').prop('checked', true);
             }
+
+            var contest_key = '{{contest.key}}';
+
+            $("a#cache_alert").click(function () {
+                var $closer = $(this);
+                $closer.parent().hide();
+                localStorage.setItem(`hide-cache-alert-${contest_key}`, 'true');
+            });
+
+            if (localStorage.getItem(`hide-cache-alert-${contest_key}`) == 'true') {
+                $("a#cache_alert").click();
+            }
+
+            $("a#frozen_alert").click(function () {
+                var $closer = $(this);
+                $closer.parent().hide();
+                localStorage.setItem(`hide-frozen-alert-${contest_key}`, 'true');
+            });
+
+            if (localStorage.getItem(`hide-frozen-alert-${contest_key}`) == 'true') {
+                $("a#frozen_alert").click();
+            }
+
+            function timeComparison(sub1, sub2) {
+                if (!sub2) return;
+                return sub1['time'] < sub2['time'];
+            }
+
+            function firstSolve() {
+                let firstSolves = {};
+
+                $('td.full-score a').each(function () {
+                    let cell = $(this)[0];
+                    let href = cell['attributes']['href']['value'];
+                    if (href.includes('submissions')) {
+                        let time = $(this).find('.solving-time').text()
+                        let hrefElement = href.split('/');
+
+                        let problem = hrefElement[hrefElement.length - 2];
+
+                        let curSub = {
+                            'td': $(this).parent(),
+                            'time': time,
+                        }
+
+                        let fs = firstSolves[problem];
+
+                        if (fs == null || timeComparison(curSub, fs)) {
+                            firstSolves[problem] = curSub;
+                        }
+                    }
+                });
+
+                for (let problem in firstSolves) {
+                    firstSolves[problem]['td'].addClass('first-solve');
+                }
+            }
+
+            {% if is_ICPC_format %}
+                firstSolve();
+            {% endif %}
 
             {% if tab == 'ranking' %}
                 {% if show_virtual %}
@@ -246,12 +277,13 @@
                         if ($col.hasClass('rating-column')) {
                             // Skip rating
                             return;
-                        } else if ($col.hasClass('personal-info')) {
-                            // Full name
-                            header.push('Full name');
-                        } else if ($col.hasClass('username') || $col.hasClass('rank')) {
-                            // Username or rank
+                        } else if ($col.hasClass('rank')) {
+                            // Rank
                             header.push(clean_text($col.text()));
+                        } else if ($col.hasClass('username')) {
+                            // Username and Full name
+                            header.push(clean_text('{{ _('Username') }}'));
+                            header.push(clean_text('{{ _('Full Name') }}'));
                         } else {
                             // Point
                             var name = $col.find('.problem-code').text();
@@ -272,9 +304,10 @@
                         if ($col.hasClass('rating-column')) {
                             // Skip rating
                             return;
-                        } else if ($col.hasClass('user-name') || $col.hasClass('personal-info')) {
-                            // Username or Full name
-                            row_data.push(clean_text($col.children().first().text()));
+                        } else if ($col.hasClass('user-name')) {
+                            // Username and Full name
+                            row_data.push(clean_text($col.find('.rating').first().text()));
+                            row_data.push(clean_text($col.find('.personal-info').first().text()));
                         } else {
                             // Point or rank
                             row_data.push(clean_text($col.ignore('.solving-time').text()));
@@ -313,11 +346,62 @@
         {% if tab == 'ranking' %}
             <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
             <label for="show-virtual-participations-checkbox" style="vertical-align: bottom">{{ _('Show virtual participations') }}</label>
+            {% if not is_ICPC_format %}
             <a href="#" onclick="download_table_as_csv()" style="float: right;">{{ _('Download as CSV') }}</a>
+            {% endif %}
         {% endif %}
     </div>
 {% endblock %}
 
 {% block users_table %}
-    {% include "contest/ranking-table.html" %}
+    {{ rendered_ranking_table }}
+{% endblock %}
+
+{% block body %}
+    {% if is_frozen %}
+    <div class="alert-warning">
+        <p style="padding: 10px; text-align: center">
+        <a class="close" id="frozen_alert">x</a>
+        {%- trans frozen_minutes=contest.frozen_last_minutes -%}
+            The scoreboard was frozen with {{frozen_minutes}} minutes remaining - submissions in the last {{frozen_minutes}} minutes of the contest are still shown as pending.
+        {%- endtrans -%}
+    </p></div>
+    {% endif %}
+    {% if not contest.ended and cache_timeout %}
+        <div class="alert-warning alert-dismissable">
+            <p style="padding: 10px; text-align: center">
+            <a class="close" id="cache_alert">x</a>
+            {%- trans -%}
+                The scoreboard is cached for {{cache_timeout}} seconds, your submission might takes some time before it appears here.
+            {%- endtrans -%}
+            </p>
+        </div>
+    {% endif %}
+    {{ super() }}
+    {% if is_ICPC_format %}
+    <table id="cell_legend" class="table" style="width: 10em; margin-left: 0">
+        <thead>
+            <tr>
+                <th scope="col">{{_('Cell colours')}}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="first-solve">
+                <td>{{_('Solved first')}}</td>
+            </tr>
+            <tr class="full-score">
+                <td>{{_('Solved')}}</td>
+            </tr>
+            <tr class="failed-score">
+                <td>{{_('Tried, incorrect')}}</td>
+            </tr>
+            <tr class="pending">
+                <td>{{_('Tried, pending')}}</td>
+            </tr>
+            <tr>
+                <td>{{_('Untried')}}</td>
+            </tr>
+        </tbody>
+    </table>
+    {% endif %}
 {% endblock %}
