@@ -19,8 +19,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
-from judge.models import BlogPost, Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, \
-    Submission, Tag, WebAuthnCredential
+from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, Organization, Problem, \
+    Profile, Solution, Submission, Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -484,6 +484,15 @@ class ProblemCloneForm(Form):
         if Problem.objects.filter(code=code).exists():
             raise ValidationError(_('Problem with code already exists.'))
         return code
+
+
+class ContestAnnouncementForm(forms.ModelForm):
+    class Meta:
+        model = ContestAnnouncement
+        fields = ['title', 'description']
+        widgets = {
+            'description': MartorWidget(attrs={'style': 'width: 100%'}),
+        }
 
 
 class ContestCloneForm(Form):
