@@ -215,9 +215,11 @@ class ICPCContestFormat(DefaultContestFormat):
                 'Each submission before the first maximum score submission will incur a **penalty of %d minutes**.',
                 penalty,
             ) % penalty
-
-        yield _('Ties will be broken by the sum of the last score altering submission time on problems with a non-zero '
-                'score, followed by the time of the last score altering submission.')
+            yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
+                    'a non-zero score (including penalty), followed by the time of the last score altering submission.')
+        else:
+            yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
+                    'a non-zero score, followed by the time of the last score altering submission.')
 
         if self.contest.frozen_last_minutes:
             yield ungettext(
