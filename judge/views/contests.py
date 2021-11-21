@@ -854,7 +854,8 @@ class ContestRanking(ContestRankingBase):
     def get_ranking_queryset(self):
         if self.is_frozen:
             queryset = base_contest_frozen_ranking_queryset(self.object)
-        queryset = base_contest_ranking_queryset(self.object)
+        else:
+            queryset = base_contest_ranking_queryset(self.object)
         if not self.show_virtual:
             queryset = queryset.filter(virtual=ContestParticipation.LIVE)
         return queryset
