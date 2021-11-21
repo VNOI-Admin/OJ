@@ -128,7 +128,7 @@ def martor_image_uploader(request):
     return HttpResponse(data, content_type='application/json')
 
 
-def csrf_failure(request, reason=""):
+def csrf_failure(request, reason=''):
     title = _('CSRF verification failed')
     message = _('This error should not happend in normal operation. '
                 'Mostly this is because we are under a DDOS attack and we need to raise '
