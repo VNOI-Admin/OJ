@@ -127,14 +127,12 @@ def martor_image_uploader(request):
         data = imgur_uploader(image)
     return HttpResponse(data, content_type='application/json')
 
+
 def csrf_failure(request, reason=""):
     title = _('CSRF verification failed')
     message = _('This error should not happend in normal operation. '
                 'Mostly this is because we are under a DDOS attack and we need to raise '
                 'our shield to protect the site from the attack.\n\n'
                 'If you see this error, please return to the homepage and try again.'
-                '<strong>DO NOT hit F5/reload/refresh page, it will cause this error again.</strong>')
-    if reason:
-        message += '\n\n' + reason
-    return generic_message(request, title,
-                                   message)
+                'DO NOT hit F5/reload/refresh page, it will cause this error again.')
+    return generic_message(request, title, message)
