@@ -805,6 +805,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             'is_frozen': self.is_frozen,
             'perms': PermWrapper(self.request.user),
             'can_edit': self.can_edit,
+            'is_ICPC_format': (self.object.format.name == ICPCContestFormat.name),
         })
 
     def get_context_data(self, **kwargs):
