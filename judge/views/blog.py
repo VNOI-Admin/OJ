@@ -186,8 +186,9 @@ class BlogPostCreate(TitleMixin, CreateView):
         return HttpResponseRedirect(post.get_absolute_url())
 
     def dispatch(self, request, *args, **kwargs):
+        # hasattr(self, 'organization') -> admin org
         if request.official_contest_mode or request.user.profile.problem_count < settings.VNOJ_BLOG_MIN_PROBLEM_COUNT \
-                and not request.user.is_superuser:
+                and not request.user.is_superuser and not hasattr(self, 'organization'):
             return generic_message(request, _('Permission denied'),
                                    _('You cannot create blog post.\n'
                                      'Note: You need to solve at least %d problems to create new blog post.')
