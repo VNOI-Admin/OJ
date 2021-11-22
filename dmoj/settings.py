@@ -87,6 +87,8 @@ VNOJ_CONTEST_DURATION_LIMIT = 14
 # Maximum number of test cases that a user can create for a problem
 # without the `create_mass_testcases` permission
 VNOJ_TESTCASE_LIMIT = 50
+# Minimum problem count required to create new blogs
+VNOJ_BLOG_MIN_PROBLEM_COUNT = 10
 
 VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
