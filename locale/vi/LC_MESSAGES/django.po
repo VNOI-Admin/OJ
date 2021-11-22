@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2021-11-19 13:41+0000\n"
+"POT-Creation-Date: 2021-11-22 13:53+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -17,27 +17,27 @@ msgstr ""
 "X-Crowdin-File: django.po\n"
 "X-Crowdin-File-ID: 10\n"
 
-#: dmoj/settings.py:67
+#: dmoj/settings.py:69
 msgid "Normal User"
 msgstr ""
 
-#: dmoj/settings.py:68
+#: dmoj/settings.py:70
 msgid "Problem Setter"
 msgstr ""
 
-#: dmoj/settings.py:69
+#: dmoj/settings.py:71
 msgid "Bedao Team"
 msgstr ""
 
-#: dmoj/settings.py:70
+#: dmoj/settings.py:72
 msgid "Staff"
 msgstr ""
 
-#: dmoj/settings.py:71
+#: dmoj/settings.py:73
 msgid "Banned User"
 msgstr ""
 
-#: dmoj/settings.py:72 templates/base.html:283 templates/comments/list.html:106
+#: dmoj/settings.py:74 templates/base.html:283 templates/comments/list.html:106
 #: templates/contest/contest-list-tabs.html:29
 #: templates/contest/ranking-table.html:52
 #: templates/problem/problem-list-tabs.html:15
@@ -48,15 +48,15 @@ msgstr ""
 msgid "Admin"
 msgstr "Quản trị"
 
-#: dmoj/settings.py:73
+#: dmoj/settings.py:75
 msgid "Teacher"
 msgstr ""
 
-#: dmoj/settings.py:484
+#: dmoj/settings.py:491
 msgid "English"
 msgstr "Tiếng Anh"
 
-#: dmoj/settings.py:485
+#: dmoj/settings.py:492
 msgid "Vietnamese"
 msgstr "Tiếng Việt"
 
@@ -283,7 +283,7 @@ msgstr "Phân loại"
 #: judge/admin/problem.py:134 templates/blog/top-pp.html:9
 #: templates/contest/contest.html:213 templates/contest/edit.html:115
 #: templates/contest/official-ranking-table.html:11
-#: templates/organization/list.html:25 templates/problem/data.html:572
+#: templates/organization/list.html:25 templates/problem/data.html:582
 #: templates/problem/list.html:188 templates/user/base-users-table.html:11
 #: templates/user/user-problems.html:60
 msgid "Points"
@@ -476,7 +476,7 @@ msgstr "Bình luận"
 
 #: judge/comments.py:47 judge/views/comment.py:39 judge/views/ticket.py:56
 msgid "Your part is silent, little toad."
-msgstr "Không có phần nói của ngươi, đồ cóc ghẻ."
+msgstr "Im lặng đi, bạn không có quyền nói ở đây."
 
 #: judge/comments.py:49 templates/comments/list.html:147
 msgid ""
@@ -3271,32 +3271,37 @@ msgstr "Trang %d của bài viết"
 msgid "Creating new blog post"
 msgstr "Tạo blog mới"
 
-#: judge/views/blog.py:181 judge/views/contests.py:1102
+#: judge/views/blog.py:181 judge/views/contests.py:1103
 #: judge/views/organization.py:289 judge/views/organization.py:588
 #: judge/views/organization.py:612 judge/views/problem.py:798
 #: judge/views/problem.py:830 judge/views/tag.py:182
 msgid "Created on site"
 msgstr "Tạo trên trang web"
 
-#: judge/views/blog.py:190 judge/views/blog.py:219 judge/views/user.py:178
+#: judge/views/blog.py:191 judge/views/blog.py:222 judge/views/user.py:178
 msgid "Permission denied"
 msgstr "Từ chối quyền"
 
-#: judge/views/blog.py:191
-msgid "You cannot create blog post."
-msgstr "Bạn không thể tạo blog."
+#: judge/views/blog.py:192
+#, python-format
+msgid ""
+"You cannot create blog post.\n"
+"Note: You need to solve at least %d problems to create new blog post."
+msgstr ""
+"Không thể tạo blog.\n"
+"Lưu ý: Bạn cần giải ít nhất %d bài để có thể tạo blog."
 
-#: judge/views/blog.py:201 judge/views/blog.py:204
+#: judge/views/blog.py:204 judge/views/blog.py:207
 msgid "Updating blog post"
 msgstr "Cập nhật blog"
 
-#: judge/views/blog.py:213 judge/views/comment.py:130
-#: judge/views/contests.py:1167 judge/views/organization.py:332
+#: judge/views/blog.py:216 judge/views/comment.py:130
+#: judge/views/contests.py:1168 judge/views/organization.py:332
 #: judge/views/problem.py:893
 msgid "Edited from site"
 msgstr "Biên tập từ trang web"
 
-#: judge/views/blog.py:220
+#: judge/views/blog.py:223
 msgid "You cannot edit blog post."
 msgstr "Bạn không thể chỉnh sửa blog."
 
@@ -3412,59 +3417,59 @@ msgstr "%s Thống kê"
 msgid "%s Rankings"
 msgstr "Bảng xếp hạng của %s"
 
-#: judge/views/contests.py:868
+#: judge/views/contests.py:869
 msgid "???"
 msgstr ""
 
-#: judge/views/contests.py:911
+#: judge/views/contests.py:912
 #, python-format
 msgid "%s Official Rankings"
 msgstr "Bảng xếp hạng chính thức của %s"
 
-#: judge/views/contests.py:941
+#: judge/views/contests.py:942
 #, python-format
 msgid "Your participation in %s"
 msgstr "Sự tham gia của bạn vào %s"
 
-#: judge/views/contests.py:942
+#: judge/views/contests.py:943
 #, python-format
 msgid "%s's participation in %s"
 msgstr "%s tham gia vào %s"
 
-#: judge/views/contests.py:949
+#: judge/views/contests.py:950
 msgid "Live"
 msgstr "Trực tuyến"
 
-#: judge/views/contests.py:961 templates/contest/contest-tabs.html:16
+#: judge/views/contests.py:962 templates/contest/contest-tabs.html:16
 msgid "Participation"
 msgstr "Tham gia"
 
-#: judge/views/contests.py:1006
+#: judge/views/contests.py:1007
 #, python-format
 msgid "%s MOSS Results"
 msgstr ""
 
-#: judge/views/contests.py:1033
+#: judge/views/contests.py:1034
 #, python-format
 msgid "Running MOSS for %s..."
 msgstr ""
 
-#: judge/views/contests.py:1056
+#: judge/views/contests.py:1057
 #, python-format
 msgid "Contest tag: %s"
 msgstr "Thẻ kỳ thi %s"
 
-#: judge/views/contests.py:1071 judge/views/contests.py:1074
+#: judge/views/contests.py:1072 judge/views/contests.py:1075
 #: templates/organization/tabs.html:27
 msgid "Create new contest"
 msgstr "Tạo kỳ thi mới"
 
-#: judge/views/contests.py:1133
+#: judge/views/contests.py:1134
 #, python-brace-format
 msgid "Editing contest {0}"
 msgstr "Sửa kỳ thi {0}"
 
-#: judge/views/contests.py:1136
+#: judge/views/contests.py:1137
 #, python-format
 msgid "Editing contest %s"
 msgstr "Sửa kỳ thi %s"
@@ -3775,12 +3780,12 @@ msgstr "Sửa dữ liệu cho {0}"
 msgid "Editing data for %s"
 msgstr "Chỉnh sửa các dữ liệu cho %s"
 
-#: judge/views/problem_data.py:232
+#: judge/views/problem_data.py:234
 #, python-format
 msgid "Too many testcases, number of testcases must not exceed %s"
 msgstr "Quá nhiều testcase, số lượng testcase không được vượt quá %s"
 
-#: judge/views/problem_data.py:300 judge/views/problem_data.py:301
+#: judge/views/problem_data.py:302 judge/views/problem_data.py:303
 #, python-format
 msgid "Generated init.yml for %s"
 msgstr "Tạo file Init.yml cho %s"
@@ -4207,14 +4212,34 @@ msgstr "Đóng góp"
 msgid "You have been successfully logged out."
 msgstr "Bạn đã đăng xuất thành công."
 
-#: judge/views/widgets.py:52 judge/views/widgets.py:62
+#: judge/views/widgets.py:53 judge/views/widgets.py:63
 #, python-format
 msgid "Invalid upstream data: %s"
 msgstr "Dữ liệu nguồn không hợp lệ %s"
 
-#: judge/views/widgets.py:72
+#: judge/views/widgets.py:73
 msgid "Bad latitude or longitude"
 msgstr "Sai tọa độ"
+
+#: judge/views/widgets.py:132
+msgid "CSRF verification failed"
+msgstr "Xác thực CSRF không thành công"
+
+#: judge/views/widgets.py:133
+msgid ""
+"This error should not happend in normal operation. Mostly this is because we "
+"are under a DDOS attack and we need to raise our shield to protect the site "
+"from the attack.\n"
+"\n"
+"If you see this error, please return to the homepage and try again.DO NOT "
+"hit F5/reload/refresh page, it will cause this error again."
+msgstr ""
+"Đại đa số trường hợp thì lỗi này không xuất hiện. Đây có thể là do chúng tôi "
+"đang bị tấn công DDOS và chúng tôi phải nâng cao tính bảo mật để bảo vệ "
+"server.\n"
+"\n"
+"Nếu bạn thấy lỗi này, hãy trở về trang chủ. ĐỪNG nhấn F5/tải lại trang, vì "
+"nó sẽ tiếp tục gây ra lỗi này."
 
 #: templates/admin/judge/contest/change_form.html:9
 msgid "Are you sure you want to rejudge ALL the submissions?"
@@ -5419,7 +5444,7 @@ msgid "There are no requests to approve."
 msgstr "Không có yêu cầu để chấp nhận."
 
 #: templates/organization/requests/pending.html:17
-#: templates/problem/data.html:576
+#: templates/problem/data.html:586
 msgid "Delete?"
 msgstr "Xoá?"
 
@@ -5464,30 +5489,39 @@ msgstr "Cập nhật preview"
 msgid "Enter a new code for the cloned problem:"
 msgstr "Nhập mã bài cho bài mới:"
 
-#: templates/problem/data.html:113
+#: templates/problem/data.html:114
 msgid "Expected checker's extension must be in [cpp, py], found "
 msgstr "Trình chấm ngoài phải có đuôi file là cpp hoặc py, không phải "
 
-#: templates/problem/data.html:173
+#: templates/problem/data.html:174
 msgid "Instruction"
 msgstr "Hướng dẫn"
 
-#: templates/problem/data.html:183
+#: templates/problem/data.html:184
 msgid "Please press this button if you have just updated the zip data"
 msgstr "Nhấn nút này nếu bạn mới thay đổi file test"
 
-#: templates/problem/data.html:287 templates/problem/data.html:381
+#: templates/problem/data.html:290
+#, python-brace-format
+msgid "You are about to create more than ${testcase_soft_limit} testcases."
+msgstr "Bạn đang tạo nhiều hơn ${testcase_soft_limit} testcase."
+
+#: templates/problem/data.html:291
+msgid "Please do not create too much testcases if they are not really needed."
+msgstr "Xin đừng tạo quá nhiều testcase nếu nó không thật sự cần thiết."
+
+#: templates/problem/data.html:297 templates/problem/data.html:391
 msgid "Too many testcases"
 msgstr "Quá nhiều testcase"
 
-#: templates/problem/data.html:289 templates/problem/data.html:383
+#: templates/problem/data.html:299 templates/problem/data.html:393
 #, python-brace-format
 msgid "Number of testcases must not exceed ${window.testcase_limit}"
 msgstr ""
 "Quá nhiều testcase, số lượng testcase không được vượt quá ${window."
 "testcase_limit}"
 
-#: templates/problem/data.html:358
+#: templates/problem/data.html:368
 msgid ""
 "No input/output files. Make sure your files are following themis/cms test "
 "format"
@@ -5495,7 +5529,7 @@ msgstr ""
 "Không tìm thấy file input/output. Hãy chắc chắn rằng file test sử dụng "
 "format của themis hoặc cms"
 
-#: templates/problem/data.html:362
+#: templates/problem/data.html:372
 #, python-brace-format
 msgid ""
 "The number of input files (${inFiles.length}) do not match the number of "
@@ -5504,22 +5538,22 @@ msgstr ""
 "Số lượng file input (${inFiles.length}) không khớp với số lượng file output "
 "(${outFiles.length})!"
 
-#: templates/problem/data.html:385
+#: templates/problem/data.html:395
 #, python-brace-format
 msgid ""
 "Because of that, only the first ${window.testcase_limit} testcases will be "
 "saved!"
 msgstr "Do đó, chỉ ${window.testcase_limit} các test đầu tiên sẽ được lưu lại!"
 
-#: templates/problem/data.html:536
+#: templates/problem/data.html:546
 msgid "View YAML"
 msgstr "Xem YAML"
 
-#: templates/problem/data.html:555
+#: templates/problem/data.html:565
 msgid "Test cases have been filled automatically!"
 msgstr "Các test đã được điền tự động!"
 
-#: templates/problem/data.html:557
+#: templates/problem/data.html:567
 msgid ""
 "Test cases have been filled automatically and <strong>not saved yet</"
 "strong>.\n"
@@ -5531,39 +5565,39 @@ msgstr ""
 "<br>\n"
 " Hãy chỉnh sửa bảng dưới đây nếu cần thiết, và nhấn nút `Apply` để lưu."
 
-#: templates/problem/data.html:569
+#: templates/problem/data.html:579
 msgid "Type"
 msgstr "Kiểu"
 
-#: templates/problem/data.html:570
+#: templates/problem/data.html:580
 msgid "Input file"
 msgstr "Tập tin đầu vào"
 
-#: templates/problem/data.html:571
+#: templates/problem/data.html:581
 msgid "Output file"
 msgstr "Tập tin đầu ra"
 
-#: templates/problem/data.html:573
+#: templates/problem/data.html:583
 msgid "Pretest?"
 msgstr ""
 
-#: templates/problem/data.html:574
+#: templates/problem/data.html:584
 msgid "Generator args"
 msgstr "Tham số trình sinh tests"
 
-#: templates/problem/data.html:611
+#: templates/problem/data.html:621
 msgid "Edit generator args"
 msgstr "Sửa tham số trình sinh test"
 
-#: templates/problem/data.html:621
+#: templates/problem/data.html:631
 msgid "Apply!"
 msgstr ""
 
-#: templates/problem/data.html:622
+#: templates/problem/data.html:632
 msgid "Add new case"
 msgstr "Thêm test mới"
 
-#: templates/problem/data.html:624
+#: templates/problem/data.html:634
 msgid "Save"
 msgstr "Lưu"
 
@@ -7177,6 +7211,9 @@ msgstr "Số bài"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+#~ msgid "You cannot create blog post."
+#~ msgstr "Bạn không thể tạo blog."
 
 #~ msgid ""
 #~ "Ties will be broken by the sum of the last submission time on problems "
