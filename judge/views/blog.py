@@ -190,8 +190,8 @@ class BlogPostCreate(TitleMixin, CreateView):
                 and not request.user.is_superuser:
             return generic_message(request, _('Permission denied'),
                                    _('You cannot create blog post.\n'
-                                     'Note: You need to solve at least %d problems to create new blog post.'
-                                     % settings.VNOJ_BLOG_MIN_PROBLEM_COUNT))
+                                     'Note: You need to solve at least %d problems to create new blog post.')
+                                   % settings.VNOJ_BLOG_MIN_PROBLEM_COUNT)
         return super().dispatch(request, *args, **kwargs)
 
 
