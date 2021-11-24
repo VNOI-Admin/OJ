@@ -70,6 +70,11 @@
             color: gray !important;
             font-weight: 600;
         }
+
+        .virtual-participation {
+            color: grey;
+            float: right
+        }
     </style>
 
     {% if is_ICPC_format %}
@@ -213,8 +218,12 @@
                 let firstSolves = {};
 
                 $('td.full-score a').each(function () {
-                    let cell = $(this)[0];
-                    let href = cell['attributes']['href']['value'];
+                    if ($(this).parent().parent().find('.virtual-participation').length) {
+                        // Skip virtual participation
+                        return;
+                    }
+
+                    let href = this['attributes']['href']['value'];
                     if (href.includes('submissions')) {
                         let time = $(this).find('.solving-time').text()
                         let hrefElement = href.split('/');

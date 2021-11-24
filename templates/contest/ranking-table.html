@@ -17,7 +17,7 @@
 
 {% block user_name_display scoped %}
     {% if user.virtual > 0 %}
-    {{ link_user(user) }}<sup style="color:grey; float: right" title="{{ _("%(cnt)s virtual participation of this user", cnt=ordinal(user.virtual)) }}">[{{user.virtual}}]</sup>
+    {{ link_user(user) }}<sup class="virtual-participation" title="{{ _("%(cnt)s virtual participation of this user", cnt=ordinal(user.virtual)) }}">[{{user.virtual}}]</sup>
     {% else %}
         {{ link_user(user) }}
     {% endif %}
