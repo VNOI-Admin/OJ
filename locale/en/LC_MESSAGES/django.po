@@ -3373,6 +3373,8 @@ msgid ""
 "Admin/OJ\"><b>Github</b></a> and <a style=\"color: #808080\" href=\"https://"
 "www.facebook.com/vnoi.wiki\"><b>Facebook</b></a>"
 msgstr ""
+"follow us on <a style=\"color: #808080\" href=\"https://github.com/"
+"winprn/OJ\"><b>Github</b></a>"
 
 #: templates/blog/content.html:13 templates/comments/list.html:75
 #: templates/comments/list.html:90 templates/contest/contest-tabs.html:24

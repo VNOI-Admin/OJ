@@ -4336,9 +4336,8 @@ msgid ""
 "Admin/OJ\"><b>Github</b></a> and <a style=\"color: #808080\" href=\"https://"
 "www.facebook.com/vnoi.wiki\"><b>Facebook</b></a>"
 msgstr ""
-"theo dõi VNOI trên <a style=\"color: #808080\" href=\"https://github.com/"
-"VNOI-Admin/OJ\"><b>Github</b></a> và <a style=\"color: #808080\" href="
-"\"https://www.facebook.com/vnoi.wiki\"><b>Facebook</b></a>"
+"theo dõi LHPOJ trên <a style=\"color: #808080\" href=\"https://github.com/"
+"winprn/OJ\"><b>Github</b></a>"
 
 #: templates/blog/blog-post.html:12
 #, python-brace-format
