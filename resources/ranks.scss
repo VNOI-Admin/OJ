@@ -1,156 +1,179 @@
-.admin a, .admin {
-    color: black !important;
-    font-weight: bold !important;
+.admin a,
+.admin {
+  color: black !important;
+  font-weight: bold !important;
 }
 
-.banned a, .banned {
-    color: black !important;
-    font-weight: normal !important;
-    text-decoration: line-through !important;
+.banned a,
+.banned {
+  color: black !important;
+  font-weight: normal !important;
+  text-decoration: line-through !important;
 }
 
 .banned a::before {
-    content: "🚫";
+  content: '🚫';
 }
 
-.staff a, .staff {
-    color: #ff888a !important;
-    font-weight: bold !important;
+.staff a,
+.staff {
+  color: #ff888a !important;
+  font-weight: bold !important;
 }
 
 .staff a::before {
-    content: "🔥";
+  content: '🔥';
 }
 
-.daor a, .daor {
-    color: #ff0066 !important;
-    font-weight: bold !important;
+.daor a,
+.daor {
+  color: #ff0066 !important;
+  font-weight: bold !important;
 }
 
 .daor a::before {
-    content: "🌸";
+  content: '🌸';
 }
 
 .teacher a::before {
-    content: "🧑‍🏫";
+  content: '🧑‍🏫';
 }
 
 @mixin rate-svg-color($color) {
-    circle {
-        stroke: $color;
-    }
-    path {
-        fill: $color;
-    }
+  circle {
+    stroke: $color;
+  }
+  path {
+    fill: $color;
+  }
 }
 
 svg.rate-box {
-    width: 1.2em;
+  width: 1.2em;
 
-    circle {
-        fill: none;
-        stroke-width: 2px;
-    }
+  circle {
+    fill: none;
+    stroke-width: 2px;
+  }
 
-    &.rate-none {
-        visibility: hidden;
-    }
+  &.rate-none {
+    visibility: hidden;
+  }
 
-    &.rate-newbie {
-        @include rate-svg-color(#808080);
-    }
+  &.rate-newbie {
+    @include rate-svg-color(#808080);
+  }
 
-    &.rate-pupil {
-        @include rate-svg-color(#008000);
-    }
+  &.rate-pupil {
+    @include rate-svg-color(#008000);
+  }
 
-    &.rate-specialist {
-        @include rate-svg-color(#03A89E);
-    }
+  &.rate-specialist {
+    @include rate-svg-color(#03a89e);
+  }
 
-    &.rate-expert {
-        @include rate-svg-color(#0000FF);
-    }
+  &.rate-expert {
+    @include rate-svg-color(#0000ff);
+  }
 
-    &.rate-candidate-master {
-        @include rate-svg-color(#AA00AA);
-    }
+  &.rate-candidate-master {
+    @include rate-svg-color(#aa00aa);
+  }
 
-    &.rate-master, &.rate-international-master {
-        @include rate-svg-color(#FF8C00);
-    }
+  &.rate-master,
+  &.rate-international-master {
+    @include rate-svg-color(#ff8c00);
+  }
 
-    &.rate-grandmaster, &.rate-international-grandmaster, &.rate-legendary-grandmaster {
-        @include rate-svg-color(#FF0000);
-    }
+  &.rate-grandmaster,
+  &.rate-international-grandmaster,
+  &.rate-legendary-grandmaster {
+    @include rate-svg-color(#ff0000);
+  }
 
-    &.rate-target {
-        circle:last-child {
-            stroke: none;
-            fill: #FF0000;
-        }
+  &.rate-target {
+    circle:last-child {
+      stroke: none;
+      fill: #ff0000;
     }
+  }
 }
 
 .rating {
-    font-weight: bold;
+  font-weight: bold;
 
-    a {
-        display: inline-block;
-    }
+  a {
+    display: inline-block;
+  }
 }
 
-.rate-none, .rate-none a {
-    color: #999;
-    font-weight: normal;
+.rate-none,
+.rate-none a {
+  color: #999;
+  font-weight: normal;
 }
 
-.rate-newbie, .rate-newbie a {
-    color: #808080;
+.rate-newbie,
+.rate-newbie a {
+  color: #808080;
 }
 
-.rate-pupil, .rate-pupil a {
-    color: #008000;
+.rate-pupil,
+.rate-pupil a {
+  color: #008000;
 }
 
-.rate-specialist, .rate-specialist a {
-    color: #03A89E;
+.rate-specialist,
+.rate-specialist a {
+  color: #03a89e;
 }
 
-.rate-expert, .rate-expert a {
-    color: #0000FF;
+.rate-expert,
+.rate-expert a {
+  color: #0000ff;
 }
 
-.rate-candidate-master, .rate-candidate-master a {
-    color: #AA00AA;
+.rate-candidate-master,
+.rate-candidate-master a {
+  color: #aa00aa;
 }
 
-.rate-master, .rate-master a,
-.rate-international-master, .rate-international-master a {
-    color: #FF8C00;
+.rate-master,
+.rate-master a,
+.rate-international-master,
+.rate-international-master a {
+  color: #ff8c00;
 }
 
-.rate-grandmaster, .rate-grandmaster a,
-.rate-international-grandmaster, .rate-international-grandmaster a,
-.rate-legendary-grandmaster, .rate-legendary-grandmaster a {
-    color: #FF0000;
+.rate-grandmaster,
+.rate-grandmaster a,
+.rate-international-grandmaster,
+.rate-international-grandmaster a,
+.rate-legendary-grandmaster,
+.rate-legendary-grandmaster a {
+  color: #ff0000;
 }
 
 .rate-legendary-grandmaster a::first-letter {
-    color: black;
+  color: black;
 }
 
 .rate-group {
-    white-space: nowrap;
+  white-space: nowrap;
+  display: inline-block;
+  color: black;
+
+  .rating {
     display: inline-block;
-    color: black;
+  }
 
-    .rating {
-        display: inline-block;
-    }
+  .rate-box {
+    margin-right: 0.2em;
+    vertical-align: bottom;
+  }
+}
 
-    .rate-box {
-        margin-right: 0.2em;
-        vertical-align: bottom;
-    }
+.kda a,
+.kda {
+  color: #ff6961;
 }

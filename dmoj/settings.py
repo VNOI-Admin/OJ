@@ -74,6 +74,7 @@ VNOJ_DISPLAY_RANKS = (
     ('banned', _('Banned User')),
     ('admin', _('Admin')),
     ('teacher', _('Teacher')),
+    ('kda', _('Khánh')),
 )
 
 # Maximum number of organization a single user can be admin, to be able to
