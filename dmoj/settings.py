@@ -33,8 +33,8 @@ ALLOWED_HOSTS = []
 CSRF_FAILURE_VIEW = 'judge.views.widgets.csrf_failure'
 
 SITE_ID = 1
-SITE_NAME = 'DMOJ'
-SITE_LONG_NAME = 'DMOJ: Modern Online Judge'
+SITE_NAME = 'LHPOJ'
+SITE_LONG_NAME = 'LHPOJ: Le Hong Phong HCMC Online Judge'
 SITE_ADMIN_EMAIL = False
 
 DMOJ_REQUIRE_STAFF_2FA = True
@@ -49,7 +49,8 @@ DMOJ_SSL = 1
 # Refer to dmoj.ca/post/103-point-system-rework
 DMOJ_PP_STEP = 0.98514
 DMOJ_PP_ENTRIES = 300
-DMOJ_PP_BONUS_FUNCTION = lambda n: 0.05 * n # 15 * (1 - 0.997 ** n)  # noqa: E731; 100 bai nua diem: 0.9930924
+def DMOJ_PP_BONUS_FUNCTION(n): return 0.05 * n  # 15 * (1 - 0.997 ** n)  # noqa: E731; 100 bai nua diem: 0.9930924
+
 
 VNOJ_ORG_PP_STEP = 0.95
 VNOJ_ORG_PP_ENTRIES = 100
@@ -61,7 +62,7 @@ VNOJ_OFFICIAL_CONTEST_MODE = False
 # Both should be int
 VNOJ_CP_COMMENT = 1  # Each comment vote equals 1 CP
 VNOJ_CP_TICKET = 10  # Each good ticket equals CP
-VNOJ_CP_PROBLEM = 20 # Each suggested problem equal 20 CP
+VNOJ_CP_PROBLEM = 20  # Each suggested problem equal 20 CP
 
 VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
 
@@ -105,7 +106,7 @@ OJ_PROBLEM_PRESET = [
         'regex': r'^https://codeforces\.com/problemset/problem/(?P<contestid>\w+)/(?P<index>\w+)$',
         'codename': 'CF_%s_%s',
         'judge': 'Codeforces',
-        },
+    },
     {
         'regex': r'^https://codeforces\.com/contest/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
         'codename': 'CF_%s_%s',
@@ -148,7 +149,7 @@ OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
 # Urls of discord webhook.
 # https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
 DISCORD_WEBHOOK = {
-    'default': None, # use this link if the specific link not found
+    'default': None,  # use this link if the specific link not found
     'on_new_ticket': None,
     'on_new_comment': None,
     'on_new_problem': None,
@@ -181,7 +182,7 @@ DMOJ_PROBLEM_HOT_PROBLEM_COUNT = 7
 DMOJ_PROBLEM_STATEMENT_DISALLOWED_CHARACTERS = {'“', '”', '‘', '’'}
 DMOJ_RATING_COLORS = True
 DMOJ_EMAIL_THROTTLING = (10, 60)
-VNOJ_DISCORD_WEBHOOK_THROTTLING = (10, 60) # Max 10 messages in 60 seconds
+VNOJ_DISCORD_WEBHOOK_THROTTLING = (10, 60)  # Max 10 messages in 60 seconds
 DMOJ_STATS_LANGUAGE_THRESHOLD = 10
 DMOJ_SUBMISSIONS_REJUDGE_LIMIT = 10
 # Maximum number of submissions a single user can queue without the `spam_submission` permission
@@ -513,8 +514,8 @@ BLEACH_USER_SAFE_ATTRS = {
     'dfn': ['title'],
     'time': ['datetime'],
     'data': ['value'],
-    'td':  ['colspan', 'rowspan'],
-    'th':  ['colspan', 'rowspan'],
+    'td': ['colspan', 'rowspan'],
+    'th': ['colspan', 'rowspan'],
     'audio': ['autoplay', 'controls', 'crossorigin', 'muted', 'loop', 'preload', 'src'],
     'video': ['autoplay', 'controls', 'crossorigin', 'height', 'muted', 'loop', 'poster', 'preload', 'src', 'width'],
     'source': ['src', 'srcset', 'type'],
