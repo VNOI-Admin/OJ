@@ -208,7 +208,7 @@ def contest_announcement_create(sender, instance, created, **kwargs):
 def registration_user_registered(sender, user, request, **kwargs):
     """Automatically activate user if SEND_ACTIVATION_EMAIL is False"""
 
-    if not getattr(settings, 'SEND_ACTIVATION_EMAIL', True):
+    if True:
         # get should never fail here
         # but if it does, we won't catch it so it can show up in our log
         profile = RegistrationProfile.objects.get(user=user)
