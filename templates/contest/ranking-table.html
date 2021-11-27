@@ -90,3 +90,13 @@
 {% block point %}
     {{ user.result_cell }}
 {% endblock %}
+
+{% block after_user_list %}
+    <tr>
+        <td colspan=2>Total AC</td>
+        {% for problem in problems %}
+            <td class="total-ac" id='{{- contest.get_label_for_problem(loop.index0) }}-total'>0</td>
+        {% endfor %}
+        <td colspan=2></td>
+    </tr>
+{% endblock %}

@@ -243,6 +243,19 @@
                 firstSolve();
             {% endif %}
 
+            function totalAC() {
+                let arr = {};
+
+                $('td.full-score').each(function () {
+                    arr[$(this).index() - 2] = (arr[$(this).index() - 2] + 1) || 1;
+                });
+                $('td.total-ac').each(function () {
+                    $(this).text(arr[$(this).index() - 1]);
+                });
+            };
+
+            totalAC();
+
             {% if tab == 'ranking' %}
                 {% if show_virtual %}
                     $('#show-virtual-participations-checkbox').prop('checked', true);
