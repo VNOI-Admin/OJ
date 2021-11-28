@@ -1,13 +1,12 @@
 import errno
 from operator import attrgetter
 
-import celery
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import CASCADE, F, Q, QuerySet, SET_NULL
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Coalesce
@@ -545,7 +544,8 @@ class Problem(models.Model):
     save.alters_data = True
 
     def _rescore(self):
-        celery.current_app.send_task('judge.tasks.submission.rescore_problem', (self.id, ))
+        from judge.tasks import rescore_problem
+        transaction.on_commit(rescore_problem.s(self.id, False).delay)
 
     class Meta:
         permissions = (

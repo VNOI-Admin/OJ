@@ -7,6 +7,7 @@
     <script type="text/javascript">
         window.valid_files = {{valid_files_json}}.sort();
         window.testcase_limit = {{testcase_limit}};
+        window.testcase_soft_limit = {{testcase_soft_limit}};
 
         $(function () {
             function autofill_if_exists($select, file) {
@@ -280,9 +281,18 @@
             });
 
             var $total = $('#id_cases-TOTAL_FORMS');
+            var alerted = false;
 
             $('a#add-case-row').click(function () {
                 total = parseInt($total.val());
+                if (total >= window.testcase_soft_limit) {
+                    if (!alerted) {
+                        s = `{{_('You are about to create more than ${testcase_soft_limit} testcases.')}}`;
+                        s += "\n{{_('Please do not create too much testcases if they are not really needed.')}}";
+                        alert(s);
+                        alerted = true;
+                    }
+                }
                 if (total >= window.testcase_limit) {
                     s = `{{_('Too many testcases')}}: ${total}`;
                     s += '\n';
