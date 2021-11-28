@@ -146,7 +146,7 @@
     {% endif %}
 
     <hr style="padding-bottom: 0.3em">
-    {% if request.in_contest %}
+    {% if request.in_contest and contest_problem %}
         {% set contest = contest_problem.contest %}
         <div><a href="{{ url('contest_user_submissions', contest.key, request.user.username, problem.code) }}">{{ _('My submissions') }}</a></div>
         {% if contest.can_see_full_submission_list(request.user) %}
