@@ -302,7 +302,8 @@ class Profile(models.Model):
     def ban_user(self, reason):
         self.ban_reason = reason
         self.display_rank = 'banned'
-        self.save(update_fields=['ban_reason', 'display_rank'])
+        self.is_unlisted = True
+        self.save(update_fields=['ban_reason', 'display_rank', 'is_unlisted'])
 
         self.user.is_active = False
         self.user.save(update_fields=['is_active'])
