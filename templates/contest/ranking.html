@@ -70,6 +70,11 @@
             color: gray !important;
             font-weight: 600;
         }
+
+        .virtual-participation {
+            color: grey;
+            float: right
+        }
     </style>
 
     {% if is_ICPC_format %}
@@ -213,8 +218,12 @@
                 let firstSolves = {};
 
                 $('td.full-score a').each(function () {
-                    let cell = $(this)[0];
-                    let href = cell['attributes']['href']['value'];
+                    if ($(this).parent().parent().find('.virtual-participation').length) {
+                        // Skip virtual participation
+                        return;
+                    }
+
+                    let href = this['attributes']['href']['value'];
                     if (href.includes('submissions')) {
                         let time = $(this).find('.solving-time').text()
                         let hrefElement = href.split('/');
@@ -242,6 +251,19 @@
             {% if is_ICPC_format %}
                 firstSolve();
             {% endif %}
+
+            function totalAC() {
+                let arr = {};
+
+                $('td.full-score').each(function () {
+                    arr[$(this).index() - 2] = (arr[$(this).index() - 2] + 1) || 1;
+                });
+                $('td.total-ac').each(function () {
+                    $(this).text(arr[$(this).index() - 1]);
+                });
+            };
+
+            totalAC();
 
             {% if tab == 'ranking' %}
                 {% if show_virtual %}

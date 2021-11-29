@@ -607,9 +607,9 @@ msgstr ""
 
 #: judge/contest_format/icpc.py:226
 #, python-format
-msgid "Ranking will be frozen in the **last %d minute**."
-msgid_plural "Ranking will be frozen in the **last %d minutes**."
-msgstr[0] "Bảng xếp hạng sẽ được đóng băng trong **%d phút cuối**."
+msgid "The scoreboard will be frozen in the **last %d minute**."
+msgid_plural "The scoreboard will be frozen in the **last %d minutes**."
+msgstr[0] "Bảng điểm sẽ được đóng băng trong **%d phút cuối**."
 
 #: judge/contest_format/ioi.py:11
 msgid "IOI"
@@ -1164,7 +1164,7 @@ msgstr "Chế độ hiển thị bảng điểm trong quá trình diễn ra kỳ
 #: judge/models/contest.py:106
 msgid "How long should the scoreboard be cached. Set to 0 to disable caching."
 msgstr ""
-"Thời gian lưu bảng xếp hạng trong bộ nhớ đệm. Đặt thành 0 để tắt bộ nhớ đệm."
+"Thời gian lưu bảng điểm trong bộ nhớ đệm. Đặt thành 0 để tắt bộ nhớ đệm."
 
 #: judge/models/contest.py:109
 msgid "Allow contestants to view submission list of others in contest time"
@@ -5188,7 +5188,7 @@ msgid ""
 "submissions in the last %(frozen_minutes)s minutes of the contest are still "
 "shown as pending."
 msgstr ""
-"Bảng xếp hạng đã được đóng băng khi còn lại %(frozen_minutes)s phút - các "
+"Bảng điểm đã được đóng băng khi còn lại %(frozen_minutes)s phút - các "
 "bài nộp trong %(frozen_minutes)s phút cuối của kỳ thi vẫn được hiển thị là "
 "đang chấm."
 
@@ -5198,7 +5198,7 @@ msgid ""
 "The scoreboard is cached for %(cache_timeout)s seconds, your submission "
 "might take some time before it appears here."
 msgstr ""
-"Bảng xếp hạng được lưu trữ trong %(cache_timeout)s giây, bài nộp của bạn có "
+"Bảng điểm được lưu trữ trong %(cache_timeout)s giây, bài nộp của bạn có "
 "thể cần một thời gian nhất định trước khi nó xuất hiện ở đây."
 
 #: templates/contest/ranking.html:385

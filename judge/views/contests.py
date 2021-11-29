@@ -215,6 +215,7 @@ class ContestMixin(object):
         if not context['logo_override_image'] and self.object.organizations.count() == 1:
             context['logo_override_image'] = self.object.organizations.first().logo_override_image
 
+        context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
         return context
 
     def get_object(self, queryset=None):
@@ -278,24 +279,10 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
                                                     default=0, output_field=IntegerField()))) \
             .add_i18n_name(self.request.LANGUAGE_CODE)
 
-        # calculate problem AC rate in contest
-        contest_problem_fields = self.object.contest_problems.defer('problem__description') \
-            .order_by('order') \
-            .annotate(user_count=Count('submission__submission__user',
-                      filter=Q(submission__submission__result='AC') &
-                      Q(submission__submission__date__gt=self.object.start_time),
-                      distinct=True)) \
-            .annotate(submission_count=Count('submission__submission',
-                      filter=Q(submission__submission__date__gt=self.object.start_time))) \
-            .values('points', 'user_count', 'submission_count')
-
-        for p, contest_p in zip(context['contest_problems'], contest_problem_fields):
-            p.points = contest_p['points']
-            p.user_count = contest_p['user_count']
-            if contest_p['submission_count']:
-                p.ac_rate = contest_p['user_count'] / contest_p['submission_count'] * 100
-            else:
-                p.ac_rate = 0
+        # convert to problem points in contest instead of actual points
+        points_list = self.object.contest_problems.values_list('points').order_by('order')
+        for idx, p in enumerate(context['contest_problems']):
+            p.points = points_list[idx][0]
 
         context['metadata'] = {
             'has_public_editorials': any(
@@ -816,9 +803,9 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             'contest': self.object,
             'has_rating': self.object.ratings.exists(),
             'is_frozen': self.is_frozen,
-            'is_ICPC_format': self.object.format.name == ICPCContestFormat.name,
             'perms': PermWrapper(self.request.user),
             'can_edit': self.can_edit,
+            'is_ICPC_format': (self.object.format.name == ICPCContestFormat.name),
         })
 
     def get_context_data(self, **kwargs):
@@ -898,7 +885,6 @@ class ContestRanking(ContestRankingBase):
         context['has_rating'] = self.object.ratings.exists()
         context['show_virtual'] = self.show_virtual
         context['is_frozen'] = self.is_frozen
-        context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
         context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
         return context
 
@@ -960,7 +946,6 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
         context['has_rating'] = False
         context['now'] = timezone.now()
         context['rank_header'] = _('Participation')
-        context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
         return context
 
     def get(self, request, *args, **kwargs):

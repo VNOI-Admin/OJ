@@ -17,7 +17,7 @@
 
 {% block user_name_display scoped %}
     {% if user.virtual > 0 %}
-    {{ link_user(user) }}<sup style="color:grey; float: right" title="{{ _("%(cnt)s virtual participation of this user", cnt=ordinal(user.virtual)) }}">[{{user.virtual}}]</sup>
+    {{ link_user(user) }}<sup class="virtual-participation" title="{{ _("%(cnt)s virtual participation of this user", cnt=ordinal(user.virtual)) }}">[{{user.virtual}}]</sup>
     {% else %}
         {{ link_user(user) }}
     {% endif %}
@@ -65,7 +65,7 @@
 
 {% block before_point_head %}
     {% for problem in problems %}
-        <th class="points header"><a href="{{ url('contest_ranked_submissions', contest.key, problem.problem.code) }}">
+        <th class="points header"><a href="{{ url('problem_detail', problem.problem.code) }}">
             {{- contest.get_label_for_problem(loop.index0) }}
             {% if not is_ICPC_format %}
             <div class="point-denominator">{{ problem.points }}</div>
@@ -89,4 +89,14 @@
 
 {% block point %}
     {{ user.result_cell }}
+{% endblock %}
+
+{% block after_user_list %}
+    <tr>
+        <td colspan=2>Total AC</td>
+        {% for problem in problems %}
+            <td class="total-ac" id='{{- contest.get_label_for_problem(loop.index0) }}-total'>0</td>
+        {% endfor %}
+        <td colspan=2></td>
+    </tr>
 {% endblock %}
