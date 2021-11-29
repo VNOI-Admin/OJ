@@ -191,15 +191,8 @@
         {% endif %}
     </div>
 
-    <div class="content-description">
-        {% cache 3600 'contest_html' contest.id MATH_ENGINE %}
-            {{ contest.description|markdown('contest', MATH_ENGINE)|reference|str|safe }}
-        {% endcache %}
-    </div>
-
     {% set in_contest = contest.is_in_contest(request.user) %}
     {% if in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
-        <hr>
         <div class="contest-problems">
             <h2 style="margin-bottom: 0.2em"><i class="fa fa-fw fa-question-circle"></i>{{ _('Problems') }} </h2>
             <table id="contest-problems" class="table">
@@ -210,10 +203,8 @@
                         <th><i class="fa fa-check"></i></th>
                     {% endif %}
                     <th>{{ _('Problem') }}</th>
-                    <th>{{ _('Points') }}</th>
-                    {% if contest.show_scoreboard %}
-                        <th>{{ _('AC Rate') }}</th>
-                        <th>{{ _('# AC') }}</th>
+                    {% if not is_ICPC_format %}
+                        <th>{{ _('Points') }}</th>
                     {% endif %}
                     {% if metadata.has_public_editorials %}
                         <th>{{ _('Editorials') }}</th>
@@ -262,12 +253,8 @@
                                 {{ problem.i18n_name or problem.name }}
                             {% endif %}
                         </td>
-                        <td>{{ problem.points|floatformat(2) }}</td>
-                        {% if contest.show_scoreboard %}
-                            <td>{{ problem.ac_rate|floatformat(1) }}%</td>
-                            <td>
-                                <a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ problem.user_count }}</a>
-                            </td>
+                        {% if not is_ICPC_format %}
+                            <td>{{ problem.points|floatformat(-2) }}</td>
                         {% endif %}
                         {% if metadata.has_public_editorials %}
                             <td>
@@ -347,11 +334,18 @@
         {% endif %}
     {% endif %}
 
+    <div class="content-description">
+        {% cache 3600 'contest_html' contest.id MATH_ENGINE %}
+            {{ contest.description|markdown('contest', MATH_ENGINE)|reference|str|safe }}
+        {% endcache %}
+    </div>
+
     <hr>
     <span class="social">
         {{ post_to_facebook(request, contest, '<i class="fa fa-facebook-official"></i>') }}
         {{ post_to_twitter(request, SITE_NAME + ':', contest, '<i class="fa fa-twitter"></i>') }}
     </span>
+
 
     {% if not comment_lock %}
         {% include "comments/list.html" %}

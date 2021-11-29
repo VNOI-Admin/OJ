@@ -446,6 +446,15 @@ class ProblemSubmissionsBase(SubmissionsListBase):
     dynamic_update = True
     check_contest_in_access_check = True
 
+    @cached_property
+    def in_contest(self):
+        if super(ProblemSubmissionsBase, self).in_contest:
+            return True
+        if not hasattr(self, 'contest'):
+            return False
+        # return true if user is accessing a problem inside a contest
+        return self.contest.problems.filter(id=self.problem.id).exists()
+
     def get_queryset(self):
         if self.in_contest and not self.contest.contest_problems.filter(problem_id=self.problem.id).exists():
             raise Http404()
