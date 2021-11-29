@@ -186,6 +186,8 @@ class BlogPostCreate(TitleMixin, CreateView):
         return HttpResponseRedirect(post.get_absolute_url())
 
     def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            raise PermissionDenied()
         # hasattr(self, 'organization') -> admin org
         if request.official_contest_mode or request.user.profile.problem_count < settings.VNOJ_BLOG_MIN_PROBLEM_COUNT \
                 and not request.user.is_superuser and not hasattr(self, 'organization'):
