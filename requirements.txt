@@ -12,7 +12,7 @@ django-redis
 dmoj-wpadmin @ git+https://github.com/DMOJ/dmoj-wpadmin.git
 lxml
 Pygments
-mistune
+mistune<2
 social-auth-app-django
 pytz
 django-statici18n
