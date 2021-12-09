@@ -310,10 +310,10 @@
     <div id="nav-shadow"></div>
 </nav>
 {% if request.in_contest %}
-    {% set contest = request.participation.contest %}
+    {% set current_contest = request.participation.contest %}
     <div id="contest-info">
-        <a href="{{ url('contest_view', contest.key) }}">
-            {{ contest.name }} -
+        <a href="{{ url('contest_view', current_contest.key) }}">
+            {{ current_contest.name }} -
             {% if request.participation.spectate %}
                 {{ _('spectating') }}
             {% elif request.participation.end_time %}
@@ -324,8 +324,8 @@
                 {{ _('virtual') }}
             {% endif %}
         </a>
-        {% if contest.can_see_own_scoreboard(request.user) %}
-            <a href="{{ url('contest_ranking', contest.key) }}" style="text-align: center; font-size: 0.7em; color: #DCD427;">
+        {% if current_contest.can_see_own_scoreboard(request.user) %}
+            <a href="{{ url('contest_ranking', current_contest.key) }}" style="text-align: center; font-size: 0.7em; color: #DCD427;">
                 {{ _('Go to Rankings') }}
             </a>
         {% endif %}
