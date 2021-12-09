@@ -145,7 +145,7 @@ class Profile(models.Model):
                                   help_text=_('Show to banned user in login page.'))
     allow_tagging = models.BooleanField(verbose_name=_('Allow tagging'),
                                         help_text=_('User will be allowed to tag problems.'),
-                                        default=False)
+                                        default=True)
     rating = models.IntegerField(null=True, default=None)
     user_script = models.TextField(verbose_name=_('user script'), default='', blank=True, max_length=65536,
                                    help_text=_('User-defined JavaScript for site customization.'))

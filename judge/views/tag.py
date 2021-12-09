@@ -188,6 +188,14 @@ class TagProblemCreate(LoginRequiredMixin, TagAllowingMixin, TitleMixin, FormVie
             form.add_error('problem_url', e)
             return self.form_invalid(form)
 
+    def dispatch(self, request, *args, **kwargs):
+        # Check if user can tag problem or not
+        if request.user.is_authenticated:
+            if request.user.profile.allow_tagging or request.user.has_perm('tagproblem.add_tagproblem'):
+                return super().dispatch(request, *args, **kwargs)
+            else:
+                return generic_message(request, _('Permission Denied'), _('You are not allowed to tag problem.'))
+
 
 class TagProblemAssign(LoginRequiredMixin, TagAllowingMixin, TagProblemMixin, TitleMixin, SingleObjectFormView):
     template_name = 'tag/assign.html'
