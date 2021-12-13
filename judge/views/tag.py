@@ -190,12 +190,10 @@ class TagProblemCreate(LoginRequiredMixin, TagAllowingMixin, TitleMixin, FormVie
 
     def dispatch(self, request, *args, **kwargs):
         # Check if user can tag problem or not
-        if request.user.is_authenticated:
-            if request.user.profile.allow_tagging or request.user.has_perm('tagproblem.add_tagproblem') or \
-                    request.user.profile.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING:
-                return super().dispatch(request, *args, **kwargs)
-            else:
-                return generic_message(request, _('Permission Denied'), _('You are not allowed to tag problem.'))
+        if request.user.is_authenticated and request.user.profile.can_tag_problems:
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return generic_message(request, _('Permission Denied'), _('You are not allowed to tag problem.'))
 
 
 class TagProblemAssign(LoginRequiredMixin, TagAllowingMixin, TagProblemMixin, TitleMixin, SingleObjectFormView):

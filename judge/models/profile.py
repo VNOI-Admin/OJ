@@ -200,6 +200,15 @@ class Profile(models.Model):
     def has_any_solves(self):
         return self.submission_set.filter(points=F('problem__points')).exists()
 
+    @cached_property
+    def can_tag_problems(self):
+        if self.allow_tagging:
+            if self.user.has_perm('tagproblem.add_tagproblem'):
+                return True
+            if self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING:
+                return True
+        return False
+
     _pp_table = [pow(settings.DMOJ_PP_STEP, i) for i in range(settings.DMOJ_PP_ENTRIES)]
 
     def calculate_points(self, table=_pp_table):
