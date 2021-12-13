@@ -145,7 +145,7 @@ class Profile(models.Model):
                                   help_text=_('Show to banned user in login page.'))
     allow_tagging = models.BooleanField(verbose_name=_('Allow tagging'),
                                         help_text=_('User will be allowed to tag problems.'),
-                                        default=False)
+                                        default=True)
     rating = models.IntegerField(null=True, default=None)
     user_script = models.TextField(verbose_name=_('user script'), default='', blank=True, max_length=65536,
                                    help_text=_('User-defined JavaScript for site customization.'))
@@ -199,6 +199,15 @@ class Profile(models.Model):
     @cached_property
     def has_any_solves(self):
         return self.submission_set.filter(points=F('problem__points')).exists()
+
+    @cached_property
+    def can_tag_problems(self):
+        if self.allow_tagging:
+            if self.user.has_perm('judge.add_tagproblem'):
+                return True
+            if self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING:
+                return True
+        return False
 
     _pp_table = [pow(settings.DMOJ_PP_STEP, i) for i in range(settings.DMOJ_PP_ENTRIES)]
 
