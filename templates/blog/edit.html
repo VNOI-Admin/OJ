@@ -29,6 +29,10 @@
             <a class="close">x</a>
             <a href="{{ url('admin:judge_blogpost_change', object.id) }}">{{ _('Edit blog post in admin panel for more options') }}</a>
         </div>
+    {% elif not edit %}
+        <div class="alert alert-warning">
+            {{ _('Please read the <a href="/about/blog/">guidelines</a> before creating a new blog post.') }}
+        </div>
     {% endif %}
     <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
