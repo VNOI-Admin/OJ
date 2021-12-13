@@ -747,7 +747,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         problem.date = timezone.now()
         with revisions.create_revision(atomic=True):
             problem.save(is_clone=True)
-            problem.authors.add(self.request.profile)
+            problem.curators.add(self.request.profile)
             problem.allowed_languages.set(languages)
             problem.language_limits.set(language_limits)
             problem.organizations.set(organizations)
@@ -789,7 +789,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()
-            problem.authors.add(self.request.user.profile)
+            problem.curators.add(self.request.user.profile)
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
             problem.date = timezone.now()
             self.save_statement(form, problem)
