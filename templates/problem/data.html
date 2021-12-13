@@ -7,12 +7,27 @@
     <script type="text/javascript">
         window.valid_files = {{valid_files_json}}.sort();
         window.testcase_limit = {{testcase_limit}};
+        window.testcase_soft_limit = {{testcase_soft_limit}};
 
         $(function () {
             function autofill_if_exists($select, file) {
                 if (!$select.val() && ~window.valid_files.indexOf(file))
-                    $select.val(file).trigger('change');
+                    $select.append(new Option(file, file, true, true)).change();
             }
+
+            var valid_files_options = window.valid_files.map(function (file) {
+                return {id: file, text: file};
+            });
+
+            var select2_settings = {
+                ajax: {
+                    transport: function (params, success) {
+                        success({results: valid_files_options});
+                    },
+                },
+                allowClear: true,
+                placeholder: ''
+            };
 
             var $table = $('#case-table');
             $table.on('add-row', function (e, $tr) {
@@ -22,11 +37,8 @@
                         name: $(this).attr('name'),
                         style: 'width: 100%'
                     })).val();
-                    $select.select2({
-                        data: window.valid_files,
-                        allowClear: true,
-                        placeholder: ''
-                    }).val(val).trigger('change').on('change', function () {
+                    var option = new Option(val, val, true, true);
+                    $select.select2(select2_settings).append(option).change().on('change', function () {
                         var val = $select.val();
                         if (val) {
                             if ($select.attr('id').endsWith('input_file'))
@@ -269,15 +281,24 @@
             });
 
             var $total = $('#id_cases-TOTAL_FORMS');
+            var alerted = false;
 
             $('a#add-case-row').click(function () {
                 total = parseInt($total.val());
+                if (total >= window.testcase_soft_limit) {
+                    if (!alerted) {
+                        s = `{{_('You are about to create more than ${testcase_soft_limit} testcases.')}}`;
+                        s += "\n{{_('Please do not create too much testcases if they are not really needed.')}}";
+                        alert(s);
+                        alerted = true;
+                    }
+                }
                 if (total >= window.testcase_limit) {
                     s = `{{_('Too many testcases')}}: ${total}`;
                     s += '\n';
                     s += `{{_('Number of testcases must not exceed ${window.testcase_limit}')}}`;
                     alert(s);
-                    return false;
+                    return true;
                 }
                 var $tr;
                 $table.find('tbody:first').append($tr = $($table.find('.extra-row-body').html()
@@ -285,7 +306,49 @@
                 $tr.find('.type-column select option[value="C"]').attr('selected', true);
                 $total.val(parseInt($total.val()) + 1);
                 $table.trigger('add-row', [$tr]);
-                window.scrollBy(0, $tr.height());
+                return false;
+            });
+
+            function reordering_row(oldIndex, newIndex, $item) {
+                if (newIndex > oldIndex) {
+                    var order = parseInt($item.parent().children().slice(oldIndex, newIndex).each(function () {
+                        var $order = $(this).find('input[id$=order]');
+                        $order.val(parseInt($order.val()) - 1).siblings('span.order').text($order.val());
+                    }).last().after($item).find('input[id$=order]').val());
+                    $item.find('input[id$=order]').val(order + 1).siblings('span.order').text(order + 1);
+                } else if (newIndex < oldIndex) {
+                    var order = parseInt($item.parent().children().slice(newIndex + 1, oldIndex + 1).each(function () {
+                        var $order = $(this).find('input[id$=order]');
+                        $order.val(parseInt($order.val()) + 1).siblings('span.order').text($order.val());
+                    }).first().before($item).find('input[id$=order]').val());
+                    $item.find('input[id$=order]').val(order - 1).siblings('span.order').text(order - 1);
+                }
+                if (newIndex != oldIndex)
+                    handle_table_reorder();
+            };
+
+            $('a#add-case-first-row').click(function () {
+                var cntRow = parseInt($total.val());
+                $('a#add-case-row').click();
+                if (cntRow == parseInt($total.val()))
+                    return false;
+                var newIndex = -1;
+                var oldIndex = parseInt($total.val()) - 1;
+                $item = $($table.find('tbody:first').children()[oldIndex]);
+                reordering_row(oldIndex, newIndex, $item);
+                return false;
+            });
+
+            $('#case-table tbody').on("click", ".add-case-row-below", function (event) {
+                var cntRow = parseInt($total.val());
+                $('a#add-case-row').click();
+                if (cntRow == parseInt($total.val()))
+                    return false;
+                var $current_row = $(this).parent().parent();
+                var newIndex = parseInt($current_row.find('input[id$=order]').val()) - 1;
+                var oldIndex = parseInt($total.val()) - 1;
+                $item = $($current_row.parent().children()[oldIndex]);
+                reordering_row(oldIndex, newIndex, $item);
                 return false;
             });
 
@@ -319,8 +382,8 @@
                 }
                 // fill cases
                 for (var i = 0; i < n_test; i++) {
-                    $("#id_cases-" + i + "-input_file").val(inFiles[i]).change();
-                    $("#id_cases-" + i + "-output_file").val(outFiles[i]).change();
+                    $("#id_cases-" + i + "-input_file").append(new Option(inFiles[i], inFiles[i], true, true)).change();
+                    $("#id_cases-" + i + "-output_file").append(new Option(outFiles[i], outFiles[i], true, true)).change();
                     $("#id_cases-" + i + "-points").val("1").change();
                 }
                 $("#fill-test-case-noti").show();
@@ -348,21 +411,7 @@
                 },
                 onDrop: function ($item, container, _super) {
                     var newIndex = $item.index();
-                    if (newIndex > oldIndex) {
-                        var order = parseInt($item.parent().children().slice(oldIndex, newIndex).each(function () {
-                            var $order = $(this).find('input[id$=order]');
-                            $order.val(parseInt($order.val()) - 1).siblings('span.order').text($order.val());
-                        }).last().after($item).find('input[id$=order]').val());
-                        $item.find('input[id$=order]').val(order + 1).siblings('span.order').text(order + 1);
-                    } else if (newIndex < oldIndex) {
-                        var order = parseInt($item.parent().children().slice(newIndex + 1, oldIndex + 1).each(function () {
-                            var $order = $(this).find('input[id$=order]');
-                            $order.val(parseInt($order.val()) + 1).siblings('span.order').text($order.val());
-                        }).first().before($item).find('input[id$=order]').val());
-                        $item.find('input[id$=order]').val(order - 1).siblings('span.order').text(order - 1);
-                    }
-                    if (newIndex != oldIndex)
-                        handle_table_reorder();
+                    reordering_row(oldIndex, newIndex, $item);
                     _super($item, container);
                 }
             });
@@ -374,6 +423,15 @@
                 else {
                     $("input[name$='DELETE']").attr('checked', false);
                 }
+            });
+            $('#problem-data-zipfile-clear_id').change(function(){
+                if (this.checked) {
+                    $('input#delete-all').attr('checked', true);
+                }
+                else {
+                    $('input#delete-all').attr('checked', false);
+                }
+                $('input#delete-all').change();
             });
             if (parseInt($total.val()) == 0 && window.valid_files.length) {
                 console.log("Filling testcase...");
@@ -518,6 +576,7 @@
         <table id="case-table" class="table">
             <thead>
             <tr>
+                <th><a id="add-case-first-row" href="#"><i class="fa fa-plus"></i></a></th>
                 <th class="order-column"></th>
                 <th class="type-column">{{ _('Type') }}</th>
                 <th>{{ _('Input file') }}</th>
@@ -545,6 +604,7 @@
                     <tbody class="extra-row-body" style="display: none">
                 {% endif %}
                 <tr data-type="{{ form['type'].value() }}">
+                    <td><a class="add-case-row-below" href="#"><i class="fa fa-plus"></i></a></td>
                     <td>{{ form.id }}{{ form.order.errors }}{{ form.order }}</td>
                     <td class="type-column">{{ form.type.errors }}{{ form.type }}</td>
                     <td{% if not (form.empty_permitted or form['type'].value() != 'C' or
@@ -571,7 +631,7 @@
             </tbody>
         </table>
         <input type="submit" value="{{ _('Apply!') }}" class="button" id="submit-button">
-        <a id="add-case-row" href="#"><i class="fa fa-plus"></i> {{ _('Add new case') }}</a>
+        <a id="add-case-row" href="#" style="display: None;"><i class="fa fa-plus"></i> {{ _('Add new case') }}</a>
     </form>
     <div style="display: none" class="generator-args-editor"><textarea></textarea><a class="button">{{ _('Save') }}</a></div>
 {% endblock %}

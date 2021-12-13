@@ -30,6 +30,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+CSRF_FAILURE_VIEW = 'judge.views.widgets.csrf_failure'
+
 SITE_ID = 1
 SITE_NAME = 'DMOJ'
 SITE_LONG_NAME = 'DMOJ: Modern Online Judge'
@@ -84,7 +86,18 @@ VNOJ_PROBLEM_TIMELIMIT_LIMIT = 5
 VNOJ_CONTEST_DURATION_LIMIT = 14
 # Maximum number of test cases that a user can create for a problem
 # without the `create_mass_testcases` permission
-VNOJ_TESTCASE_LIMIT = 50
+VNOJ_TESTCASE_HARD_LIMIT = 100
+# If a user without the `create_mass_testcases` permission create more than this amount of test
+# they will receive a warning
+VNOJ_TESTCASE_SOFT_LIMIT = 50
+# Minimum problem count required to create new blogs
+VNOJ_BLOG_MIN_PROBLEM_COUNT = 10
+
+VNOJ_TESTCASE_VISIBLE_LENGTH = 60
+
+# Some problems have a lot of testcases, and each testcase
+# has about 5~6 fields, so we need to raise this
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 3000
 
 # List of online judge preset for OJ API
 OJ_PROBLEM_PRESET = [
@@ -575,7 +588,7 @@ MARTOR_UPLOAD_URL_PREFIX = '/martor'
 
 # Directory under MEDIA_ROOT to use to store image uploaded through martor.
 MARTOR_UPLOAD_MEDIA_DIR = 'martor'
-MARTOR_UPLOAD_SAFE_EXTS = {'.jpg', '.png', '.gif'}
+MARTOR_UPLOAD_SAFE_EXTS = {'.jpg', '.png', '.gif', '.svg'}
 
 PDF_STATEMENT_UPLOAD_URL_PREFIX = '/pdf'
 PDF_STATEMENT_UPLOAD_MEDIA_DIR = 'pdf'

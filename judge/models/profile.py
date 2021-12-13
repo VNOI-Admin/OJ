@@ -141,6 +141,8 @@ class Profile(models.Model):
                                default=False)
     is_unlisted = models.BooleanField(verbose_name=_('unlisted user'), help_text=_('User will not be ranked.'),
                                       default=False)
+    ban_reason = models.TextField(null=True, blank=True,
+                                  help_text=_('Show to banned user in login page.'))
     allow_tagging = models.BooleanField(verbose_name=_('Allow tagging'),
                                         help_text=_('User will be allowed to tag problems.'),
                                         default=False)
@@ -175,16 +177,24 @@ class Profile(models.Model):
     notes = models.TextField(verbose_name=_('internal notes'), null=True, blank=True,
                              help_text=_('Notes for administrators regarding this user.'))
     data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
+    username_display_override = models.CharField(max_length=100, blank=True, verbose_name=_('display name override'),
+                                                 help_text=_('Name displayed in place of username'))
 
     @cached_property
     def organization(self):
         # We do this to take advantage of prefetch_related
-        orgs = self.organizations.filter(is_unlisted=False)
+        # Don't need to filter here, because the prefetch_related has already filtered unlisted
+        # orgs
+        orgs = self.organizations.all()
         return orgs[0] if orgs else None
 
     @cached_property
     def username(self):
         return self.user.username
+
+    @cached_property
+    def display_name(self):
+        return self.username_display_override or self.username
 
     @cached_property
     def has_any_solves(self):
@@ -294,6 +304,17 @@ class Profile(models.Model):
         return False
 
     check_totp_code.alters_data = True
+
+    def ban_user(self, reason):
+        self.ban_reason = reason
+        self.display_rank = 'banned'
+        self.is_unlisted = True
+        self.save(update_fields=['ban_reason', 'display_rank', 'is_unlisted'])
+
+        self.user.is_active = False
+        self.user.save(update_fields=['is_active'])
+
+    ban_user.alters_data = True
 
     def get_absolute_url(self):
         return reverse('user_page', args=(self.user.username,))

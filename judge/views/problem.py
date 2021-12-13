@@ -747,7 +747,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         problem.date = timezone.now()
         with revisions.create_revision(atomic=True):
             problem.save(is_clone=True)
-            problem.authors.add(self.request.profile)
+            problem.curators.add(self.request.profile)
             problem.allowed_languages.set(languages)
             problem.language_limits.set(language_limits)
             problem.organizations.set(organizations)
@@ -756,6 +756,12 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             revisions.set_comment(_('Cloned problem from %s') % old_code)
 
         return HttpResponseRedirect(reverse('problem_edit', args=(problem.code,)))
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.object.is_editable_by(request.user):
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
@@ -783,9 +789,8 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()
-            problem.authors.add(self.request.user.profile)
+            problem.curators.add(self.request.user.profile)
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-            problem.partial = True
             problem.date = timezone.now()
             self.save_statement(form, problem)
             problem.save()
@@ -800,6 +805,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
         initial = initial.copy()
         initial['description'] = misc_config(self.request)['misc_config']['description_example']
         initial['memory_limit'] = 262144  # 256 MB
+        initial['partial'] = True
         return initial
 
 
@@ -817,7 +823,6 @@ class ProblemSuggest(ProblemCreate):
             self.object = problem = form.save()
             problem.suggester = self.request.user.profile
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-            problem.partial = True
             problem.date = timezone.now()
             self.save_statement(form, problem)
             problem.save()

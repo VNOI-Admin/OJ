@@ -216,20 +216,22 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         context['valid_files'] = set(context['valid_files'])
         context['all_case_forms'] = chain(context['cases_formset'], [context['cases_formset'].empty_form])
 
-        if self.request.user.has_perm('create_mass_testcases'):
+        if self.request.user.has_perm('judge.create_mass_testcases'):
             context['testcase_limit'] = 9999
+            context['testcase_soft_limit'] = 9999
         else:
-            context['testcase_limit'] = settings.VNOJ_TESTCASE_LIMIT
+            context['testcase_limit'] = settings.VNOJ_TESTCASE_HARD_LIMIT
+            context['testcase_soft_limit'] = settings.VNOJ_TESTCASE_SOFT_LIMIT
         return context
 
     def check_valid(self, data_form, cases_formset):
         if not data_form.is_valid() or not cases_formset.is_valid():
             return False
         number_of_cases = cases_formset.total_form_count() - len(cases_formset.deleted_forms)
-        if number_of_cases > settings.VNOJ_TESTCASE_LIMIT and \
-           not self.request.user.has_perm('create_mass_testcases'):
+        if number_of_cases > settings.VNOJ_TESTCASE_HARD_LIMIT and \
+           not self.request.user.has_perm('judge.create_mass_testcases'):
             error = ValidationError(
-                _('Too many testcases, number of testcases must not exceed %s') % settings.VNOJ_TESTCASE_LIMIT,
+                _('Too many testcases, number of testcases must not exceed %s') % settings.VNOJ_TESTCASE_HARD_LIMIT,
                 code='too_many_testcases',
             )
             cases_formset._non_form_errors.append(error)

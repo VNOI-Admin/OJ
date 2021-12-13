@@ -20,7 +20,7 @@ from django.views.generic.edit import FormView
 
 from judge import event_poster as event
 from judge.models import GeneralIssue, Problem, Profile, Ticket, TicketMessage
-from judge.tasks import on_new_ticket
+from judge.tasks import on_new_ticket, on_new_ticket_message
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.tickets import filter_visible_tickets, own_ticket_filter
 from judge.utils.views import SingleObjectFormView, TitleMixin, paginate_query_context
@@ -53,7 +53,8 @@ class TicketForm(forms.Form):
         if self.request is not None and self.request.user.is_authenticated:
             profile = self.request.profile
             if profile.mute:
-                raise ValidationError(_('Your part is silent, little toad.'))
+                suffix_msg = '' if profile.ban_reason is None else _(' Reason: ') + profile.ban_reason
+                raise ValidationError(_('Your part is silent, little toad.') + suffix_msg)
         return super(TicketForm, self).clean()
 
 
@@ -185,6 +186,7 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
             event.post('ticket-%d' % self.object.id, {
                 'type': 'ticket-message', 'message': message.id,
             })
+        on_new_ticket_message.delay(message.pk, message.ticket.pk, message.body)
         return HttpResponseRedirect('%s#message-%d' % (reverse('ticket', args=[self.object.id]), message.id))
 
     def get_title(self):
@@ -375,7 +377,7 @@ class TicketMessageDataAjax(TicketMixin, SingleObjectMixin, View):
         except TicketMessage.DoesNotExist:
             return HttpResponseBadRequest()
         return JsonResponse({
-            'message': get_template('ticket/message.html').render({'message': message}, request),
+            'message': get_template('ticket/message.html').render({'message': message, 'ticket': ticket}, request),
             'notification': {
                 'title': _('New Ticket Message For: %s') % ticket.title,
                 'body': truncatechars(message.body, 200),

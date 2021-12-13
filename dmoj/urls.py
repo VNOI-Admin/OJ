@@ -204,6 +204,7 @@ urlpatterns = [
     url(r'^data/download/$', user.UserDownloadData.as_view(), name='user_download_data'),
     url(r'^user/(?P<user>[\w-]+)', include([
         url(r'^$', user.UserAboutPage.as_view(), name='user_page'),
+        url(r'^/ban$', user.UserBan.as_view(), name='user_ban'),
         url(r'^/blog/', paged_list_view(user.UserBlogPage, 'user_blog')),
         url(r'^/solved', include([
             url(r'^$', user.UserProblemsPage.as_view(), name='user_problems'),
@@ -241,6 +242,7 @@ urlpatterns = [
         url(r'^/edit$', contests.EditContest.as_view(), name='contest_edit'),
         url(r'^/moss$', contests.ContestMossView.as_view(), name='contest_moss'),
         url(r'^/moss/delete$', contests.ContestMossDelete.as_view(), name='contest_moss_delete'),
+        url(r'^/announce', contests.ContestAnnounce.as_view(), name='contest_announce'),
         url(r'^/clone$', contests.ContestClone.as_view(), name='contest_clone'),
         url(r'^/ranking/$', contests.ContestRanking.as_view(), name='contest_ranking'),
         url(r'^/ranking/ajax$', contests.contest_ranking_ajax, name='contest_ranking_ajax'),

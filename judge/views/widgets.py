@@ -15,6 +15,7 @@ from django.views.generic import View
 from martor.api import imgur_uploader
 
 from judge.models import Submission
+from judge.utils.views import generic_message
 
 __all__ = ['rejudge_submission', 'DetectTimezone']
 
@@ -125,3 +126,13 @@ def martor_image_uploader(request):
     else:
         data = imgur_uploader(image)
     return HttpResponse(data, content_type='application/json')
+
+
+def csrf_failure(request, reason=''):
+    title = _('CSRF verification failed')
+    message = _('This error should not happend in normal operation. '
+                'Mostly this is because we are under a DDOS attack and we need to raise '
+                'our shield to protect the site from the attack.\n\n'
+                'If you see this error, please return to the homepage and try again.'
+                'DO NOT hit F5/reload/refresh page, it will cause this error again.')
+    return generic_message(request, title, message)

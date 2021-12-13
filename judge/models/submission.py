@@ -175,8 +175,11 @@ class Submission(models.Model):
         contest_problem = contest.problem
         contest.points = round(self.case_points / self.case_total * contest_problem.points
                                if self.case_total > 0 else 0, 3)
-        if not contest_problem.partial and contest.points != contest_problem.points:
+
+        partial = (contest_problem.partial and contest_problem.problem.partial)
+        if not partial and contest.points != contest_problem.points:
             contest.points = 0
+
         contest.save()
         contest.participation.recompute_results()
 

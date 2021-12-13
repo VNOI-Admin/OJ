@@ -45,7 +45,7 @@ class DefaultContestFormat(BaseContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def display_user_problem(self, participation, contest_problem):
+    def display_user_problem(self, participation, contest_problem, frozen=False):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
         if format_data:
             return format_html(
@@ -60,7 +60,7 @@ class DefaultContestFormat(BaseContestFormat):
         else:
             return mark_safe('<td></td>')
 
-    def display_participation_result(self, participation):
+    def display_participation_result(self, participation, frozen=False):
         return format_html(
             u'<td class="user-points"><a href="{url}">{points}<div class="solving-time">{cumtime}</div></a></td>',
             url=reverse('contest_all_user_submissions',
@@ -77,4 +77,5 @@ class DefaultContestFormat(BaseContestFormat):
 
     def get_short_form_display(self):
         yield _('The maximum score submission for each problem will be used.')
-        yield _('Ties will be broken by the sum of the last submission time on problems with a non-zero score.')
+        yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
+                'a non-zero score.')

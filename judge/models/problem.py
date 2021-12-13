@@ -1,13 +1,12 @@
 import errno
 from operator import attrgetter
 
-import celery
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import CASCADE, F, Q, QuerySet, SET_NULL
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Coalesce
@@ -110,12 +109,24 @@ class SubmissionSourceAccess:
     FOLLOW = 'F'
 
 
+class ProblemTestcaseAccess:
+    ALWAYS = 'A'
+    OUT_CONTEST = 'C'
+    AUTHOR_ONLY = 'O'
+
+
 class Problem(models.Model):
     SUBMISSION_SOURCE_ACCESS = (
         (SubmissionSourceAccess.FOLLOW, _('Follow global setting')),
         (SubmissionSourceAccess.ALWAYS, _('Always visible')),
         (SubmissionSourceAccess.SOLVED, _('Visible if problem solved')),
         (SubmissionSourceAccess.ONLY_OWN, _('Only own submissions')),
+    )
+
+    PROBLEM_TESTCASE_ACCESS = (
+        (ProblemTestcaseAccess.AUTHOR_ONLY, _('Visible for authors')),
+        (ProblemTestcaseAccess.OUT_CONTEST, _('Visible if user is not in a contest')),
+        (ProblemTestcaseAccess.ALWAYS, _('Always visible')),
     )
 
     code = models.CharField(max_length=32, verbose_name=_('problem code'), unique=True,
@@ -184,6 +195,9 @@ class Problem(models.Model):
     submission_source_visibility_mode = models.CharField(verbose_name=_('submission source visibility'), max_length=1,
                                                          default=SubmissionSourceAccess.FOLLOW,
                                                          choices=SUBMISSION_SOURCE_ACCESS)
+    testcase_visibility_mode = models.CharField(verbose_name=_('Testcase visibility'), max_length=1,
+                                                default=ProblemTestcaseAccess.AUTHOR_ONLY,
+                                                choices=PROBLEM_TESTCASE_ACCESS)
 
     objects = TranslatedProblemQuerySet.as_manager()
     tickets = GenericRelation('Ticket')
@@ -285,6 +299,22 @@ class Problem(models.Model):
 
     def is_subs_manageable_by(self, user):
         return user.is_staff and self.is_rejudgeable_by(user)
+
+    def is_testcase_accessible_by(self, user):
+        if self.testcase_visibility_mode == ProblemTestcaseAccess.ALWAYS:
+            return True
+
+        if not user.is_authenticated:
+            return False
+
+        if self.is_editable_by(user):
+            return True
+
+        if self.testcase_visibility_mode == ProblemTestcaseAccess.OUT_CONTEST:
+            return user.profile.current_contest is None
+
+        # Don't need to check for ProblemTestcaseAccess.AUTHOR_ONLY
+        return False
 
     @classmethod
     def get_visible_problems(cls, user):
@@ -477,6 +507,9 @@ class Problem(models.Model):
 
     def save(self, *args, **kwargs):
         is_clone = kwargs.pop('is_clone', False)
+        # if short_circuit = true the judge will stop judging
+        # as soon as the submission failed a test case
+        self.short_circuit = not self.partial
         super(Problem, self).save(*args, **kwargs)
         # Ignore the custom save if we are cloning a problem
         if is_clone:
@@ -511,7 +544,8 @@ class Problem(models.Model):
     save.alters_data = True
 
     def _rescore(self):
-        celery.current_app.send_task('judge.tasks.submission.rescore_problem', (self.id, ))
+        from judge.tasks import rescore_problem
+        transaction.on_commit(rescore_problem.s(self.id, False).delay)
 
     class Meta:
         permissions = (

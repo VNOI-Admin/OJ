@@ -95,7 +95,7 @@ class AtCoderContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def display_user_problem(self, participation, contest_problem):
+    def display_user_problem(self, participation, contest_problem, frozen=False):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
         if format_data:
             penalty = format_html('<small style="color:red"> ({penalty})</small>',
@@ -123,5 +123,5 @@ class AtCoderContestFormat(DefaultContestFormat):
                 'Each submission before the first maximum score submission will incur a **penalty of %d minutes**.',
                 penalty,
             ) % penalty
-
+            yield _('Ties will be broken by the last score altering submission time (including penalty).')
         yield _('Ties will be broken by the last score altering submission time.')

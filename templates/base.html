@@ -227,9 +227,6 @@
         <clipPath id="rating-clip"><circle cx="8" cy="8" r="7"/></clipPath>
     </defs>
 </svg>
-<div id="nav-background">
-    <div id="nav-shadow"></div>
-</div>
 <nav id="navigation" class="unselectable">
     <div id="nav-container">
         <a id="navicon" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
@@ -277,7 +274,7 @@
                             <span>
                                 <img src="{{ gravatar(request.user, 32) }}" height="24" width="24">{# -#}
                                 <span>
-                                    {%- trans username=request.user.first_name or request.user.username -%}
+                                    {%- trans username=request.user.first_name or request.profile.display_name -%}
                                         Hello, <b>{{ username }}</b>.
                                     {%- endtrans %}
                                 </span>
@@ -310,11 +307,13 @@
             {% endif %}
         </span>
     </div>
+    <div id="nav-shadow"></div>
 </nav>
 {% if request.in_contest %}
+    {% set current_contest = request.participation.contest %}
     <div id="contest-info">
-        <a href="{{ url('contest_view', request.participation.contest.key) }}" style="vertical-align: middle">
-            {{ request.participation.contest.name }} -
+        <a href="{{ url('contest_view', current_contest.key) }}">
+            {{ current_contest.name }} -
             {% if request.participation.spectate %}
                 {{ _('spectating') }}
             {% elif request.participation.end_time %}
@@ -325,6 +324,11 @@
                 {{ _('virtual') }}
             {% endif %}
         </a>
+        {% if current_contest.can_see_own_scoreboard(request.user) %}
+            <a href="{{ url('contest_ranking', current_contest.key) }}" style="text-align: center; font-size: 0.7em; color: #DCD427;">
+                {{ _('Go to Rankings') }}
+            </a>
+        {% endif %}
     </div>
 {% endif %}
 <div id="page-container">
@@ -333,6 +337,9 @@
     </noscript>
     <br>
     <main id="content">
+        {% if i18n_config.top_notification %}
+            {{ render_django(i18n_config.top_notification) }}
+        {% endif %}
         {% block title_row %}
             <h2 style="color:#393630; display:inline">
                 {% block content_title %}

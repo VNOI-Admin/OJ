@@ -224,12 +224,12 @@ header {
 }
 
 #nav-shadow {
-    height: 59px;
-    background: linear-gradient(rgba(0, 0, 0, 0.5), transparent);
+    height: 3px;
+    background: linear-gradient(rgba($widget_black, 0.5), transparent);
 }
 
 #nav-container {
-    // background: $widget_black;
+    background: $widget_black;
 
     // opacity: 0.77
     // filter: alpha(opacity=77)
@@ -237,11 +237,10 @@ header {
 }
 
 #navigation {
-    position: absolute;
+    position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    max-width: 90em;
 }
 
 nav {
@@ -283,8 +282,8 @@ nav {
                 text-decoration: none;
                 vertical-align: middle;
                 color: #FFF;
-                padding: 13px 7px;
-                height: 18px;
+                padding: 14px 7px;
+                height: 20px;
                 display: inline-table;
 
                 &:link {
@@ -299,9 +298,10 @@ nav {
 
                 &.active {
                     color: #FFF;
+
                     border: 5px solid transparent;
                     border-bottom: 5px solid $highlight_blue;
-                    padding: 13px 2px;
+                    padding: 9px 2px;
                 }
 
                 .nav-expand {
@@ -536,7 +536,7 @@ noscript #noscript {
     border-right: 1px solid $border_gray;
     border-left: 1px solid $border_gray;
     background: white;
-    max-width: 90em;
+    max-width: 100em;
 }
 
 // border-bottom: 1px solid rgb(204, 204, 204)
@@ -577,19 +577,10 @@ math {
     #navigation {
         height: 36px;
     }
-    #nav-background {
-        position: absolute;
-        z-index: 3;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 36px;
-        background: $widget_black;
-    }
 
     #nav-shadow {
-        height: 39px;
-        background: linear-gradient(rgba(0, 0, 0, 0.5), transparent);
+        height: 3px;
+        background: linear-gradient(rgba($widget_black, 0.5), transparent);
     }
     #navicon {
         transition-duration: 0.25s;

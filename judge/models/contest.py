@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+from datetime import timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -86,6 +87,9 @@ class Contest(models.Model):
     start_time = models.DateTimeField(verbose_name=_('start time'), db_index=True)
     end_time = models.DateTimeField(verbose_name=_('end time'), db_index=True)
     time_limit = models.DurationField(verbose_name=_('time limit'), blank=True, null=True)
+    frozen_last_minutes = models.IntegerField(verbose_name=_('frozen last minutes'), default=0,
+                                              help_text=_('If set, the scoreboard will be frozen for the last X '
+                                                          'minutes. Only available for ICPC format.'))
     is_visible = models.BooleanField(verbose_name=_('publicly visible'), default=False,
                                      help_text=_('Should be set even for organization-private contests, where it '
                                                  'determines whether the contest is visible to members of the '
@@ -98,6 +102,12 @@ class Contest(models.Model):
     scoreboard_visibility = models.CharField(verbose_name=_('scoreboard visibility'), default=SCOREBOARD_VISIBLE,
                                              max_length=1, help_text=_('Scoreboard visibility through the duration '
                                                                        'of the contest'), choices=SCOREBOARD_VISIBILITY)
+    scoreboard_cache_timeout = models.PositiveIntegerField(verbose_name=('scoreboard cache timeout'), default=0,
+                                                           help_text=_('How long should the scoreboard be cached. '
+                                                                       'Set to 0 to disable caching.'))
+    show_submission_list = models.BooleanField(default=True,
+                                               help_text=_('Allow contestants to view submission list '
+                                                           'of others in contest time'))
     use_clarifications = models.BooleanField(verbose_name=_('no comments'),
                                              help_text=_('Use clarification system instead of comments.'),
                                              default=True)
@@ -233,6 +243,33 @@ class Contest(models.Model):
             return True
         return False
 
+    def can_see_full_submission_list(self, user):
+        """Logic:
+            - If scoreboard is not visible -> False
+            - If user can edit the contest -> True
+            - If contest is frozen -> False
+            - If contest is ended -> True
+            - If show_submission_list -> True
+            - Otherwise -> False
+        """
+        # If the user cannot view the full scoreboard, then they should not be
+        # able to view the submission list of others.
+        if not self.can_see_full_scoreboard(user):
+            return False
+        if user.is_authenticated and user.profile.id in self.editor_ids:
+            return True
+        if user.has_perm('judge.edit_all_contest'):
+            return True
+        # Because we have not yet implemented the freezing logic for the submission list
+        # so we should disable the submission list if the contest is frozen
+        if self.is_frozen:
+            return False
+        if self.ended:
+            return True
+        if self.show_submission_list:
+            return True
+        return False
+
     def has_completed_contest(self, user):
         if user.is_authenticated:
             participation = self.users.filter(virtual=ContestParticipation.LIVE, user=user.profile).first()
@@ -263,6 +300,11 @@ class Contest(models.Model):
     @cached_property
     def can_join(self):
         return self.start_time <= self._now
+
+    @cached_property
+    def frozen_time(self):
+        # Don't need to check self.frozen_last_minutes != 0
+        return self.end_time - timedelta(minutes=self.frozen_last_minutes)
 
     @property
     def time_before_start(self):
@@ -316,6 +358,15 @@ class Contest(models.Model):
         self.save()
 
     update_user_count.alters_data = True
+
+    @property
+    def is_frozen(self):
+        if self.frozen_last_minutes == 0:
+            return False
+        if self.format.name == contest_format.ICPCContestFormat.name:
+            # Keep frozen even if the contest is ended
+            return self._now >= self.frozen_time
+        return False
 
     class Inaccessible(Exception):
         pass
@@ -470,9 +521,14 @@ class ContestParticipation(models.Model):
     real_start = models.DateTimeField(verbose_name=_('start time'), default=timezone.now, db_column='start')
     score = models.FloatField(verbose_name=_('score'), default=0, db_index=True)
     cumtime = models.PositiveIntegerField(verbose_name=_('cumulative time'), default=0)
+    frozen_score = models.FloatField(verbose_name=_('frozen score'), default=0, db_index=True,
+                                     help_text=_('Frozen score in the scoreboard.'))
+    frozen_cumtime = models.PositiveIntegerField(verbose_name=_('frozen cumulative time'), default=0,
+                                                 help_text=_('Frozen cumulative time in the scoreboard.'))
     is_disqualified = models.BooleanField(verbose_name=_('is disqualified'), default=False,
                                           help_text=_('Whether this participation is disqualified.'))
     tiebreaker = models.FloatField(verbose_name=_('tie-breaking field'), default=0.0)
+    frozen_tiebreaker = models.FloatField(verbose_name=_('frozen tie-breaking field'), default=0.0)
     virtual = models.IntegerField(verbose_name=_('virtual participation id'), default=LIVE,
                                   help_text=_('0 means non-virtual, otherwise the n-th virtual participation.'))
     format_data = JSONField(verbose_name=_('contest format specific data'), null=True, blank=True)
@@ -540,6 +596,10 @@ class ContestParticipation(models.Model):
         end = self.end_time
         if end is not None and end >= self._now:
             return end - self._now
+
+    @property
+    def is_frozen(self):
+        return self.contest.is_frozen
 
     def __str__(self):
         if self.spectate:

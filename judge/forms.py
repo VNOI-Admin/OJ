@@ -19,8 +19,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
-from judge.models import BlogPost, Contest, ContestProblem, Language, Organization, Problem, Profile, Solution, \
-    Submission, Tag, WebAuthnCredential
+from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, Organization, Problem, \
+    Profile, Solution, Submission, Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -137,7 +137,7 @@ class ProblemEditForm(ModelForm):
     required_css_class = 'required'
 
     def __init__(self, *args, **kwargs):
-        org_pk = kwargs.pop('org_pk', None)
+        self.org_pk = org_pk = kwargs.pop('org_pk', None)
         self.user = kwargs.pop('user', None)
         super(ProblemEditForm, self).__init__(*args, **kwargs)
 
@@ -155,6 +155,17 @@ class ProblemEditForm(ModelForm):
             str(self.fields['testers'].help_text) + ' ' + \
             str(_('You can paste a list of usernames into this box.'))
 
+    def clean_code(self):
+        code = self.cleaned_data['code']
+        if self.org_pk is None:
+            return code
+        org = Organization.objects.get(pk=self.org_pk)
+        prefix = ''.join(x for x in org.slug.lower() if x.isalpha()) + '_'
+        if not code.startswith(prefix):
+            raise forms.ValidationError(_('Problem id code must starts with `%s`') % (prefix, ),
+                                        'problem_id_invalid_prefix')
+        return code
+
     def clean_statement_file(self):
         content = self.files.get('statement_file', None)
         if content is not None:
@@ -169,7 +180,7 @@ class ProblemEditForm(ModelForm):
         return content
 
     def clean_time_limit(self):
-        has_high_perm = self.user and self.user.has_perm('high_problem_timelimit')
+        has_high_perm = self.user and self.user.has_perm('judge.high_problem_timelimit')
         timelimit = self.cleaned_data['time_limit']
         if timelimit and timelimit > settings.VNOJ_PROBLEM_TIMELIMIT_LIMIT and not has_high_perm:
             raise forms.ValidationError(_('You cannot set time limit higher than %d seconds')
@@ -179,11 +190,13 @@ class ProblemEditForm(ModelForm):
 
     class Meta:
         model = Problem
-        fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points',
-                  'statement_file', 'source', 'types', 'group', 'description', 'testers']
+        fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points', 'partial',
+                  'statement_file', 'source', 'types', 'group', 'testcase_visibility_mode',
+                  'description', 'testers']
         widgets = {
             'types': Select2MultipleWidget,
             'group': Select2Widget,
+            'testcase_visibility_mode': Select2Widget,
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
             'testers': HeavySelect2MultipleWidget(
                 data_view='profile_select2',
@@ -349,8 +362,20 @@ class CustomAuthenticationForm(AuthenticationForm):
         except User.DoesNotExist:
             user = None
         if user is not None:
-            super(CustomAuthenticationForm, self).confirm_login_allowed(user)
+            self.confirm_login_allowed(user)
         return super(CustomAuthenticationForm, self).clean()
+
+    def confirm_login_allowed(self, user):
+        if not user.is_active and user.profile.ban_reason:
+            raise forms.ValidationError(
+                _('This account has been banned. Reason: %s') % user.profile.ban_reason,
+                code='banned',
+            )
+        super(CustomAuthenticationForm, self).confirm_login_allowed(user)
+
+
+class UserBanForm(Form):
+    ban_reason = CharField()
 
 
 class NoAutoCompleteCharField(forms.CharField):
@@ -461,6 +486,15 @@ class ProblemCloneForm(Form):
         return code
 
 
+class ContestAnnouncementForm(forms.ModelForm):
+    class Meta:
+        model = ContestAnnouncement
+        fields = ['title', 'description']
+        widgets = {
+            'description': MartorWidget(attrs={'style': 'width: 100%'}),
+        }
+
+
 class ContestCloneForm(Form):
     key = CharField(max_length=32, validators=[RegexValidator('^[a-z0-9_]+$', _('Contest id must be ^[a-z0-9_]+$'))])
 
@@ -528,7 +562,7 @@ class ContestForm(ModelForm):
     required_css_class = 'required'
 
     def __init__(self, *args, **kwargs):
-        org_pk = kwargs.pop('org_pk', None)
+        self.org_pk = org_pk = kwargs.pop('org_pk', None)
         self.user = kwargs.pop('user', None)
         super(ContestForm, self).__init__(*args, **kwargs)
 
@@ -551,13 +585,24 @@ class ContestForm(ModelForm):
         start_time = cleaned_data.get('start_time')
         end_time = cleaned_data.get('end_time')
 
-        has_long_perm = self.user and self.user.has_perm('long_contest_duration')
+        has_long_perm = self.user and self.user.has_perm('judge.long_contest_duration')
         if end_time and start_time and \
            (end_time - start_time).days > settings.VNOJ_CONTEST_DURATION_LIMIT and not has_long_perm:
             raise forms.ValidationError(_('Contest duration cannot be longer than %d days')
                                         % settings.VNOJ_CONTEST_DURATION_LIMIT,
                                         'contest_duration_too_long')
         return cleaned_data
+
+    def clean_key(self):
+        key = self.cleaned_data['key']
+        if self.org_pk is None:
+            return key
+        org = Organization.objects.get(pk=self.org_pk)
+        prefix = ''.join(x for x in org.slug.lower() if x.isalpha()) + '_'
+        if not key.startswith(prefix):
+            raise forms.ValidationError(_('Contest id must starts with `%s`') % (prefix, ),
+                                        'contest_id_invalid_prefix')
+        return key
 
     class Meta:
         model = Contest
