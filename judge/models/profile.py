@@ -205,7 +205,7 @@ class Profile(models.Model):
         if self.allow_tagging:
             if self.user.has_perm('judge.add_tagproblem'):
                 return True
-            if self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING:
+            if self.rating is not None and self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING:
                 return True
         return False
 
