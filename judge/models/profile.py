@@ -203,7 +203,7 @@ class Profile(models.Model):
     @cached_property
     def can_tag_problems(self):
         if self.allow_tagging:
-            if self.user.has_perm('tagproblem.add_tagproblem'):
+            if self.user.has_perm('judge.add_tagproblem'):
                 return True
             if self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING:
                 return True
