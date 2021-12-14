@@ -25,7 +25,7 @@ from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message,
 
 class TagAllowingMixin(object):
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated or (not request.profile.allow_tagging and not request.user.is_superuser):
+        if not request.user.is_authenticated or (not request.profile.can_tag_problems):
             return generic_message(request, _('Cannot tag'),
                                    _('You are not allowed to tag problem.'))
         return super(TagAllowingMixin, self).dispatch(request, *args, **kwargs)
@@ -187,13 +187,6 @@ class TagProblemCreate(LoginRequiredMixin, TagAllowingMixin, TitleMixin, FormVie
         except (APIError, IntegrityError) as e:
             form.add_error('problem_url', e)
             return self.form_invalid(form)
-
-    def dispatch(self, request, *args, **kwargs):
-        # Check if user can tag problem or not
-        if request.user.is_authenticated and request.user.profile.can_tag_problems:
-            return super().dispatch(request, *args, **kwargs)
-        else:
-            return generic_message(request, _('Permission Denied'), _('You are not allowed to tag problem.'))
 
 
 class TagProblemAssign(LoginRequiredMixin, TagAllowingMixin, TagProblemMixin, TitleMixin, SingleObjectFormView):
