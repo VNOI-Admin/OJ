@@ -124,4 +124,5 @@ class AtCoderContestFormat(DefaultContestFormat):
                 penalty,
             ) % penalty
             yield _('Ties will be broken by the last score altering submission time (including penalty).')
-        yield _('Ties will be broken by the last score altering submission time.')
+        else:
+            yield _('Ties will be broken by the last score altering submission time.')
