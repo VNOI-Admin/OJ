@@ -99,7 +99,7 @@ class ProfileForm(ModelForm):
         super(ProfileForm, self).__init__(*args, **kwargs)
         if not user.has_perm('judge.edit_all_organization'):
             self.fields['organizations'].queryset = Organization.objects.filter(
-                Q(is_open=True) | Q(id__in=user.profile.organizations.all()),
+                Q(is_open=True, is_unlisted=False) | Q(id__in=user.profile.organizations.all()),
             )
         if not self.fields['organizations'].queryset:
             self.fields.pop('organizations')
