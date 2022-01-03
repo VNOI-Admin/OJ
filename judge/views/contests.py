@@ -1181,7 +1181,7 @@ class ExportContestSubmissions(ContestMixin, SingleObjectMixin, View):
         return response
 
     def export_contest_submissions(self, contest):
-        output_dir = tempfile.mktemp(suffix=".zip")
+        output_dir = tempfile.mktemp(suffix='.zip')
 
         users = contest.users.filter(virtual=ContestParticipation.LIVE).select_related('user__user')
 
