@@ -1,5 +1,6 @@
 import json
 import os
+import zipfile
 import tempfile
 from calendar import Calendar, SUNDAY
 from collections import defaultdict, namedtuple
@@ -1172,30 +1173,24 @@ class ExportContestSubmissions(ContestMixin, SingleObjectMixin, View):
 
     def get(self, request, *args, **kwargs):
         contest = self.get_object()
-        output_dir, submission_zip = self.export_contest_submissions(contest)
-        response = HttpResponse(File(open(submission_zip, 'rb')),
+        output_dir = self.export_contest_submissions(contest)
+        response = HttpResponse(File(open(output_dir, 'rb')),
                                 content_type='application/zip')
-        rmtree(output_dir)
-        os.remove(submission_zip)
+        os.remove(output_dir)
         response['Content-Disposition'] = 'attachment; filename="%s-submissions.zip"' % (contest.key)
         return response
 
     def export_contest_submissions(self, contest):
-        output_dir = tempfile.mkdtemp()
+        output_dir = tempfile.mktemp(suffix=".zip")
 
         users = contest.users.filter(virtual=ContestParticipation.LIVE).select_related('user__user')
 
-        user_count = 0
-        submission_count = 0
+        submission_zip = zipfile.ZipFile(output_dir, 'w', zipfile.ZIP_DEFLATED)
 
         for user in users:
-            user_count += 1
-
             username = user.user.user.username
-            user_dir = os.path.join(output_dir, username)
+            user_dir = username
             user_history_dir = os.path.join(user_dir, '$History')
-
-            os.makedirs(user_dir)
 
             problems = set()
             submissions = user.submissions.filter(submission__language__file_only=False).order_by('-id') \
@@ -1204,17 +1199,12 @@ class ExportContestSubmissions(ContestMixin, SingleObjectMixin, View):
                              'submission__language__extension', 'submission__id')
 
             for problem, source, ext, sub_id in submissions:
-                submission_count += 1
-
                 if problem not in problems:  # Last submission
                     problems.add(problem)
-                    with open(os.path.join(user_dir, f'{problem}.{ext}'), 'w') as f:
-                        f.write(source)
+                    submission_zip.writestr(os.path.join(user_dir, f'{problem}.{ext}'), source)
                 else:
-                    os.makedirs(user_history_dir, exist_ok=True)
-                    with open(os.path.join(user_history_dir, f'{problem}_{sub_id}.{ext}'), 'w') as f:
-                        f.write(source)
+                    submission_zip.writestr(os.path.join(user_history_dir, f'{problem}_{sub_id}.{ext}'), source)
 
-        submission_zip = make_archive(output_dir, 'zip', output_dir)
+        submission_zip.close()
 
-        return output_dir, submission_zip
+        return output_dir
