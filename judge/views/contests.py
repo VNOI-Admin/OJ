@@ -16,6 +16,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.core.files import File
+from django.core.files.storage import default_storage
 from django.db import IntegrityError
 from django.db.models import Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.expressions import CombinedExpression
@@ -1193,17 +1194,29 @@ class ExportContestSubmissions(ContestMixin, SingleObjectMixin, View):
             user_history_dir = os.path.join(user_dir, '$History')
 
             problems = set()
-            submissions = user.submissions.filter(submission__language__file_only=False).order_by('-id') \
+            submissions = user.submissions.order_by('-id') \
                 .select_related('problem__problem', 'submission__source', 'submission__language') \
                 .values_list('problem__problem__code', 'submission__source__source',
-                             'submission__language__extension', 'submission__id')
+                             'submission__language__extension', 'submission__id', 'language__file_only')
 
-            for problem, source, ext, sub_id in submissions:
+            for problem, source, ext, sub_id, file_only in submissions:
                 if problem not in problems:  # Last submission
                     problems.add(problem)
-                    submission_zip.writestr(os.path.join(user_dir, f'{problem}.{ext}'), source)
+                    if file_only:
+                        # Get the basename of the source as it is an URL
+                        filename = os.path.basename(source)
+                        submission_zip.write(
+                            default_storage.open(os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, filename)),
+                            os.path.join(user_dir, f'{problem}.{ext}')
+                        )
+                        pass
+                    else:
+                        submission_zip.writestr(os.path.join(user_dir, f'{problem}.{ext}'), source)
                 else:
-                    submission_zip.writestr(os.path.join(user_history_dir, f'{problem}_{sub_id}.{ext}'), source)
+                    if file_only:
+                        pass
+                    else:
+                        submission_zip.writestr(os.path.join(user_history_dir, f'{problem}_{sub_id}.{ext}'), source)
 
         submission_zip.close()
 
