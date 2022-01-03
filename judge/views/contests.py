@@ -1,13 +1,12 @@
 import json
 import os
-import zipfile
 import tempfile
+import zipfile
 from calendar import Calendar, SUNDAY
 from collections import defaultdict, namedtuple
 from datetime import date, datetime, time, timedelta
 from functools import partial
 from operator import attrgetter, itemgetter
-from shutil import make_archive, rmtree
 
 from django import forms
 from django.conf import settings
@@ -1207,7 +1206,7 @@ class ExportContestSubmissions(ContestMixin, SingleObjectMixin, View):
                         filename = os.path.basename(source)
                         submission_zip.write(
                             default_storage.open(os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, filename)),
-                            os.path.join(user_dir, f'{problem}.{ext}')
+                            os.path.join(user_dir, f'{problem}.{ext}'),
                         )
                         pass
                     else:
