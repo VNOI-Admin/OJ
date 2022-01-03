@@ -1,4 +1,7 @@
+import os
 import json
+import tempfile
+from shutil import make_archive, rmtree
 from calendar import Calendar, SUNDAY
 from collections import defaultdict, namedtuple
 from datetime import date, datetime, time, timedelta
@@ -9,6 +12,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.context_processors import PermWrapper
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.files import File
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.db import IntegrityError
@@ -1157,3 +1161,60 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(object=self.object))
+
+
+class ExportContestSubmissions(ContestMixin, SingleObjectMixin, View):
+    def get_object(self, queryset=None):
+        contest = super().get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return contest
+
+    def get(self, request, *args, **kwargs):
+        contest = self.get_object()
+        output_dir, submission_zip = self.export_contest_submissions(contest)
+        response = HttpResponse(File(open(submission_zip, 'rb')),
+                                content_type='application/zip')
+        rmtree(output_dir)
+        os.remove(submission_zip)
+        response['Content-Disposition'] = 'attachment; filename="%s-submissions.zip"' % (contest.key)
+        return response
+
+    def export_contest_submissions(self, contest):
+        output_dir = tempfile.mkdtemp()
+
+        users = contest.users.filter(virtual=ContestParticipation.LIVE).select_related('user__user')
+
+        user_count = 0
+        submission_count = 0
+
+        for user in users:
+            user_count += 1
+
+            username = user.user.user.username
+            user_dir = os.path.join(output_dir, username)
+            user_history_dir = os.path.join(user_dir, '$History')
+
+            os.makedirs(user_dir)
+
+            problems = set()
+            submissions = user.submissions.filter(submission__language__file_only=False).order_by('-id') \
+                .select_related('problem__problem', 'submission__source', 'submission__language') \
+                .values_list('problem__problem__code', 'submission__source__source',
+                             'submission__language__extension', 'submission__id')
+
+            for problem, source, ext, sub_id in submissions:
+                submission_count += 1
+
+                if problem not in problems:  # Last submission
+                    problems.add(problem)
+                    with open(os.path.join(user_dir, f'{problem}.{ext}'), 'w') as f:
+                        f.write(source)
+                else:
+                    os.makedirs(user_history_dir, exist_ok=True)
+                    with open(os.path.join(user_history_dir, f'{problem}_{sub_id}.{ext}'), 'w') as f:
+                        f.write(source)
+
+        submission_zip = make_archive(output_dir, 'zip', output_dir)
+
+        return output_dir, submission_zip

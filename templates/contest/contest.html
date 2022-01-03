@@ -194,7 +194,10 @@
     {% set in_contest = contest.is_in_contest(request.user) %}
     {% if in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
         <div class="contest-problems">
-            <h2 style="margin-bottom: 0.2em"><i class="fa fa-fw fa-question-circle"></i>{{ _('Problems') }} </h2>
+            <h2 style="margin-bottom: 0.2em; float:left;"><i class="fa fa-fw fa-question-circle"></i>{{ _('Problems') }} </h2>
+            {% if can_edit %}
+                <a class="button" style="float:right" href="{{ url('contest_submissions_export', contest.key) }}">Export submissions</a>
+            {% endif %}
             <table id="contest-problems" class="table">
                 <thead>
                 <tr>
