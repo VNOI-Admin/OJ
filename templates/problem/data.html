@@ -2,6 +2,7 @@
 
 {% block js_media %}
     {{data_form.media.js}}
+    {% include "leave-warning.html" %}
     <script type="text/javascript" src="{{ static('libs/jquery-sortable.js') }}"></script>
     <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
     <script type="text/javascript">
@@ -441,6 +442,7 @@
                 console.log("Filling testcase...");
                 fill_testcases();
             }
+            $('form').dirty('setAsClean');
         }).change();
     </script>
 {% endblock %}
