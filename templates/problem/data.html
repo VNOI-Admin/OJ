@@ -380,6 +380,10 @@
                 while ($total.val() < n_test) {
                     $('a#add-case-row').click();
                 }
+                // natsort
+                var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+                inFiles.sort(collator.compare);
+                outFiles.sort(collator.compare);
                 // fill cases
                 for (var i = 0; i < n_test; i++) {
                     $("#id_cases-" + i + "-input_file").append(new Option(inFiles[i], inFiles[i], true, true)).change();
