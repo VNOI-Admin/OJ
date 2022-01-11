@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block js_media %}
+    {% include "leave-warning.html" %}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script type="text/javascript">
         window.django = {jQuery: $};
