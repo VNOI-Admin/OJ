@@ -1,66 +1,127 @@
 from datetime import timedelta
-import xml.etree.cElementTree as ET
+from typing import Dict
 
 from django.core.management.base import BaseCommand, CommandError
-from django.utils import timezone
+from django.utils import timezone, translation
+from lxml import etree as ET
 
-from judge.models import Contest
+from judge.models import Contest, ContestSubmission, Language
+from judge.models.submission import SUBMISSION_RESULT
 
 # Ref: https://clics.ecs.baylor.edu/index.php?title=Event_Feed_2016
 
 
 def fill_info(contest: Contest, root: ET.Element):
     info = ET.SubElement(root, 'info')
-
-    contest_id = ET.SubElement(info, 'contest-id')
-    contest_id.text = contest.key  # TODO: must match regex [a-z0-9-]{1,36}
-
-    title = ET.SubElement(info, 'title')
-    title.text = contest.name
-
-    starttime = ET.SubElement(info, 'starttime')
-    starttime.text = str(contest.start_time.timestamp())
-
-    length = ET.SubElement(info, 'length')
-    length.text = str(contest.time_limit or contest.contest_window_length)
-
-    penalty = ET.SubElement(info, 'penalty')
-    penalty.text = '20'  # FIXME: get penalty from contest format
-
-    started = ET.SubElement(info, 'started')
-    started.text = 'True' if timezone.now() >= contest.start_time else 'False'
-
+    info.tail = '\n'
+    ET.SubElement(info, 'contest-id').text = contest.key  # FIXME: must match regex [a-z0-9-]{1,36}
+    ET.SubElement(info, 'title').text = contest.name
+    ET.SubElement(info, 'starttime').text = str(contest.start_time.timestamp())
+    ET.SubElement(info, 'length').text = str(contest.time_limit or contest.contest_window_length)
+    ET.SubElement(info, 'penalty').text = '20'  # FIXME: get penalty from contest format
+    ET.SubElement(info, 'started').text = 'True' if timezone.now() >= contest.start_time else 'False'
     if contest.frozen_last_minutes:
-        scoreboard_freeze_length = ET.SubElement(info, 'scoreboard-freeze-length')
-        scoreboard_freeze_length.text = str(timedelta(minutes=contest.frozen_last_minutes))
+        ET.SubElement(info, 'scoreboard-freeze-length').text = str(timedelta(minutes=contest.frozen_last_minutes))
 
 
 def fill_language(contest: Contest, root: ET.Element):
-    language = ET.SubElement(root, 'language')
+    for id, key, name in Language.objects.all().values_list('id', 'key', 'name'):
+        language = ET.SubElement(root, 'language')
+        language.tail = '\n'
+        ET.SubElement(language, 'id').text = str(id)
+        ET.SubElement(language, 'key').text = key
+        ET.SubElement(language, 'name').text = name
 
 
 def fill_region(contest: Contest, root: ET.Element):
     region = ET.SubElement(root, 'region')
+    region.tail = '\n'
+    ET.SubElement(region, 'external-id').text = '1'
+    ET.SubElement(region, 'name').text = 'Administrative Site'
 
 
 def fill_judgement(contest: Contest, root: ET.Element):
-    judgement = ET.SubElement(root, 'judgement')
+    for acronym, name in SUBMISSION_RESULT:
+        judgement = ET.SubElement(root, 'judgement')
+        judgement.tail = '\n'
+        ET.SubElement(judgement, 'acronym').text = acronym
+        ET.SubElement(judgement, 'name').text = str(name)
 
 
-def fill_problem(contest: Contest, root: ET.Element):
-    problem = ET.SubElement(root, 'problem')
+def fill_problem(contest: Contest, root: ET.Element) -> Dict[int, int]:
+
+    def get_label_for_problem(index):
+        ret = ''
+        while index > 0:
+            ret += chr((index - 1) % 26 + 65)
+            index = (index - 1) // 26
+        return ret[::-1]
+
+    contest_problems = contest.contest_problems.order_by('order').values_list('problem__id', 'problem__name')
+    problem_index = {}
+    for id, (external_id, name) in enumerate(contest_problems, start=1):
+        problem = ET.SubElement(root, 'problem')
+        problem.tail = '\n'
+        ET.SubElement(problem, 'id').text = str(id)
+        ET.SubElement(problem, 'label').text = get_label_for_problem(id)
+        ET.SubElement(problem, 'name').text = name
+
+        problem_index[external_id] = id
+
+    return problem_index
 
 
-def fill_team(contest: Contest, root: ET.Element):
-    team = ET.SubElement(root, 'team')
+def fill_team(contest: Contest, root: ET.Element) -> Dict[int, int]:
+    teams = contest.users.filter(virtual=0).select_related('user', 'user__user')
+    team_index = {}
+    for id, participation in enumerate(teams, start=1):
+        user = participation.user.user
+        team = ET.SubElement(root, 'team')
+        team.tail = '\n'
+        ET.SubElement(team, 'id').text = str(id)
+        ET.SubElement(team, 'external-id').text = str(user.id)
+        ET.SubElement(team, 'name').text = user.first_name or user.username
+        ET.SubElement(team, 'nationality').text = 'VNM'
+        ET.SubElement(team, 'region').text = 'Administrative Site'
+        org = participation.user.organization
+        ET.SubElement(team, 'university').text = org.name if org else ''
+
+        team_index[user.id] = id
+
+    return team_index
 
 
-def fill_run(contest: Contest, root: ET.Element):
-    run = ET.SubElement(root, 'run')
+def fill_run(contest: Contest, root: ET.Element, problem_index: Dict[int, int], team_index: Dict[int, int]):
+    for contest_sub in ContestSubmission.objects.filter(participation__contest=contest, participation__virtual=0) \
+                                        .exclude(submission__result__isnull=True) \
+                                        .exclude(submission__result__in=['IE', 'CE']) \
+                                        .select_related('submission', 'submission__problem', 'submission__language', 'submission__user__user'):
+        run = ET.SubElement(root, 'run')
+        run.tail = '\n'
+        sub = contest_sub.submission
+        ET.SubElement(run, 'id').text = str(sub.id)
+        ET.SubElement(run, 'problem').text = str(problem_index[sub.problem.id])
+        ET.SubElement(run, 'language').text = sub.language.key
+        ET.SubElement(run, 'team').text = str(team_index[sub.user.user.id])
+        ET.SubElement(run, 'timestamp').text = str(sub.date.timestamp())
+        ET.SubElement(run, 'time').text = str((sub.date - contest.start_time).total_seconds())
+        ET.SubElement(run, 'judged').text = 'True'
+        solved = sub.result == 'AC'
+        ET.SubElement(run, 'result').text = sub.result
+        # FIXME: any submission after AC should not be penalized
+        ET.SubElement(run, 'penalty').text = 'False' if solved else 'True'
+        ET.SubElement(run, 'solved').text = 'True' if solved else 'False'
 
 
 def fill_finalized(contest: Contest, root: ET.Element):
     finalized = ET.SubElement(root, 'finalized')
+    finalized.tail = '\n'
+    # TODO: input number of medals
+    ET.SubElement(finalized, 'last-gold').text = '4'
+    ET.SubElement(finalized, 'last-silver').text = '8'
+    ET.SubElement(finalized, 'last-bronze').text = '12'
+    ET.SubElement(finalized, 'comment').text = 'Auto-finalized'
+    ET.SubElement(finalized, 'timestamp').text = str(timezone.now().timestamp())
 
 
 class Command(BaseCommand):
@@ -81,7 +142,12 @@ class Command(BaseCommand):
         if contest is None:
             raise CommandError('contest not found')
 
+        # Force using English
+        translation.activate('en')
+
+        # Create root element
         root = ET.Element('contest')
+        root.text = '\n'
 
         # Contest information
         fill_info(contest, root)
@@ -96,18 +162,17 @@ class Command(BaseCommand):
         fill_judgement(contest, root)
 
         # Problems
-        fill_problem(contest, root)
+        problem_index = fill_problem(contest, root)
 
         # Teams
-        fill_team(contest, root)
+        team_index = fill_team(contest, root)
 
         # Runs (i.e. submissions)
-        fill_run(contest, root)
+        fill_run(contest, root, problem_index, team_index)
 
         # Contest finalization information
         fill_finalized(contest, root)
 
         # Write to output file
         tree = ET.ElementTree(root)
-        ET.indent(tree, space='', level=0)
         tree.write(output_file, encoding='utf-8', xml_declaration=True)
