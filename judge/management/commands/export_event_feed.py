@@ -11,14 +11,14 @@ from judge.models.submission import SUBMISSION_RESULT
 # Ref: https://clics.ecs.baylor.edu/index.php?title=Event_Feed_2016
 
 
-def fill_info(contest: Contest, root: ET.Element, penalty: int):
+def fill_info(contest: Contest, root: ET.Element):
     info = ET.SubElement(root, 'info')
     info.tail = '\n'
     ET.SubElement(info, 'contest-id').text = contest.key.replace('_', '-')
     ET.SubElement(info, 'title').text = contest.name
     ET.SubElement(info, 'starttime').text = str(contest.start_time.timestamp())
     ET.SubElement(info, 'length').text = str(contest.time_limit or contest.contest_window_length)
-    ET.SubElement(info, 'penalty').text = str(penalty)
+    ET.SubElement(info, 'penalty').text = str(contest.format.config.get('penalty', 0))
     ET.SubElement(info, 'started').text = 'True' if timezone.now() >= contest.start_time else 'False'
     if contest.frozen_last_minutes:
         ET.SubElement(info, 'scoreboard-freeze-length').text = str(timedelta(minutes=contest.frozen_last_minutes))
@@ -74,15 +74,16 @@ def fill_team(contest: Contest, root: ET.Element) -> Dict[int, int]:
     teams = contest.users.filter(virtual=0).select_related('user', 'user__user')
     team_index = {}
     for id, participation in enumerate(teams, start=1):
-        user = participation.user.user
+        profile = participation.user
+        user = profile.user
         team = ET.SubElement(root, 'team')
         team.tail = '\n'
         ET.SubElement(team, 'id').text = str(id)
         ET.SubElement(team, 'external-id').text = str(user.id)
-        ET.SubElement(team, 'name').text = user.first_name or user.username
+        ET.SubElement(team, 'name').text = user.first_name or profile.display_name
         ET.SubElement(team, 'nationality').text = 'VNM'
         ET.SubElement(team, 'region').text = 'Administrative Site'
-        org = participation.user.organization
+        org = profile.organization
         ET.SubElement(team, 'university').text = org.name if org else ''
 
         team_index[user.id] = id
@@ -132,7 +133,6 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('key', help='contest key')
         parser.add_argument('output', help='output XML file')
-        parser.add_argument('--penalty', help='penalty for each wrong submission', default=20, type=int)
         parser.add_argument('--medal',
                             help='the last integer rank (position) in the contest which will be '
                             'awarded Gold, Silver, and Bronze medals respectively',
@@ -143,7 +143,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         contest_key = options['key']
         output_file = options['output']
-        penalty = options['penalty']
         last_medals = options['medal']
 
         if not output_file.endswith('.xml'):
@@ -161,7 +160,7 @@ class Command(BaseCommand):
         root.text = '\n'
 
         # Contest information
-        fill_info(contest, root, penalty)
+        fill_info(contest, root)
 
         # Programming languages
         fill_language(contest, root)
