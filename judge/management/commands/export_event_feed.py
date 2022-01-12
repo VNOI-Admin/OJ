@@ -92,7 +92,6 @@ def fill_team(contest: Contest, root: ET.Element) -> Dict[int, int]:
 
 
 def fill_run(contest: Contest, root: ET.Element, problem_index: Dict[int, int], team_index: Dict[int, int]):
-
     solved_set = set()
     for contest_sub in ContestSubmission.objects.filter(participation__contest=contest, participation__virtual=0) \
                                         .exclude(submission__result__isnull=True) \
