@@ -49,7 +49,6 @@ def fill_judgement(contest: Contest, root: ET.Element):
 
 
 def fill_problem(contest: Contest, root: ET.Element) -> Dict[int, int]:
-
     def get_label_for_problem(index):
         ret = ''
         while index > 0:
