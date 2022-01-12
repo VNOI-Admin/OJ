@@ -1,5 +1,5 @@
 from datetime import timedelta
-from typing import Dict
+from typing import Dict, List
 
 from django.core.management.base import BaseCommand, CommandError
 from django.utils import timezone, translation
@@ -11,14 +11,14 @@ from judge.models.submission import SUBMISSION_RESULT
 # Ref: https://clics.ecs.baylor.edu/index.php?title=Event_Feed_2016
 
 
-def fill_info(contest: Contest, root: ET.Element):
+def fill_info(contest: Contest, root: ET.Element, penalty: int):
     info = ET.SubElement(root, 'info')
     info.tail = '\n'
-    ET.SubElement(info, 'contest-id').text = contest.key  # FIXME: must match regex [a-z0-9-]{1,36}
+    ET.SubElement(info, 'contest-id').text = contest.key.replace('_', '-')
     ET.SubElement(info, 'title').text = contest.name
     ET.SubElement(info, 'starttime').text = str(contest.start_time.timestamp())
     ET.SubElement(info, 'length').text = str(contest.time_limit or contest.contest_window_length)
-    ET.SubElement(info, 'penalty').text = '20'  # FIXME: get penalty from contest format
+    ET.SubElement(info, 'penalty').text = str(penalty)
     ET.SubElement(info, 'started').text = 'True' if timezone.now() >= contest.start_time else 'False'
     if contest.frozen_last_minutes:
         ET.SubElement(info, 'scoreboard-freeze-length').text = str(timedelta(minutes=contest.frozen_last_minutes))
@@ -92,10 +92,13 @@ def fill_team(contest: Contest, root: ET.Element) -> Dict[int, int]:
 
 
 def fill_run(contest: Contest, root: ET.Element, problem_index: Dict[int, int], team_index: Dict[int, int]):
+
+    solved_set = set()
     for contest_sub in ContestSubmission.objects.filter(participation__contest=contest, participation__virtual=0) \
                                         .exclude(submission__result__isnull=True) \
                                         .exclude(submission__result__in=['IE', 'CE']) \
-                                        .select_related('submission', 'submission__problem', 'submission__language', 'submission__user__user'):
+                                        .select_related('submission', 'submission__problem',
+                                                        'submission__language', 'submission__user__user'):
         run = ET.SubElement(root, 'run')
         run.tail = '\n'
         sub = contest_sub.submission
@@ -106,20 +109,21 @@ def fill_run(contest: Contest, root: ET.Element, problem_index: Dict[int, int], 
         ET.SubElement(run, 'timestamp').text = str(sub.date.timestamp())
         ET.SubElement(run, 'time').text = str((sub.date - contest.start_time).total_seconds())
         ET.SubElement(run, 'judged').text = 'True'
-        solved = sub.result == 'AC'
         ET.SubElement(run, 'result').text = sub.result
-        # FIXME: any submission after AC should not be penalized
-        ET.SubElement(run, 'penalty').text = 'False' if solved else 'True'
-        ET.SubElement(run, 'solved').text = 'True' if solved else 'False'
+        ET.SubElement(run, 'solved').text = 'True' if sub.result == 'AC' else 'False'
+
+        hash = (sub.problem.id, sub.user.user.id)
+        if sub.result == 'AC':
+            solved_set.add(hash)
+        ET.SubElement(run, 'penalty').text = 'False' if hash in solved_set else 'True'
 
 
-def fill_finalized(contest: Contest, root: ET.Element):
+def fill_finalized(contest: Contest, root: ET.Element, last_medals: List[int]):
     finalized = ET.SubElement(root, 'finalized')
     finalized.tail = '\n'
-    # TODO: input number of medals
-    ET.SubElement(finalized, 'last-gold').text = '4'
-    ET.SubElement(finalized, 'last-silver').text = '8'
-    ET.SubElement(finalized, 'last-bronze').text = '12'
+    ET.SubElement(finalized, 'last-gold').text = str(last_medals[0])
+    ET.SubElement(finalized, 'last-silver').text = str(last_medals[1])
+    ET.SubElement(finalized, 'last-bronze').text = str(last_medals[2])
     ET.SubElement(finalized, 'comment').text = 'Auto-finalized'
     ET.SubElement(finalized, 'timestamp').text = str(timezone.now().timestamp())
 
@@ -130,10 +134,19 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('key', help='contest key')
         parser.add_argument('output', help='output XML file')
+        parser.add_argument('--penalty', help='penalty for each wrong submission', default=20, type=int)
+        parser.add_argument('--medal',
+                            help='the last integer rank (position) in the contest which will be '
+                            'awarded Gold, Silver, and Bronze medals respectively',
+                            nargs=3,
+                            default=[4, 8, 12],
+                            metavar=('lastGold', 'lastSilver', 'lastBronze'))
 
     def handle(self, *args, **options):
         contest_key = options['key']
         output_file = options['output']
+        penalty = options['penalty']
+        last_medals = options['medal']
 
         if not output_file.endswith('.xml'):
             raise CommandError('output file must end with .xml')
@@ -150,7 +163,7 @@ class Command(BaseCommand):
         root.text = '\n'
 
         # Contest information
-        fill_info(contest, root)
+        fill_info(contest, root, penalty)
 
         # Programming languages
         fill_language(contest, root)
@@ -171,7 +184,7 @@ class Command(BaseCommand):
         fill_run(contest, root, problem_index, team_index)
 
         # Contest finalization information
-        fill_finalized(contest, root)
+        fill_finalized(contest, root, last_medals)
 
         # Write to output file
         tree = ET.ElementTree(root)
