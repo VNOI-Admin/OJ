@@ -76,10 +76,11 @@ class ContestListMixin(object):
             else:
                 self.hide_private_contests = self.request.session.get('hide_private_contests', False)
 
-            if self.hide_private_contests:
-                return Contest.get_public_contests()
+        queryset = Contest.get_visible_contests(self.request.user)
+        if self.hide_private_contests:
+            queryset = queryset.filter(is_organization_private=False)
 
-        return Contest.get_visible_contests(self.request.user)
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
