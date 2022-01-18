@@ -126,7 +126,7 @@ def prepare_contest_data(self, contest_id, options):
                 # Get the basename of the source as it is an URL
                 filename = os.path.basename(source)
                 data_file.write(
-                    default_storage.path(os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, \
+                    default_storage.path(os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR,
                                          problem, str(user_id), filename)),
                     path,
                 )
