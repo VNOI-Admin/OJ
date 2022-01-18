@@ -89,7 +89,7 @@ def prepare_contest_data(self, contest_id, options):
         p.done = 0
         contest = Contest.objects.get(id=contest_id)
         queryset = ContestSubmission.objects.filter(participation__contest=contest, participation__virtual=0) \
-                                    .order_by('-id') \
+                                    .order_by('-points', 'id') \
                                     .select_related('problem__problem', 'submission__user__user',
                                                     'submission__source', 'submission__language') \
                                     .values_list('submission__user__user__id', 'submission__user__user__username',
