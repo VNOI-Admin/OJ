@@ -318,7 +318,7 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
         context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
-        context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD),
+        context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD)
 
         return context
 
