@@ -198,7 +198,13 @@ DMOJ_USER_MAX_ORGANIZATION_COUNT = 3
 # Whether to allow users to download their data
 DMOJ_USER_DATA_DOWNLOAD = False
 DMOJ_USER_DATA_CACHE = ''
+DMOJ_USER_DATA_INTERNAL = ''
 DMOJ_USER_DATA_DOWNLOAD_RATELIMIT = datetime.timedelta(days=1)
+# Whether to allow contest authors to download contest data
+DMOJ_CONTEST_DATA_DOWNLOAD = False
+DMOJ_CONTEST_DATA_CACHE = ''
+DMOJ_CONTEST_DATA_INTERNAL = ''
+DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT = datetime.timedelta(days=1)
 DMOJ_COMMENT_VOTE_HIDE_THRESHOLD = -5
 DMOJ_PDF_PROBLEM_CACHE = ''
 DMOJ_PDF_PROBLEM_TEMP_DIR = tempfile.gettempdir()

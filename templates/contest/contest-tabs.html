@@ -2,7 +2,7 @@
 
 {% block tabs %}
     {% if can_edit %}
-        {{ make_tab('export_submissions', 'fa-plus', url('contest_submissions_export', contest.key), _('Export')) }}
+        {{ make_tab('download_data', 'fa-plus', url('contest_prepare_data', contest.key), _('Download data')) }}
     {% endif %}
     {{ make_tab('detail', 'fa-info-circle', url('contest_view', contest.key), _('Info')) }}
     {% if contest.can_see_full_submission_list(request.user) %}

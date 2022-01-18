@@ -31,7 +31,8 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from reversion import revisions
 
-from judge.forms import CustomAuthenticationForm, DownloadDataForm, ProfileForm, UserBanForm, UserForm, newsletter_id
+from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
+    newsletter_id
 from judge.models import BlogPost, Organization, Profile, Rating, Submission
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
@@ -338,7 +339,7 @@ class UserDataMixin:
 
 class UserPrepareData(LoginRequiredMixin, UserDataMixin, TitleMixin, FormView):
     template_name = 'user/prepare-data.html'
-    form_class = DownloadDataForm
+    form_class = UserDownloadDataForm
 
     @cached_property
     def _now(self):

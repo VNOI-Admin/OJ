@@ -178,6 +178,7 @@ class Contest(models.Model):
                                            help_text=_('Number of digits to round points to.'))
     csv_ranking = models.TextField(verbose_name=_('official ranking'), blank=True,
                                    help_text=_('Official ranking exported from CMS in CSV format.'))
+    data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
 
     @cached_property
     def format_class(self):
