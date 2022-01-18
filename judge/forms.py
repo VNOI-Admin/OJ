@@ -257,7 +257,7 @@ class UserDownloadDataForm(Form):
 
 
 class ContestDownloadDataForm(Form):
-    submission_download = BooleanField(required=False, label=_('Download submissions?'))
+    submission_download = BooleanField(required=False, initial=True, label=_('Download submissions?'))
     submission_problem_glob = CharField(initial='*', label=_('Filter by problem code glob:'), max_length=100)
     submission_results = MultipleChoiceField(
         required=False,

@@ -56,7 +56,7 @@
                     group.fadeOut(duration);
                 }
             };
-            $('#id_submission_download').attr('checked', true).change(function() {
+            $('#id_submission_download').change(function() {
                 check($(this), 300);
             });
             $('#prepare-download').click(function() {
@@ -96,7 +96,7 @@
                     <h3>{{ _('Submissions') }}</h3>
                     <b>{{ form.submission_download.label }}</b>
                     {{ form.submission_download }}
-                    <div class="form-group">
+                    <div class="form-group" style="display: none;">
                         <div class="form-field">
                             <div>{{ form.submission_problem_glob.label }}</div>
                             <div>{{ form.submission_problem_glob }}</div>
