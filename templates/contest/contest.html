@@ -195,7 +195,7 @@
     {% if in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
         <div class="contest-problems">
             <h2 style="margin-bottom: 0.2em; float:left;"><i class="fa fa-fw fa-question-circle"></i>{{ _('Problems') }} </h2>
-            {% if can_edit %}
+            {% if can_edit and can_download_data %}
                 <a class="button" style="float:right" href="{{ url('contest_prepare_data', contest.key) }}">Download data</a>
             {% endif %}
             <table id="contest-problems" class="table">

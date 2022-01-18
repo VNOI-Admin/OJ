@@ -116,7 +116,7 @@
                         {% endif %}
                     </button>
                     {% if can_download_data %}
-                        <a class="button main-download-action" href="{{ url('contest_download_data') }}">{{ _('Download prepared data') }}</a>
+                        <a class="button main-download-action" href="{{ url('contest_download_data', contest.key) }}">{{ _('Download prepared data') }}</a>
                     {% endif %}
                 </div>
             </form>
@@ -126,7 +126,7 @@
                 <br>
                 {{ _('You will need to wait %(countdown)s to prepare a new data download.', countdown=time_until_can_prepare|as_countdown) }}
             </div>
-            <a class="button aux-download-action" href="{{ url('contest_download_data') }}">{{ _('Download data') }}</a>
+            <a class="button aux-download-action" href="{{ url('contest_download_data', contest.key) }}">{{ _('Download data') }}</a>
         {% endif %}
     </div>
 {% endblock %}

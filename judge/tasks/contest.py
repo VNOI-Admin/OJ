@@ -92,9 +92,10 @@ def prepare_contest_data(self, contest_id, options):
                                     .order_by('-id') \
                                     .select_related('problem__problem', 'submission__user__user',
                                                     'submission__source', 'submission__language') \
-                                    .values_list('problem__problem__code', 'submission__user__user__username',
-                                                 'submission__source__source', 'submission__language__extension',
-                                                 'submission__id', 'submission__language__file_only')
+                                    .values_list('submission__user__user__id', 'submission__user__user__username',
+                                                 'problem__problem__code', 'submission__source__source',
+                                                 'submission__language__extension', 'submission__id',
+                                                 'submission__language__file_only')
 
         if options['submission_results']:
             queryset = queryset.filter(result__in=options['submission_results'])
@@ -113,22 +114,25 @@ def prepare_contest_data(self, contest_id, options):
     length = len(submissions)
     with Progress(self, length, stage=_('Preparing contest data')) as p:
         data_file = zipfile.ZipFile(os.path.join(settings.DMOJ_CONTEST_DATA_CACHE, '%s.zip' % contest_id), mode='w')
-        for problem, username, source, ext, sub_id, file_only in submissions:
-            path = os.path.join(username, f'{problem}_{sub_id}.{ext}')
-            if path in data_file.namelist():
-                # FIXME: Use a better way to check this
+        exported = set()
+        for user_id, username, problem, source, ext, sub_id, file_only in submissions:
+            if (user_id, problem) in exported:
                 path = os.path.join(username, '$History', f'{problem}_{sub_id}.{ext}')
+            else:
+                path = os.path.join(username, f'{problem}.{ext}')
+                exported.add((user_id, problem))
+
             if file_only:
                 # Get the basename of the source as it is an URL
                 filename = os.path.basename(source)
                 data_file.write(
-                    # FIXME: path for default_storage is not correct
-                    default_storage.open(os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, filename)),
+                    default_storage.path(os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, problem, str(user_id), filename)),
                     path,
                 )
                 pass
             else:
                 data_file.writestr(path, source)
+
             p.did(1)
 
         data_file.close()

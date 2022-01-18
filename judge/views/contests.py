@@ -318,6 +318,8 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
         context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
+        context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD),
+
         return context
 
 
@@ -1175,12 +1177,15 @@ class ContestDataMixin(ContestMixin):
 
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
-        if not settings.DMOJ_CONTEST_DATA_DOWNLOAD or not self.object.ended:
+        if not settings.DMOJ_CONTEST_DATA_DOWNLOAD:
             raise Http404()
+        if not self.object.ended:
+            return generic_message(request, _('Contest has not ended'),
+                                   _('Please wait until the contest has ended to download data.'))
         return super().dispatch(request, *args, **kwargs)
 
 
-class ContestPrepareData(ContestDataMixin, SingleObjectFormView):
+class ContestPrepareData(ContestDataMixin, TitleMixin, SingleObjectFormView):
     title = _('Download contest data')
     template_name = 'contest/prepare-data.html'
     form_class = ContestDownloadDataForm
@@ -1215,7 +1220,7 @@ class ContestPrepareData(ContestDataMixin, SingleObjectFormView):
         return task_status_url_by_id(
             status_id,
             message=_('Preparing data for %s...') % (self.object.name,),
-            redirect=reverse('contest_prepare_data'),
+            redirect=reverse('contest_prepare_data', args=(self.object.key,)),
         )
 
     def form_valid(self, form):
