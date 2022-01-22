@@ -250,6 +250,8 @@ urlpatterns = [
         url(r'^/join$', contests.ContestJoin.as_view(), name='contest_join'),
         url(r'^/leave$', contests.ContestLeave.as_view(), name='contest_leave'),
         url(r'^/stats$', contests.ContestStats.as_view(), name='contest_stats'),
+        url(r'^/data/prepare/$', contests.ContestPrepareData.as_view(), name='contest_prepare_data'),
+        url(r'^/data/download/$', contests.ContestDownloadData.as_view(), name='contest_download_data'),
 
         url(r'^/rank/(?P<problem>\w+)/',
             paged_list_view(ranked_submission.ContestRankedSubmission, 'contest_ranked_submissions')),

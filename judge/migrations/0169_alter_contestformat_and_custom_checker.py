@@ -2,6 +2,7 @@
 
 import django.core.validators
 from django.db import migrations, models
+
 import judge.models.problem_data
 import judge.utils.problem_data
 

@@ -1,4 +1,5 @@
 import json
+import os
 from calendar import Calendar, SUNDAY
 from collections import defaultdict, namedtuple
 from datetime import date, datetime, time, timedelta
@@ -35,18 +36,19 @@ from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
-from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestForm, ProposeContestProblemFormSet
+from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
+    ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Organization, Problem, ProblemClarification, Profile, Submission
-from judge.tasks import on_new_contest, run_moss
-from judge.utils.celery import redirect_to_task_status
+from judge.tasks import on_new_contest, prepare_contest_data, run_moss
+from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
-    generic_message
+    add_file_response, generic_message
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete', 'contest_ranking_ajax',
@@ -315,6 +317,8 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         authenticated = self.request.user.is_authenticated
         context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
         context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
+
+        context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD)
 
         return context
 
@@ -1158,3 +1162,106 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(object=self.object))
+
+
+class ContestDataMixin(ContestMixin):
+    @cached_property
+    def data_path(self):
+        return os.path.join(settings.DMOJ_CONTEST_DATA_CACHE, '%s.zip' % self.object.id)
+
+    def get_object(self, queryset=None):
+        contest = super().get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return contest
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not settings.DMOJ_CONTEST_DATA_DOWNLOAD:
+            raise Http404()
+        if not self.object.ended:
+            return generic_message(request, _('Contest has not ended'),
+                                   _('Please wait until the contest has ended to download data.'))
+        return super().dispatch(request, *args, **kwargs)
+
+
+class ContestPrepareData(ContestDataMixin, TitleMixin, SingleObjectFormView):
+    title = _('Download contest data')
+    template_name = 'contest/prepare-data.html'
+    form_class = ContestDownloadDataForm
+
+    @cached_property
+    def _now(self):
+        return timezone.now()
+
+    @cached_property
+    def can_prepare_data(self):
+        return (
+            self.object.data_last_downloaded is None or
+            self.object.data_last_downloaded + settings.DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT < self._now or
+            not os.path.exists(self.data_path)
+        )
+
+    @cached_property
+    def data_cache_key(self):
+        return 'celery_status_id:contest_data_download_%s' % self.object.id
+
+    @cached_property
+    def in_progress_url(self):
+        status_id = cache.get(self.data_cache_key)
+        status = task_status_by_id(status_id).status if status_id else None
+        return (
+            self.build_task_url(status_id)
+            if status in ('PENDING', 'PROGRESS', 'STARTED')
+            else None
+        )
+
+    def build_task_url(self, status_id):
+        return task_status_url_by_id(
+            status_id,
+            message=_('Preparing data for %s...') % (self.object.name,),
+            redirect=reverse('contest_prepare_data', args=(self.object.key,)),
+        )
+
+    def form_valid(self, form):
+        self.object.data_last_downloaded = self._now
+        self.object.save()
+        status = prepare_contest_data.delay(self.object.id, json.dumps(form.cleaned_data))
+        cache.set(self.data_cache_key, status.id)
+        return HttpResponseRedirect(self.build_task_url(status.id))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['can_prepare_data'] = self.can_prepare_data
+        context['can_download_data'] = os.path.exists(self.data_path)
+        context['in_progress_url'] = self.in_progress_url
+        context['ratelimit'] = settings.DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT
+
+        if not self.can_prepare_data:
+            context['time_until_can_prepare'] = (
+                settings.DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT - (self._now - self.object.data_last_downloaded)
+            )
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if not self.can_prepare_data or self.in_progress_url is not None:
+            raise PermissionDenied()
+        return super().post(request, *args, **kwargs)
+
+
+class ContestDownloadData(ContestDataMixin, SingleObjectMixin, View):
+    def get(self, request, *args, **kwargs):
+        if not os.path.exists(self.data_path):
+            raise Http404()
+
+        response = HttpResponse()
+
+        if hasattr(settings, 'DMOJ_CONTEST_DATA_INTERNAL'):
+            url_path = '%s/%s.zip' % (settings.DMOJ_CONTEST_DATA_INTERNAL, self.object.id)
+        else:
+            url_path = None
+        add_file_response(request, response, url_path, self.data_path)
+
+        response['Content-Type'] = 'application/zip'
+        response['Content-Disposition'] = 'attachment; filename=%s-data.zip' % self.object.key
+        return response

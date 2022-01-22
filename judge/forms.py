@@ -226,7 +226,7 @@ class ProposeProblemSolutionFormSet(inlineformset_factory(Problem, Solution, for
     pass
 
 
-class DownloadDataForm(Form):
+class UserDownloadDataForm(Form):
     comment_download = BooleanField(required=False, label=_('Download comments?'))
     submission_download = BooleanField(required=False, label=_('Download submissions?'))
     submission_problem_glob = CharField(initial='*', label=_('Filter by problem code glob:'), max_length=100)
@@ -241,6 +241,36 @@ class DownloadDataForm(Form):
 
     def clean(self):
         can_download = ('comment_download', 'submission_download')
+        if not any(self.cleaned_data[v] for v in can_download):
+            raise ValidationError(_('Please select at least one thing to download.'))
+        return self.cleaned_data
+
+    def clean_submission_problem_glob(self):
+        if not self.cleaned_data['submission_download']:
+            return '*'
+        return self.cleaned_data['submission_problem_glob']
+
+    def clean_submission_result(self):
+        if not self.cleaned_data['submission_download']:
+            return ()
+        return self.cleaned_data['submission_result']
+
+
+class ContestDownloadDataForm(Form):
+    submission_download = BooleanField(required=False, initial=True, label=_('Download submissions?'))
+    submission_problem_glob = CharField(initial='*', label=_('Filter by problem code glob:'), max_length=100)
+    submission_results = MultipleChoiceField(
+        required=False,
+        widget=Select2MultipleWidget(
+            attrs={'style': 'width: 260px', 'data-placeholder': _('Leave empty to include all submissions')},
+        ),
+        choices=sorted(map(itemgetter(0, 0), Submission.RESULT)),
+        label=_('Filter by result:'),
+    )
+
+    def clean(self):
+        can_download = ('submission_download',)
+        print(can_download)
         if not any(self.cleaned_data[v] for v in can_download):
             raise ValidationError(_('Please select at least one thing to download.'))
         return self.cleaned_data
