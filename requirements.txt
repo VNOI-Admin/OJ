@@ -1,4 +1,5 @@
 Django>=2.2,<3
+django-cleanup
 django_compressor
 django-mptt
 django-pagedown<2

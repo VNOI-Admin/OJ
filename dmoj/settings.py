@@ -387,6 +387,7 @@ INSTALLED_APPS += (
     'django_jinja',
     'martor',
     'adminsortable2',
+    'django_cleanup.apps.CleanupConfig',
 )
 
 MIDDLEWARE = (

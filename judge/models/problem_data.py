@@ -66,7 +66,7 @@ class ProblemData(models.Model):
                                       null=True,
                                       blank=True,
                                       upload_to=problem_directory_file,
-                                      validators=[FileExtensionValidator(allowed_extensions=['cpp', 'py'])])
+                                      validators=[FileExtensionValidator(allowed_extensions=['cpp', 'py', 'pas'])])
 
     custom_grader = models.FileField(verbose_name=_('custom grader file'), storage=problem_data_storage,
                                      null=True,
