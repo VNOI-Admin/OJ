@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0168_alter_allow_tagging'),
+        ('judge', '0169_alter_contestformat_and_custom_checker'),
     ]
 
     operations = [
