@@ -232,11 +232,11 @@ class ProblemDataCompiler(object):
 
                 if not self.generator:
                     if case.input_file not in self.files:
-                        raise ProblemDataError(_('Input file for case %d does not exist: %s') %
-                                               (i, case.input_file))
+                        raise ProblemDataError(_('Input file for case %(case)d does not exist: %(file)s') %
+                                               ({'case': i, 'file': case.input_file}))
                     if case.output_file not in self.files:
-                        raise ProblemDataError(_('Output file for case %d does not exist: %s') %
-                                               (i, case.output_file))
+                        raise ProblemDataError(_('Output file for case %(case)d does not exist: %(file)s') %
+                                               ({'case': i, 'file': case.output_file}))
 
                 if case.input_file:
                     data['in'] = case.input_file
