@@ -239,8 +239,9 @@ class OrganizationRequestView(OrganizationRequestBaseView):
                 to_approve = sum(form.cleaned_data['state'] == 'A' for form in formset.forms if form not in deleted_set)
                 can_add = organization.slots - organization.members.count()
                 if to_approve > can_add:
-                    messages.error(request, _('Your organization can only receive %d more members. '
-                                              'You cannot approve %d users.') % (can_add, to_approve))
+                    messages.error(request, _('Your organization can only receive %(can_add)d more members. '
+                                              'You cannot approve %(to_approve)d users.') %
+                                             ({'can_add': can_add, 'to_approve': to_approve}))
                     return self.render_to_response(self.get_context_data(object=organization))
 
             approved, rejected = 0, 0

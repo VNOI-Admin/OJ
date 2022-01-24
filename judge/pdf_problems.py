@@ -279,9 +279,10 @@ class SeleniumPDFRender(BasePdfMaker):
         'displayHeaderFooter': True,
         'headerTemplate': '<div></div>',
         'footerTemplate': '<center style="margin: 0 auto; font-family: Segoe UI; font-size: 10px">' +
-                          gettext('Page %s of %s') %
-                          ('<span class="pageNumber"></span>', '<span class="totalPages"></span>') +
-                          '</center>',
+                          gettext('Page %(current)s of %(total)s') % ({
+                              'current': '<span class="pageNumber"></span>',
+                              'total': '<span class="totalPages"></span>',
+                          }) + '</center>',
     }
 
     def get_log(self, driver):

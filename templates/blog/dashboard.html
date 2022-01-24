@@ -18,9 +18,9 @@
                         <span class="time">
                             <span data-unix="{{ submission.date|utc|date("c") }}"
                                   class="recent-time moment-time-toggle">
-                                {% trans time=submission.date|date(_("N j, Y, g:i a")) %}
+                                {%- trans time=submission.date|date(_("N j, Y, g:i a")) -%}
                                     on {{ time }}
-                                {% endtrans %}
+                                {%- endtrans -%}
                             </span>
                         </span>
                     </li>
