@@ -577,9 +577,7 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
             self.object = problem = form.save()
             problem.authors.add(self.request.user.profile)
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-            problem.partial = True
-            # We have to set it to True, even it is private for a org
-            problem.is_public = True
+
             problem.is_organization_private = True
             problem.organizations.add(self.organization)
             problem.date = timezone.now()
