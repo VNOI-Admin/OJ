@@ -168,12 +168,24 @@
             var $tr_custom_header_file = $custom_header_file.parent().parent();
             var $tr_grader_args = $grader_args.parent().parent();
 
+            function clean_io_method() {
+                var old_args = try_parse_json($grader_args.val());
+                delete old_args.io_method;
+                delete old_args.io_input_file;
+                delete old_args.io_output_file;
+                $grader_args.val(JSON.stringify(old_args));
+            }
+
             $grader.change(function () {
                 var grader = $grader.val();
                 var standard_grader = grader === 'standard';
                 var signature_grader = grader === 'signature';
                 var output_only = grader === 'output_only';
                 var standard_io = $io_method.val() === 'standard';
+
+                if (!standard_grader) {
+                    clean_io_method();
+                }
 
                 $tr_io_method.toggle(standard_grader);
                 $tr_io_input_file.toggle(standard_grader && !standard_io);
@@ -188,9 +200,13 @@
                 $tr_io_input_file.toggle(!standard_io);
                 $tr_io_output_file.toggle(!standard_io);
 
-                var old_args = try_parse_json($grader_args.val());
-                old_args['io_method'] = $io_method.val();
-                $grader_args.val(JSON.stringify(old_args));
+                if (standard_io) {
+                    clean_io_method();
+                } else {
+                    var old_args = try_parse_json($grader_args.val());
+                    old_args['io_method'] = $io_method.val();
+                    $grader_args.val(JSON.stringify(old_args));
+                }
             });
             $io_method.val(try_parse_json($grader_args.val()).io_method || 'standard').change();
 

@@ -1,4 +1,5 @@
 import errno
+import json
 from operator import attrgetter
 
 from django.conf import settings
@@ -504,6 +505,26 @@ class Problem(models.Model):
     @property
     def markdown_style(self):
         return 'problem-full' if self.is_full_markup else 'problem'
+
+    @cached_property
+    def io_method(self):
+        if self.is_manually_managed:
+            return {'method': 'unknown'}
+
+        grader_args = self.data_files.grader_args
+        if grader_args:
+            grader_args = json.loads(grader_args)
+            if grader_args.get('io_method') == 'file':
+                # ProblemDataCompiler makes sure that if io_method is 'file',
+                # io_input_file and io_output_file are always set.
+                return {
+                    'method': 'file',
+                    'input': grader_args['io_input_file'],
+                    'output': grader_args['io_output_file'],
+                }
+
+        return {'method': 'standard'}
+
 
     def save(self, *args, **kwargs):
         is_clone = kwargs.pop('is_clone', False)

@@ -181,11 +181,12 @@ class ProblemDataCompiler(object):
 
             if case.grader == 'standard':
                 if grader_args.get('io_method') == 'file':
+                    if 'io_input_file' not in grader_args or 'io_output_file' not in grader_args:
+                        raise ProblemDataError(_('You must specify both input and output files.'))
+
                     init['file_io'] = {}
-                    if grader_args.get('io_input_file'):
-                        init['file_io']['input'] = grader_args['io_input_file']
-                    if grader_args.get('io_output_file'):
-                        init['file_io']['output'] = grader_args['io_output_file']
+                    init['file_io']['input'] = grader_args['io_input_file']
+                    init['file_io']['output'] = grader_args['io_output_file']
 
                 return
 
