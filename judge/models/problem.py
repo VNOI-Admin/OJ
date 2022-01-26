@@ -525,7 +525,6 @@ class Problem(models.Model):
 
         return {'method': 'standard'}
 
-
     def save(self, *args, **kwargs):
         is_clone = kwargs.pop('is_clone', False)
         # if short_circuit = true the judge will stop judging
