@@ -171,15 +171,23 @@ class ProblemDataCompiler(object):
             return file_path[1], file_ext
 
         def make_grader(init, case):
-            # We don't need to do anything if it is standard grader
-            if case.grader == 'standard':
-                return
             if case.grader == 'output_only':
                 init['output_only'] = True
                 return
+
             grader_args = {}
             if case.grader_args:
                 grader_args = json.loads(case.grader_args)
+
+            if case.grader == 'standard':
+                if grader_args.get('io_method') == 'file':
+                    init['file_io'] = {}
+                    if grader_args.get('io_input_file'):
+                        init['file_io']['input'] = grader_args['io_input_file']
+                    if grader_args.get('io_output_file'):
+                        init['file_io']['output'] = grader_args['io_output_file']
+
+                return
 
             if case.grader == 'interactive':
                 file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)

@@ -101,7 +101,7 @@
 
                 // auto fill for custom checker
                 $custom_checker_file.change(function () {
-                    if ($checker.val().startsWith('bridged') && !init) {
+                    if ($checker.val() === 'bridged' && !init) {
                         $file_name = $custom_checker_file.val().split('\\').pop();
                         // Handle case that the current file is null but we have a file in database
                         $old_file = $custom_checker_file.parent().find('a')[0];
@@ -142,33 +142,71 @@
                 }
 
                 $checker.change(function () {
-                    $custom_checker_file.toggle($checker.val().startsWith('bridged')).change();
-                    $custom_checker_type.toggle($checker.val().startsWith('bridged')).change();
-                    $tr_custom_checker_file.toggle($checker.val().startsWith('bridged'));
-                    $tr_custom_checker_type.toggle($checker.val().startsWith('bridged'));
+                    $custom_checker_file.toggle($checker.val() === 'bridged').change();
+                    $custom_checker_type.toggle($checker.val() === 'bridged').change();
+                    $tr_custom_checker_file.toggle($checker.val() === 'bridged');
+                    $tr_custom_checker_type.toggle($checker.val() === 'bridged');
                     $precision.toggle($checker.val().startsWith('floats')).change();
-                    if (!($checker.val().startsWith('bridged') || $checker.val().startsWith('floats')))
+                    if (!($checker.val() === 'bridged' || $checker.val().startsWith('floats')))
                         $args.val('');
                     init = false;
                 }).change();
             })();
 
             var $grader = $('#id_problem-data-grader');
+            var $io_method = $('#id_problem-data-io_method');
+            var $io_input_file = $('#id_problem-data-io_input_file');
+            var $io_output_file = $('#id_problem-data-io_output_file');
             var $custom_grader_file = $('#id_problem-data-custom_grader');
             var $custom_header_file = $('#id_problem-data-custom_header');
             var $grader_args = $('#id_problem-data-grader_args');
 
+            var $tr_io_method = $io_method.parent().parent();
+            var $tr_io_input_file = $io_input_file.parent().parent();
+            var $tr_io_output_file = $io_output_file.parent().parent();
             var $tr_custom_grader_file = $custom_grader_file.parent().parent();
             var $tr_custom_header_file = $custom_header_file.parent().parent();
             var $tr_grader_args = $grader_args.parent().parent();
 
             $grader.change(function () {
-                $tr_custom_grader_file.toggle(!$grader.val().startsWith('standard') &&
-                                              !$grader.val().startsWith('output_only') &&
-                                              !!$grader.val());
-                $tr_custom_header_file.toggle($grader.val().startsWith('signature'));
-                $tr_grader_args.toggle($grader.val().startsWith('signature'));
+                var grader = $grader.val();
+                var standard_grader = grader === 'standard';
+                var signature_grader = grader === 'signature';
+                var output_only = grader === 'output_only';
+                var standard_io = $io_method.val() === 'standard';
+
+                $tr_io_method.toggle(standard_grader);
+                $tr_io_input_file.toggle(standard_grader && !standard_io);
+                $tr_io_output_file.toggle(standard_grader && !standard_io);
+                $tr_custom_grader_file.toggle(!standard_grader && !output_only && !!grader);
+                $tr_custom_header_file.toggle(signature_grader);
+                $tr_grader_args.toggle(signature_grader);
             }).change();
+
+            $io_method.change(function () {
+                var standard_io = $io_method.val() === 'standard';
+                $tr_io_input_file.toggle(!standard_io);
+                $tr_io_output_file.toggle(!standard_io);
+
+                var old_args = try_parse_json($grader_args.val());
+                old_args['io_method'] = $io_method.val();
+                $grader_args.val(JSON.stringify(old_args));
+            });
+            $io_method.val(try_parse_json($grader_args.val()).io_method || 'standard').change();
+
+            $io_input_file.change(function () {
+                var old_args = try_parse_json($grader_args.val());
+                old_args['io_input_file'] = $io_input_file.val();
+                $grader_args.val(JSON.stringify(old_args));
+            });
+            $io_input_file.val(try_parse_json($grader_args.val()).io_input_file || '').change();
+
+            $io_output_file.change(function () {
+                var old_args = try_parse_json($grader_args.val());
+                old_args['io_output_file'] = $io_output_file.val();
+                $grader_args.val(JSON.stringify(old_args));
+            });
+            $io_output_file.val(try_parse_json($grader_args.val()).io_output_file || '').change();
 
             $td = $checker.parent();
             var $sample = $("<a/>",{
