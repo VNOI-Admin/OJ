@@ -511,6 +511,10 @@ class Problem(models.Model):
         if self.is_manually_managed:
             return {'method': 'unknown'}
 
+        if self.data_files.grader != 'standard':
+            # File IO is only supported for the standard grader.
+            return {'method': 'standard'}
+
         grader_args = self.data_files.grader_args
         if grader_args:
             grader_args = json.loads(grader_args)
