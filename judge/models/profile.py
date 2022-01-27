@@ -351,6 +351,7 @@ class Profile(models.Model):
             ('totp', _('Edit TOTP settings')),
             ('can_upload_image', _('Can upload image directly to server via martor')),
             ('high_problem_timelimit', _('Can set high problem timelimit')),
+            ('high_problem_memorylimit', _('Can set high problem memorylimit')),
             ('long_contest_duration', _('Can set long contest duration')),
             ('create_mass_testcases', _('Can create unlimitted number of testcases for a problem')),
         )

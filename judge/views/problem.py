@@ -870,8 +870,9 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
 
     def get_language_limit_formset(self):
         if self.request.POST:
-            return LanguageLimitFormSet(self.request.POST, instance=self.get_object())
-        return LanguageLimitFormSet(instance=self.get_object())
+            return LanguageLimitFormSet(self.request.POST, instance=self.get_object(),
+                                        form_kwargs={'user': self.request.user})
+        return LanguageLimitFormSet(instance=self.get_object(), form_kwargs={'user': self.request.user})
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
