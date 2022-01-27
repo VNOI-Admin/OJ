@@ -19,8 +19,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
-from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, Organization, Problem, \
-    Profile, Solution, Submission, Tag, WebAuthnCredential
+from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, LanguageLimit, \
+    Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -126,6 +126,15 @@ class ProposeProblemSolutionForm(ModelForm):
         }
 
 
+class LanguageLimitForm(ModelForm):
+    class Meta:
+        model = LanguageLimit
+        fields = ('language', 'time_limit', 'memory_limit')
+        widgets = {
+            'language': Select2Widget(attrs={'style': 'width:200px'}),
+        }
+
+
 class ProblemEditForm(ModelForm):
     statement_file = forms.FileField(
         required=False,
@@ -223,6 +232,10 @@ class ProblemEditForm(ModelForm):
 
 
 class ProposeProblemSolutionFormSet(inlineformset_factory(Problem, Solution, form=ProposeProblemSolutionForm)):
+    pass
+
+
+class LanguageLimitFormSet(inlineformset_factory(Problem, LanguageLimit, form=LanguageLimitForm, can_delete=True)):
     pass
 
 

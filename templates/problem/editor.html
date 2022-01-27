@@ -4,8 +4,21 @@
     {{ form.media.js }}
     {% include "leave-warning.html" %}
 
+    <script src="{{ static('vnoj/jquery.formset.js') }}"></script>
+
     <script>
         $(function() {
+            {% if lang_limit_formset %}
+                $('#form_set tr').formset({
+                    prefix: '{{ lang_limit_formset.prefix }}'
+                });
+
+            $('#lang_limit_title').click(function() {
+                $('#lang_limit_title i').toggleClass('fa-caret-down fa-caret-up');
+                $('#lang_limit_table').toggleClass('hidden');
+            });
+            {% endif %}
+
             var noResults = function () {
                 return '{{ _('Press Enter to select multiple users...') }}';
             };
@@ -46,7 +59,30 @@
 {% block media %}
     {{ form.media.css }}
     <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
 {% endblock %}
+
+{% macro form_as_row(form) -%}
+    {% if form.non_field_errors() %}
+    <tr>
+        <td colspan="6">{{ form.non_field_errors() }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+        <td>{{ form.id }} {{ form.language.errors }}{{ form.language }}</td>
+        <td>{{ form.time_limit.errors }}{{ form.time_limit }}</td>
+        <td>{{ form.memory_limit.errors }}{{ form.memory_limit }}</td>
+        <td>
+        {% if lang_limit_formset.can_delete and form.instance.pk %}
+            {{ form.DELETE }}
+        {% endif %}
+        </td>
+    <tr>
+{%- endmacro %}
 
 {% block body %}
 <div>
@@ -61,7 +97,26 @@
             <p class="errornote"> {{ _('Please correct the error below.') }}</p>
         {% endif %}
         {% csrf_token %}
+        {{ lang_limit_formset.management_form }}
         <table class="django-as-table">{{ form.as_table() }}</table>
+        <hr>
+
+        <center><h3 id="lang_limit_title">{{ _('Language-specific resource limit') }} <i id='caret' class="fa fa-caret-down"></i></h3></center>
+        <table class="table" id="lang_limit_table">
+            <thead>
+                <tr>
+                    <th style="width: 20em;"> {{ _('Language') }} </th>
+                    <th> {{ _('Time limit (seconds)') }} </th>
+                    <th> {{ _('Memory limit (MiB)') }} </th>
+                    <th> {{ _('Delete') }} </th>
+                </tr>
+            </thead>
+            <tbody id="form_set">
+                {% for form in lang_limit_formset %}
+                    {{ form_as_row(form) }}
+                {% endfor %}
+            </tbody>
+        </table>
         <hr>
 
         <center><h3> {{ _('Editorial') }} </h3></center>
