@@ -101,8 +101,8 @@
         <table class="django-as-table">{{ form.as_table() }}</table>
         <hr>
 
-        <center><h3 id="lang_limit_title">{{ _('Language-specific resource limit') }} <i id='caret' class="fa fa-caret-down"></i></h3></center>
-        <table class="table" id="lang_limit_table">
+        <center><h3 id="lang_limit_title">{{ _('Language-specific resource limit') }} <i class="fa fa-caret-up"></i></h3></center>
+        <table class="table hidden" id="lang_limit_table">
             <thead>
                 <tr>
                     <th style="width: 20em;"> {{ _('Language') }} </th>
