@@ -1263,6 +1263,8 @@ class ContestPrepareData(ContestDataMixin, TitleMixin, SingleObjectMixin, FormVi
 
 class ContestDownloadData(ContestDataMixin, SingleObjectMixin, View):
     def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
         if not os.path.exists(self.data_path):
             raise Http404()
 
