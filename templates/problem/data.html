@@ -208,21 +208,26 @@
                     $grader_args.val(JSON.stringify(old_args));
                 }
             });
-            $io_method.val(try_parse_json($grader_args.val()).io_method || 'standard').change();
 
             $io_input_file.change(function () {
                 var old_args = try_parse_json($grader_args.val());
                 old_args['io_input_file'] = $io_input_file.val();
                 $grader_args.val(JSON.stringify(old_args));
             });
-            $io_input_file.val(try_parse_json($grader_args.val()).io_input_file || '').change();
 
             $io_output_file.change(function () {
                 var old_args = try_parse_json($grader_args.val());
                 old_args['io_output_file'] = $io_output_file.val();
                 $grader_args.val(JSON.stringify(old_args));
             });
-            $io_output_file.val(try_parse_json($grader_args.val()).io_output_file || '').change();
+
+            if ($grader.val() === 'standard') {
+                $io_method.val(try_parse_json($grader_args.val()).io_method || 'standard').change();
+                if ($io_method.val() === 'file') {
+                    $io_input_file.val(try_parse_json($grader_args.val()).io_input_file || '').change();
+                    $io_output_file.val(try_parse_json($grader_args.val()).io_output_file || '').change();
+                }
+            }
 
             $td = $checker.parent();
             var $sample = $("<a/>",{
