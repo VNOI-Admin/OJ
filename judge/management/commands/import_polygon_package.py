@@ -1,5 +1,7 @@
 import json
 import os
+import re
+import subprocess
 import tempfile
 import zipfile
 
@@ -10,7 +12,7 @@ from django.urls import reverse
 from django.utils import translation
 from lxml import etree as ET
 
-from judge.models import Problem, ProblemData, ProblemGroup, ProblemTestCase
+from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemType
 from judge.utils.problem_data import ProblemDataCompiler
 
 
@@ -116,8 +118,63 @@ def parse_tests(problem_meta, root, package):
         problem_meta['cases'][-1]['points'] = 1
 
 
+def pandoc_tex_to_markdown(tex):
+    tmp_dir = tempfile.TemporaryDirectory()
+    with open(os.path.join(tmp_dir.name, 'temp.tex'), 'w') as f:
+        f.write(tex)
+    subprocess.run(['pandoc', '-f', 'latex', '-t', 'markdown', '-o', 'temp.md', 'temp.tex'], cwd=tmp_dir.name)
+    with open(os.path.join(tmp_dir.name, 'temp.md'), 'r') as f:
+        md = f.read()
+    tmp_dir.cleanup()
+
+    # FIXME: find a better way to do this
+    # Ideally, we should let pandoc handle this
+    md = re.sub(r'\$\$(.+?)\$\$', r'~~\1~~', md)
+    md = re.sub(r'\$(.+?)\$', r'~\1~', md)
+    return md
+
+
 def parse_statements(problem_meta, root, package):
-    problem_meta['statement'] = ''
+    statement = root.find('.//statement[@type="application/x-tex"]')
+    if statement is None:
+        raise CommandError('statement not found')
+
+    problem_properties_path = statement.get('path').replace('problem.tex', 'problem-properties.json')
+    if problem_properties_path not in package.namelist():
+        raise CommandError(f'problem-properties.json not found at path {problem_properties_path}')
+
+    problem_properties = json.loads(package.read(problem_properties_path).decode('utf-8'))
+    problem_meta['description'] = ''
+
+    # Legend
+    problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['legend'])
+
+    # Input
+    problem_meta['description'] += '\n## Input\n\n'
+    problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['input'])
+
+    # Output
+    problem_meta['description'] += '\n## Output\n\n'
+    problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['output'])
+
+    # Scoring
+    if problem_properties['scoring'] != '':
+        problem_meta['description'] += '\n## Scoring\n\n'
+        problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['scoring'])
+
+    # Sample tests
+    for i, sample in enumerate(problem_properties['sampleTests'], start=1):
+        problem_meta['description'] += f'\n## Sample Input {i}\n\n'
+        problem_meta['description'] += '```\n' + sample['input'] + '```\n'
+        problem_meta['description'] += f'\n## Sample Output {i}\n\n'
+        problem_meta['description'] += '```\n' + sample['output'] + '```\n'
+
+    # Notes
+    if problem_properties['notes'] != '':
+        problem_meta['description'] += '\n## Notes\n\n'
+        problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['notes'])
+
+    # TODO: parse and save images
 
 
 def create_problem(problem_meta):
@@ -127,11 +184,14 @@ def create_problem(problem_meta):
         name=problem_meta['name'],
         time_limit=problem_meta['time_limit'],
         memory_limit=problem_meta['memory_limit'],
-        description=problem_meta['statement'],
-        group=ProblemGroup.objects.first(),
+        description=problem_meta['description'],
+        group=ProblemGroup.objects.order_by('id').first(),  # Uncategorized
         points=0.0,
         partial=True,
     )
+    problem.save()
+    problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
+    problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
     problem.save()
 
     with open(problem_meta['zipfile'], 'rb') as f:
@@ -162,9 +222,10 @@ def create_problem(problem_meta):
 
     print('Generating init.yml')
     ProblemDataCompiler.generate(
-        problem=problem, data=problem_data,
+        problem=problem,
+        data=problem_data,
         cases=problem.cases.order_by('order'),
-        files=zipfile.ZipFile(problem_data.zipfile.path).namelist()
+        files=zipfile.ZipFile(problem_data.zipfile.path).namelist(),
     )
 
 
