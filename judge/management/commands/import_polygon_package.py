@@ -253,7 +253,7 @@ def create_problem(problem_meta):
     with open(problem_meta['zipfile'], 'rb') as f:
         problem_data = ProblemData(
             problem=problem,
-            zipfile=File(open(problem_meta['zipfile'], 'rb')),
+            zipfile=File(f),
             grader=problem_meta['grader'],
             checker=problem_meta['checker'],
         )
