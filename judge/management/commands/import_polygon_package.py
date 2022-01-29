@@ -18,7 +18,7 @@ from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTe
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import django_uploader
 
-PANDOC_FILTER = '''
+PANDOC_FILTER = """
 local List = require 'pandoc.List'
 
 function Math(m)
@@ -55,7 +55,7 @@ function Div(el)
     table.insert(res, pandoc.RawBlock('markdown', '</' .. el.classes[1] .. '>'))
     return res
 end
-'''
+"""
 
 
 def parse_checker(problem_meta, root, package):
@@ -201,7 +201,7 @@ def parse_statements(problem_meta, root, package):
     problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['output'])
 
     # Scoring
-    if problem_properties['scoring'] != None:
+    if problem_properties['scoring'] is not None:
         problem_meta['description'] += '\n## Scoring\n\n'
         problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['scoring'])
 
