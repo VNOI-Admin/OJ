@@ -286,7 +286,7 @@ def create_problem(problem_meta):
 
 
 class Command(BaseCommand):
-    help = 'import Codeforces Polygon package'
+    help = 'import Codeforces Polygon full package'
 
     def add_arguments(self, parser):
         parser.add_argument('package', help='path to package in zip format')
