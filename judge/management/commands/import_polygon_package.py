@@ -1,6 +1,7 @@
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import zipfile
@@ -8,12 +9,41 @@ import zipfile
 from django.contrib.sites.models import Site
 from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 from django.urls import reverse
 from django.utils import translation
 from lxml import etree as ET
 
 from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemType
 from judge.utils.problem_data import ProblemDataCompiler
+from judge.views.widgets import django_uploader
+
+PANDOC_FILTER = '''
+local List = require 'pandoc.List'
+
+function Math(m)
+    -- Replace $ with ~
+    local delimiter = m.mathtype == 'InlineMath' and '~' or '~~'
+    return pandoc.RawInline('markdown', delimiter .. m.text .. delimiter)
+end
+
+function Image(el)
+    -- And line breaks before the image
+    return {pandoc.RawInline('markdown', '\\n\\n'), el}
+end
+
+function Div(el)
+    -- Currently only used for <center>
+    -- FIXME: What about other classes?
+    local res = List:new{}
+    table.insert(res, pandoc.RawBlock('markdown', '<' .. el.classes[1] .. '>'))
+    for _, block in ipairs(el.content) do
+        table.insert(res, block)
+    end
+    table.insert(res, pandoc.RawBlock('markdown', '</' .. el.classes[1] .. '>'))
+    return res
+end
+'''
 
 
 def parse_checker(problem_meta, root, package):
@@ -122,24 +152,25 @@ def pandoc_tex_to_markdown(tex):
     tmp_dir = tempfile.TemporaryDirectory()
     with open(os.path.join(tmp_dir.name, 'temp.tex'), 'w') as f:
         f.write(tex)
-    subprocess.run(['pandoc', '-f', 'latex', '-t', 'markdown', '-o', 'temp.md', 'temp.tex'], cwd=tmp_dir.name)
+    with open(os.path.join(tmp_dir.name, 'filter.lua'), 'w') as f:
+        f.write(PANDOC_FILTER)
+    subprocess.run(['pandoc', '--lua-filter=filter.lua', '-o', 'temp.md', 'temp.tex'], cwd=tmp_dir.name)
     with open(os.path.join(tmp_dir.name, 'temp.md'), 'r') as f:
         md = f.read()
     tmp_dir.cleanup()
 
-    # FIXME: find a better way to do this
-    # Ideally, we should let pandoc handle this
-    md = re.sub(r'\$\$(.+?)\$\$', r'~~\1~~', md)
-    md = re.sub(r'\$(.+?)\$', r'~\1~', md)
     return md
 
 
 def parse_statements(problem_meta, root, package):
+    print('Converting statement to Markdown')
+
     statement = root.find('.//statement[@type="application/x-tex"]')
     if statement is None:
         raise CommandError('statement not found')
 
-    problem_properties_path = statement.get('path').replace('problem.tex', 'problem-properties.json')
+    statement_folder = os.path.dirname(statement.get('path'))
+    problem_properties_path = os.path.join(statement_folder, 'problem-properties.json')
     if problem_properties_path not in package.namelist():
         raise CommandError(f'problem-properties.json not found at path {problem_properties_path}')
 
@@ -174,9 +205,22 @@ def parse_statements(problem_meta, root, package):
         problem_meta['description'] += '\n## Notes\n\n'
         problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['notes'])
 
-    # TODO: parse and save images
+    # Images
+    images = re.findall(r'!\[image\]\((.+?)\)', problem_meta['description'])
+    images = list(set(images))
+    for image_path in images:
+        image = File(
+            file=package.open(os.path.join(statement_folder, image_path), 'r'),
+            name=os.path.basename(image_path),
+        )
+        data = json.loads(django_uploader(image))
+        problem_meta['description'] = problem_meta['description'].replace(
+            f'![image]({image_path})',
+            f'![image]({data["link"]})',
+        )
 
 
+@transaction.atomic
 def create_problem(problem_meta):
     print('Creating problem in database')
     problem = Problem(
@@ -239,6 +283,10 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         # Force using English
         translation.activate('en')
+
+        # Check if pandoc is available
+        if not shutil.which('pandoc'):
+            raise CommandError('pandoc not installed')
 
         package = zipfile.ZipFile(options['package'], 'r')
         if 'problem.xml' not in package.namelist():
