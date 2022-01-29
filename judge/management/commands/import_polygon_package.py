@@ -166,7 +166,7 @@ def pandoc_tex_to_markdown(tex):
         f.write(tex)
     with open(os.path.join(tmp_dir.name, 'filter.lua'), 'w') as f:
         f.write(PANDOC_FILTER)
-    subprocess.run(['pandoc', '--lua-filter=filter.lua', '-o', 'temp.md', 'temp.tex'], cwd=tmp_dir.name)
+    subprocess.run(['pandoc', '--lua-filter=filter.lua', '-t', 'gfm', '-o', 'temp.md', 'temp.tex'], cwd=tmp_dir.name)
     with open(os.path.join(tmp_dir.name, 'temp.md'), 'r') as f:
         md = f.read()
     tmp_dir.cleanup()
