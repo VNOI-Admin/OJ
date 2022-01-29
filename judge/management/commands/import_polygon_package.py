@@ -32,6 +32,18 @@ function Image(el)
     return {pandoc.RawInline('markdown', '\\n\\n'), el}
 end
 
+function Str(el)
+    -- Fix endash and emdash
+    -- TODO: fix other special characters
+    if el.text == '\\u{2013}' then
+        return '&ndash;'
+    elseif el.text == '\\u{2014}' then
+        return '&mdash;'
+    else
+        return el
+    end
+end
+
 function Div(el)
     -- Currently only used for <center>
     -- FIXME: What about other classes?
@@ -125,7 +137,7 @@ def parse_tests(problem_meta, root, package):
     for i, test in enumerate(testset.find('tests').getchildren(), start=1):
         input_path = input_path_pattern % i
         answer_path = answer_path_pattern % i
-        points = int(float(test.get('points')))
+        points = int(float(test.get('points', 0)))
         total_points += points
 
         tests_zip.writestr(f'{i:02d}.inp', package.read(input_path))
@@ -189,16 +201,16 @@ def parse_statements(problem_meta, root, package):
     problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['output'])
 
     # Scoring
-    if problem_properties['scoring'] != '':
+    if problem_properties['scoring'] != None:
         problem_meta['description'] += '\n## Scoring\n\n'
         problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['scoring'])
 
     # Sample tests
     for i, sample in enumerate(problem_properties['sampleTests'], start=1):
         problem_meta['description'] += f'\n## Sample Input {i}\n\n'
-        problem_meta['description'] += '```\n' + sample['input'] + '```\n'
+        problem_meta['description'] += '```\n' + sample['input'].strip() + '\n```\n'
         problem_meta['description'] += f'\n## Sample Output {i}\n\n'
-        problem_meta['description'] += '```\n' + sample['output'] + '```\n'
+        problem_meta['description'] += '```\n' + sample['output'].strip() + '\n```\n'
 
     # Notes
     if problem_properties['notes'] != '':
@@ -288,10 +300,6 @@ class Command(BaseCommand):
         if not shutil.which('pandoc'):
             raise CommandError('pandoc not installed')
 
-        package = zipfile.ZipFile(options['package'], 'r')
-        if 'problem.xml' not in package.namelist():
-            raise CommandError('problem.xml not found')
-
         # Let's validate the problem code right now.
         # We don't want to have done everything and still fail because
         # of invalid problem code.
@@ -299,6 +307,10 @@ class Command(BaseCommand):
         Problem._meta.get_field('code').run_validators(problem_code)
         if Problem.objects.filter(code=problem_code).exists():
             raise CommandError(f'problem with code {problem_code} already exists')
+
+        package = zipfile.ZipFile(options['package'], 'r')
+        if 'problem.xml' not in package.namelist():
+            raise CommandError('problem.xml not found')
 
         root = ET.fromstring(package.read('problem.xml'))
 
