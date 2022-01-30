@@ -156,8 +156,11 @@ def parse_tests(problem_meta, root, package):
     print(f'Found {len(problem_meta["cases"])} testcases!')
 
     if total_points == 0:
-        print('Total points of all testcases is zero. Set points of last testcase to 1.')
-        problem_meta['cases'][-1]['points'] = 1
+        print('Total points is zero. Set partial to False')
+        problem_meta['partial'] = False
+    else:
+        print('Total points is non-zero. Set partial to True')
+        problem_meta['partial'] = True
 
 
 def pandoc_tex_to_markdown(tex):
@@ -241,9 +244,9 @@ def create_problem(problem_meta):
         time_limit=problem_meta['time_limit'],
         memory_limit=problem_meta['memory_limit'],
         description=problem_meta['description'],
+        partial=problem_meta['partial'],
         group=ProblemGroup.objects.order_by('id').first(),  # Uncategorized
         points=0.0,
-        partial=True,
     )
     problem.save()
     problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
