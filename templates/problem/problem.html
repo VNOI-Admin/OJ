@@ -234,6 +234,25 @@
             </div>
         {% endfor %}
     </div>
+    {% if problem.io_method.method == 'standard' %}
+        <div class="problem-info-entry">
+            <i class="fa fa-keyboard-o fa-fw"></i><span class="pi-name">{{ _('Input:') }}</span>
+            <span class="pi-value">stdin</span>
+        </div>
+        <div class="problem-info-entry">
+            <i class="fa fa-print fa-fw"></i><span class="pi-name">{{ _('Output:') }}</span>
+            <span class="pi-value">stdout</span>
+        </div>
+    {% elif problem.io_method.method == 'file' %}
+        <div class="problem-info-entry">
+            <i class="fa fa-keyboard-o fa-fw"></i><span class="pi-name">{{ _('Input:') }}</span>
+            <span class="pi-value"><i>{{ problem.io_method.input }}</i></span>
+        </div>
+        <div class="problem-info-entry">
+            <i class="fa fa-print fa-fw"></i><span class="pi-name">{{ _('Output:') }}</span>
+            <span class="pi-value"><i>{{ problem.io_method.output }}</i></span>
+        </div>
+    {% endif %}
 
     <hr style="padding-top: 0.7em">
 
