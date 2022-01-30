@@ -508,7 +508,7 @@ class Problem(models.Model):
 
     @cached_property
     def io_method(self):
-        if self.is_manually_managed:
+        if self.is_manually_managed or not hasattr(self, 'data_files'):
             return {'method': 'unknown'}
 
         if self.data_files.grader != 'standard':
