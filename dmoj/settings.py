@@ -81,9 +81,6 @@ VNOJ_ORGANIZATION_ADMIN_LIMIT = 3
 # Maximum timelimit (second) that a user can set for a problem
 # without the `high_problem_timelimit` permission
 VNOJ_PROBLEM_TIMELIMIT_LIMIT = 5
-# Maximum memorylimit (KiB) that a user can set for a problem
-# without the `high_problem_memorylimit` permission
-VNOJ_PROBLEM_MEMORYLIMIT_LIMIT = 1048576
 # Maximum contest duration (day) that a user can set for a contest
 # without the `long_contest_duration` permission
 VNOJ_CONTEST_DURATION_LIMIT = 14

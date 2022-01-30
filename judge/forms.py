@@ -140,15 +140,6 @@ class LanguageLimitForm(ModelForm):
                                         'problem_timelimit_too_long')
         return self.cleaned_data['time_limit']
 
-    def clean_memory_limit(self):
-        has_high_perm = self.user and self.user.has_perm('judge.high_problem_memorylimit')
-        memorylimit = self.cleaned_data['memory_limit']
-        if memorylimit and memorylimit > settings.VNOJ_PROBLEM_MEMORYLIMIT_LIMIT and not has_high_perm:
-            raise forms.ValidationError(_('You cannot set memory limit higher than %d MB')
-                                        % settings.VNOJ_PROBLEM_MEMORYLIMIT_LIMIT,
-                                        'problem_memorylimit_too_long')
-        return self.cleaned_data['memory_limit']
-
     class Meta:
         model = LanguageLimit
         fields = ('language', 'time_limit', 'memory_limit')
