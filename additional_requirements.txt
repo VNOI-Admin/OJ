@@ -1,0 +1,3 @@
+mysqlclient
+uwsgi
+websocket-client
