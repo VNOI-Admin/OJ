@@ -17,6 +17,7 @@
                 $('#lang_limit_title i').toggleClass('fa-caret-down fa-caret-up');
                 $('#lang_limit_table').toggleClass('hidden');
             });
+            $('#lang_limit_title').click();
             {% endif %}
 
             var noResults = function () {
@@ -101,8 +102,11 @@
         <table class="django-as-table">{{ form.as_table() }}</table>
         <hr>
 
-        <center><h3 id="lang_limit_title">{{ _('Language-specific resource limit') }} <i class="fa fa-caret-up"></i></h3></center>
-        <table class="table hidden" id="lang_limit_table">
+        <center>
+            <h3 id="lang_limit_title">{{ _('Language-specific resource limit') }} <i class="fa fa-caret-up"></i></h3>
+            <span class="helptext">{{ _('Only use this feature if you really need to!') }}</span>
+        </center>
+        <table class="table" id="lang_limit_table">
             <thead>
                 <tr>
                     <th style="width: 20em;"> {{ _('Language') }} </th>
