@@ -6,6 +6,7 @@ import subprocess
 import tempfile
 import zipfile
 
+from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
@@ -123,8 +124,14 @@ def parse_tests(problem_meta, root, package):
     # while DMOJ uses seconds and kilobytes.
     problem_meta['time_limit'] = float(testset.find('time-limit').text) / 1000
     problem_meta['memory_limit'] = int(testset.find('memory-limit').text) // 1024
+
+    if hasattr(settings, 'DMOJ_PROBLEM_MIN_MEMORY_LIMIT'):
+        problem_meta['memory_limit'] = max(problem_meta['memory_limit'], settings.DMOJ_PROBLEM_MIN_MEMORY_LIMIT)
+    if hasattr(settings, 'DMOJ_PROBLEM_MAX_MEMORY_LIMIT'):
+        problem_meta['memory_limit'] = min(problem_meta['memory_limit'], settings.DMOJ_PROBLEM_MAX_MEMORY_LIMIT)
+
     print(f'Time limit: {problem_meta["time_limit"]}s')
-    print(f'Memory limit: {problem_meta["memory_limit"]}KB')
+    print(f'Memory limit: {problem_meta["memory_limit"] // 1024}MB')
 
     problem_meta['cases'] = []
     problem_meta['zipfile'] = os.path.join(problem_meta['tmp_dir'].name, 'tests.zip')
