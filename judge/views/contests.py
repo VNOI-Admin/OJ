@@ -27,7 +27,7 @@ from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import ListView, TemplateView
+from django.views.generic import FormView, ListView, TemplateView
 from django.views.generic.detail import BaseDetailView, DetailView, SingleObjectMixin, View
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import BaseListView
@@ -254,6 +254,8 @@ class ContestMixin(object):
             return render(request, 'contest/private.html', {
                 'error': e, 'title': _('Access to contest "%s" denied') % e.name,
             }, status=403)
+        except PermissionDenied as e:
+            return generic_message(request, _('Permission denied'), e)
 
 
 class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
@@ -328,6 +330,13 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
     template_name = 'contest/clone.html'
     form_class = ContestCloneForm
     permission_required = 'judge.clone_contest'
+    permission_denied_message = _('You are not allowed to clone contests.')
+
+    def get_object(self, queryset=None):
+        contest = super().get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied(_('You are not allowed to edit this contest.'))
+        return contest
 
     def form_valid(self, form):
         contest = self.object
@@ -362,17 +371,17 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
         return HttpResponseRedirect(reverse('contest_edit', args=(contest.key,)))
 
-    def dispatch(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if not self.can_edit:
-            raise PermissionDenied()
-        return super().dispatch(request, *args, **kwargs)
-
 
 class ContestAnnounce(ContestMixin, TitleMixin, SingleObjectFormView):
     title = _('Create contest announcement')
     template_name = 'contest/create-announcement.html'
     form_class = ContestAnnouncementForm
+
+    def get_object(self, queryset=None):
+        contest = super().get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied(_('You are not allowed to edit this contest.'))
+        return contest
 
     def form_valid(self, form):
         contest = self.object
@@ -383,12 +392,6 @@ class ContestAnnounce(ContestMixin, TitleMixin, SingleObjectFormView):
         announcement.send()
 
         return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
-
-    def dispatch(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if not self.can_edit:
-            raise PermissionDenied()
-        return super().dispatch(request, *args, **kwargs)
 
 
 class ContestAccessDenied(Exception):
@@ -984,6 +987,7 @@ class ContestParticipationDisqualify(ContestMixin, SingleObjectMixin, View):
 
 class ContestMossMixin(ContestMixin, PermissionRequiredMixin):
     permission_required = 'judge.moss_contest'
+    permission_denied_message = _('You are not allowed to run MOSS.')
 
     def get_object(self, queryset=None):
         contest = super().get_object(queryset)
@@ -1054,6 +1058,7 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
     model = Contest
     form_class = ContestForm
     permission_required = 'judge.add_contest'
+    permission_denied_message = _('You are not allowed to create contests.')
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1099,8 +1104,14 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
         else:
             return self.render_to_response(self.get_context_data(*args, **kwargs))
 
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except PermissionDenied as e:
+            return generic_message(request, _('Permission denied'), e)
 
-class EditContest(ContestMixin, TitleMixin, UpdateView):
+
+class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
     template_name = 'contest/edit.html'
     model = Contest
     form_class = ContestForm
@@ -1108,7 +1119,7 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
     def get_object(self, queryset=None):
         contest = super(EditContest, self).get_object(queryset)
         if not contest.is_editable_by(self.request.user):
-            raise PermissionDenied()
+            raise PermissionDenied(_('You are not allowed to edit this contest.'))
         return contest
 
     def get_form_kwargs(self):
@@ -1165,28 +1176,23 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
             return self.render_to_response(self.get_context_data(object=self.object))
 
 
-class ContestDataMixin(ContestMixin):
+class ContestDataMixin(ContestMixin, LoginRequiredMixin):
     @cached_property
     def data_path(self):
         return os.path.join(settings.DMOJ_CONTEST_DATA_CACHE, '%s.zip' % self.object.id)
 
     def get_object(self, queryset=None):
-        contest = super().get_object(queryset)
-        if not contest.is_editable_by(self.request.user):
-            raise PermissionDenied()
-        return contest
-
-    def dispatch(self, request, *args, **kwargs):
-        self.object = self.get_object()
         if not settings.DMOJ_CONTEST_DATA_DOWNLOAD:
             raise Http404()
-        if not self.object.ended:
-            return generic_message(request, _('Contest has not ended'),
-                                   _('Please wait until the contest has ended to download data.'))
-        return super().dispatch(request, *args, **kwargs)
+        contest = super().get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied(_('You are not allowed to edit this contest.'))
+        if not contest.ended:
+            raise PermissionDenied(_('Please wait until the contest has ended to download data.'))
+        return contest
 
 
-class ContestPrepareData(ContestDataMixin, TitleMixin, SingleObjectFormView):
+class ContestPrepareData(ContestDataMixin, TitleMixin, SingleObjectMixin, FormView):
     title = _('Download contest data')
     template_name = 'contest/prepare-data.html'
     form_class = ContestDownloadDataForm
@@ -1244,14 +1250,21 @@ class ContestPrepareData(ContestDataMixin, TitleMixin, SingleObjectFormView):
             )
         return context
 
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().get(request, *args, **kwargs)
+
     def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
         if not self.can_prepare_data or self.in_progress_url is not None:
-            raise PermissionDenied()
+            raise PermissionDenied('You are not allowed to prepare new data.')
         return super().post(request, *args, **kwargs)
 
 
 class ContestDownloadData(ContestDataMixin, SingleObjectMixin, View):
     def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
         if not os.path.exists(self.data_path):
             raise Http404()
 
