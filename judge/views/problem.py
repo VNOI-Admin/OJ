@@ -28,7 +28,8 @@ from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.forms import ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, ProposeProblemSolutionFormSet
+from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, \
+    ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
@@ -867,8 +868,15 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
             return ProposeProblemSolutionFormSet(self.request.POST, instance=self.get_object())
         return ProposeProblemSolutionFormSet(instance=self.get_object())
 
+    def get_language_limit_formset(self):
+        if self.request.POST:
+            return LanguageLimitFormSet(self.request.POST, instance=self.get_object(),
+                                        form_kwargs={'user': self.request.user})
+        return LanguageLimitFormSet(instance=self.get_object(), form_kwargs={'user': self.request.user})
+
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
+        data['lang_limit_formset'] = self.get_language_limit_formset()
         data['solution_formset'] = self.get_solution_formset()
         return data
 
@@ -891,12 +899,14 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
+        form_lang_limit = self.get_language_limit_formset()
         form_edit = self.get_solution_formset()
-        if form.is_valid() and form_edit.is_valid():
+        if form.is_valid() and form_edit.is_valid() and form_lang_limit.is_valid():
             with revisions.create_revision(atomic=True):
                 problem = form.save()
                 self.save_statement(form, problem)
                 problem.save()
+                form_lang_limit.save()
                 form_edit.save()
 
                 revisions.set_comment(_('Edited from site'))
