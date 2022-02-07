@@ -15,7 +15,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import DetailView
 
 from judge.highlight_code import highlight_code
@@ -56,10 +56,10 @@ def grader_args_cleaner(self):
 
 
 class ProblemDataForm(ModelForm):
-    io_method = ChoiceField(choices=IO_METHODS, label=_('IO Method'), initial='standard', required=False,
+    io_method = ChoiceField(choices=IO_METHODS, label=gettext_lazy('IO Method'), initial='standard', required=False,
                             widget=Select2Widget(attrs={'style': 'width: 200px'}))
-    io_input_file = CharField(max_length=100, label=_('Input from file'), required=False)
-    io_output_file = CharField(max_length=100, label=_('Output to file'), required=False)
+    io_input_file = CharField(max_length=100, label=gettext_lazy('Input from file'), required=False)
+    io_output_file = CharField(max_length=100, label=gettext_lazy('Output to file'), required=False)
     checker_type = ChoiceField(choices=CUSTOM_CHECKERS, widget=Select2Widget(attrs={'style': 'width: 200px'}))
 
     def clean_zipfile(self):
