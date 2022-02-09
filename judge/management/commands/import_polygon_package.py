@@ -185,12 +185,16 @@ def pandoc_tex_to_markdown(tex):
 
 
 def parse_statements(problem_meta, root, package):
-    print('Converting statement to Markdown')
-
     statement = root.find('.//statement[@type="application/x-tex"]')
     if statement is None:
+        print('Statement not found! Would you like to skip statement (y/n)? ', end='', flush=True)
+        if input().lower() in ['y', 'yes']:
+            problem_meta['description'] = ''
+            return
+
         raise CommandError('statement not found')
 
+    print('Converting statement to Markdown')
     statement_folder = os.path.dirname(statement.get('path'))
     problem_properties_path = os.path.join(statement_folder, 'problem-properties.json')
     if problem_properties_path not in package.namelist():
@@ -269,11 +273,14 @@ def create_problem(problem_meta):
         )
         problem_data.save()
 
-    if 'checker_args' in problem_meta:
+    if problem_meta['checker'] == 'bridged':
         with open(problem_meta['custom_checker'], 'rb') as f:
             problem_data.custom_checker = File(f)
-            problem_data.checker_args = json.dumps(problem_meta['checker_args'])
             problem_data.save()
+
+    if 'checker_args' in problem_meta:
+        problem_data.checker_args = json.dumps(problem_meta['checker_args'])
+        problem_data.save()
 
     for order, case_data in enumerate(problem_meta['cases'], start=1):
         case = ProblemTestCase(
@@ -327,8 +334,12 @@ class Command(BaseCommand):
         # A dictionary to hold all problem information.
         problem_meta = {}
         problem_meta['code'] = problem_code
-        problem_meta['name'] = root.find('.//name').get('value')
         problem_meta['tmp_dir'] = tempfile.TemporaryDirectory()
+        if root.find('.//name') is not None:
+            problem_meta['name'] = root.find('.//name').get('value')
+        else:
+            print('Problem name not found! Please type in problem name: ', end='', flush=True)
+            problem_meta['name'] = input()
 
         try:
             parse_checker(problem_meta, root, package)
