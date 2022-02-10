@@ -828,6 +828,17 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         context['tab'] = self.tab
         return context
 
+    def get(self, request, *args, **kwargs):
+        if 'raw' in request.GET:
+            self.object = self.get_object()
+
+            if not self.object.can_see_own_scoreboard(self.request.user):
+                raise Http404()
+
+            return HttpResponse(self.get_rendered_ranking_table(), content_type='text/plain')
+
+        return super().get(request, *args, **kwargs)
+
 
 class ContestRanking(ContestRankingBase):
     tab = 'ranking'

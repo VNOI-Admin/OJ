@@ -145,6 +145,28 @@
                 };
 
                 install_tooltips();
+
+                // Auto reload every 10 seconds
+                var ranking_outdated = false;
+                function update_ranking() {
+                    if ($('body').hasClass('window-hidden')) {
+                        return ranking_outdated = true;
+                    }
+                    $.ajax({
+                        url: '?raw'
+                    }).done(function (data) {
+                        $('#users-table').html(data);
+                    }).always(function () {
+                        ranking_outdated = false;
+                        setTimeout(update_ranking, 10000);
+                    });
+                }
+                $(window).on('dmoj:window-visible', function () {
+                    if (ranking_outdated) {
+                        update_ranking();
+                    }
+                });
+                setTimeout(update_ranking, 10000);
             });
         </script>
     {% endif %}
