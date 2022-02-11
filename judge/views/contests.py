@@ -203,7 +203,7 @@ class ContestMixin(object):
             context['live_participation'] = None
             context['has_joined'] = False
 
-        context['now'] = timezone.now()
+        context['now'] = self.object._now
         context['is_editor'] = self.is_editor
         context['is_tester'] = self.is_tester
         context['can_edit'] = self.can_edit
@@ -955,7 +955,6 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['has_rating'] = False
-        context['now'] = timezone.now()
         context['rank_header'] = _('Participation')
         return context
 
