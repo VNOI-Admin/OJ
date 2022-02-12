@@ -16,7 +16,7 @@ from django.db import IntegrityError
 from django.db.models import Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
 from django.template.defaultfilters import date as date_filter, floatformat
@@ -51,7 +51,7 @@ from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleOb
     add_file_response, generic_message
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
-           'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete', 'contest_ranking_ajax',
+           'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
            'ContestParticipationList', 'ContestParticipationDisqualify', 'get_contest_ranking_list',
            'base_contest_ranking_list']
 
@@ -752,40 +752,6 @@ def get_contest_ranking_list(request, contest, participation=None, ranking_list=
     return users, problems
 
 
-def contest_ranking_ajax(request, contest, participation=None):
-    contest, exists = _find_contest(request, contest)
-    if not exists:
-        return HttpResponseBadRequest('Invalid contest', content_type='text/plain')
-
-    if not contest.can_see_full_scoreboard(request.user):
-        raise Http404()
-
-    is_frozen = contest.is_frozen and not contest.is_editable_by(request.user)
-
-    if is_frozen:
-        queryset = base_contest_frozen_ranking_queryset(contest)
-    else:
-        queryset = base_contest_ranking_queryset(contest)
-
-    queryset = queryset.filter(virtual=ContestParticipation.LIVE)
-
-    users, problems = get_contest_ranking_list(
-        request, contest, participation,
-        ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=is_frozen),
-    )
-
-    return render(request, 'contest/ranking-table.html', {
-        'users': users,
-        'problems': problems,
-        'contest': contest,
-        'has_rating': contest.ratings.exists(),
-        'is_frozen': is_frozen,
-        'is_ICPC_format': contest.format.name == ICPCContestFormat.name,
-        'perms': PermWrapper(request.user),
-        'can_edit': contest.is_editable_by(request.user),
-    })
-
-
 class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/ranking.html'
     ranking_table_template_name = 'contest/ranking-table.html'
@@ -827,6 +793,17 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         context['rendered_ranking_table'] = self.get_rendered_ranking_table()
         context['tab'] = self.tab
         return context
+
+    def get(self, request, *args, **kwargs):
+        if 'raw' in request.GET:
+            self.object = self.get_object()
+
+            if not self.object.can_see_own_scoreboard(self.request.user):
+                raise Http404()
+
+            return HttpResponse(self.get_rendered_ranking_table(), content_type='text/plain')
+
+        return super().get(request, *args, **kwargs)
 
 
 class ContestRanking(ContestRankingBase):
