@@ -438,6 +438,10 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
 
         requires_access_code = (not self.can_edit and contest.access_code and access_code != contest.access_code)
         if contest.ended:
+            if contest.disallow_virtual:
+                return generic_message(request, _('Virtual joining not allowed'),
+                                       _('Virtual joining is not allowed for this contest.'))
+
             if requires_access_code:
                 raise ContestAccessDenied()
 

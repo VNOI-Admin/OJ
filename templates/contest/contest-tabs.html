@@ -41,7 +41,7 @@
                         {% csrf_token %}
                         <input type="submit" class="leaving-forever" value="{{ _('Leave contest') }}">
                     </form>
-                {% else %}
+                {% elif not contest.disallow_virtual %}
                     {# Allow users to virtual join #}
                     <form action="{{ url('contest_join', contest.key) }}" method="post"
                           class="contest-join-pseudotab unselectable button">
