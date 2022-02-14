@@ -220,7 +220,8 @@ class Contest(models.Model):
     def is_in_contest(self, user):
         if user.is_authenticated:
             profile = user.profile
-            return profile and profile.current_contest is not None and profile.current_contest.contest == self
+            return profile and profile.current_contest is not None and profile.current_contest.contest == self \
+                and profile.current_contest.contest.can_join
         return False
 
     def can_see_own_scoreboard(self, user):
