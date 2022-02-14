@@ -252,10 +252,14 @@ class Problem(models.Model):
         # If we don't want to check if the user is in a contest containing that problem.
         if not skip_contest_problem_check and user.is_authenticated:
             # If user is currently in a contest containing that problem.
-            current = user.profile.current_contest_id
+            current = user.profile.current_contest
             if current is not None:
+                # If contest has not started (for joining contest in advance).
+                if not current.contest.can_join:
+                    return False
+
                 from judge.models import ContestProblem
-                if ContestProblem.objects.filter(problem_id=self.id, contest__users__id=current).exists():
+                if ContestProblem.objects.filter(problem_id=self.id, contest__users__id=current.id).exists():
                     return True
 
         # Problem is public.
