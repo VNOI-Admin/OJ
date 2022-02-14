@@ -715,7 +715,7 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
                 request.user.username,
                 kwargs.get(self.slug_url_kwarg),
             )
-            return HttpResponseForbidden('<h1>Do you want me to ban you?</h1>')
+            return HttpResponseForbidden('<h1>You are not allowed to submit to this problem.</h1>')
 
     def dispatch(self, request, *args, **kwargs):
         submission_id = kwargs.get('submission')
