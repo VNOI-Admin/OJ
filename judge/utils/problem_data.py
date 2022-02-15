@@ -181,8 +181,12 @@ class ProblemDataCompiler(object):
 
             if case.grader == 'standard':
                 if grader_args.get('io_method') == 'file':
-                    if 'io_input_file' not in grader_args or 'io_output_file' not in grader_args:
+                    if grader_args.get('io_input_file', '') == '' or grader_args.get('io_output_file', '') == '':
                         raise ProblemDataError(_('You must specify both input and output files.'))
+
+                    if not isinstance(grader_args['io_input_file'], str) or \
+                            not isinstance(grader_args['io_output_file'], str):
+                        raise ProblemDataError(_('Input/Output file must be a string.'))
 
                     init['file_io'] = {}
                     init['file_io']['input'] = grader_args['io_input_file']
