@@ -494,7 +494,7 @@
                 for (var i = 0; i < n_test; i++) {
                     $("#id_cases-" + i + "-input_file").append(new Option(inFiles[i], inFiles[i], true, true)).change();
                     $("#id_cases-" + i + "-output_file").append(new Option(outFiles[i], outFiles[i], true, true)).change();
-                    $("#id_cases-" + i + "-points").val("1").change();
+                    $("#id_cases-" + i + "-points").val(i == n_test - 1 ? "1" : "0").change();
                 }
                 $("#fill-test-case-noti").show();
                 if (inFiles.length > window.testcase_limit) {
