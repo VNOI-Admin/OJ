@@ -2889,7 +2889,7 @@ msgstr "Đang xử lý"
 
 #: judge/models/submission.py:37 judge/models/submission.py:66
 msgid "Grading"
-msgstr "Chấm điểm"
+msgstr "Đang chấm điểm"
 
 #: judge/models/submission.py:38 judge/models/submission.py:67
 msgid "Completed"

@@ -204,6 +204,10 @@ class SubmissionStatus(SubmissionDetailBase):
             context['cases_data'] = get_problem_testcases_data(submission.problem)
         else:
             context['cases_data'] = {}
+
+        context['can_view_per_testcase_status'] = self.request.user.is_superuser or \
+            getattr(settings, 'ALLOW_VIEW_PER_TESTCASE_STATUS', True)
+
         context['time_limit'] = submission.problem.time_limit
         try:
             lang_limit = submission.problem.language_limits.get(language=submission.language)
