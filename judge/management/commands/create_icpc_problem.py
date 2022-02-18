@@ -84,37 +84,38 @@ def update_problem_testcases(problem, testcases, test_file_path):
 
 
 def create_problem(problem_code, icpc_folder):
-    if Problem.objects.filter(code=problem_code).count():
-        print(f'Skip {problem_code}')
-        return
     problem_folder = os.path.join(icpc_folder, problem_code)
     test_path = os.path.join(problem_folder, 'data')
 
     if not os.path.exists(test_path):
         raise CommandError(f'Test data folder `{test_path}` not found.')
 
-    pdf_path = os.path.join(problem_folder, f'{problem_code}.pdf')
-    yml_path = os.path.join(problem_folder, 'problem.yaml')
+    if Problem.objects.filter(code=problem_code).count() == 0:
+        pdf_path = os.path.join(problem_folder, f'{problem_code}.pdf')
+        yml_path = os.path.join(problem_folder, 'problem.yaml')
 
-    print(f'Creating problem {problem_code}')
-    with open(pdf_path, 'rb') as f, open(yml_path) as y:
-        file_url = pdf_statement_uploader(f)
-        config = yaml.full_load(y)
-        problem = Problem(code=problem_code)
-        problem.name = problem_code
-        problem.pdf_url = file_url
-        problem.time_limit = config['limits']['time_multiplier']
-        problem.memory_limit = 512 * 1024
-        problem.partial = False
-        problem.points = 1
-        problem.group = ProblemGroup.objects.order_by('id').first()  # Uncategorized
-        problem.date = timezone.now()
-        problem.save()
+        print(f'Creating problem {problem_code}')
+        with open(pdf_path, 'rb') as f, open(yml_path) as y:
+            file_url = pdf_statement_uploader(f)
+            config = yaml.full_load(y)
+            problem = Problem(code=problem_code)
+            problem.name = problem_code
+            problem.pdf_url = file_url
+            problem.time_limit = config['limits']['time_multiplier']
+            problem.memory_limit = 512 * 1024
+            problem.partial = False
+            problem.points = 1
+            problem.group = ProblemGroup.objects.order_by('id').first()  # Uncategorized
+            problem.date = timezone.now()
+            problem.save()
 
-        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-        problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
-        problem.authors.set(Profile.objects.filter(user__username='admin'))
-        problem.save()
+            problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
+            problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
+            problem.authors.set(Profile.objects.filter(user__username='admin'))
+            problem.save()
+    else:
+        print(f'Skipped create problem {problem_code}.')
+        problem = Problem.objects.get(code=problem_code)
 
     testcases = get_testcases(test_path)
 
