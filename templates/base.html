@@ -250,6 +250,10 @@
         </ul>
 
         <span id="user-links">
+            {% if ticket_count %}
+                <a href="{{url('ticket_list')}}" style="margin-right: 5px; color: red; "> {{ticket_count}} tickets</a>
+            {% endif %}
+
             <a href=
                 {% if request.resolver_match.view_name == "problem_detail" and problem %}
                     "{{ url('new_problem_ticket', problem.code) }}"
