@@ -58,7 +58,7 @@
 {% block personal_info_data scoped %}
     {% if user.organization %}
         <span class="organization"><a href="{{ user.organization.get_absolute_url() }}">
-            {{- user.organization.short_name -}}
+            {{- user.organization.name -}}
         </a></span>
     {% endif %}
 {% endblock %}
