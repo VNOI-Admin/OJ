@@ -8,7 +8,7 @@ from django.utils.functional import SimpleLazyObject, new_method_proxy
 
 from judge import event_poster as event
 from judge.utils.caniuse import CanIUse, SUPPORT
-from .models import MiscConfig, NavigationBar, Profile
+from .models import MiscConfig, NavigationBar, Profile, Ticket
 
 
 class FixedSimpleLazyObject(SimpleLazyObject):
@@ -60,13 +60,16 @@ def __nav_tab(path):
 
 def general_info(request):
     path = request.get_full_path()
-    return {
+    context = {
         'nav_tab': FixedSimpleLazyObject(partial(__nav_tab, request.path)),
         'nav_bar': NavigationBar.objects.all(),
         'LOGIN_RETURN_PATH': '' if path.startswith('/accounts/') else path,
         'perms': PermWrapper(request.user),
         'HAS_WEBAUTHN': bool(settings.WEBAUTHN_RP_ID),
     }
+    if request.user.is_superuser:
+        context['ticket_count'] = Ticket.objects.filter(is_open=True).count()
+    return context
 
 
 def site(request):
