@@ -156,6 +156,10 @@
                         url: '?raw'
                     }).done(function (data) {
                         $('#users-table').html(data);
+                        if (localStorage.getItem('show-personal-info') == 'true') {
+                            $('.personal-info').show();
+                            $('#show-personal-info-checkbox').prop('checked', true);
+                        }
                     }).always(function () {
                         ranking_outdated = false;
                         setTimeout(update_ranking, 10000);
