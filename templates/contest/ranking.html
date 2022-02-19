@@ -163,7 +163,7 @@
                         {% if is_ICPC_format %}
                             window.firstSolve();
                         {% endif %}
-                        windows.totalAC();
+                        window.totalAC();
                     }).always(function () {
                         ranking_outdated = false;
                         setTimeout(update_ranking, 10000);
