@@ -107,7 +107,8 @@ class ICPCContestFormat(DefaultContestFormat):
                         # largest points. However, for computing & showing frozen scoreboard,
                         # if the largest points is 0, we need to get the last submission.
                         time = subs.aggregate(time=Max('submission__date'))['time']
-                        is_frozen_sub = (participation.is_frozen and time >= frozen_time)
+                        # time can be None if there all of submissions are CE or IE.
+                        is_frozen_sub = (participation.is_frozen and time and time >= frozen_time)
                 else:
                     tries = 0
                     # Don't need to set frozen_tries = 0 because we've initialized it with 0
