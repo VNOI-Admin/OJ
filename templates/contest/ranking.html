@@ -156,6 +156,14 @@
                         url: '?raw'
                     }).done(function (data) {
                         $('#users-table').html(data);
+                        if (localStorage.getItem('show-personal-info') == 'true') {
+                            $('.personal-info').show();
+                            $('#show-personal-info-checkbox').prop('checked', true);
+                        }
+                        {% if is_ICPC_format %}
+                            window.firstSolve();
+                        {% endif %}
+                        window.totalAC();
                     }).always(function () {
                         ranking_outdated = false;
                         setTimeout(update_ranking, 10000);
@@ -236,7 +244,7 @@
                 return sub1['time'] < sub2['time'];
             }
 
-            function firstSolve() {
+            window.firstSolve = function() {
                 let firstSolves = {};
 
                 $('td.full-score a').each(function () {
@@ -271,10 +279,10 @@
             }
 
             {% if is_ICPC_format %}
-                firstSolve();
+                window.firstSolve();
             {% endif %}
 
-            function totalAC() {
+            window.totalAC = function() {
                 let arr = {};
 
                 $('td.full-score').each(function () {
@@ -285,7 +293,7 @@
                 });
             };
 
-            totalAC();
+            window.totalAC();
 
             {% if tab == 'ranking' %}
                 {% if show_virtual %}
