@@ -40,7 +40,7 @@
 
     {% if submission.status == 'G' %}
         <div class="sub-testcase">
-            {%- if submission.current_testcase > 0 -%}
+            {%- if request.user.is_superuser and submission.current_testcase > 0 -%}
                 {{ _('Case #%(case)s', case=submission.current_testcase) }}
             {%- else -%}
                 ...
@@ -53,7 +53,7 @@
             <a href="{{ url('submission_status', submission.id) }}">
                 <i class="fa fa-eye fa-fw"></i><span class="label">{{ _('view') }}</span>
             </a> ·
-            {% if not submission.language.file_only or request.user.is_superuser %}
+            {% if not submission.language.file_only %}
                     <a href="{{ url('submission_source', submission.id) }}">
                         {{ _('source') }}
                     </a>
@@ -85,6 +85,7 @@
     {% endif %}
 </div>
 
+{% if request.user.is_superuser %}
 <div class="sub-usage">
     {% if submission.status in ('QU', 'P', 'G', 'CE', 'IE', 'AB') %}
         <div class="time">---</div>
@@ -101,3 +102,4 @@
         <div class="memory">{{ (submission.memory_bytes|filesizeformat(True)).replace('i', '') }}</div>
     {% endif %}
 </div>
+{% endif %}
