@@ -73,12 +73,13 @@ def fill_problem(contest: Contest, root: ET.Element) -> Dict[int, int]:
 def fill_team(contest: Contest, root: ET.Element) -> Dict[int, int]:
     teams = contest.users.filter(virtual=0).select_related('user', 'user__user')
     team_index = {}
-    for id, participation in enumerate(teams, start=1):
+    for participation in teams:
         profile = participation.user
         user = profile.user
         team = ET.SubElement(root, 'team')
         team.tail = '\n'
-        ET.SubElement(team, 'id').text = str(id)
+        team_id = str(profile.notes)
+        ET.SubElement(team, 'id').text = str(team_id)
         ET.SubElement(team, 'external-id').text = str(user.id)
         ET.SubElement(team, 'name').text = user.first_name or profile.display_name
         ET.SubElement(team, 'nationality').text = 'VNM'
@@ -86,7 +87,7 @@ def fill_team(contest: Contest, root: ET.Element) -> Dict[int, int]:
         org = profile.organization
         ET.SubElement(team, 'university').text = org.name if org else ''
 
-        team_index[user.id] = id
+        team_index[user.id] = team_id
 
     return team_index
 
