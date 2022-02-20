@@ -17,7 +17,7 @@
         <span class="language">{{ submission.language.short_display_name }}</span>
     </div>
 </div>
-
+{% set can_view_testcase_status = request.user.is_superuser or submission.problem.testcase_result_visibility_mode == 'A' %}
 <div class="sub-main">
     <div class="sub-info{% if submission.status == 'G' %} sub-info-grading{% endif %}">
         {% if show_problem %}
@@ -38,7 +38,7 @@
         </div>
     </div>
 
-    {% if submission.status == 'G' %}
+    {% if submission.status == 'G' and can_view_testcase_status %}
         <div class="sub-testcase">
             {%- if submission.current_testcase > 0 -%}
                 {{ _('Case #%(case)s', case=submission.current_testcase) }}
@@ -91,7 +91,7 @@
     {% endif %}
 </div>
 
-{% set can_view_testcase_status = request.user.is_superuser or submission.problem.testcase_result_visibility_mode == 'A' %}
+
 <div class="sub-usage">
     {% if submission.status in ('QU', 'P', 'G', 'CE', 'IE', 'AB') or not can_view_testcase_status %}
         <div class="time">---</div>
