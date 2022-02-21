@@ -387,7 +387,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
                 'has_completed_contest': self.assertFalse,
             },
             'normal_after_window': {
-                'can_see_own_scoreboard': self.assertFalse,
+                'can_see_own_scoreboard': self.assertTrue,
                 'can_see_full_scoreboard': self.assertFalse,
                 'can_see_full_submission_list': self.assertFalse,
                 'has_completed_contest': self.assertTrue,
