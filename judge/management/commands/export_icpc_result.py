@@ -28,6 +28,6 @@ class Command(BaseCommand):
             result_writer.writerow(['external id', 'rank', 'prize', 'solved', 'penalty', 'last AC'])
             for rank, p in enumerate(participations, start=1):
                 user = p.user
-                result_writer.writerow([user.notes, rank, '', p.score, p.cumtime, int(p.tiebreaker)])
+                result_writer.writerow([user.notes, rank, '', int(p.score), p.cumtime, int(p.tiebreaker)])
 
             print(f'Exported result to {output_path}')
