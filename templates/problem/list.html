@@ -166,7 +166,8 @@
                 <tr>
                     {% if request.user.is_authenticated %}
                         <th class="solved">
-                            <a href="{{ sort_links.solved }}"><i class="fa fa-check"></i>{{ sort_order.solved }}
+                            <a href="{{ sort_links.solved }}">
+                                <i class="fa fa-check"></i>{{ sort_order.solved }}
                             </a>
                         </th>
                     {% endif %}
@@ -191,7 +192,9 @@
                         <a href="{{ sort_links.ac_rate }}">{{ _('%% AC') }}{{ sort_order.ac_rate }}</a>
                     </th>
                     <th class="editorial">
-                        {{ _('Editorial') }}
+                        <a href="{{ sort_links.editorial }}">
+                            <i class="fa fa-book"></i>{{ sort_order.editorial }}
+                        </a>
                     </th>
                     <th class="users">
                         <a href="{{ sort_links.user_count }}">{{ _('# AC') }}{{ sort_order.user_count }}</a>
