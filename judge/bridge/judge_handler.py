@@ -27,7 +27,7 @@ UPDATE_RATE_LIMIT = 5
 UPDATE_RATE_TIME = 0.5
 SubmissionData = namedtuple(
     'SubmissionData',
-    'time memory short_circuit pretests_only contest_no attempt_no user_id file_only file_size_limit',
+    'time memory short_circuit pretests_only contest_no attempt_no user_id file_only file_size_limit batch_policy',
 )
 
 
@@ -199,13 +199,14 @@ class JudgeHandler(ZlibPacketHandler):
         _ensure_connection()
 
         try:
-            pid, time, memory, short_circuit, lid, is_pretested, sub_date, uid, part_virtual, part_id, \
+            pid, time, memory, short_circuit, batch_policy, lid, is_pretested, sub_date, uid, part_virtual, part_id, \
                 file_only, file_size_limit = (
                     Submission.objects.filter(id=submission)
                               .values_list('problem__id', 'problem__time_limit', 'problem__memory_limit',
-                                           'problem__short_circuit', 'language__id', 'is_pretested', 'date',
-                                           'user__id', 'contest__participation__virtual', 'contest__participation__id',
-                                           'language__file_only', 'language__file_size_limit')).get()
+                                           'problem__short_circuit', 'problem__batch_policy', 'language__id',
+                                           'is_pretested', 'date', 'user__id', 'contest__participation__virtual',
+                                           'contest__participation__id', 'language__file_only',
+                                           'language__file_size_limit')).get()
         except Submission.DoesNotExist:
             logger.error('Submission vanished: %s', submission)
             json_log.error(self._make_json_log(
@@ -233,6 +234,7 @@ class JudgeHandler(ZlibPacketHandler):
             user_id=uid,
             file_only=file_only,
             file_size_limit=file_size_limit,
+            batch_policy=batch_policy,
         )
 
     def disconnect(self, force=False):
@@ -262,6 +264,7 @@ class JudgeHandler(ZlibPacketHandler):
                 'user': data.user_id,
                 'file-only': data.file_only,
                 'file-size-limit': data.file_size_limit,
+                'batch-policy': data.batch_policy,
             },
         })
 
@@ -380,6 +383,9 @@ class JudgeHandler(ZlibPacketHandler):
         status_codes = ['SC', 'AC', 'WA', 'MLE', 'TLE', 'IR', 'RTE', 'OLE']
         batches = {}  # batch number: (points, total)
 
+        problem = submission.problem
+        batch_policy = min if problem.batch_policy == 'min' else max
+
         for case in SubmissionTestCase.objects.filter(submission=submission):
             time += case.time
             if not case.batch:
@@ -387,7 +393,7 @@ class JudgeHandler(ZlibPacketHandler):
                 total += case.total
             else:
                 if case.batch in batches:
-                    batches[case.batch][0] = min(batches[case.batch][0], case.points)
+                    batches[case.batch][0] = batch_policy(batches[case.batch][0], case.points)
                     batches[case.batch][1] = max(batches[case.batch][1], case.total)
                 else:
                     batches[case.batch] = [case.points, case.total]
@@ -405,7 +411,6 @@ class JudgeHandler(ZlibPacketHandler):
         submission.case_points = points
         submission.case_total = total
 
-        problem = submission.problem
         sub_points = round(points / total * problem.points if total > 0 else 0, 3)
         if not problem.partial and sub_points != problem.points:
             sub_points = 0

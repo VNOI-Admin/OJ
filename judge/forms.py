@@ -213,11 +213,12 @@ class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
         fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points', 'partial',
-                  'statement_file', 'source', 'types', 'group', 'testcase_visibility_mode',
+                  'batch_policy', 'statement_file', 'source', 'types', 'group', 'testcase_visibility_mode',
                   'description', 'testers']
         widgets = {
-            'types': Select2MultipleWidget,
-            'group': Select2Widget,
+            'types': Select2MultipleWidget(attrs={'style': 'width: 30em'}),
+            'group': Select2Widget(attrs={'style': 'width: 30em'}),
+            'batch_policy': Select2Widget(attrs={'style': 'width: 30em'}),
             'testcase_visibility_mode': Select2Widget,
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
             'testers': HeavySelect2MultipleWidget(

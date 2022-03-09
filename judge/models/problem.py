@@ -170,6 +170,11 @@ class Problem(models.Model):
                                                validators=[MinValueValidator(settings.DMOJ_PROBLEM_MIN_MEMORY_LIMIT),
                                                            MaxValueValidator(settings.DMOJ_PROBLEM_MAX_MEMORY_LIMIT)])
     short_circuit = models.BooleanField(default=False)
+    batch_policy = models.CharField(verbose_name=_('Batch case scoring policy'), max_length=3,
+                                    default='min',
+                                    choices=(
+                                        ('min', _('Use min points in batch')),
+                                        ('max', _('Use max points in batch'))))
     points = models.FloatField(verbose_name=_('points'),
                                help_text=_('Points awarded for problem completion. '
                                            "Points are displayed with a 'p' suffix if partial."),

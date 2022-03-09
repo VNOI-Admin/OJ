@@ -124,10 +124,11 @@ def SubmissionSourceDiff(request):
     })
 
 
-def make_batch(batch, cases):
+def make_batch(batch, cases, problem):
     result = {'id': batch, 'cases': cases}
     if batch:
-        result['points'] = min(map(attrgetter('points'), cases))
+        batch_policy = min if problem.batch_policy == 'min' else max
+        result['points'] = batch_policy(map(attrgetter('points'), cases))
         result['total'] = max(map(attrgetter('total'), cases))
     return result
 
@@ -135,11 +136,16 @@ def make_batch(batch, cases):
 TestCase = namedtuple('TestCase', 'id status batch num_combined')
 
 
-def get_statuses(batch, cases):
+def get_statuses(batch, cases, problem):
+    points = [case.points for case in cases]
     cases = [TestCase(id=case.id, status=case.status, batch=batch, num_combined=1) for case in cases]
     if batch:
-        # Get the first non-AC case if it exists.
-        return [next((case for case in cases if case.status != 'AC'), cases[0])]
+        if problem.batch_policy == 'min':
+            # Get the first non-AC case if it exists.
+            return [next((case for case in cases if case.status != 'AC'), cases[0])]
+        else:
+            # Get the testcase that has the largest points
+            return [cases[points.index(max(points))]]
     else:
         return cases
 
@@ -161,7 +167,7 @@ def combine_statuses(status_cases, submission):
     return ret
 
 
-def group_test_cases(cases):
+def group_test_cases(cases, problem):
     result = []
     status = []
     buf = []
@@ -175,14 +181,14 @@ def group_test_cases(cases):
         if case.time:
             max_execution_time = max(max_execution_time, case.time)
         if case.batch != last and buf:
-            result.append(make_batch(last, buf))
-            status.extend(get_statuses(last, buf))
+            result.append(make_batch(last, buf, problem))
+            status.extend(get_statuses(last, buf, problem))
             buf = []
         buf.append(case)
         last = case.batch
     if buf:
-        result.append(make_batch(last, buf))
-        status.extend(get_statuses(last, buf))
+        result.append(make_batch(last, buf, problem))
+        status.extend(get_statuses(last, buf, problem))
     return result, status, max_execution_time, test_case_count
 
 
@@ -194,7 +200,7 @@ class SubmissionStatus(SubmissionDetailBase):
         submission = self.object
 
         context['batches'], statuses, context['max_execution_time'], test_case_count \
-            = group_test_cases(submission.test_cases.all())
+            = group_test_cases(submission.test_cases.all(), submission.problem)
 
         context['feedback_limit'] = min(3, test_case_count - 1)
 
