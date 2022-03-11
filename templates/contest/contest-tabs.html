@@ -21,6 +21,7 @@
         {{ make_tab('submissions', 'fa-bar-chart', url('contest_all_submissions', contest.key), _('Submissions')) }}
     {% endif %}
     {% if can_edit %}
+        {{ make_tab('balloons', 'fa-bullseye', url('contest_balloons', contest.key), _('Balloons')) }}
         {% if perms.judge.moss_contest and has_moss_api_key %}
             {{ make_tab('moss', 'fa-gavel', url('contest_moss', contest.key), _('MOSS')) }}
         {% endif %}

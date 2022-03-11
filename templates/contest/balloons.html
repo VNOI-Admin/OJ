@@ -1,0 +1,71 @@
+{% extends "common-content.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'detail' %}
+    {% set title = contest.name %}
+    {% include "contest/contest-tabs.html" %}
+    {% if contest.is_organization_private %}
+        <span class="organization-tags">
+            {% for org in contest.organizations.all() %}
+                <span class="organization-tag">
+                    <a href="{{ org.get_absolute_url() }}">
+                        <i class="fa fa-lock"></i> {{ org.name }}
+                    </a>
+                </span>
+            {% endfor %}
+        </span>
+    {% endif %}
+{% endblock %}
+
+{% block content_js_media %}
+    {% include "contest/media-js.html" %}
+{% endblock %}
+
+
+{% block body %}
+    <div class="contest-clartifications">
+        <form action="balloons" method="get">
+            <input type="hidden" name="balloons_done" value="0">
+            <input type="submit" value="Reset filter">
+        </form>
+        <table id="contest-clartifications" class="table">
+            <thead>
+                <tr>
+                    <th>{{ _('NO.') }}</th>
+                    <th>{{ _('SubID.') }}</th>
+                    <th>{{ _('TEAM') }}</th>
+                    <th>{{ _('PROBLEM') }}</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for submission in accept_submissions %}
+                <tr>
+                    <td> {{ loop.index0 + balloons_done + 1 }}</td>
+                    <td>
+                        {{ submission.id}}
+                    </td>
+                    <td style="text-align: left; padding-left: 2em;">
+                        {{ link_user(submission.user) }}
+                        {{ submission.user.user.username }}
+                    </td>
+                    <td style="text-align: left; padding-left: 2em;">
+                        {{ submission.problem.code }}
+                    </td>
+                    <td>
+                        <form action="balloons" method="get">
+                            <input type="hidden" name="balloons_done" value="{{ loop.index0 + balloons_done + 1 }}">
+                            <input type="submit" value="Filter from here">
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <hr>
+{% endblock %}
+
+{% block description_end %}{% endblock %}
