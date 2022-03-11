@@ -46,13 +46,15 @@ from judge.utils.cms import parse_csv_ranking
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
 from judge.utils.ranker import ranker
+from judge.utils.raw_sql import use_straight_join
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message
+from judge.views.submission import submission_related
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
-           'ContestParticipationList', 'ContestParticipationDisqualify', 'get_contest_ranking_list',
+           'ContestParticipationList', 'ContestBalloons', 'ContestParticipationDisqualify', 'get_contest_ranking_list',
            'base_contest_ranking_list']
 
 
@@ -1149,6 +1151,46 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
         else:
             self.profile = self.request.profile
         return super().get(request, *args, **kwargs)
+
+
+class ContestBalloons(ContestMixin, TitleMixin, DetailView):
+    template_name = 'contest/balloons.html'
+
+    def get_title(self):
+        return self.object.name
+
+    def get_accepted_submissions(self):
+        queryset = Submission.objects.all()
+        use_straight_join(queryset)
+        queryset = queryset.filter(contest_object=self.object, result='AC', date__lt=self.object.frozen_time)
+        queryset = submission_related(queryset).order_by('judged_date')
+
+        # We only consider the first AC submission of each team in each problem
+        # I don't really want to right a raw SQL query to do that so i do it here instead
+        accepted_problems = set()
+        submissions = []
+
+        for submission in queryset:
+            key = (submission.user.user.username, submission.problem.id)
+            if key in accepted_problems:
+                continue
+            submissions.append(submission)
+            accepted_problems.add(key)
+
+        return submissions
+
+    def get_context_data(self, **kwargs):
+        context = super(ContestBalloons, self).get_context_data(**kwargs)
+        context['balloons_done'] = max(0, int(self.request.GET.get('balloons_done', 0)) - 1)
+        context['accept_submissions'] = self.get_accepted_submissions()[context['balloons_done']:]
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if self.can_edit:
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return HttpResponseForbidden()
 
 
 class ContestParticipationDisqualify(ContestMixin, SingleObjectMixin, View):
