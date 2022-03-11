@@ -49,14 +49,17 @@ from judge.utils.cms import parse_csv_ranking
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
+from judge.utils.ranker import ranker
+from judge.utils.raw_sql import use_straight_join
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
-from judge.utils.views import SingleObjectFormView, TitleMixin, \
+from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message, paginate_query_context
+from judge.views.submission import submission_related
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
-           'ContestParticipationDisqualify',
-           'ContestProblemMakePublic']
+           'ContestParticipationList', 'ContestBalloons', 'ContestParticipationDisqualify',
+           'ContestProblemMakePublic', 'get_contest_ranking_list', 'base_contest_ranking_list']
 
 
 def _find_contest(request, key, private_check=True):
@@ -1246,6 +1249,84 @@ class ContestOfficialRanking(ContestRankingBase):
             return redirect(self.object.csv_ranking)
 
         return super().get(request, *args, **kwargs)
+
+
+class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
+    tab = 'participation'
+
+    def get_title(self):
+        if self.profile == self.request.profile:
+            return _('Your participation in %(contest)s') % {'contest': self.object.name}
+        return _("%(user)s's participation in %(contest)s") % {
+            'user': self.profile.username, 'contest': self.object.name,
+        }
+
+    def get_ranking_list(self):
+        if not self.object.can_see_full_scoreboard(self.request.user) and self.profile != self.request.profile:
+            raise Http404()
+
+        queryset = self.object.users.filter(user=self.profile, virtual__gte=0).order_by('-virtual')
+        live_link = format_html('<a href="{2}#!{1}">{0}</a>', _('Live'), self.profile.username,
+                                reverse('contest_ranking', args=[self.object.key]))
+
+        return get_contest_ranking_list(
+            self.request, self.object,
+            ranking_list=partial(base_contest_ranking_list, queryset=queryset),
+            ranker=lambda users, key: ((user.participation.virtual or live_link, user) for user in users))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['has_rating'] = False
+        context['rank_header'] = _('Participation')
+        return context
+
+    def get(self, request, *args, **kwargs):
+        if 'user' in kwargs:
+            self.profile = get_object_or_404(Profile, user__username=kwargs['user'])
+        else:
+            self.profile = self.request.profile
+        return super().get(request, *args, **kwargs)
+
+
+class ContestBalloons(ContestMixin, TitleMixin, DetailView):
+    template_name = 'contest/balloons.html'
+
+    def get_title(self):
+        return self.object.name
+
+    def get_accepted_submissions(self):
+        queryset = Submission.objects.all()
+        use_straight_join(queryset)
+        queryset = queryset.filter(contest_object=self.object, result='AC', date__lt=self.object.frozen_time)
+        queryset = submission_related(queryset).order_by('judged_date')
+
+        # We only consider the first AC submission of each team in each problem
+        # I don't really want to right a raw SQL query to do that so i do it here instead
+        accepted_problems = set()
+        submissions = []
+
+        for submission in queryset:
+            key = (submission.user.user.username, submission.problem.id)
+            if key in accepted_problems:
+                continue
+            submissions.append(submission)
+            accepted_problems.add(key)
+
+        return submissions
+
+    def get_context_data(self, **kwargs):
+        context = super(ContestBalloons, self).get_context_data(**kwargs)
+        context['balloons_done'] = max(0, int(self.request.GET.get('balloons_done', 0)) - 1)
+        context['accept_submissions'] = self.get_accepted_submissions()[context['balloons_done']:]
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if self.can_edit:
+            return super().dispatch(request, *args, **kwargs)
+        else:
+            return HttpResponseForbidden()
+
 
 
 class ContestParticipationDisqualify(ContestMixin, SingleObjectMixin, View):
