@@ -955,17 +955,30 @@ class ContestBalloons(ContestMixin, TitleMixin, DetailView):
     def get_title(self):
         return self.object.name
 
-    def submission_queryset(self):
+    def get_accepted_submissions(self):
         queryset = Submission.objects.all()
         use_straight_join(queryset)
-        queryset = queryset.filter(contest_object=self.object, result='AC').order_by('judged_date')
-        queryset = submission_related(queryset)
-        return queryset
+        queryset = queryset.filter(contest_object=self.object, result='AC', date__lt=self.object.frozen_time)
+        queryset = submission_related(queryset).order_by('judged_date')
+
+        # We only consider the first AC submission of each team in each problem
+        # I don't really want to right a raw SQL query to do that so i do it here instead
+        accepted_problems = set()
+        submissions = []
+
+        for submission in queryset:
+            key = (submission.user.user.username, submission.problem.id)
+            if key in accepted_problems:
+                continue
+            submissions.append(submission)
+            accepted_problems.add(key)
+
+        return submissions
 
     def get_context_data(self, **kwargs):
         context = super(ContestBalloons, self).get_context_data(**kwargs)
         context['balloons_done'] = max(0, int(self.request.GET.get('balloons_done', 0)) - 1)
-        context['accept_submissions'] = self.submission_queryset()[context['balloons_done']:]
+        context['accept_submissions'] = self.get_accepted_submissions()[context['balloons_done']:]
         return context
 
     def dispatch(self, request, *args, **kwargs):
