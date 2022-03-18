@@ -675,6 +675,8 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         return queryset.search(query, queryset.BOOLEAN).extra(order_by=['-relevance'])
 
     def get_filter(self):
+        if self.request.user.is_superuser:
+            return Q()
         _filter = Q(is_public=True) & Q(is_organization_private=False)
         if self.profile is not None:
             # Resolve the ids up front: OR EXISTS(...) defeats the (is_public, is_organization_private, date)
