@@ -379,6 +379,8 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         return queryset.search(query, queryset.BOOLEAN).extra(order_by=['-relevance'])
 
     def get_filter(self):
+        if self.request.user.is_superuser:
+            return Q()
         filter = Q(is_public=True) & Q(is_organization_private=False)
         if self.profile is not None:
             filter |= Q(authors=self.profile)
