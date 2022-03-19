@@ -213,6 +213,7 @@ class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
         fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points', 'partial',
+                  'allow_view_testcase_status', 'allow_view_feedback',
                   'batch_policy', 'statement_file', 'source', 'types', 'group', 'testcase_visibility_mode',
                   'description', 'testers']
         widgets = {

@@ -214,6 +214,16 @@ class Problem(models.Model):
 
     suggester = models.ForeignKey(Profile, blank=True, null=True, related_name='suggested_problems', on_delete=SET_NULL)
 
+    allow_view_testcase_status = models.BooleanField(
+        help_text=('Allow user to view result of testcase. Should be allow for most of problems except for ICPC'),
+        default=True,
+    )
+
+    allow_view_feedback = models.BooleanField(
+        help_text=('Allow user to view checker feedback.'),
+        default=False,
+    )
+
     __original_points = None
 
     def __init__(self, *args, **kwargs):

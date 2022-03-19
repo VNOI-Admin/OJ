@@ -67,7 +67,7 @@
             {% set print_case_ext_feedback = case.extended_feedback
                                              and
                                              ((not request.in_contest and current_test_case_count <= feedback_limit)
-                                              or can_view_test) %}
+                                              or can_view_test or can_view_feedback) %}
             {% set curr_data = cases_data.get(case.case, None) %}
             {% set has_extended_data = print_case_output or print_case_ext_feedback or (can_view_test and curr_data) %}
 
