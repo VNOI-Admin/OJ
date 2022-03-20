@@ -1,6 +1,5 @@
 import os
 
-import yaml
 from django.conf import settings
 from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
@@ -93,12 +92,10 @@ def create_problem(problem_name, icpc_folder):
 
     if Problem.objects.filter(code=problem_code).count() == 0:
         pdf_path = os.path.join(problem_folder, f'{problem_name}.pdf')
-        yml_path = os.path.join(problem_folder, 'problem.yaml')
 
         print(f'Creating problem {problem_name}')
-        with open(pdf_path, 'rb') as f, open(yml_path) as y:
+        with open(pdf_path, 'rb') as f:
             file_url = pdf_statement_uploader(f)
-            config = yaml.full_load(y)
             problem = Problem(code=problem_code)
             problem.allow_view_testcase_status = False
             problem.name = problem_name
