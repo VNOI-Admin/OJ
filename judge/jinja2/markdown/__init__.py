@@ -57,6 +57,19 @@ def fragments_to_tree(fragment):
     return tree
 
 
+def strip_paragraphs_tags(tree):
+    for p in tree.xpath('.//p'):
+        for child in p.iterchildren(reversed=True):
+            p.addnext(child)
+        parent = p.getparent()
+        prev = p.getprevious()
+        if prev is not None:
+            prev.tail = (prev.tail or '') + p.text
+        else:
+            parent.text = (parent.text or '') + p.text
+        parent.remove(p)
+
+
 def fragment_tree_to_str(tree):
     return html.tostring(tree, encoding='unicode')[len('<div>'):-len('</div>')]
 
@@ -74,7 +87,7 @@ def add_table_class(text):
 
 
 @registry.filter
-def markdown(text, style, math_engine=None, lazy_load=False):
+def markdown(text, style, math_engine=None, lazy_load=False, strip_paragraphs=False):
     styles = settings.MARKDOWN_STYLES.get(style, settings.MARKDOWN_DEFAULT_STYLE)
     if styles.get('safe_mode', True):
         safe_mode = 'escape'
@@ -98,10 +111,12 @@ def markdown(text, style, math_engine=None, lazy_load=False):
     result = add_table_class(result)
     result = inc_header(result, 2)
 
-    if post_processors:
+    if post_processors or strip_paragraphs:
         tree = fragments_to_tree(result)
         for processor in post_processors:
             processor(tree)
+        if strip_paragraphs:
+            strip_paragraphs_tags(tree)
         result = fragment_tree_to_str(tree)
     if bleach_params:
         result = get_cleaner(style, bleach_params).clean(result)
