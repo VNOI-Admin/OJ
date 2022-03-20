@@ -111,12 +111,13 @@
                         if (!($file_name == '')) {
                             $file_name = $file_name.split('/').pop()
                             $file_ext = $file_name.split('.').pop()
-                            if (!(['cpp', 'py', 'pas'].includes($file_ext))) {
-                                alert("{{ _('Expected checker\'s extension must be in [cpp, py, pas], found ') }}'" + $file_ext + "'");
+                            if (!(['cpp', 'py', 'pas', 'java'].includes($file_ext))) {
+                                alert("{{ _('Expected checker\'s extension must be in [cpp, py, pas, java], found ') }}'" + $file_ext + "'");
                             }
                             else {
                                 $lang = $file_ext.toUpperCase();
                                 if ($lang == "CPP") $lang = "CPP17";
+                                if ($lang == "JAVA") $lang = "JAVA8";
                                 $args.val(JSON.stringify({files: $file_name, lang: $lang, type: $custom_checker_type.find(":selected").val()}));
                                 if ($lang == "PY")
                                     $args.val('');
