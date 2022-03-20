@@ -165,9 +165,9 @@ SITE_FULL_URL = None  # ie 'https://oj.vnoi.info', please remove the last / if n
 
 NODEJS = '/usr/bin/node'
 EXIFTOOL = '/usr/bin/exiftool'
-ACE_URL = '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3'
-SELECT2_JS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js'
-DEFAULT_SELECT2_CSS = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'
+ACE_URL = '/static/vnoj/ace/1.4.14'
+SELECT2_JS_URL = '/static/vnoj/select2/4.0.3/js/select2.min.js'
+SELECT2_CSS_URL = '/static/vnoj/select2/4.0.3/css/select2.min.css'
 
 DMOJ_CAMO_URL = None
 DMOJ_CAMO_KEY = None
@@ -268,8 +268,8 @@ SELENIUM_CHROMEDRIVER_PATH = 'chromedriver'
 PYGMENT_THEME = 'pygment-github.css'
 INLINE_JQUERY = True
 INLINE_FONTAWESOME = True
-JQUERY_JS = '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'
-FONTAWESOME_CSS = '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'
+JQUERY_JS = '/static/vnoj/jquery/3.4.1/jquery.min.js'
+FONTAWESOME_CSS = '/static/vnoj/font-awesome/4.3.0/css/font-awesome.min.css'
 DMOJ_CANONICAL = 'oj.vnoi.info'
 
 # Application definition
