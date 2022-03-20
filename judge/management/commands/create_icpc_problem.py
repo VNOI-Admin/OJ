@@ -103,7 +103,7 @@ def create_problem(problem_name, icpc_folder):
             problem.allow_view_testcase_status = False
             problem.name = problem_name
             problem.pdf_url = file_url
-            problem.time_limit = config['limits']['time_multiplier']
+            problem.time_limit = 1
             problem.memory_limit = 512 * 1024
             problem.partial = False
             problem.points = 1
