@@ -83,23 +83,24 @@ def update_problem_testcases(problem, testcases, test_file_path):
     )
 
 
-def create_problem(problem_code, icpc_folder):
-    problem_folder = os.path.join(icpc_folder, problem_code)
+def create_problem(problem_name, icpc_folder):
+    problem_code = 'icpc_' + problem_name[0]
+    problem_folder = os.path.join(icpc_folder, problem_name)
     test_path = os.path.join(problem_folder, 'data')
 
     if not os.path.exists(test_path):
         raise CommandError(f'Test data folder `{test_path}` not found.')
 
     if Problem.objects.filter(code=problem_code).count() == 0:
-        pdf_path = os.path.join(problem_folder, f'{problem_code}.pdf')
+        pdf_path = os.path.join(problem_folder, f'{problem_name}.pdf')
         yml_path = os.path.join(problem_folder, 'problem.yaml')
 
-        print(f'Creating problem {problem_code}')
+        print(f'Creating problem {problem_name}')
         with open(pdf_path, 'rb') as f, open(yml_path) as y:
             file_url = pdf_statement_uploader(f)
             config = yaml.full_load(y)
             problem = Problem(code=problem_code)
-            problem.name = problem_code
+            problem.name = problem_name
             problem.pdf_url = file_url
             problem.time_limit = config['limits']['time_multiplier']
             problem.memory_limit = 512 * 1024
@@ -114,7 +115,7 @@ def create_problem(problem_code, icpc_folder):
             problem.authors.set(Profile.objects.filter(user__username='admin'))
             problem.save()
     else:
-        print(f'Skipped create problem {problem_code}.')
+        print(f'Skipped create problem {problem_name}.')
         problem = Problem.objects.get(code=problem_code)
 
     testcases = get_testcases(test_path)

@@ -1,12 +1,16 @@
 import os
 
-
+import yaml
 from django.conf import settings
+from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.utils import timezone
 
-from judge.models import Problem, ProblemTestCase
+from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemType
+from judge.models.profile import Profile
 from judge.utils.problem_data import ProblemDataCompiler
+from judge.views.widgets import pdf_statement_uploader
 
 
 def get_testcases(test_path):
@@ -63,10 +67,12 @@ def update_problem_testcases(problem, testcases, test_file_path):
         )
         files += case_data
         case.save()
-
-    problem_data = problem.data_files
-    problem_data.zipfile.name = test_file_path
-    problem_data.save()
+    with open(test_file_path, 'rb') as f:
+        problem_data = ProblemData(
+            problem=problem,
+            zipfile=File(f),
+        )
+        problem_data.save()
 
     print('Generating init.yml')
     ProblemDataCompiler.generate(
@@ -77,24 +83,58 @@ def update_problem_testcases(problem, testcases, test_file_path):
     )
 
 
+def create_problem(problem_name, icpc_folder):
+    problem_code = 'icpc_' + problem_name[0]
+    problem_folder = os.path.join(icpc_folder, problem_name)
+    test_path = os.path.join(problem_folder, 'data')
+
+    if not os.path.exists(test_path):
+        raise CommandError(f'Test data folder `{test_path}` not found.')
+
+    if Problem.objects.filter(code=problem_code).count() == 0:
+        pdf_path = os.path.join(problem_folder, f'{problem_name}.pdf')
+        yml_path = os.path.join(problem_folder, 'problem.yaml')
+
+        print(f'Creating problem {problem_name}')
+        with open(pdf_path, 'rb') as f, open(yml_path) as y:
+            file_url = pdf_statement_uploader(f)
+            config = yaml.full_load(y)
+            problem = Problem(code=problem_code)
+            problem.name = problem_name
+            problem.pdf_url = file_url
+            problem.time_limit = config['limits']['time_multiplier']
+            problem.memory_limit = 512 * 1024
+            problem.partial = False
+            problem.points = 1
+            problem.group = ProblemGroup.objects.order_by('id').first()  # Uncategorized
+            problem.date = timezone.now()
+            problem.save()
+
+            problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
+            problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
+            problem.authors.set(Profile.objects.filter(user__username='admin'))
+            problem.save()
+    else:
+        print(f'Skipped create problem {problem_name}.')
+        problem = Problem.objects.get(code=problem_code)
+
+    testcases = get_testcases(test_path)
+
+    print('Creating zip file')
+    test_zip_name = 'data.zip'
+    os.system(f'cd {test_path} && zip -rq {test_zip_name} .')
+
+    update_problem_testcases(problem, testcases, os.path.join(test_path, test_zip_name))
+
+
 class Command(BaseCommand):
     help = 'update testcase from github'
 
     def add_arguments(self, parser):
-        parser.add_argument('code', help='problem code')
         parser.add_argument('name', help='name of problem in the github repo')
 
     def handle(self, *args, **options):
-        problem_code = options['code']
         problem_repo_name = options['name']
-        problem = Problem.objects.filter(code=problem_code).first()
-        if problem is None:
-            raise CommandError(f'problem {problem_code} not found')
-
-        try:
-            problem.data_files
-        except Exception:
-            raise CommandError('Please create testcase via web UI before using this command.')
 
         icpc_folder = getattr(settings, 'ICPC_GITHUB_FOLDER', None)
         if icpc_folder is None:
@@ -103,26 +143,4 @@ class Command(BaseCommand):
         if not os.path.exists(icpc_folder):
             raise CommandError(f'Folder {icpc_folder} not found. Make sure to clone the repo to that folder')
 
-        os.system(f'cd {icpc_folder} && git pull origin master')
-
-        problem_folder = os.path.join(icpc_folder, problem_repo_name)
-
-        if not os.path.exists(problem_folder):
-            raise CommandError(f'Folder {problem_folder} not found. Did you misspell the problem name?')
-
-        test_path = os.path.join(problem_folder, 'data')
-
-        if not os.path.exists(test_path):
-            raise CommandError('Test data folder not found.')
-
-        testcases = get_testcases(test_path)
-
-        test_zip_name = 'data.zip'
-        print('Creating zip file')
-        os.system(f'cd {test_path} && zip -rq {test_zip_name} .')
-        os.rename(
-            os.path.join(test_path, test_zip_name),
-            os.path.join(settings.DMOJ_PROBLEM_DATA_ROOT, problem_code, test_zip_name),
-        )
-
-        update_problem_testcases(problem, testcases, os.path.join(problem_code, test_zip_name))
+        create_problem(problem_repo_name, icpc_folder)
