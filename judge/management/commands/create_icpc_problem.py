@@ -100,6 +100,7 @@ def create_problem(problem_name, icpc_folder):
             file_url = pdf_statement_uploader(f)
             config = yaml.full_load(y)
             problem = Problem(code=problem_code)
+            problem.allow_view_testcase_status = False
             problem.name = problem_name
             problem.pdf_url = file_url
             problem.time_limit = config['limits']['time_multiplier']
