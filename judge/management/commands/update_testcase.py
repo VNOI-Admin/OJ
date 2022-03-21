@@ -67,10 +67,14 @@ def update_problem_testcases(problem, testcases, test_file_path):
         files += case_data
         case.save()
     with open(test_file_path, 'rb') as f:
-        problem_data = ProblemData(
-            problem=problem,
-            zipfile=File(f),
-        )
+        try:
+            problem_data = problem.data_files
+            problem_data.zipfile.save('data.zip', File(f))
+        except Exception:
+            problem_data = ProblemData(
+                problem=problem,
+                zipfile=File(f),
+            )
         problem_data.save()
 
     print('Generating init.yml')
