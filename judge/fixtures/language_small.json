@@ -113,7 +113,7 @@
             "pygments": "pascal",
             "template": "",
             "info": "",
-            "description": "",
+            "description": "Compile options: `fpc -Fe/dev/stderr -O2`",
             "extension": "pas",
             "include_in_problem": true
         }
@@ -130,7 +130,7 @@
             "pygments": "python",
             "template": "",
             "info": "",
-            "description": "",
+            "description": "Compile options: `python -BS`",
             "extension": "py",
             "include_in_problem": true
         }
@@ -147,7 +147,7 @@
             "pygments": "python3",
             "template": "",
             "info": "",
-            "description": "",
+            "description": "Compile options: `python3 -BS`",
             "extension": "py",
             "include_in_problem": true
         }
@@ -183,6 +183,76 @@
             "info": "",
             "description": "",
             "extension": "txt",
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 12,
+        "fields": {
+            "key": "OUTPUT",
+            "name": "Output Only",
+            "short_name": null,
+            "common_name": "Output Only",
+            "ace": "text",
+            "pygments": "text",
+            "template": "",
+            "info": "",
+            "description": "",
+            "extension": "zip",
+            "file_only": true,
+            "file_size_limit": 10,
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 13,
+        "fields": {
+            "key": "PYPY",
+            "name": "PyPy 2",
+            "short_name": "PYPY2",
+            "common_name": "Python",
+            "ace": "python",
+            "pygments": "python",
+            "template": "",
+            "info": "",
+            "description": "Compile options: `pypy -BS`",
+            "extension": "py",
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 14,
+        "fields": {
+            "key": "PYPY3",
+            "name": "PyPy 3",
+            "short_name": "PYPY3",
+            "common_name": "Python",
+            "ace": "python",
+            "pygments": "python3",
+            "template": "",
+            "info": "",
+            "description": "Compile options: `pypy3 -BS`",
+            "extension": "py",
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 15,
+        "fields": {
+            "key": "KOTLIN",
+            "name": "Kotlin",
+            "short_name": "",
+            "common_name": "Kotlin",
+            "ace": "kotlin",
+            "pygments": "kotlin",
+            "template": "",
+            "info": "",
+            "description": "Compile options: `kotlinc`",
+            "extension": "kt",
             "include_in_problem": true
         }
     }
