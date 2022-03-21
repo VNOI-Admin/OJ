@@ -665,6 +665,7 @@ class ContestForm(ModelForm):
         fields = [
             'key', 'name',
             'start_time', 'end_time', 'is_visible',
+            'submission_interval',
             'use_clarifications',
             'hide_problem_tags',
             'hide_problem_authors',

@@ -9,6 +9,7 @@ from random import randrange
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models import F, Prefetch, Q
@@ -30,7 +31,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, \
     ProposeProblemSolutionFormSet
-from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
+from judge.models import ContestParticipation, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
 from judge.tasks import on_new_problem
@@ -622,6 +623,21 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         return reverse('submission_status', args=(self.new_submission.id,))
 
     def form_valid(self, form):
+        contest_problem = self.contest_problem
+
+        if contest_problem is not None and self.request.profile.current_contest.virtual != \
+                ContestParticipation.SPECTATE:
+            sub_interval = contest_problem.contest.submission_interval
+            last_sub_cache_key = 'sub_%s-%s-%s' % \
+                (self.request.user.id, contest_problem.contest.id, contest_problem.problem.id)
+            if cache.get(last_sub_cache_key) is not None:
+                form.add_error(None,
+                               _('You have to wait at least %d seconds after the last submission to submit again.')
+                               % sub_interval)
+                return self.form_invalid(form)
+        else:
+            sub_interval = 0
+
         if (
             not self.request.user.has_perm('judge.spam_submission') and
             Submission.objects.filter(user=self.request.profile, rejudged_date__isnull=True)
@@ -642,7 +658,6 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         with transaction.atomic():
             self.new_submission = form.save(commit=False)
 
-            contest_problem = self.contest_problem
             if contest_problem is not None:
                 # Use the contest object from current_contest.contest because we already use it
                 # in profile.update_contest().
@@ -682,6 +697,10 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         # Save a query.
         self.new_submission.source = source
         self.new_submission.judge(force_judge=True, judge_id=form.cleaned_data['judge'])
+
+        # Store last submission in cache
+        if sub_interval > 0:
+            cache.set(last_sub_cache_key, 1, sub_interval)
 
         # In contest mode, we should log the ip
         if settings.VNOJ_OFFICIAL_CONTEST_MODE:

@@ -182,6 +182,8 @@ class Contest(models.Model):
     disallow_virtual = models.BooleanField(verbose_name=_('Disallow virtual joining'),
                                            help_text=_('Disallow virtual joining after contest has ended.'),
                                            default=False)
+    submission_interval = models.IntegerField(verbose_name=_('submission interval'), default=0,
+                                              help_text=_('Time in seconds between submissions per problem.'))
 
     @cached_property
     def format_class(self):
