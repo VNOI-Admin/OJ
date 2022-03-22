@@ -234,10 +234,3 @@ class ICPCContestFormat(DefaultContestFormat):
                 'The scoreboard will be frozen in the **last %d minutes**.',
                 self.contest.frozen_last_minutes,
             ) % self.contest.frozen_last_minutes
-
-        if self.contest.submission_interval > 0:
-            yield ungettext(
-                'For each problem, contestants have to wait %d second before being able to submit again.',
-                'For each problem, contestants have to wait %d seconds before being able to submit again.',
-                self.contest.submission_interval,
-            ) % self.contest.submission_interval

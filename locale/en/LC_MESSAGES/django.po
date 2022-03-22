@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2022-03-22 01:05+0000\n"
+"POT-Creation-Date: 2022-03-22 02:32+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -132,7 +132,7 @@ msgid "Included contests"
 msgstr ""
 
 #: judge/admin/contest.py:66 judge/forms.py:569
-#: templates/contest/contest.html:201 templates/contest/contest.html:308
+#: templates/contest/contest.html:206 templates/contest/contest.html:313
 #: templates/contest/moss.html:43 templates/problem/list.html:177
 #: templates/user/user-problems.html:58 templates/user/user-problems.html:100
 msgid "Problem"
@@ -299,7 +299,7 @@ msgid "Taxonomy"
 msgstr ""
 
 #: judge/admin/problem.py:134 templates/blog/top-pp.html:9
-#: templates/contest/contest.html:203 templates/contest/edit.html:116
+#: templates/contest/contest.html:208 templates/contest/edit.html:116
 #: templates/contest/official-ranking-table.html:11
 #: templates/organization/list.html:25 templates/problem/data.html:656
 #: templates/problem/list.html:188 templates/user/base-users-table.html:11
@@ -401,8 +401,8 @@ msgstr[1] ""
 msgid "Recalulate contribution points"
 msgstr ""
 
-#: judge/admin/runtime.py:72 templates/contest/contest.html:275
-#: templates/contest/contest.html:309
+#: judge/admin/runtime.py:72 templates/contest/contest.html:280
+#: templates/contest/contest.html:314
 msgid "Description"
 msgstr ""
 
@@ -610,17 +610,6 @@ msgstr ""
 #, python-format
 msgid "The scoreboard will be frozen in the **last %d minute**."
 msgid_plural "The scoreboard will be frozen in the **last %d minutes**."
-msgstr[0] ""
-msgstr[1] ""
-
-#: judge/contest_format/icpc.py:240
-#, python-format
-msgid ""
-"For each problem, contestants have to wait %d second before being able to "
-"submit again."
-msgid_plural ""
-"For each problem, contestants have to wait %d seconds before being able to "
-"submit again."
 msgstr[0] ""
 msgstr[1] ""
 
@@ -4938,63 +4927,70 @@ msgstr ""
 msgid "There is **no submission limit** for any of these problems."
 msgstr ""
 
-#: templates/contest/contest.html:161
+#: templates/contest/contest.html:160
+#, python-format
+msgid ""
+"For each problem, contestants have to **wait %(it)d seconds** before being "
+"able to submit again."
+msgstr ""
+
+#: templates/contest/contest.html:166
 #, python-format
 msgid "The contest format is **%(format)s**."
 msgstr ""
 
-#: templates/contest/contest.html:170
+#: templates/contest/contest.html:175
 msgid "The scoreboard will be **visible** for the duration of the contest."
 msgstr ""
 
-#: templates/contest/contest.html:172
+#: templates/contest/contest.html:177
 msgid "The scoreboard will be **hidden** until your window is over."
 msgstr ""
 
-#: templates/contest/contest.html:174
+#: templates/contest/contest.html:179
 msgid ""
 "The scoreboard will be **hidden** for the entire duration of the contest."
 msgstr ""
 
-#: templates/contest/contest.html:179
+#: templates/contest/contest.html:184
 msgid "An **access code is required** to join the contest."
 msgstr ""
 
-#: templates/contest/contest.html:190 templates/contest/edit.html:108
+#: templates/contest/contest.html:195 templates/contest/edit.html:108
 #: templates/contest/edit.html:115
 msgid "Problems"
 msgstr ""
 
-#: templates/contest/contest.html:192 templates/contest/prepare-data.html:129
+#: templates/contest/contest.html:197 templates/contest/prepare-data.html:129
 #: templates/user/prepare-data.html:136
 msgid "Download data"
 msgstr ""
 
-#: templates/contest/contest.html:206
+#: templates/contest/contest.html:211
 msgid "Editorials"
 msgstr ""
 
-#: templates/contest/contest.html:258 templates/problem/editor.html:126
+#: templates/contest/contest.html:263 templates/problem/editor.html:126
 msgid "Editorial"
 msgstr ""
 
-#: templates/contest/contest.html:269
+#: templates/contest/contest.html:274
 msgid "Announcements"
 msgstr ""
 
-#: templates/contest/contest.html:273 templates/contest/contest.html:307
+#: templates/contest/contest.html:278 templates/contest/contest.html:312
 msgid "When"
 msgstr ""
 
-#: templates/contest/contest.html:274 templates/ticket/list.html:262
+#: templates/contest/contest.html:279 templates/ticket/list.html:262
 msgid "Title"
 msgstr ""
 
-#: templates/contest/contest.html:293
+#: templates/contest/contest.html:298
 msgid "Add an announcement"
 msgstr ""
 
-#: templates/contest/contest.html:303 templates/problem/problem.html:397
+#: templates/contest/contest.html:308 templates/problem/problem.html:397
 msgid "Clarifications"
 msgstr ""
 

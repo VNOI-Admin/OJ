@@ -155,6 +155,11 @@
                                     {{ _('There is **no submission limit** for any of these problems.')|markdown('default') }}
                                 {% endif %}
                             </li>
+                            {% if contest.submission_interval > 0 %}
+                            <li>
+                                {{ _('For each problem, contestants have to **wait %(it)d seconds** before being able to submit again.', it=contest.submission_interval)|markdown('default') }}
+                            </li>
+                            {% endif %}
                         </ul>
                     </li>
                     <li>
