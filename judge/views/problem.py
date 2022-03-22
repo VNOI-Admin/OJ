@@ -37,6 +37,7 @@ from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.diggpaginator import DiggPaginator
+from judge.utils.log_user_ip import log_user_ip
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import hot_problems, user_attempted_ids, \
     user_completed_ids
@@ -538,7 +539,6 @@ class RandomProblem(ProblemList):
 
 
 user_logger = logging.getLogger('judge.user')
-user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
 
 
 class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFormView):
@@ -704,15 +704,8 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
 
         # In contest mode, we should log the ip
         if settings.VNOJ_OFFICIAL_CONTEST_MODE:
-            ip = self.request.META['REMOTE_ADDR']
-            # I didn't log the timestamp here because
-            # the logger can handle it.
-            user_submit_ip_logger.info(
-                '%s,%s,%s',
-                self.request.user.username,
-                ip,
-                self.new_submission.problem.code,
-            )
+            messages = ['submit', self.request.user.username, self.new_submission.problem.code]
+            log_user_ip(self.request, ','.join(messages))
 
         return super().form_valid(form)
 

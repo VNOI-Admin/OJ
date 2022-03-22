@@ -39,6 +39,7 @@ from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
 from judge.template_context import MiscConfigDict
 from judge.utils.celery import task_status_by_id, task_status_url_by_id
+from judge.utils.log_user_ip import log_user_ip
 from judge.utils.problems import contest_completed_ids, user_completed_ids
 from judge.utils.pwned import PwnedPasswordsValidator
 from judge.utils.ranker import ranker
@@ -164,6 +165,11 @@ class CustomLoginView(LoginView):
             self.request.session['password_pwned'] = True
         else:
             self.request.session['password_pwned'] = False
+
+        # In contest mode, we should log the ip
+        if settings.VNOJ_OFFICIAL_CONTEST_MODE:
+            messages = ['login', form.cleaned_data['username']]
+            log_user_ip(self.request, ','.join(messages))
         return super().form_valid(form)
 
 
