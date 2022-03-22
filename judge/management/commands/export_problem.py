@@ -1,42 +1,69 @@
 import json
+import os
+import shutil
 
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from judge.models import Language, Problem, ProblemGroup, ProblemType, Profile
+from judge.models import Language, Problem, ProblemGroup, ProblemType
+from judge.utils.problem_data import ProblemDataStorage
+
+problem_data_storage = ProblemDataStorage()
+
+
+def export_problem(code, export_name=None):
+    export_name = export_name or code
+
+    problem = Problem.objects.get(code=code)
+
+    # Retrieve
+    data = {
+        'code': export_name,  # Use for custom names
+        'name': problem.name,
+        'description': problem.description,
+        'time_limit': problem.time_limit,
+        'memory_limit': problem.memory_limit,
+        'short_circuit': problem.short_circuit,
+        'batch_policy': problem.batch_policy,
+        'points': problem.points,
+        'partial': problem.partial,
+    }
+
+    tmp_dir = os.path.join('/', 'tmp', export_name)
+    if os.path.exists(tmp_dir):
+        shutil.rmtree(tmp_dir)
+    os.mkdir(tmp_dir)
+
+    json.dump(data, open(os.path.join(tmp_dir, 'problem.json'), 'w'))
+    if problem_data_storage.exists(code):
+        shutil.copytree(problem_data_storage.path(code), tmp_dir, dirs_exist_ok=True)
+    package_dir = shutil.make_archive(os.path.join('/', 'tmp', export_name), 'zip', tmp_dir)
+    shutil.rmtree(tmp_dir)  # Remove unused directory after packing
+
+    return package_dir
+
+
+def import_problem(path):
+    tmp_dir = os.path.join('/', 'tmp', os.path.splitext(os.path.basename(path))[0])
+    shutil.unpack_archive(path, tmp_dir, 'zip')
+    data = json.load(open(os.path.join(tmp_dir, 'problem.json')))
+
+    problem = Problem.objects.create(**data, is_manually_managed=True, group=ProblemGroup.objects.first())
+    problem.types.add(ProblemType.objects.first())
+    problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
+    problem.date = timezone.now()
+    problem.save()
+    test_files_path = problem_data_storage.path(data['code'])
+    shutil.copytree(tmp_dir, test_files_path, dirs_exist_ok=True)
+
+    return problem
 
 
 class Command(BaseCommand):
     help = 'create export/import problems'
 
     def add_arguments(self, parser):
-        # parser.add_argument('code', help='problem code')
-        # parser.add_argument('output', help='output file')
-        parser.add_argument('input', help='input file')
+        pass
 
     def handle(self, *args, **options):
-        problems = json.load(open(options['input']))
-        for p in problems:
-            problem = Problem(**p)
-            problem.group = ProblemGroup.objects.order_by('id').first()  # Uncategorized
-            problem.date = timezone.now()
-            problem.save()
-
-            problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-            problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
-            problem.authors.set(Profile.objects.filter(user__username='admin'))
-            problem.save()
-        # problems = Problem.objects.get(code__startswith=options['code'])
-        # result = []
-        # for p in problems:
-        #     data = {
-        #         'code': p.code,
-        #         'name': p.name,
-        #         'pdf_url': 'https://oj.vnoi.info' + p.pdf_url,
-        #         'time_limit': p.time_limit,
-        #         'memory_limit': p.memory_limit,
-        #         'points': p.points,
-        #         'partial': p.partial,
-        #     }
-        #     result.append(data)
-        # json.dump(result, open(options['output'], 'w'))
+        pass
