@@ -24,7 +24,8 @@ def export_problem(code, export_name=None):
         'time_limit': problem.time_limit,
         'memory_limit': problem.memory_limit,
         'short_circuit': problem.short_circuit,
-        'batch_policy': problem.batch_policy,
+        'allow_view_testcase_status': problem.allow_view_testcase_status,
+        'allow_view_feedback': problem.allow_view_feedback,
         'points': problem.points,
         'partial': problem.partial,
     }
