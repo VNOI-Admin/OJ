@@ -75,6 +75,7 @@ def update_problem_testcases(problem, testcases, test_file_path):
                 problem=problem,
                 zipfile=File(f),
             )
+        problem_data.output_limit = 100 * 1024 * 1024
         problem_data.save()
 
     print('Generating init.yml')
