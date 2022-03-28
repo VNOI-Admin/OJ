@@ -6,7 +6,7 @@ from django.template.defaultfilters import floatformat
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _, gettext_lazy, ngettext
+from django.utils.translation import gettext as _, gettext_lazy, ungettext
 
 from judge.contest_format.default import DefaultContestFormat
 from judge.contest_format.registry import register_contest_format
@@ -14,9 +14,9 @@ from judge.timezone import from_database_time
 from judge.utils.timedelta import nice_repr
 
 
-@register_contest_format('atcoder')
-class AtCoderContestFormat(DefaultContestFormat):
-    name = gettext_lazy('AtCoder')
+@register_contest_format('vnoj')
+class VNOJContestFormat(DefaultContestFormat):
+    name = gettext_lazy('VNOJ')
     config_defaults = {'penalty': 5}
     config_validators = {'penalty': lambda x: x >= 0}
     """
@@ -29,7 +29,7 @@ class AtCoderContestFormat(DefaultContestFormat):
             return
 
         if not isinstance(config, dict):
-            raise ValidationError('AtCoder-styled contest expects no config or dict as config')
+            raise ValidationError('VNOJ-styled contest expects no config or dict as config')
 
         for key, value in config.items():
             if key not in cls.config_defaults:
@@ -46,13 +46,14 @@ class AtCoderContestFormat(DefaultContestFormat):
 
     def update_participation(self, participation):
         cumtime = 0
+        last = 0
         penalty = 0
-        points = 0
+        score = 0
         format_data = {}
 
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT MAX(cs.points) as `score`, (
+                SELECT MAX(cs.points) as `points`, (
                     SELECT MIN(csub.date)
                         FROM judge_contestsubmission ccs LEFT OUTER JOIN
                              judge_submission csub ON (csub.id = ccs.submission_id)
@@ -64,7 +65,7 @@ class AtCoderContestFormat(DefaultContestFormat):
                 GROUP BY cp.id
             """, (participation.id, participation.id))
 
-            for score, time, prob in cursor.fetchall():
+            for points, time, prob in cursor.fetchall():
                 time = from_database_time(time)
                 dt = (time - participation.start).total_seconds()
 
@@ -74,7 +75,7 @@ class AtCoderContestFormat(DefaultContestFormat):
                     subs = participation.submissions.exclude(submission__result__isnull=True) \
                                                     .exclude(submission__result__in=['IE', 'CE']) \
                                                     .filter(problem_id=prob)
-                    if score:
+                    if points:
                         prev = subs.filter(submission__date__lte=time).count() - 1
                         penalty += prev * self.config['penalty'] * 60
                     else:
@@ -83,15 +84,16 @@ class AtCoderContestFormat(DefaultContestFormat):
                 else:
                     prev = 0
 
-                if score:
-                    cumtime = max(cumtime, dt)
+                if points:
+                    cumtime += dt
+                    last = max(last, dt)
 
-                format_data[str(prob)] = {'time': dt, 'points': score, 'penalty': prev}
-                points += score
+                format_data[str(prob)] = {'time': dt, 'points': points, 'penalty': prev}
+                score += points
 
         participation.cumtime = cumtime + penalty
-        participation.score = round(points, self.contest.points_precision)
-        participation.tiebreaker = 0
+        participation.score = round(score, self.contest.points_precision)
+        participation.tiebreaker = last  # field is sorted from least to greatest
         participation.format_data = format_data
         participation.save()
 
@@ -118,11 +120,13 @@ class AtCoderContestFormat(DefaultContestFormat):
 
         penalty = self.config['penalty']
         if penalty:
-            yield ngettext(
+            yield ungettext(
                 'Each submission before the first maximum score submission will incur a **penalty of %d minute**.',
                 'Each submission before the first maximum score submission will incur a **penalty of %d minutes**.',
                 penalty,
             ) % penalty
-            yield _('Ties will be broken by the last score altering submission time (including penalty).')
+            yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
+                    'a non-zero score (including penalty), followed by the time of the last score altering submission.')
         else:
-            yield _('Ties will be broken by the last score altering submission time.')
+            yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
+                    'a non-zero score, followed by the time of the last score altering submission.')

@@ -148,8 +148,8 @@ class ProblemDataCompiler(object):
                 if checker_ext == 'py':
                     return custom_checker_path[1]
 
-                if checker_ext != 'cpp':
-                    raise ProblemDataError(_("Why don't you use a cpp/py checker?"))
+                if checker_ext != 'cpp' and checker_ext != 'pas':
+                    raise ProblemDataError(_("Why don't you use a cpp/pas/py checker?"))
                 # the cpp checker will be handled
                 # right below here, outside of this scope
 
@@ -171,15 +171,28 @@ class ProblemDataCompiler(object):
             return file_path[1], file_ext
 
         def make_grader(init, case):
-            # We don't need to do anything if it is standard grader
-            if case.grader == 'standard':
-                return
             if case.grader == 'output_only':
                 init['output_only'] = True
                 return
+
             grader_args = {}
             if case.grader_args:
                 grader_args = json.loads(case.grader_args)
+
+            if case.grader == 'standard':
+                if grader_args.get('io_method') == 'file':
+                    if grader_args.get('io_input_file', '') == '' or grader_args.get('io_output_file', '') == '':
+                        raise ProblemDataError(_('You must specify both input and output files.'))
+
+                    if not isinstance(grader_args['io_input_file'], str) or \
+                            not isinstance(grader_args['io_output_file'], str):
+                        raise ProblemDataError(_('Input/Output file must be a string.'))
+
+                    init['file_io'] = {}
+                    init['file_io']['input'] = grader_args['io_input_file']
+                    init['file_io']['output'] = grader_args['io_output_file']
+
+                return
 
             if case.grader == 'interactive':
                 file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
@@ -232,11 +245,11 @@ class ProblemDataCompiler(object):
 
                 if not self.generator:
                     if case.input_file not in self.files:
-                        raise ProblemDataError(_('Input file for case %d does not exist: %s') %
-                                               (i, case.input_file))
+                        raise ProblemDataError(_('Input file for case %(case)d does not exist: %(file)s') %
+                                               ({'case': i, 'file': case.input_file}))
                     if case.output_file not in self.files:
-                        raise ProblemDataError(_('Output file for case %d does not exist: %s') %
-                                               (i, case.output_file))
+                        raise ProblemDataError(_('Output file for case %(case)d does not exist: %(file)s') %
+                                               ({'case': i, 'file': case.output_file}))
 
                 if case.input_file:
                     data['in'] = case.input_file

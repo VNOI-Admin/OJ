@@ -1,4 +1,5 @@
 import json
+import os
 from calendar import Calendar, SUNDAY
 from collections import defaultdict, namedtuple
 from datetime import date, datetime, time, timedelta
@@ -15,7 +16,7 @@ from django.db import IntegrityError
 from django.db.models import Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.template import loader
 from django.template.defaultfilters import date as date_filter, floatformat
@@ -26,7 +27,7 @@ from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import ListView, TemplateView
+from django.views.generic import FormView, ListView, TemplateView
 from django.views.generic.detail import BaseDetailView, DetailView, SingleObjectMixin, View
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import BaseListView
@@ -35,21 +36,22 @@ from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
-from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestForm, ProposeContestProblemFormSet
+from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
+    ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Organization, Problem, ProblemClarification, Profile, Submission
-from judge.tasks import on_new_contest, run_moss
-from judge.utils.celery import redirect_to_task_status
+from judge.tasks import on_new_contest, prepare_contest_data, run_moss
+from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
-    generic_message
+    add_file_response, generic_message
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
-           'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete', 'contest_ranking_ajax',
+           'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
            'ContestParticipationList', 'ContestParticipationDisqualify', 'get_contest_ranking_list',
            'base_contest_ranking_list']
 
@@ -76,10 +78,11 @@ class ContestListMixin(object):
             else:
                 self.hide_private_contests = self.request.session.get('hide_private_contests', False)
 
-            if self.hide_private_contests:
-                return Contest.get_public_contests()
+        queryset = Contest.get_visible_contests(self.request.user)
+        if self.hide_private_contests:
+            queryset = queryset.filter(is_organization_private=False)
 
-        return Contest.get_visible_contests(self.request.user)
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -200,7 +203,7 @@ class ContestMixin(object):
             context['live_participation'] = None
             context['has_joined'] = False
 
-        context['now'] = timezone.now()
+        context['now'] = self.object._now
         context['is_editor'] = self.is_editor
         context['is_tester'] = self.is_tester
         context['can_edit'] = self.can_edit
@@ -251,6 +254,8 @@ class ContestMixin(object):
             return render(request, 'contest/private.html', {
                 'error': e, 'title': _('Access to contest "%s" denied') % e.name,
             }, status=403)
+        except PermissionDenied as e:
+            return generic_message(request, _('Permission denied'), e)
 
 
 class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
@@ -315,6 +320,8 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
         context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
+        context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD)
+
         return context
 
 
@@ -323,6 +330,13 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
     template_name = 'contest/clone.html'
     form_class = ContestCloneForm
     permission_required = 'judge.clone_contest'
+    permission_denied_message = _('You are not allowed to clone contests.')
+
+    def get_object(self, queryset=None):
+        contest = super().get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied(_('You are not allowed to edit this contest.'))
+        return contest
 
     def form_valid(self, form):
         contest = self.object
@@ -337,6 +351,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         contest.pk = None
         contest.is_visible = False
         contest.user_count = 0
+        contest.virtual_count = 0
         contest.locked_after = None
         contest.key = form.cleaned_data['key']
         with revisions.create_revision(atomic=True):
@@ -357,17 +372,17 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
         return HttpResponseRedirect(reverse('contest_edit', args=(contest.key,)))
 
-    def dispatch(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if not self.can_edit:
-            raise PermissionDenied()
-        return super().dispatch(request, *args, **kwargs)
-
 
 class ContestAnnounce(ContestMixin, TitleMixin, SingleObjectFormView):
     title = _('Create contest announcement')
     template_name = 'contest/create-announcement.html'
     form_class = ContestAnnouncementForm
+
+    def get_object(self, queryset=None):
+        contest = super().get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied(_('You are not allowed to edit this contest.'))
+        return contest
 
     def form_valid(self, form):
         contest = self.object
@@ -378,12 +393,6 @@ class ContestAnnounce(ContestMixin, TitleMixin, SingleObjectFormView):
         announcement.send()
 
         return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
-
-    def dispatch(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if not self.can_edit:
-            raise PermissionDenied()
-        return super().dispatch(request, *args, **kwargs)
 
 
 class ContestAccessDenied(Exception):
@@ -429,6 +438,10 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
 
         requires_access_code = (not self.can_edit and contest.access_code and access_code != contest.access_code)
         if contest.ended:
+            if contest.disallow_virtual:
+                return generic_message(request, _('Virtual joining not allowed'),
+                                       _('Virtual joining is not allowed for this contest.'))
+
             if requires_access_code:
                 raise ContestAccessDenied()
 
@@ -743,40 +756,6 @@ def get_contest_ranking_list(request, contest, participation=None, ranking_list=
     return users, problems
 
 
-def contest_ranking_ajax(request, contest, participation=None):
-    contest, exists = _find_contest(request, contest)
-    if not exists:
-        return HttpResponseBadRequest('Invalid contest', content_type='text/plain')
-
-    if not contest.can_see_full_scoreboard(request.user):
-        raise Http404()
-
-    is_frozen = contest.is_frozen and not contest.is_editable_by(request.user)
-
-    if is_frozen:
-        queryset = base_contest_frozen_ranking_queryset(contest)
-    else:
-        queryset = base_contest_ranking_queryset(contest)
-
-    queryset = queryset.filter(virtual=ContestParticipation.LIVE)
-
-    users, problems = get_contest_ranking_list(
-        request, contest, participation,
-        ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=is_frozen),
-    )
-
-    return render(request, 'contest/ranking-table.html', {
-        'users': users,
-        'problems': problems,
-        'contest': contest,
-        'has_rating': contest.ratings.exists(),
-        'is_frozen': is_frozen,
-        'is_ICPC_format': contest.format.name == ICPCContestFormat.name,
-        'perms': PermWrapper(request.user),
-        'can_edit': contest.is_editable_by(request.user),
-    })
-
-
 class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/ranking.html'
     ranking_table_template_name = 'contest/ranking-table.html'
@@ -818,6 +797,17 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         context['rendered_ranking_table'] = self.get_rendered_ranking_table()
         context['tab'] = self.tab
         return context
+
+    def get(self, request, *args, **kwargs):
+        if 'raw' in request.GET:
+            self.object = self.get_object()
+
+            if not self.object.can_see_own_scoreboard(self.request.user):
+                raise Http404()
+
+            return HttpResponse(self.get_rendered_ranking_table(), content_type='text/plain')
+
+        return super().get(request, *args, **kwargs)
 
 
 class ContestRanking(ContestRankingBase):
@@ -927,7 +917,8 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
     def get_title(self):
         if self.profile == self.request.profile:
             return _('Your participation in %s') % self.object.name
-        return _("%s's participation in %s") % (self.profile.username, self.object.name)
+        return _("%(user)s's participation in %(contest)s") % \
+                ({'user': self.profile.username, 'contest': self.object.name})
 
     def get_ranking_list(self):
         if not self.object.can_see_full_scoreboard(self.request.user) and self.profile != self.request.profile:
@@ -945,7 +936,6 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['has_rating'] = False
-        context['now'] = timezone.now()
         context['rank_header'] = _('Participation')
         return context
 
@@ -978,6 +968,7 @@ class ContestParticipationDisqualify(ContestMixin, SingleObjectMixin, View):
 
 class ContestMossMixin(ContestMixin, PermissionRequiredMixin):
     permission_required = 'judge.moss_contest'
+    permission_denied_message = _('You are not allowed to run MOSS.')
 
     def get_object(self, queryset=None):
         contest = super().get_object(queryset)
@@ -1048,6 +1039,7 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
     model = Contest
     form_class = ContestForm
     permission_required = 'judge.add_contest'
+    permission_denied_message = _('You are not allowed to create contests.')
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
@@ -1093,8 +1085,14 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
         else:
             return self.render_to_response(self.get_context_data(*args, **kwargs))
 
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except PermissionDenied as e:
+            return generic_message(request, _('Permission denied'), e)
 
-class EditContest(ContestMixin, TitleMixin, UpdateView):
+
+class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
     template_name = 'contest/edit.html'
     model = Contest
     form_class = ContestForm
@@ -1102,7 +1100,7 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
     def get_object(self, queryset=None):
         contest = super(EditContest, self).get_object(queryset)
         if not contest.is_editable_by(self.request.user):
-            raise PermissionDenied()
+            raise PermissionDenied(_('You are not allowed to edit this contest.'))
         return contest
 
     def get_form_kwargs(self):
@@ -1157,3 +1155,108 @@ class EditContest(ContestMixin, TitleMixin, UpdateView):
             return HttpResponseRedirect(self.get_success_url())
         else:
             return self.render_to_response(self.get_context_data(object=self.object))
+
+
+class ContestDataMixin(ContestMixin, LoginRequiredMixin):
+    @cached_property
+    def data_path(self):
+        return os.path.join(settings.DMOJ_CONTEST_DATA_CACHE, '%s.zip' % self.object.id)
+
+    def get_object(self, queryset=None):
+        if not settings.DMOJ_CONTEST_DATA_DOWNLOAD:
+            raise Http404()
+        contest = super().get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise PermissionDenied(_('You are not allowed to edit this contest.'))
+        if not contest.ended:
+            raise PermissionDenied(_('Please wait until the contest has ended to download data.'))
+        return contest
+
+
+class ContestPrepareData(ContestDataMixin, TitleMixin, SingleObjectMixin, FormView):
+    title = _('Download contest data')
+    template_name = 'contest/prepare-data.html'
+    form_class = ContestDownloadDataForm
+
+    @cached_property
+    def _now(self):
+        return timezone.now()
+
+    @cached_property
+    def can_prepare_data(self):
+        return (
+            self.object.data_last_downloaded is None or
+            self.object.data_last_downloaded + settings.DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT < self._now or
+            not os.path.exists(self.data_path)
+        )
+
+    @cached_property
+    def data_cache_key(self):
+        return 'celery_status_id:contest_data_download_%s' % self.object.id
+
+    @cached_property
+    def in_progress_url(self):
+        status_id = cache.get(self.data_cache_key)
+        status = task_status_by_id(status_id).status if status_id else None
+        return (
+            self.build_task_url(status_id)
+            if status in ('PENDING', 'PROGRESS', 'STARTED')
+            else None
+        )
+
+    def build_task_url(self, status_id):
+        return task_status_url_by_id(
+            status_id,
+            message=_('Preparing data for %s...') % (self.object.name,),
+            redirect=reverse('contest_prepare_data', args=(self.object.key,)),
+        )
+
+    def form_valid(self, form):
+        self.object.data_last_downloaded = self._now
+        self.object.save()
+        status = prepare_contest_data.delay(self.object.id, json.dumps(form.cleaned_data))
+        cache.set(self.data_cache_key, status.id)
+        return HttpResponseRedirect(self.build_task_url(status.id))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['can_prepare_data'] = self.can_prepare_data
+        context['can_download_data'] = os.path.exists(self.data_path)
+        context['in_progress_url'] = self.in_progress_url
+        context['ratelimit'] = settings.DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT
+
+        if not self.can_prepare_data:
+            context['time_until_can_prepare'] = (
+                settings.DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT - (self._now - self.object.data_last_downloaded)
+            )
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.can_prepare_data or self.in_progress_url is not None:
+            raise PermissionDenied('You are not allowed to prepare new data.')
+        return super().post(request, *args, **kwargs)
+
+
+class ContestDownloadData(ContestDataMixin, SingleObjectMixin, View):
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        if not os.path.exists(self.data_path):
+            raise Http404()
+
+        response = HttpResponse()
+
+        if hasattr(settings, 'DMOJ_CONTEST_DATA_INTERNAL'):
+            url_path = '%s/%s.zip' % (settings.DMOJ_CONTEST_DATA_INTERNAL, self.object.id)
+        else:
+            url_path = None
+        add_file_response(request, response, url_path, self.data_path)
+
+        response['Content-Type'] = 'application/zip'
+        response['Content-Disposition'] = 'attachment; filename=%s-data.zip' % self.object.key
+        return response

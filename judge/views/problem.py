@@ -2,6 +2,7 @@ import logging
 import os
 import re
 import shutil
+import zipfile
 from datetime import timedelta
 from operator import itemgetter
 from random import randrange
@@ -27,7 +28,8 @@ from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.forms import ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, ProposeProblemSolutionFormSet
+from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, \
+    ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.pdf_problems import DefaultPdfMaker, HAS_PDF
@@ -656,6 +658,14 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
 
             submission_file = form.files.get('submission_file', None)
             if submission_file is not None:
+                if self.new_submission.language.key == 'SCRATCH':
+                    try:
+                        archive = zipfile.ZipFile(submission_file.file)
+                        submission_file.file = archive.open('project.json')
+                        submission_file.name = 'dummy.json'
+                    except (zipfile.BadZipFile, KeyError):
+                        pass
+
                 source_url = submission_uploader(
                     submission_file=submission_file,
                     problem_code=self.new_submission.problem.code,
@@ -705,7 +715,7 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
                 request.user.username,
                 kwargs.get(self.slug_url_kwarg),
             )
-            return HttpResponseForbidden('<h1>Do you want me to ban you?</h1>')
+            return HttpResponseForbidden('<h1>You are not allowed to submit to this problem.</h1>')
 
     def dispatch(self, request, *args, **kwargs):
         submission_id = kwargs.get('submission')
@@ -858,8 +868,15 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
             return ProposeProblemSolutionFormSet(self.request.POST, instance=self.get_object())
         return ProposeProblemSolutionFormSet(instance=self.get_object())
 
+    def get_language_limit_formset(self):
+        if self.request.POST:
+            return LanguageLimitFormSet(self.request.POST, instance=self.get_object(),
+                                        form_kwargs={'user': self.request.user})
+        return LanguageLimitFormSet(instance=self.get_object(), form_kwargs={'user': self.request.user})
+
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
+        data['lang_limit_formset'] = self.get_language_limit_formset()
         data['solution_formset'] = self.get_solution_formset()
         return data
 
@@ -882,12 +899,14 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
+        form_lang_limit = self.get_language_limit_formset()
         form_edit = self.get_solution_formset()
-        if form.is_valid() and form_edit.is_valid():
+        if form.is_valid() and form_edit.is_valid() and form_lang_limit.is_valid():
             with revisions.create_revision(atomic=True):
                 problem = form.save()
                 self.save_statement(form, problem)
                 problem.save()
+                form_lang_limit.save()
                 form_edit.save()
 
                 revisions.set_comment(_('Edited from site'))

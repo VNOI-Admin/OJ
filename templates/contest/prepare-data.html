@@ -56,7 +56,6 @@
                     group.fadeOut(duration);
                 }
             };
-            check($('#id_submission_download'), 0);
             $('#id_submission_download').change(function() {
                 check($(this), 300);
             });
@@ -76,7 +75,7 @@
     <div class="centered-form">
         {% if in_progress_url %}
             <div class="alert alert-warning">
-                {{ _('We are currently preparing your data.') }}
+                {{ _('We are currently preparing the contest data.') }}
             </div>
             <a class="button aux-download-action" href="{{ in_progress_url }}">{{ _('Track progress') }}</a>
         {% elif can_prepare_data %}
@@ -85,7 +84,7 @@
                     You may only prepare a new data download for this contest once every {{ ratelimit }}.
                 {%- endtrans -%}
                 <br>
-                {{ _('Once your data is ready, you will find a download link on this page.') }}
+                {{ _('Once the contest data is ready, you will find a download link on this page.') }}
             </div>
             <form id="download-data-form" action="" method="post" class="form-area">
                 {% if form.non_field_errors() %}
@@ -96,16 +95,10 @@
                 {% endif %}
                 {% csrf_token %}
                 <div>
-                    <h3>{{ _('Comments') }}</h3>
-                    <b>{{ form.comment_download.label }}</b>
-                    {{ form.comment_download }}
-                </div>
-                <hr>
-                <div>
                     <h3>{{ _('Submissions') }}</h3>
                     <b>{{ form.submission_download.label }}</b>
                     {{ form.submission_download }}
-                    <div class="form-group">
+                    <div class="form-group" style="display: none;">
                         <div class="form-field">
                             <div>{{ form.submission_problem_glob.label }}</div>
                             <div>{{ form.submission_problem_glob }}</div>
@@ -125,7 +118,7 @@
                         {% endif %}
                     </button>
                     {% if can_download_data %}
-                        <a class="button main-download-action" href="{{ url('user_download_data') }}">{{ _('Download prepared data') }}</a>
+                        <a class="button main-download-action" href="{{ url('contest_download_data', contest.key) }}">{{ _('Download prepared data') }}</a>
                     {% endif %}
                 </div>
             </form>
@@ -137,7 +130,7 @@
                     You will need to wait {{ countdown }} to prepare a new data download.
                 {%- endtrans -%}
             </div>
-            <a class="button aux-download-action" href="{{ url('user_download_data') }}">{{ _('Download data') }}</a>
+            <a class="button aux-download-action" href="{{ url('contest_download_data', contest.key) }}">{{ _('Download data') }}</a>
         {% endif %}
     </div>
 {% endblock %}

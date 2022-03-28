@@ -52,7 +52,12 @@
         <div class="sub-prop"><div>
             <a href="{{ url('submission_status', submission.id) }}">
                 <i class="fa fa-eye fa-fw"></i><span class="label">{{ _('view') }}</span>
-            </a>
+            </a> ·
+            {% if not submission.language.file_only or request.user.is_superuser %}
+                    <a href="{{ url('submission_source', submission.id) }}">
+                        {{ _('source') }}
+                    </a>
+                {% endif %}
             {% if perms.judge.rejudge_submission and can_edit %} ·
                 {% if not submission.is_locked %}
                     <a href="#" onclick="rejudge_submission({{ submission.id }}, event);return false">
@@ -70,9 +75,11 @@
             <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">
                 {{ _('diff') }}
             </a> ·
-            <a href="{{ url('admin:judge_submission_change', submission.id) }}">
+                {% if request.user.is_superuser %}
+                <a href="{{ url('admin:judge_submission_change', submission.id) }}">
                     <i class="fa fa-cog fa-fw"></i><span class="label">{{ _('admin') }}</span>
                 </a>
+                {% endif %}
             {% endif %}
         </div></div>
     {% endif %}

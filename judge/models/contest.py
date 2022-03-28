@@ -178,6 +178,10 @@ class Contest(models.Model):
                                            help_text=_('Number of digits to round points to.'))
     csv_ranking = models.TextField(verbose_name=_('official ranking'), blank=True,
                                    help_text=_('Official ranking exported from CMS in CSV format.'))
+    data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
+    disallow_virtual = models.BooleanField(verbose_name=_('Disallow virtual joining'),
+                                           help_text=_('Disallow virtual joining after contest has ended.'),
+                                           default=False)
 
     @cached_property
     def format_class(self):
@@ -603,10 +607,13 @@ class ContestParticipation(models.Model):
 
     def __str__(self):
         if self.spectate:
-            return gettext('%s spectating in %s') % (self.user.username, self.contest.name)
+            return gettext('%(user)s spectating in %(contest)s') % \
+                ({'user': self.user.username, 'contest': self.contest.name})
         if self.virtual:
-            return gettext('%s in %s, v%d') % (self.user.username, self.contest.name, self.virtual)
-        return gettext('%s in %s') % (self.user.username, self.contest.name)
+            return gettext('%(user)s in %(contest)s, v%(virtual)d') % \
+                ({'user': self.user.username, 'contest': self.contest.name, 'virtual': self.virtual})
+        return gettext('%(user)s in %(contest)s') % \
+            ({'user': self.user.username, 'contest': self.contest.name})
 
     class Meta:
         verbose_name = _('contest participation')

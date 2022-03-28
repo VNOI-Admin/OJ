@@ -1,0 +1,9 @@
+<script src="{{ static('vnoj/jquery.dirty.min.js') }}"></script>
+<script type="text/javascript">
+    $(function() {
+        $('form').dirty({
+            preventLeaving: true,
+            leavingMessage: '{{ _('Changes you made may not be saved.') }}',
+        });
+    });
+</script>

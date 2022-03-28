@@ -285,12 +285,6 @@
             <div class="top-pagination-bar">
                 {% include "list-pages.html" %}
                 <div style="display: flex; align-items: center;">
-                    {% if hide_private_contests is not none %}
-                        <div style="padding-right: 0.5em;">
-                            <input id="hide-private-contests-checkbox" type="checkbox">
-                            <label for="hide-private-contests-checkbox">{{ _('Hide private contests') }}</label>
-                        </div>
-                    {% endif %}
                     <form id="search-form" name="form" action="" method="get">
                         <input id="search" type="text" name="search" value="{{ search_query or '' }}"
                             placeholder="{{ _('Search contest...') }}">
@@ -326,11 +320,15 @@
                             {{ user_count(contest, request.user) }}
                         </td>
                         {% if not request.in_contest %}
-                            <td><form action="{{ url('contest_join', contest.key) }}" method="post">
+                            {% if not contest.disallow_virtual %}
+                                <td><form action="{{ url('contest_join', contest.key) }}" method="post">
                                     {% csrf_token %}
                                     <input type="submit" class="unselectable button full participate-button"
                                            value="{{ _('Virtual join') }}">
-                            </form></td>
+                                </form></td>
+                            {% else %}
+                                <td></td>
+                            {% endif %}
                         {% endif %}
                     </tr>
                 {% endfor %}
