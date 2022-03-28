@@ -11,15 +11,15 @@ from judge.utils.problem_data import ProblemDataStorage
 problem_data_storage = ProblemDataStorage()
 
 
-def export_problem(code, export_name=None):
-    export_name = export_name or code
+def export_problem(code, export_code=None, prefix_name=''):
+    export_code = export_code or code
 
     problem = Problem.objects.get(code=code)
 
     # Retrieve
     data = {
-        'code': export_name,  # Use for custom names
-        'name': problem.name,
+        'code': export_code,  # Use for custom names
+        'name': prefix_name + problem.name,
         'description': problem.description,
         'time_limit': problem.time_limit,
         'memory_limit': problem.memory_limit,
@@ -30,7 +30,7 @@ def export_problem(code, export_name=None):
         'partial': problem.partial,
     }
 
-    tmp_dir = os.path.join('/', 'tmp', export_name)
+    tmp_dir = os.path.join('/', 'tmp', export_code)
     if os.path.exists(tmp_dir):
         shutil.rmtree(tmp_dir)
     os.mkdir(tmp_dir)
@@ -38,7 +38,7 @@ def export_problem(code, export_name=None):
     json.dump(data, open(os.path.join(tmp_dir, 'problem.json'), 'w'))
     if problem_data_storage.exists(code):
         shutil.copytree(problem_data_storage.path(code), tmp_dir, dirs_exist_ok=True)
-    package_dir = shutil.make_archive(os.path.join('/', 'tmp', export_name), 'zip', tmp_dir)
+    package_dir = shutil.make_archive(os.path.join('/', 'tmp', export_code), 'zip', tmp_dir)
     shutil.rmtree(tmp_dir)  # Remove unused directory after packing
 
     return package_dir
