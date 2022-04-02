@@ -522,7 +522,7 @@ class UserList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
                 .prefetch_related(Prefetch('organizations',
                                   queryset=Organization.objects.filter(is_unlisted=False).only('name', 'id', 'slug')))
                 .only('display_rank', 'user', 'points', 'rating', 'performance_points',
-                      'problem_count', 'organizations'))
+                      'problem_count', 'organizations', 'username_display_override'))
 
     def get_context_data(self, **kwargs):
         context = super(UserList, self).get_context_data(**kwargs)
@@ -555,7 +555,8 @@ class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView
                 .prefetch_related(Prefetch('user', queryset=User.objects.only('username', 'first_name')))
                 .prefetch_related(Prefetch('organizations',
                                   queryset=Organization.objects.filter(is_unlisted=False).only('name', 'id', 'slug')))
-                .only('display_rank', 'user', 'organizations', 'rating', 'contribution_points'))
+                .only('display_rank', 'user', 'organizations', 'rating', 'contribution_points',
+                      'username_display_override'))
 
     def get_context_data(self, **kwargs):
         context = super(ContribList, self).get_context_data(**kwargs)
