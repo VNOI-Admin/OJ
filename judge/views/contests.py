@@ -823,7 +823,8 @@ class ContestRanking(ContestRankingBase):
 
     @property
     def cache_key(self):
-        return f'contest_ranking_cache_{self.object.key}_{self.show_virtual}_{self.is_frozen}'
+        return f'contest_ranking_cache_{self.object.key}_{self.show_virtual}_{self.is_frozen}_' \
+               f'{self.request.LANGUAGE_CODE}'
 
     @property
     def bypass_cache_ranking(self):
