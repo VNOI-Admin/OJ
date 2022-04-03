@@ -91,7 +91,7 @@ class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
         context['title'] = self.object.name
         context['users'] = \
             ranker(self.object.members.filter(is_unlisted=False).order_by(self.order)
-                   .select_related('user').defer('about', 'user_script', 'notes'))
+                   .select_related('user', 'display_badge').defer('about', 'user_script', 'notes'))
         context['partial'] = True
         context['is_admin'] = self.can_edit_organization()
         context['kick_url'] = reverse('organization_user_kick', args=[self.object.id, self.object.slug])
