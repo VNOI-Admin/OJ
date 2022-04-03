@@ -25,6 +25,7 @@
             <h3>{{ _('Execution Results') }}</h3>
         {% endif %}
         <br>
+        {% if can_view_per_testcase_status %}
         {% if statuses or not submission.is_graded %}
             {% for case in statuses %}
                 {% if case.status == "AC" %}
@@ -66,7 +67,7 @@
             {% set print_case_ext_feedback = case.extended_feedback
                                              and
                                              ((not request.in_contest and current_test_case_count <= feedback_limit)
-                                              or can_view_test) %}
+                                              or can_view_test or can_view_feedback) %}
             {% set curr_data = cases_data.get(case.case, None) %}
             {% set has_extended_data = print_case_output or print_case_ext_feedback or (can_view_test and curr_data) %}
 
@@ -180,6 +181,13 @@
                 <b>{{ _('Submission aborted!') }}</b>
             {% endif %}
             <br>
+        {% endif %}
+        {% else %}
+
+        <div class="sub-result {{ submission.result_class }}" style="width: fit-content; padding: 10px;">
+            {{ submission.long_status }}
+        </div>
+
         {% endif %}
     {% endif %}
 {% else %}
