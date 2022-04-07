@@ -195,7 +195,7 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
     def get_context_data(self, **kwargs):
         context = super(TicketView, self).get_context_data(**kwargs)
         context['ticket_messages'] = self.object.messages.select_related('user__user')
-        context['assignees'] = self.object.assignees.select_related('user')
+        context['assignees'] = self.object.assignees.select_related('user', 'display_badge')
         return context
 
 
