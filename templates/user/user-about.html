@@ -46,6 +46,16 @@
             <br>
         {% endif %}
 
+        <h4>{{ _('Badges & Awards') }}</h4>
+        {% for badge in user.badges.all() %}
+            <div style="display: inline-block; margin-left: 1em; margin-right: 1em;">
+                <img src="{{ badge.full_size or badge.mini or '' }}" title="{{ badge.name }}" style="height: 10em; width: auto; display: block; margin: 0 auto;" />
+                <p style="text-align: center; font-weight: bold; text-transform: uppercase;">{{ badge.name }}</p>
+            </div>
+        {% else %}
+            <i>{{ _('This user has not earned any badges or awards.') }}</i>
+        {% endfor %}
+
         <h4 id="submission-activity-header"></h4>
         <div id="submission-activity" style="display: none;">
             <div id="submission-activity-actions">

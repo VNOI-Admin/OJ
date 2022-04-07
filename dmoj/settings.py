@@ -338,6 +338,7 @@ else:
                     'children': [
                         'judge.Organization',
                         'judge.OrganizationRequest',
+                        'judge.Badge',
                     ],
                 },
                 {

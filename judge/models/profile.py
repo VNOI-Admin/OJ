@@ -119,6 +119,15 @@ class Organization(models.Model):
         verbose_name_plural = _('organizations')
 
 
+class Badge(models.Model):
+    name = models.CharField(max_length=128, verbose_name=_('badge name'))
+    mini = models.URLField(verbose_name=_('mini badge URL'), blank=True)
+    full_size = models.URLField(verbose_name=_('full size badge URL'), blank=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, verbose_name=_('user associated'), on_delete=models.CASCADE)
     about = models.TextField(verbose_name=_('self-description'), null=True, blank=True)
@@ -133,6 +142,8 @@ class Profile(models.Model):
     ace_theme = models.CharField(max_length=30, choices=ACE_THEMES, default='github')
     last_access = models.DateTimeField(verbose_name=_('last access time'), default=now)
     ip = models.GenericIPAddressField(verbose_name=_('last IP'), blank=True, null=True)
+    badges = models.ManyToManyField(Badge, verbose_name=_('badges'), blank=True, related_name='users')
+    display_badge = models.ForeignKey(Badge, verbose_name=_('display badge'), null=True, on_delete=models.SET_NULL)
     organizations = SortedManyToManyField(Organization, verbose_name=_('organization'), blank=True,
                                           related_name='members', related_query_name='member')
     display_rank = models.CharField(max_length=10, default='user', verbose_name=_('display rank'),

@@ -65,7 +65,7 @@ class Comment(MPTTModel):
 
     @classmethod
     def most_recent(cls, user, n, batch=None):
-        queryset = cls.objects.filter(hidden=False).select_related('author__user') \
+        queryset = cls.objects.filter(hidden=False).select_related('author__user', 'author__display_badge') \
             .defer('author__about', 'body').order_by('-id')
 
         problem_cache = CacheDict(lambda code: Problem.objects.defer('description', 'summary').get(code=code))

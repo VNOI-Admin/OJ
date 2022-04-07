@@ -55,8 +55,9 @@ class ProfileForm(ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['about', 'organizations', 'timezone', 'language', 'ace_theme', 'user_script']
+        fields = ['about', 'display_badge', 'organizations', 'timezone', 'language', 'ace_theme', 'user_script']
         widgets = {
+            'display_badge': Select2Widget(attrs={'style': 'width:200px'}),
             'user_script': AceWidget(theme='github'),
             'timezone': Select2Widget(attrs={'style': 'width:200px'}),
             'language': Select2Widget(attrs={'style': 'width:200px'}),
@@ -97,6 +98,7 @@ class ProfileForm(ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(ProfileForm, self).__init__(*args, **kwargs)
+        self.fields['display_badge'].required = False
         if not user.has_perm('judge.edit_all_organization'):
             self.fields['organizations'].queryset = Organization.objects.filter(
                 Q(is_open=True, is_unlisted=False) | Q(id__in=user.profile.organizations.all()),

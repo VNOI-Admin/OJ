@@ -45,7 +45,7 @@ class PostListBase(ListView):
 
     def get_queryset(self):
         return (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
-                .order_by('-sticky', '-publish_on').prefetch_related('authors__user'))
+                .order_by('-sticky', '-publish_on').prefetch_related('authors__user', 'authors__display_badge'))
 
     def get_context_data(self, **kwargs):
         context = super(PostListBase, self).get_context_data(**kwargs)
@@ -106,7 +106,7 @@ class PostList(PostListBase):
         if self.request.user.is_authenticated:
             context['own_open_tickets'] = (
                 Ticket.objects.filter(user=self.request.profile, is_open=True).order_by('-id')
-                              .prefetch_related('linked_item').select_related('user__user')
+                              .prefetch_related('linked_item').select_related('user__user', 'user__display_badge')
             )
         else:
             context['own_open_tickets'] = []
@@ -114,7 +114,7 @@ class PostList(PostListBase):
         # Superusers better be staffs, not the spell-casting kind either.
         if self.request.user.is_staff:
             tickets = (Ticket.objects.order_by('-id').filter(is_open=True).prefetch_related('linked_item')
-                             .select_related('user__user'))
+                             .select_related('user__user', 'user__display_badge'))
             context['open_tickets'] = filter_visible_tickets(tickets, self.request.user)[:10]
         else:
             context['open_tickets'] = []
@@ -123,15 +123,17 @@ class PostList(PostListBase):
     def get_top_pp_users(self):
         return (Profile.objects.order_by('-performance_points')
                 .filter(performance_points__gt=0, is_unlisted=False)
-                .only('user', 'performance_points', 'display_rank', 'rating')
-                .select_related('user')
+                .only('user', 'performance_points', 'display_rank', 'display_badge', 'rating',
+                      'username_display_override')
+                .select_related('user', 'display_badge')
                 [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
 
     def get_top_contributors(self):
         return (Profile.objects.order_by('-contribution_points')
                 .filter(contribution_points__gt=0, is_unlisted=False)
-                .only('user', 'contribution_points', 'display_rank', 'rating')
-                .select_related('user')
+                .only('user', 'contribution_points', 'display_rank', 'display_badge', 'rating',
+                      'username_display_override')
+                .select_related('user', 'display_badge')
                 [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
 
 
