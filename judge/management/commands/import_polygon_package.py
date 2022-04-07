@@ -23,8 +23,8 @@ PANDOC_FILTER = """
 local List = require 'pandoc.List'
 
 function Math(m)
-    -- Replace $ with ~
-    local delimiter = m.mathtype == 'InlineMath' and '~' or '~~'
+    -- Fix math delimiters
+    local delimiter = m.mathtype == 'InlineMath' and '~' or '$$'
     return pandoc.RawInline('markdown', delimiter .. m.text .. delimiter)
 end
 
