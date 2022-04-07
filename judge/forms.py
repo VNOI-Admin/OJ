@@ -98,7 +98,12 @@ class ProfileForm(ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(ProfileForm, self).__init__(*args, **kwargs)
+
         self.fields['display_badge'].required = False
+        self.fields['display_badge'].queryset = self.instance.badges.all()
+        if not self.fields['display_badge'].queryset:
+            self.fields.pop('display_badge')
+
         if not user.has_perm('judge.edit_all_organization'):
             self.fields['organizations'].queryset = Organization.objects.filter(
                 Q(is_open=True, is_unlisted=False) | Q(id__in=user.profile.organizations.all()),
