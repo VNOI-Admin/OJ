@@ -36,7 +36,7 @@ lupa
 martor @ git+https://github.com/VNOI-Admin/martor.git
 netaddr
 webauthn<1
-bleach<5
+bleach[css]
 markdown2 @ git+https://github.com/VNOI-Admin/python-markdown2.git
 discord-webhook
 django-admin-sortable2<2
