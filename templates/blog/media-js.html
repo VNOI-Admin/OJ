@@ -10,8 +10,11 @@
                         id: id
                     },
                     success: function (data, textStatus, jqXHR) {
-                        var score = $('#post-' + id + ' #post-score').first();
-                        score.text(parseInt(score.text()) + delta);
+                        var score = $('#post-' + id + ' #post-score');
+
+                        score.each(function() {
+                            console.log($(this).text(parseInt($(this).text()) + delta));
+                        });
                         if (typeof on_success !== 'undefined')
                             on_success();
                     },
@@ -24,28 +27,38 @@
             var get_$votes = function (id) {
                 var $post = $('#post-' + id);
                 return {
-                    upvote: $post.find('.upvote-link').first(),
-                    downvote: $post.find('.downvote-link').first()
+                    upvote1: $post.find('.upvote-link').first(),
+                    downvote1: $post.find('.downvote-link').first(),
+                    upvote2: $post.find('.upvote-link').last(),
+                    downvote2: $post.find('.downvote-link').last(),
                 };
             };
 
             window.blog_upvote = function (id) {
                 ajax_vote_blog('{{ url('blog_upvote') }}', id, 1, function () {
                     var $votes = get_$votes(id);
-                    if ($votes.downvote.hasClass('voted'))
-                        $votes.downvote.removeClass('voted');
+                    if ($votes.downvote1.hasClass('voted'))
+                        $votes.downvote1.removeClass('voted');
                     else
-                        $votes.upvote.addClass('voted');
+                        $votes.upvote1.addClass('voted');
+                    if ($votes.downvote2.hasClass('voted'))
+                        $votes.downvote2.removeClass('voted');
+                    else
+                        $votes.upvote2.addClass('voted');
                 });
             };
 
             window.blog_downvote = function (id) {
                 ajax_vote_blog('{{ url('blog_downvote') }}', id, -1, function () {
                     var $votes = get_$votes(id);
-                    if ($votes.upvote.hasClass('voted'))
-                        $votes.upvote.removeClass('voted');
+                    if ($votes.upvote1.hasClass('voted'))
+                        $votes.upvote1.removeClass('voted');
                     else
-                        $votes.downvote.addClass('voted');
+                        $votes.downvote1.addClass('voted');
+                    if ($votes.upvote2.hasClass('voted'))
+                        $votes.upvote2.removeClass('voted');
+                    else
+                        $votes.downvote2.addClass('voted');
                 });
             };
 
