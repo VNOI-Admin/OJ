@@ -350,6 +350,8 @@ urlpatterns = [
             url(r'^edit$', blog.BlogPostEdit.as_view(), name='blog_post_edit'),
         ])),
         url(r'^new$', blog.BlogPostCreate.as_view(), name='blog_post_new'),
+        url(r'^upvote$', blog.upvote_blog, name='blog_upvote'),
+        url(r'^downvote$', blog.downvote_blog, name='blog_downvote'),
     ])),
 
     url(r'^license/(?P<key>[-\w.]+)$', license.LicenseDetail.as_view(), name='license'),
