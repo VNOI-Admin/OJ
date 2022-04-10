@@ -82,7 +82,6 @@ def vote_blog(request, delta):
 
 
 def upvote_blog(request):
-    print('lmao')
     return vote_blog(request, 1)
 
 
