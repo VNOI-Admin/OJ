@@ -32,7 +32,7 @@
         </div>
     {% elif not edit %}
         <div class="alert alert-warning">
-            {{ _('Please read the <a href="/about/blog/">guidelines</a> before creating a new blog post.') }}
+            {{ _('Please read the %(guidelines)s before creating a new blog post.', guidelines='<a href="/about/blog/">guidelines</a>'|safe) }}
         </div>
     {% endif %}
     <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">

@@ -7,7 +7,9 @@
             <a class="close">x</a>
             <b>{{ _('Thanks for suggesting problem!') }}</b>
             <br>
-            {{ _('Please keep in mind that this form is only for creating new problems. Spamming and using for wrong purposes is not allowed.<br>If you don\'t know how to suggest a problem, please read <a href="/about/suggest_guide/">this</a>.') }}
+            {{ _('Please keep in mind that this form is only for creating new problems. Spamming and using for wrong purposes is not allowed.') }}
+            <br>
+            {{ _('If you don\'t know how to suggest a problem, please read %(guide)s.', guide='<a href="/about/suggest_guide/">this</a>'|safe) }}
         </div>
     {% endif %}
     <form action="" method="post" class="form-area" enctype="multipart/form-data" style="display: flex; justify-content: center; flex-direction: column;">
