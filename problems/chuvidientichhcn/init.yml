@@ -1,0 +1,5 @@
+archive: chuvidientichhcn.zip
+test_cases:
+- {in: chuvidientichhcn.1.in, out: chuvidientichhcn.1.out, points: 25}
+- {in: chuvidientichhcn.2.in, out: chuvidientichhcn.2.out, points: 50}
+- {in: chuvidientichhcn.3.in, out: chuvidientichhcn.3.out, points: 50}

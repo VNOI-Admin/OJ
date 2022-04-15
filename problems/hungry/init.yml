@@ -1,0 +1,19 @@
+archive: hungry.zip
+test_cases:
+- batched:
+  - {in: hungry.1a.in, out: hungry.1a.out}
+  - {in: hungry.1b.in, out: hungry.1b.out}
+  - {in: hungry.1c.in, out: hungry.1c.out}
+  points: 5
+- batched:
+  - {in: hungry.2a.in, out: hungry.2a.out}
+  - {in: hungry.2b.in, out: hungry.2b.out}
+  - {in: hungry.2c.in, out: hungry.2c.out}
+  - {in: hungry.2d.in, out: hungry.2d.out}
+  points: 20
+- batched:
+  - {in: hungry.3a.in, out: hungry.3a.out}
+  - {in: hungry.3b.in, out: hungry.3b.out}
+  - {in: hungry.3c.in, out: hungry.3c.out}
+  - {in: hungry.3d.in, out: hungry.3d.out}
+  points: 25

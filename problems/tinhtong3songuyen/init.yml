@@ -1,0 +1,5 @@
+archive: tinhtong3songuyen.zip
+test_cases:
+- {in: tinhtong3songuyen.1.in, out: tinhtong3songuyen.1.out, points: 25}
+- {in: tinhtong3songuyen.2.in, out: tinhtong3songuyen.2.out, points: 50}
+- {in: tinhtong3songuyen.3.in, out: tinhtong3songuyen.3.out, points: 50}

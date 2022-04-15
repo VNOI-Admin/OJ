@@ -1,0 +1,5 @@
+archive: timsodu.zip
+test_cases:
+- {in: timsodu.1.in, out: timsodu.1.out, points: 25}
+- {in: timsodu.2.in, out: timsodu.2.out, points: 50}
+- {in: timsodu.3.in, out: timsodu.3.out, points: 50}

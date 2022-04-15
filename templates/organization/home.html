@@ -73,7 +73,7 @@
             {% if posts %}
                 <br>
                 <h3>{{ _('News') }} <i class="fa fa-terminal"></i></h3>
-                <div class="sidebox-content" style="border: unset;">
+                <div class="sidebox-content">
                     {% for post in posts %}
                         {% include "blog/blog-post.html" %}
                     {% endfor %}
