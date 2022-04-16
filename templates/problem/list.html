@@ -191,13 +191,13 @@
                     <th class="ac-rate">
                         <a href="{{ sort_links.ac_rate }}">{{ _('%% AC') }}{{ sort_order.ac_rate }}</a>
                     </th>
+                    <th class="users">
+                        <a href="{{ sort_links.user_count }}">{{ _('# AC') }}{{ sort_order.user_count }}</a>
+                    </th>
                     <th class="editorial" title="{{ _('Editorial') }}">
                         <a href="{{ sort_links.editorial }}">
                             <i class="fa fa-book"></i>{{ sort_order.editorial }}
                         </a>
-                    </th>
-                    <th class="users">
-                        <a href="{{ sort_links.user_count }}">{{ _('# AC') }}{{ sort_order.user_count }}</a>
                     </th>
                 </tr>
                 </thead>
@@ -251,6 +251,11 @@
                         {% endif %}
                         <td class="p">{{ problem.points|floatformat(2) }}</td>
                         <td class="ac-rate">{{ problem.ac_rate|floatformat(1) }}%</td>
+                        <td class="users">
+                            <a href="{{ url('ranked_submissions', problem.code) }}">
+                                {{ problem.user_count }}
+                            </a>
+                        </td>
                         <td>
                             {% if problem.has_public_editorial %}
                                 <a href="{{ url('problem_editorial', problem.code) }}">
@@ -259,11 +264,6 @@
                             {% else %}
                                 <i class="no-editorial-color fa fa-minus-circle"></i>
                             {% endif %}
-                        </td>
-                        <td class="users">
-                            <a href="{{ url('ranked_submissions', problem.code) }}">
-                                {{ problem.user_count }}
-                            </a>
                         </td>
                     </tr>
                 {% endfor %}
