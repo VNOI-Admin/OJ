@@ -37,23 +37,17 @@ register_patterns = [
          TitledTemplateView.as_view(template_name='registration/activation_complete.html',
                                     title=_('Activation Successful!')),
          name='registration_activation_complete'),
-    # Let use <str:activation_key>,
-    # because a bad activation key should still get to the view;
-    # that way it can return a sensible "invalid key" message instead of a
-    # confusing 404.
-    path('activate/<str:activation_key>/',
-         ActivationView.as_view(title=_('Activation key invalid')),
-         name='registration_activate'),
-    path('register/',
-         RegistrationView.as_view(title=_('Register')),
-         name='registration_register'),
+    # Let's use <str:activation_key>, because a bad activation key should still get to the view;
+    # that way, it can return a sensible "invalid key" message instead of a confusing 404.
+    path('activate/<str:activation_key>/', ActivationView.as_view(), name='registration_activate'),
+    path('register/', RegistrationView.as_view(), name='registration_register'),
     path('register/complete/',
          TitledTemplateView.as_view(template_name=REGISTRATION_COMPLETE_TEMPLATE,
                                     title=_('Registration Completed')),
          name='registration_complete'),
     path('register/closed/',
          TitledTemplateView.as_view(template_name='registration/registration_closed.html',
-                                    title=_('Registration not allowed')),
+                                    title=_('Registration Not Allowed')),
          name='registration_disallowed'),
     path('login/', user.CustomLoginView.as_view(), name='auth_login'),
     path('logout/', user.UserLogoutView.as_view(), name='auth_logout'),
