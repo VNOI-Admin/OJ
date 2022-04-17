@@ -1,7 +1,7 @@
 {% extends "generic-message.html" %}
 
 {% block body %}
-    {{ _('You are not allowed to create new organizations because you are the administrator of %(limit)s organizations. Please use your existing organizations.', limit=('<strong>more than %d</strong>' % admin_limit)|safe) }}
+    {{ (_('You are not allowed to create new organizations because you are the administrator of **more than %(limit)s** organizations. Please use your existing organizations.', limit=admin_limit))|markdown('default', strip_paragraphs=True) }}
     <br><br>
     {{ _('Below are a list of organizations in which you are the administrator:') }}
     {% for org in admin_of %}
