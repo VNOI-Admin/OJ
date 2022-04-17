@@ -32,7 +32,7 @@
         </div>
     {% elif not edit %}
         <div class="alert alert-warning">
-            {{ _('Please read the %(guidelines)s before creating a new blog post.', guidelines='<a href="/about/blog/">guidelines</a>'|safe) }}
+            {{ (_('Please read the [guidelines][0] before creating a new blog post.') + '\n\n  [0]: /about/blog/')|markdown('blog', strip_paragraphs=True) }}
         </div>
     {% endif %}
     <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
