@@ -511,6 +511,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
 
 
 class SuggestList(ProblemList):
+    title = gettext_lazy('Suggested problem list')
     template_name = 'problem/suggest-list.html'
     permission_required = 'superuser'
 
