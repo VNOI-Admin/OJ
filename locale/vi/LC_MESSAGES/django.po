@@ -4859,7 +4859,7 @@ msgstr "j F, Y, G:i T"
 #: templates/contest/contest.html:77
 #, python-format
 msgid "%(time_limit)s window between %(start_time)s and %(end_time)s"
-msgstr "%(time_limit)s giữa %(start_time)s và %(end_time)s</b>"
+msgstr "%(time_limit)s giữa %(start_time)s và %(end_time)s"
 
 #: templates/contest/contest.html:80
 #, python-format
