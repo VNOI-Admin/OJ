@@ -6130,8 +6130,8 @@ msgid "Your source code must contain at most 65536 characters."
 msgstr "Độ dài code không được vượt quá 65536 ký tự."
 
 #: templates/problem/submit.html:160
-msgid "'Click to select a file or drag a file into this box'"
-msgstr "'Nhấn để chọn file hoặc kéo thả file vào đây'"
+msgid "Click to select a file or drag a file into this box"
+msgstr "Nhấn để chọn file hoặc kéo thả file vào đây"
 
 #: templates/problem/submit.html:161
 #, python-brace-format
@@ -6142,12 +6142,12 @@ msgstr ""
 "${file_size_limit}MB.`"
 
 #: templates/problem/submit.html:227
-msgid "'File name'"
-msgstr "'Tên file'"
+msgid "File name"
+msgstr "Tên file"
 
 #: templates/problem/submit.html:228
-msgid "'File size'"
-msgstr "'Độ lớn của file'"
+msgid "File size"
+msgstr "Độ lớn của file"
 
 #: templates/problem/submit.html:368
 msgid "Warning!"
