@@ -338,8 +338,8 @@ urlpatterns = [
 
     path('posts/', paged_list_view(blog.PostList, 'blog_post_list')),
     path('posts/new', blog.BlogPostCreate.as_view(), name='blog_post_new'),
-    path('new', blog.BlogPostCreate.as_view(), name='blog_post_new'),
-    path('upvote', blog.upvote_blog, name='blog_upvote'),
+    path('posts/upvote', blog.upvote_blog, name='blog_upvote'),
+    path('posts/downvote', blog.downvote_blog, name='blog_downvote'),
     path('post/<int:id>-<slug:slug>', include([
         path('', blog.PostView.as_view(), name='blog_post'),
         path('/edit', blog.BlogPostEdit.as_view(), name='blog_post_edit'),

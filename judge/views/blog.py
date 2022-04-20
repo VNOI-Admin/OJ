@@ -223,6 +223,14 @@ class PostView(TitleMixin, CommentedDetailView):
     def get_comment_page(self):
         return 'b:%s' % self.object.id
 
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
+            profile = self.request.profile
+            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
+        return queryset
+
     def get_context_data(self, **kwargs):
         context = super(PostView, self).get_context_data(**kwargs)
         context['og_image'] = self.object.og_image

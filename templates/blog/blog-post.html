@@ -41,23 +41,6 @@
         {% endcache %}
     </div>
     <div class="meta">
-        <div class="vote" style="display: flex; float: left; gap: 0.1em; margin-right: 0.5em; font-size: 1.1em;">
-            {% if logged_in %}
-                <a href="javascript:blog_upvote({{ post.id }})"
-                class="upvote-link fa fa-chevron-up fa-fw{% if post.vote_score == 1 %} voted{% endif %}"></a>
-            {% else %}
-                <a href="javascript:alert('{{ _('Please login to vote')|escapejs }}')" title="{{ _('Please login to vote') }}"
-                class="upvote-link fa fa-chevron-up fa-fw"></a>
-            {% endif %}
-            <div id="post-score" class="comment-score">{{ post.score }}</div>
-            {% if logged_in %}
-                <a href="javascript:blog_downvote({{ post.id }})"
-                class="downvote-link fa fa-chevron-down fa-fw{% if post.vote_score == -1 %} voted{% endif %}"></a>
-            {% else %}
-                <a href="javascript:alert('{{ _('Please login to vote')|escapejs }}')" title="{{ _('Please login to vote') }}"
-                class="downvote-link fa fa-chevron-down fa-fw"></a>
-            {% endif %}
-        </div>
         <div class="time">
             <i class="fa fa-user"></i>
             {% with authors=post.authors.all() %}
