@@ -273,11 +273,7 @@
                         <a href="{{ url('user_page') }}">
                             <span>
                                 <img src="{{ gravatar(request.user, 32) }}" height="24" width="24">{# -#}
-                                <span>
-                                    {%- trans username=request.user.first_name or request.profile.display_name -%}
-                                        Hello, <b>{{ username }}</b>.
-                                    {%- endtrans %}
-                                </span>
+                                <span>{{ _('Hello, %(username)s.', username=bold(request.user.first_name or request.profile.display_name)) }}</span>
                             </span>
                         </a>
                         <ul style="width: 150px">
@@ -286,7 +282,7 @@
                             {% endif %}
                             <li><a href="{{ url('user_edit_profile') }}">{{ _('Edit profile') }}</a></li>
                             {% if request.user.is_impersonate %}
-                                <li><a href="{{ url('impersonate-stop') }}">Stop impersonating</a></li>
+                                <li><a href="{{ url('impersonate-stop') }}">{{ _('Stop impersonating') }}</a></li>
                             {% else %}
                                 <li>
                                     <form action="{{ url('auth_logout') }}" method="POST">
@@ -363,8 +359,8 @@
     <footer>
         <span id="footer-content">
             <br>
-            {{_('proudly powered by <a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>')}} |
-            {{_('follow us on <a style="color: #808080" href="https://github.com/VNOI-Admin/OJ"><b>Github</b></a> and <a style="color: #808080" href="https://www.facebook.com/vnoi.wiki"><b>Facebook</b></a>')}}
+            {{_('proudly powered by %(dmoj)s', dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'))}} |
+            {{_('follow us on %(github)s and %(facebook)s', github=safe('<a style="color: #808080" href="https://github.com/VNOI-Admin/OJ"><b>Github</b></a>'), facebook=safe('<a style="color: #808080" href="https://www.facebook.com/vnoi.wiki"><b>Facebook</b></a>'))}}
             {% if i18n_config.footer %}
                 {{ i18n_config.footer|safe }} |
             {% endif %}

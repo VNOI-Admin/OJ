@@ -637,11 +637,9 @@
             <a class="close">x</a>
             <b>{{ _('Test cases have been filled automatically!') }}</b>
             <br>
-            {%- trans -%}
-                Test cases have been filled automatically and <strong>not saved yet</strong>.
-                <br>
-                Please modify the table below if needed and press the `Apply` button to save!
-            {%- endtrans -%}
+            {{ (_('Test cases have been filled automatically and **not saved yet**!'))|markdown('default', strip_paragraphs=True) }}
+            <br>
+            {{ _('Please modify the table below if needed and press the `Apply` button to save!') }}
         </div>
         {% if cases_formset._non_form_errors %}
             {{ cases_formset._non_form_errors }}

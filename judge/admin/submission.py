@@ -11,6 +11,7 @@ from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy as _, ngettext, pgettext
+from reversion.admin import VersionAdmin
 
 from django_ace import AceWidget
 from judge.models import ContestParticipation, ContestProblem, ContestSubmission, Profile, Submission, \
@@ -77,9 +78,13 @@ class ContestSubmissionInline(admin.StackedInline):
             if db_field.name == 'participation':
                 kwargs['queryset'] = ContestParticipation.objects.filter(user=submission.user,
                                                                          contest__problems=submission.problem) \
-                    .only('id', 'contest__name')
+                    .only('id', 'contest__name', 'virtual')
 
                 def label(obj):
+                    if obj.spectate:
+                        return gettext('%s (spectating)') % obj.contest.name
+                    if obj.virtual:
+                        return gettext('%s (virtual %d)') % (obj.contest.name, obj.virtual)
                     return obj.contest.name
             elif db_field.name == 'problem':
                 kwargs['queryset'] = ContestProblem.objects.filter(problem=submission.problem) \
@@ -107,7 +112,7 @@ class SubmissionSourceInline(admin.StackedInline):
         return super().get_formset(request, obj, **kwargs)
 
 
-class SubmissionAdmin(admin.ModelAdmin):
+class SubmissionAdmin(VersionAdmin):
     readonly_fields = ('user', 'problem', 'date', 'judged_date')
     fields = ('user', 'problem', 'date', 'judged_date', 'locked_after', 'time', 'memory', 'points', 'language',
               'status', 'result', 'case_points', 'case_total', 'judged_on', 'error')
@@ -166,7 +171,7 @@ class SubmissionAdmin(admin.ModelAdmin):
             queryset = queryset.filter(Q(problem__authors__id=id) | Q(problem__curators__id=id))
         judged = len(queryset)
         for model in queryset:
-            model.judge(rejudge=True, batch_rejudge=True)
+            model.judge(rejudge=True, batch_rejudge=True, rejudge_user=request.user)
         self.message_user(request, ngettext('%d submission was successfully scheduled for rejudging.',
                                             '%d submissions were successfully scheduled for rejudging.',
                                             judged) % judged)
@@ -256,5 +261,5 @@ class SubmissionAdmin(admin.ModelAdmin):
         if not request.user.has_perm('judge.edit_all_problem') and \
                 not submission.problem.is_editor(request.profile):
             raise PermissionDenied()
-        submission.judge(rejudge=True)
+        submission.judge(rejudge=True, rejudge_user=request.user)
         return HttpResponseRedirect(request.META.get('HTTP_REFERER', '/'))
