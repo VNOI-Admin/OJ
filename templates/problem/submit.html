@@ -157,7 +157,7 @@
                         $('#file_upload').val('');
                         $('#file_upload').attr({accept: file_ext});
                         $('#file_drag').html(
-                            '<b>' + {{ _("'Click to select a file or drag a file into this box'") }} + '</b><br>' +
+                            '<b>{{ _("Click to select a file or drag a file into this box") }}</b><br>' +
                             {{ _('`Only accept "${file_ext}". Maximum file size is ${file_size_limit}MB.`') }}
                         );
                     } else {
@@ -224,8 +224,8 @@
                 var file = $('#file_upload')[0].files[0];
                 if (file) {
                     $('#file_drag').html(
-                        '<b>' + {{ _("'File name'") }} + ':</b> ' + file.name + '<br>' +
-                        '<b>' + {{ _("'File size'") }} + ':</b> ' + (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+                        '<b>{{ _("File name") }}:</b> ' + file.name + '<br>' +
+                        '<b>{{ _("File size") }}:</b> ' + (file.size / (1024 * 1024)).toFixed(2) + ' MB'
                     );
                 }
             }
