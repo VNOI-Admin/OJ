@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Count, Q
+from django.db.models.expressions import Value
+from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -16,9 +18,11 @@ from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateR
 from reversion import revisions
 
 from judge.forms import OrganizationForm
-from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, Problem, Profile
+from judge.models import BlogPost, BlogVote, Comment, Contest, Language, Organization, OrganizationRequest, \
+    Problem, Profile
 from judge.tasks import on_new_problem
 from judge.utils.ranker import ranker
+from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
@@ -445,6 +449,11 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
             else:
                 # Org admin can view public posts & their own posts
                 queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
+
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
+            profile = self.request.profile
+            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
