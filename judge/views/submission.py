@@ -9,7 +9,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.db.models import Prefetch, Q
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseRedirect, \
+    JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
@@ -42,6 +43,10 @@ def submission_related(queryset):
 class SubmissionPermissionDenied(PermissionDenied):
     def __init__(self, submission):
         self.submission = submission
+
+
+class SubmissionSourcePermissionDenied(PermissionDenied):
+    pass
 
 
 class SubmissionMixin(object):
@@ -102,6 +107,12 @@ class SubmissionSource(SubmissionDetailBase):
     def get_queryset(self):
         return super().get_queryset().select_related('source')
 
+    def get_object(self, queryset=None):
+        submission = super().get_object(queryset)
+        if submission.language.file_only and not self.request.user.is_superuser:
+            raise SubmissionSourcePermissionDenied()
+        return submission
+
     def get_context_data(self, **kwargs):
         context = super(SubmissionSource, self).get_context_data(**kwargs)
         submission = self.object
@@ -109,12 +120,11 @@ class SubmissionSource(SubmissionDetailBase):
         context['highlighted_source'] = highlight_code(submission.source.source, submission.language.pygments)
         return context
 
-    def dispatch(self, request, *args, **kwargs):
-        submission = self.get_object()
-        if submission.language.file_only and not request.user.is_superuser:
-            return generic_message(request, 'Access denied', 'This source cannot be viewed by normal users.',
-                                   404)
-        return super(SubmissionSource, self).dispatch(request, *args, **kwargs)
+    def get(self, request, *args, **kwargs):
+        try:
+            return super().get(request, *args, **kwargs)
+        except SubmissionSourcePermissionDenied:
+            return generic_message(request, 'Access denied', 'This source cannot be viewed by normal users.', 404)
 
 
 @require_GET
@@ -257,8 +267,11 @@ class SubmissionTestCaseQuery(SubmissionStatus):
 
 class SubmissionSourceRaw(SubmissionSource):
     def get(self, request, *args, **kwargs):
-        submission = self.get_object()
-        return HttpResponse(submission.source.source, content_type='text/plain')
+        try:
+            submission = self.get_object()
+            return HttpResponse(submission.source.source, content_type='text/plain')
+        except PermissionDenied:
+            return HttpResponseNotFound()
 
 
 @require_POST
