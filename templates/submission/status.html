@@ -69,6 +69,9 @@
     {% if not submission.language.file_only or request.user.is_superuser %}
         <div><a href="{{ url('submission_source', submission.id) }}">{{ _('View source') }}</a></div>
     {% endif %}
+    {% if submission.language.file_only %}
+        <div><a href="{{ url('submission_source_download', submission.id) }}">{{ _('Download') }}</a></div>
+    {% endif %}
     {% if (request.user == submission.user.user or perms.judge.resubmit_other) and not submission.language.file_only %}
         <div><a href="{{ url('problem_submit', submission.problem.code, submission.id) }}">{{ _('Resubmit') }}</a></div>
     {% endif %}

@@ -178,6 +178,8 @@ urlpatterns = [
 
     path('src/<int:submission>', submission.SubmissionSource.as_view(), name='submission_source'),
     path('src/<int:submission>/raw', submission.SubmissionSourceRaw.as_view(), name='submission_source_raw'),
+    path('src/<int:submission>/download', submission.SubmissionSourceDownload.as_view(),
+         name='submission_source_download'),
 
     path('submission/<int:submission>', include([
         path('', submission.SubmissionStatus.as_view(), name='submission_status'),
