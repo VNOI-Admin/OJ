@@ -141,8 +141,8 @@ def SubmissionSourceDiff(request):
     first_id = request.GET['first_id']
     second_id = request.GET['second_id']
 
-    first_sub = get_object_or_404(Submission, id=first_id)
-    second_sub = get_object_or_404(Submission, id=second_id)
+    first_sub = get_object_or_404(Submission, id=first_id, language__file_only=False)
+    second_sub = get_object_or_404(Submission, id=second_id, language__file_only=False)
 
     if not first_sub.can_see_detail(request.user) or not second_sub.can_see_detail(request.user):
         raise PermissionDenied()
