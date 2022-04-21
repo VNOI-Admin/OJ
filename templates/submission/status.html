@@ -86,7 +86,7 @@
             </form>
         </div>
     {% endif %}
-    {% if can_edit %}
+    {% if can_edit and not submission.language.file_only %}
         <div><a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">{{ _('Diff this submission') }}</a></div>
     {% endif %}
 
