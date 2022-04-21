@@ -251,17 +251,19 @@ class Profile(models.Model):
     calculate_points.alters_data = True
 
     def calculate_contribution_points(self):
-        from judge.models import Comment, Ticket
+        from judge.models import BlogPost, Comment, Ticket
         old_pp = self.contribution_points
         # Because the aggregate function can return None
         # So we use `X or 0` to get 0 if X is None
         # Please note that `0 or X` will return None if X is None
         total_comment_scores = Comment.objects.filter(author=self.id) \
             .aggregate(sum=Sum('score'))['sum'] or 0
+        total_blog_scores = BlogPost.objects.filter(authors=self.id, visible=True, organization=None) \
+            .aggregate(sum=Sum('score'))['sum'] or 0
         count_good_tickets = Ticket.objects.filter(user=self.id, is_contributive=True) \
             .count()
         count_suggested_problem = self.suggested_problems.filter(is_public=True).count()
-        new_pp = total_comment_scores * settings.VNOJ_CP_COMMENT + \
+        new_pp = (total_comment_scores + total_blog_scores) * settings.VNOJ_CP_COMMENT + \
             count_good_tickets * settings.VNOJ_CP_TICKET + \
             count_suggested_problem * settings.VNOJ_CP_PROBLEM
         if new_pp != old_pp:

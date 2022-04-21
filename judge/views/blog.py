@@ -1,7 +1,12 @@
 from django.conf import settings
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
+from django.db import IntegrityError
 from django.db.models import Count, Max
-from django.http import Http404, HttpResponseRedirect
+from django.db.models.expressions import Value
+from django.db.models.functions import Coalesce
+from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, \
+    HttpResponseRedirect
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -9,15 +14,79 @@ from django.views.generic import CreateView, ListView, UpdateView
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
+from judge.dblock import LockModel
 from judge.forms import BlogPostForm
-from judge.models import BlogPost, Comment, Contest, Language, Problem, Profile, Submission, \
+from judge.models import BlogPost, BlogVote, Comment, Contest, Language, Problem, Profile, Submission, \
     Ticket
 from judge.tasks import on_new_blogpost
 from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.problems import user_completed_ids
+from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.tickets import filter_visible_tickets
 from judge.utils.views import TitleMixin, generic_message
+
+
+@login_required
+def vote_blog(request, delta):
+    if abs(delta) != 1:
+        return HttpResponseBadRequest(_('Messing around, are we?'), content_type='text/plain')
+
+    if request.method != 'POST':
+        return HttpResponseForbidden()
+
+    if 'id' not in request.POST or len(request.POST['id']) > 10:
+        return HttpResponseBadRequest()
+
+    if not request.user.is_staff and not request.profile.has_any_solves:
+        return HttpResponseBadRequest(_('You must solve at least one problem before you can vote.'),
+                                      content_type='text/plain')
+
+    if request.profile.mute:
+        suffix_msg = '' if request.profile.ban_reason is None else _(' Reason: ') + request.profile.ban_reason
+        return HttpResponseBadRequest(_('Your part is silent, little toad.') + suffix_msg, content_type='text/plain')
+
+    try:
+        blog_id = int(request.POST['id'])
+    except ValueError:
+        return HttpResponseBadRequest()
+
+    try:
+        blog = BlogPost.objects.filter(id=blog_id).get()
+    except BlogPost.DoesNotExist:
+        return HttpResponseNotFound(_('Blog post not found.'), content_type='text/plain')
+
+    if blog.authors.filter(id=request.profile.id).exists():
+        return HttpResponseBadRequest(_('You cannot vote your own blog'), content_type='text/plain')
+
+    vote = BlogVote()
+    vote.blog_id = blog_id
+    vote.voter = request.profile
+    vote.score = delta
+
+    while True:
+        try:
+            vote.save()
+        except IntegrityError:
+            with LockModel(write=(BlogVote,)):
+                try:
+                    vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
+                except BlogVote.DoesNotExist:
+                    # We must continue racing in case this is exploited to manipulate votes.
+                    continue
+                return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
+        else:
+            BlogPost.objects.get(id=blog_id).vote(delta)
+        break
+    return HttpResponse('success', content_type='text/plain')
+
+
+def upvote_blog(request):
+    return vote_blog(request, 1)
+
+
+def downvote_blog(request):
+    return vote_blog(request, -1)
 
 
 class BlogPostMixin(object):
@@ -44,8 +113,13 @@ class PostListBase(ListView):
                              orphans=orphans, allow_empty_first_page=allow_empty_first_page, **kwargs)
 
     def get_queryset(self):
-        return (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
-                .order_by('-sticky', '-publish_on').prefetch_related('authors__user', 'authors__display_badge'))
+        queryset = (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
+                    .order_by('-sticky', '-publish_on').prefetch_related('authors__user', 'authors__display_badge'))
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
+            profile = self.request.profile
+            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super(PostListBase, self).get_context_data(**kwargs)
@@ -148,6 +222,14 @@ class PostView(TitleMixin, CommentedDetailView):
 
     def get_comment_page(self):
         return 'b:%s' % self.object.id
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
+            profile = self.request.profile
+            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
+        return queryset
 
     def get_context_data(self, **kwargs):
         context = super(PostView, self).get_context_data(**kwargs)

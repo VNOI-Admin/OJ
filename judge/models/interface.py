@@ -1,7 +1,9 @@
 import re
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import CASCADE
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -72,7 +74,7 @@ class BlogPost(models.Model):
     content = models.TextField(verbose_name=_('post content'))
     summary = models.TextField(verbose_name=_('post summary'), blank=True)
     og_image = models.CharField(verbose_name=_('openGraph image'), default='', max_length=150, blank=True)
-
+    score = models.IntegerField(verbose_name=_('votes'), default=0)
     global_post = models.BooleanField(verbose_name=_('global post'), default=False,
                                       help_text=_('Display this blog post at the homepage.'))
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name=_('organization'),
@@ -80,6 +82,16 @@ class BlogPost(models.Model):
 
     def __str__(self):
         return self.title
+
+    def vote(self, delta):
+        self.score += delta
+        self.save(update_fields=['score'])
+
+        # Only update contributions for global and personal posts
+        if self.visible and self.organization is None:
+            for author in self.authors.all():
+                # Blog votes are counted as comment votes
+                author.update_contribution_points(delta * settings.VNOJ_CP_COMMENT)
 
     def get_absolute_url(self):
         return reverse('blog_post', args=(self.id, self.slug))
@@ -119,3 +131,14 @@ class BlogPost(models.Model):
         )
         verbose_name = _('blog post')
         verbose_name_plural = _('blog posts')
+
+
+class BlogVote(models.Model):
+    voter = models.ForeignKey(Profile, related_name='voted_blogs', on_delete=CASCADE)
+    blog = models.ForeignKey(BlogPost, related_name='votes', on_delete=CASCADE)
+    score = models.IntegerField()
+
+    class Meta:
+        unique_together = ['voter', 'blog']
+        verbose_name = _('blog vote')
+        verbose_name_plural = _('blog votes')
