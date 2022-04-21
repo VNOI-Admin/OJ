@@ -76,13 +76,15 @@
                 {% endif %}
             {% endif %}
             {% if can_edit %} ·
-            <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">
-                {{ _('diff') }}
-            </a> ·
+                {% if not submission.language.file_only %}
+                    <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">
+                        {{ _('diff') }}
+                    </a> ·
+                {% endif %}
                 {% if request.user.is_superuser %}
-                <a href="{{ url('admin:judge_submission_change', submission.id) }}">
-                    <i class="fa fa-cog fa-fw"></i><span class="label">{{ _('admin') }}</span>
-                </a>
+                    <a href="{{ url('admin:judge_submission_change', submission.id) }}">
+                        <i class="fa fa-cog fa-fw"></i><span class="label">{{ _('admin') }}</span>
+                    </a>
                 {% endif %}
             {% endif %}
         </div></div>
