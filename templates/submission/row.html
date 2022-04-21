@@ -53,11 +53,15 @@
             <a href="{{ url('submission_status', submission.id) }}">
                 <i class="fa fa-eye fa-fw"></i><span class="label">{{ _('view') }}</span>
             </a> ·
-            {% if not submission.language.file_only or request.user.is_superuser %}
-                    <a href="{{ url('submission_source', submission.id) }}">
-                        {{ _('source') }}
-                    </a>
-                {% endif %}
+            {% if not submission.language.file_only %}
+                <a href="{{ url('submission_source', submission.id) }}">
+                    {{ _('source') }}
+                </a>
+            {% else %}
+                <a href="{{ url('submission_source_download', submission.id) }}">
+                    {{ _('download') }}
+                </a>
+            {% endif %}
             {% if perms.judge.rejudge_submission and can_edit %} ·
                 {% if not submission.is_locked %}
                     <a href="#" onclick="rejudge_submission({{ submission.id }}, event);return false">

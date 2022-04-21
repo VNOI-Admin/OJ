@@ -1,4 +1,5 @@
 import json
+import os
 from collections import namedtuple
 from itertools import groupby
 from operator import attrgetter
@@ -8,6 +9,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
+from django.core.files.storage import default_storage
 from django.db.models import Prefetch, Q
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseRedirect, \
     JsonResponse
@@ -28,7 +30,7 @@ from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.problem_data import get_problem_testcases_data
 from judge.utils.problems import get_result_data, user_completed_ids, user_editable_ids, user_tester_ids
 from judge.utils.raw_sql import join_sql_subquery, use_straight_join
-from judge.utils.views import DiggPaginatorMixin, TitleMixin, generic_message
+from judge.utils.views import DiggPaginatorMixin, TitleMixin, add_file_response, generic_message
 
 
 def submission_related(queryset):
@@ -273,6 +275,33 @@ class SubmissionSourceRaw(SubmissionSource):
         try:
             submission = self.get_object()
             return HttpResponse(submission.source.source, content_type='text/plain')
+        except PermissionDenied:
+            return HttpResponseNotFound()
+
+
+class SubmissionSourceDownload(SubmissionDetailBase):
+    def get(self, request, *args, **kwargs):
+        try:
+            submission = self.get_object()
+            if not submission.language.file_only:
+                return HttpResponseNotFound()
+
+            problem_code = submission.problem.code
+            user_id = submission.user.user.id
+            username = submission.user.user.username
+            id = submission.id
+            ext = submission.language.extension
+
+            response = HttpResponse()
+            response['Content-Type'] = 'application/octet-stream'
+            response['Content-Disposition'] = 'attachment; filename=%s_%s_%s.%s' % (problem_code, username, id, ext)
+
+            url_path = submission.source.source
+            file_path = default_storage.path(os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, problem_code,
+                                                          str(user_id), os.path.basename(url_path)))
+            add_file_response(request, response, url_path, file_path)
+
+            return response
         except PermissionDenied:
             return HttpResponseNotFound()
 
