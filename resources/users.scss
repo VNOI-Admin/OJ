@@ -1,11 +1,5 @@
 @import "vars";
 
-#content-left {
-    &.users {
-        flex: unset;
-    }
-}
-
 td.user-name, td.personal-info, td.organization-name {
     padding-left: 1em;
     text-align: left;
