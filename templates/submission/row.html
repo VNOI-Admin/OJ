@@ -55,11 +55,11 @@
             </a> ·
             {% if not submission.language.file_only %}
                 <a href="{{ url('submission_source', submission.id) }}">
-                    {{ _('source') }}
+                    <i class="fa fa-file-code-o fa-fw"></i><span class="label">{{ _('source') }}</span>
                 </a>
             {% else %}
                 <a href="{{ url('submission_source_download', submission.id) }}">
-                    {{ _('download') }}
+                    <i class="fa fa-download fa-fw"></i><span class="label">{{ _('download') }}</span>
                 </a>
             {% endif %}
             {% if perms.judge.rejudge_submission and can_edit %} ·
@@ -75,13 +75,13 @@
                     </span>
                 {% endif %}
             {% endif %}
-            {% if can_edit %} ·
-                {% if not submission.language.file_only %}
+            {% if can_edit %}
+                {% if not submission.language.file_only %} ·
                     <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">
-                        {{ _('diff') }}
-                    </a> ·
+                        <i class="fa fa-files-o fa-fw"></i><span class="label">{{ _('diff') }}</span>
+                    </a>
                 {% endif %}
-                {% if request.user.is_superuser %}
+                {% if request.user.is_superuser %} ·
                     <a href="{{ url('admin:judge_submission_change', submission.id) }}">
                         <i class="fa fa-cog fa-fw"></i><span class="label">{{ _('admin') }}</span>
                     </a>
