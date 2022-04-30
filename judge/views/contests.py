@@ -910,6 +910,9 @@ class ContestOfficialRanking(ContestRankingBase):
         return users, problems
 
     def get_context_data(self, **kwargs):
+        if not self.object.csv_ranking:
+            raise Http404()
+
         context = super().get_context_data(**kwargs)
         context['has_rating'] = False
         return context
