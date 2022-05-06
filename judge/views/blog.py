@@ -137,14 +137,14 @@ class PostListBase(ListView):
 class PostList(PostListBase):
     template_name = 'blog/list.html'
     show_all_blogs = False
-    tab = "home"
+    tab = 'home'
 
     def get_queryset(self):
         queryset = super(PostList, self).get_queryset()
         self.show_all_blogs = self.request.GET.get('show_all_blogs', 'false') == 'true'
         queryset = queryset.filter(global_post=not self.show_all_blogs)
         if self.show_all_blogs:
-            self.tab = "blog_list"
+            self.tab = 'blog_list'
 
         return queryset
 
