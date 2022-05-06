@@ -529,9 +529,10 @@ class Problem(models.Model):
         grader_args = self.data_files.grader_args
         if grader_args:
             grader_args = json.loads(grader_args)
-            if grader_args.get('io_method') == 'file':
-                # ProblemDataCompiler makes sure that if io_method is 'file',
-                # io_input_file and io_output_file are always set.
+            if grader_args.get('io_method', '') == 'file':
+                if grader_args.get('io_input_file', '') == '' or grader_args.get('io_output_file', '') == '':
+                    return {'method': 'unknown'}
+
                 return {
                     'method': 'file',
                     'input': grader_args['io_input_file'],
