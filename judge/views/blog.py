@@ -114,7 +114,7 @@ class PostListBase(ListView):
 
     def get_queryset(self):
         queryset = (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
-                    .order_by('-sticky', '-publish_on').prefetch_related('authors__user', 'authors__display_badge'))
+                    .prefetch_related('authors__user', 'authors__display_badge'))
         if self.request.user.is_authenticated:
             queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
             profile = self.request.profile
@@ -142,9 +142,11 @@ class PostList(PostListBase):
     def get_queryset(self):
         queryset = super(PostList, self).get_queryset()
         self.show_all_blogs = self.request.GET.get('show_all_blogs', 'false') == 'true'
-        queryset = queryset.filter(global_post=not self.show_all_blogs)
         if self.show_all_blogs:
             self.tab = 'blog_list'
+            queryset = queryset.order_by('-publish_on')
+        else:
+            queryset = queryset.filter(global_post=True).order_by('-sticky', '-publish_on')
 
         return queryset
 
