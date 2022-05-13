@@ -2,8 +2,10 @@
 
 {% block js_media %}
     {{data_form.media.js}}
+    {% include "leave-warning.html" %}
     <script type="text/javascript" src="{{ static('libs/jquery-sortable.js') }}"></script>
     <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('vnoj/jszip/jszip.min.js') }}"></script>
     <script type="text/javascript">
         window.valid_files = {{valid_files_json}}.sort();
         window.testcase_limit = {{testcase_limit}};
@@ -100,7 +102,7 @@
 
                 // auto fill for custom checker
                 $custom_checker_file.change(function () {
-                    if ($checker.val().startsWith('bridged') && !init) {
+                    if ($checker.val() === 'bridged' && !init) {
                         $file_name = $custom_checker_file.val().split('\\').pop();
                         // Handle case that the current file is null but we have a file in database
                         $old_file = $custom_checker_file.parent().find('a')[0];
@@ -110,8 +112,8 @@
                         if (!($file_name == '')) {
                             $file_name = $file_name.split('/').pop()
                             $file_ext = $file_name.split('.').pop()
-                            if (!(['cpp', 'py'].includes($file_ext))) {
-                                alert("{{ _('Expected checker\'s extension must be in [cpp, py], found ') }}'" + $file_ext + "'");
+                            if (!(['cpp', 'py', 'pas'].includes($file_ext))) {
+                                alert("{{ _('Expected checker\'s extension must be in [cpp, py, pas], found ') }}'" + $file_ext + "'");
                             }
                             else {
                                 $lang = $file_ext.toUpperCase();
@@ -141,33 +143,92 @@
                 }
 
                 $checker.change(function () {
-                    $custom_checker_file.toggle($checker.val().startsWith('bridged')).change();
-                    $custom_checker_type.toggle($checker.val().startsWith('bridged')).change();
-                    $tr_custom_checker_file.toggle($checker.val().startsWith('bridged'));
-                    $tr_custom_checker_type.toggle($checker.val().startsWith('bridged'));
+                    $custom_checker_file.toggle($checker.val() === 'bridged').change();
+                    $custom_checker_type.toggle($checker.val() === 'bridged').change();
+                    $tr_custom_checker_file.toggle($checker.val() === 'bridged');
+                    $tr_custom_checker_type.toggle($checker.val() === 'bridged');
                     $precision.toggle($checker.val().startsWith('floats')).change();
-                    if (!($checker.val().startsWith('bridged') || $checker.val().startsWith('floats')))
+                    if (!($checker.val() === 'bridged' || $checker.val().startsWith('floats')))
                         $args.val('');
                     init = false;
                 }).change();
             })();
 
             var $grader = $('#id_problem-data-grader');
+            var $io_method = $('#id_problem-data-io_method');
+            var $io_input_file = $('#id_problem-data-io_input_file');
+            var $io_output_file = $('#id_problem-data-io_output_file');
             var $custom_grader_file = $('#id_problem-data-custom_grader');
             var $custom_header_file = $('#id_problem-data-custom_header');
             var $grader_args = $('#id_problem-data-grader_args');
 
+            var $tr_io_method = $io_method.parent().parent();
+            var $tr_io_input_file = $io_input_file.parent().parent();
+            var $tr_io_output_file = $io_output_file.parent().parent();
             var $tr_custom_grader_file = $custom_grader_file.parent().parent();
             var $tr_custom_header_file = $custom_header_file.parent().parent();
             var $tr_grader_args = $grader_args.parent().parent();
 
+            function clean_io_method() {
+                var old_args = try_parse_json($grader_args.val());
+                delete old_args.io_method;
+                delete old_args.io_input_file;
+                delete old_args.io_output_file;
+                $grader_args.val(JSON.stringify(old_args));
+            }
+
             $grader.change(function () {
-                $tr_custom_grader_file.toggle(!$grader.val().startsWith('standard') &&
-                                              !$grader.val().startsWith('output_only') &&
-                                              !!$grader.val());
-                $tr_custom_header_file.toggle($grader.val().startsWith('signature'));
-                $tr_grader_args.toggle($grader.val().startsWith('signature'));
+                var grader = $grader.val();
+                var standard_grader = grader === 'standard';
+                var signature_grader = grader === 'signature';
+                var output_only = grader === 'output_only';
+                var standard_io = $io_method.val() === 'standard';
+
+                if (!standard_grader) {
+                    clean_io_method();
+                }
+
+                $tr_io_method.toggle(standard_grader);
+                $tr_io_input_file.toggle(standard_grader && !standard_io);
+                $tr_io_output_file.toggle(standard_grader && !standard_io);
+                $tr_custom_grader_file.toggle(!standard_grader && !output_only && !!grader);
+                $tr_custom_header_file.toggle(signature_grader);
+                $tr_grader_args.toggle(signature_grader);
             }).change();
+
+            $io_method.change(function () {
+                var standard_io = $io_method.val() === 'standard';
+                $tr_io_input_file.toggle(!standard_io);
+                $tr_io_output_file.toggle(!standard_io);
+
+                if (standard_io) {
+                    clean_io_method();
+                } else {
+                    var old_args = try_parse_json($grader_args.val());
+                    old_args['io_method'] = $io_method.val();
+                    $grader_args.val(JSON.stringify(old_args));
+                }
+            });
+
+            $io_input_file.change(function () {
+                var old_args = try_parse_json($grader_args.val());
+                old_args['io_input_file'] = $io_input_file.val();
+                $grader_args.val(JSON.stringify(old_args));
+            });
+
+            $io_output_file.change(function () {
+                var old_args = try_parse_json($grader_args.val());
+                old_args['io_output_file'] = $io_output_file.val();
+                $grader_args.val(JSON.stringify(old_args));
+            });
+
+            if ($grader.val() === 'standard') {
+                $io_method.val(try_parse_json($grader_args.val()).io_method || 'standard').change();
+                if ($io_method.val() === 'file') {
+                    $io_input_file.val(try_parse_json($grader_args.val()).io_input_file || '').change();
+                    $io_output_file.val(try_parse_json($grader_args.val()).io_output_file || '').change();
+                }
+            }
 
             $td = $checker.parent();
             var $sample = $("<a/>",{
@@ -278,6 +339,14 @@
                     if (!filled)
                         $(this).find('input[id$=order]').val('');
                 });
+
+                // Check all hidden "Clear" checkboxes
+                // so the corresponding files are cleaned up automatically by django-cleanup
+                $(':checkbox').filter(function() { return this.id.endsWith('clear_id') }).each(function () {
+                    if ($(this).parent().is(':hidden')) {
+                        $(this).attr('checked', true);
+                    }
+                });
             });
 
             var $total = $('#id_cases-TOTAL_FORMS');
@@ -353,6 +422,7 @@
             });
 
             function fill_testcases() {
+                console.log("Filling testcase...");
                 var inFiles = [], outFiles = [];
                 var input_re = new RegExp(/^(?=.*?\.in|in).*?(?:(?:^|\W)(\d+)[^\d\s]+)?(\d+)[^\d\s]*$/);
                 var output_re = new RegExp(/^(?=.*?\.out|.*?\.ok|.*?\.ans|out|ok|ans).*?(?:(?:^|\W)(\d+)[^\d\s]+)?(\d+)[^\d\s]*$/);
@@ -380,6 +450,10 @@
                 while ($total.val() < n_test) {
                     $('a#add-case-row').click();
                 }
+                // natsort
+                var collator = new Intl.Collator(undefined, {numeric: true, sensitivity: 'base'});
+                inFiles.sort(collator.compare);
+                outFiles.sort(collator.compare);
                 // fill cases
                 for (var i = 0; i < n_test; i++) {
                     $("#id_cases-" + i + "-input_file").append(new Option(inFiles[i], inFiles[i], true, true)).change();
@@ -434,9 +508,24 @@
                 $('input#delete-all').change();
             });
             if (parseInt($total.val()) == 0 && window.valid_files.length) {
-                console.log("Filling testcase...");
                 fill_testcases();
             }
+
+            $("#id_problem-data-zipfile").change((event) => {
+                let fileInput = event.target.files[0];
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    JSZip.loadAsync(ev.target.result).then(function(zip) {
+                        window.valid_files = Object.keys(zip.files).sort();
+                        fill_testcases();
+                    }).catch(function(err) {
+                        console.log(err);
+                        console.error("Failed to open as ZIP file");
+                    })
+                };
+                reader.readAsArrayBuffer(fileInput);
+            })
+            $('form').dirty('setAsClean');
         }).change();
     </script>
 {% endblock %}
@@ -564,11 +653,9 @@
             <a class="close">x</a>
             <b>{{ _('Test cases have been filled automatically!') }}</b>
             <br>
-            {%- trans -%}
-                Test cases have been filled automatically and <strong>not saved yet</strong>.
-                <br>
-                Please modify the table below if needed and press the `Apply` button to save!
-            {%- endtrans -%}
+            {{ (_('Test cases have been filled automatically and **not saved yet**!'))|markdown('default', strip_paragraphs=True) }}
+            <br>
+            {{ _('Please modify the table below if needed and press the `Apply` button to save!') }}
         </div>
         {% if cases_formset._non_form_errors %}
             {{ cases_formset._non_form_errors }}

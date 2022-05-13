@@ -53,7 +53,8 @@ class TicketForm(forms.Form):
         if self.request is not None and self.request.user.is_authenticated:
             profile = self.request.profile
             if profile.mute:
-                raise ValidationError(_('Your part is silent, little toad.'))
+                suffix_msg = '' if profile.ban_reason is None else _(' Reason: ') + profile.ban_reason
+                raise ValidationError(_('Your part is silent, little toad.') + suffix_msg)
         return super(TicketForm, self).clean()
 
 
@@ -194,7 +195,7 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
     def get_context_data(self, **kwargs):
         context = super(TicketView, self).get_context_data(**kwargs)
         context['ticket_messages'] = self.object.messages.select_related('user__user')
-        context['assignees'] = self.object.assignees.select_related('user')
+        context['assignees'] = self.object.assignees.select_related('user', 'display_badge')
         return context
 
 

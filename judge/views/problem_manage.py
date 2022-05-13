@@ -92,7 +92,8 @@ class BaseRejudgeSubmissionsView(PermissionRequiredMixin, ManageProblemSubmissio
 
 class RejudgeSubmissionsView(BaseRejudgeSubmissionsView):
     def generate_response(self, id_range, languages, results):
-        status = rejudge_problem_filter.delay(self.object.id, id_range, languages, results)
+        status = rejudge_problem_filter.delay(self.object.id, id_range, languages, results,
+                                              user_id=self.request.user.id)
         return redirect_to_task_status(
             status, message=_('Rejudging selected submissions for %s...') % (self.object.name,),
             redirect=reverse('problem_submissions_rejudge_success', args=[self.object.code, status.id]),
@@ -127,6 +128,6 @@ def rescore_success(request, problem, task_id):
     count = AsyncResult(task_id).result
     if not isinstance(count, int):
         raise Http404()
-    messages.success(request, ngettext('%d submission were successfully rescored.',
+    messages.success(request, ngettext('%d submission was successfully rescored.',
                                        '%d submissions were successfully rescored.', count) % (count,))
     return HttpResponseRedirect(reverse('problem_manage_submissions', args=[problem]))

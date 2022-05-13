@@ -1,1 +1,7 @@
-<span class="{{ profile.css_class }}"><a href="{{ url('user_page', user.username) }}">{{ user.username }}</a></span>
+<span class="{{ profile.css_class }}">
+    <a href="{{ url('user_page', user.username) }}">{{ profile.display_name }}
+    {% if profile.display_badge %}
+        <img src="{{ profile.display_badge.mini }}" title="{{ profile.display_badge.name }}" style="height: 1em; width: auto;" />
+    {% endif %}
+    </a>
+</span>

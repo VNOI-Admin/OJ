@@ -9,10 +9,11 @@
             "common_name": "C++",
             "ace": "c_cpp",
             "pygments": "cpp",
-            "template": "",
+            "template": "#include <stdio.h>\r\n\r\nint main() {\r\n    return 0;\r\n}",
             "info": "",
             "description": "Compile options: `g++ -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s`",
-            "extension": "cpp"
+            "extension": "cpp",
+            "include_in_problem": true
         }
     },
     {
@@ -25,10 +26,11 @@
             "common_name": "C++",
             "ace": "c_cpp",
             "pygments": "cpp",
-            "template": "",
+            "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    ios_base::sync_with_stdio(false);\r\n    cin.tie(NULL);\r\n    \r\n    return 0;\r\n}",
             "info": "",
             "description": "Compile options: `g++ -std=c++11 -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s`",
-            "extension": "cpp"
+            "extension": "cpp",
+            "include_in_problem": true
         }
     },
     {
@@ -41,10 +43,11 @@
             "common_name": "C++",
             "ace": "c_cpp",
             "pygments": "cpp",
-            "template": "",
+            "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    ios_base::sync_with_stdio(false);\r\n    cin.tie(NULL);\r\n    \r\n    return 0;\r\n}",
             "info": "",
             "description": "Compile options: `g++ -std=c++14 -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s`",
-            "extension": "cpp"
+            "extension": "cpp",
+            "include_in_problem": true
         }
     },
     {
@@ -57,10 +60,11 @@
             "common_name": "C++",
             "ace": "c_cpp",
             "pygments": "cpp",
-            "template": "",
+            "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    ios_base::sync_with_stdio(false);\r\n    cin.tie(NULL);\r\n    \r\n    return 0;\r\n}",
             "info": "",
             "description": "Compile options: `g++ -std=c++17 -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s`",
-            "extension": "cpp"
+            "extension": "cpp",
+            "include_in_problem": true
         }
     },
     {
@@ -73,10 +77,11 @@
             "common_name": "C",
             "ace": "c_cpp",
             "pygments": "c",
-            "template": "",
+            "template": "#include <stdio.h>\r\n\r\nint main() {\r\n    return 0;\r\n}",
             "info": "",
             "description": "Compile options: `gcc -std=c99 -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s`",
-            "extension": "c"
+            "extension": "c",
+            "include_in_problem": true
         }
     },
     {
@@ -89,10 +94,11 @@
             "common_name": "C",
             "ace": "c_cpp",
             "pygments": "cpp",
-            "template": "",
+            "template": "#include <stdio.h>\r\n\r\nint main() {\r\n    return 0;\r\n}",
             "info": "",
             "description": "Compile options: `gcc -std=c11 -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s`",
-            "extension": "c"
+            "extension": "c",
+            "include_in_problem": true
         }
     },
     {
@@ -107,8 +113,9 @@
             "pygments": "pascal",
             "template": "",
             "info": "",
-            "description": "",
-            "extension": "pas"
+            "description": "Compile options: `fpc -Fe/dev/stderr -O2`",
+            "extension": "pas",
+            "include_in_problem": true
         }
     },
     {
@@ -123,8 +130,9 @@
             "pygments": "python",
             "template": "",
             "info": "",
-            "description": "",
-            "extension": "py"
+            "description": "Compile options: `python -BS`",
+            "extension": "py",
+            "include_in_problem": true
         }
     },
     {
@@ -139,8 +147,9 @@
             "pygments": "python3",
             "template": "",
             "info": "",
-            "description": "",
-            "extension": "py"
+            "description": "Compile options: `python3 -BS`",
+            "extension": "py",
+            "include_in_problem": true
         }
     },
     {
@@ -153,10 +162,11 @@
             "common_name": "Java",
             "ace": "java",
             "pygments": "java",
-            "template": "",
+            "template": "import java.io.*;\r\nimport java.util.*;\r\n\r\npublic class Main {\r\n    public static void main(String[] args) {\r\n\r\n    }\r\n}",
             "info": "",
-            "description": "Compile options: `javac -encoding UTF-8 -profile compact1`",
-            "extension": "java"
+            "description": "Compile options: `javac8 -encoding UTF-8 -profile compact1`",
+            "extension": "java",
+            "include_in_problem": true
         }
     },
     {
@@ -164,15 +174,139 @@
         "pk": 11,
         "fields": {
             "key": "TEXT",
-            "name": "Text",
+            "name": "TEXT",
+            "short_name": "TEXT",
+            "common_name": "TEXT",
+            "ace": "text",
+            "pygments": "text",
+            "template": "",
+            "info": "",
+            "description": "Run options: `cat`",
+            "extension": "txt",
+            "include_in_problem": false
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 12,
+        "fields": {
+            "key": "SCRATCH",
+            "name": "Scratch",
             "short_name": null,
-            "common_name": "Text",
+            "common_name": "Scratch",
+            "ace": "text",
+            "pygments": "text",
+            "template": "",
+            "info": "",
+            "description": "Run options: `scratch-run`",
+            "extension": "sb3",
+            "file_only": true,
+            "file_size_limit": 1,
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 13,
+        "fields": {
+            "key": "OUTPUT",
+            "name": "Output Only",
+            "short_name": null,
+            "common_name": "Output Only",
             "ace": "text",
             "pygments": "text",
             "template": "",
             "info": "",
             "description": "",
-            "extension": "txt"
+            "extension": "zip",
+            "file_only": true,
+            "file_size_limit": 10,
+            "include_in_problem": false
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 14,
+        "fields": {
+            "key": "CPP20",
+            "name": "C++20",
+            "short_name": "C++20",
+            "common_name": "C++",
+            "ace": "c_cpp",
+            "pygments": "cpp",
+            "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    ios_base::sync_with_stdio(false);\r\n    cin.tie(NULL);\r\n    \r\n    return 0;\r\n}",
+            "info": "",
+            "description": "Compile options: `g++ -std=c++20 -Wall -DONLINE_JUDGE -O2 -lm -fmax-errors=5 -march=native -s`",
+            "extension": "cpp",
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 15,
+        "fields": {
+            "key": "KOTLIN",
+            "name": "Kotlin",
+            "short_name": null,
+            "common_name": "Kotlin",
+            "ace": "kotlin",
+            "pygments": "kotlin",
+            "template": "",
+            "info": "",
+            "description": "Compile options: `kotlinc`",
+            "extension": "kt",
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 16,
+        "fields": {
+            "key": "PYPY",
+            "name": "PyPy 2",
+            "short_name": "PYPY2",
+            "common_name": "PyPy",
+            "ace": "python",
+            "pygments": "python",
+            "template": "",
+            "info": "",
+            "description": "Compile options: `pypy -BS`",
+            "extension": "py",
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 17,
+        "fields": {
+            "key": "PYPY3",
+            "name": "PyPy 3",
+            "short_name": null,
+            "common_name": "PyPy",
+            "ace": "python",
+            "pygments": "python",
+            "template": "",
+            "info": "",
+            "description": "Compile options: `pypy3 -BS`",
+            "extension": "py",
+            "include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 18,
+        "fields": {
+            "key": "JAVA17",
+            "name": "Java 17",
+            "short_name": null,
+            "common_name": "Java",
+            "ace": "java",
+            "pygments": "java",
+            "template": "import java.io.*;\r\nimport java.util.*;\r\n\r\npublic class Main {\r\n    public static void main(String[] args) {\r\n\r\n    }\r\n}",
+            "info": "",
+            "description": "Compile options: `javac17 -encoding UTF-8`",
+            "extension": "java",
+            "include_in_problem": true
         }
     }
 ]

@@ -119,6 +119,15 @@ class Organization(models.Model):
         verbose_name_plural = _('organizations')
 
 
+class Badge(models.Model):
+    name = models.CharField(max_length=128, verbose_name=_('badge name'))
+    mini = models.URLField(verbose_name=_('mini badge URL'), blank=True)
+    full_size = models.URLField(verbose_name=_('full size badge URL'), blank=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, verbose_name=_('user associated'), on_delete=models.CASCADE)
     about = models.TextField(verbose_name=_('self-description'), null=True, blank=True)
@@ -133,6 +142,8 @@ class Profile(models.Model):
     ace_theme = models.CharField(max_length=30, choices=ACE_THEMES, default='github')
     last_access = models.DateTimeField(verbose_name=_('last access time'), default=now)
     ip = models.GenericIPAddressField(verbose_name=_('last IP'), blank=True, null=True)
+    badges = models.ManyToManyField(Badge, verbose_name=_('badges'), blank=True, related_name='users')
+    display_badge = models.ForeignKey(Badge, verbose_name=_('display badge'), null=True, on_delete=models.SET_NULL)
     organizations = SortedManyToManyField(Organization, verbose_name=_('organization'), blank=True,
                                           related_name='members', related_query_name='member')
     display_rank = models.CharField(max_length=10, default='user', verbose_name=_('display rank'),
@@ -145,7 +156,7 @@ class Profile(models.Model):
                                   help_text=_('Show to banned user in login page.'))
     allow_tagging = models.BooleanField(verbose_name=_('Allow tagging'),
                                         help_text=_('User will be allowed to tag problems.'),
-                                        default=False)
+                                        default=True)
     rating = models.IntegerField(null=True, default=None)
     user_script = models.TextField(verbose_name=_('user script'), default='', blank=True, max_length=65536,
                                    help_text=_('User-defined JavaScript for site customization.'))
@@ -163,12 +174,12 @@ class Profile(models.Model):
                                       validators=[RegexValidator('^$|^[A-Z2-7]{32}$',
                                                                  _('TOTP key must be empty or base32'))])
     scratch_codes = EncryptedNullCharField(max_length=255, null=True, blank=True, verbose_name=_('scratch codes'),
-                                           help_text=_('JSON array of 16 character base32-encoded codes \
-                                                        for scratch codes'),
+                                           help_text=_('JSON array of 16 character base32-encoded codes '
+                                                       'for scratch codes'),
                                            validators=[
                                                RegexValidator(r'^(\[\])?$|^\[("[A-Z0-9]{16}", *)*"[A-Z0-9]{16}"\]$',
-                                                              _('Scratch codes must be empty or a JSON array of \
-                                                                 16-character base32 codes'))])
+                                                              _('Scratch codes must be empty or a JSON array of '
+                                                                '16-character base32 codes'))])
     last_totp_timecode = models.IntegerField(verbose_name=_('last TOTP timecode'), default=0)
     api_token = models.CharField(max_length=64, null=True, verbose_name=_('API token'),
                                  help_text=_('64 character hex-encoded API access token'),
@@ -177,6 +188,8 @@ class Profile(models.Model):
     notes = models.TextField(verbose_name=_('internal notes'), null=True, blank=True,
                              help_text=_('Notes for administrators regarding this user.'))
     data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
+    username_display_override = models.CharField(max_length=100, blank=True, verbose_name=_('display name override'),
+                                                 help_text=_('Name displayed in place of username'))
 
     @cached_property
     def organization(self):
@@ -191,8 +204,21 @@ class Profile(models.Model):
         return self.user.username
 
     @cached_property
+    def display_name(self):
+        return self.username_display_override or self.username
+
+    @cached_property
     def has_any_solves(self):
         return self.submission_set.filter(points=F('problem__points')).exists()
+
+    @cached_property
+    def can_tag_problems(self):
+        if self.allow_tagging:
+            if self.user.has_perm('judge.add_tagproblem'):
+                return True
+            if self.rating is not None and self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING:
+                return True
+        return False
 
     _pp_table = [pow(settings.DMOJ_PP_STEP, i) for i in range(settings.DMOJ_PP_ENTRIES)]
 
@@ -225,17 +251,19 @@ class Profile(models.Model):
     calculate_points.alters_data = True
 
     def calculate_contribution_points(self):
-        from judge.models import Comment, Ticket
+        from judge.models import BlogPost, Comment, Ticket
         old_pp = self.contribution_points
         # Because the aggregate function can return None
         # So we use `X or 0` to get 0 if X is None
         # Please note that `0 or X` will return None if X is None
         total_comment_scores = Comment.objects.filter(author=self.id) \
             .aggregate(sum=Sum('score'))['sum'] or 0
+        total_blog_scores = BlogPost.objects.filter(authors=self.id, visible=True, organization=None) \
+            .aggregate(sum=Sum('score'))['sum'] or 0
         count_good_tickets = Ticket.objects.filter(user=self.id, is_contributive=True) \
             .count()
         count_suggested_problem = self.suggested_problems.filter(is_public=True).count()
-        new_pp = total_comment_scores * settings.VNOJ_CP_COMMENT + \
+        new_pp = (total_comment_scores + total_blog_scores) * settings.VNOJ_CP_COMMENT + \
             count_good_tickets * settings.VNOJ_CP_TICKET + \
             count_suggested_problem * settings.VNOJ_CP_PROBLEM
         if new_pp != old_pp:
@@ -302,7 +330,8 @@ class Profile(models.Model):
     def ban_user(self, reason):
         self.ban_reason = reason
         self.display_rank = 'banned'
-        self.save(update_fields=['ban_reason', 'display_rank'])
+        self.is_unlisted = True
+        self.save(update_fields=['ban_reason', 'display_rank', 'is_unlisted'])
 
         self.user.is_active = False
         self.user.save(update_fields=['is_active'])

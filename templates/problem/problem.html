@@ -146,14 +146,22 @@
     {% endif %}
 
     <hr style="padding-bottom: 0.3em">
-
-    {% if request.user.is_authenticated and has_submissions %}
-        <div>
-            <a href="{{ url('user_submissions', problem.code, request.user.username) }}">{{ _('My submissions') }}</a>
-        </div>
+    {% if request.in_contest and contest_problem %}
+        {% set contest = contest_problem.contest %}
+        <div><a href="{{ url('contest_user_submissions', contest.key, request.user.username, problem.code) }}">{{ _('My submissions') }}</a></div>
+        {% if contest.can_see_full_submission_list(request.user) %}
+            <div><a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a></div>
+            <div><a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ _('Best submissions') }}</a></div>
+        {% endif %}
+    {% else %}
+        {% if request.user.is_authenticated and has_submissions %}
+            <div>
+                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">{{ _('My submissions') }}</a>
+            </div>
+        {% endif %}
+        <div><a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a></div>
+        <div><a href="{{ url('ranked_submissions', problem.code) }}">{{ _('Best submissions') }}</a></div>
     {% endif %}
-    <div><a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a></div>
-    <div><a href="{{ url('ranked_submissions', problem.code) }}">{{ _('Best submissions') }}</a></div>
     {% if (editorial and editorial.is_accessible_by(request.user)) and not request.in_contest %}
         <hr>
         <div><a href="{{ url('problem_editorial', problem.code) }}">{{ _('Read editorial') }}</a></div>
@@ -226,6 +234,25 @@
             </div>
         {% endfor %}
     </div>
+    {% if problem.io_method.method == 'standard' %}
+        <div class="problem-info-entry">
+            <i class="fa fa-keyboard-o fa-fw"></i><span class="pi-name">{{ _('Input:') }}</span>
+            <span class="pi-value">stdin</span>
+        </div>
+        <div class="problem-info-entry">
+            <i class="fa fa-print fa-fw"></i><span class="pi-name">{{ _('Output:') }}</span>
+            <span class="pi-value">stdout</span>
+        </div>
+    {% elif problem.io_method.method == 'file' %}
+        <div class="problem-info-entry">
+            <i class="fa fa-keyboard-o fa-fw"></i><span class="pi-name">{{ _('Input:') }}</span>
+            <span class="pi-value"><i>{{ problem.io_method.input }}</i></span>
+        </div>
+        <div class="problem-info-entry">
+            <i class="fa fa-print fa-fw"></i><span class="pi-name">{{ _('Output:') }}</span>
+            <span class="pi-value"><i>{{ problem.io_method.output }}</i></span>
+        </div>
+    {% endif %}
 
     <hr style="padding-top: 0.7em">
 

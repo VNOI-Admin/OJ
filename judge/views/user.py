@@ -17,8 +17,9 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.db.models import Count, F, Max, Min, Prefetch
+from django.db.models.expressions import Value
 from django.db.models.fields import DateField
-from django.db.models.functions import Cast, ExtractYear
+from django.db.models.functions import Cast, Coalesce, ExtractYear
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -31,8 +32,9 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from reversion import revisions
 
-from judge.forms import CustomAuthenticationForm, DownloadDataForm, ProfileForm, UserBanForm, UserForm, newsletter_id
-from judge.models import BlogPost, Organization, Profile, Rating, Submission
+from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
+    newsletter_id
+from judge.models import BlogPost, BlogVote, Organization, Profile, Rating, Submission
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
@@ -41,6 +43,7 @@ from judge.utils.celery import task_status_by_id, task_status_url_by_id
 from judge.utils.problems import contest_completed_ids, user_completed_ids
 from judge.utils.pwned import PwnedPasswordsValidator
 from judge.utils.ranker import ranker
+from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
@@ -103,7 +106,7 @@ class UserPage(TitleMixin, UserMixin, DetailView):
 
     def get_title(self):
         return (_('My account') if self.request.user == self.object.user else
-                _('User %s') % self.object.user.username)
+                _('User %s') % self.object.display_name)
 
     # TODO: the same code exists in problem.py, maybe move to problems.py?
     @cached_property
@@ -197,7 +200,7 @@ class UserAboutPage(UserPage):
             'ranking': rating.rank,
             'link': '%s#!%s' % (reverse('contest_ranking', args=(rating.contest.key,)), self.object.user.username),
             'timestamp': (rating.contest.end_time - EPOCH).total_seconds() * 1000,
-            'date': date_format(rating.contest.end_time, _('M j, Y, G:i')),
+            'date': date_format(timezone.localtime(rating.contest.end_time), _('M j, Y, G:i')),
             'class': rating_class(rating.rating),
             'height': '%.3fem' % rating_progress(rating.rating),
         } for rating in ratings]))
@@ -264,6 +267,11 @@ class UserBlogPage(CustomUserMixin, PostListBase):
 
         if self.request.user != self.user.user:
             queryset = queryset.filter(visible=True, publish_on__lte=timezone.now())
+
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
+            profile = self.request.profile
+            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
@@ -338,7 +346,7 @@ class UserDataMixin:
 
 class UserPrepareData(LoginRequiredMixin, UserDataMixin, TitleMixin, FormView):
     template_name = 'user/prepare-data.html'
-    form_class = DownloadDataForm
+    form_class = UserDownloadDataForm
 
     @cached_property
     def _now(self):
@@ -520,8 +528,9 @@ class UserList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
                 .prefetch_related(Prefetch('user', queryset=User.objects.only('username', 'first_name')))
                 .prefetch_related(Prefetch('organizations',
                                   queryset=Organization.objects.filter(is_unlisted=False).only('name', 'id', 'slug')))
-                .only('display_rank', 'user', 'points', 'rating', 'performance_points',
-                      'problem_count', 'organizations'))
+                .select_related('display_badge')
+                .only('display_rank', 'display_badge', 'user', 'points', 'rating', 'performance_points',
+                      'problem_count', 'organizations', 'username_display_override'))
 
     def get_context_data(self, **kwargs):
         context = super(UserList, self).get_context_data(**kwargs)
@@ -554,7 +563,9 @@ class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView
                 .prefetch_related(Prefetch('user', queryset=User.objects.only('username', 'first_name')))
                 .prefetch_related(Prefetch('organizations',
                                   queryset=Organization.objects.filter(is_unlisted=False).only('name', 'id', 'slug')))
-                .only('display_rank', 'user', 'organizations', 'rating', 'contribution_points'))
+                .select_related('display_badge')
+                .only('display_rank', 'display_badge', 'user', 'organizations', 'rating', 'contribution_points',
+                      'username_display_override'))
 
     def get_context_data(self, **kwargs):
         context = super(ContribList, self).get_context_data(**kwargs)

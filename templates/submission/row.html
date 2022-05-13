@@ -52,7 +52,16 @@
         <div class="sub-prop"><div>
             <a href="{{ url('submission_status', submission.id) }}">
                 <i class="fa fa-eye fa-fw"></i><span class="label">{{ _('view') }}</span>
-            </a>
+            </a> ·
+            {% if not submission.language.file_only %}
+                <a href="{{ url('submission_source', submission.id) }}">
+                    <i class="fa fa-file-code-o fa-fw"></i><span class="label">{{ _('source') }}</span>
+                </a>
+            {% else %}
+                <a href="{{ url('submission_source_download', submission.id) }}">
+                    <i class="fa fa-download fa-fw"></i><span class="label">{{ _('download') }}</span>
+                </a>
+            {% endif %}
             {% if perms.judge.rejudge_submission and can_edit %} ·
                 {% if not submission.is_locked %}
                     <a href="#" onclick="rejudge_submission({{ submission.id }}, event);return false">
@@ -66,13 +75,17 @@
                     </span>
                 {% endif %}
             {% endif %}
-            {% if can_edit %} ·
-            <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">
-                {{ _('diff') }}
-            </a> ·
-            <a href="{{ url('admin:judge_submission_change', submission.id) }}">
-                    <i class="fa fa-cog fa-fw"></i><span class="label">{{ _('admin') }}</span>
-                </a>
+            {% if can_edit %}
+                {% if not submission.language.file_only %} ·
+                    <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">
+                        <i class="fa fa-files-o fa-fw"></i><span class="label">{{ _('diff') }}</span>
+                    </a>
+                {% endif %}
+                {% if request.user.is_superuser %} ·
+                    <a href="{{ url('admin:judge_submission_change', submission.id) }}">
+                        <i class="fa fa-cog fa-fw"></i><span class="label">{{ _('admin') }}</span>
+                    </a>
+                {% endif %}
             {% endif %}
         </div></div>
     {% endif %}

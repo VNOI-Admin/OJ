@@ -1,7 +1,7 @@
 {% extends "tabs-base.html" %}
 
 {% block tabs %}
-    {% if request.user.is_authenticated and (request.profile.allow_tagging or request.user.is_superuser) %}
+    {% if request.user.is_authenticated and request.user.profile.can_tag_problems %}
         {{ make_tab('create', 'fa-plus', url('tagproblem_create'), _('Create new tag problem')) }}
     {% endif %}
     {{ make_tab('list', 'fa-list', url('tagproblem_list'), _('List')) }}

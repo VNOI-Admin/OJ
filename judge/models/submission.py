@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from reversion import revisions
 
 from judge.judgeapi import abort_submission, judge_submission
 from judge.models.problem import Problem, SubmissionSourceAccess, TranslatedProblemForeignKeyQuerySet
@@ -45,6 +46,7 @@ SUBMISSION_SEARCHABLE_STATUS = \
     SUBMISSION_RESULT + tuple([status for status in SUBMISSION_STATUS if status not in SUBMISSION_RESULT])
 
 
+@revisions.register(follow=['test_cases'])
 class Submission(models.Model):
     RESULT = SUBMISSION_RESULT
     STATUS = SUBMISSION_STATUS
@@ -125,9 +127,15 @@ class Submission(models.Model):
     def is_locked(self):
         return self.locked_after is not None and self.locked_after < timezone.now()
 
-    def judge(self, *args, force_judge=False, **kwargs):
+    def judge(self, *args, rejudge=False, force_judge=False, rejudge_user=None, **kwargs):
         if force_judge or not self.is_locked:
-            judge_submission(self, *args, **kwargs)
+            if rejudge:
+                with revisions.create_revision(manage_manually=True):
+                    if rejudge_user:
+                        revisions.set_user(rejudge_user)
+                    revisions.set_comment('Rejudged')
+                    revisions.add_to_revision(self)
+            judge_submission(self, *args, rejudge=rejudge, **kwargs)
 
     judge.alters_data = True
 
@@ -175,8 +183,11 @@ class Submission(models.Model):
         contest_problem = contest.problem
         contest.points = round(self.case_points / self.case_total * contest_problem.points
                                if self.case_total > 0 else 0, 3)
-        if not contest_problem.partial and contest.points != contest_problem.points:
+
+        partial = (contest_problem.partial and contest_problem.problem.partial)
+        if not partial and contest.points != contest_problem.points:
             contest.points = 0
+
         contest.save()
         contest.participation.recompute_results()
 
@@ -236,6 +247,7 @@ class SubmissionSource(models.Model):
         return 'Source of %s' % self.submission
 
 
+@revisions.register()
 class SubmissionTestCase(models.Model):
     RESULT = SUBMISSION_RESULT
 

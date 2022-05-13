@@ -54,7 +54,7 @@ class DefaultContestFormat(BaseContestFormat):
                        self.best_solution_state(format_data['points'], contest_problem.points)),
                 url=reverse('contest_user_submissions',
                             args=[self.contest.key, participation.user.user.username, contest_problem.problem.code]),
-                points=floatformat(format_data['points']),
+                points=floatformat(format_data['points'], -self.contest.points_precision),
                 time=nice_repr(timedelta(seconds=format_data['time']), 'noday'),
             )
         else:
@@ -77,5 +77,5 @@ class DefaultContestFormat(BaseContestFormat):
 
     def get_short_form_display(self):
         yield _('The maximum score submission for each problem will be used.')
-        yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
+        yield _('Ties will be broken by the sum of the last submission time on problems with '
                 'a non-zero score.')

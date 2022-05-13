@@ -166,10 +166,10 @@ class Contest(models.Model):
                               help_text=_('A JSON object to serve as the configuration for the chosen contest format '
                                           'module. Leave empty to use None. Exact format depends on the contest format '
                                           'selected.'))
-    problem_label_script = models.TextField(verbose_name='contest problem label script', blank=True,
-                                            help_text='A custom Lua function to generate problem labels. Requires a '
-                                                      'single function with an integer parameter, the zero-indexed '
-                                                      'contest problem index, and returns a string, the label.')
+    problem_label_script = models.TextField(verbose_name=_('contest problem label script'), blank=True,
+                                            help_text=_('A custom Lua function to generate problem labels. Requires a '
+                                                        'single function with an integer parameter, the zero-indexed '
+                                                        'contest problem index, and returns a string, the label.'))
     locked_after = models.DateTimeField(verbose_name=_('contest lock'), null=True, blank=True,
                                         help_text=_('Prevent submissions from this contest '
                                                     'from being rejudged after this date.'))
@@ -178,6 +178,10 @@ class Contest(models.Model):
                                            help_text=_('Number of digits to round points to.'))
     csv_ranking = models.TextField(verbose_name=_('official ranking'), blank=True,
                                    help_text=_('Official ranking exported from CMS in CSV format.'))
+    data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
+    disallow_virtual = models.BooleanField(verbose_name=_('Disallow virtual joining'),
+                                           help_text=_('Disallow virtual joining after contest has ended.'),
+                                           default=False)
 
     @cached_property
     def format_class(self):
@@ -224,7 +228,7 @@ class Contest(models.Model):
             return True
         if not self.can_join:
             return False
-        if not self.show_scoreboard and not self.is_in_contest(user):
+        if not self.show_scoreboard and not self.is_in_contest(user) and not self.has_completed_contest(user):
             return False
         return True
 
@@ -603,10 +607,13 @@ class ContestParticipation(models.Model):
 
     def __str__(self):
         if self.spectate:
-            return gettext('%s spectating in %s') % (self.user.username, self.contest.name)
+            return gettext('%(user)s spectating in %(contest)s') % \
+                ({'user': self.user.username, 'contest': self.contest.name})
         if self.virtual:
-            return gettext('%s in %s, v%d') % (self.user.username, self.contest.name, self.virtual)
-        return gettext('%s in %s') % (self.user.username, self.contest.name)
+            return gettext('%(user)s in %(contest)s, v%(virtual)d') % \
+                ({'user': self.user.username, 'contest': self.contest.name, 'virtual': self.virtual})
+        return gettext('%(user)s in %(contest)s') % \
+            ({'user': self.user.username, 'contest': self.contest.name})
 
     class Meta:
         verbose_name = _('contest participation')
