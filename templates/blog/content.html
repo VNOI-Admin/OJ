@@ -54,7 +54,11 @@
                     <span class="post-authors">{{ link_users(authors) }}</span>
                 {%- endif -%}
             {% endwith %}
-            {{ relative_time(post.publish_on, abs=_('posted on {time}'), rel=_('posted {time}')) -}}
+            <span class="post-time">
+                {% trans trimmed time=post.publish_on|date(_("N j, Y, g:i a")) %}
+                    posted on {{ time }}
+                {% endtrans %}
+            </span>
         </div>
     </div>
 </div>
