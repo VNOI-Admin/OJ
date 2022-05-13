@@ -44,7 +44,8 @@ class CommentForm(ModelForm):
         if self.request is not None and self.request.user.is_authenticated:
             profile = self.request.profile
             if profile.mute:
-                raise ValidationError(_('Your part is silent, little toad.'))
+                suffix_msg = '' if profile.ban_reason is None else _(' Reason: ') + profile.ban_reason
+                raise ValidationError(_('Your part is silent, little toad.') + suffix_msg)
             elif not self.request.user.is_staff and not profile.has_any_solves:
                 raise ValidationError(_('You need to have solved at least one problem '
                                         'before your voice can be heard.'))
@@ -109,7 +110,8 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
         queryset = Comment.objects.filter(hidden=False, page=self.get_comment_page())
         context['has_comments'] = queryset.exists()
         context['comment_lock'] = self.is_comment_locked()
-        queryset = queryset.select_related('author__user').defer('author__about').annotate(revisions=Count('versions'))
+        queryset = queryset.select_related('author__user', 'author__display_badge') \
+                           .defer('author__about').annotate(revisions=Count('versions'))
 
         if self.request.user.is_authenticated:
             queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(CommentVote, 'score'), Value(0)))

@@ -78,7 +78,7 @@
 
                 $('#go').click(clean_submit);
 
-                $('input#full_text, input#hide_solved, input#show_types').click(function () {
+                $('input#full_text, input#hide_solved, input#show_types, input#has_public_editorial').click(function () {
                     prep_form();
                     ($('<form>').attr('action', window.location.pathname + '?' + $form.serialize())
                         .append($('<input>').attr('type', 'hidden').attr('name', 'csrfmiddlewaretoken')
@@ -166,7 +166,8 @@
                 <tr>
                     {% if request.user.is_authenticated %}
                         <th class="solved">
-                            <a href="{{ sort_links.solved }}"><i class="fa fa-check"></i>{{ sort_order.solved }}
+                            <a href="{{ sort_links.solved }}">
+                                <i class="fa fa-check"></i>{{ sort_order.solved }}
                             </a>
                         </th>
                     {% endif %}
@@ -192,6 +193,11 @@
                     </th>
                     <th class="users">
                         <a href="{{ sort_links.user_count }}">{{ _('# AC') }}{{ sort_order.user_count }}</a>
+                    </th>
+                    <th class="editorial" title="{{ _('Editorial') }}">
+                        <a href="{{ sort_links.editorial }}">
+                            <i class="fa fa-book"></i>{{ sort_order.editorial }}
+                        </a>
                     </th>
                 </tr>
                 </thead>
@@ -249,6 +255,15 @@
                             <a href="{{ url('ranked_submissions', problem.code) }}">
                                 {{ problem.user_count }}
                             </a>
+                        </td>
+                        <td>
+                            {% if problem.has_public_editorial %}
+                                <a href="{{ url('problem_editorial', problem.code) }}">
+                                    <i class="has-editorial-color fa fa-check-circle"></i>
+                                </a>
+                            {% else %}
+                                <i class="no-editorial-color fa fa-minus-circle"></i>
+                            {% endif %}
                         </td>
                     </tr>
                 {% endfor %}

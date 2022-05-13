@@ -97,6 +97,8 @@ VNOJ_BLOG_MIN_PROBLEM_COUNT = 10
 
 VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
+VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem
+
 # Some problems have a lot of testcases, and each testcase
 # has about 5~6 fields, so we need to raise this
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 3000
@@ -198,7 +200,13 @@ DMOJ_USER_MAX_ORGANIZATION_COUNT = 3
 # Whether to allow users to download their data
 DMOJ_USER_DATA_DOWNLOAD = False
 DMOJ_USER_DATA_CACHE = ''
+DMOJ_USER_DATA_INTERNAL = ''
 DMOJ_USER_DATA_DOWNLOAD_RATELIMIT = datetime.timedelta(days=1)
+# Whether to allow contest authors to download contest data
+DMOJ_CONTEST_DATA_DOWNLOAD = False
+DMOJ_CONTEST_DATA_CACHE = ''
+DMOJ_CONTEST_DATA_INTERNAL = ''
+DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT = datetime.timedelta(days=1)
 DMOJ_COMMENT_VOTE_HIDE_THRESHOLD = -5
 DMOJ_PDF_PROBLEM_CACHE = ''
 DMOJ_PDF_PROBLEM_TEMP_DIR = tempfile.gettempdir()
@@ -332,6 +340,7 @@ else:
                     'children': [
                         'judge.Organization',
                         'judge.OrganizationRequest',
+                        'judge.Badge',
                     ],
                 },
                 {
@@ -381,6 +390,7 @@ INSTALLED_APPS += (
     'django_jinja',
     'martor',
     'adminsortable2',
+    'django_cleanup.apps.CleanupConfig',
 )
 
 MIDDLEWARE = (
@@ -459,6 +469,7 @@ TEMPLATES = [
             'autoescape': select_autoescape(['html', 'xml']),
             'trim_blocks': True,
             'lstrip_blocks': True,
+            'translation_engine': 'judge.utils.safe_translations',
             'extensions': DEFAULT_EXTENSIONS + [
                 'compressor.contrib.jinja2ext.CompressorExtension',
                 'judge.jinja2.DMOJExtension',

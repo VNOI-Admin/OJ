@@ -106,7 +106,7 @@ class AtCoderContestFormat(DefaultContestFormat):
                        self.best_solution_state(format_data['points'], contest_problem.points)),
                 url=reverse('contest_user_submissions',
                             args=[self.contest.key, participation.user.user.username, contest_problem.problem.code]),
-                points=floatformat(format_data['points']),
+                points=floatformat(format_data['points'], -self.contest.points_precision),
                 penalty=penalty,
                 time=nice_repr(timedelta(seconds=format_data['time']), 'noday'),
             )
@@ -124,4 +124,5 @@ class AtCoderContestFormat(DefaultContestFormat):
                 penalty,
             ) % penalty
             yield _('Ties will be broken by the last score altering submission time (including penalty).')
-        yield _('Ties will be broken by the last score altering submission time.')
+        else:
+            yield _('Ties will be broken by the last score altering submission time.')

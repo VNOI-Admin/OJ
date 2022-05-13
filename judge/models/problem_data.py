@@ -38,6 +38,11 @@ GRADERS = (
     ('custom_judge', _('Custom Grader')),
 )
 
+IO_METHODS = (
+    ('standard', _('Standard Input/Output')),
+    ('file', _('Via files')),
+)
+
 CUSTOM_CHECKERS = (
     ('themis', _('Themis checker')),
     ('testlib', _('Testlib checker')),
@@ -57,8 +62,8 @@ class ProblemData(models.Model):
     output_prefix = models.IntegerField(verbose_name=_('output prefix length'), blank=True, null=True)
     output_limit = models.IntegerField(verbose_name=_('output limit length'), blank=True, null=True)
     feedback = models.TextField(verbose_name=_('init.yml generation feedback'), blank=True)
-    checker = models.CharField(max_length=10, verbose_name=_('checker'), choices=CHECKERS, blank=True)
-    grader = models.CharField(max_length=30, verbose_name=_('Grader'), choices=GRADERS, blank=True)
+    checker = models.CharField(max_length=10, verbose_name=_('checker'), choices=CHECKERS, default='standard')
+    grader = models.CharField(max_length=30, verbose_name=_('Grader'), choices=GRADERS, default='standard')
     checker_args = models.TextField(verbose_name=_('checker arguments'), blank=True,
                                     help_text=_('checker arguments as a JSON object'))
 
@@ -66,7 +71,7 @@ class ProblemData(models.Model):
                                       null=True,
                                       blank=True,
                                       upload_to=problem_directory_file,
-                                      validators=[FileExtensionValidator(allowed_extensions=['cpp', 'py'])])
+                                      validators=[FileExtensionValidator(allowed_extensions=['cpp', 'py', 'pas'])])
 
     custom_grader = models.FileField(verbose_name=_('custom grader file'), storage=problem_data_storage,
                                      null=True,

@@ -36,7 +36,8 @@ def vote_comment(request, delta):
                                       content_type='text/plain')
 
     if request.profile.mute:
-        return HttpResponseBadRequest(_('Your part is silent, little toad.'), content_type='text/plain')
+        suffix_msg = '' if request.profile.ban_reason is None else _(' Reason: ') + request.profile.ban_reason
+        return HttpResponseBadRequest(_('Your part is silent, little toad.') + suffix_msg, content_type='text/plain')
 
     try:
         comment_id = int(request.POST['id'])

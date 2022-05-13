@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Count, Q
+from django.db.models.expressions import Value
+from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -16,9 +18,11 @@ from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateR
 from reversion import revisions
 
 from judge.forms import OrganizationForm
-from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, Problem, Profile
+from judge.models import BlogPost, BlogVote, Comment, Contest, Language, Organization, OrganizationRequest, \
+    Problem, Profile
 from judge.tasks import on_new_problem
 from judge.utils.ranker import ranker
+from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
@@ -65,7 +69,8 @@ class OrganizationDetailView(OrganizationMixin, DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         if self.object.slug != kwargs['slug']:
-            return HttpResponsePermanentRedirect(reverse('organization_home', args=(self.object.id, self.object.slug)))
+            return HttpResponsePermanentRedirect(reverse(
+                request.resolver_match.url_name, args=(self.object.id, self.object.slug)))
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
 
@@ -91,7 +96,7 @@ class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
         context['title'] = self.object.name
         context['users'] = \
             ranker(self.object.members.filter(is_unlisted=False).order_by(self.order)
-                   .select_related('user').defer('about', 'user_script', 'notes'))
+                   .select_related('user', 'display_badge').defer('about', 'user_script', 'notes'))
         context['partial'] = True
         context['is_admin'] = self.can_edit_organization()
         context['kick_url'] = reverse('organization_user_kick', args=[self.object.id, self.object.slug])
@@ -239,8 +244,9 @@ class OrganizationRequestView(OrganizationRequestBaseView):
                 to_approve = sum(form.cleaned_data['state'] == 'A' for form in formset.forms if form not in deleted_set)
                 can_add = organization.slots - organization.members.count()
                 if to_approve > can_add:
-                    messages.error(request, _('Your organization can only receive %d more members. '
-                                              'You cannot approve %d users.') % (can_add, to_approve))
+                    messages.error(request, _('Your organization can only receive %(can_add)d more members. '
+                                              'You cannot approve %(to_approve)d users.') %
+                                             ({'can_add': can_add, 'to_approve': to_approve}))
                     return self.render_to_response(self.get_context_data(object=organization))
 
             approved, rejected = 0, 0
@@ -444,6 +450,11 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
                 # Org admin can view public posts & their own posts
                 queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
 
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
+            profile = self.request.profile
+            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
+
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
     def get_context_data(self, **kwargs):
@@ -576,9 +587,7 @@ class ProblemCreateOrganization(CustomAdminOrganizationMixin, ProblemCreate):
             self.object = problem = form.save()
             problem.authors.add(self.request.user.profile)
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-            problem.partial = True
-            # We have to set it to True, even it is private for a org
-            problem.is_public = True
+
             problem.is_organization_private = True
             problem.organizations.add(self.organization)
             problem.date = timezone.now()

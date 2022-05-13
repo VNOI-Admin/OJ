@@ -157,7 +157,7 @@
                         $('#file_upload').val('');
                         $('#file_upload').attr({accept: file_ext});
                         $('#file_drag').html(
-                            '<b>' + {{ _("'Click to select a file or drag a file into this box'") }} + '</b><br>' +
+                            '<b>{{ _("Click to select a file or drag a file into this box") }}</b><br>' +
                             {{ _('`Only accept "${file_ext}". Maximum file size is ${file_size_limit}MB.`') }}
                         );
                     } else {
@@ -224,8 +224,8 @@
                 var file = $('#file_upload')[0].files[0];
                 if (file) {
                     $('#file_drag').html(
-                        '<b>' + {{ _("'File name'") }} + ':</b> ' + file.name + '<br>' +
-                        '<b>' + {{ _("'File size'") }} + ':</b> ' + (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+                        '<b>{{ _("File name") }}:</b> ' + file.name + '<br>' +
+                        '<b>{{ _("File size") }}:</b> ' + (file.size / (1024 * 1024)).toFixed(2) + ' MB'
                     );
                 }
             }
@@ -365,10 +365,8 @@
         {% if default_lang not in form.fields.language.queryset %}
             <div class="alert alert-warning alert-dismissable">
                 <a class="close">x</a>
-                {% trans trimmed default_language=default_lang.name %}
-                    <b>Warning!</b> Your default language, <b>{{ default_language }}</b>,
-                    is unavailable for this problem and has been deselected.
-                {% endtrans %}
+                <b>{{ _('Warning!') }}</b>
+                {{ _('Your default language, %(language)s, is unavailable for this problem and has been deselected.', language=bold(default_lang.name)) }}
             </div>
         {% endif %}
 

@@ -70,15 +70,16 @@
             {%- endif -%}
         </a>
         <div id="time">
-            {% if contest.time_limit %}
-                {% trans trimmed start_time=contest.start_time|date(_("F j, Y, G:i T")), end_time=contest.end_time|date(_("F j, Y, G:i T")), time_limit=contest.time_limit|timedelta('localized-no-seconds') %}
-                    <b>{{ time_limit }}</b> window between <b>{{ start_time }}</b> and <b>{{ end_time }}</b>
-                {% endtrans %}
-            {% else %}
-                {% trans trimmed length=contest.contest_window_length|timedelta("localized-no-seconds"), start_time=contest.start_time|date(_("F j, Y, G:i T")) %}
-                    <b>{{ length }}</b> long starting on <b>{{ start_time }}</b>
-                {% endtrans %}
-            {% endif %}
+            {% with start_time=contest.start_time|date(_("F j, Y, G:i T")) %}
+                {% if contest.time_limit %}
+                    {% set end_time=contest.end_time|date(_("F j, Y, G:i T")) %}
+                    {% set time_limit=contest.time_limit|timedelta('localized-no-seconds') %}
+                    {{ _('%(time_limit)s window between %(start_time)s and %(end_time)s', start_time=bold(start_time), end_time=bold(end_time), time_limit=bold(time_limit)) }}
+                {% else %}
+                    {% set length=contest.contest_window_length|timedelta('localized-no-seconds') %}
+                    {{ _('%(length)s long starting on %(start_time)s', start_time=bold(start_time), length=bold(length)) }}
+                {% endif %}
+            {% endwith %}
         </div>
         {% if contest.show_short_display %}
             <div id="details">
@@ -191,17 +192,13 @@
         {% endif %}
     </div>
 
-    <div class="content-description">
-        {% cache 3600 'contest_html' contest.id MATH_ENGINE %}
-            {{ contest.description|markdown('contest', MATH_ENGINE)|reference|str|safe }}
-        {% endcache %}
-    </div>
-
     {% set in_contest = contest.is_in_contest(request.user) %}
     {% if in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
-        <hr>
         <div class="contest-problems">
-            <h2 style="margin-bottom: 0.2em"><i class="fa fa-fw fa-question-circle"></i>{{ _('Problems') }} </h2>
+            <h2 style="margin-bottom: 0.2em; float:left;"><i class="fa fa-fw fa-question-circle"></i>{{ _('Problems') }} </h2>
+            {% if can_edit and can_download_data %}
+                <a class="button" style="float:right" href="{{ url('contest_prepare_data', contest.key) }}">{{ _('Download data') }}</a>
+            {% endif %}
             <table id="contest-problems" class="table">
                 <thead>
                 <tr>
@@ -210,10 +207,8 @@
                         <th><i class="fa fa-check"></i></th>
                     {% endif %}
                     <th>{{ _('Problem') }}</th>
-                    <th>{{ _('Points') }}</th>
-                    {% if contest.show_scoreboard %}
-                        <th>{{ _('AC Rate') }}</th>
-                        <th>{{ _('# AC') }}</th>
+                    {% if not is_ICPC_format %}
+                        <th>{{ _('Points') }}</th>
                     {% endif %}
                     {% if metadata.has_public_editorials %}
                         <th>{{ _('Editorials') }}</th>
@@ -262,12 +257,8 @@
                                 {{ problem.i18n_name or problem.name }}
                             {% endif %}
                         </td>
-                        <td>{{ problem.points|floatformat(2) }}</td>
-                        {% if contest.show_scoreboard %}
-                            <td>{{ problem.ac_rate|floatformat(1) }}%</td>
-                            <td>
-                                <a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ problem.user_count }}</a>
-                            </td>
+                        {% if not is_ICPC_format %}
+                            <td>{{ problem.points|floatformat(-2) }}</td>
                         {% endif %}
                         {% if metadata.has_public_editorials %}
                             <td>
@@ -347,11 +338,18 @@
         {% endif %}
     {% endif %}
 
+    <div class="content-description">
+        {% cache 3600 'contest_html' contest.id MATH_ENGINE %}
+            {{ contest.description|markdown('contest', MATH_ENGINE)|reference|str|safe }}
+        {% endcache %}
+    </div>
+
     <hr>
     <span class="social">
         {{ post_to_facebook(request, contest, '<i class="fa fa-facebook-official"></i>') }}
         {{ post_to_twitter(request, SITE_NAME + ':', contest, '<i class="fa fa-twitter"></i>') }}
     </span>
+
 
     {% if not comment_lock %}
         {% include "comments/list.html" %}

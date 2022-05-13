@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block js_media %}
+    {% include "leave-warning.html" %}
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script>
         // This code activates flatpickr on fields with the 'datetimefield' class when the document has loaded
@@ -28,6 +29,10 @@
         <div class="alert alert-warning alert-dismissable">
             <a class="close">x</a>
             <a href="{{ url('admin:judge_blogpost_change', object.id) }}">{{ _('Edit blog post in admin panel for more options') }}</a>
+        </div>
+    {% elif not edit %}
+        <div class="alert alert-warning">
+            {{ (_('Please read the [guidelines][0] before creating a new blog post.') + '\n\n  [0]: /about/blog/')|markdown('blog', strip_paragraphs=True) }}
         </div>
     {% endif %}
     <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">

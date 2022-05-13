@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 
+{% block js_media %}
+    {% include "blog/media-js.html" %}
+{% endblock %}
+
 {% block media %}
     {% include "blog/media-css.html" %}
     <style>
@@ -24,11 +28,14 @@
         }
     </style>
 {% endblock %}
+
 {% block title_row %}
     {% set tab = 'blogs' %}
     {% include "user/user-tabs.html" %}
 {% endblock %}
+
 {% block title_ruler %}{% endblock %}
+
 {% block body %}
     {% block before_posts %}{% endblock %}
     <div id="blog-container">

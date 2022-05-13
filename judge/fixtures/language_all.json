@@ -12,7 +12,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "py"
+        "extension": "py",
+		"include_in_problem": true
     }
 },
 {
@@ -28,7 +29,8 @@
         "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    return 0;\r\n}",
         "info": "",
         "description": "",
-        "extension": "cpp"
+        "extension": "cpp",
+		"include_in_problem": true
     }
 },
 {
@@ -44,7 +46,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "rb"
+        "extension": "rb",
+		"include_in_problem": true
     }
 },
 {
@@ -60,7 +63,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "php"
+        "extension": "php",
+		"include_in_problem": true
     }
 },
 {
@@ -76,7 +80,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "pl"
+        "extension": "pl",
+		"include_in_problem": true
     }
 },
 {
@@ -92,7 +97,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "py"
+        "extension": "py",
+		"include_in_problem": true
     }
 },
 {
@@ -108,7 +114,8 @@
         "template": "#include <stdio.h>\r\n\r\nint main() {\r\n    return 0;\r\n}",
         "info": "",
         "description": "",
-        "extension": "c"
+        "extension": "c",
+		"include_in_problem": true
     }
 },
 {
@@ -124,7 +131,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "pas"
+        "extension": "pas",
+		"include_in_problem": true
     }
 },
 {
@@ -140,7 +148,8 @@
         "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    return 0;\r\n}",
         "info": "",
         "description": "",
-        "extension": "cpp"
+        "extension": "cpp",
+		"include_in_problem": true
     }
 },
 {
@@ -156,7 +165,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "cs"
+        "extension": "cs",
+		"include_in_problem": true
     }
 },
 {
@@ -172,7 +182,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "hs"
+        "extension": "hs",
+		"include_in_problem": true
     }
 },
 {
@@ -188,7 +199,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "go"
+        "extension": "go",
+		"include_in_problem": true
     }
 },
 {
@@ -204,7 +216,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "py"
+        "extension": "py",
+		"include_in_problem": true
     }
 },
 {
@@ -220,7 +233,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "py"
+        "extension": "py",
+		"include_in_problem": true
     }
 },
 {
@@ -236,7 +250,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "f95"
+        "extension": "f95",
+		"include_in_problem": true
     }
 },
 {
@@ -252,15 +267,16 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "asm"
+        "extension": "asm",
+		"include_in_problem": true
     }
 },
 {
     "model": "judge.language",
     "pk": 21,
     "fields": {
-        "key": "RUBY2",
-        "name": "Ruby 2",
+        "key": "RUBY",
+        "name": "Ruby",
         "short_name": "",
         "common_name": "Ruby",
         "ace": "ruby",
@@ -268,7 +284,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "rb"
+        "extension": "rb",
+		"include_in_problem": true
     }
 },
 {
@@ -284,7 +301,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "lua"
+        "extension": "lua",
+		"include_in_problem": true
     }
 },
 {
@@ -300,7 +318,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "ml"
+        "extension": "ml",
+		"include_in_problem": true
     }
 },
 {
@@ -316,7 +335,8 @@
         "template": "",
         "info": "tprologc; OpenTuring 1.0.0",
         "description": "",
-        "extension": "t"
+        "extension": "t",
+		"include_in_problem": true
     }
 },
 {
@@ -332,7 +352,8 @@
         "template": "import java.io.*;\r\nimport java.util.*;\r\n\r\npublic class Main {\r\n    public static void main(String[] args) {\r\n\r\n    }\r\n}",
         "info": "",
         "description": "",
-        "extension": "java"
+        "extension": "java",
+		"include_in_problem": true
     }
 },
 {
@@ -348,7 +369,8 @@
         "template": "/* \r\n * This is a custom version of V8 that adds six functions in order to perform I/O and aid in online judging.\r\n *\r\n * * `print(...)`: similar to Python's `print`, prints all argument separated by space followed by new line.\r\n * * `flush()`: flushes stdout, ensuring everything output by `print()` immediately shows up.\r\n * * `gets()`: similar to the Ruby equivalent, returns one line of input from `stdin`.\r\n * * `read(bytes)`: read `bytes` bytes from stdin as an `ArrayBuffer`.\r\n * * `write(buffer)`: write a typed array, `ArrayBuffer`, or a view of `ArrayBuffer` to stdout.\r\n * * `quit(code)`: exits the program with `code`.\r\n * * You can also assign to the global variable `autoflush` to control whether `print()` flushes.\r\n *\r\n */",
         "info": "",
         "description": "This is a custom version of V8 that adds six functions in order to perform I/O and aid in online judging.\r\n\r\n* `print(...)`: similar to Python's `print`, prints all argument separated by space followed by new line.\r\n* `flush()`: flushes stdout, ensuring everything output by `print()` immediately shows up.\r\n* `gets()`: similar to the Ruby equivalent, returns one line of input from `stdin`.\r\n* `read(bytes)`: read `bytes` bytes from stdin as an [`ArrayBuffer`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer).\r\n* `write(buffer)`: write a typed array, `ArrayBuffer`, or a view of `ArrayBuffer` to stdout.\r\n* `quit(code)`: exits the program with `code`.\r\n* You can also assign to the global variable `autoflush` to control whether `print()` flushes.",
-        "extension": "js"
+        "extension": "js",
+		"include_in_problem": true
     }
 },
 {
@@ -364,7 +386,8 @@
         "template": "import std.stdio;\r\n\r\nvoid main() {\r\n\r\n}",
         "info": "",
         "description": "",
-        "extension": "d"
+        "extension": "d",
+		"include_in_problem": true
     }
 },
 {
@@ -380,7 +403,8 @@
         "template": "",
         "info": "",
         "description": "Classical [brain\\*\\*\\*\\*](http://www.muppetlabs.com/~breadbox/bf/) with as many byte-sized cells as there are bytes in the memory limit.",
-        "extension": "c"
+        "extension": "c",
+		"include_in_problem": true
     }
 },
 {
@@ -396,7 +420,8 @@
         "template": "",
         "info": "",
         "description": "Objective-C with GNUstep Base 1.22.1 on GCC 4.7.2+.",
-        "extension": "m"
+        "extension": "m",
+		"include_in_problem": true
     }
 },
 {
@@ -412,7 +437,8 @@
         "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    return 0;\r\n}",
         "info": "",
         "description": "",
-        "extension": "cpp"
+        "extension": "cpp",
+		"include_in_problem": true
     }
 },
 {
@@ -428,7 +454,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "vb"
+        "extension": "vb",
+		"include_in_problem": true
     }
 },
 {
@@ -444,7 +471,8 @@
         "template": "#include <stdio.h>\r\n\r\nint main() {\r\n    return 0;\r\n}",
         "info": "",
         "description": "",
-        "extension": "c"
+        "extension": "c",
+		"include_in_problem": true
     }
 },
 {
@@ -460,7 +488,8 @@
         "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    return 0;\r\n}",
         "info": "",
         "description": "",
-        "extension": "cpp"
+        "extension": "cpp",
+		"include_in_problem": true
     }
 },
 {
@@ -476,7 +505,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "dart"
+        "extension": "dart",
+		"include_in_problem": true
     }
 },
 {
@@ -492,7 +522,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "tcl"
+        "extension": "tcl",
+		"include_in_problem": true
     }
 },
 {
@@ -508,7 +539,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "cbl"
+        "extension": "cbl",
+		"include_in_problem": true
     }
 },
 {
@@ -524,7 +556,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "fs"
+        "extension": "fs",
+		"include_in_problem": true
     }
 },
 {
@@ -540,7 +573,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "scm"
+        "extension": "scm",
+		"include_in_problem": true
     }
 },
 {
@@ -556,7 +590,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "adb"
+        "extension": "adb",
+		"include_in_problem": true
     }
 },
 {
@@ -572,7 +607,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "awk"
+        "extension": "awk",
+		"include_in_problem": true
     }
 },
 {
@@ -588,7 +624,8 @@
         "template": "#[macro_use] extern crate dmoj;\r\n\r\nfn main() {\r\n    println!(\"Hello, World!\");\r\n}",
         "info": "",
         "description": "",
-        "extension": "rs"
+        "extension": "rs",
+		"include_in_problem": true
     }
 },
 {
@@ -604,7 +641,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "coffee"
+        "extension": "coffee",
+		"include_in_problem": true
     }
 },
 {
@@ -620,7 +658,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "pl"
+        "extension": "pl",
+		"include_in_problem": true
     }
 },
 {
@@ -636,7 +675,8 @@
         "template": "",
         "info": "",
         "description": "Gforth 0.7.2.\r\n\r\nSubmissions ran as `gforth <source>.fs -e bye`.",
-        "extension": "fs"
+        "extension": "fs",
+		"include_in_problem": true
     }
 },
 {
@@ -652,7 +692,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "i"
+        "extension": "i",
+		"include_in_problem": true
     }
 },
 {
@@ -668,7 +709,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "txt"
+        "extension": "txt",
+		"include_in_problem": true
     }
 },
 {
@@ -684,7 +726,8 @@
         "template": "// Must be the same name as the problem code\r\nobject problemcode extends App {\r\n    \r\n}",
         "info": "",
         "description": "",
-        "extension": "scala"
+        "extension": "scala",
+		"include_in_problem": true
     }
 },
 {
@@ -700,7 +743,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "swift"
+        "extension": "swift",
+		"include_in_problem": true
     }
 },
 {
@@ -716,7 +760,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "asm"
+        "extension": "asm",
+		"include_in_problem": true
     }
 },
 {
@@ -732,7 +777,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "asm"
+        "extension": "asm",
+		"include_in_problem": true
     }
 },
 {
@@ -748,7 +794,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "asm"
+        "extension": "asm",
+		"include_in_problem": true
     }
 },
 {
@@ -764,7 +811,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "sed"
+        "extension": "sed",
+		"include_in_problem": true
     }
 },
 {
@@ -780,7 +828,8 @@
         "template": "import java.io.*;\r\nimport java.util.*;\r\n\r\npublic class Main {\r\n    public static void main(String[] args) {\r\n\r\n    }\r\n}",
         "info": "",
         "description": "",
-        "extension": "java"
+        "extension": "java",
+		"include_in_problem": true
     }
 },
 {
@@ -796,7 +845,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "asm"
+        "extension": "asm",
+		"include_in_problem": true
     }
 },
 {
@@ -812,7 +862,8 @@
         "template": "#lang racket",
         "info": "",
         "description": "",
-        "extension": "rkt"
+        "extension": "rkt",
+		"include_in_problem": true
     }
 },
 {
@@ -828,7 +879,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "groovy"
+        "extension": "groovy",
+		"include_in_problem": true
     }
 },
 {
@@ -844,7 +896,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "kt"
+        "extension": "kt",
+		"include_in_problem": true
     }
 },
 {
@@ -860,7 +913,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "pike"
+        "extension": "pike",
+		"include_in_problem": true
     }
 },
 {
@@ -876,7 +930,8 @@
         "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    return 0;\r\n}",
         "info": "",
         "description": "",
-        "extension": "cpp"
+        "extension": "cpp",
+		"include_in_problem": true
     }
 },
 {
@@ -892,7 +947,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "cl"
+        "extension": "cl",
+		"include_in_problem": true
     }
 },
 {
@@ -908,7 +964,8 @@
         "template": "import java.io.*;\r\nimport java.util.*;\r\n\r\npublic class Main {\r\n    public static void main(String[] args) {\r\n\r\n    }\r\n}",
         "info": "",
         "description": "",
-        "extension": "java"
+        "extension": "java",
+		"include_in_problem": true
     }
 },
 {
@@ -924,7 +981,8 @@
         "template": "#include <stdio.h>\r\n\r\nint main() {\r\n    return 0;\r\n}",
         "info": "",
         "description": "",
-        "extension": "c"
+        "extension": "c",
+		"include_in_problem": true
     }
 },
 {
@@ -940,7 +998,8 @@
         "template": "import java.io.*;\r\nimport java.util.*;\r\n\r\npublic class Main {\r\n    public static void main(String[] args) {\r\n\r\n    }\r\n}",
         "info": "",
         "description": "",
-        "extension": "java"
+        "extension": "java",
+		"include_in_problem": true
     }
 },
 {
@@ -956,7 +1015,8 @@
         "template": "",
         "info": "",
         "description": "",
-        "extension": "zig"
+        "extension": "zig",
+		"include_in_problem": true
     }
 }
 ]

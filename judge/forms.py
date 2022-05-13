@@ -19,8 +19,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.translation import gettext_lazy as _
 
 from django_ace import AceWidget
-from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, Organization, Problem, \
-    Profile, Solution, Submission, Tag, WebAuthnCredential
+from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, LanguageLimit, \
+    Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavyPreviewPageDownWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -55,8 +55,9 @@ class ProfileForm(ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['about', 'organizations', 'timezone', 'language', 'ace_theme', 'user_script']
+        fields = ['about', 'display_badge', 'organizations', 'timezone', 'language', 'ace_theme', 'user_script']
         widgets = {
+            'display_badge': Select2Widget(attrs={'style': 'width:200px'}),
             'user_script': AceWidget(theme='github'),
             'timezone': Select2Widget(attrs={'style': 'width:200px'}),
             'language': Select2Widget(attrs={'style': 'width:200px'}),
@@ -97,9 +98,15 @@ class ProfileForm(ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(ProfileForm, self).__init__(*args, **kwargs)
+
+        self.fields['display_badge'].required = False
+        self.fields['display_badge'].queryset = self.instance.badges.all()
+        if not self.fields['display_badge'].queryset:
+            self.fields.pop('display_badge')
+
         if not user.has_perm('judge.edit_all_organization'):
             self.fields['organizations'].queryset = Organization.objects.filter(
-                Q(is_open=True) | Q(id__in=user.profile.organizations.all()),
+                Q(is_open=True, is_unlisted=False) | Q(id__in=user.profile.organizations.all()),
             )
         if not self.fields['organizations'].queryset:
             self.fields.pop('organizations')
@@ -123,6 +130,28 @@ class ProposeProblemSolutionForm(ModelForm):
             'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('solution_preview')}),
             'publish_on': DateInput(attrs={'type': 'date'}),
+        }
+
+
+class LanguageLimitForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super(LanguageLimitForm, self).__init__(*args, **kwargs)
+
+    def clean_time_limit(self):
+        has_high_perm = self.user and self.user.has_perm('judge.high_problem_timelimit')
+        timelimit = self.cleaned_data['time_limit']
+        if timelimit and timelimit > settings.VNOJ_PROBLEM_TIMELIMIT_LIMIT and not has_high_perm:
+            raise forms.ValidationError(_('You cannot set time limit higher than %d seconds')
+                                        % settings.VNOJ_PROBLEM_TIMELIMIT_LIMIT,
+                                        'problem_timelimit_too_long')
+        return self.cleaned_data['time_limit']
+
+    class Meta:
+        model = LanguageLimit
+        fields = ('language', 'time_limit', 'memory_limit')
+        widgets = {
+            'language': Select2Widget(attrs={'style': 'width:200px'}),
         }
 
 
@@ -226,7 +255,11 @@ class ProposeProblemSolutionFormSet(inlineformset_factory(Problem, Solution, for
     pass
 
 
-class DownloadDataForm(Form):
+class LanguageLimitFormSet(inlineformset_factory(Problem, LanguageLimit, form=LanguageLimitForm, can_delete=True)):
+    pass
+
+
+class UserDownloadDataForm(Form):
     comment_download = BooleanField(required=False, label=_('Download comments?'))
     submission_download = BooleanField(required=False, label=_('Download submissions?'))
     submission_problem_glob = CharField(initial='*', label=_('Filter by problem code glob:'), max_length=100)
@@ -241,6 +274,36 @@ class DownloadDataForm(Form):
 
     def clean(self):
         can_download = ('comment_download', 'submission_download')
+        if not any(self.cleaned_data[v] for v in can_download):
+            raise ValidationError(_('Please select at least one thing to download.'))
+        return self.cleaned_data
+
+    def clean_submission_problem_glob(self):
+        if not self.cleaned_data['submission_download']:
+            return '*'
+        return self.cleaned_data['submission_problem_glob']
+
+    def clean_submission_result(self):
+        if not self.cleaned_data['submission_download']:
+            return ()
+        return self.cleaned_data['submission_result']
+
+
+class ContestDownloadDataForm(Form):
+    submission_download = BooleanField(required=False, initial=True, label=_('Download submissions?'))
+    submission_problem_glob = CharField(initial='*', label=_('Filter by problem code glob:'), max_length=100)
+    submission_results = MultipleChoiceField(
+        required=False,
+        widget=Select2MultipleWidget(
+            attrs={'style': 'width: 260px', 'data-placeholder': _('Leave empty to include all submissions')},
+        ),
+        choices=sorted(map(itemgetter(0, 0), Submission.RESULT)),
+        label=_('Filter by result:'),
+    )
+
+    def clean(self):
+        can_download = ('submission_download',)
+        print(can_download)
         if not any(self.cleaned_data[v] for v in can_download):
             raise ValidationError(_('Please select at least one thing to download.'))
         return self.cleaned_data
@@ -573,12 +636,10 @@ class ContestForm(ModelForm):
             self.fields['private_contestants'].widget.data_view = None
             self.fields['private_contestants'].widget.data_url = reverse('organization_profile_select2',
                                                                          args=(org_pk, ))
-            self.fields['private_contestants'].help_text = \
-                str(self.fields['private_contestants'].help_text) + ' ' + \
-                str(_('You can paste a list of usernames into this box.'))
-        else:
-            self.fields.pop('private_contestants')
-            self.fields.pop('is_private')
+
+        self.fields['private_contestants'].help_text = \
+            str(self.fields['private_contestants'].help_text) + ' ' + \
+            str(_('You can paste a list of usernames into this box.'))
 
     def clean(self):
         cleaned_data = super().clean()

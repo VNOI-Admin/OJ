@@ -1,13 +1,13 @@
 import errno
+import json
 from operator import attrgetter
 
-import celery
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
-from django.db import models
+from django.db import models, transaction
 from django.db.models import CASCADE, F, Q, QuerySet, SET_NULL
 from django.db.models.expressions import RawSQL
 from django.db.models.functions import Coalesce
@@ -88,7 +88,8 @@ class TranslatedProblemQuerySet(SearchQuerySet):
     def add_i18n_name(self, language):
         queryset = self._clone()
         alias = unique_together_left_join(queryset, ProblemTranslation, 'problem', 'language', language)
-        return queryset.annotate(i18n_name=RawSQL('%s.name' % alias, ()))
+        return queryset.annotate(i18n_name=Coalesce(RawSQL('%s.name' % alias, ()), F('name'),
+                                                    output_field=models.CharField()))
 
 
 class TranslatedProblemForeignKeyQuerySet(QuerySet):
@@ -208,6 +209,16 @@ class Problem(models.Model):
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
 
     suggester = models.ForeignKey(Profile, blank=True, null=True, related_name='suggested_problems', on_delete=SET_NULL)
+
+    allow_view_testcase_status = models.BooleanField(
+        help_text=_('Allow user to view result of testcase. Should be allow for most of problems except for ICPC'),
+        default=True,
+    )
+
+    allow_view_feedback = models.BooleanField(
+        help_text=_('Allow user to view checker feedback.'),
+        default=False,
+    )
 
     __original_points = None
 
@@ -506,6 +517,30 @@ class Problem(models.Model):
     def markdown_style(self):
         return 'problem-full' if self.is_full_markup else 'problem'
 
+    @cached_property
+    def io_method(self):
+        if self.is_manually_managed or not hasattr(self, 'data_files'):
+            return {'method': 'unknown'}
+
+        if self.data_files.grader != 'standard':
+            # File IO is only supported for the standard grader.
+            return {'method': 'standard'}
+
+        grader_args = self.data_files.grader_args
+        if grader_args:
+            grader_args = json.loads(grader_args)
+            if grader_args.get('io_method', '') == 'file':
+                if grader_args.get('io_input_file', '') == '' or grader_args.get('io_output_file', '') == '':
+                    return {'method': 'unknown'}
+
+                return {
+                    'method': 'file',
+                    'input': grader_args['io_input_file'],
+                    'output': grader_args['io_output_file'],
+                }
+
+        return {'method': 'standard'}
+
     def save(self, *args, **kwargs):
         is_clone = kwargs.pop('is_clone', False)
         # if short_circuit = true the judge will stop judging
@@ -545,7 +580,8 @@ class Problem(models.Model):
     save.alters_data = True
 
     def _rescore(self):
-        celery.current_app.send_task('judge.tasks.submission.rescore_problem', (self.id, ))
+        from judge.tasks import rescore_problem
+        transaction.on_commit(rescore_problem.s(self.id, False).delay)
 
     class Meta:
         permissions = (

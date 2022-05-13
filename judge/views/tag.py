@@ -25,7 +25,7 @@ from judge.utils.views import SingleObjectFormView, TitleMixin, generic_message,
 
 class TagAllowingMixin(object):
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_authenticated or (not request.profile.allow_tagging and not request.user.is_superuser):
+        if not request.user.is_authenticated or (not request.profile.can_tag_problems):
             return generic_message(request, _('Cannot tag'),
                                    _('You are not allowed to tag problem.'))
         return super(TagAllowingMixin, self).dispatch(request, *args, **kwargs)

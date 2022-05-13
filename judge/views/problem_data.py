@@ -8,18 +8,19 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
-from django.forms import BaseModelFormSet, ChoiceField, HiddenInput, ModelForm, NumberInput, Select, formset_factory
+from django.forms import BaseModelFormSet, CharField, ChoiceField, HiddenInput, ModelForm, NumberInput, Select, \
+    formset_factory
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _
+from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import DetailView
 
 from judge.highlight_code import highlight_code
 from judge.models import Problem, ProblemData, ProblemTestCase, Submission, problem_data_storage
-from judge.models.problem_data import CUSTOM_CHECKERS
+from judge.models.problem_data import CUSTOM_CHECKERS, IO_METHODS
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.utils.unicode import utf8text
 from judge.utils.views import TitleMixin, add_file_response, generic_message
@@ -55,6 +56,10 @@ def grader_args_cleaner(self):
 
 
 class ProblemDataForm(ModelForm):
+    io_method = ChoiceField(choices=IO_METHODS, label=gettext_lazy('IO Method'), initial='standard', required=False,
+                            widget=Select2Widget(attrs={'style': 'width: 200px'}))
+    io_input_file = CharField(max_length=100, label=gettext_lazy('Input from file'), required=False)
+    io_output_file = CharField(max_length=100, label=gettext_lazy('Output to file'), required=False)
     checker_type = ChoiceField(choices=CUSTOM_CHECKERS, widget=Select2Widget(attrs={'style': 'width: 200px'}))
 
     def clean_zipfile(self):
@@ -69,7 +74,8 @@ class ProblemDataForm(ModelForm):
         model = ProblemData
         fields = [
             'zipfile',
-            'grader', 'custom_grader', 'custom_header', 'grader_args',
+            'grader', 'io_method', 'io_input_file', 'io_output_file',
+            'custom_grader', 'custom_header', 'grader_args',
             'checker', 'custom_checker', 'checker_args', 'checker_type',
             'output_limit',
         ]
@@ -132,8 +138,9 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
         return _('Comparing submissions for {0}').format(self.object.name)
 
     def get_content_title(self):
-        return format_html(_('Comparing submissions for <a href="{1}">{0}</a>'), self.object.name,
-                           reverse('problem_detail', args=[self.object.code]))
+        return mark_safe(escape(_('Comparing submissions for {0}')).format(
+            format_html('<a href="{1}">{0}</a>', self.object.name, reverse('problem_detail', args=[self.object.code])),
+        ))
 
     def get_object(self, queryset=None):
         problem = super(ProblemSubmissionDiff, self).get_object(queryset)
@@ -155,7 +162,7 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
         if not subs:
             raise Submission.DoesNotExist()
 
-        context['submissions'] = subs
+        context['submissions'] = subs.filter(language__file_only=False)
 
         # If we have associated data we can do better than just guess
         data = ProblemTestCase.objects.filter(dataset=self.object, type='C')
