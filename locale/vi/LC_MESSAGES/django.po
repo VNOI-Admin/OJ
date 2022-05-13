@@ -4448,7 +4448,6 @@ msgstr "Trang web này hoạt động tốt nhất khi JavaScript được cho p
 msgid "proudly powered by %(dmoj)s"
 msgstr "dựa trên nền tảng %(dmoj)s"
 
-<<<<<<< HEAD
 #: templates/base.html:359
 msgid ""
 "follow us on <a style=\"color: #808080\" href=\"https://github.com/VNOI-"
@@ -4457,12 +4456,6 @@ msgid ""
 msgstr ""
 "theo dõi LHPOJ trên <a style=\"color: #808080\" href=\"https://github.com/"
 "winprn/OJ\"><b>Github</b></a>"
-=======
-#: templates/base.html:363
-#, python-format
-msgid "follow us on %(github)s and %(facebook)s"
-msgstr "theo dõi VNOI trên %(github)s và %(facebook)s"
->>>>>>> c9f223b4a5a934e340bce7d257a63ddd8c76a2c9
 
 #: templates/blog/blog-post.html:12
 #, python-brace-format
