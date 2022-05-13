@@ -31,7 +31,9 @@
                         <span class="post-authors">{{ link_users(authors) }}</span>
                     {%- endif -%}
                 {% endwith %}
-                {{ relative_time(post.publish_on, abs=_('posted on {time}'), rel=_('posted {time}')) -}}
+                {% with abs=_('posted on {time}'), rel=_('posted {time}') %}
+                    {{ relative_time(post.publish_on, abs=abs, rel=rel) }}
+                {% endwith %}
             </span>
         </div>
     </div>
