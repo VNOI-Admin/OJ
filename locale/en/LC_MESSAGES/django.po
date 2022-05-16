@@ -3369,9 +3369,8 @@ msgstr ""
 
 #: templates/base.html:327
 msgid ""
-"follow us on <a style=\"color: #808080\" href=\"https://github.com/VNOI-"
-"Admin/OJ\"><b>Github</b></a> and <a style=\"color: #808080\" href=\"https://"
-"www.facebook.com/vnoi.wiki\"><b>Facebook</b></a>"
+"follow us on <a style=\"color: #808080\" href=\"https://github.com/winprn"
+"/OJ\"><b>Github</b></a>"
 msgstr ""
 "follow us on <a style=\"color: #808080\" href=\"https://github.com/"
 "winprn/OJ\"><b>Github</b></a>"
