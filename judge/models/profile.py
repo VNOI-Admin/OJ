@@ -395,7 +395,7 @@ class WebAuthnCredential(models.Model):
         )
 
     def __str__(self):
-        return f'WebAuthn credential: {self.name}'
+        return _('WebAuthn credential: %(name)s') % {'name': self.name}
 
     class Meta:
         verbose_name = _('WebAuthn credential')
