@@ -126,9 +126,7 @@
             <div class="alert alert-warning">
                 {{ _('Your data is ready!') }}
                 <br>
-                {%- trans countdown=time_until_can_prepare|as_countdown -%}
-                    You will need to wait {{ countdown }} to prepare a new data download.
-                {%- endtrans -%}
+                {{ _('You will need to wait %(countdown)s to prepare a new data download.', countdown=as_countdown(time_until_can_prepare)) }}
             </div>
             <a class="button aux-download-action" href="{{ url('contest_download_data', contest.key) }}">{{ _('Download data') }}</a>
         {% endif %}

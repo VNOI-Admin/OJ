@@ -161,7 +161,7 @@
                                     <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
                                 </div>
                                 <div class="time">
-                                    {%- trans countdown=contest.time_before_end|as_countdown -%} Ends in {{countdown}} {%- endtrans -%}
+                                    {{ _('Ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) }}
                                 </div>
                             </div>
                         {% endfor %}
@@ -179,7 +179,7 @@
                                     <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
                                 </div>
                                 <div class="time">
-                                    {%- trans countdown=contest.time_before_start|as_countdown -%} Starting in {{countdown}}. {%- endtrans -%}
+                                    {{ _('Starting in %(countdown)s.', countdown=as_countdown(contest.time_before_start)) }}
                                 </div>
                             </div>
                         {% endfor %}
