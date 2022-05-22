@@ -114,7 +114,7 @@ class PostListBase(ListView):
 
     def get_queryset(self):
         queryset = (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
-                    .order_by('-sticky', '-publish_on').prefetch_related('authors__user', 'authors__display_badge'))
+                    .prefetch_related('authors__user', 'authors__display_badge'))
         if self.request.user.is_authenticated:
             queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
             profile = self.request.profile
@@ -136,15 +136,26 @@ class PostListBase(ListView):
 
 class PostList(PostListBase):
     template_name = 'blog/list.html'
+    show_all_blogs = False
+    tab = 'home'
 
     def get_queryset(self):
         queryset = super(PostList, self).get_queryset()
-        queryset = queryset.filter(global_post=True)
+        self.show_all_blogs = self.request.GET.get('show_all_blogs', 'false') == 'true'
+        if self.show_all_blogs:
+            self.tab = 'blog_list'
+            queryset = queryset.order_by('-publish_on')
+        else:
+            queryset = queryset.filter(global_post=True).order_by('-sticky', '-publish_on')
+
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super(PostList, self).get_context_data(**kwargs)
         context['first_page_href'] = reverse('home')
+        context['all_blogs_link'] = f"{reverse('home')}?show_all_blogs=true"
+        context['show_all_blogs'] = self.show_all_blogs
+
         context['page_prefix'] = reverse('blog_post_list')
         context['comments'] = Comment.most_recent(self.request.user, 10)
         context['new_problems'] = Problem.get_public_problems() \
@@ -192,6 +203,10 @@ class PostList(PostListBase):
             context['open_tickets'] = filter_visible_tickets(tickets, self.request.user)[:10]
         else:
             context['open_tickets'] = []
+
+        context['tab'] = self.tab
+        context['left_align_tabs'] = True
+
         return context
 
     def get_top_pp_users(self):

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title_row %}{% endblock %}
+{% block title_row %}
+{% endblock %}
 {% block title_ruler %}{% endblock %}
 
 {% block media %}
@@ -97,7 +98,7 @@
     </div>
     <div id="blog-container">
         <div class="blog-content sidebox">
-            <h3>{{ _('News') }} <i class="fa fa-terminal"></i></h3>
+            {% include "blog/blog-list-tabs.html" %}
             <div class="sidebox-content" style="border: unset;">
                 {% for post in posts %}
                     {% include "blog/blog-post.html" %}
