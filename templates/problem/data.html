@@ -5,6 +5,7 @@
     {% include "leave-warning.html" %}
     <script type="text/javascript" src="{{ static('libs/jquery-sortable.js') }}"></script>
     <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('vnoj/jszip/jszip.min.js') }}"></script>
     <script type="text/javascript">
         window.valid_files = {{valid_files_json}}.sort();
         window.testcase_limit = {{testcase_limit}};
@@ -421,6 +422,7 @@
             });
 
             function fill_testcases() {
+                console.log("Filling testcase...");
                 var inFiles = [], outFiles = [];
                 var input_re = new RegExp(/^(?=.*?\.in|in).*?(?:(?:^|\W)(\d+)[^\d\s]+)?(\d+)[^\d\s]*$/);
                 var output_re = new RegExp(/^(?=.*?\.out|.*?\.ok|.*?\.ans|out|ok|ans).*?(?:(?:^|\W)(\d+)[^\d\s]+)?(\d+)[^\d\s]*$/);
@@ -506,9 +508,23 @@
                 $('input#delete-all').change();
             });
             if (parseInt($total.val()) == 0 && window.valid_files.length) {
-                console.log("Filling testcase...");
                 fill_testcases();
             }
+
+            $("#id_problem-data-zipfile").change((event) => {
+                let fileInput = event.target.files[0];
+                var reader = new FileReader();
+                reader.onload = function(ev) {
+                    JSZip.loadAsync(ev.target.result).then(function(zip) {
+                        window.valid_files = Object.keys(zip.files).sort();
+                        fill_testcases();
+                    }).catch(function(err) {
+                        console.log(err);
+                        console.error("Failed to open as ZIP file");
+                    })
+                };
+                reader.readAsArrayBuffer(fileInput);
+            })
             $('form').dirty('setAsClean');
         }).change();
     </script>
