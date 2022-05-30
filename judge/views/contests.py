@@ -831,7 +831,8 @@ class ContestRanking(ContestRankingBase):
 
     @property
     def bypass_cache_ranking(self):
-        return self.object.scoreboard_cache_timeout == 0 or self.can_edit
+        return self.object.scoreboard_cache_timeout == 0 or self.can_edit or \
+            self.object.scoreboard_visibility != Contest.SCOREBOARD_VISIBLE
 
     def get_ranking_queryset(self):
         if self.is_frozen:
