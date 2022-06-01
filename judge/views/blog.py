@@ -5,19 +5,18 @@ from django.db import IntegrityError
 from django.db.models import Count, Max
 from django.db.models.expressions import Value
 from django.db.models.functions import Coalesce
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, \
-    HttpResponseRedirect
+from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
+                         HttpResponseForbidden, HttpResponseNotFound,
+                         HttpResponseRedirect)
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, ListView, UpdateView
-from reversion import revisions
-
 from judge.comments import CommentedDetailView
 from judge.dblock import LockModel
 from judge.forms import BlogPostForm
-from judge.models import BlogPost, BlogVote, Comment, Contest, Language, Problem, Profile, Submission, \
-    Ticket
+from judge.models import (BlogPost, BlogVote, Comment, Contest, Language,
+                          Problem, Profile, Submission, Ticket)
 from judge.tasks import on_new_blogpost
 from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
@@ -25,6 +24,7 @@ from judge.utils.problems import user_completed_ids
 from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.tickets import filter_visible_tickets
 from judge.utils.views import TitleMixin, generic_message
+from reversion import revisions
 
 
 @login_required
@@ -320,7 +320,7 @@ class BlogPostEdit(BlogPostMixin, TitleMixin, UpdateView):
             return super(BlogPostEdit, self).form_valid(form)
 
     def dispatch(self, request, *args, **kwargs):
-        if request.official_contest_mode:
+        if request.official_contest_mode and not request.user.is_superuser:
             return generic_message(request, _('Permission denied'),
                                    _('You cannot edit blog post.'))
         return super().dispatch(request, *args, **kwargs)
