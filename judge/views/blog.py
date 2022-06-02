@@ -12,6 +12,8 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
 from django.views.generic import CreateView, ListView, UpdateView
+
+from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.dblock import LockModel
 from judge.forms import BlogPostForm
@@ -24,7 +26,6 @@ from judge.utils.problems import user_completed_ids
 from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.tickets import filter_visible_tickets
 from judge.utils.views import TitleMixin, generic_message
-from reversion import revisions
 
 
 @login_required
@@ -161,7 +162,7 @@ class PostList(PostListBase):
 
         context['newsfeed_link'] = f"{reverse('home')}?show_all_blogs=false"
         context['all_blogs_link'] = f"{reverse('home')}?show_all_blogs=true"
-        
+
         context['show_all_blogs'] = self.show_all_blogs
 
         context['page_prefix'] = reverse('blog_post_list')
