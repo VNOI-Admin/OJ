@@ -141,7 +141,12 @@ class PostList(PostListBase):
 
     def get_queryset(self):
         queryset = super(PostList, self).get_queryset()
-        self.show_all_blogs = self.request.GET.get('show_all_blogs', 'false') == 'true'
+
+        if 'show_all_blogs' in self.request.GET:
+            self.show_all_blogs = self.request.session['show_all_blogs'] = self.request.GET['show_all_blogs'] == 'true'
+        else:
+            self.show_all_blogs = self.request.session.get('show_all_blogs', False)
+
         if self.show_all_blogs:
             self.tab = 'blog_list'
             queryset = queryset.order_by('-publish_on')
@@ -153,7 +158,10 @@ class PostList(PostListBase):
     def get_context_data(self, **kwargs):
         context = super(PostList, self).get_context_data(**kwargs)
         context['first_page_href'] = reverse('home')
+
+        context['newsfeed_link'] = f"{reverse('home')}?show_all_blogs=false"
         context['all_blogs_link'] = f"{reverse('home')}?show_all_blogs=true"
+        
         context['show_all_blogs'] = self.show_all_blogs
 
         context['page_prefix'] = reverse('blog_post_list')
