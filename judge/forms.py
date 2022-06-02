@@ -16,7 +16,8 @@ from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, 
 from django.forms.widgets import DateTimeInput
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse, reverse_lazy
-from django.utils.translation import gettext_lazy as _
+from django.utils.text import format_lazy
+from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from django_ace import AceWidget
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, LanguageLimit, \
@@ -31,7 +32,9 @@ two_factor_validators_by_length = {
     TOTP_CODE_LENGTH: {
         'regex_validator': RegexValidator(
             f'^[0-9]{{{TOTP_CODE_LENGTH}}}$',
-            _(f'Two-factor authentication tokens must be {TOTP_CODE_LENGTH} decimal digits.'),
+            format_lazy(ngettext_lazy('Two-factor authentication tokens must be {count} decimal digit.',
+                                      'Two-factor authentication tokens must be {count} decimal digits.',
+                                      TOTP_CODE_LENGTH), count=TOTP_CODE_LENGTH),
         ),
         'verify': lambda code, profile: not profile.check_totp_code(code),
         'err': _('Invalid two-factor authentication token.'),
@@ -87,8 +90,9 @@ class ProfileForm(ModelForm):
         max_orgs = settings.DMOJ_USER_MAX_ORGANIZATION_COUNT
 
         if sum(org.is_open for org in organizations) > max_orgs:
-            raise ValidationError(
-                _('You may not be part of more than {count} public organizations.').format(count=max_orgs))
+            raise ValidationError(ngettext_lazy('You may not be part of more than {count} public organization.',
+                                                'You may not be part of more than {count} public organizations.',
+                                                max_orgs).format(count=max_orgs))
 
         return self.cleaned_data
 
