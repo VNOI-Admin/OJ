@@ -530,7 +530,7 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
         })
 
 
-class ContestLeave(LoginRequiredMixin, ContestMixin, BaseDetailView):
+class ContestLeave(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
     def dispatch(self, request, *args, **kwargs):
         if request.method != 'POST':
             return HttpResponseForbidden()
