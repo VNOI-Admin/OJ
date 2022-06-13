@@ -17,10 +17,12 @@ from judge.utils.timedelta import nice_repr
 @register_contest_format('vnoj')
 class VNOJContestFormat(DefaultContestFormat):
     name = gettext_lazy('VNOJ')
-    config_defaults = {'penalty': 5}
-    config_validators = {'penalty': lambda x: x >= 0}
+    config_defaults = {'penalty': 5, 'LPO': False}
+    config_validators = {'penalty': lambda x: x >= 0, 'LPO': lambda x: isinstance(x, bool)}
     """
         penalty: Number of penalty minutes each incorrect submission adds. Defaults to 5.
+        LPO: Last problem only. If true, cumtime will used the last submission time, not the total time of
+        all submissions.
     """
 
     @classmethod
@@ -91,7 +93,7 @@ class VNOJContestFormat(DefaultContestFormat):
                 format_data[str(prob)] = {'time': dt, 'points': points, 'penalty': prev}
                 score += points
 
-        participation.cumtime = cumtime + penalty
+        participation.cumtime = (last if self.config['LPO'] else cumtime) + penalty
         participation.score = round(score, self.contest.points_precision)
         participation.tiebreaker = last  # field is sorted from least to greatest
         participation.format_data = format_data
