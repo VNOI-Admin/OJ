@@ -17,11 +17,11 @@ from judge.utils.timedelta import nice_repr
 @register_contest_format('vnoj')
 class VNOJContestFormat(DefaultContestFormat):
     name = gettext_lazy('VNOJ')
-    config_defaults = {'penalty': 5, 'LPO': False}
-    config_validators = {'penalty': lambda x: x >= 0, 'LPO': lambda x: isinstance(x, bool)}
+    config_defaults = {'penalty': 5, 'LSO': False}
+    config_validators = {'penalty': lambda x: x >= 0, 'LSO': lambda x: isinstance(x, bool)}
     """
         penalty: Number of penalty minutes each incorrect submission adds. Defaults to 5.
-        LPO: Last problem only. If true, cumtime will used the last submission time, not the total time of
+        LSO: Last submission only. If true, cumtime will used the last submission time, not the total time of
         all submissions.
     """
 
@@ -93,7 +93,7 @@ class VNOJContestFormat(DefaultContestFormat):
                 format_data[str(prob)] = {'time': dt, 'points': points, 'penalty': prev}
                 score += points
 
-        participation.cumtime = (last if self.config['LPO'] else cumtime) + penalty
+        participation.cumtime = (last if self.config['LSO'] else cumtime) + penalty
         participation.score = round(score, self.contest.points_precision)
         participation.tiebreaker = last  # field is sorted from least to greatest
         participation.format_data = format_data
@@ -119,6 +119,11 @@ class VNOJContestFormat(DefaultContestFormat):
 
     def get_short_form_display(self):
         yield _('The maximum score submission for each problem will be used.')
+
+        if self.config['LSO']:
+            yield _('The total time will be calculated using the last submission time and the total penalty.')
+        else:
+            yield _('The total time will be calculated using the sum of all submission times and the total penalty.')
 
         penalty = self.config['penalty']
         if penalty:
