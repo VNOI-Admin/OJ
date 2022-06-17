@@ -220,6 +220,12 @@ class Problem(models.Model):
         default=False,
     )
 
+    allow_judging = models.BooleanField(
+        verbose_name=_('allow judging'),
+        default=True,
+        help_text=_('If disabled, submissions will be stored but not judged.')
+    )
+
     __original_points = None
 
     def __init__(self, *args, **kwargs):
