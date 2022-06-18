@@ -120,11 +120,6 @@ class VNOJContestFormat(DefaultContestFormat):
     def get_short_form_display(self):
         yield _('The maximum score submission for each problem will be used.')
 
-        if self.config['LSO']:
-            yield _('The total time will be calculated using the last submission time and the total penalty.')
-        else:
-            yield _('The total time will be calculated using the sum of all submission times and the total penalty.')
-
         penalty = self.config['penalty']
         if penalty:
             yield ungettext(
@@ -132,8 +127,14 @@ class VNOJContestFormat(DefaultContestFormat):
                 'Each submission before the first maximum score submission will incur a **penalty of %d minutes**.',
                 penalty,
             ) % penalty
-            yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
-                    'a non-zero score (including penalty), followed by the time of the last score altering submission.')
+            if self.config['LSO']:
+                yield _('Ties will be broken by the time of the last score altering submission (including penalty).')
+            else:
+                yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
+                        'a non-zero score (including penalty), followed by the time of the last score altering submission.')
         else:
-            yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
-                    'a non-zero score, followed by the time of the last score altering submission.')
+            if self.config['LSO']:
+                yield _('Ties will be broken by the time of the last score altering submission.')
+            else:
+                yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
+                        'a non-zero score, followed by the time of the last score altering submission.')
