@@ -143,6 +143,8 @@ class PostList(PostListBase):
     def get_queryset(self):
         queryset = super(PostList, self).get_queryset()
 
+        queryset = queryset.filter(organization=None)
+
         if 'show_all_blogs' in self.request.GET:
             self.show_all_blogs = self.request.session['show_all_blogs'] = self.request.GET['show_all_blogs'] == 'true'
         else:
