@@ -1,3 +1,4 @@
+import hashlib
 import json
 import os
 import re
@@ -5,6 +6,7 @@ import shutil
 import subprocess
 import tempfile
 import zipfile
+from operator import itemgetter
 
 from django.conf import settings
 from django.contrib.sites.models import Site
@@ -15,7 +17,7 @@ from django.urls import reverse
 from django.utils import translation
 from lxml import etree as ET
 
-from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemType
+from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemTranslation, ProblemType
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import django_uploader
 
@@ -185,65 +187,129 @@ def pandoc_tex_to_markdown(tex):
 
 
 def parse_statements(problem_meta, root, package):
-    statement = root.find('.//statement[@type="application/x-tex"]')
-    if statement is None:
+    image_cache = {}
+
+    def parse_problem_properties(problem_properties):
+        description = ''
+
+        # Legend
+        description += pandoc_tex_to_markdown(problem_properties['legend'])
+
+        # Input
+        description += '\n## Input\n\n'
+        description += pandoc_tex_to_markdown(problem_properties['input'])
+
+        # Output
+        description += '\n## Output\n\n'
+        description += pandoc_tex_to_markdown(problem_properties['output'])
+
+        # Scoring
+        if problem_properties['scoring'] is not None:
+            description += '\n## Scoring\n\n'
+            description += pandoc_tex_to_markdown(problem_properties['scoring'])
+
+        # Sample tests
+        for i, sample in enumerate(problem_properties['sampleTests'], start=1):
+            description += f'\n## Sample Input {i}\n\n'
+            description += '```\n' + sample['input'].strip() + '\n```\n'
+            description += f'\n## Sample Output {i}\n\n'
+            description += '```\n' + sample['output'].strip() + '\n```\n'
+
+        # Notes
+        if problem_properties['notes'] != '':
+            description += '\n## Notes\n\n'
+            description += pandoc_tex_to_markdown(problem_properties['notes'])
+
+        # Images
+        images = re.findall(r'!\[image\]\((.+?)\)', description)
+        images = list(set(images))
+        for image_path in images:
+            norm_path = os.path.normpath(os.path.join(statement_folder, image_path))
+            sha1 = hashlib.sha1()
+            sha1.update(package.open(norm_path, 'r').read())
+            sha1 = sha1.hexdigest()
+
+            if sha1 not in image_cache:
+                image = File(
+                    file=package.open(norm_path, 'r'),
+                    name=os.path.basename(image_path),
+                )
+                data = json.loads(django_uploader(image))
+                image_cache[sha1] = data['link']
+
+            description = description.replace(
+                f'![image]({image_path})',
+                f'![image]({image_cache[sha1]})',
+            )
+
+        return description
+
+    def input_choice(prompt, choices):
+        while True:
+            choice = input(prompt)
+            if choice in choices:
+                return choice
+            else:
+                print('Invalid choice')
+
+    statements = root.findall('.//statement[@type="application/x-tex"]')
+    if len(statements) == 0:
         print('Statement not found! Would you like to skip statement (y/n)? ', end='', flush=True)
         if input().lower() in ['y', 'yes']:
+            problem_meta['name'] = ''
             problem_meta['description'] = ''
+            problem_meta['translations'] = []
             return
 
         raise CommandError('statement not found')
 
-    print('Converting statement to Markdown')
-    statement_folder = os.path.dirname(statement.get('path'))
-    problem_properties_path = os.path.join(statement_folder, 'problem-properties.json')
-    if problem_properties_path not in package.namelist():
-        raise CommandError(f'problem-properties.json not found at path {problem_properties_path}')
+    translations = []
+    for statement in statements:
+        language = statement.get('language', 'unknown')
+        statement_folder = os.path.dirname(statement.get('path'))
+        problem_properties_path = os.path.join(statement_folder, 'problem-properties.json')
+        if problem_properties_path not in package.namelist():
+            raise CommandError(f'problem-properties.json not found at path {problem_properties_path}')
 
-    problem_properties = json.loads(package.read(problem_properties_path).decode('utf-8'))
-    problem_meta['description'] = ''
+        problem_properties = json.loads(package.read(problem_properties_path).decode('utf-8'))
 
-    # Legend
-    problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['legend'])
+        print(f'Converting statement in language {language} to Markdown')
+        description = parse_problem_properties(problem_properties)
+        translations.append({
+            'language': language,
+            'description': description,
+        })
 
-    # Input
-    problem_meta['description'] += '\n## Input\n\n'
-    problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['input'])
+    if len(translations) > 1:
+        languages = [t['language'] for t in translations]
+        print('Multilingual statements found:', languages)
+        main_language = input_choice('Please select one as the main statement: ', languages)
+    else:
+        main_language = translations[0]['language']
 
-    # Output
-    problem_meta['description'] += '\n## Output\n\n'
-    problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['output'])
+    problem_meta['translations'] = []
 
-    # Scoring
-    if problem_properties['scoring'] is not None:
-        problem_meta['description'] += '\n## Scoring\n\n'
-        problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['scoring'])
+    for t in translations:
+        language = t['language']
+        description = t['description']
+        name_element = root.find(f'.//name[@language="{language}"]')
+        name = name_element.get('value') if name_element is not None else ''
 
-    # Sample tests
-    for i, sample in enumerate(problem_properties['sampleTests'], start=1):
-        problem_meta['description'] += f'\n## Sample Input {i}\n\n'
-        problem_meta['description'] += '```\n' + sample['input'].strip() + '\n```\n'
-        problem_meta['description'] += f'\n## Sample Output {i}\n\n'
-        problem_meta['description'] += '```\n' + sample['output'].strip() + '\n```\n'
-
-    # Notes
-    if problem_properties['notes'] != '':
-        problem_meta['description'] += '\n## Notes\n\n'
-        problem_meta['description'] += pandoc_tex_to_markdown(problem_properties['notes'])
-
-    # Images
-    images = re.findall(r'!\[image\]\((.+?)\)', problem_meta['description'])
-    images = list(set(images))
-    for image_path in images:
-        image = File(
-            file=package.open(os.path.join(statement_folder, image_path), 'r'),
-            name=os.path.basename(image_path),
-        )
-        data = json.loads(django_uploader(image))
-        problem_meta['description'] = problem_meta['description'].replace(
-            f'![image]({image_path})',
-            f'![image]({data["link"]})',
-        )
+        if language == main_language:
+            problem_meta['name'] = name
+            problem_meta['description'] = description
+        else:
+            choices = list(map(itemgetter(0), settings.LANGUAGES))
+            site_language = input_choice(
+                f'Please select corresponding site language for {language} '
+                f'(available options are {", ".join(choices)}): ',
+                choices,
+            )
+            problem_meta['translations'].append({
+                'language': site_language,
+                'name': name,
+                'description': description,
+            })
 
 
 @transaction.atomic
@@ -263,6 +329,14 @@ def create_problem(problem_meta):
     problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
     problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
     problem.save()
+
+    for tran in problem_meta['translations']:
+        ProblemTranslation(
+            problem=problem,
+            language=tran['language'],
+            name=tran['name'],
+            description=tran['description'],
+        ).save()
 
     with open(problem_meta['zipfile'], 'rb') as f:
         problem_data = ProblemData(
@@ -335,11 +409,6 @@ class Command(BaseCommand):
         problem_meta = {}
         problem_meta['code'] = problem_code
         problem_meta['tmp_dir'] = tempfile.TemporaryDirectory()
-        if root.find('.//name') is not None:
-            problem_meta['name'] = root.find('.//name').get('value')
-        else:
-            print('Problem name not found! Please type in problem name: ', end='', flush=True)
-            problem_meta['name'] = input()
 
         try:
             parse_checker(problem_meta, root, package)
