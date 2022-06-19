@@ -24,6 +24,16 @@ from judge.views.widgets import django_uploader
 PANDOC_FILTER = """
 local List = require 'pandoc.List'
 
+function normalize_quote(text)
+    -- These four quotes are disallowed characters.
+    -- See DMOJ_PROBLEM_STATEMENT_DISALLOWED_CHARACTERS
+    text = text:gsub('\\u{2018}', "'") -- left single quote
+    text = text:gsub('\\u{2019}', "'") -- right single quote
+    text = text:gsub('\\u{201C}', '"') -- left double quote
+    text = text:gsub('\\u{201D}', '"') -- right double quote
+    return text
+end
+
 function Math(m)
     -- Fix math delimiters
     local delimiter = m.mathtype == 'InlineMath' and '~' or '$$'
@@ -35,16 +45,28 @@ function Image(el)
     return {pandoc.RawInline('markdown', '\\n\\n'), el}
 end
 
+function Code(el)
+    -- Normalize quotes
+    el.text = normalize_quote(el.text)
+    return el
+end
+
+function CodeBlock(el)
+    -- Normalize quotes
+    el.text = normalize_quote(el.text)
+    return el
+end
+
 function Str(el)
-    -- Fix endash and emdash
-    -- TODO: fix other special characters
-    if el.text == '\\u{2013}' then
-        return '&ndash;'
-    elseif el.text == '\\u{2014}' then
-        return '&mdash;'
-    else
-        return el
-    end
+    -- en dash and em dash would still show up correctly if we don't escape
+    -- them, but they would be hardly noticeable while editing.
+    el.text = el.text:gsub('\\u{2013}', '&ndash;')
+    el.text = el.text:gsub('\\u{2014}', '&mdash;')
+
+    -- Normalize quotes
+    el.text = normalize_quote(el.text)
+
+    return el
 end
 
 function Div(el)
