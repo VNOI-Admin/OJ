@@ -146,9 +146,15 @@ class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMi
 
     def get_context_data(self, **kwargs):
         context = super(ProblemRaw, self).get_context_data(**kwargs)
-        context['problem_name'] = self.object.name
+
+        try:
+            trans = self.object.translations.get(language=self.request.LANGUAGE_CODE)
+        except ProblemTranslation.DoesNotExist:
+            trans = None
+
+        context['problem_name'] = self.object.name if trans is None else trans.name
         context['url'] = self.request.build_absolute_uri()
-        context['description'] = self.object.description
+        context['description'] = self.object.description if trans is None else trans.description
         return context
 
     def get(self, request, *args, **kwargs):
