@@ -131,7 +131,8 @@ class VNOJContestFormat(DefaultContestFormat):
                 yield _('Ties will be broken by the time of the last score altering submission (including penalty).')
             else:
                 yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
-                        'a non-zero score (including penalty), followed by the time of the last score altering submission.')
+                        'a non-zero score (including penalty), followed by the time of the last score altering '
+                        'submission.')
         else:
             if self.config['LSO']:
                 yield _('Ties will be broken by the time of the last score altering submission.')
