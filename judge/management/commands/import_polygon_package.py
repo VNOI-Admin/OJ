@@ -211,6 +211,22 @@ def pandoc_tex_to_markdown(tex):
 def parse_statements(problem_meta, root, package):
     image_cache = {}
 
+    def save_image(image_path):
+        norm_path = os.path.normpath(os.path.join(statement_folder, image_path))
+        sha1 = hashlib.sha1()
+        sha1.update(package.open(norm_path, 'r').read())
+        sha1 = sha1.hexdigest()
+
+        if sha1 not in image_cache:
+            image = File(
+                file=package.open(norm_path, 'r'),
+                name=os.path.basename(image_path),
+            )
+            data = json.loads(django_uploader(image))
+            image_cache[sha1] = data['link']
+
+        return image_cache[sha1]
+
     def parse_problem_properties(problem_properties):
         description = ''
 
@@ -243,25 +259,17 @@ def parse_statements(problem_meta, root, package):
             description += pandoc_tex_to_markdown(problem_properties['notes'])
 
         # Images
-        images = re.findall(r'!\[image\]\((.+?)\)', description)
-        images = list(set(images))
-        for image_path in images:
-            norm_path = os.path.normpath(os.path.join(statement_folder, image_path))
-            sha1 = hashlib.sha1()
-            sha1.update(package.open(norm_path, 'r').read())
-            sha1 = sha1.hexdigest()
-
-            if sha1 not in image_cache:
-                image = File(
-                    file=package.open(norm_path, 'r'),
-                    name=os.path.basename(image_path),
-                )
-                data = json.loads(django_uploader(image))
-                image_cache[sha1] = data['link']
-
+        for image_path in set(re.findall(r'!\[image\]\((.+?)\)', description)):
             description = description.replace(
                 f'![image]({image_path})',
-                f'![image]({image_cache[sha1]})',
+                f'![image]({save_image(image_path)})',
+            )
+
+        for img_tag in set(re.findall(r'<\s*img[^>]*>', description)):
+            image_path = re.search(r'<\s*img[^>]+src\s*=\s*(["\'])(.*?)\1[^>]*>', description).group(2)
+            description = description.replace(
+                img_tag,
+                img_tag.replace(image_path, save_image(image_path)),
             )
 
         return description
