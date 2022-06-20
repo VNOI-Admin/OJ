@@ -138,8 +138,6 @@ def parse_checker(problem_meta, root, package):
 
 
 def parse_tests(problem_meta, root, package):
-    # TODO: support input/output via files?
-
     testset = root.find('.//testset[@name="tests"]')
     if testset is None:
         raise CommandError('testset tests not found')
@@ -192,6 +190,20 @@ def parse_tests(problem_meta, root, package):
     else:
         print('Total points is non-zero. Set partial to True')
         problem_meta['partial'] = True
+
+    problem_meta['grader_args'] = {}
+    judging = root.find('.//judging')
+    if judging is not None:
+        io_input_file = judging.get('input-file', '')
+        io_output_file = judging.get('output-file', '')
+
+        if io_input_file != '' and io_output_file != '':
+            print('Use File IO')
+            print('Input file:', io_input_file)
+            print('Output file:', io_output_file)
+            problem_meta['grader_args']['io_method'] = 'file'
+            problem_meta['grader_args']['io_input_file'] = io_input_file
+            problem_meta['grader_args']['io_output_file'] = io_output_file
 
 
 def pandoc_tex_to_markdown(tex):
@@ -374,6 +386,7 @@ def create_problem(problem_meta):
             zipfile=File(f),
             grader=problem_meta['grader'],
             checker=problem_meta['checker'],
+            grader_args=json.dumps(problem_meta['grader_args']),
         )
         problem_data.save()
 
