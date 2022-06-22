@@ -142,6 +142,9 @@ def parse_tests(problem_meta, root, package):
     if testset is None:
         raise CommandError('testset tests not found')
 
+    if len(testset.find('tests').getchildren()) == 0:
+        raise CommandError('no testcases found')
+
     # Polygon specifies the time limit in ms and memory limit in bytes,
     # while DMOJ uses seconds and kilobytes.
     problem_meta['time_limit'] = float(testset.find('time-limit').text) / 1000
@@ -156,12 +159,22 @@ def parse_tests(problem_meta, root, package):
     print(f'Memory limit: {problem_meta["memory_limit"] // 1024}MB')
 
     problem_meta['cases'] = []
+    problem_meta['batches'] = {}
     problem_meta['zipfile'] = os.path.join(problem_meta['tmp_dir'].name, 'tests.zip')
     tests_zip = zipfile.ZipFile(problem_meta['zipfile'], 'w')
 
     input_path_pattern = testset.find('input-path-pattern').text
     answer_path_pattern = testset.find('answer-path-pattern').text
     total_points = 0
+
+    groups = testset.find('groups')
+    if groups is not None:
+        for group in groups.getchildren():
+            points_policy = group.get('points-policy')
+            if points_policy == 'complete-group':
+                points = int(float(group.get('points', 0)))
+                problem_meta['batches'][group.get('name')] = {'points': points, 'cases': []}
+                total_points += points
 
     for i, test in enumerate(testset.find('tests').getchildren(), start=1):
         input_path = input_path_pattern % i
@@ -171,18 +184,23 @@ def parse_tests(problem_meta, root, package):
 
         tests_zip.writestr(f'{i:02d}.inp', package.read(input_path))
         tests_zip.writestr(f'{i:02d}.out', package.read(answer_path))
-        problem_meta['cases'].append({
-            'input_file': f'{i:02d}.inp',
-            'output_file': f'{i:02d}.out',
-            'points': points,
-        })
+
+        group = test.get('group', '')
+        if group in problem_meta['batches']:
+            problem_meta['batches'][group]['cases'].append({
+                'input_file': f'{i:02d}.inp',
+                'output_file': f'{i:02d}.out',
+            })
+        else:
+            problem_meta['cases'].append({
+                'input_file': f'{i:02d}.inp',
+                'output_file': f'{i:02d}.out',
+                'points': points,
+            })
 
     tests_zip.close()
 
-    if len(problem_meta['cases']) == 0:
-        raise CommandError('no testcases found')
-
-    print(f'Found {len(problem_meta["cases"])} testcases!')
+    print(f'Found {len(testset.find("tests").getchildren())} testcases!')
 
     if total_points == 0:
         print('Total points is zero. Set partial to False')
@@ -399,10 +417,38 @@ def create_problem(problem_meta):
         problem_data.checker_args = json.dumps(problem_meta['checker_args'])
         problem_data.save()
 
-    for order, case_data in enumerate(problem_meta['cases'], start=1):
+    order = 0
+
+    for batch in problem_meta['batches'].values():
+        if len(batch['cases']) == 0:
+            continue
+
+        order += 1
+        start_batch = ProblemTestCase(dataset=problem, order=order, type='S', points=batch['points'], is_pretest=False)
+        start_batch.save()
+
+        for case_data in batch['cases']:
+            order += 1
+            case = ProblemTestCase(
+                dataset=problem,
+                order=order,
+                type='C',
+                input_file=case_data['input_file'],
+                output_file=case_data['output_file'],
+                is_pretest=False,
+            )
+            case.save()
+
+        order += 1
+        end_batch = ProblemTestCase(dataset=problem, order=order, type='E', is_pretest=False)
+        end_batch.save()
+
+    for case_data in problem_meta['cases']:
+        order += 1
         case = ProblemTestCase(
             dataset=problem,
             order=order,
+            type='C',
             input_file=case_data['input_file'],
             output_file=case_data['output_file'],
             points=case_data['points'],
