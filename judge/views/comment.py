@@ -56,7 +56,7 @@ def vote_comment(request, delta):
         vote = CommentVote.objects.get(comment_id=comment_id, voter=request.profile)
         # If the vote is the same as the new one, change score and delete it
         if (vote.score != delta):
-        # If the vote is the opposite of the new one, change score and change vote
+            # If the vote is the opposite of the new one, change score and change vote
             if (vote.score == 1):
                 Comment.objects.get(id=comment_id).vote(-2)
             else:
@@ -70,7 +70,7 @@ def vote_comment(request, delta):
             return HttpResponse('unvote success', content_type='text/plain')
     except CommentVote.DoesNotExist:
         pass
-    
+
     vote = CommentVote()
     vote.comment_id = comment_id
     vote.voter = request.profile

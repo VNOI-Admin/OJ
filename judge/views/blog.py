@@ -64,7 +64,7 @@ def vote_blog(request, delta):
         vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
         # If the vote is the same as the new one, change score and delete it
         if (vote.score != delta):
-        # If the vote is the opposite of the new one, change score and change vote
+            # If the vote is the opposite of the new one, change score and change vote
             if (vote.score == 1):
                 BlogPost.objects.get(id=blog_id).vote(-2)
             else:
