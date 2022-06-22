@@ -18,6 +18,7 @@ resources/ranks.css
 resources/table.css
 resources/martor-description.css
 sass_processed
+test
 bridge_log.txt
 _mytempfile/
 tmp_uwsgi.ini
