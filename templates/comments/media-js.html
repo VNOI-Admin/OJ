@@ -85,7 +85,11 @@
                     },
                     success: function (data, textStatus, jqXHR) {
                         var score = $('#comment-' + id + ' .comment-score').first();
-                        score.text(parseInt(score.text()) + delta);
+                        if (data.includes('unvote')){
+							score.text(parseInt(score.text()) - delta);
+						} else {
+							score.text(parseInt(score.text()) + delta);
+						}
                         if (typeof on_success !== 'undefined')
                             on_success();
                     },
@@ -106,20 +110,34 @@
             window.comment_upvote = function (id) {
                 ajax_vote('{{ url('comment_upvote') }}', id, 1, function () {
                     var $votes = get_$votes(id);
-                    if ($votes.downvote.hasClass('voted'))
+                    if ($votes.downvote.hasClass('voted')){
                         $votes.downvote.removeClass('voted');
-                    else
+                        var score = $('#comment-' + id + ' .comment-score').first();
+						score.text(parseInt(score.text()) + 1);
+					}
+                    if ($votes.upvote.hasClass('voted')){
+                        $votes.upvote.removeClass('voted');
+					}
+                    else {
                         $votes.upvote.addClass('voted');
+					}
                 });
             };
 
             window.comment_downvote = function (id) {
                 ajax_vote('{{ url('comment_downvote') }}', id, -1, function () {
                     var $votes = get_$votes(id);
-                    if ($votes.upvote.hasClass('voted'))
+					if ($votes.upvote.hasClass('voted')) { 
                         $votes.upvote.removeClass('voted');
-                    else
+                        var score = $('#comment-' + id + ' .comment-score').first(); 
+						score.text(parseInt(score.text()) - 1);
+					}
+                    if ($votes.downvote.hasClass('voted')){
+                        $votes.downvote.removeClass('voted');
+					}
+                    else {
                         $votes.downvote.addClass('voted');
+					}
                 });
             };
 

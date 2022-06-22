@@ -60,6 +60,23 @@ def vote_blog(request, delta):
     if blog.authors.filter(id=request.profile.id).exists():
         return HttpResponseBadRequest(_('You cannot vote your own blog'), content_type='text/plain')
 
+    try:
+        vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
+        if (vote.score != delta):
+            if (vote.score == 1):
+                BlogPost.objects.get(id=blog_id).vote(-2)
+            else:
+                BlogPost.objects.get(id=blog_id).vote(2)
+            vote.score = delta
+            vote.save()
+            return HttpResponse('vote success', content_type='text/plain')
+        else:
+            BlogPost.objects.get(id=blog_id).vote(-delta)
+            vote.delete()
+            return HttpResponse('unvote success', content_type='text/plain')
+    except BlogVote.DoesNotExist:
+        pass
+
     vote = BlogVote()
     vote.blog_id = blog_id
     vote.voter = request.profile
@@ -75,11 +92,11 @@ def vote_blog(request, delta):
                 except BlogVote.DoesNotExist:
                     # We must continue racing in case this is exploited to manipulate votes.
                     continue
-                return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
+                # return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
         else:
             BlogPost.objects.get(id=blog_id).vote(delta)
         break
-    return HttpResponse('success', content_type='text/plain')
+    return HttpResponse('vote success', content_type='text/plain')
 
 
 def upvote_blog(request):

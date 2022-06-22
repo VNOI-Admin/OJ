@@ -52,6 +52,23 @@ def vote_comment(request, delta):
     if comment.author == request.profile:
         return HttpResponseBadRequest(_('You cannot vote on your own comments.'), content_type='text/plain')
 
+    try:
+        vote = CommentVote.objects.get(comment_id=comment_id, voter=request.profile)
+        if (vote.score != delta):
+            if (vote.score == 1):
+                Comment.objects.get(id=comment_id).vote(-2)
+            else:
+                Comment.objects.get(id=comment_id).vote(2)
+            vote.score = delta
+            vote.save()
+            return HttpResponse('vote success', content_type='text/plain')
+        else:
+            Comment.objects.get(id=comment_id).vote(-delta)
+            vote.delete()
+            return HttpResponse('unvote success', content_type='text/plain')
+    except CommentVote.DoesNotExist:
+        pass
+    
     vote = CommentVote()
     vote.comment_id = comment_id
     vote.voter = request.profile
@@ -67,11 +84,11 @@ def vote_comment(request, delta):
                 except CommentVote.DoesNotExist:
                     # We must continue racing in case this is exploited to manipulate votes.
                     continue
-                return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
+                # return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
         else:
             Comment.objects.get(id=comment_id).vote(delta)
         break
-    return HttpResponse('success', content_type='text/plain')
+    return HttpResponse('vote success', content_type='text/plain')
 
 
 def upvote_comment(request):
