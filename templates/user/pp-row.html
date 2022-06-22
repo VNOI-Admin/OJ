@@ -21,8 +21,8 @@
         <a href="{{ url('submission_status', breakdown.sub_id) }}">{{ breakdown.points|floatformat(2) }}pp</a>
     </div>
     <div class="pp-weighted">
-        {% with percent='<b>%s%%</b>'|safe|format(breakdown.weight|floatformat(0)), pp=breakdown.scaled_points %}
-            {{ _('weighted %(percent)s (%(pp).2fpp)', percent=percent, pp=pp) }}
+        {% with percent='<b>%s%%</b>'|safe|format(breakdown.weight|floatformat(0)), pp=breakdown.scaled_points|floatformat(2) %}
+            {{ _('weighted %(percent)s (%(pp)spp)', percent=percent, pp=pp) }}
         {% endwith %}
     </div>
 </div>
