@@ -54,7 +54,9 @@ def vote_comment(request, delta):
 
     try:
         vote = CommentVote.objects.get(comment_id=comment_id, voter=request.profile)
+        # If the vote is the same as the new one, change score and delete it
         if (vote.score != delta):
+        # If the vote is the opposite of the new one, change score and change vote
             if (vote.score == 1):
                 Comment.objects.get(id=comment_id).vote(-2)
             else:
@@ -85,6 +87,7 @@ def vote_comment(request, delta):
                     # We must continue racing in case this is exploited to manipulate votes.
                     continue
                 # return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
+                # Remove the "Twice" Respond
         else:
             Comment.objects.get(id=comment_id).vote(delta)
         break
