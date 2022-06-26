@@ -4,7 +4,6 @@
 
 {% block title_row %}
     {% set tab = 'detail' %}
-    {% set title = contest.name %}
     {% include "contest/contest-tabs.html" %}
     {% if contest.is_organization_private %}
         <span class="organization-tags">
