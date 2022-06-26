@@ -57,6 +57,15 @@ function CodeBlock(el)
     return el
 end
 
+function Quoted(el)
+    -- Normalize quotes
+    local quote = el.quotetype == 'SingleQuote' and "'" or '"'
+    local inlines = el.content
+    table.insert(inlines, 1, quote)
+    table.insert(inlines, quote)
+    return inlines
+end
+
 function Str(el)
     -- en dash and em dash would still show up correctly if we don't escape
     -- them, but they would be hardly noticeable while editing.
