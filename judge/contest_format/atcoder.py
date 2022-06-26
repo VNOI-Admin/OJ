@@ -123,6 +123,6 @@ class AtCoderContestFormat(DefaultContestFormat):
                 'Each submission before the first maximum score submission will incur a **penalty of %d minutes**.',
                 penalty,
             ) % penalty
-            yield _('Ties will be broken by the last score altering submission time (including penalty).')
+            yield _('Ties will be broken by the time of the last score altering submission (including penalty).')
         else:
-            yield _('Ties will be broken by the last score altering submission time.')
+            yield _('Ties will be broken by the time of the last score altering submission.')

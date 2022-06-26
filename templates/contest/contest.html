@@ -134,13 +134,6 @@
                         {% endif %}
                     </li>
                     <li>
-                        {% filter markdown('default') %}
-                            {% trans trimmed count=metadata.problem_count %}
-                                There is **{{ count }}** problem in this contest.
-                            {% pluralize count %}
-                                There are **{{ count }}** problems in this contest.
-                            {% endtrans %}
-                        {% endfilter %}
                         <ul>
                             <li>
                                 {% if metadata.has_partials %}
