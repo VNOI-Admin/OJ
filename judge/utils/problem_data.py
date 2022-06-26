@@ -144,7 +144,7 @@ class ProblemDataCompiler(object):
                     raise ProblemDataError(e)
 
                 # Python checker doesn't need to use bridged
-                # so we return the name dirrectly
+                # so we return the name directly
                 if checker_ext == 'py':
                     return custom_checker_path[1]
 
