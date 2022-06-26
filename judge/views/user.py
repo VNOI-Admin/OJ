@@ -234,7 +234,7 @@ class UserAboutPage(UserPage):
 
 
 class UserBan(UserMixin, TitleMixin, SingleObjectFormView):
-    title = _('Ban user')
+    title = gettext_lazy('Ban user')
     template_name = 'user/ban.html'
     form_class = UserBanForm
 

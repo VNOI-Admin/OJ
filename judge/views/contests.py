@@ -377,7 +377,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
 
 class ContestAnnounce(ContestMixin, TitleMixin, SingleObjectFormView):
-    title = _('Create contest announcement')
+    title = gettext_lazy('Create contest announcement')
     template_name = 'contest/create-announcement.html'
     form_class = ContestAnnouncementForm
 
@@ -1182,7 +1182,7 @@ class ContestDataMixin(ContestMixin, LoginRequiredMixin):
 
 
 class ContestPrepareData(ContestDataMixin, TitleMixin, SingleObjectMixin, FormView):
-    title = _('Download contest data')
+    title = gettext_lazy('Download contest data')
     template_name = 'contest/prepare-data.html'
     form_class = ContestDownloadDataForm
 
