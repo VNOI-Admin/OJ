@@ -1,3 +1,10 @@
+{% macro make_status(case) %}
+    {% set partial = (case.status == 'AC' and  case.points < case.total) %}
+    <span title="{{ case.long_status }}" class="case-{%- if partial -%}_AC{% else %}{{- case.status -}}{%- endif -%}">
+        {%- if case.status == 'SC' %}&mdash;{% elif partial %}{{_("Partial Accepted")}}{% else %}{{ case.long_status }}{% endif -%}
+    </span>
+{% endmacro %}
+
 {% if submission.contest_or_none %}
     {% set prefix_length = submission.contest_or_none.problem.output_prefix_override %}
 {% else %}
@@ -58,6 +65,7 @@
             {% if batch.id %}
                 <b>{{ _('Batch ') }}#{{ test_case_id() }}</b>
                 ({{ _('%(points)s/%(total)s points', points=batch.points|floatformat(0), total=batch.total|floatformat(0)) }})
+                {{ make_status(batch) }}
                 <br>
                 <div class="batch-cases">
             {% endif %}
@@ -86,10 +94,7 @@
                 </td>
 
                 <td>
-                    {% set partial = (case.status == 'AC' and  case.points < case.total) %}
-                    <span title="{{ case.long_status }}" class="case-{%- if partial -%}_AC{% else %}{{- case.status -}}{%- endif -%}">
-                        {%- if case.status == 'SC' %}&mdash;{% elif partial %}{{_("Partial Accepted")}}{% else %}{{ case.long_status }}{% endif -%}
-                    </span>
+                    {{ make_status(case) }}
                     {%- if case.feedback %}&nbsp;({{ case.feedback }}){% endif -%}
                 </td>
 

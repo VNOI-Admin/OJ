@@ -165,11 +165,14 @@ def SubmissionSourceDiff(request):
     })
 
 
-def make_batch(batch, cases):
+def make_batch(batch, cases, statuses=None):
     result = {'id': batch, 'cases': cases}
     if batch:
         result['points'] = min(map(attrgetter('points'), cases))
         result['total'] = max(map(attrgetter('total'), cases))
+        result['status'] = statuses[0].status if statuses else None
+        if result['status']:
+            result['long_status'] = Submission.USER_DISPLAY_CODES.get(result['status'], '')
     return result
 
 
@@ -216,14 +219,16 @@ def group_test_cases(cases):
         if case.time:
             max_execution_time = max(max_execution_time, case.time)
         if case.batch != last and buf:
-            result.append(make_batch(last, buf))
-            status.extend(get_statuses(last, buf))
+            statuses = get_statuses(last, buf)
+            result.append(make_batch(last, buf, statuses))
+            status.extend(statuses)
             buf = []
         buf.append(case)
         last = case.batch
     if buf:
-        result.append(make_batch(last, buf))
-        status.extend(get_statuses(last, buf))
+        statuses = get_statuses(last, buf)
+        result.append(make_batch(last, buf, statuses))
+        status.extend(statuses)
     return result, status, max_execution_time, test_case_count
 
 
