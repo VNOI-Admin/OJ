@@ -248,7 +248,6 @@ class SubmissionStatus(SubmissionDetailBase):
         if not submission.is_graded and len(statuses) > 0 and statuses[-1].batch is not None:
             context['batches'][-1]['not_graded'] = True
 
-
         context['statuses'] = combine_statuses(statuses, submission)
         context['can_view_test'] = submission.problem.is_testcase_accessible_by(self.request.user)
         if context['can_view_test']:

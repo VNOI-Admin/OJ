@@ -213,10 +213,10 @@ class Problem(models.Model):
                                                 default=ProblemTestcaseAccess.AUTHOR_ONLY,
                                                 choices=PROBLEM_TESTCASE_ACCESS)
 
-    testcase_result_visibility_mode  = models.CharField(verbose_name=_('Testcase result visibility'), max_length=1,
-                                                        default=ProblemTestcaseResultAccess.ALL_TEST_CASE,
-                                                        choices=PROBLEM_TESTCASE_RESULT_ACCESS,
-                                                        help_text=_('What testcase result should be showed to users?'))
+    testcase_result_visibility_mode = models.CharField(verbose_name=_('Testcase result visibility'), max_length=1,
+                                                       default=ProblemTestcaseResultAccess.ALL_TEST_CASE,
+                                                       choices=PROBLEM_TESTCASE_RESULT_ACCESS,
+                                                       help_text=_('What testcase result should be showed to users?'))
 
     objects = TranslatedProblemQuerySet.as_manager()
     tickets = GenericRelation('Ticket')
