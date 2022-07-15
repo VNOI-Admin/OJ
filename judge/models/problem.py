@@ -117,6 +117,12 @@ class ProblemTestcaseAccess:
     AUTHOR_ONLY = 'O'
 
 
+class ProblemTestcaseResultAccess:
+    ALL_TEST_CASE = 'A'
+    ONLY_BATCH_RESULT = 'B'
+    ONLY_SUBMISSION_RESULT = 'S'
+
+
 class Problem(models.Model):
     SUBMISSION_SOURCE_ACCESS = (
         (SubmissionSourceAccess.FOLLOW, _('Follow global setting')),
@@ -129,6 +135,12 @@ class Problem(models.Model):
         (ProblemTestcaseAccess.AUTHOR_ONLY, _('Visible for authors')),
         (ProblemTestcaseAccess.OUT_CONTEST, _('Visible if user is not in a contest')),
         (ProblemTestcaseAccess.ALWAYS, _('Always visible')),
+    )
+
+    PROBLEM_TESTCASE_RESULT_ACCESS = (
+        (ProblemTestcaseResultAccess.ALL_TEST_CASE, _('Show all testcase result')),
+        (ProblemTestcaseResultAccess.ONLY_BATCH_RESULT, _('Show batch result only')),
+        (ProblemTestcaseResultAccess.ONLY_SUBMISSION_RESULT, _('Show submission result only')),
     )
 
     code = models.CharField(max_length=32, verbose_name=_('problem code'), unique=True,
@@ -201,6 +213,11 @@ class Problem(models.Model):
                                                 default=ProblemTestcaseAccess.AUTHOR_ONLY,
                                                 choices=PROBLEM_TESTCASE_ACCESS)
 
+    testcase_result_visibility_mode  = models.CharField(verbose_name=_('Testcase result visibility'), max_length=1,
+                                                        default=ProblemTestcaseResultAccess.ALL_TEST_CASE,
+                                                        choices=PROBLEM_TESTCASE_RESULT_ACCESS,
+                                                        help_text=_('What testcase result should be showed to users?'))
+
     objects = TranslatedProblemQuerySet.as_manager()
     tickets = GenericRelation('Ticket')
 
@@ -209,11 +226,6 @@ class Problem(models.Model):
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
 
     suggester = models.ForeignKey(Profile, blank=True, null=True, related_name='suggested_problems', on_delete=SET_NULL)
-
-    allow_view_testcase_status = models.BooleanField(
-        help_text=_('Allow user to view result of testcase. Should be allow for most of problems except for ICPC'),
-        default=True,
-    )
 
     allow_view_feedback = models.BooleanField(
         help_text=_('Allow user to view checker feedback.'),

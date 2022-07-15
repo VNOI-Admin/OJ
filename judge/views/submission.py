@@ -25,7 +25,7 @@ from django.views.generic import DetailView, ListView
 
 from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
-from judge.models.problem import SubmissionSourceAccess
+from judge.models.problem import ProblemTestcaseResultAccess, SubmissionSourceAccess
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.problem_data import get_problem_testcases_data
 from judge.utils.problems import get_result_data, user_completed_ids, user_editable_ids, user_tester_ids
@@ -244,6 +244,11 @@ class SubmissionStatus(SubmissionDetailBase):
 
         context['feedback_limit'] = min(3, test_case_count - 1)
 
+        # copy from combine_statuses
+        if not submission.is_graded and len(statuses) > 0 and statuses[-1].batch is not None:
+            context['batches'][-1]['not_graded'] = True
+
+
         context['statuses'] = combine_statuses(statuses, submission)
         context['can_view_test'] = submission.problem.is_testcase_accessible_by(self.request.user)
         if context['can_view_test']:
@@ -251,8 +256,11 @@ class SubmissionStatus(SubmissionDetailBase):
         else:
             context['cases_data'] = {}
 
-        context['can_view_per_testcase_status'] = self.request.user.is_superuser or \
-            submission.problem.allow_view_testcase_status
+        context['can_view_testcase_status'] = self.request.user.is_superuser or \
+            submission.problem.testcase_result_visibility_mode == ProblemTestcaseResultAccess.ALL_TEST_CASE
+        context['can_view_batch_status'] = submission.problem.testcase_result_visibility_mode \
+            == ProblemTestcaseResultAccess.ONLY_BATCH_RESULT
+
         context['can_view_feedback'] = self.request.user.is_superuser or \
             submission.problem.allow_view_feedback
         context['time_limit'] = submission.problem.time_limit
