@@ -94,7 +94,7 @@
     {% else %}
         <script type="text/javascript" src="{{ static('mathjax_config.js') }}"></script>
     {% endif %}
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js"></script>
+    <script type="text/javascript" src="{{ static('vnoj/mathjax/tex-chtml.min.js') }}"></script>
     <script type="text/javascript">
         MathJax.typesetPromise().then(function () {
             if (typeof window.callPhantom === 'function')
