@@ -2,7 +2,7 @@ import pytz
 from django.conf import settings
 from django.db import connection
 from django.utils import timezone
-from django.utils.timezone import make_aware
+from django.utils.timezone import make_aware, make_naive
 
 
 class TimezoneMiddleware(object):
@@ -25,3 +25,10 @@ def from_database_time(datetime):
     if tz is None:
         return datetime
     return make_aware(datetime, tz)
+
+
+def to_database_time(datetime):
+    tz = connection.timezone
+    if tz is None:
+        return datetime
+    return make_naive(datetime, tz)
