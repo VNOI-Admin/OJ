@@ -25,7 +25,7 @@ from django.views.generic import DetailView, ListView
 
 from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
-from judge.models.problem import SubmissionSourceAccess
+from judge.models.problem import ProblemTestcaseResultAccess, SubmissionSourceAccess
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.problem_data import get_problem_testcases_data
 from judge.utils.problems import get_result_data, user_completed_ids, user_editable_ids, user_tester_ids
@@ -34,11 +34,12 @@ from judge.utils.views import DiggPaginatorMixin, TitleMixin, add_file_response,
 
 
 def submission_related(queryset):
-    return queryset.select_related('user__user', 'problem', 'language') \
-        .only('id', 'user__user__username', 'user__display_rank', 'user__rating', 'problem__name',
-              'problem__code', 'problem__is_public', 'language__short_name', 'language__key', 'date', 'time', 'memory',
-              'points', 'result', 'status', 'case_points', 'case_total', 'current_testcase', 'contest_object',
-              'locked_after', 'problem__submission_source_visibility_mode', 'user__username_display_override') \
+    return queryset.select_related('user__user', 'user__display_badge', 'problem', 'language') \
+        .only('id', 'user__user__username', 'user__display_rank', 'user__rating', 'problem__name', 'problem__code',
+              'problem__is_public', 'language__short_name', 'language__key', 'language__file_only', 'date', 'time',
+              'memory', 'points', 'result', 'status', 'case_points', 'case_total', 'current_testcase', 'contest_object',
+              'locked_after', 'problem__submission_source_visibility_mode', 'problem__testcase_result_visibility_mode',
+              'user__username_display_override', 'user__display_badge__name', 'user__display_badge__mini') \
         .prefetch_related('contest_object__authors', 'contest_object__curators')
 
 
@@ -165,11 +166,14 @@ def SubmissionSourceDiff(request):
     })
 
 
-def make_batch(batch, cases):
+def make_batch(batch, cases, statuses=None):
     result = {'id': batch, 'cases': cases}
     if batch:
         result['points'] = min(map(attrgetter('points'), cases))
         result['total'] = max(map(attrgetter('total'), cases))
+        result['status'] = statuses[0].status if statuses else None
+        if result['status']:
+            result['long_status'] = Submission.USER_DISPLAY_CODES.get(result['status'], '')
     return result
 
 
@@ -216,14 +220,16 @@ def group_test_cases(cases):
         if case.time:
             max_execution_time = max(max_execution_time, case.time)
         if case.batch != last and buf:
-            result.append(make_batch(last, buf))
-            status.extend(get_statuses(last, buf))
+            statuses = get_statuses(last, buf)
+            result.append(make_batch(last, buf, statuses))
+            status.extend(statuses)
             buf = []
         buf.append(case)
         last = case.batch
     if buf:
-        result.append(make_batch(last, buf))
-        status.extend(get_statuses(last, buf))
+        statuses = get_statuses(last, buf)
+        result.append(make_batch(last, buf, statuses))
+        status.extend(statuses)
     return result, status, max_execution_time, test_case_count
 
 
@@ -239,6 +245,10 @@ class SubmissionStatus(SubmissionDetailBase):
 
         context['feedback_limit'] = min(3, test_case_count - 1)
 
+        # copy from combine_statuses
+        if not submission.is_graded and len(statuses) > 0 and statuses[-1].batch is not None:
+            context['batches'][-1]['not_graded'] = True
+
         context['statuses'] = combine_statuses(statuses, submission)
         context['can_view_test'] = submission.problem.is_testcase_accessible_by(self.request.user)
         if context['can_view_test']:
@@ -246,8 +256,11 @@ class SubmissionStatus(SubmissionDetailBase):
         else:
             context['cases_data'] = {}
 
-        context['can_view_per_testcase_status'] = self.request.user.is_superuser or \
-            submission.problem.allow_view_testcase_status
+        context['can_view_testcase_status'] = self.request.user.is_superuser or \
+            submission.problem.testcase_result_visibility_mode == ProblemTestcaseResultAccess.ALL_TEST_CASE
+        context['can_view_batch_status'] = submission.problem.testcase_result_visibility_mode \
+            == ProblemTestcaseResultAccess.ONLY_BATCH_RESULT
+
         context['can_view_feedback'] = self.request.user.is_superuser or \
             submission.problem.allow_view_feedback
         context['time_limit'] = submission.problem.time_limit

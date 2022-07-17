@@ -126,7 +126,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
             'fields': (
                 'code', 'name', 'suggester', 'is_public', 'is_manually_managed', 'date', 'authors',
                 'curators', 'testers', 'is_organization_private', 'organizations', 'submission_source_visibility_mode',
-                'testcase_visibility_mode', 'allow_view_testcase_status', 'allow_view_feedback',
+                'testcase_visibility_mode', 'testcase_result_visibility_mode', 'allow_view_feedback',
                 'is_full_markup', 'pdf_url', 'source', 'description', 'license',
             ),
         }),
