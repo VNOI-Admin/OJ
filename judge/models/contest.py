@@ -89,7 +89,7 @@ class Contest(models.Model):
     time_limit = models.DurationField(verbose_name=_('time limit'), blank=True, null=True)
     frozen_last_minutes = models.IntegerField(verbose_name=_('frozen last minutes'), default=0,
                                               help_text=_('If set, the scoreboard will be frozen for the last X '
-                                                          'minutes. Only available for ICPC format.'))
+                                                          'minutes. Only available for ICPC and VNOJ format.'))
     is_visible = models.BooleanField(verbose_name=_('publicly visible'), default=False,
                                      help_text=_('Should be set even for organization-private contests, where it '
                                                  'determines whether the contest is visible to members of the '
