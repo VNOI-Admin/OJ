@@ -256,3 +256,10 @@ class VNOJContestFormat(DefaultContestFormat):
             else:
                 yield _('Ties will be broken by the sum of the last score altering submission time on problems with '
                         'a non-zero score, followed by the time of the last score altering submission.')
+
+        if self.contest.frozen_last_minutes:
+            yield ungettext(
+                'The scoreboard will be frozen in the **last %d minute**.',
+                'The scoreboard will be frozen in the **last %d minutes**.',
+                self.contest.frozen_last_minutes,
+            ) % self.contest.frozen_last_minutes
