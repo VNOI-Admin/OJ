@@ -1155,10 +1155,10 @@ msgstr "số phút đóng băng"
 #: judge/models/contest.py:91
 msgid ""
 "If set, the scoreboard will be frozen for the last X minutes. Only available "
-"for ICPC format."
+"for ICPC and VNOJ format."
 msgstr ""
 "Nếu được thiết lập, bảng xếp hạng sẽ dược đóng băng trong X phút cuối. Chỉ "
-"hỗ trợ format ICPC."
+"hỗ trợ format ICPC và VNOJ."
 
 #: judge/models/contest.py:93 judge/models/problem.py:181
 msgid "publicly visible"
