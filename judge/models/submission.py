@@ -139,6 +139,7 @@ class Submission(models.Model):
                 judge_submission(self, *args, rejudge=rejudge, **kwargs)
         else:
             Submission.objects.filter(id=self.id).update(status='D', result='AB')
+            self.update_contest()
 
     judge.alters_data = True
 
