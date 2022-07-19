@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='contest',
             name='frozen_last_minutes',
-            field=models.IntegerField(default=0, help_text='If set, the scoreboard will be frozen for the last X minutes. Only available for ICPC format.', verbose_name='frozen last minutes'),
+            field=models.IntegerField(default=0, help_text='If set, the scoreboard will be frozen for the last X minutes. Only available for ICPC and VNOJ format.', verbose_name='frozen last minutes'),
         ),
         migrations.AddField(
             model_name='contestparticipation',

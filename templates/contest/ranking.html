@@ -159,9 +159,7 @@
                             $('.personal-info').show();
                             $('#show-personal-info-checkbox').prop('checked', true);
                         }
-                        {% if is_ICPC_format %}
-                            window.firstSolve();
-                        {% endif %}
+                        window.firstSolve();
                         window.totalAC();
                     }).always(function () {
                         ranking_outdated = false;
@@ -255,6 +253,9 @@
                     let href = this['attributes']['href']['value'];
                     if (href.includes('submissions')) {
                         let time = $(this).find('.solving-time').text()
+                        if (time.length == 0) {
+                            continue;
+                        }
                         let hrefElement = href.split('/');
 
                         let problem = hrefElement[hrefElement.length - 2];
@@ -277,9 +278,7 @@
                 }
             }
 
-            {% if is_ICPC_format %}
-                window.firstSolve();
-            {% endif %}
+            window.firstSolve();
 
             window.totalAC = function() {
                 let arr = {};
