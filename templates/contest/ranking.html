@@ -254,7 +254,7 @@
                     if (href.includes('submissions')) {
                         let time = $(this).find('.solving-time').text()
                         if (time.length == 0) {
-                            continue;
+                            return;
                         }
                         let hrefElement = href.split('/');
 
