@@ -73,7 +73,7 @@ class BlogPost(models.Model):
     publish_on = models.DateTimeField(verbose_name=_('publish after'))
     content = models.TextField(verbose_name=_('post content'))
     summary = models.TextField(verbose_name=_('post summary'), blank=True)
-    og_image = models.CharField(verbose_name=_('openGraph image'), default='', max_length=150, blank=True)
+    og_image = models.CharField(verbose_name=_('OpenGraph image'), default='', max_length=150, blank=True)
     score = models.IntegerField(verbose_name=_('votes'), default=0)
     global_post = models.BooleanField(verbose_name=_('global post'), default=False,
                                       help_text=_('Display this blog post at the homepage.'))
