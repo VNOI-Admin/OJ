@@ -40,21 +40,21 @@ class EncryptedNullCharField(EncryptedCharField):
 class Organization(models.Model):
     name = models.CharField(max_length=128, verbose_name=_('organization title'))
     slug = models.SlugField(max_length=128, verbose_name=_('organization slug'),
-                            help_text=_('Organization name shown in URL'))
+                            help_text=_('Organization name shown in URLs.'))
     short_name = models.CharField(max_length=20, verbose_name=_('short name'),
-                                  help_text=_('Displayed beside user name during contests'))
+                                  help_text=_('Displayed beside user name during contests.'))
     about = models.TextField(verbose_name=_('organization description'))
     admins = models.ManyToManyField('Profile', verbose_name=_('administrators'), related_name='admin_of',
-                                    help_text=_('Those who can edit this organization'))
+                                    help_text=_('Those who can edit this organization.'))
     creation_date = models.DateTimeField(verbose_name=_('creation date'), auto_now_add=True)
     is_open = models.BooleanField(verbose_name=_('is open organization?'),
-                                  help_text=_('Allow joining organization'), default=False)
+                                  help_text=_('Allow joining organization.'), default=False)
     is_unlisted = models.BooleanField(verbose_name=_('is unlisted organization?'),
                                       help_text=_('Organization will not be listed'), default=True)
     slots = models.IntegerField(verbose_name=_('maximum size'), null=True, blank=True,
                                 help_text=_('Maximum amount of users in this organization, '
-                                            'only applicable to private organizations'))
-    access_code = models.CharField(max_length=7, help_text=_('Student access code'),
+                                            'only applicable to private organizations.'))
+    access_code = models.CharField(max_length=7, help_text=_('Student access code.'),
                                    verbose_name=_('access code'), null=True, blank=True)
     logo_override_image = models.CharField(verbose_name=_('logo override image'), default='', max_length=150,
                                            blank=True,
@@ -96,7 +96,7 @@ class Organization(models.Model):
         elif isinstance(item, Profile):
             return self.members.filter(id=item.id).exists()
         else:
-            raise TypeError('Organization membership test must be Profile or primany key')
+            raise TypeError('Organization membership test must be Profile or primary key')
 
     def __str__(self):
         return self.name
@@ -164,32 +164,32 @@ class Profile(models.Model):
                                            null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
     math_engine = models.CharField(verbose_name=_('math engine'), choices=MATH_ENGINES_CHOICES, max_length=4,
                                    default=settings.MATHOID_DEFAULT_TYPE,
-                                   help_text=_('the rendering engine used to render math'))
+                                   help_text=_('The rendering engine used to render math.'))
     is_totp_enabled = models.BooleanField(verbose_name=_('TOTP 2FA enabled'), default=False,
-                                          help_text=_('check to enable TOTP-based two-factor authentication'))
+                                          help_text=_('Check to enable TOTP-based two-factor authentication.'))
     is_webauthn_enabled = models.BooleanField(verbose_name=_('WebAuthn 2FA enabled'), default=False,
-                                              help_text=_('check to enable WebAuthn-based two-factor authentication'))
+                                              help_text=_('Check to enable WebAuthn-based two-factor authentication.'))
     totp_key = EncryptedNullCharField(max_length=32, null=True, blank=True, verbose_name=_('TOTP key'),
-                                      help_text=_('32 character base32-encoded key for TOTP'),
+                                      help_text=_('32-character Base32-encoded key for TOTP.'),
                                       validators=[RegexValidator('^$|^[A-Z2-7]{32}$',
-                                                                 _('TOTP key must be empty or base32'))])
+                                                                 _('TOTP key must be empty or Base32.'))])
     scratch_codes = EncryptedNullCharField(max_length=255, null=True, blank=True, verbose_name=_('scratch codes'),
-                                           help_text=_('JSON array of 16 character base32-encoded codes '
-                                                       'for scratch codes'),
+                                           help_text=_('JSON array of 16-character Base32-encoded codes '
+                                                       'for scratch codes.'),
                                            validators=[
                                                RegexValidator(r'^(\[\])?$|^\[("[A-Z0-9]{16}", *)*"[A-Z0-9]{16}"\]$',
                                                               _('Scratch codes must be empty or a JSON array of '
-                                                                '16-character base32 codes'))])
+                                                                '16-character Base32 codes.'))])
     last_totp_timecode = models.IntegerField(verbose_name=_('last TOTP timecode'), default=0)
     api_token = models.CharField(max_length=64, null=True, verbose_name=_('API token'),
-                                 help_text=_('64 character hex-encoded API access token'),
+                                 help_text=_('64-character hex-encoded API access token.'),
                                  validators=[RegexValidator('^[a-f0-9]{64}$',
                                                             _('API token must be None or hexadecimal'))])
     notes = models.TextField(verbose_name=_('internal notes'), null=True, blank=True,
                              help_text=_('Notes for administrators regarding this user.'))
     data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
     username_display_override = models.CharField(max_length=100, blank=True, verbose_name=_('display name override'),
-                                                 help_text=_('Name displayed in place of username'))
+                                                 help_text=_('Name displayed in place of username.'))
 
     @cached_property
     def organization(self):

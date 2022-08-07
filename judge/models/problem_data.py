@@ -65,7 +65,7 @@ class ProblemData(models.Model):
     checker = models.CharField(max_length=10, verbose_name=_('checker'), choices=CHECKERS, default='standard')
     grader = models.CharField(max_length=30, verbose_name=_('Grader'), choices=GRADERS, default='standard')
     checker_args = models.TextField(verbose_name=_('checker arguments'), blank=True,
-                                    help_text=_('checker arguments as a JSON object'))
+                                    help_text=_('Checker arguments as a JSON object.'))
 
     custom_checker = models.FileField(verbose_name=_('custom checker file'), storage=problem_data_storage,
                                       null=True,
@@ -140,4 +140,4 @@ class ProblemTestCase(models.Model):
     output_limit = models.IntegerField(verbose_name=_('output limit length'), blank=True, null=True)
     checker = models.CharField(max_length=10, verbose_name=_('checker'), choices=CHECKERS, blank=True)
     checker_args = models.TextField(verbose_name=_('checker arguments'), blank=True,
-                                    help_text=_('checker arguments as a JSON object'))
+                                    help_text=_('Checker arguments as a JSON object.'))

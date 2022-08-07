@@ -100,8 +100,8 @@ class Contest(models.Model):
                                                      related_name='view_contest_scoreboard',
                                                      help_text=_('These users will be able to view the scoreboard.'))
     scoreboard_visibility = models.CharField(verbose_name=_('scoreboard visibility'), default=SCOREBOARD_VISIBLE,
-                                             max_length=1, help_text=_('Scoreboard visibility through the duration '
-                                                                       'of the contest'), choices=SCOREBOARD_VISIBILITY)
+                                             help_text=_('Scoreboard visibility through the duration of the contest'),
+                                             max_length=1, choices=SCOREBOARD_VISIBILITY)
     scoreboard_cache_timeout = models.PositiveIntegerField(verbose_name=('scoreboard cache timeout'), default=0,
                                                            help_text=_('How long should the scoreboard be cached. '
                                                                        'Set to 0 to disable caching.'))
@@ -114,10 +114,10 @@ class Contest(models.Model):
     push_announcements = models.BooleanField(verbose_name=_('push announcements'),
                                              help_text=_('Notify users when there are new announcements.'),
                                              default=False)
-    rating_floor = models.IntegerField(verbose_name=('rating floor'), help_text=_('Rating floor for contest'),
-                                       null=True, blank=True)
-    rating_ceiling = models.IntegerField(verbose_name=('rating ceiling'), help_text=_('Rating ceiling for contest'),
-                                         null=True, blank=True)
+    rating_floor = models.IntegerField(verbose_name=_('rating floor'), null=True, blank=True,
+                                       help_text=_('Do not rate users who have a lower rating.'))
+    rating_ceiling = models.IntegerField(verbose_name=_('rating ceiling'), null=True, blank=True,
+                                         help_text=_('Do not rate users who have a higher rating.'))
     rate_all = models.BooleanField(verbose_name=_('rate all'), help_text=_('Rate all users who joined.'), default=False)
     rate_exclude = models.ManyToManyField(Profile, verbose_name=_('exclude from ratings'), blank=True,
                                           related_name='rate_exclude+')
