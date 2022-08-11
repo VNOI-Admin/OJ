@@ -242,7 +242,6 @@
             }
 
             window.firstSolve = function() {
-                console.time('firstSolve');
                 let firstSolves = {};
 
                 $('td.full-score a').each(function () {
@@ -277,7 +276,6 @@
                         }
                     }
                 });
-                console.timeEnd('firstSolve');
 
                 for (let problem in firstSolves) {
                     firstSolves[problem]['td'].addClass('first-solve');
