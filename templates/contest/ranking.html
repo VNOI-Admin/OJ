@@ -3,7 +3,6 @@
 {% block title_ruler %}{% endblock %}
 
 {% block title_row %}
-    {% set title = contest.name %}
     {% include "contest/contest-tabs.html" %}
 {% endblock %}
 
@@ -160,9 +159,7 @@
                             $('.personal-info').show();
                             $('#show-personal-info-checkbox').prop('checked', true);
                         }
-                        {% if is_ICPC_format %}
-                            window.firstSolve();
-                        {% endif %}
+                        window.firstSolve();
                         window.totalAC();
                     }).always(function () {
                         ranking_outdated = false;
@@ -245,17 +242,25 @@
             }
 
             window.firstSolve = function() {
+                console.time('firstSolve');
                 let firstSolves = {};
 
                 $('td.full-score a').each(function () {
-                    if ($(this).parent().parent().find('.virtual-participation').length) {
+                    if (this.parentNode.parentNode.getElementsByClassName('virtual-participation').length) {
                         // Skip virtual participation
+                        return;
+                    }
+
+                    if (this.parentNode.parentNode.classList.contains('disqualified')) {
                         return;
                     }
 
                     let href = this['attributes']['href']['value'];
                     if (href.includes('submissions')) {
-                        let time = $(this).find('.solving-time').text()
+                        let time = this.getElementsByClassName('solving-time')[0].textContent;
+                        if (time.length == 0) {
+                            return;
+                        }
                         let hrefElement = href.split('/');
 
                         let problem = hrefElement[hrefElement.length - 2];
@@ -272,15 +277,14 @@
                         }
                     }
                 });
+                console.timeEnd('firstSolve');
 
                 for (let problem in firstSolves) {
                     firstSolves[problem]['td'].addClass('first-solve');
                 }
             }
 
-            {% if is_ICPC_format %}
-                window.firstSolve();
-            {% endif %}
+            window.firstSolve();
 
             window.totalAC = function() {
                 let arr = {};

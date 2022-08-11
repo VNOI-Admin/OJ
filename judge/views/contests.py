@@ -377,7 +377,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
 
 class ContestAnnounce(ContestMixin, TitleMixin, SingleObjectFormView):
-    title = _('Create contest announcement')
+    title = gettext_lazy('Create contest announcement')
     template_name = 'contest/create-announcement.html'
     form_class = ContestAnnouncementForm
 
@@ -831,7 +831,8 @@ class ContestRanking(ContestRankingBase):
 
     @property
     def bypass_cache_ranking(self):
-        return self.object.scoreboard_cache_timeout == 0 or self.can_edit
+        return self.object.scoreboard_cache_timeout == 0 or self.can_edit or \
+            (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user.profile))
 
     def get_ranking_queryset(self):
         if self.is_frozen:
@@ -1181,7 +1182,7 @@ class ContestDataMixin(ContestMixin, LoginRequiredMixin):
 
 
 class ContestPrepareData(ContestDataMixin, TitleMixin, SingleObjectMixin, FormView):
-    title = _('Download contest data')
+    title = gettext_lazy('Download contest data')
     template_name = 'contest/prepare-data.html'
     form_class = ContestDownloadDataForm
 

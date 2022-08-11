@@ -4,7 +4,6 @@
 
 {% block title_row %}
     {% set tab = 'detail' %}
-    {% set title = contest.name %}
     {% include "contest/contest-tabs.html" %}
     {% if contest.is_organization_private %}
         <span class="organization-tags">
@@ -85,7 +84,7 @@
             <div id="details">
                 <ul>
                     {% with authors=contest.authors.all() %}
-                        {% if authors %}
+                        {% if not contest.hide_problem_authors and authors %}
                             <li>
                                 {% trans trimmed count=authors|length, link_authors=link_users(authors) %}
                                     The author of this contest is {{ link_authors }}.
@@ -96,7 +95,7 @@
                         {% endif %}
                     {% endwith %}
                     {% with testers=contest.testers.all() %}
-                        {% if testers %}
+                        {% if not contest.hide_problem_authors and testers %}
                             <li>
                                 {% trans trimmed count=testers|length, link_testers=link_users(testers) %}
                                     Special thanks to {{ link_testers }} for testing and feedback on the problems.
@@ -134,13 +133,6 @@
                         {% endif %}
                     </li>
                     <li>
-                        {% filter markdown('default') %}
-                            {% trans trimmed count=metadata.problem_count %}
-                                There is **{{ count }}** problem in this contest.
-                            {% pluralize count %}
-                                There are **{{ count }}** problems in this contest.
-                            {% endtrans %}
-                        {% endfilter %}
                         <ul>
                             <li>
                                 {% if metadata.has_partials %}
