@@ -1,5 +1,6 @@
 {% extends "base.html" %}
-{% block title_row %}{% endblock %}
+{% block title_row %}
+{% endblock %}
 {% block title_ruler %}{% endblock %}
 
 {% block media %}
@@ -9,7 +10,6 @@
     <link rel="alternate" type="application/rss+xml" href="{{ url('comment_rss') }}" title="RSS Comment Feed">
     <link rel="alternate" type="application/atom+xml" href="{{ url('problem_atom') }}" title="Atom Problem Feed">
     <link rel="alternate" type="application/rss+xml" href="{{ url('problem_rss') }}" title="RSS Problem Feed">
-    {% include "blog/media-css.html" %}
     <style>
         .post {
             margin: 0 0.5em;
@@ -97,7 +97,7 @@
     </div>
     <div id="blog-container">
         <div class="blog-content sidebox">
-            <h3>{{ _('News') }} <i class="fa fa-terminal"></i></h3>
+            {% include "blog/blog-list-tabs.html" %}
             <div class="sidebox-content" style="border: unset;">
                 {% for post in posts %}
                     {% include "blog/blog-post.html" %}

@@ -5,8 +5,9 @@ from django.db import IntegrityError
 from django.db.models import Count, Max
 from django.db.models.expressions import Value
 from django.db.models.functions import Coalesce
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, \
-    HttpResponseRedirect
+from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
+                         HttpResponseForbidden, HttpResponseNotFound,
+                         HttpResponseRedirect)
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
@@ -16,8 +17,8 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.dblock import LockModel
 from judge.forms import BlogPostForm
-from judge.models import BlogPost, BlogVote, Comment, Contest, Language, Problem, Profile, Submission, \
-    Ticket
+from judge.models import (BlogPost, BlogVote, Comment, Contest, Language,
+                          Problem, Profile, Submission, Ticket)
 from judge.tasks import on_new_blogpost
 from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
@@ -114,7 +115,7 @@ class PostListBase(ListView):
 
     def get_queryset(self):
         queryset = (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
-                    .order_by('-sticky', '-publish_on').prefetch_related('authors__user', 'authors__display_badge'))
+                    .prefetch_related('authors__user', 'authors__display_badge'))
         if self.request.user.is_authenticated:
             queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
             profile = self.request.profile
@@ -136,15 +137,36 @@ class PostListBase(ListView):
 
 class PostList(PostListBase):
     template_name = 'blog/list.html'
+    show_all_blogs = False
+    tab = 'home'
 
     def get_queryset(self):
         queryset = super(PostList, self).get_queryset()
-        queryset = queryset.filter(global_post=True)
+
+        queryset = queryset.filter(organization=None)
+
+        if 'show_all_blogs' in self.request.GET:
+            self.show_all_blogs = self.request.session['show_all_blogs'] = self.request.GET['show_all_blogs'] == 'true'
+        else:
+            self.show_all_blogs = self.request.session.get('show_all_blogs', False)
+
+        if self.show_all_blogs:
+            self.tab = 'blog_list'
+            queryset = queryset.order_by('-publish_on')
+        else:
+            queryset = queryset.filter(global_post=True).order_by('-sticky', '-publish_on')
+
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super(PostList, self).get_context_data(**kwargs)
         context['first_page_href'] = reverse('home')
+
+        context['newsfeed_link'] = f"{reverse('home')}?show_all_blogs=false"
+        context['all_blogs_link'] = f"{reverse('home')}?show_all_blogs=true"
+
+        context['show_all_blogs'] = self.show_all_blogs
+
         context['page_prefix'] = reverse('blog_post_list')
         context['comments'] = Comment.most_recent(self.request.user, 10)
         context['new_problems'] = Problem.get_public_problems() \
@@ -192,6 +214,10 @@ class PostList(PostListBase):
             context['open_tickets'] = filter_visible_tickets(tickets, self.request.user)[:10]
         else:
             context['open_tickets'] = []
+
+        context['tab'] = self.tab
+        context['left_align_tabs'] = True
+
         return context
 
     def get_top_pp_users(self):
@@ -305,7 +331,7 @@ class BlogPostEdit(BlogPostMixin, TitleMixin, UpdateView):
             return super(BlogPostEdit, self).form_valid(form)
 
     def dispatch(self, request, *args, **kwargs):
-        if request.official_contest_mode:
+        if request.official_contest_mode and not request.user.is_superuser:
             return generic_message(request, _('Permission denied'),
                                    _('You cannot edit blog post.'))
         return super().dispatch(request, *args, **kwargs)

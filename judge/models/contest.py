@@ -10,7 +10,7 @@ from django.db.models import CASCADE, Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from jsonfield import JSONField
 from lupa import LuaRuntime
 from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MOSS_LANG_PYTHON
@@ -89,7 +89,7 @@ class Contest(models.Model):
     time_limit = models.DurationField(verbose_name=_('time limit'), blank=True, null=True)
     frozen_last_minutes = models.IntegerField(verbose_name=_('frozen last minutes'), default=0,
                                               help_text=_('If set, the scoreboard will be frozen for the last X '
-                                                          'minutes. Only available for ICPC format.'))
+                                                          'minutes. Only available for ICPC and VNOJ format.'))
     is_visible = models.BooleanField(verbose_name=_('publicly visible'), default=False,
                                      help_text=_('Should be set even for organization-private contests, where it '
                                                  'determines whether the contest is visible to members of the '
@@ -367,7 +367,8 @@ class Contest(models.Model):
     def is_frozen(self):
         if self.frozen_last_minutes == 0:
             return False
-        if self.format.name == contest_format.ICPCContestFormat.name:
+        if self.format.name == contest_format.ICPCContestFormat.name or \
+           self.format.name == contest_format.VNOJContestFormat.name:
             # Keep frozen even if the contest is ended
             return self._now >= self.frozen_time
         return False
@@ -607,13 +608,12 @@ class ContestParticipation(models.Model):
 
     def __str__(self):
         if self.spectate:
-            return gettext('%(user)s spectating in %(contest)s') % \
-                ({'user': self.user.username, 'contest': self.contest.name})
+            return _('%(user)s spectating in %(contest)s') % {'user': self.user.username, 'contest': self.contest.name}
         if self.virtual:
-            return gettext('%(user)s in %(contest)s, v%(virtual)d') % \
-                ({'user': self.user.username, 'contest': self.contest.name, 'virtual': self.virtual})
-        return gettext('%(user)s in %(contest)s') % \
-            ({'user': self.user.username, 'contest': self.contest.name})
+            return _('%(user)s in %(contest)s, v%(id)d') % {
+                'user': self.user.username, 'contest': self.contest.name, 'id': self.virtual,
+            }
+        return _('%(user)s in %(contest)s') % {'user': self.user.username, 'contest': self.contest.name}
 
     class Meta:
         verbose_name = _('contest participation')

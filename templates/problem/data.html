@@ -357,7 +357,7 @@
                 if (total >= window.testcase_soft_limit) {
                     if (!alerted) {
                         s = `{{_('You are about to create more than ${testcase_soft_limit} testcases.')}}`;
-                        s += "\n{{_('Please do not create too much testcases if they are not really needed.')}}";
+                        s += "\n{{_('Please do not create too many testcases if not really necessary.')}}";
                         alert(s);
                         alerted = true;
                     }

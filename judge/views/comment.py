@@ -44,13 +44,13 @@ def vote_comment(request, delta):
     except ValueError:
         return HttpResponseBadRequest()
 
-    try:
-        comment = Comment.objects.filter(id=comment_id, hidden=False).get()
-    except Comment.DoesNotExist:
+    comment = Comment.objects.filter(id=comment_id, hidden=False).first()
+
+    if not comment:
         return HttpResponseNotFound(_('Comment not found.'), content_type='text/plain')
 
-    if request.profile == comment.author:
-        return HttpResponseBadRequest(_('You cannot vote your own comment'), content_type='text/plain')
+    if comment.author == request.profile:
+        return HttpResponseBadRequest(_('You cannot vote on your own comments.'), content_type='text/plain')
 
     vote = CommentVote()
     vote.comment_id = comment_id
