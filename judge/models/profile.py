@@ -96,7 +96,7 @@ class Organization(models.Model):
         elif isinstance(item, Profile):
             return self.members.filter(id=item.id).exists()
         else:
-            raise TypeError('Organization membership test must be Profile or primary key')
+            raise TypeError('Organization membership test must be Profile or primary key.')
 
     def __str__(self):
         return self.name
