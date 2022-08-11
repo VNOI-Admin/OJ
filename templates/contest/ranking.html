@@ -250,6 +250,11 @@
                         return;
                     }
 
+                    if ($(this).parent().parent().hasClass('disqualified')) {
+                        // Skip disqualified
+                        return;
+                    }
+
                     let href = this['attributes']['href']['value'];
                     if (href.includes('submissions')) {
                         let time = $(this).find('.solving-time').text()
