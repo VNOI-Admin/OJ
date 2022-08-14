@@ -2,16 +2,11 @@
   margin: 0;
   width: 100%;
   min-width: 0;
-    margin: 0;
-    width: 100%;
-    min-width: 0;
 }
 
 .wmd-button-bar {
   width: 100%;
   background-color: Silver;
-    width: 100%;
-    background-color: Silver;
 }
 
 .wmd-input {
@@ -20,45 +15,25 @@
   max-width: 100%;
   background: #fff;
   border: 1px solid DarkGray;
-  font-family: Consolas, 'Liberation Mono', Monaco, 'Courier New', monospace !important;
-    height: 300px;
-    width: 100%;
-    max-width: 100%;
-    background: #fff;
-    border: 1px solid DarkGray;
-    font-family: Consolas, "Liberation Mono", Monaco, "Courier New", monospace !important;
+  font-family: Consolas, "Liberation Mono", Monaco, "Courier New", monospace !important;
 }
 
 .wmd-preview {
   background: none;
   word-break: break-word;
-    background: none;
-    word-break: break-word;
 }
 
 .wmd-button-row {
-  position: relative;
-  margin: 10px 5px 5px;
+  margin: 5px;
   padding: 0;
-  height: 20px;
-  overflow-x: auto;
-  overflow-y: hidden;
-    margin: 5px;
-    padding: 0;
-    line-height: 0;
+  line-height: 0;
 }
 
 .wmd-spacer {
-  width: 1px;
+  width: 15px;
   height: 20px;
-  margin-left: 14px;
-  position: absolute;
   display: inline-block;
   list-style: none;
-    width: 15px;
-    height: 20px;
-    display: inline-block;
-    list-style: none;
 }
 
 .wmd-button {
@@ -66,17 +41,9 @@
   height: 20px;
   padding-left: 2px;
   padding-right: 3px;
-  position: absolute;
   display: inline-block;
   list-style: none;
   cursor: pointer;
-    width: 20px;
-    height: 20px;
-    padding-left: 2px;
-    padding-right: 3px;
-    display: inline-block;
-    list-style: none;
-    cursor: pointer;
 }
 
 .wmd-button > span {
@@ -84,34 +51,15 @@
   width: 20px;
   height: 20px;
   display: inline-block;
-    background: url(pagedown/wmd-buttons.png) no-repeat 0 0;
-    width: 20px;
-    height: 20px;
-    display: inline-block;
-}
-
-.wmd-spacer1 {
-  left: 50px;
-}
-
-.wmd-spacer2 {
-  left: 175px;
-}
-
-.wmd-spacer3 {
-  left: 300px;
 }
 
 .wmd-prompt-background {
   background-color: Black;
-    background-color: Black;
 }
 
 .wmd-prompt-dialog {
   border: 1px solid #999999;
-  background-color: #f5f5f5;
-    border: 1px solid #999999;
-    background-color: #F5F5F5;
+  background-color: #F5F5F5;
 }
 
 .wmd-prompt-dialog > div {
@@ -119,36 +67,20 @@
   font-family: arial, helvetica, sans-serif;
 }
 
-.wmd-prompt-dialog > form > input[type='text'] {
+.wmd-prompt-dialog > form > input[type="text"] {
   border: 1px solid #999999;
   color: black;
 }
 
-.wmd-prompt-dialog > form > input[type='button'] {
+.wmd-prompt-dialog > form > input[type="button"] {
   border: 1px solid #888888;
   font-family: trebuchet MS, helvetica, sans-serif;
   font-size: 0.8em;
   font-weight: bold;
-    font-size: 0.8em;
-    font-family: arial, helvetica, sans-serif;
-}
-
-.wmd-prompt-dialog > form > input[type="text"] {
-    border: 1px solid #999999;
-    color: black;
-}
-
-.wmd-prompt-dialog > form > input[type="button"] {
-    border: 1px solid #888888;
-    font-family: trebuchet MS, helvetica, sans-serif;
-    font-size: 0.8em;
-    font-weight: bold;
 }
 
 .wmd-wrapper {
-  width: 100% !important;
   padding-right: 0 !important;
-    padding-right: 0 !important;
 }
 
 .wmd-preview {
@@ -160,57 +92,31 @@
   border: 1px solid #a9a9a9;
   border-radius: 5px;
   box-sizing: border-box;
-    margin-top: 15px;
-    padding: 7px;
-    background: white;
-    line-height: 1.5em;
-    font-size: 1em;
-    border: 1px solid #a9a9a9;
-    border-radius: 5px;
-    box-sizing: border-box;
 }
 
 .wmd-preview:empty {
   display: none;
-    display: none;
 }
 
-.wmd-preview h1,
-.wmd-preview h2,
-.wmd-preview h3,
-.wmd-preview h4,
-.wmd-preview h5,
-.wmd-preview h6 {
+.wmd-preview h1, .wmd-preview h2, .wmd-preview h3, .wmd-preview h4, .wmd-preview h5, .wmd-preview h6 {
   font-weight: bold !important;
   margin-left: 0 !important;
-.wmd-preview h1, .wmd-preview h2, .wmd-preview h3, .wmd-preview h4, .wmd-preview h5, .wmd-preview h6 {
-    font-weight: bold !important;
-    margin-left: 0 !important;
 }
 
 .wmd-preview:not(.dmmd-preview) h1 {
   font-size: 1.6em !important;
   margin: 0 !important;
   padding: 0 !important;
-    font-size: 1.6em !important;
-    margin: 0 !important;
-    padding: 0 !important;
 }
 
 .wmd-preview:not(.dmmd-preview) h2 {
-  font-size: 1.4em !important;
-    font-size: 1.4em !important
+  font-size: 1.4em !important
 }
 
 .wmd-preview:not(.dmmd-preview) h3 {
-  font-size: 1em !important;
-    font-size: 1em !important
+  font-size: 1em !important
 }
 
-.wmd-preview:not(.dmmd-preview) h4,
-.wmd-preview:not(.dmmd-preview) h5,
-.wmd-preview:not(.dmmd-preview) h6 {
-  font-size: 0.9em !important;
 .wmd-preview:not(.dmmd-preview) h4, .wmd-preview:not(.dmmd-preview) h5, .wmd-preview:not(.dmmd-preview) h6 {
-    font-size: .9em !important
+  font-size: .9em !important
 }
