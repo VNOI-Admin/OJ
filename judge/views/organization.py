@@ -139,6 +139,8 @@ class LeaveOrganization(OrganizationMembershipChange):
     def handle(self, request, org, profile):
         if not profile.organizations.filter(id=org.id).exists():
             return generic_message(request, _('Leaving organization'), _('You are not in "%s".') % org.short_name)
+        if org.is_admin(profile):
+            return generic_message(request, _('Leaving organization'), _('You cannot leave an organization you own.'))
         profile.organizations.remove(org)
 
 
