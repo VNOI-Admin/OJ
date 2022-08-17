@@ -8,14 +8,14 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ImproperlyConfigured
 from django.core.files.storage import default_storage
-from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, HttpResponseRedirect
+from django.http import Http404, HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, \
+    HttpResponseRedirect
 from django.utils.translation import gettext as _
 from django.views.decorators.http import require_POST
 from django.views.generic import View
 from martor.api import imgur_uploader
 
 from judge.models import Submission
-from judge.utils.views import generic_message
 
 __all__ = ['rejudge_submission', 'DetectTimezone']
 
@@ -128,11 +128,8 @@ def martor_image_uploader(request):
     return HttpResponse(data, content_type='application/json')
 
 
-def csrf_failure(request, reason=''):
-    title = _('CSRF verification failed')
-    message = _('This error should not happend in normal operation. '
-                'Mostly this is because we are under a DDOS attack and we need to raise '
-                'our shield to protect the site from the attack.\n\n'
-                'If you see this error, please return to the homepage and try again.'
-                'DO NOT hit F5/reload/refresh page, it will cause this error again.')
-    return generic_message(request, title, message)
+def csrf_failure(request: HttpRequest, reason=''):
+    # Redirect to the same page in case of CSRF failure
+    # So that we can turn on cloudflare DDOS protection without
+    # showing the CSRF failure page to user
+    return HttpResponseRedirect(request.path)
