@@ -17200,3 +17200,12 @@ INFO 2022-08-19 12:29:45,949 judge_handler Fiora: 1 test case(s) completed on: 3
 INFO 2022-08-19 12:29:46,262 judge_handler Fiora: 1 test case(s) completed on: 3532
 INFO 2022-08-19 12:29:46,270 judge_handler Fiora: Grading has ended on: 3532
 INFO 2022-08-19 12:29:46,270 judge_list Judge available after grading 3532: Fiora
+INFO 2022-08-19 13:11:46,208 daemon Exiting due to SIGINT
+INFO 2022-08-19 13:12:01,173 judge_handler Judge connected from: ('127.0.0.1', 48184)
+INFO 2022-08-19 13:12:01,174 judge_handler Judge connected from: ('127.0.0.1', 48186)
+INFO 2022-08-19 13:12:01,178 judge_handler Judge connected from: ('127.0.0.1', 48192)
+INFO 2022-08-19 13:12:01,180 judge_handler Judge connected from: ('127.0.0.1', 48190)
+INFO 2022-08-19 13:12:01,181 judge_handler Judge authenticated: ('127.0.0.1', 48186) (Yasuo)
+INFO 2022-08-19 13:12:01,189 judge_handler Judge authenticated: ('127.0.0.1', 48184) (Fiora)
+INFO 2022-08-19 13:12:01,202 judge_handler Judge authenticated: ('127.0.0.1', 48190) (Leesin)
+INFO 2022-08-19 13:12:01,206 judge_handler Judge authenticated: ('127.0.0.1', 48192) (Riven)
