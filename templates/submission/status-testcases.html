@@ -83,7 +83,7 @@
         {% if can_view_testcase_status %}
         <table class="submissions-status-table">{% for case in batch.cases %}
             {% set current_test_case_count = test_case_counter() %}
-            {% set print_case_output = can_view_test and case.output and (prefix_length is none or prefix_length > 0) %}
+            {% set print_case_output = can_view_test and case.output %}
             {% set print_case_ext_feedback = case.extended_feedback
                                              and
                                              ((not request.in_contest and current_test_case_count <= feedback_limit)
@@ -139,7 +139,7 @@
                             {% endif %}
                             {% if print_case_output %}
                                 <strong>{{ _('Your output (clipped)') }}</strong>
-                                {% if prefix_length is none %}
+                                {% if prefix_length is none or prefix_length == 0 %}
                                     <pre class="case-output">{{ case.output|linebreaksbr }}</pre>
                                 {% else %}
                                     <pre class="case-output">{{ case.output[:prefix_length]|linebreaksbr }}</pre>
