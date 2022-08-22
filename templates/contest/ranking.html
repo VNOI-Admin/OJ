@@ -237,7 +237,7 @@
             }
 
             function convertToSeconds(timeString) {
-                time = timeString.split(':').map(Number); // time = [hour, minute, second]
+                const time = timeString.split(':').map(Number); // time = [hour, minute, second]
                 return time[0] * 60 * 60 + time[1] * 60 + time[2];
             }
 
