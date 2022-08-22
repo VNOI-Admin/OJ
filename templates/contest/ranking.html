@@ -236,6 +236,11 @@
                 $("a#frozen_alert").click();
             }
 
+            function convertToSeconds(timeString) {
+                time = timeString.split(':').map(Number); // time = [hour, minute, second]
+                return time[0] * 60 * 60 + time[1] * 60 + time[2];
+            }
+
             function timeComparison(sub1, sub2) {
                 if (!sub2) return;
                 return sub1['time'] < sub2['time'];
@@ -266,7 +271,7 @@
 
                         let curSub = {
                             'td': $(this).parent(),
-                            'time': time,
+                            'time': convertToSeconds(time),
                         }
 
                         let fs = firstSolves[problem];
