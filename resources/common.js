@@ -60,6 +60,7 @@ $(function () {
         else
             document.body.className = this[hidden] ? 'window-hidden' : 'window-visible';
 
+        document.body.className += " dark";
         if ('$' in window)
             $(window).trigger('dmoj:' + document.body.className);
     }
