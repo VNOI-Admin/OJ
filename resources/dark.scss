@@ -3585,6 +3585,10 @@
     color: var(--color-scale-gray-9);
   }
 
+  .new-comments .comment-display {
+    background-color: var(--color-scale-gray-6);
+  }
+
   @media (max-width: 1498px) {
     #page-container {
       border-left: none;
@@ -3675,9 +3679,6 @@
     .comments {
       -webkit-padding-start: 5%;
       padding-inline-start: 5%;
-    }
-    .new-comments .comment-display {
-      background-color: var(--color-scale-gray-6);
     }
     .comment {
       margin-left: -5%;
