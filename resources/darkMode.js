@@ -32,12 +32,9 @@ const changeTheme = (theme) => {
     }
 }
 
-
 themeToggler.addEventListener('click', (e) => {
     e.preventDefault();
     const currentTheme = localStorage.getItem('theme') || 'light';
 
     changeTheme(currentTheme);
 })
-
-exports.changeTheme = changeTheme;

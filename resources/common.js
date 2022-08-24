@@ -1,5 +1,4 @@
 // IE 8
-import { changeTheme } from "./darkMode";
 if (!Array.prototype.indexOf) {
     Array.prototype.indexOf = function (obj) {
         for (var i = 0; i < this.length; i++) {
@@ -61,8 +60,9 @@ $(function () {
         else
             document.body.className = this[hidden] ? 'window-hidden' : 'window-visible';
 
-        changeTheme();
         // document.body.className += " dark";
+        const theme = localStorage.getItem('theme') || 'light';
+        document.body.classList.add(theme);
         if ('$' in window)
             $(window).trigger('dmoj:' + document.body.className);
     }
@@ -71,11 +71,6 @@ $(function () {
     if (document[hidden] !== undefined)
         onchange({type: document[hidden] ? 'blur' : 'focus'});
 });
-
-$(function () {
-    const theme = localStorage.getItem('theme') || 'light';
-    document.body.classList.add(theme);
-})
 
 function register_toggle(link) {
     link.click(function () {
