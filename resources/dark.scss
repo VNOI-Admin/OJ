@@ -2274,9 +2274,9 @@
 
   input[type="number"] {
     padding: 4px 8px;
-    color: #555;
-    background: #fff none;
-    border: 1px solid #ccc;
+    color: var(--color-fg-default);
+    background: var(--color-scale-gray-7) none;
+    border: 1px solid var(--color-border-default);
     border-radius: 4px;
     box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
     -webkit-transition: border-color 0.15s ease-in-out 0s,
@@ -3357,7 +3357,7 @@
   #banner {
     border-bottom: 1px solid rgba(0, 0, 0, 0.2);
     padding-bottom: 1em;
-    color: rgb(85, 85, 85);
+    color: var(--color-fg-default);
     font-size: 15px;
   }
   #banner a.date {
@@ -3582,11 +3582,35 @@
 
   .ace-github {
     background-color: var(--color-scale-gray-7);
-    color: var(--color-scale-gray-9);
+    color: var(--color-scale-gray-3);
+  }
+
+  .ace-github.ace_focus {
+    color: var(--color-scale-white);
+  }
+
+  .ace-github .ace_marker-layer .ace_active-line {
+    background-color: var(--color-scale-gray-8);
+  }
+
+  .ace-github.ace_focus .ace_marker-layer .ace_active-line {
+    background-color: var(--color-scale-gray-9);
+  }
+
+  .ui.attached.segment {
+    border-color: var(--color-border-default);
+  }
+
+  .ui.segment {
+    background-color: var(--color-scale-gray-7);
   }
 
   .new-comments .comment-display {
     background-color: var(--color-scale-gray-6);
+  }
+
+  .ui.basic.buttons .button {
+    color: var(--color-fg-on-emphasis) !important;
   }
 
   @media (max-width: 1498px) {

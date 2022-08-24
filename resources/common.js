@@ -63,6 +63,7 @@ $(function () {
         // document.body.className += " dark";
         const theme = localStorage.getItem('theme') || 'light';
         document.body.classList.add(theme);
+        
         if ('$' in window)
             $(window).trigger('dmoj:' + document.body.className);
     }
