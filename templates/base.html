@@ -225,6 +225,9 @@
         const theme = localStorage.getItem('theme') || 'light';
         document.body.classList.add(theme);
         window.onunload = function(){};
+        if (performance.navigation.type === 2) {
+            location.reload(true);
+        }
     </script>
     <script>
         fbq('track', 'ViewContent');
