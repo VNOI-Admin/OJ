@@ -1,4 +1,5 @@
 // IE 8
+import { changeTheme } from "./darkMode";
 if (!Array.prototype.indexOf) {
     Array.prototype.indexOf = function (obj) {
         for (var i = 0; i < this.length; i++) {
@@ -60,6 +61,7 @@ $(function () {
         else
             document.body.className = this[hidden] ? 'window-hidden' : 'window-visible';
 
+        changeTheme();
         // document.body.className += " dark";
         if ('$' in window)
             $(window).trigger('dmoj:' + document.body.className);
