@@ -1818,7 +1818,7 @@
     font-size: 0.9em;
   }
   .content-description blockquote {
-    color: #666;
+    color: var(--color-fg-default);
     border-left: 0.5em #eee solid;
     margin: 1em 1em;
     padding: 1px 1px 1px 1.5em;
@@ -3675,6 +3675,9 @@
     .comments {
       -webkit-padding-start: 5%;
       padding-inline-start: 5%;
+    }
+    .new-comments .comment-display {
+      background-color: var(--color-scale-gray-6);
     }
     .comment {
       margin-left: -5%;
