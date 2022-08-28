@@ -25,7 +25,7 @@ bad_mail_regex = list(map(re.compile, settings.BAD_MAIL_PROVIDER_REGEX))
 class CustomRegistrationForm(RegistrationForm):
     username = forms.RegexField(regex=re.compile(r'^\w+$', re.ASCII), max_length=30, label=_('Username'),
                                 error_messages={'invalid': _('A username must contain letters, '
-                                                             'numbers, or underscores')})
+                                                             'numbers, or underscores.')})
     full_name = forms.CharField(max_length=30, label=_('Full name'), required=False)
     timezone = ChoiceField(label=_('Timezone'), choices=TIMEZONE,
                            widget=Select2Widget(attrs={'style': 'width:100%'}))
