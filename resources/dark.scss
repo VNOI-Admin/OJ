@@ -3339,7 +3339,7 @@
   }
   #contest-calendar td ul li a {
     text-decoration: none;
-    color: #222;
+    color: var(--color-fg-default);
   }
   #contest-calendar td ul li a:hover {
     text-decoration: underline;
@@ -3627,6 +3627,10 @@
 
   .ui.basic.buttons .button {
     color: var(--color-fg-on-emphasis) !important;
+  }
+
+  tbody {
+    color: var(--color-fg-subtle);
   }
 
   @media (max-width: 1498px) {
