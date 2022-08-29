@@ -1475,6 +1475,7 @@
   .select2-selection.select2-selection--single,
   .select2-selection.select2-selection--multiple,
   .select2-dropdown.select2-dropdown--below,
+  .select2-dropdown,
   .select2-container--default .select2-search--dropdown .select2-search__field {
     background-color: var(--color-scale-gray-7);
     border: 1px solid var(--color-border-default);
@@ -3583,6 +3584,12 @@
   .ace-github {
     background-color: var(--color-scale-gray-7);
     color: var(--color-scale-gray-3);
+  }
+
+  .ace_line_group::selection,
+  .ace_line::selection,
+  .ace_text::selection {
+    background: var(--color-scale-gray-7);
   }
 
   .ace-github.ace_focus {
