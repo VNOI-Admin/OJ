@@ -1930,6 +1930,15 @@
     border-radius: 4px;
     font-size: 0.95em;
   }
+  .code .k {
+    color: #b3b3b3;
+  }
+  .code .nn {
+    color: var(--color-fg-default);
+  }
+  .code .o {
+    color: #e6e6e6;
+  }
   .content-description kbd {
     color: #000;
     page-break-inside: avoid;
