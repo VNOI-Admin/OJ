@@ -12,13 +12,13 @@
   height: 100%;
 
   a {
-    color: rgba(108, 182, 255, 0.8509803922);
+    color: var(--color-scale-blue-4);
     font-weight: 500;
     text-decoration: none;
     display: inline;
   }
   a:hover {
-    color: var(--color-scale-blue-5);
+    color: var(--color-scale-blue-6);
   }
   a:active {
     color: #faa700;
