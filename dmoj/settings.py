@@ -272,7 +272,7 @@ INLINE_JQUERY = True
 INLINE_FONTAWESOME = True
 JQUERY_JS = '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'
 FONTAWESOME_CSS = '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'
-DMOJ_CANONICAL = 'lhpoj.me'
+DMOJ_CANONICAL = 'lhpoj.lehongphong.edu.vn'
 
 # Application definition
 
