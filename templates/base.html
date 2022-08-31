@@ -6,7 +6,6 @@
     {% if misc_config.meta_keywords %}
         <meta name="keywords" content="{{ misc_config.meta_keywords }}">
     {% endif %}
-    <meta name="description" property="og:description" content="Chào mừng mọi người đến với hệ thống chấm bài tự động của những học sinh của trường THPT chuyên Lê Hồng Phong, Thành phố Hồ Chí Minh.">
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1">
     <!-- Favicons-->
     <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
@@ -30,27 +29,28 @@
     <meta name="theme-color" content="#231F20">
     {% if og_image %}
         <meta property="og:image" content="{{ request.build_absolute_uri(og_image) }}">
-    {% else %}
+        {% else %}
         <meta property="og:image" og:image:type="image/png" content="{{ request.build_absolute_uri("/favicon-96x96.png") }}">
-    {% endif %}
-    {% block og_title %}{% endblock %}
-    <meta property="og:site_name" content="{{ SITE_LONG_NAME }}">
-    <meta property="og:url"
-          content="{{ DMOJ_SCHEME }}://{{ DMOJ_CANONICAL|default(site.domain) }}{{ request.get_full_path() }}">
-
-    <!--[if lt IE 9]>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
-    <script>window.bad_browser = true</script>
-    <![endif]-->
-    {% block meta %}{% endblock %}
-    {% if not INLINE_FONTAWESOME %}
-        <link rel="stylesheet" href="{{ FONTAWESOME_CSS }}">
-    {% endif %}
-    {% compress css %}
-        <link rel="stylesheet" href="{{ static('style.css') }}">
-        {% if PYGMENT_THEME %}
+        {% endif %}
+        {% block og_title %}{% endblock %}
+        <meta property="og:site_name" content="{{ SITE_LONG_NAME }}">
+        <meta property="og:url"
+        content="{{ DMOJ_SCHEME }}://{{ DMOJ_CANONICAL|default(site.domain) }}{{ request.get_full_path() }}">
+        
+        <meta name="description" property="og:description" content="Chào mừng mọi người đến với hệ thống chấm bài tự động của những học sinh của trường THPT chuyên Lê Hồng Phong, Thành phố Hồ Chí Minh.">
+        <!--[if lt IE 9]>
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
+            <script>window.bad_browser = true</script>
+            <![endif]-->
+            {% block meta %}{% endblock %}
+            {% if not INLINE_FONTAWESOME %}
+            <link rel="stylesheet" href="{{ FONTAWESOME_CSS }}">
+            {% endif %}
+            {% compress css %}
+            <link rel="stylesheet" href="{{ static('style.css') }}">
+            {% if PYGMENT_THEME %}
             <link rel="stylesheet" href="{{ static(PYGMENT_THEME) }}">
-        {% endif %}{% if INLINE_FONTAWESOME %}
+            {% endif %}{% if INLINE_FONTAWESOME %}
         <link rel="stylesheet" href="{{ static('libs/fontawesome/font-awesome.css') }}">{% endif %}
         <link rel="stylesheet" href="{{ static('source_sans_pro.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ static('libs/featherlight/featherlight.min.css') }}">
