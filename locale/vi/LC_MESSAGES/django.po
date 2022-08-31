@@ -1330,7 +1330,7 @@ msgstr "tổng kết kỳ thi"
 
 #: judge/models/contest.py:155 judge/models/problem.py:192
 msgid "Plain-text, shown in meta description tag, e.g. for social media."
-msgstr ""
+msgstr "Chào mừng mọi người đến với hệ thống chấm bài tự động của những học sinh của trường THPT chuyên Lê Hồng Phong, Thành phố Hồ Chí Minh."
 "Các thông tin này sẽ hiển thị khi chia sẻ kỳ thi lên mạng xã hội (ví dụ "
 "discord, facebook)."
 
