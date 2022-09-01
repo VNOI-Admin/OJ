@@ -13,15 +13,15 @@
     </script>
     {% compress js %}
         {% include "stats/media-js.html" %}
-        <script type="text/javascript">
+        <script type="text/javascript" defer>
+            let pieChart = null;
             $(function () {
                 draw_stacked_bar_chart(window.stats.problem_status_count, $('#problem-status-count'));
                 draw_bar_chart(window.stats.problem_ac_rate, $('#problem-ac-rate'));
-                const pieChart = draw_pie_chart(window.stats.language_count, $('#language-count'));
+                pieChart = draw_pie_chart(window.stats.language_count, $('#language-count'));
                 draw_bar_chart(window.stats.language_ac_rate, $('#language-ac-rate'));
             });
-        </script>
-        <script defer>
+
             themeToggler.addEventListener('click', () => {
                 if (pieChart) {
                     pieChart.render();
