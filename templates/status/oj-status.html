@@ -97,11 +97,6 @@
                 });
             });
 
-            // const themeToggler = document.querySelector('.toggle-theme');
-            themeToggler.addEventListener('click', () => {
-                by_language_chart.update();
-                result_chart.update();
-            })
         </script>
     {% endcompress %}
     {% include "contest/media-js.html" %}
@@ -173,4 +168,13 @@
             </td>
         </tr>
     </table>
+    <script defer>
+        themeToggler = document.querySelector('.toggle-theme');
+        themeToggler.addEventListener('click', () => {
+            if (result_chart) {
+                result_chart.options.legend.labels.fontColor = `${theme === 'light' ? 'black' : 'white'}`;
+                result_chart.update();
+            }
+        })
+    </script>
 {% endblock %}
