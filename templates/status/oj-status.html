@@ -172,6 +172,7 @@
         themeToggler = document.querySelector('.toggle-theme');
         themeToggler.addEventListener('click', () => {
             if (result_chart) {
+                console.log('re-render');
                 result_chart.options.legend.labels.fontColor = `${theme === 'light' ? 'black' : 'white'}`;
                 result_chart.render();
             }
