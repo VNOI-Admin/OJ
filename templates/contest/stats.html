@@ -23,8 +23,9 @@
             });
 
             themeToggler.addEventListener('click', () => {
+                console.log(pieChart);
                 if (pieChart) {
-                    pieChart.render();
+                    renderChart(pieChart);
                 }
             })
         </script>
