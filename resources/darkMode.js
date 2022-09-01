@@ -39,10 +39,10 @@ themeToggler.addEventListener('click', (e) => {
 	changeTheme(currentTheme);
 });
 
-const renderChart = (chart) => {
+function renderChart(chart) {
 	const theme = localStorage.getItem('theme') || 'light';
 	chart.options.legend.labels.fontColor = `${
 		theme === 'light' ? 'black' : 'white'
 	}`;
 	chart.render();
-};
+}
