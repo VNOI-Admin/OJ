@@ -13,7 +13,7 @@
     </script>
     {% compress js %}
         {% include "stats/media-js.html" %}
-        <script type="text/javascript" defer>
+        <script type="text/javascript">
             let pieChart = null;
             $(function () {
                 draw_stacked_bar_chart(window.stats.problem_status_count, $('#problem-status-count'));
@@ -21,13 +21,6 @@
                 pieChart = draw_pie_chart(window.stats.language_count, $('#language-count'));
                 draw_bar_chart(window.stats.language_ac_rate, $('#language-ac-rate'));
             });
-
-            themeToggler.addEventListener('click', () => {
-                console.log(pieChart);
-                if (pieChart) {
-                    renderChart(pieChart);
-                }
-            })
         </script>
     {% endcompress %}
     {% include "contest/media-js.html" %}
@@ -62,4 +55,13 @@
     <div id="language-ac-rate" class="chart">
         <canvas></canvas>
     </div>
+    <script defer>
+        themeToggler = document.querySelector('.toggle-theme');
+        themeToggler.addEventListener('click', () => {
+            console.log(pieChart);
+            if (pieChart) {
+                renderChart(pieChart);
+            }
+        })
+    </script>
 {% endblock %}
