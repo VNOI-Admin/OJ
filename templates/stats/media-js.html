@@ -1,5 +1,6 @@
 <script type="text/javascript" src="{{ static('libs/chart.js/Chart.js') }}"></script>
 <script type="text/javascript">
+    const theme = localStorage.getItem('theme') || 'light';
     function draw_pie_chart(data, $chart) {
         var ctx = $chart.find('canvas')[0].getContext('2d');
         var chart = new Chart(ctx, {
@@ -12,7 +13,7 @@
                 legend: {
                     position: 'right',
                     labels: {
-                        fontColor: 'black',
+                        fontColor: `${theme === 'light' ? 'black' : 'white'}`,
                         boxWidth: 20,
                     },
                 },
