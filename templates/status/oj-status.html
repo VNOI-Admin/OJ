@@ -176,10 +176,10 @@
             if (tmp === 'light') newTheme = 'dark';
             else newTheme = 'light';
             if (result_chart) {
-                console.log(result_chart.options.legend.labels.fontColor, newTheme);
                 result_chart.options.legend.labels.fontColor = `${newTheme === 'light' ? 'black' : 'white'}`;
-                console.log(result_chart.options.legend.labels.fontColor, newTheme);
+                by_language_chart.options.legend.labels.fontColor = `${newTheme === 'light' ? 'black' : 'white'}`;
                 result_chart.render();
+                by_language_chart.render();
             }
         })
     </script>
