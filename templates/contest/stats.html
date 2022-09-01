@@ -17,9 +17,17 @@
             $(function () {
                 draw_stacked_bar_chart(window.stats.problem_status_count, $('#problem-status-count'));
                 draw_bar_chart(window.stats.problem_ac_rate, $('#problem-ac-rate'));
-                draw_pie_chart(window.stats.language_count, $('#language-count'));
+                const pieChart = draw_pie_chart(window.stats.language_count, $('#language-count'));
                 draw_bar_chart(window.stats.language_ac_rate, $('#language-ac-rate'));
             });
+        </script>
+        <script defer>
+            themeToggler = document.querySelector('.toggle-theme');
+            themeToggler.addEventListener('click', () => {
+                if (pieChart) {
+                    pieChart.render();
+                }
+            })
         </script>
     {% endcompress %}
     {% include "contest/media-js.html" %}

@@ -171,15 +171,11 @@
     <script defer>
         themeToggler = document.querySelector('.toggle-theme');
         themeToggler.addEventListener('click', () => {
-            const tmp = localStorage.getItem('theme') || 'light';
-            let newTheme = null;
-            if (tmp === 'light') newTheme = 'dark';
-            else newTheme = 'light';
             if (result_chart) {
-                result_chart.options.legend.labels.fontColor = `${newTheme === 'light' ? 'black' : 'white'}`;
-                by_language_chart.options.legend.labels.fontColor = `${newTheme === 'light' ? 'black' : 'white'}`;
-                result_chart.render();
-                by_language_chart.render();
+                renderChart(result_chart);
+            }
+            if (by_language_chart) {
+                renderChart(by_language_chart);
             }
         })
     </script>
