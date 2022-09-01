@@ -95,12 +95,12 @@
                     ({ startDate, endDate } = picker);
                     draw_charts(picker.startDate, picker.endDate);
                 });
-
-                themeToggler.addEventListener('click', () => {
-                    by_language_chart.update();
-                    result_chart.update();
-                })
             });
+            
+            themeToggler.addEventListener('click', () => {
+                by_language_chart.update();
+                result_chart.update();
+            })
         </script>
     {% endcompress %}
     {% include "contest/media-js.html" %}
