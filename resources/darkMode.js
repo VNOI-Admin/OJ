@@ -41,6 +41,7 @@ themeToggler.addEventListener('click', (e) => {
 
 function renderChart(chart) {
 	const theme = localStorage.getItem('theme') || 'light';
+	console.log(theme);
 	chart.options.legend.labels.fontColor = `${
 		theme === 'light' ? 'black' : 'white'
 	}`;
