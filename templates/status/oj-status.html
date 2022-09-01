@@ -173,7 +173,7 @@
         themeToggler.addEventListener('click', () => {
             if (result_chart) {
                 result_chart.options.legend.labels.fontColor = `${theme === 'light' ? 'black' : 'white'}`;
-                result_chart.update();
+                result_chart.render();
             }
         })
     </script>
