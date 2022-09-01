@@ -10,6 +10,8 @@
             var result_chart = null;
             var queue_time_chart = null;
             var org_by_day_chart = null;
+            let startDate = null;
+            let endDate = null;
 
             function draw_charts(start_date, end_date) {
                 $.ajax({
@@ -90,8 +92,14 @@
                 }, cb);
 
                 $('#daterange').on('apply.daterangepicker', function(ev, picker) {
+                    ({ startDate, endDate } = picker);
                     draw_charts(picker.startDate, picker.endDate);
                 });
+
+                themeToggler.addEventListener('click', () => {
+                    if (!startDate || !endDate) return ;
+                    draw_charts(startDate, endDate);
+                })
             });
         </script>
     {% endcompress %}
