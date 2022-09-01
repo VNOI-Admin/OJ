@@ -97,8 +97,8 @@
                 });
 
                 themeToggler.addEventListener('click', () => {
-                    if (!startDate || !endDate) return ;
-                    draw_charts(startDate, endDate);
+                    by_language_chart.update();
+                    result_chart.update();
                 })
             });
         </script>
