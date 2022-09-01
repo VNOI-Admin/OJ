@@ -171,7 +171,7 @@
     <script defer>
         themeToggler = document.querySelector('.toggle-theme');
         themeToggler.addEventListener('click', () => {
-            const newTheme = 'light';
+            let newTheme = 'light';
             if (theme === 'light') newTheme = 'dark';
             if (result_chart) {
                 console.log(result_chart.options.legend.labels.fontColor, newTheme);
