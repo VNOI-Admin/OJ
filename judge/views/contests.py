@@ -545,7 +545,7 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
             return generic_message(request, _('Not registered'),
                                    _('You are not registered for this contest.'))
 
-        requires_access_code = not self.can_edit and not contest.require_registration \
+        requires_access_code = not self.can_edit and (contest.ended or not contest.require_registration) \
             and contest.access_code and access_code != contest.access_code
         if contest.ended:
             if contest.disallow_virtual:
