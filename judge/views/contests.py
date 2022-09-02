@@ -440,6 +440,77 @@ class ContestAccessCodeForm(forms.Form):
         self.fields['access_code'].widget.attrs.update({'autocomplete': 'off'})
 
 
+class ContestRegister(LoginRequiredMixin, ContestMixin, BaseDetailView):
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return self.ask_for_access_code()
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        try:
+            return self.register_contest(request)
+        except ContestAccessDenied:
+            if request.POST.get('access_code'):
+                return self.ask_for_access_code(ContestAccessCodeForm(request.POST))
+            else:
+                return HttpResponseRedirect(request.path)
+
+    def register_contest(self, request, access_code=None):
+        contest = self.object
+        profile = request.profile
+
+        if not request.user.is_superuser and contest.banned_users.filter(id=profile.id).exists():
+            return generic_message(request, _('Banned from joining'),
+                                   _('You have been declared persona non grata for this contest. '
+                                     'You are permanently barred from joining this contest.'))
+
+        if not contest.require_registration:
+            return generic_message(request, _('Cannot register'),
+                                   _('Registration is not required for this contest.'))
+
+        if not contest.can_register:
+            return generic_message(request, _('Cannot register'),
+                                   _('You cannot register for this contest now.'))
+
+        requires_access_code = (not self.can_edit and contest.access_code and access_code != contest.access_code)
+        if contest.ended:
+            return generic_message(request, _('Contest has ended'),
+                                   _('"%s" has ended.') % contest.name)
+        else:
+            if requires_access_code:
+                raise ContestAccessDenied()
+
+            if contest in profile.registered_contests.all():
+                return generic_message(request, _('Already registered'),
+                                       _('You have already registered for this contest.'))
+
+            if self.is_editor or self.is_tester:
+                return generic_message(request, _('Cannot register'),
+                                       _('You cannot register for this contest.'))
+
+            profile.registered_contests.add(contest)
+
+        profile.save()
+        contest._updating_stats_only = True
+        contest.update_registration_count()
+        return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
+
+    def ask_for_access_code(self, form=None):
+        contest = self.object
+        wrong_code = False
+        if form:
+            if form.is_valid():
+                if form.cleaned_data['access_code'] == contest.access_code:
+                    return self.register_contest(self.request, form.cleaned_data['access_code'])
+                wrong_code = True
+        else:
+            form = ContestAccessCodeForm()
+        return render(self.request, 'contest/access_code.html', {
+            'form': form, 'wrong_code': wrong_code,
+            'title': _('Enter access code for "%s"') % contest.name,
+        })
+
+
 class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -469,7 +540,13 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
                                    _('You have been declared persona non grata for this contest. '
                                      'You are permanently barred from joining this contest.'))
 
-        requires_access_code = (not self.can_edit and contest.access_code and access_code != contest.access_code)
+        if contest.require_registration and not contest.ended and not self.is_editor and not self.is_tester \
+           and contest not in profile.registered_contests.all():
+            return generic_message(request, _('Not registered'),
+                                   _('You are not registered for this contest.'))
+
+        requires_access_code = not self.can_edit and not contest.require_registration \
+            and contest.access_code and access_code != contest.access_code
         if contest.ended:
             if contest.disallow_virtual:
                 return generic_message(request, _('Virtual joining not allowed'),

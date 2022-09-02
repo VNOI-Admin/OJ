@@ -86,6 +86,13 @@ class Contest(models.Model):
     problems = models.ManyToManyField(Problem, verbose_name=_('problems'), through='ContestProblem')
     start_time = models.DateTimeField(verbose_name=_('start time'), db_index=True)
     end_time = models.DateTimeField(verbose_name=_('end time'), db_index=True)
+    registration_start = models.DateTimeField(verbose_name=_('registration start time'),
+                                              blank=True, null=True, default=None)
+    registration_end = models.DateTimeField(verbose_name=_('registration end time'),
+                                            blank=True, null=True, default=None)
+    registered_users = models.ManyToManyField(Profile, help_text=_('Users who registered for the contest.'),
+                                              blank=True, related_name='registered_contests')
+    registration_count = models.IntegerField(verbose_name=_('registration count'), default=0)
     time_limit = models.DurationField(verbose_name=_('time limit'), blank=True, null=True)
     frozen_last_minutes = models.IntegerField(verbose_name=_('frozen last minutes'), default=0,
                                               help_text=_('If set, the scoreboard will be frozen for the last X '
@@ -308,6 +315,17 @@ class Contest(models.Model):
         return timezone.now()
 
     @cached_property
+    def require_registration(self):
+        return self.registration_start is not None or self.registration_end is not None
+
+    @cached_property
+    def can_register(self):
+        if not self.require_registration:
+            return False
+        return (self._now <= self.registration_end if self.registration_end else True) \
+            and (self.registration_start <= self._now if self.registration_start else True)
+
+    @cached_property
     def can_join(self):
         return self.start_time <= self._now
 
@@ -315,6 +333,13 @@ class Contest(models.Model):
     def frozen_time(self):
         # Don't need to check self.frozen_last_minutes != 0
         return self.end_time - timedelta(minutes=self.frozen_last_minutes)
+
+    @property
+    def time_before_register(self):
+        if self.registration_start and self._now <= self.registration_start:
+            return self.registration_start - self._now
+        else:
+            return None
 
     @property
     def time_before_start(self):
@@ -368,6 +393,12 @@ class Contest(models.Model):
         self.save()
 
     update_user_count.alters_data = True
+
+    def update_registration_count(self):
+        self.registration_count = self.registered_users.all().count()
+        self.save()
+
+    update_registration_count.alters_data = True
 
     @property
     def is_frozen(self):
