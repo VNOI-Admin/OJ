@@ -399,6 +399,7 @@ urlpatterns = [
     ])),
 
     path('stats/data/all/', stats.all_data, name='stats_data_all'),
+    path('hof/', stats.HoFView.as_view(), name='hof'),
 
     path('tickets/', include([
         path('', ticket.TicketList.as_view(), name='ticket_list'),

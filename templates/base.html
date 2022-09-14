@@ -227,6 +227,7 @@
         <clipPath id="rating-clip"><circle cx="8" cy="8" r="7"/></clipPath>
     </defs>
 </svg>
+{% block navbar %}
 <nav id="navigation" class="unselectable">
     <div id="nav-container">
         <a id="navicon" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
@@ -305,6 +306,7 @@
     </div>
     <div id="nav-shadow"></div>
 </nav>
+{% endblock %}
 {% if request.in_contest %}
     {% set current_contest = request.participation.contest %}
     <div id="contest-info">
@@ -331,8 +333,7 @@
     <noscript>
         <div id="noscript">{{ _('This site works best with JavaScript enabled.') }}</div>
     </noscript>
-    <br>
-    <main id="content">
+    <main id="content" style="padding-top: 1em;">
         {% if i18n_config.top_notification %}
             {{ render_django(i18n_config.top_notification) }}
         {% endif %}

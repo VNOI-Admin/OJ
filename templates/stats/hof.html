@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+
+{% block media %}
+<link rel="stylesheet" href="{{ static('hof.css') }}">
+<style>
+</style>
+{% endblock %}
+
+{% block js_media %}
+<script>
+
+    $(document).ready(function(){
+
+        $('.logo-grid-icon').mouseenter(event => {
+            $('.title').text($(event.currentTarget).data('title'));
+            $('.title').html($('.title').html().replace(/\n/g, '<br>'));
+
+            $('#description').removeClass('type');
+            $('#description').text($(event.currentTarget).data('content'));
+            $('#description').width();
+            $('#description').addClass('type');
+        });
+
+        $('.logo-grid-icon').mouseleave(event => {
+            $('.title').text("VNOJ Hall of Fame");
+            $('.title').html($('.title').html().replace(/\n/g, '<br>'));
+
+            $('#description').removeClass('type');
+            $('#description').text(
+            `Meet the contributors of the community, the challengers who named themselves the best of the best.
+            Use the VNOJ logo and let the journey begins.`);
+            $('#description').html($('#description').html().replace(/\n/g, '<br>'));
+            $('#description').width();
+            $('#description').addClass('type');
+        });
+
+        $('.card').click(event => {
+            const current_active = $('.card.active');
+            if ($(current_active)[0] == $(event.currentTarget)[0]) {
+                console.log('Same card clicked');
+                current_active.removeClass('active').children('.card-content').removeClass('active');
+                current_active.children().not('.card-content').fadeIn('fast');
+            } else {
+                console.log('Different card clicked');
+                current_active.removeClass('active').children('.card-content').removeClass('active');
+                current_active.children().not('.card-content').fadeIn('fast');
+                $(event.currentTarget).addClass('active').children().not('.card-content').fadeOut('fast');
+                $(event.currentTarget).children('.card-content').addClass('active');
+            }
+        })
+
+    });
+</script>
+{% endblock %}
+
+{% block navbar %}
+{% endblock %}
+
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+    <section id="intro" class="hall-section">
+        <div class="hall-content hero-sub-page">
+            <div class="hero-sub-page__content">
+                <h1 class="title">
+                    VNOJ Hall of Fame
+                </h1>
+                <div style="height: 4em; text-align:right; padding: 0.5em 0em 0.5em 0em;">
+                    <span id="description" class="type" style="--n:500">
+                        Meet the contributors of the community, the challengers who named themselves the best of the best.
+                        <br>
+                        Use the VNOJ logo and let the journey begins.
+                    </span>
+                </div>
+                <!-- <button class="hall-button"><a style="color: black !important;" href="#server-stats"><span>TO THE HALL  <i class="fa arrow fa-angle-double-right"></i></span></a></button> -->
+            </div>
+            <div class="hero-sub-page__content">
+                <table style="padding-right: 2em; border-collapse: seperate; border-spacing: 1.5em;">
+                    <tr>
+                        <td>
+                            <a href="#contests"><img class="logo-grid-icon logo-top-left" style="float:right" src="{{ static('VNOIV.png') }}" data-title="Hall of Champions" data-content="Meet challengers from some of the latest contests."></a>
+                        </td>
+                        <td>
+                            <a href="#server-stats"><img class="logo-grid-icon logo-top-right" style="float:left" src="{{ static('VNOIN.png') }}" data-title="Cracking the Stats" data-content="Top rating users. Top contributors. Top problem hunters. Everyone, everywhere, all at once."></a>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <a href="#this-week"><img class="logo-grid-icon logo-bottom-left" style="float:right" src="{{ static('VNOIO.png') }}" data-title="This week in community" data-content="What is currently on the front page of the newspaper?"></a>
+                        </td>
+                        <td>
+                            <a href="{{ url('home') }}"><img class="logo-grid-icon logo-bottom-right" style="float:left" src="{{ static('VNOII.png') }}" data-title="Return to the ship" data-content="Get back to your adventure. Write your own Hall of Fame."></a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </section>
+
+        <section id="contests" class="hall-section">
+        </section>
+
+    <section id="server-stats" class="hall-section">
+        <div class="hall-content">
+            <div class="card-holder">
+                <div class="card rating-ranker">
+                    <div class="overlay"></div>
+                    <div class="circle">
+                        <i class="fa fa-graduation-cap"></i>
+                    </div>
+                    <p class="card-title">Rating rankers</p>
+                    <div class="card-content">
+                        {{ ratings }}
+                        <table class="table">
+                            <thead>
+                                <th>Username</th>
+                                <th>Username</th>
+                                <th>Username</th>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Username</td>
+                                    <td>Username</td>
+                                    <td>Username</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card problem-solver">
+                    <div class="overlay"></div>
+                    <div class="circle">
+                        <i class="fa fa-users"></i>
+                    </div>
+                    <p class="card-title">Problem Solvers</p>
+                    <div class="card-content">
+                        {{ problem_solvers }}
+                    </div>
+                </div>
+                <div class="card contributor">
+                    <div class="overlay"></div>
+                    <div class="circle">
+                        <i class="fa fa-thumbs-up"></i>
+                    </div>
+                    <p class="card-title">Contributors</p>
+                    <div class="card-content">
+                        {{ contributors }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="this-week" class="hall-section">
+        <div class="hall-content">This is the this-week part</div>
+    </section>
+{% endblock %}

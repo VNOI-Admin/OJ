@@ -9,8 +9,10 @@ from django.http import HttpResponseForbidden, JsonResponse
 from django.http.response import HttpResponseBadRequest
 from django.utils.dateparse import parse_datetime
 from django.utils.translation import gettext_lazy as _
+from django.views.generic import TemplateView
 
-from judge.models import Problem, Submission
+from judge.models import Profile, Contest, ContestParticipation, Problem, Submission
+from judge.utils.views import TitleMixin
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 
 
@@ -158,3 +160,25 @@ def all_data(request):
         **submission_data(start_date, end_date, utc_offset),
         **organization_data(start_date, end_date, utc_offset),
     })
+
+
+class HoFView(TitleMixin, TemplateView):
+    template_name = 'stats/hof.html'
+    title = 'Hall of Fame'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        contests = Contest.objects.filter(is_rated=True)[:3]
+        contest_top_users = [contest.users.filter(virtual=ContestParticipation.LIVE)
+                             .annotate(submission_count=Count('submission'))
+                             .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker', '-submission_count')[:3]
+                             for contest in contests]
+
+        context['contests'] = list(zip(contests, contest_top_users))
+        users = Profile.objects.all().only('user', 'rating', 'performance_points', 'contribution_points')
+        context['ratings'] = users.order_by('-rating')[:50]
+        context['problem_solvers'] = users.order_by('-performance_points')[:50]
+        context['contributors'] = users.order_by('-contribution_points')[:50]
+
+        return context
