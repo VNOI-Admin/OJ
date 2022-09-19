@@ -6895,7 +6895,7 @@ msgstr "Kết quả:"
 
 #: templates/submission/status-testcases.html:124
 msgid "Your output (clipped)"
-msgstr "Output của bạn (đã được lượt bỏ)"
+msgstr "Output của bạn (đã được lược bỏ)"
 
 #: templates/submission/status-testcases.html:132
 msgid "Judge feedback"
