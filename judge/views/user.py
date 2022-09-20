@@ -15,7 +15,7 @@ from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordRes
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError, ObjectDoesNotExist
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db.models import Count, F, Max, Min, Prefetch
 from django.db.models.expressions import Value
 from django.db.models.fields import DateField
@@ -35,14 +35,15 @@ from reversion import revisions
 from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
     newsletter_id
 from judge.models import BlogPost, BlogVote, Organization, Profile, Rating, Submission
-from judge.models.contest import Contest
 from judge.models.comment import Comment, CommentVote
+from judge.models.contest import Contest
 from judge.models.problem import Problem, Solution
 from judge.models.tag import TagProblem
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
 from judge.template_context import MiscConfigDict
+from judge.utils.cachedict import CacheDict
 from judge.utils.celery import task_status_by_id, task_status_url_by_id
 from judge.utils.problems import contest_completed_ids, user_completed_ids
 from judge.utils.pwned import PwnedPasswordsValidator
@@ -50,7 +51,6 @@ from judge.utils.ranker import ranker
 from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
-from judge.utils.cachedict import CacheDict
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message
 from judge.views.blog import PostListBase
@@ -283,8 +283,9 @@ class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
     title = None
 
     def get_queryset(self):
-        queryset = (Comment.objects.filter(author=self.user, hidden=False).prefetch_related('author__user', 'author__display_badge') \
-                    .defer('author__about').order_by('-id')).annotate(revisions=Count('versions'))
+        queryset = (Comment.objects.filter(author=self.user, hidden=False)
+                    .prefetch_related('author__user', 'author__display_badge')
+                    .defer('author__about').order_by('-id').annotate(revisions=Count('versions')))
 
         user = self.request.user
 
@@ -354,6 +355,7 @@ class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
         if not self.request.user.is_superuser:
             raise PermissionDenied()
         return super().dispatch(request, *args, **kwargs)
+
 
 class UserProblemsPage(UserPage):
     template_name = 'user/user-problems.html'
