@@ -15,7 +15,7 @@ from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordRes
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError, ObjectDoesNotExist
 from django.db.models import Count, F, Max, Min, Prefetch
 from django.db.models.expressions import Value
 from django.db.models.fields import DateField
@@ -35,6 +35,10 @@ from reversion import revisions
 from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
     newsletter_id
 from judge.models import BlogPost, BlogVote, Organization, Profile, Rating, Submission
+from judge.models.contest import Contest
+from judge.models.comment import Comment, CommentVote
+from judge.models.problem import Problem, Solution
+from judge.models.tag import TagProblem
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
@@ -46,12 +50,13 @@ from judge.utils.ranker import ranker
 from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
+from judge.utils.cachedict import CacheDict
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message
 from judge.views.blog import PostListBase
 from .contests import ContestRanking
 
-__all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserDownloadData', 'UserPrepareData',
+__all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserCommentPage', 'UserDownloadData', 'UserPrepareData',
            'users', 'edit_profile']
 
 
@@ -269,6 +274,86 @@ class UserBlogPage(CustomUserMixin, PostListBase):
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
+
+class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
+    template_name = 'user/comment.html'
+    model = Comment
+    paginate_by = 10
+    context_object_name = 'comments'
+    title = None
+
+    def get_queryset(self):
+        queryset = (Comment.objects.filter(author=self.user, hidden=False).prefetch_related('author__user', 'author__display_badge') \
+                    .defer('author__about').order_by('-id')).annotate(revisions=Count('versions'))
+
+        user = self.request.user
+
+        if user.is_authenticated:
+            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(CommentVote, 'score'), Value(0)))
+            unique_together_left_join(queryset, CommentVote, 'comment', 'voter', self.request.profile.id)
+
+        problem_cache = CacheDict(lambda code: Problem.objects.defer('description', 'summary').get(code=code))
+        solution_cache = CacheDict(lambda code: Solution.objects.defer('content').get(problem__code=code))
+        contest_cache = CacheDict(lambda key: Contest.objects.defer('description').get(key=key))
+        blog_cache = CacheDict(lambda id: BlogPost.objects.defer('summary', 'content').get(id=id))
+        problemtag_cache = CacheDict(lambda code: TagProblem.objects.get(code=code))
+
+        problem_access = CacheDict(lambda code: problem_cache[code].is_accessible_by(user))
+        solution_access = CacheDict(lambda code: problem_access[code] and solution_cache[code].is_accessible_by(user))
+        contest_access = CacheDict(lambda key: contest_cache[key].is_accessible_by(user))
+        blog_access = CacheDict(lambda id: blog_cache[id].can_see(user))
+
+        batch = 2 * self.paginate_by
+
+        output = []
+        for i in itertools.count(0):
+            slice = queryset[i * batch:i * batch + batch]
+            if not slice:
+                break
+
+            for comment in slice:
+                page_key = comment.page[2:]
+                try:
+                    if comment.page.startswith('p:'):
+                        has_access = problem_access[page_key]
+                        comment.page_title = problem_cache[page_key].name
+                    elif comment.page.startswith('s:'):
+                        has_access = solution_access[page_key]
+                        comment.page_title = _('Editorial for %s') % problem_cache[page_key].name
+                    elif comment.page.startswith('c:'):
+                        has_access = contest_access[page_key]
+                        comment.page_title = contest_cache[page_key].name
+                    elif comment.page.startswith('b:'):
+                        has_access = blog_access[page_key]
+                        comment.page_title = blog_cache[page_key].title
+                    elif comment.page.startswith('t:'):
+                        has_access = True
+                        comment.page_title = problemtag_cache[page_key].name
+                    else:
+                        has_access = True
+                except ObjectDoesNotExist:
+                    pass
+                else:
+                    if has_access:
+                        output.append(comment)
+
+        return output
+
+    def get_context_data(self, **kwargs):
+        context = super(UserCommentPage, self).get_context_data(**kwargs)
+        context['first_page_href'] = None
+        context['title'] = self.title or _('Page %d of Comments') % context['page_obj'].number
+        context['vote_hide_threshold'] = settings.DMOJ_COMMENT_VOTE_HIDE_THRESHOLD
+
+        if self.request.user.is_authenticated:
+            context['is_new_user'] = not self.request.user.is_staff and not self.request.profile.has_any_solves
+
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.user.is_superuser:
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
 
 class UserProblemsPage(UserPage):
     template_name = 'user/user-problems.html'
