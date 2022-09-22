@@ -259,7 +259,7 @@ class UserBlogPage(CustomUserMixin, PostListBase):
     def get_queryset(self):
         queryset = BlogPost.objects.filter(authors=self.user, organization=None)
 
-        if self.request.user != self.user.user and not self.request.user.is_staff:
+        if self.request.user != self.user.user and not self.request.user.is_superuser:
             queryset = queryset.filter(visible=True, publish_on__lte=timezone.now())
 
         if self.request.user.is_authenticated:
