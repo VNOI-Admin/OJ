@@ -15,6 +15,7 @@ footer {
 
 body {
 	color: white;
+	font-family: monospace !important;
 }
 
 #content {
@@ -138,7 +139,6 @@ body {
 	font-weight: bold;
 	text-transform: uppercase;
 	animation: color-animation 4s linear infinite alternate;
-	font-family: monospace;
 	opacity: 1;
 	transition: 1s ease-in;
 }
@@ -185,7 +185,6 @@ body {
 }
 
 .type {
-	font-family: monospace;
 	color:#0000;
 	background:
 	linear-gradient(-90deg,#00DFFC 5px,#0000 0) 10px 0,
@@ -266,7 +265,7 @@ body {
 	background: var(--bg-color-light);
 }
 
-.card:hover p {
+.card:hover>p {
 	color: var(--text-color-hover);
 }
 
@@ -280,6 +279,7 @@ body {
 	height: 90vh;
 	width: 40vw;
 	animation: none;
+	background-color: #44c2ea;
 }
 
 .card.active .overlay {
@@ -370,12 +370,74 @@ body {
 	color: black;
 	z-index: 300;
 	opacity: 0;
+	width: 100%;
 	position: absolute;
 	transition: all 0s ease-out;
 	text-overflow: ellipsis;
 	overflow: auto;
-	padding: 0em 1.5em 0em 1.5em;
+	padding: 1em;
 	cursor: pointer;
+}
+
+.card-content .table {
+	padding: 2em;
+	overflow: wrap;
+}
+
+.card-content .table td, .card-content .table th {
+	border: none;
+}
+
+.card-content .table th {
+	background-color: var(--bg-color);
+	color: black;
+}
+
+.card-content .table tr:nth-child(odd) td {
+	background-color: var(--bg-color-light);
+	color: black;
+}
+
+.card-content .table tr:nth-child(even) td {
+	background-color: var(--bg-color);
+	color: black;
+}
+
+.stage {
+	margin: auto;
+	padding: 0.5em;
+	margin-top: 3em;
+	position: relative;
+	text-align: center;
+}
+
+.stage>img {
+	display: block;
+	margin-left: auto;
+	margin-right: auto;
+	width: 80%;
+}
+
+.ranking p {
+	position:relative;
+	left: 50%;
+	transform: translateX(-50%);
+	width: 6em;
+	text-align: center;
+}
+
+.ranking {
+	display: flex;
+	position: absolute;
+	top: 15%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 100%;
+	justify-content: center;
+}
+
+.stage .rank1 {
+	margin: auto 3.7rem;
 }
 
 .card-content.active {

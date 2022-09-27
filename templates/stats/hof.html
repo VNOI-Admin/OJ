@@ -111,19 +111,39 @@
                     </div>
                     <p class="card-title">Rating rankers</p>
                     <div class="card-content">
-                        {{ ratings }}
-                        <table class="table">
+                        <div class="stage">
+                            <img src="{{ static('stage.png') }}"/>
+                            <div class="ranking">
+                                <div class="rank3">
+                                    <p class="rank3__content__info__name">{{ ratings[2].user.username|truncate(14) }}</p>
+                                    <p class="rank3__content__info__rating">Rating: {{ ratings[2].rating }}</p>
+                                </div>
+                                <div class="rank1">
+                                    <p class="rank1__content__info__name">{{ ratings[0].user.username|truncate(14) }}</p>
+                                    <p class="rank1__content__info__rating">Rating: {{ ratings[0].rating }}</p>
+                                </div>
+                                <div class="rank2">
+                                    <p class="rank2__content__info__name">{{ ratings[1].user.username|truncate(14) }}</p>
+                                    <p class="rank2__content__info__rating">Rating: {{ ratings[1].rating }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="table" cellspacing="0" cellpadding="0">
                             <thead>
+                                <th>Rank</th>
                                 <th>Username</th>
-                                <th>Username</th>
-                                <th>Username</th>
+                                <th>Rating</th>
                             </thead>
                             <tbody>
-                                <tr>
-                                    <td>Username</td>
-                                    <td>Username</td>
-                                    <td>Username</td>
-                                </tr>
+                                {% for user in ratings %}
+                                    {% if loop.index > 3 %}
+                                        <tr>
+                                            <td>{{ loop.index }}</td>
+                                            <td>{{ user }}</td>
+                                            <td>{{ user.rating }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
                             </tbody>
                         </table>
                     </div>
@@ -135,7 +155,41 @@
                     </div>
                     <p class="card-title">Problem Solvers</p>
                     <div class="card-content">
-                        {{ problem_solvers }}
+                        <div class="stage">
+                            <img src="{{ static('stage.png') }}"/>
+                            <div class="ranking">
+                                <div class="rank3">
+                                    <p class="rank3__content__info__name">{{ problem_solvers[2].user.username|truncate(14) }}</p>
+                                    <p class="rank3__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[2].performance_points | float) }}</p>
+                                </div>
+                                <div class="rank1">
+                                    <p class="rank1__content__info__name">{{ problem_solvers[0].user.username|truncate(14) }}</p>
+                                    <p class="rank1__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[0].performance_points | float) }}</p>
+                                </div>
+                                <div class="rank2">
+                                    <p class="rank2__content__info__name">{{ problem_solvers[1].user.username|truncate(14) }}</p>
+                                    <p class="rank2__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[1].performance_points | float) }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="table" cellspacing="0" cellpadding="0">
+                            <thead>
+                                <th>Rank</th>
+                                <th>Username</th>
+                                <th>Rating</th>
+                            </thead>
+                            <tbody>
+                                {% for user in problem_solvers %}
+                                    {% if loop.index > 3 %}
+                                        <tr>
+                                            <td>{{ loop.index }}</td>
+                                            <td>{{ user }}</td>
+                                            <td>{{'%0.2f'| format(user.performance_points | float) }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
                 <div class="card contributor">
@@ -145,7 +199,41 @@
                     </div>
                     <p class="card-title">Contributors</p>
                     <div class="card-content">
-                        {{ contributors }}
+                        <div class="stage">
+                            <img src="{{ static('stage.png') }}"/>
+                            <div class="ranking">
+                                <div class="rank3">
+                                    <p class="rank3__content__info__name">{{ contributors[2].user.username|truncate(14) }}</p>
+                                    <p class="rank3__content__info__rating">CP: {{ contributors[2].contribution_points }}</p>
+                                </div>
+                                <div class="rank1">
+                                    <p class="rank1__content__info__name">{{ contributors[0].user.username|truncate(14) }}</p>
+                                    <p class="rank1__content__info__rating">CP: {{ contributors[0].contribution_points }}</p>
+                                </div>
+                                <div class="rank2">
+                                    <p class="rank2__content__info__name">{{ contributors[1].user.username|truncate(14) }}</p>
+                                    <p class="rank2__content__info__rating">CP: {{ contributors[1].contribution_points }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <table class="table" cellspacing="0" cellpadding="0">
+                            <thead>
+                                <th>Rank</th>
+                                <th>Username</th>
+                                <th>Contribution points</th>
+                            </thead>
+                            <tbody>
+                                {% for user in contributors %}
+                                    {% if loop.index > 3 %}
+                                        <tr>
+                                            <td>{{ loop.index }}</td>
+                                            <td>{{ user }}</td>
+                                            <td>{{ user.contribution_points }}</td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
