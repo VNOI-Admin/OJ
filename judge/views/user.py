@@ -15,7 +15,7 @@ from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordRes
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
-from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied, ValidationError
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.db.models import Count, F, Max, Min, Prefetch
 from django.db.models.expressions import Value
 from django.db.models.fields import DateField
@@ -35,15 +35,11 @@ from reversion import revisions
 from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
     newsletter_id
 from judge.models import BlogPost, BlogVote, Organization, Profile, Rating, Submission
-from judge.models.comment import Comment, CommentVote
-from judge.models.contest import Contest
-from judge.models.problem import Problem, Solution
-from judge.models.tag import TagProblem
+from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
 from judge.template_context import MiscConfigDict
-from judge.utils.cachedict import CacheDict
 from judge.utils.celery import task_status_by_id, task_status_url_by_id
 from judge.utils.problems import contest_completed_ids, user_completed_ids
 from judge.utils.pwned import PwnedPasswordsValidator
@@ -283,62 +279,9 @@ class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
     title = None
 
     def get_queryset(self):
-        queryset = (Comment.objects.filter(author=self.user, hidden=False)
-                    .prefetch_related('author__user', 'author__display_badge')
-                    .defer('author__about').order_by('-id').annotate(revisions=Count('versions')))
-
-        user = self.request.user
-
-        if user.is_authenticated:
-            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(CommentVote, 'score'), Value(0)))
-            unique_together_left_join(queryset, CommentVote, 'comment', 'voter', self.request.profile.id)
-
-        problem_cache = CacheDict(lambda code: Problem.objects.defer('description', 'summary').get(code=code))
-        solution_cache = CacheDict(lambda code: Solution.objects.defer('content').get(problem__code=code))
-        contest_cache = CacheDict(lambda key: Contest.objects.defer('description').get(key=key))
-        blog_cache = CacheDict(lambda id: BlogPost.objects.defer('summary', 'content').get(id=id))
-        problemtag_cache = CacheDict(lambda code: TagProblem.objects.get(code=code))
-
-        problem_access = CacheDict(lambda code: problem_cache[code].is_accessible_by(user))
-        solution_access = CacheDict(lambda code: problem_access[code] and solution_cache[code].is_accessible_by(user))
-        contest_access = CacheDict(lambda key: contest_cache[key].is_accessible_by(user))
-        blog_access = CacheDict(lambda id: blog_cache[id].can_see(user))
-
-        batch = 2 * self.paginate_by
-
-        output = []
-        for i in itertools.count(0):
-            slice = queryset[i * batch:i * batch + batch]
-            if not slice:
-                break
-
-            for comment in slice:
-                page_key = comment.page[2:]
-                try:
-                    if comment.page.startswith('p:'):
-                        has_access = problem_access[page_key]
-                        comment.page_title = problem_cache[page_key].name
-                    elif comment.page.startswith('s:'):
-                        has_access = solution_access[page_key]
-                        comment.page_title = _('Editorial for %s') % problem_cache[page_key].name
-                    elif comment.page.startswith('c:'):
-                        has_access = contest_access[page_key]
-                        comment.page_title = contest_cache[page_key].name
-                    elif comment.page.startswith('b:'):
-                        has_access = blog_access[page_key]
-                        comment.page_title = blog_cache[page_key].title
-                    elif comment.page.startswith('t:'):
-                        has_access = True
-                        comment.page_title = problemtag_cache[page_key].name
-                    else:
-                        has_access = True
-                except ObjectDoesNotExist:
-                    pass
-                else:
-                    if has_access:
-                        output.append(comment)
-
-        return output
+        return Comment.get_newest_visible_comments(viewer=self.request.user,
+                                                   author=self.user,
+                                                   batch=2 * self.paginate_by)
 
     def get_context_data(self, **kwargs):
         context = super(UserCommentPage, self).get_context_data(**kwargs)
