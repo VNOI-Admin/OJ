@@ -6,7 +6,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import CASCADE
+from django.db.models import CASCADE, Count
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -64,9 +64,14 @@ class Comment(MPTTModel):
         self.author.update_contribution_points(delta * settings.VNOJ_CP_COMMENT)
 
     @classmethod
-    def most_recent(cls, user, n, batch=None):
-        queryset = cls.objects.filter(hidden=False).select_related('author__user', 'author__display_badge') \
-            .defer('author__about', 'body').order_by('-id')
+    def get_newest_visible_comments(cls, viewer, author=None, n=None, batch=None):
+        if author is not None:
+            queryset = cls.objects.filter(hidden=False, author=author)
+        else:
+            queryset = cls.objects.filter(hidden=False)
+
+        queryset = (queryset.prefetch_related('author__user', 'author__display_badge')
+                    .defer('author__about', 'body').order_by('-id').annotate(revisions=Count('versions')))
 
         problem_cache = CacheDict(lambda code: Problem.objects.defer('description', 'summary').get(code=code))
         solution_cache = CacheDict(lambda code: Solution.objects.defer('content').get(problem__code=code))
@@ -74,13 +79,14 @@ class Comment(MPTTModel):
         blog_cache = CacheDict(lambda id: BlogPost.objects.defer('summary', 'content').get(id=id))
         problemtag_cache = CacheDict(lambda code: TagProblem.objects.get(code=code))
 
-        problem_access = CacheDict(lambda code: problem_cache[code].is_accessible_by(user))
-        solution_access = CacheDict(lambda code: problem_access[code] and solution_cache[code].is_accessible_by(user))
-        contest_access = CacheDict(lambda key: contest_cache[key].is_accessible_by(user))
-        blog_access = CacheDict(lambda id: blog_cache[id].can_see(user))
+        problem_access = CacheDict(lambda code: problem_cache[code].is_accessible_by(viewer))
+        solution_access = CacheDict(lambda code: problem_access[code] and solution_cache[code].is_accessible_by(viewer))
+        contest_access = CacheDict(lambda key: contest_cache[key].is_accessible_by(viewer))
+        blog_access = CacheDict(lambda id: blog_cache[id].can_see(viewer))
 
         if batch is None:
             batch = 2 * n
+
         output = []
         for i in itertools.count(0):
             slice = queryset[i * batch:i * batch + batch]
@@ -111,9 +117,13 @@ class Comment(MPTTModel):
                 else:
                     if has_access:
                         output.append(comment)
-                if len(output) >= n:
+                if n is not None and len(output) >= n:
                     return output
         return output
+
+    @classmethod
+    def most_recent(cls, user, n, batch=None):
+        return cls.get_newest_visible_comments(viewer=user, n=n, batch=batch)
 
     @cached_property
     def link(self):
