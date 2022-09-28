@@ -9,6 +9,9 @@
     {% if not request.official_contest_mode %}
         {{ make_tab('blogs', 'fa-rss', url('user_blog', user.user.username), _('Blogs')) }}
     {% endif %}
+    {% if request.user.is_superuser %}
+        {{ make_tab('comments', 'fa-comments', url('user_comment', user.user.username), _('Comments')) }}
+    {% endif %}
     {% if request.user.is_superuser and user.user != request.user and not user.user.is_superuser %}
         {{ make_tab('impersonate', 'fa-eye', url('impersonate-start', user.user.id), _('Impersonate')) }}
         {{ make_tab('ban', 'fa-ban', url('user_ban', user.user.username), _('Ban this user')) }}
