@@ -178,4 +178,5 @@ def comment_hide(request):
 
     comment = get_object_or_404(Comment, id=comment_id)
     comment.get_descendants(include_self=True).update(hidden=True)
+    comment.author.calculate_contribution_points()
     return HttpResponse('ok')

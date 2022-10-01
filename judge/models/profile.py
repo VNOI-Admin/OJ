@@ -256,7 +256,7 @@ class Profile(models.Model):
         # Because the aggregate function can return None
         # So we use `X or 0` to get 0 if X is None
         # Please note that `0 or X` will return None if X is None
-        total_comment_scores = Comment.objects.filter(author=self.id) \
+        total_comment_scores = Comment.objects.filter(author=self.id, hidden=False) \
             .aggregate(sum=Sum('score'))['sum'] or 0
         total_blog_scores = BlogPost.objects.filter(authors=self.id, visible=True, organization=None) \
             .aggregate(sum=Sum('score'))['sum'] or 0
