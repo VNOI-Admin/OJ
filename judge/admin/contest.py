@@ -66,8 +66,8 @@ class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
     verbose_name = _('Problem')
     verbose_name_plural = 'Problems'
     fields = ('problem', 'points', 'partial', 'is_pretested', 'max_submissions', 'output_prefix_override', 'order',
-              'rejudge_column', 'rescore_column')
-    readonly_fields = ('rejudge_column', 'rescore_column')
+              'rejudge_column')
+    readonly_fields = ('rejudge_column',)
     form = ContestProblemInlineForm
 
     def rejudge_column(self, obj):
@@ -76,13 +76,6 @@ class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
         return format_html('<a class="button rejudge-link" href="{}">Rejudge</a>',
                            reverse('admin:judge_contest_rejudge', args=(obj.contest.id, obj.id)))
     rejudge_column.short_description = ''
-
-    def rescore_column(self, obj):
-        if obj.id is None:
-            return ''
-        return format_html('<a class="button rescore-link" href="{}">Rescore</a>',
-                           reverse('admin:judge_contest_rescore', args=(obj.contest.id, obj.id)))
-    rescore_column.short_description = ''
 
 
 class ContestAnnouncementInlineForm(ModelForm):
@@ -289,8 +282,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         return [
             url(r'^rate/all/$', self.rate_all_view, name='judge_contest_rate_all'),
             url(r'^(\d+)/rate/$', self.rate_view, name='judge_contest_rate'),
-            url(r'^(\d+)/rejudge/(\d+)/$', self.rejudge_view, name='judge_contest_rejudge'),
-            url(r'^(\d+)/rescore/(\d+)/$', self.rescore_view, name='judge_contest_rescore'),
+            url(r'^(\d+)/judge/(\d+)/$', self.rejudge_view, name='judge_contest_rejudge'),
             url(r'^(\d+)/resend/(\d+)/$', self.resend_view, name='judge_contest_resend'),
         ] + super(ContestAdmin, self).get_urls()
 
@@ -301,16 +293,6 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
 
         self.message_user(request, ngettext('%d submission was successfully scheduled for rejudging.',
                                             '%d submissions were successfully scheduled for rejudging.',
-                                            len(queryset)) % len(queryset))
-        return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
-
-    def rescore_view(self, request, contest_id, problem_id):
-        queryset = ContestSubmission.objects.filter(problem_id=problem_id).select_related('submission')
-        for model in queryset:
-            model.submission.update_contest()
-
-        self.message_user(request, ngettext('%d submission was successfully rescored.',
-                                            '%d submissions were successfully rescored.',
                                             len(queryset)) % len(queryset))
         return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
 
