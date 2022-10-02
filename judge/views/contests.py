@@ -555,7 +555,7 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
         if contest.require_registration and not contest.ended and not self.is_editor and not self.is_tester:
             try:
                 ContestParticipation.objects.get(
-                    contest=contest, user=profile, virtual=ContestParticipation.REGISTER
+                    contest=contest, user=profile, virtual=ContestParticipation.REGISTER,
                 )
             except ContestParticipation.DoesNotExist:
                 return generic_message(request, _('Not registered'),
