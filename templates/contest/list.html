@@ -124,12 +124,12 @@
     {% else %}
         {{ contest.user_count }}
     {% endif %}
-    <span title="{%- trans count=contest.virtual_count - contest.user_count -%}
+    <span title="{%- trans count=contest.virtual_count -%}
         This contest has {{count}} virtual participation
         {%- pluralize -%}
         This contest has {{count}} virtual participations
         {%- endtrans -%}"
-        style="opacity: 50%;">({{ contest.virtual_count - contest.user_count }})</span>
+        style="opacity: 50%;">({{ contest.virtual_count }})</span>
 {% endmacro %}
 
 {% macro contest_join(contest, request, finished_contests) %}
@@ -142,7 +142,7 @@
                            value="{{ _('Spectate') }}">
                 </form>
             {% else %}
-                {% if not request.profile or not contest.require_registration or contest in request.profile.registered_contests.all() %}
+                {% if not request.profile or not contest.require_registration or contest in request.profile.registered_contests %}
                     <form action="{{ url('contest_join', contest.key) }}" method="post">
                         {% csrf_token %}
                         <input type="submit" class="unselectable button full participate-button join-warning"
@@ -155,7 +155,7 @@
             {% if contest.require_registration and not contest.time_before_register %}
                 <div style="padding-top: 0.5em">
                     <span style="opacity: 50%">Registered users: </span>
-                    <span>{{ contest.registration_count }}</span>
+                    <span>{{ contest.user_count }}</span>
                 </div>
             {% endif %}
         </td>
@@ -165,7 +165,7 @@
 {% macro contest_register(contest, request) %}
     <td>    
         {% if request.profile not in contest.authors.all() and request.profile not in contest.curators.all() and request.profile not in contest.testers.all() %}
-            {% if request.profile and contest in request.profile.registered_contests.all() %}
+            {% if request.profile and contest in request.profile.registered_contests %}
                 <span style="color: #87ab69"><b>Already registered</b></span>
             {% elif not contest.can_register %}
                 {% if contest.time_before_register %}
@@ -184,7 +184,7 @@
         {% if not contest.time_before_register %}
             <div style="padding-top: 0.5em">
                 <span style="opacity: 50%">Registered users: </span>
-                <span>{{ contest.registration_count }}</span>
+                <span>{{ contest.user_count }}</span>
             </div>
         {% endif %}
     </td>
@@ -264,7 +264,7 @@
                         <td>
                             {{ user_count(contest, request.user) }}
                         </td>
-                        {% if contest.require_registration and request.profile and contest not in request.profile.registered_contests.all() %}
+                        {% if contest.require_registration and request.profile and contest not in request.profile.registered_contests %}
                             {{ contest_register(contest, request) }}
                         {% else %}
                             {{ contest_join(contest, request, finished_contests) }}

@@ -90,9 +90,6 @@ class Contest(models.Model):
                                               blank=True, null=True, default=None)
     registration_end = models.DateTimeField(verbose_name=_('registration end time'),
                                             blank=True, null=True, default=None)
-    registered_users = models.ManyToManyField(Profile, help_text=_('Users who registered for the contest.'),
-                                              blank=True, related_name='registered_contests')
-    registration_count = models.IntegerField(verbose_name=_('registration count'), default=0)
     time_limit = models.DurationField(verbose_name=_('time limit'), blank=True, null=True)
     frozen_last_minutes = models.IntegerField(verbose_name=_('frozen last minutes'), default=0,
                                               help_text=_('If set, the scoreboard will be frozen for the last X '
@@ -388,17 +385,11 @@ class Contest(models.Model):
         return reverse('contest_view', args=(self.key,))
 
     def update_user_count(self):
-        self.user_count = self.users.filter(virtual=0).count()
-        self.virtual_count = self.users.filter(virtual__gt=ContestParticipation.SPECTATE).count()
+        self.user_count = self.users.filter(virtual=-2 if self.require_registration else 0).count()
+        self.virtual_count = self.users.filter(virtual__gt=0).count()
         self.save()
 
     update_user_count.alters_data = True
-
-    def update_registration_count(self):
-        self.registration_count = self.registered_users.all().count()
-        self.save()
-
-    update_registration_count.alters_data = True
 
     @property
     def is_frozen(self):
@@ -557,6 +548,7 @@ class ContestAnnouncement(models.Model):
 class ContestParticipation(models.Model):
     LIVE = 0
     SPECTATE = -1
+    REGISTER = -2
 
     contest = models.ForeignKey(Contest, verbose_name=_('associated contest'), related_name='users', on_delete=CASCADE)
     user = models.ForeignKey(Profile, verbose_name=_('user'), related_name='contest_history', on_delete=CASCADE)
