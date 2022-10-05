@@ -263,6 +263,8 @@
                 {% endfor %}
                 </tbody>
             </table>
+
+            <a href="{{ url('contest_all_problems', contest.key) }}">All problems</a>
         </div>
         {% if has_announcements or can_edit %}
         <div class="contest-clartifications">

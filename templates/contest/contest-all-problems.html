@@ -1,0 +1,76 @@
+{% extends "common-content.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = '' %}
+    {% include "contest/contest-tabs.html" %}
+    {% if contest.is_organization_private %}
+        <span class="organization-tags">
+            {% for org in contest.organizations.all() %}
+                <span class="organization-tag">
+                    <a href="{{ org.get_absolute_url() }}">
+                        <i class="fa fa-lock"></i> {{ org.name }}
+                    </a>
+                </span>
+            {% endfor %}
+        </span>
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    {% set in_contest = contest.is_in_contest(request.user) %}
+    {% if in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
+        {% block description %}
+                {% for problem in contest_problems %}
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div class="content-description" style="width: 70%;">
+                            <div class="problem_container">
+                                <h2 style="margin-top: 0.5em;">{{ problem.name }}</h2>
+                                <div>
+                                    <span><strong>Time limit:</strong> {{ problem.time_limit }} /</span>
+                                    <span><strong>Memory limit:</strong> {{ problem.memory_limit|kbsimpleformat }}</span>
+                                    <p><strong>Point:</strong> {{ problem.points }}</p>
+                                </div>
+                            </div>
+                            {% if problem.is_suggesting %}
+                                <div class="alert alert-warning alert-dismissable">
+                                    <a class="close">x</a>
+                                    <b>{{ _('This problem is only a suggestion!') }}</b>
+                                    <br>
+                                    {{ _('This problem cannot be accessed by normal users until it is approved by an admin or staff. Please make sure that all the data for this problem is correct.') }}
+                                </div>
+                            {% endif %}
+                            {% cache 86400 'problem_html' problem.id MATH_ENGINE LANGUAGE_CODE %}
+                                {{ problem.description|markdown(problem.markdown_style, MATH_ENGINE)|reference|str|safe }}
+                            {% endcache %}
+
+                            {% with pdf_url=problem.pdf_url %}
+                                {% if pdf_url %}
+                                    <p>{{ _("In case the statement didn't load correctly, you can download the statement here: ") }}<a href="{{ pdf_url }}">{{ _("Statement") }}</a></p>
+                                    <object id="pdfContainer" data="{{ pdf_url }}" type="application/pdf" height="1000" style="width: 100%;" ></object>
+                                {% endif %}
+                            {% endwith %}
+
+                            {% with license=problem.license %}
+                                {% if license %}
+                                    <span class="license">
+                                    <a href="{{ url('license', license.key) }}">{{ license.display or license.name }}</a>
+                                </span>
+                                {% endif %}
+                            {% endwith %}
+                            <hr>
+                        </div>
+                    </div>
+                {% endfor %}
+        {% endblock %}
+    {% endif %}
+
+    <!-- <hr> -->
+{% endblock %}
+
+{% block description_end %}{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+{% endblock %}
