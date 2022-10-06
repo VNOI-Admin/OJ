@@ -80,9 +80,8 @@
             <a class="button aux-download-action" href="{{ in_progress_url }}">{{ _('Track progress') }}</a>
         {% elif can_prepare_data %}
             <div class="alert alert-warning">
-                {%- trans ratelimit=ratelimit|timedelta('localized-no-seconds') -%}
-                    You may only prepare a new data download for this contest once every {{ ratelimit }}.
-                {%- endtrans -%}
+                {% set duration=ratelimit|timedelta %}
+                {{ _('You may only prepare a new data download once every %(duration)s.', duration=duration) }}
                 <br>
                 {{ _('Once the contest data is ready, you will find a download link on this page.') }}
             </div>
