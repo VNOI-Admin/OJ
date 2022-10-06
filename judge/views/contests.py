@@ -921,7 +921,7 @@ class ContestOfficialRanking(ContestRankingBase):
     def get_ranking_list(self):
         def display_points(points):
             return format_html(
-                u'<td class="user-points">{points}</td>',
+                '<td class="user-points">{points}</td>',
                 points=floatformat(points),
             )
 

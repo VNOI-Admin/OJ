@@ -2,7 +2,7 @@ from django.contrib import admin
 from django.forms import ModelForm
 from django.urls import reverse_lazy
 from django.utils.html import format_html
-from django.utils.translation import gettext, gettext_lazy as _, ungettext
+from django.utils.translation import gettext, gettext_lazy as _, ngettext
 from reversion.admin import VersionAdmin
 
 from judge.models import Organization
@@ -59,9 +59,9 @@ class OrganizationAdmin(VersionAdmin):
         for org in queryset:
             org.calculate_points()
             count += 1
-        self.message_user(request, ungettext('%d organization has scores recalculated.',
-                                             '%d organizations have scores recalculated.',
-                                             count) % count)
+        self.message_user(request, ngettext('%d organization has scores recalculated.',
+                                            '%d organizations have scores recalculated.',
+                                            count) % count)
     recalculate_points.short_description = _('Recalculate scores')
 
 

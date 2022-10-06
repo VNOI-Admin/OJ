@@ -7,7 +7,7 @@ from django.template.defaultfilters import floatformat
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _, gettext_lazy, ungettext
+from django.utils.translation import gettext as _, gettext_lazy, ngettext
 
 from judge.contest_format.default import DefaultContestFormat
 from judge.contest_format.registry import register_contest_format
@@ -227,7 +227,7 @@ class VNOJContestFormat(DefaultContestFormat):
             points = participation.score
             cumtime = participation.cumtime
         return format_html(
-            u'<td class="user-points"><a href="{url}">{points}<div class="solving-time">{cumtime}</div></a></td>',
+            '<td class="user-points"><a href="{url}">{points}<div class="solving-time">{cumtime}</div></a></td>',
             url=reverse('contest_all_user_submissions',
                         args=[self.contest.key, participation.user.user.username]),
             points=floatformat(points, -self.contest.points_precision),
@@ -239,7 +239,7 @@ class VNOJContestFormat(DefaultContestFormat):
 
         penalty = self.config['penalty']
         if penalty:
-            yield ungettext(
+            yield ngettext(
                 'Each submission before the first maximum score submission will incur a **penalty of %d minute**.',
                 'Each submission before the first maximum score submission will incur a **penalty of %d minutes**.',
                 penalty,
@@ -258,7 +258,7 @@ class VNOJContestFormat(DefaultContestFormat):
                         'a non-zero score, followed by the time of the last score altering submission.')
 
         if self.contest.frozen_last_minutes:
-            yield ungettext(
+            yield ngettext(
                 'The scoreboard will be frozen in the **last %d minute**.',
                 'The scoreboard will be frozen in the **last %d minutes**.',
                 self.contest.frozen_last_minutes,
