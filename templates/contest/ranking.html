@@ -396,7 +396,7 @@
 {% endblock %}
 
 {% block before_users_table %}
-    <div style="margin-bottom: 0.5em">
+    <div style="margin-bottom: 1.25em">
         {% if tab == 'participation' %}
             {% if contest.can_see_full_scoreboard(request.user) %}
                 <input id="search-contest" type="text" placeholder="{{ _('View user participation') }}">
