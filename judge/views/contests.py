@@ -327,20 +327,8 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
 
         return context
 
-class ContestAllProblems(ContestMixin, TitleMixin, CommentedDetailView):
+class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/contest-all-problems.html'
-
-    def is_comment_locked(self):
-        if self.object.use_clarifications:
-            now = timezone.now()
-            if self.object.is_in_contest(self.request.user) or \
-                    (self.object.start_time <= now and now <= self.object.end_time):
-                return True
-
-        return super(ContestAllProblems, self).is_comment_locked()
-
-    def get_comment_page(self):
-        return 'c:%s' % self.object.key
 
     def get_title(self):
         return self.object.name
