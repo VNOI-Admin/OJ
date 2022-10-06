@@ -35,6 +35,7 @@ from reversion import revisions
 from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
     newsletter_id
 from judge.models import BlogPost, BlogVote, Organization, Profile, Rating, Submission
+from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
@@ -51,7 +52,7 @@ from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleOb
 from judge.views.blog import PostListBase
 from .contests import ContestRanking
 
-__all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserDownloadData', 'UserPrepareData',
+__all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserCommentPage', 'UserDownloadData', 'UserPrepareData',
            'users', 'edit_profile']
 
 
@@ -259,7 +260,7 @@ class UserBlogPage(CustomUserMixin, PostListBase):
     def get_queryset(self):
         queryset = BlogPost.objects.filter(authors=self.user, organization=None)
 
-        if self.request.user != self.user.user:
+        if self.request.user != self.user.user and not self.request.user.is_superuser:
             queryset = queryset.filter(visible=True, publish_on__lte=timezone.now())
 
         if self.request.user.is_authenticated:
@@ -268,6 +269,35 @@ class UserBlogPage(CustomUserMixin, PostListBase):
             unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
+
+
+class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
+    template_name = 'user/comment.html'
+    model = Comment
+    paginate_by = 10
+    context_object_name = 'comments'
+    title = None
+
+    def get_queryset(self):
+        return Comment.get_newest_visible_comments(viewer=self.request.user,
+                                                   author=self.user,
+                                                   batch=2 * self.paginate_by)
+
+    def get_context_data(self, **kwargs):
+        context = super(UserCommentPage, self).get_context_data(**kwargs)
+        context['first_page_href'] = None
+        context['title'] = self.title or _('Page %d of Comments') % context['page_obj'].number
+        context['vote_hide_threshold'] = settings.DMOJ_COMMENT_VOTE_HIDE_THRESHOLD
+
+        if self.request.user.is_authenticated:
+            context['is_new_user'] = not self.request.user.is_staff and not self.request.profile.has_any_solves
+
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.user.is_superuser:
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class UserProblemsPage(UserPage):
