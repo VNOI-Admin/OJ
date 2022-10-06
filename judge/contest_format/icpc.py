@@ -229,7 +229,7 @@ class ICPCContestFormat(DefaultContestFormat):
                     'a non-zero score, followed by the time of the last score altering submission.')
 
         if self.contest.frozen_last_minutes:
-            yield ungettext(
+            yield ngettext(
                 'The scoreboard will be frozen in the **last %d minute**.',
                 'The scoreboard will be frozen in the **last %d minutes**.',
                 self.contest.frozen_last_minutes,
