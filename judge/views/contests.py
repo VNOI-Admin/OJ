@@ -327,6 +327,7 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
 
         return context
 
+
 class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/contest-all-problems.html'
 
