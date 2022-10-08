@@ -263,6 +263,8 @@
                 {% endfor %}
                 </tbody>
             </table>
+
+            <a class="button" style="width: fit-content" href="{{ url('contest_all_problems', contest.key) }}">{{ _('All problems') }}</a>
         </div>
         {% if has_announcements or can_edit %}
         <div class="contest-clartifications">

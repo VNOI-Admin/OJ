@@ -5078,6 +5078,10 @@ msgstr "Tạo thông báo"
 msgid "Clarifications"
 msgstr "Làm rõ"
 
+#: templates/contest/contest.html:268
+msgid "All problems"
+msgstr "Tất cả bài tập"
+
 #: templates/contest/create-announcement.html:18
 msgid "Announce"
 msgstr "Thông báo"
