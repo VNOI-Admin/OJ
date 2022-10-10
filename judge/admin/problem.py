@@ -196,10 +196,6 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
                                             '%d problems successfully marked as public.',
                                             count) % count)
 
-        self.message_user(request, ngettext("%d problem's publish date successfully updated.",
-                                            "%d problems' publish date successfully updated.",
-                                            count) % count)
-
     make_public_and_update_publish_date.short_description = _('Mark problems as public and set publish date to now')
 
     def make_private(self, request, queryset):
