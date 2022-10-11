@@ -9,6 +9,7 @@ from django.db.models.functions import Coalesce
 from django.forms import ModelForm
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponseRedirect
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.generic import View
@@ -79,10 +80,14 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
             try:
                 parent = int(parent)
             except ValueError:
+                return HttpResponseBadRequest()
+            try:
+                parent_comment = Comment.objects.get(hidden=False, id=parent, page=page)
+            except Comment.DoesNotExist:
                 return HttpResponseNotFound()
-            else:
-                if not Comment.objects.filter(hidden=False, id=parent, page=page).exists():
-                    return HttpResponseNotFound()
+            if not (self.request.user.has_perm('judge.change_comment') or
+                    parent_comment.time > timezone.now() - settings.DMOJ_COMMENT_REPLY_TIMEFRAME):
+                return HttpResponseForbidden()
 
         form = CommentForm(request, request.POST)
         if form.is_valid():
@@ -126,5 +131,6 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
                 % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
         context['comment_list'] = queryset
         context['vote_hide_threshold'] = settings.DMOJ_COMMENT_VOTE_HIDE_THRESHOLD
+        context['reply_cutoff'] = timezone.now() - settings.DMOJ_COMMENT_REPLY_TIMEFRAME
 
         return context
