@@ -17,7 +17,8 @@ from django.urls import reverse
 from django.utils import translation
 from lxml import etree as ET
 
-from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemTranslation, ProblemType, Profile
+from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemTranslation, \
+    ProblemType, Profile
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import django_uploader
 
@@ -512,7 +513,7 @@ class Command(BaseCommand):
                 profile = Profile.objects.get(user__username=username)
             except Profile.DoesNotExist:
                 raise CommandError(f'user {username} does not exist')
-            
+
             problem_authors.append(profile)
 
         # A dictionary to hold all problem information.
