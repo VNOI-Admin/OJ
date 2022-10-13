@@ -17,7 +17,8 @@ from django.urls import reverse
 from django.utils import translation
 from lxml import etree as ET
 
-from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemTranslation, ProblemType
+from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemTranslation, \
+    ProblemType, Profile
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import django_uploader
 
@@ -396,6 +397,7 @@ def create_problem(problem_meta):
     )
     problem.save()
     problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
+    problem.authors.set(problem_meta['authors'])
     problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
     problem.save()
 
@@ -480,6 +482,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('package', help='path to package in zip format')
         parser.add_argument('code', help='problem code')
+        parser.add_argument('--authors', help='VNOI username of author of the problem', nargs='+')
 
     def handle(self, *args, **options):
         # Force using English
@@ -503,10 +506,21 @@ class Command(BaseCommand):
 
         root = ET.fromstring(package.read('problem.xml'))
 
+        problem_authors_args = options['authors']
+        problem_authors = []
+        for username in problem_authors_args:
+            try:
+                profile = Profile.objects.get(user__username=username)
+            except Profile.DoesNotExist:
+                raise CommandError(f'user {username} does not exist')
+
+            problem_authors.append(profile)
+
         # A dictionary to hold all problem information.
         problem_meta = {}
         problem_meta['code'] = problem_code
         problem_meta['tmp_dir'] = tempfile.TemporaryDirectory()
+        problem_meta['authors'] = problem_authors
 
         try:
             parse_checker(problem_meta, root, package)
