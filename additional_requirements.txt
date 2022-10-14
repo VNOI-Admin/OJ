@@ -2,3 +2,4 @@ uwsgi
 websocket-client
 watchdog
 matplotlib
+sendgrid-django
