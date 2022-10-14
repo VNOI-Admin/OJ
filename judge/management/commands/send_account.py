@@ -1,4 +1,5 @@
 import csv
+import time
 
 from django.conf import settings
 from django.core import mail
@@ -41,3 +42,4 @@ class Command(BaseCommand):
             password = row['password']
             p = Profile.objects.filter(user__username=username)[0]
             send_account(p.organization.name, teamname, username, password, email)
+            time.sleep(2)
