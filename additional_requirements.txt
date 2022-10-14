@@ -1,3 +1,4 @@
 mysqlclient
 uwsgi
 websocket-client
+sendgrid-django
