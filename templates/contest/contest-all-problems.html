@@ -26,7 +26,13 @@
                     <div style="display: flex; flex-direction: column; align-items: center;">
                         <div class="content-description" style="width: 70%;">
                             <div class="problem_container">
-                                <h2 style="margin-top: 0.5em;">{{ problem.name }}</h2>
+                                <div style="display: flex">
+                                    <h2 style="margin-top: 0.5em; margin-right: 0.5em;">{{ problem.name }}</h2>
+                                    <a href="{{ url('problem_submit', problem.code) }}" class="button" style="display: inline; margin: auto 0;">
+                                        {{ _('Submit') }}
+                                    </a>
+                                </div>
+
                                 <div>
                                     <span><strong>Time limit:</strong> {{ problem.time_limit }} /</span>
                                     <span><strong>Memory limit:</strong> {{ problem.memory_limit|kbsimpleformat }}</span>
