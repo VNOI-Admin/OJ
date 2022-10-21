@@ -148,8 +148,8 @@ class ProblemDataCompiler(object):
                 if checker_ext == 'py':
                     return custom_checker_path[1]
 
-                if checker_ext != 'cpp' and checker_ext != 'pas':
-                    raise ProblemDataError(_("Why don't you use a cpp/pas/py checker?"))
+                if checker_ext not in ['cpp', 'pas', 'java']:
+                    raise ProblemDataError(_("Why don't you use a cpp/pas/py/java checker?"))
                 # the cpp checker will be handled
                 # right below here, outside of this scope
 
