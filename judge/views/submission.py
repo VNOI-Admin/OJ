@@ -235,6 +235,7 @@ def group_test_cases(cases):
 
 class SubmissionStatus(SubmissionDetailBase):
     template_name = 'submission/status.html'
+
     def get_queryset(self):
         return super().get_queryset().select_related('contest', 'contest_object', 'contest__problem')
 
