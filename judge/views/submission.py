@@ -236,6 +236,9 @@ def group_test_cases(cases):
 class SubmissionStatus(SubmissionDetailBase):
     template_name = 'submission/status.html'
 
+    def get_queryset(self):
+        return super().get_queryset().select_related('contest', 'contest_object', 'contest__problem')
+
     def get_context_data(self, **kwargs):
         context = super(SubmissionStatus, self).get_context_data(**kwargs)
         submission = self.object
@@ -244,6 +247,10 @@ class SubmissionStatus(SubmissionDetailBase):
             = group_test_cases(submission.test_cases.all())
 
         context['feedback_limit'] = min(3, test_case_count - 1)
+        # In case the submission is in an on-going contest, we don't want to show any feedback.
+        # However, this can be override by setting `submission.problem.allow_view_feedback`.
+        if submission.contest_object and not submission.contest_object.ended:
+            context['feedback_limit'] = 0
 
         # copy from combine_statuses
         if not submission.is_graded and len(statuses) > 0 and statuses[-1].batch is not None:
