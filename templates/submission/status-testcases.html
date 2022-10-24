@@ -138,11 +138,12 @@
                                 <pre class="case-output">{{ curr_data['answer']|linebreaksbr }}</pre>
                             {% endif %}
                             {% if print_case_output %}
+                                {% set escaped_output = case.output.encode("unicode-escape").decode("utf-8") %}
                                 <strong>{{ _('Your output (clipped)') }}</strong>
                                 {% if prefix_length is none or prefix_length == 0 %}
-                                    <pre class="case-output">{{ case.output|linebreaksbr }}</pre>
+                                    <pre class="case-output">{{ escaped_output|linebreaksbr }}</pre>
                                 {% else %}
-                                    <pre class="case-output">{{ case.output[:prefix_length]|linebreaksbr }}</pre>
+                                    <pre class="case-output">{{ escaped_output[:prefix_length]|linebreaksbr }}</pre>
                                 {% endif %}
                             {% endif %}
                             {% if print_case_ext_feedback %}
