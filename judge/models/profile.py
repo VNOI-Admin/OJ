@@ -238,7 +238,7 @@ class Profile(models.Model):
 
     @cached_property
     def registered_contests(self):
-        return [participation.contest for participation in self.contest_history.filter(virtual=-2).all()]
+        return [participation.contest for participation in self.contest_history.filter(virtual=0).all()]
 
     _pp_table = [pow(settings.DMOJ_PP_STEP, i) for i in range(settings.DMOJ_PP_ENTRIES)]
 

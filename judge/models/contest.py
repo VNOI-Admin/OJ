@@ -385,7 +385,7 @@ class Contest(models.Model):
         return reverse('contest_view', args=(self.key,))
 
     def update_user_count(self):
-        self.user_count = self.users.filter(virtual=-2 if self.require_registration else 0).count()
+        self.user_count = self.users.filter(virtual=0).count()
         self.virtual_count = self.users.filter(virtual__gt=0).count()
         self.save()
 
@@ -548,7 +548,6 @@ class ContestAnnouncement(models.Model):
 class ContestParticipation(models.Model):
     LIVE = 0
     SPECTATE = -1
-    REGISTER = -2
 
     contest = models.ForeignKey(Contest, verbose_name=_('associated contest'), related_name='users', on_delete=CASCADE)
     user = models.ForeignKey(Profile, verbose_name=_('user'), related_name='contest_history', on_delete=CASCADE)

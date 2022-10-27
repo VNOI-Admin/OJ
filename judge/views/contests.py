@@ -485,18 +485,17 @@ class ContestRegister(LoginRequiredMixin, ContestMixin, BaseDetailView):
                 return generic_message(request, _('Cannot register'),
                                        _('You cannot register for this contest.'))
 
-            REGISTER = ContestParticipation.REGISTER
-
             try:
                 ContestParticipation.objects.get(
-                    contest=contest, user=profile, virtual=REGISTER,
+                    contest=contest, user=profile, virtual=0
                 )
             except ContestParticipation.DoesNotExist:
                 if requires_access_code:
                     raise ContestAccessDenied()
 
                 ContestParticipation.objects.create(
-                    contest=contest, user=profile, virtual=REGISTER,
+                    contest=contest, user=profile, virtual=0,
+                    real_start=datetime(1, 1, 1)
                 )
             else:
                 return generic_message(request, _('Already registered'),
@@ -552,15 +551,6 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
                                    _('You have been declared persona non grata for this contest. '
                                      'You are permanently barred from joining this contest.'))
 
-        if contest.require_registration and not contest.ended and not self.is_editor and not self.is_tester:
-            try:
-                ContestParticipation.objects.get(
-                    contest=contest, user=profile, virtual=ContestParticipation.REGISTER,
-                )
-            except ContestParticipation.DoesNotExist:
-                return generic_message(request, _('Not registered'),
-                                       _('You are not registered for this contest.'))
-
         requires_access_code = not self.can_edit and (contest.ended or not contest.require_registration) \
             and contest.access_code and access_code != contest.access_code
         if contest.ended:
@@ -591,7 +581,13 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
                 participation = ContestParticipation.objects.get(
                     contest=contest, user=profile, virtual=(SPECTATE if self.is_editor or self.is_tester else LIVE),
                 )
+                if participation.real_start.date() == date(1, 1, 1):
+                    participation.real_start = timezone.now()
             except ContestParticipation.DoesNotExist:
+                if not self.is_editor and not self.is_tester and contest.require_registration:
+                    return generic_message(request, _('Not registered'),
+                                           _('You are not registered for this contest.'))
+
                 if requires_access_code:
                     raise ContestAccessDenied()
 
