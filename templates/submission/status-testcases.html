@@ -1,6 +1,6 @@
 {% macro make_status(case) %}
     {% set partial = (case.status == 'AC' and  case.points < case.total) %}
-    <span title="{{ case.long_status }}" class="case-{%- if partial -%}_AC{% else %}{{- case.status -}}{%- endif -%}">
+    <span title="{{ case.long_status }}" class="case-{%- if partial -%}_AC{% else %}{{- case.result_class -}}{%- endif -%}">
         {%- if case.status == 'SC' %}&mdash;{% elif partial %}{{_("Partial Accepted")}}{% else %}{{ case.long_status }}{% endif -%}
     </span>
 {% endmacro %}
