@@ -110,6 +110,7 @@ def create_problem(problem_name, icpc_folder):
             problem.points = 1
             problem.group = ProblemGroup.objects.order_by('id').first()  # Uncategorized
             problem.date = timezone.now()
+            problem.testcase_result_visibility_mode = 'S'
             problem.save()
 
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
@@ -143,7 +144,7 @@ class Command(BaseCommand):
 
         os.system(f'cd {icpc_folder} && git pull origin master')
 
-        blacklist = ['template_package', '.github', '.git']
+        blacklist = ['template_package', '.github', '.git', 'xx-mien-nam', 'yy-mien-nam', '6-mien-trung']
         problems = [
             name for name in os.listdir(icpc_folder)
             if os.path.isdir(os.path.join(icpc_folder, name)) and
