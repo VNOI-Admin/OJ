@@ -87,7 +87,7 @@ def update_problem_testcases(problem, testcases, test_file_path, checker_path, p
         case.save()
 
     with open(test_file_path, 'rb') as f, open(checker_path, 'rb') as checker_raw:
-        checker = io.BytesIO(checker_raw.read().replace(b'#include "testlib_kattis.h"', b'#include "testlib.h"'))
+        checker = io.BytesIO(checker_raw.read().replace(b'#include "testlib_for_kattis.h"', b'#include "testlib.h"'))
 
         try:
             problem_data = problem.data_files
