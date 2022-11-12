@@ -13,7 +13,7 @@ from judge.views.widgets import pdf_statement_uploader
 
 
 def get_testcases(test_path):
-    def get_input_output(test_type):
+    def get_input_output(test_type, required=True):
         inputs = []
         outputs = []
         test_type_path = os.path.join(test_path, test_type)
@@ -35,7 +35,7 @@ def get_testcases(test_path):
                 f'In {test_type}, found {len(inputs)} input files, which is differ from {len(outputs)} output files.',
             )
 
-        if len(inputs) == 0:
+        if len(inputs) == 0 and required:
             raise CommandError(f'Found nothing in {test_type} folder.')
 
         print(f'Found {len(inputs)} {test_type} testcases')
@@ -44,7 +44,7 @@ def get_testcases(test_path):
         outputs.sort()
         return inputs, outputs
 
-    sample_in, sample_out = get_input_output('sample')
+    sample_in, sample_out = get_input_output('sample', False)
     secret_in, secret_out = get_input_output('secret')
 
     return list(zip(sample_in + secret_in, sample_out + secret_out))
