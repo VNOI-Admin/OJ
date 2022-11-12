@@ -144,7 +144,7 @@ class Command(BaseCommand):
 
         os.system(f'cd {icpc_folder} && git pull origin master')
 
-        blacklist = ['template_package', '.github', '.git', 'xx-mien-nam', 'yy-mien-nam', '6-mien-trung']
+        blacklist = ['template_package', '.github', '.git', 'xx-mien-nam', 'yy-mien-nam', '6-mien-trung', '_other_docs_']
         problems = [
             name for name in os.listdir(icpc_folder)
             if os.path.isdir(os.path.join(icpc_folder, name)) and
