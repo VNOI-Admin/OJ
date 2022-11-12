@@ -17,7 +17,7 @@ def send_account(team_uni, team_name, username, password, coach_email):
         'teamusername': username,
         'teampassword': password,
     })
-    subject = f'{team_name} - Thông tin tài khoản thi ICPC Miền Bắc 2022'
+    subject = f'{team_name} - Thông tin tài khoản thi thử ICPC Quốc Gia 2022'
     plain_message = strip_tags(html_message)
 
     mail.send_mail(subject, plain_message, settings.SERVER_EMAIL, [coach_email], html_message=html_message)
