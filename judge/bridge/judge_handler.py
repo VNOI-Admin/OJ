@@ -385,7 +385,7 @@ class JudgeHandler(ZlibPacketHandler):
         batches = {}  # batch number: (points, total)
 
         for case in SubmissionTestCase.objects.filter(submission=submission):
-            time += case.time
+            time = max(time, case.time)
             if not case.batch:
                 points += case.points
                 total += case.total
