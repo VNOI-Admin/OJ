@@ -1,4 +1,7 @@
 import os
+import json
+import yaml
+import io
 
 from django.conf import settings
 from django.core.files import File
@@ -10,6 +13,11 @@ from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTe
 from judge.models.profile import Profile
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import pdf_statement_uploader
+
+
+NORMAL = 0
+INTERACTIVE = 1
+CHECKER = 2
 
 
 def get_testcases(test_path):
@@ -47,11 +55,22 @@ def get_testcases(test_path):
     sample_in, sample_out = get_input_output('sample', False)
     secret_in, secret_out = get_input_output('secret')
 
-    return list(zip(sample_in + secret_in, sample_out + secret_out))
+    return list(zip(sample_in + secret_in, sample_out + secret_out)), len(sample_in), len(secret_in)
+
+def get_checker(validators_path):
+    results = []
+    for path, subdirs, files in os.walk(validators_path):
+        for name in files:
+            if name.endswith('.cpp'):
+                results.append(os.path.join(path, name))
+    if len(results) != 1:
+        raise CommandError(f'Found {len(results)} validators, which is not 1.')
+
+    return results[0]
 
 
 @transaction.atomic
-def update_problem_testcases(problem, testcases, test_file_path):
+def update_problem_testcases(problem, testcases, test_file_path, checker_path, problem_type):
     # delete old testcases
     problem.cases.all().delete()
     files = []
@@ -66,15 +85,45 @@ def update_problem_testcases(problem, testcases, test_file_path):
         )
         files += case_data
         case.save()
-    with open(test_file_path, 'rb') as f:
+
+    with open(test_file_path, 'rb') as f, open(checker_path, 'rb') as checker_raw:
+        checker = io.BytesIO(checker_raw.read().replace(b'#include "testlib_kattis.h"', b'#include "testlib.h"'))
+
         try:
             problem_data = problem.data_files
             problem_data.zipfile.save('data.zip', File(f))
+
+            if problem_type == CHECKER:
+                problem_data.checker = 'bridged'
+                problem_data.custom_checker.save('checker.cpp', File(checker))
+                problem_data.checker_args = json.dumps({
+                    "files": "checker.cpp",
+                    "lang": "CPP17",
+                    "type": "testlib"
+                })
+            elif problem_type == INTERACTIVE:
+                problem_data.interactive = True
+                problem_data.grader = 'interactive'
+                problem_data.custom_grader.save('checker.cpp', File(checker))
         except Exception:
             problem_data = ProblemData(
                 problem=problem,
                 zipfile=File(f),
             )
+
+            if problem_type == CHECKER:
+                problem_data.checker = 'bridged'
+                problem_data.custom_checker.save('checker.cpp', File(checker))
+                problem_data.checker_args = json.dumps({
+                    "files": "checker.cpp",
+                    "lang": "CPP17",
+                    "type": "testlib"
+                })
+            elif problem_type == INTERACTIVE:
+                problem_data.interactive = True
+                problem_data.grader = 'interactive'
+                problem_data.custom_grader.save('checker.cpp', File(checker))
+
         problem_data.output_limit = 100 * 1024 * 1024
         problem_data.save()
 
@@ -121,13 +170,28 @@ def create_problem(problem_name, icpc_folder):
         print(f'Skipped create problem {problem_name}.')
         problem = Problem.objects.get(code=problem_code)
 
-    testcases = get_testcases(test_path)
+    testcases, n_sample, n_secret = get_testcases(test_path)
 
     print('Creating zip file')
     test_zip_name = 'data.zip'
     os.system(f'cd {test_path} && zip -rq {test_zip_name} .')
 
-    update_problem_testcases(problem, testcases, os.path.join(test_path, test_zip_name))
+    problem_setting = yaml.load(open(os.path.join(problem_folder, 'problem.yaml'), 'r'), Loader=yaml.SafeLoader)
+
+    validation = problem_setting.get('validation', '')
+    if validation == 'custom interactive':
+        problem_type = INTERACTIVE
+        checker_path = get_checker(os.path.join(problem_folder, 'output_validators'))
+    elif validation == 'custom':
+        problem_type = CHECKER
+        checker_path = get_checker(os.path.join(problem_folder, 'output_validators'))
+    else:
+        problem_type = NORMAL
+        # small hack to make the `open with` work without any modification
+        checker_path = os.path.join(problem_folder, 'problem.yaml')
+
+    update_problem_testcases(problem, testcases, os.path.join(test_path, test_zip_name), checker_path, problem_type)
+    return n_sample, n_secret, problem_type
 
 
 class Command(BaseCommand):
@@ -151,15 +215,21 @@ class Command(BaseCommand):
             name not in blacklist
         ]
         problems.sort()
-        errors = []
+        messages = {}
         for problem in problems:
             try:
                 print('=============================')
-                create_problem(problem, icpc_folder)
+                n_sample, n_secret, problem_type = create_problem(problem, icpc_folder)
+                msg = ''
+                if problem_type == CHECKER:
+                    msg = ' [custom checker]'
+                elif problem_type == INTERACTIVE:
+                    msg = ' [interactive]'
+
+                messages[problem] = f'{n_sample} samples, {n_secret} secrets{msg}.'
                 print('Succeed.')
             except Exception as e:
                 print(f'Cannot import problem {problem}. Please check error message.')
-                errors.append((problem, e))
-        if errors:
-            for p, e in errors:
-                print(p, e)
+                messages[problem] = str(e)
+
+        print(json.dumps(messages, indent=4))

@@ -21,4 +21,4 @@ class Command(BaseCommand):
         if not os.path.exists(icpc_folder):
             raise CommandError(f'Folder {icpc_folder} not found. Make sure to clone the repo to that folder')
         os.system(f'cd {icpc_folder} && git pull origin master')
-        create_problem(problem_repo_name, icpc_folder)
+        print(create_problem(problem_repo_name, icpc_folder))
