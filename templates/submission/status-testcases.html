@@ -169,13 +169,13 @@
                     {% if submission.result == "TLE" %}
                         <span>---,</span>
                     {% else %}
-                        <span title="{{ submission.time }}s">{{ submission.time|floatformat(3) }}s,</span>
+                        <span title="{{ total_execution_time }}s">{{ total_execution_time|floatformat(3) }}s,</span>
                     {% endif %}
                     {{ submission.memory|kbdetailformat }}
                     <br>
                     {% if submission.result == "AC" %}
                         <b>{{ _('Maximum single-case runtime:') }}</b>
-                        <span title="{{ max_execution_time }}s">{{ max_execution_time|floatformat(3) }}s</span>
+                        <span title="{{ submission.time }}s">{{ submission.time |floatformat(3) }}s</span>
                         <br>
                     {% endif %}
                 {% endif %}
