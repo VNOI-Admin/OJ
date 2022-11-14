@@ -340,24 +340,9 @@ $.fn.textWidth = function () {
 };
 
 $(function () {
-    $('.tabs').each(function () {
-        var $this = $(this), $h2 = $(this).find('h2'), $ul = $(this).find('ul');
-        var cutoff = ($h2.textWidth() || 0) + 20, handler;
-        $ul.children().each(function () {
-            cutoff += $(this).width();
-        });
-        $(window).resize(handler = function () {
-            $this.toggleClass('tabs-no-flex', $this.width() < cutoff);
-        });
-        handler();
-    });
-});
-
-$(function () {
     // Reveal spoiler
     $(document).on('click', 'blockquote.spoiler', function (e) {
         $(this).addClass("is-visible");
         e.stopPropagation();
     } );
 });
-
