@@ -925,8 +925,8 @@ class ContestPublicRanking(ContestRanking):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        rankingAccessCode = self.object.rankingAccessCode
-        if rankingAccessCode is None or rankingAccessCode == '' or rankingAccessCode != request.GET.get('code'):
+        ranking_access_code = self.object.ranking_access_code
+        if not ranking_access_code or ranking_access_code != request.GET.get('code'):
             return generic_message(request, _('Ranking access code required'),
                                    _('You need to provide a valid ranking access code to access this page.'))
 
