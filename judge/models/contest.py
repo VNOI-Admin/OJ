@@ -184,6 +184,10 @@ class Contest(models.Model):
                                            default=False)
 
     @cached_property
+    def rankingAccessCode(self):
+        return 'TODO'
+
+    @cached_property
     def format_class(self):
         return contest_format.formats[self.format_name]
 

@@ -151,8 +151,9 @@
                     if ($('body').hasClass('window-hidden')) {
                         return ranking_outdated = true;
                     }
+                    var queryParam = window.location.search
                     $.ajax({
-                        url: '?raw'
+                        url: queryParam ? queryParam + '&raw' : '?raw',
                     }).done(function (data) {
                         $('#users-table').html(data);
                         if (localStorage.getItem('show-personal-info') == 'true') {

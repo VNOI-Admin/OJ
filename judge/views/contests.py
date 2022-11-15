@@ -802,6 +802,10 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     def is_frozen(self):
         return False
 
+    def check_can_see_own_scoreboard(self):
+        if not self.object.can_see_own_scoreboard(self.request.user):
+            raise Http404()
+
     def get_rendered_ranking_table(self):
         users, problems = self.get_ranking_list()
 
@@ -819,8 +823,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        if not self.object.can_see_own_scoreboard(self.request.user):
-            raise Http404()
+        self.check_can_see_own_scoreboard()
 
         context['rendered_ranking_table'] = self.get_rendered_ranking_table()
         context['tab'] = self.tab
@@ -830,8 +833,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         if 'raw' in request.GET:
             self.object = self.get_object()
 
-            if not self.object.can_see_own_scoreboard(self.request.user):
-                raise Http404()
+            self.check_can_see_own_scoreboard()
 
             return HttpResponse(self.get_rendered_ranking_table(), content_type='text/plain')
 
@@ -857,7 +859,7 @@ class ContestRanking(ContestRankingBase):
     @property
     def bypass_cache_ranking(self):
         return self.object.scoreboard_cache_timeout == 0 or self.can_edit or \
-            (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user.profile))
+            (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user))
 
     def get_ranking_queryset(self):
         if self.is_frozen:
@@ -868,6 +870,19 @@ class ContestRanking(ContestRankingBase):
             queryset = queryset.filter(virtual=ContestParticipation.LIVE)
         return queryset
 
+    def get_full_ranking_list(self):
+        if 'show_virtual' in self.request.GET:
+            self.show_virtual = self.request.session['show_virtual'] \
+                              = self.request.GET.get('show_virtual').lower() == 'true'
+        else:
+            self.show_virtual = self.request.session.get('show_virtual', False)
+
+        queryset = self.get_ranking_queryset()
+        return get_contest_ranking_list(
+            self.request, self.object,
+            ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=self.is_frozen),
+        )
+
     def get_ranking_list(self):
         if not self.object.can_see_full_scoreboard(self.request.user):
             queryset = self.object.users.filter(user=self.request.profile, virtual=ContestParticipation.LIVE)
@@ -877,18 +892,7 @@ class ContestRanking(ContestRankingBase):
                 ranker=lambda users, key: ((_('???'), user) for user in users),
             )
 
-        if 'show_virtual' in self.request.GET:
-            self.show_virtual = self.request.session['show_virtual'] \
-                              = self.request.GET.get('show_virtual').lower() == 'true'
-        else:
-            self.show_virtual = self.request.session.get('show_virtual', False)
-
-        queryset = self.get_ranking_queryset()
-
-        return get_contest_ranking_list(
-            self.request, self.object,
-            ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=self.is_frozen),
-        )
+        return self.get_full_ranking_list()
 
     def get_rendered_ranking_table(self):
         if self.bypass_cache_ranking:
@@ -908,6 +912,25 @@ class ContestRanking(ContestRankingBase):
         context['is_frozen'] = self.is_frozen
         context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
         return context
+
+
+class ContestPublicRanking(ContestRanking):
+    def check_can_see_own_scoreboard(self):
+        # ignore this check, we want to show the scoreboard to everyone
+        pass
+
+    def get_ranking_list(self):
+        # ignore the `can_see_full_scoreboard` check
+        return self.get_full_ranking_list()
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        rankingAccessCode = self.object.rankingAccessCode
+        if rankingAccessCode is None or rankingAccessCode == '' or rankingAccessCode != request.GET.get('code'):
+            return generic_message(request, _('Ranking access code required'),
+                                   _('You need to provide a valid ranking access code to access this page.'))
+
+        return super().get(request, *args, **kwargs)
 
 
 class ContestOfficialRanking(ContestRankingBase):
