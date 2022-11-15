@@ -55,7 +55,7 @@ def run_moss(self, contest_key):
                     contest_object=contest,
                     problem=problem,
                     language__common_name=dmoj_lang,
-                ).order_by('-points').values_list('user__user__username', 'source__source')
+                ).order_by('-points').values_list('user__user__username', 'user__username_display_override', 'source__source')
 
                 if subs.exists():
                     moss_call = MOSS(moss_api_key, language=moss_lang, matching_file_limit=100,
@@ -63,7 +63,8 @@ def run_moss(self, contest_key):
 
                     users = set()
 
-                    for username, source in subs:
+                    for username, username_display_override, source in subs:
+                        username = username_display_override or username
                         if username in users:
                             continue
                         users.add(username)
