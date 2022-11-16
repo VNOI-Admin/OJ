@@ -109,6 +109,49 @@
             height: 2.3em;
         }
     </style>
+
+    <style>
+        #org-dropdown-check-list {
+            display: inline-block;
+        }
+
+        #org-check-list-wrapper {
+            display: none;
+        }
+
+        #org-check-list-wrapper {
+            display: none;
+            border: 1px solid gray;
+            position: absolute;
+            z-index: 999;
+            background: #ffffff;
+            width: 600px;
+        }
+
+        #org-check-list li {
+            list-style: none;
+        }
+
+        #org-dropdown-check-list.visible #org-check-list-wrapper {
+            display: block;
+        }
+
+        #org-check-list-wrapper button {
+            margin: 5px;
+        }
+
+        #org-check-list {
+            max-height: 250px;
+            overflow: auto;
+            border-bottom: 1px solid gray;
+            padding-inline-start: 0px;
+            margin-block: 0px;
+        }
+
+        .filter-checklist-button {
+            float: right;
+        }
+    </style>
 {% endblock %}
 
 {% block users_js_media %}
@@ -159,6 +202,10 @@
                             $('.personal-info').show();
                             $('#show-personal-info-checkbox').prop('checked', true);
                         }
+                        {% if tab == 'ranking' %}
+                            window.getOrganizationCodes();
+                            window.applyRankingFilter();
+                        {% endif %}
                         window.firstSolve();
                         window.totalAC();
                     }).always(function () {
@@ -236,6 +283,153 @@
                 $("a#frozen_alert").click();
             }
 
+            if (localStorage.getItem(`filter-cleared-${contest_key}`) === null) {
+                localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
+            }
+
+            if (localStorage.getItem(`filter-selected-orgs-${contest_key}`) === null) {
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, []);
+            }
+
+            $('#filter-by-organization-button').click(function () {
+                $('#org-check-list-wrapper').toggle();
+            });
+
+            $('#apply-organization-filter').click(function () {
+                let org_list_items = $('#org-check-list').find('label > li');
+                let selected_orgs = [];
+
+                org_list_items.each(function () {
+                    let org_li = $(this);
+                    if (org_li.children('input').prop('checked')) {
+                        selected_orgs.push(org_li.text());
+                    }
+                });
+
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, selected_orgs);
+                window.applyRankingFilter();
+                window.totalAC();
+
+                $('#org-check-list-wrapper').toggle();
+            });
+
+            $('#clear-organization-filter').click(function () {
+                let org_list_items = $('#org-check-list').find('label > li');
+
+                org_list_items.each(function () {
+                    $(this).children('input').prop('checked', false);
+                });
+
+                $('#org-check-list-wrapper').toggle();
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, []);
+
+                window.clearRankingFilter();
+                window.totalAC();
+            });
+
+            window.getOrganizationCodes = function () {
+                let org_list = []
+
+                $('#users-table > tbody > *').each(function () {
+                    let org_anchor = $(this).find("div > div > .personal-info > .organization > a")[0];
+
+                    if (org_anchor) {
+                        org_list.push(org_anchor.text);
+                    }
+                });
+
+                org_list.sort();
+                org_list.push("Other");
+
+                org_list = new Set(org_list);
+
+                let org_options = $('#org-check-list');
+                org_options.empty();
+
+                org_list.forEach(function (org) {
+                    org_options.append(
+                        `<label><li><input value="${org}" type="checkbox" />${org}</li></label>`
+                    );
+                })
+            };
+
+            window.getOrganizationCodes();
+
+            function extractCurrentAbsRank(row_text) {
+                let paren_surround_text = row_text.match(/\(([^)]+)\)/);
+                let current_abs_rank
+                    = (paren_surround_text !== null)
+                    ? paren_surround_text[1]
+                    : row_text;
+                return current_abs_rank;
+            }
+
+            window.clearRankingFilter = function () {
+                if (localStorage.getItem(`filter-cleared-${contest_key}`) == 'true') {
+                    return;
+                }
+
+                $('#users-table > tbody > tr[id]').each(function () {
+                    $(this).show();
+                    $(this).find("td")[0].innerHTML = extractCurrentAbsRank($(this).find("td")[0].innerText);
+                });
+
+                localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
+            };
+
+            window.applyRankingFilter = function () {
+                let counter = 0;
+                let previous_abs_rank = -1;
+                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`);
+
+                if (!selected_orgs.length) {
+                    window.clearRankingFilter();
+                    return;
+                }
+
+                $('#users-table > tbody > tr[id]').each(function () {
+                    let row = $(this);
+
+                    let org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
+                    let org = org_anchor ? org_anchor.text : 'Other';
+
+                    if (!selected_orgs.includes(org)) {
+                        row.hide();
+                        return;
+                    }
+
+                    row.show();
+                    let current_abs_rank = extractCurrentAbsRank(row.find("td")[0].innerText);
+
+                    if (previous_abs_rank == -1 || previous_abs_rank != current_abs_rank) {
+                        ++counter;
+                    }
+
+                    row.find("td")[0].innerHTML = `${counter}<br>(${current_abs_rank})`;
+                    previous_abs_rank = current_abs_rank;
+                });
+
+                if (counter > 0) {
+                    localStorage.setItem(`filter-cleared-${contest_key}`, 'false');
+                }
+            };
+
+            window.applyRankingFilter();
+
+            window.restoreChecklistOptions = function () {
+                let org_list_items = $('#org-check-list').find('label > li');
+                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`);
+
+                org_list_items.each(function () {
+                    let org_li = $(this);
+                    if (selected_orgs.includes(org_li.text())) {
+                        $(this).children('input').prop('checked', true);
+                    }
+                });
+            };
+
+            window.restoreChecklistOptions();
+
             function convertToSeconds(timeString) {
                 const time = timeString.split(':').map(Number); // time = [hour, minute, second]
                 return time[0] * 60 * 60 + time[1] * 60 + time[2];
@@ -293,6 +487,10 @@
                 let arr = {};
 
                 $('td.full-score').each(function () {
+                    if ($(this).parent().is(':hidden')) {
+                        return;
+                    }
+
                     arr[$(this).index() - 2] = (arr[$(this).index() - 2] + 1) || 1;
                 });
                 $('td.total-ac').each(function () {
@@ -360,6 +558,11 @@
                 });
 
                 $('table#users-table tbody tr').each(function () {
+                    // Skip hidden row (due to filtering)
+                    if ($(this).is(':hidden')) {
+                        return;
+                    }
+
                     var row_data = [];
                     $(this).find('td').each(function () {
                         var $col = $(this);
@@ -401,6 +604,20 @@
             {% if contest.can_see_full_scoreboard(request.user) %}
                 <input id="search-contest" type="text" placeholder="{{ _('View user participation') }}">
             {% endif %}
+        {% endif %}
+        {% if tab == 'ranking' %}
+            <div id="org-dropdown-check-list" tabindex="100">
+                <button id="filter-by-organization-button" class="inline-button">
+                    <i class="tab-icon fa fa-filter"></i>
+                    <b>{{ _('Filter') }}</b>
+                </button>
+
+                <div id="org-check-list-wrapper">
+                    <ul id="org-check-list"></ul>
+                    <button id="apply-organization-filter" class="inline-button filter-checklist-button">{{ _('Apply') }}</button>
+                    <button id="clear-organization-filter" class="inline-button filter-checklist-button">{{ _('Clear') }}</button>
+                </div>
+            </div>
         {% endif %}
         {% if tab != 'official_ranking' %}
             <input id="show-personal-info-checkbox" type="checkbox" style="vertical-align: bottom">
