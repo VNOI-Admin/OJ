@@ -5404,6 +5404,14 @@ msgstr "Xem thành viên tham gia"
 msgid "Show full name/organization"
 msgstr "Hiển thị tên/tổ chức"
 
+#: templates/contest/ranking.html:579
+msgid "Filter"
+msgstr "Lọc"
+
+#: templates/contest/ranking.html:584
+msgid "Clear"
+msgstr "Đặt lại"
+
 #: templates/contest/ranking.html:411
 msgid "Show virtual participations"
 msgstr "Hiển thị xếp hạng của virtual"
