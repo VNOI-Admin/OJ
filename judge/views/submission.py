@@ -259,7 +259,7 @@ class SubmissionStatus(SubmissionDetailBase):
         context['statuses'] = combine_statuses(statuses, submission)
         context['can_view_test'] = submission.problem.is_testcase_accessible_by(self.request.user)
         if context['can_view_test']:
-            context['cases_data'] = get_problem_testcases_data(submission.problem)
+            context['cases_data'] = get_problem_testcases_data(submission.problem, submission.is_pretested)
         else:
             context['cases_data'] = {}
 

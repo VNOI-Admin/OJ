@@ -62,7 +62,7 @@ def get_testcase_data(archive, case):
     }
 
 
-def get_problem_testcases_data(problem):
+def get_problem_testcases_data(problem, is_pretested):
     """ Read test data of a problem and store
     result in a dictionary.
 
@@ -92,9 +92,13 @@ def get_problem_testcases_data(problem):
 
     # TODO:
     # - Support manually managed problems
-    # - Support pretest
+
+    queryset = problem.cases.all()
+    if is_pretested:
+        queryset = queryset.filter(is_pretest=True)
+
     order = 0
-    for case in problem.cases.all().order_by('order'):
+    for case in queryset.order_by('order'):
         try:
             if not case.input_file:
                 continue
