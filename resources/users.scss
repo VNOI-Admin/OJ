@@ -11,6 +11,12 @@ tr {
     &:target {
         background: #fff897;
     }
+
+    td {
+        > a {
+            font-size: 12px;
+        }
+    }
 }
 
 #search-handle {
