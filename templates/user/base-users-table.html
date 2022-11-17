@@ -1,10 +1,10 @@
+
+
 <thead>
     <tr>
         <th class="header rank" style="width: 5%;">{{ rank_header or _("Rank") }}</th>
         {% block after_rank_head %}{% endblock %}
         <th class="header username">{{ _('Username') }}</th>
-        {% block before_point_head %}{% endblock %}
-
         <th class="header points">
             {% block point_head %}
                 {% if sort_links %}<a href="{{ sort_links.performance_points }}">{% endif %}
@@ -12,7 +12,9 @@
                 {%- if sort_links %}{{ sort_order.performance_points }}</a>{% endif %}
             {% endblock %}
         </th>
-        {% block after_point_head %}{% endblock %}
+        {% block penalty %}{% endblock %}
+        {% block before_point_head %}{% endblock %}
+        {% block rating %}{% endblock %}
     </tr>
 </thead>
 
@@ -45,12 +47,12 @@
                     </div>
                 </div>
             </div>
-        {% block before_point scoped %}{% endblock %}
         {% block point scoped %}
             <td title="{{ user.performance_points|floatformat(2) }}" class="user-points">
                 {{ user.performance_points|floatformat(2) }}
             </td>
         {% endblock %}
+        {% block before_point scoped %}{% endblock %}
         {% block after_point scoped %}{% endblock %}
     </tr>
 {% endfor %}
