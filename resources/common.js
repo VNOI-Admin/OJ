@@ -227,7 +227,7 @@ function register_time(elems, limit) {
             if (moment().diff(time, 'seconds') < limit) {
                 $this.text(rel_format.replace('{time}', time.fromNow()));
             } else {
-                $this.text(rel_format.replace('{time}', time.format("h:mm:ss a, MM/DD/YYYY")));
+                $this.text(rel_format.replace('{time}', time.format("h:mm:ss a, DD/MM/YYYY")));
             }
             setTimeout(update, 10000);
         }
