@@ -26,19 +26,7 @@
     {% endif %}
 {% endblock %}
 
-{% block user_name_data %}
-    {% if not contest.ended %}
-        {% if not user.participation.ended %}
-            <div class="start-time active">
-                {% with abs=_('Started on {time}'), rel=_('Started {time}') %}
-                    {{ relative_time(user.participation.start, abs=abs, rel=rel) }}
-                {% endwith %}
-            </div>
-        {% else %}
-            <div class="start-time">{{ _('Participation ended.') }}</div>
-        {% endif %}
-    {% endif %}
-
+{% block admin_operations %}
     {% if can_edit %}
         <span class="contest-participation-operation">
             <form action="{{ url('contest_participation_disqualify', contest.key) }}" method="post">
@@ -57,6 +45,20 @@
                    title="{{ _('Admin') }}" class="edit-participation"><i class="fa fa-cog fa-fw"></i></a>
             {% endif %}
         </span>
+    {% endif %}
+{% endblock %}
+
+{% block user_name_data %}
+    {% if not contest.ended %}
+        {% if not user.participation.ended %}
+            <div class="start-time active">
+                {% with abs=_('Started on {time}'), rel=_('Started {time}') %}
+                    {{ relative_time(user.participation.start, abs=abs, rel=rel) }}
+                {% endwith %}
+            </div>
+        {% else %}
+            <div class="start-time">{{ _('Participation ended.') }}</div>
+        {% endif %}
     {% endif %}
 {% endblock %}
 
@@ -99,6 +101,7 @@
 {% block after_user_list %}
     <tr>
         <td colspan=2>Total AC</td>
+        <td></td>
         {% for problem in problems %}
             <td class="total-ac" id='{{- contest.get_label_for_problem(loop.index0) }}-total'>0</td>
         {% endfor %}

@@ -14,6 +14,7 @@
         </th>
         {% block penalty %}{% endblock %}
         {% block before_point_head %}{% endblock %}
+        {% block after_point_head %}{% endblock %}
         {% block rating %}{% endblock %}
     </tr>
 </thead>
@@ -21,7 +22,11 @@
 <tbody>
 {% for rank, user in users %}
     <tr id="user-{{ user.user.username }}" {% block row_extra scoped %}{% endblock %}>
-        <td>{{ rank }}</td>
+        <td>
+            {{ rank }}
+            <br>
+            {% block admin_operations scoped %}{% endblock %}
+        </td>
         {% block after_rank scoped %}{% endblock %}
         <td class="user-name">
             <div>
