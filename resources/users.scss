@@ -11,6 +11,12 @@ tr {
     &:target {
         background: #fff897;
     }
+
+    td.full-score, td.failed-score, td.partial-score {
+        a {
+            font-size: 12px;
+        }
+    }
 }
 
 span.organization {

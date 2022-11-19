@@ -102,6 +102,9 @@
     <tr>
         <td colspan=2>Total AC</td>
         <td></td>
+        {% if is_ICPC_format %}
+            <td></td>
+        {% endif %}
         {% for problem in problems %}
             <td class="total-ac" id='{{- contest.get_label_for_problem(loop.index0) }}-total'>0</td>
         {% endfor %}
