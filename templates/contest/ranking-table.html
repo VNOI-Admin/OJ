@@ -108,6 +108,8 @@
         {% for problem in problems %}
             <td class="total-ac" id='{{- contest.get_label_for_problem(loop.index0) }}-total'>0</td>
         {% endfor %}
-        <td colspan=2></td>
+        {% if has_rating %}
+            <td colspan=2></td>
+        {% endif %}
     </tr>
 {% endblock %}
