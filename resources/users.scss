@@ -12,8 +12,8 @@ tr {
         background: #fff897;
     }
 
-    td {
-        > a {
+    td.full-score, td.failed-score, td.partial-score {
+        a {
             font-size: 12px;
         }
     }
