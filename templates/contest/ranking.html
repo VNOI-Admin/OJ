@@ -100,6 +100,10 @@
             white-space: nowrap;
         }
 
+        .select2-container {
+            z-index: 1;
+        }
+
         #search-contest, #search-contest + .select2 {
             margin-top: 0.5em;
         }
@@ -108,9 +112,7 @@
             width: 200px;
             height: 2.3em;
         }
-    </style>
 
-    <style>
         #org-dropdown-check-list {
             display: inline-block;
         }
@@ -176,22 +178,6 @@
 {% endblock %}
 
 {% block users_js_media %}
-    {% if can_edit %}
-        <script type="text/javascript">
-            $(function () {
-                $('a.disqualify-participation').click(function (e) {
-                    e.preventDefault();
-                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to disqualify this participation?') }}"))
-                        $(this).closest('form').submit();
-                })
-                $('a.un-disqualify-participation').click(function (e) {
-                    e.preventDefault();
-                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to un-disqualify this participation?') }}"))
-                        $(this).closest('form').submit();
-                })
-            });
-        </script>
-    {% endif %}
     {% if not contest.ended %}
         <script type="text/javascript">
             $(function () {
@@ -228,6 +214,7 @@
                         {% endif %}
                         window.firstSolve();
                         window.totalAC();
+                        window.enableAdminOperations();
                     }).always(function () {
                         ranking_outdated = false;
                         setTimeout(update_ranking, 10000);
@@ -316,7 +303,7 @@
             // hack to keep scroll position after selecting option
             // https://stackoverflow.com/questions/55045146/select2-do-not-scroll-on-selection
             // scrollAfterSelect is only available after v4.0.6
-            $(document).ready(function() {
+            $(function() {
                 $('#org-check-list').select2({
                     multiple: true,
                     closeOnSelect: false,
@@ -363,6 +350,11 @@
                         this.open();
                     }
                 }
+
+                $('#filter-by-organization-button').click(function () {
+                    $('#org-check-list-wrapper').toggle();
+                    $('#org-check-list').select2('open');
+                });
             });
 
             if (localStorage.getItem(`filter-cleared-${contest_key}`) === null) {
@@ -372,13 +364,6 @@
             if (localStorage.getItem(`filter-selected-orgs-${contest_key}`) === null) {
                 localStorage.setItem(`filter-selected-orgs-${contest_key}`, []);
             }
-
-            $(document).ready(function() {
-                $('#filter-by-organization-button').click(function () {
-                    $('#org-check-list-wrapper').show();
-                    $('#org-check-list').select2('open');
-                });
-            });
 
             $('#apply-organization-filter').click(function () {
                 $('#org-check-list-wrapper').hide();
@@ -588,6 +573,21 @@
             };
 
             window.totalAC();
+
+            window.enableAdminOperations = function () {
+                $('a.disqualify-participation').click(function (e) {
+                    e.preventDefault();
+                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to disqualify this participation?') }}"))
+                        $(this).closest('form').submit();
+                })
+                $('a.un-disqualify-participation').click(function (e) {
+                    e.preventDefault();
+                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to un-disqualify this participation?') }}"))
+                        $(this).closest('form').submit();
+                })
+            };
+
+            window.enableAdminOperations();
         });
 
         {% if tab == 'ranking' %}
