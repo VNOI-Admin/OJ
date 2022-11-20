@@ -118,11 +118,10 @@
         #org-check-list-wrapper {
             display: none;
             background: #ffffff;
-            width: 300px;
             border: 1px solid gray;
+            padding: 10px;
 
             right: auto;
-            transform: translateX(-50%);
             position: absolute;
             z-index: 1;
         }
@@ -136,13 +135,12 @@
         }
 
         #org-check-list-wrapper button {
-            margin: 5px;
+            margin-bottom: 5px;
+            margin-left: 5px;
         }
 
         #org-check-list {
             border-bottom: 1px solid gray;
-            padding-inline-start: 0px;
-            margin-block: 0px;
 
             /* reset properties of the parent elements */
             color: black;
@@ -152,12 +150,6 @@
 
         .filter-checklist-button {
             float: right;
-        }
-
-        .header.username > * {
-            margin-left: 10px;
-            margin-right: 10px;
-            vertical-align: middle;
         }
 
         .select2-selection__rendered {
@@ -170,12 +162,15 @@
             color: black;
         }
 
-        .select2-selection {
-            margin-top: 10px !important;
-        }
-
         #select2-org-check-list-results > li {
             color: black;
+        }
+        #select2-org-check-list-results > li:hover {
+            background: #aaaaaa !important;
+        }
+
+        .select2-results__option[aria-selected=true] {
+            background: #cdcdcd !important;
         }
     </style>
 {% endblock %}
@@ -229,7 +224,6 @@
                             $('#show-personal-info-checkbox').prop('checked', true);
                         }
                         {% if tab == 'ranking' %}
-                            window.getOrganizationCodes();
                             window.applyRankingFilter();
                         {% endif %}
                         window.firstSolve();
@@ -311,34 +305,27 @@
 
             // hack to keep scroll position after selecting option
             // https://stackoverflow.com/questions/55045146/select2-do-not-scroll-on-selection
+            // scrollAfterSelect is only available after v4.0.6
             $(document).ready(function() {
                 $('#org-check-list').select2({
                     closeOnSelect: false,
-                }).on('select2:selecting', function(e) {
+                }).on('select2:selecting select2:unselecting', function(e) {
                     let cur = e.params.args.data.id;
                     let old = (e.target.value == '') ? [cur] : $(e.target).val().concat([cur]);
                     $(e.target).val(old).trigger('change');
-                    $(e.params.args.originalEvent?.currentTarget).attr('aria-selected', 'true');
+
+                    if (e.params.args.originalEvent) {
+                        let target = $(e.params.args.originalEvent.currentTarget);
+                        if (target.attr('aria-selected') == 'true') {
+                            target.attr('aria-selected', 'false');
+                        } else {
+                            target.attr('aria-selected', 'true');
+                        }
+                    }
+
                     return false;
                 });
             });
-
-            {% if tab == 'ranking' %}
-                $('.header.username').append(
-                    `<div id="org-dropdown-check-list">
-                        <button id="filter-by-organization-button" class="inline-button">
-                            <i class="tab-icon fa fa-filter"></i>
-                            <b>{{ _('Filter') }}</b>
-                        </button>
-
-                        <div id="org-check-list-wrapper">
-                            <select id="org-check-list" name="orgs[]" multiple="multiple"></select>
-                            <button id="apply-organization-filter" class="inline-button filter-checklist-button">{{ _('Apply') }}</button>
-                            <button id="clear-organization-filter" class="inline-button filter-checklist-button">{{ _('Clear') }}</button>
-                        </div>
-                    </div>`
-                );
-            {% endif %}
 
             if (localStorage.getItem(`filter-cleared-${contest_key}`) === null) {
                 localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
@@ -348,8 +335,11 @@
                 localStorage.setItem(`filter-selected-orgs-${contest_key}`, []);
             }
 
-            $('#filter-by-organization-button').click(function () {
-                $('#org-check-list-wrapper').toggle();
+            $(document).ready(function() {
+                $('#filter-by-organization-button').click(function () {
+                    $('#org-check-list-wrapper').toggle();
+                    $('#org-check-list').select2('open');
+                });
             });
 
             $('#apply-organization-filter').click(function () {
@@ -664,6 +654,22 @@
             {% if contest.can_see_full_scoreboard(request.user) %}
                 <input id="search-contest" type="text" placeholder="{{ _('View user participation') }}">
             {% endif %}
+        {% endif %}
+        {% if tab == 'ranking' %}
+            <div id="org-dropdown-check-list">
+                <button id="filter-by-organization-button" class="inline-button">
+                    <i class="tab-icon fa fa-filter"></i>
+                    <b>{{ _('Filter') }}</b>
+                </button>
+
+                <div id="org-check-list-wrapper">
+                    <div>
+                        <button id="apply-organization-filter" class="inline-button filter-checklist-button">{{ _('Apply') }}</button>
+                        <button id="clear-organization-filter" class="inline-button filter-checklist-button">{{ _('Clear') }}</button>
+                    </div>
+                    <select id="org-check-list" name="orgs[]" multiple="multiple"></select>
+                </div>
+            </div>
         {% endif %}
         {% if tab != 'official_ranking' %}
             <input id="show-personal-info-checkbox" type="checkbox" style="vertical-align: bottom">
