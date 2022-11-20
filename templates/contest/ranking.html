@@ -321,24 +321,43 @@
                     multiple: true,
                     closeOnSelect: false,
                     placeholder: '{{ _('Search organizations') }}',
-                }).on('select2:selecting', function(e) {
-                    let selected = e.params.args.data.id;
-                    let val = $(e.target).val().concat([selected]);
+                });
+
+                var selection = $('#org-check-list').data().select2.selection;
+                var results = $('#org-check-list').data().select2.results;
+
+                $('#org-check-list').on('select2:selecting', function(e) {
+                    let id = e.params.args.data.id;
+                    let val = $(e.target).val().concat([id]);
                     $(e.target).val(val).trigger('change');
-                    $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'true');
-                    $('#org-check-list').data().select2.selection.$search.val('');
+
+                    if (selection.$search.val() != '') {
+                        selection.$search.val('');
+                        selection.trigger('query', {});
+                    } else {
+                        results.setClasses();
+                    }
+
                     return false;
-                }).on('select2:unselecting', function(e) {
-                    let selected = e.params.args.data.id;
-                    let val = $(e.target).val().filter(function(v) { return v != selected; });
+                });
+
+                $('#org-check-list').on('select2:unselecting', function(e) {
+                    let id = e.params.args.data.id;
+                    let val = $(e.target).val().filter(function(v) { return v != id; });
                     $(e.target).val(val).trigger('change');
-                    $(e.params.args.originalEvent.currentTarget).attr('aria-selected', 'false');
-                    $('#org-check-list').data().select2.selection.$search.val('');
+
+                    if (selection.$search.val() != '') {
+                        selection.$search.val('');
+                        selection.trigger('query', {});
+                    } else {
+                        results.setClasses();
+                    }
+
                     return false;
                 });
 
                 $('#org-check-list').data().select2.toggleDropdown = function () {
-                    $('#org-check-list').data().select2.selection.$search.trigger('focus');
+                    selection.$search.trigger('focus');
 
                     if (!this.isOpen()) {
                         this.open();
@@ -389,9 +408,13 @@
                     return;
                 }
 
+                if ($(e.target).attr('id') && $(e.target).attr('id').startsWith('select2-org-check-list-result')) {
+                    return;
+                }
+
                 // check if the clicked area is the checklist or not
                 if ($('#org-dropdown-check-list').has(e.target).length === 0) {
-                    $('#org-check-list-wrapper').hide();
+                    $('#apply-organization-filter').click();
                 }
             });
 
