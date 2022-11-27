@@ -10,21 +10,21 @@
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 0.5em;
-    background: rgba(0, 0, 0, 0.01);
+    background: rgba($color_primary100, 0.01);
 
     &.striped tr:nth-child(2n) {
-        background: #d9d9d942;
+        background: rgba($color_primary100, 0.03);
     }
-    
+
     &.striped tr {
         backdrop-filter: blur(3px);
     }
 
     th {
         height: 2em;
-        color: #FFF;
+        color: $color_primary0;
         background-color: $color_primary75;
-        border-color: #555;
+        border-color: $color_primary50;
         border-width: 0 1px 1px 0;
         border-style: solid;
         padding: 4px 10px;
