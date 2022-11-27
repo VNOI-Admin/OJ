@@ -17,7 +17,7 @@
 
     h1, h2, h3, h4, h5, h6 {
         font-weight: normal;
-        color: #111;
+        color: $color_primary90;
         margin-bottom: 0.75em;
         padding: 0;
         background: 0;
@@ -43,7 +43,7 @@
 
     h4 {
         font-size: 1.4em;
-        border-bottom: 1px solid #EEE;
+        border-bottom: 1px solid rgba($color_primary100, 0.1);
         line-height: 1.225;
         padding-bottom: 0.3em;
         padding-top: 0.5em;
@@ -59,8 +59,8 @@
     }
 
     blockquote {
-        color: #666;
-        border-left: 0.5em #EEE solid;
+        color: $color_primary50;
+        border-left: 0.5em rgba($color_primary100, 0.1) solid;
         margin: 1em 1em;
         padding: 1px 1px 1px 1.5em;
     }
@@ -75,11 +75,11 @@
         border: solid 1px #c8ccd0;
     }
 
-    blockquote.spoiler > * { 
+    blockquote.spoiler > * {
         display: none;
     }
 
-    blockquote.spoiler::before { 
+    blockquote.spoiler::before {
         content: "";
         display: block;
         position: absolute;
@@ -90,8 +90,8 @@
         border-radius: 8px;
         background: #c8ccd0;
     }
-    
-    blockquote.spoiler::after { 
+
+    blockquote.spoiler::after {
         content: "Reveal spoiler!";
         background-repeat: no-repeat;
         background-position: center right;
@@ -127,7 +127,7 @@
     }
 
     pre, code, kbd, samp, span.code {
-        color: #000;
+        color: $color_primary100;
         page-break-inside: avoid;
         font-family: $monospace-fonts;
         font-size: 0.98em;
@@ -138,10 +138,10 @@
         margin: 0 2px;
         padding: 0 5px;
         border: 1px solid $color_primary25;
-        background-color: #f8f8f8;
+        background-color: $color_primary5;
         border-radius: $widget_border_radius;
         font-size: 0.95em;
-        color: #444;
+        color: $color_primary75;
     }
 
     pre {
@@ -152,7 +152,7 @@
             padding: 0;
             background: transparent;
             font-size: 1em;
-            color: black;
+            color: $color_primary100;
         }
 
         white-space: pre-wrap;
@@ -160,8 +160,8 @@
         margin: 1.5em 0 1.5em 0;
         padding: 1em;
         border: 1px solid $color_primary25;
-        background-color: #f8f8f8;
-        color: black;
+        background-color: $color_primary5;
+        color: $color_primary100;
         border-radius: $widget_border_radius;
     }
 
