@@ -208,11 +208,11 @@ class Command(BaseCommand):
 
         os.system(f'cd {icpc_folder} && git pull origin master')
 
-        blacklist = ['template_package', '.github', '.git', 'xx-mien-nam', 'yy-mien-nam', '6-mien-trung', '_other_docs_']
+        blacklist = ['xx-mien-nam', 'yy-mien-nam', '6-mien-trung']
         problems = [
             name for name in os.listdir(icpc_folder)
             if os.path.isdir(os.path.join(icpc_folder, name)) and
-            name not in blacklist
+            name not in blacklist and not name.startswith('_') and not name.startswith('.')
         ]
         problems.sort()
         messages = {}
