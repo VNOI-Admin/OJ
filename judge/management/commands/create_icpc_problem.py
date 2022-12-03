@@ -206,7 +206,7 @@ class Command(BaseCommand):
         if not os.path.exists(icpc_folder):
             raise CommandError(f'Folder {icpc_folder} not found. Make sure to clone the repo to that folder')
 
-        os.system(f'cd {icpc_folder} && git pull origin master')
+        os.system(f'cd {icpc_folder} && git pull')
 
         blacklist = ['xx-mien-nam', 'yy-mien-nam', '6-mien-trung']
         problems = [
