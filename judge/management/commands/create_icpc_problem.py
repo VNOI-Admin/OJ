@@ -149,10 +149,10 @@ def create_problem(problem_name, icpc_folder):
 
         print(f'Creating problem {problem_name}')
         with open(pdf_path, 'rb') as f:
-            file_url = pdf_statement_uploader(f)
+            # file_url = pdf_statement_uploader(f)
             problem = Problem(code=problem_code)
             problem.name = problem_name
-            problem.pdf_url = file_url
+            # problem.pdf_url = file_url
             problem.time_limit = 1
             problem.memory_limit = 512 * 1024
             problem.partial = False
