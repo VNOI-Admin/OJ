@@ -13,9 +13,6 @@ dmoj-site.sock
 uwsgi.ini
 .fuse_hidden*
 resources/style.css
-resources/content-description.css
-resources/ranks.css
-resources/table.css
 resources/martor-description.css
 sass_processed
 bridge_log.txt
