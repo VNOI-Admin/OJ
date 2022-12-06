@@ -926,10 +926,10 @@ class ContestPublicRanking(ContestRanking):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
 
-        ranking_access_time = self.object.ranking_access_time
+        ranking_stop_last_minutes = self.object.ranking_stop_last_minutes
         time_left_seconds = (self.object.end_time - self.object._now).total_seconds()
 
-        if time_left_seconds < ranking_access_time * 60:
+        if time_left_seconds < ranking_stop_last_minutes * 60:
             return generic_message(request, _('Access past the allowed time'),
                                    _('You are not allowed to view the ranking past the allowed time.'))
 
