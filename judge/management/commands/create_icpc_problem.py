@@ -177,19 +177,6 @@ def create_problem(problem_name, icpc_folder):
 
     testcases, n_sample, n_secret = get_testcases(test_path)
 
-    print('Add sample testcases into problem')
-    description = ''
-    for test_id, testcase_data in enumerate(testcases[:n_sample], start=1):
-        input_file, output_file = testcase_data
-        with open(os.path.join(test_path, input_file), 'r') as fin, open(os.path.join(test_path, output_file), 'r') as fout:
-            input_data = fin.read()
-            output_data = fout.read()
-            description += f'## Sample Input {test_id}\n```\n{input_data}```\n\n'
-            description += f'## Sample Output {test_id}\n```\n{output_data}```\n\n'
-
-    problem.description = description
-    problem.save()
-
     print('Creating zip file')
     test_zip_name = 'data.zip'
     os.system(f'cd {test_path} && zip -rq {test_zip_name} .')
@@ -207,6 +194,20 @@ def create_problem(problem_name, icpc_folder):
         problem_type = NORMAL
         # small hack to make the `open with` work without any modification
         checker_path = os.path.join(problem_folder, 'problem.yaml')
+
+    if problem_type != INTERACTIVE:
+        print('Add sample testcases into problem')
+        description = ''
+        for test_id, testcase_data in enumerate(testcases[:n_sample], start=1):
+            input_file, output_file = testcase_data
+            with open(os.path.join(test_path, input_file), 'r') as fin, open(os.path.join(test_path, output_file), 'r') as fout:
+                input_data = fin.read()
+                output_data = fout.read()
+                description += f'## Sample Input {test_id}\n```\n{input_data}```\n\n'
+                description += f'## Sample Output {test_id}\n```\n{output_data}```\n\n'
+
+        problem.description = description
+        problem.save()
 
     update_problem_testcases(problem, testcases, os.path.join(test_path, test_zip_name), checker_path, problem_type)
     return n_sample, n_secret, problem_type
