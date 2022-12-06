@@ -508,6 +508,9 @@
                 return false;
             };
 
+            $('a#fill-testcases').click(function() {
+                $("input[id^=id_cases-][id$=points]").val(1);
+            });
             var oldIndex;
             $table.sortable({
                 containerSelector: 'table',
@@ -687,6 +690,11 @@
         <table class="table">
             {{ data_form.as_table() }}
         </table>
+        <div style="float:right">
+            <a id="fill-testcases" href="#" class="button">
+                {{ _('Click here to set points to OI style') }}
+            </a>
+        </div>
         <div class="alert alert-warning alert-dismissable" id="fill-test-case-noti" style="display: none;">
             <a class="close">x</a>
             <b>{{ _('Test cases have been filled automatically!') }}</b>
