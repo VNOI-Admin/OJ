@@ -60,13 +60,10 @@ class Command(BaseCommand):
         prefix = options['prefix']
 
         reader = csv.DictReader(fin)
-        rows = list(reader)
-        random.shuffle(rows)
-
         writer = csv.DictWriter(fout, fieldnames=['username', 'teamname', 'password'])
         writer.writeheader()
 
-        for cnt, row in enumerate(rows, start=1):
+        for cnt, row in enumerate(reader, start=1):
             username = f'{prefix}{cnt}'
             teamname = row['name']
             org = get_org(row['instName'])
