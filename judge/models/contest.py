@@ -188,8 +188,8 @@ class Contest(models.Model):
                                                        'Leave it blank to disable.'),
                                            blank=True, default='', max_length=255)
     ranking_stop_last_minutes = models.IntegerField(verbose_name=_('ranking stop last minutes'), default=0,
-                                              help_text=_('If set, the scoreboard will be stopped for the last X '
-                                                          'minutes.'))
+                                              help_text=_('If set, the public scoreboard will be stopped for the'
+                                                          'last X minutes.'))
 
     @cached_property
     def format_class(self):

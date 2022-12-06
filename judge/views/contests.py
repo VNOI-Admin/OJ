@@ -931,7 +931,7 @@ class ContestPublicRanking(ContestRanking):
 
         if time_left_seconds < ranking_stop_last_minutes * 60:
             return generic_message(request, _('Access past the allowed time'),
-                                   _('You are not allowed to view the ranking past the allowed time.'))
+                                   _('You are not allowed to view the ranking in the last X minutes.'))
 
         ranking_access_code = self.object.ranking_access_code
         if not ranking_access_code or ranking_access_code != request.GET.get('code'):
