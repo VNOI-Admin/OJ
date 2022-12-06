@@ -925,6 +925,14 @@ class ContestPublicRanking(ContestRanking):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
+
+        ranking_access_time = self.object.ranking_access_time
+        time_left_seconds = (self.object.end_time - self.object._now).total_seconds()
+
+        if time_left_seconds < ranking_access_time * 60:
+            return generic_message(request, _('Access past the allowed time'),
+                                   _('You are not allowed to view the ranking past the allowed time.'))
+
         ranking_access_code = self.object.ranking_access_code
         if not ranking_access_code or ranking_access_code != request.GET.get('code'):
             return generic_message(request, _('Ranking access code required'),

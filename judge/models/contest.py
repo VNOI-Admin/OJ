@@ -187,6 +187,9 @@ class Contest(models.Model):
                                            help_text=_('An optional code to view the contest ranking. '
                                                        'Leave it blank to disable.'),
                                            blank=True, default='', max_length=255)
+    ranking_access_time = models.IntegerField(verbose_name=_('ranking access time'),
+                                               help_text=_('Set the time (in minutes) before the contest ends to disable the contest ranking.'),
+                                               default=0)
 
     @cached_property
     def format_class(self):
