@@ -7,6 +7,114 @@
 {% endblock %}
 
 {% block users_media %}
+    <style>
+        #users-table .username {
+            min-width: 20em;
+        }
+
+        #users-table td {
+            height: 2.5em;
+        }
+
+        #users-table a {
+            display: block;
+        }
+
+        #users-table {
+            font-size: 14px;
+        }
+
+        .user-name a, .user-name form {
+            display: inline-block !important;
+        }
+
+        .user-name .info-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        #users-table th a, #users-table th a:link, #users-table th a:visited {
+            color: white;
+        }
+
+        #users-table th a:hover {
+            color: #0F0;
+        }
+
+        #users-table td:not(.user-name, .personal-info) a:hover {
+            text-decoration: underline;
+        }
+
+        .rank {
+            min-width: 2.4em
+        }
+
+        .points {
+            min-width: 2.4em;
+        }
+
+        .disqualified {
+            background-color: #ffa8a8 !important;
+        }
+
+        .point-denominator {
+            border-top: 1px solid gray;
+            font-size: 0.7em;
+        }
+
+        .start-time {
+            display: none;
+        }
+
+        .personal-info {
+            display: none;
+        }
+
+        .personal-info a {
+            color: gray !important;
+            font-weight: 600;
+            position: relative;
+            display: inline-flex !important;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .personal-info img {
+            width: 30px;
+            height: 30px;
+            margin-bottom: 0;
+        }
+
+        .personal-info .uni-name {
+            position: absolute;
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            background-color: rgb(255, 255, 255, 0.9);
+            padding: 8px;
+            margin-top: 32px;
+            border-radius: 8px;
+            box-shadow: 0px 2px 20px rgba(0, 0, 0, 0.3);
+            pointer-events: none;
+            white-space: nowrap;
+            transition: all 0.5s;
+        }
+
+        .personal-info .organization:hover .uni-name  {
+            display: block;
+            visibility: visible;
+            width: min-content;
+            opacity: 1;
+        }
+
+        .virtual-participation {
+            color: grey;
+            float: right
+        }
+    </style>
+
     {% if is_ICPC_format %}
         {% include "contest/media-icpc-css.html" %}
     {% else %}
@@ -354,6 +462,16 @@
                     localStorage.setItem(`filter-cleared-${contest_key}`, 'false');
                 }
             };
+
+            $('.uni-logo').each((index, el) => {
+                if (el.complete) {
+                    if (el.naturalWidth !== 0) return ;
+                    const parentEl = el.parentNode;
+                    const siblingEl = el.nextSibling.nextSibling;
+                    el.parentNode.removeChild(el);
+                    siblingEl.classList = "";
+                }
+            })
 
             window.applyRankingFilter();
 
