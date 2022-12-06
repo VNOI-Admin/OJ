@@ -53,18 +53,10 @@ class Command(BaseCommand):
         writer = csv.DictWriter(fout, fieldnames=['username', 'fullname', 'password'])
         writer.writeheader()
 
-        counter = {
-            'cd': 0,
-            'ct': 0,
-            'sc': 0,
-            'kc': 0,
-        }
         for row in reader:
-            league = row['league']
-            cnt = counter[league] + 1
-            counter[league] = cnt
+            username = row['username']
 
-            username = f'{prefix}{league}{cnt}'
+            username = f'{prefix}{username}'
             fullname = row['name']
             org = get_org(row['org'])
             password = generate_password()
@@ -76,8 +68,6 @@ class Command(BaseCommand):
                 'fullname': fullname,
                 'password': password,
             })
-
-        print(counter)
 
         fin.close()
         fout.close()
