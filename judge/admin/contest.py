@@ -145,7 +145,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         (_('Settings'), {'fields': ('is_visible', 'use_clarifications', 'push_announcements', 'disallow_virtual',
                                     'hide_problem_tags', 'hide_problem_authors', 'show_short_display',
                                     'run_pretests_only', 'locked_after', 'scoreboard_visibility',
-                                    'ranking_access_code', 'scoreboard_cache_timeout', 'show_submission_list',
+                                    'ranking_access_code', 'ranking_stop_last_minutes', 'scoreboard_cache_timeout', 'show_submission_list',
                                     'points_precision', 'banned_judges')}),
         (_('Scheduling'), {'fields': ('start_time', 'end_time', 'registration_start', 'registration_end',
                                       'time_limit')}),
