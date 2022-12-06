@@ -50,6 +50,11 @@ def get_testcases(test_path):
 
         inputs.sort()
         outputs.sort()
+        for input_file, output_file in zip(inputs, outputs):
+            if input_file[:-3] != output_file[:-4]:
+                raise CommandError(
+                    f'found input file `{input_file}` and output file `{output_file}` which is not matched.',
+                )
         return inputs, outputs
 
     sample_in, sample_out = get_input_output('sample', False)
@@ -171,6 +176,19 @@ def create_problem(problem_name, icpc_folder):
         problem = Problem.objects.get(code=problem_code)
 
     testcases, n_sample, n_secret = get_testcases(test_path)
+
+    print('Add sample testcases into problem')
+    description = ''
+    for test_id, testcase_data in enumerate(testcases[:n_sample], start=1):
+        input_file, output_file = testcase_data
+        with open(os.path.join(test_path, input_file), 'r') as fin, open(os.path.join(test_path, output_file), 'r') as fout:
+            input_data = fin.read()
+            output_data = fout.read()
+            description += f'## Sample Input {test_id}\n```\n{input_data}```\n\n'
+            description += f'## Sample Output {test_id}\n```\n{output_data}```\n\n'
+
+    problem.description = description
+    problem.save()
 
     print('Creating zip file')
     test_zip_name = 'data.zip'
