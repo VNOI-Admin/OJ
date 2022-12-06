@@ -47,7 +47,8 @@
 {% block personal_info_data scoped %}
     {% if user.organization %}
         <span class="organization"><a href="{{ user.organization.get_absolute_url() }}">
-            {{- user.organization.name -}}
+            <img class="uni-logo" src="{{user.organization.logo_override_image}}">
+            <p class="uni-name">{{- user.organization.name -}}</p>
         </a></span>
     {% endif %}
 {% endblock %}
