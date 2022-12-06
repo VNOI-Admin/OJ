@@ -87,12 +87,12 @@
             margin-bottom: 0;
         }
 
-        .personal-info p {
+        .personal-info .uni-name {
             position: absolute;
             z-index: 10000;
             opacity: 0;
             visibility: hidden;
-            background-color: rgb(255, 255, 255, 0.8);
+            background-color: rgb(255, 255, 255, 0.9);
             padding: 8px;
             margin-top: 32px;
             border-radius: 8px;
@@ -102,7 +102,7 @@
             transition: all 0.5s;
         }
 
-        .personal-info .organization:hover p  {
+        .personal-info .organization:hover .uni-name  {
             display: block;
             visibility: visible;
             width: min-content;
@@ -529,6 +529,16 @@
                     localStorage.setItem(`filter-cleared-${contest_key}`, 'false');
                 }
             };
+
+            $('.uni-logo').each((index, el) => {
+                if (el.complete) {
+                    if (el.naturalWidth !== 0) return ;
+                    const parentEl = el.parentNode;
+                    const siblingEl = el.nextSibling.nextSibling;
+                    el.parentNode.removeChild(el);
+                    siblingEl.classList = "";
+                }
+            })
 
             window.applyRankingFilter();
 
