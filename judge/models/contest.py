@@ -183,6 +183,11 @@ class Contest(models.Model):
                                            help_text=_('Disallow virtual joining after contest has ended.'),
                                            default=False)
 
+    ranking_access_code = models.CharField(verbose_name=_('ranking access code'),
+                                           help_text=_('An optional code to view the contest ranking. '
+                                                       'Leave it blank to disable.'),
+                                           blank=True, default='', max_length=255)
+
     @cached_property
     def format_class(self):
         return contest_format.formats[self.format_name]
