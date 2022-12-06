@@ -17,7 +17,7 @@ from django.db.models import BooleanField, Case, Count, F, FloatField, IntegerFi
 from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template import loader
 from django.template.defaultfilters import date as date_filter, floatformat
 from django.urls import reverse
@@ -959,12 +959,21 @@ class ContestOfficialRanking(ContestRankingBase):
         return users, problems
 
     def get_context_data(self, **kwargs):
-        if not self.object.csv_ranking:
-            raise Http404()
-
         context = super().get_context_data(**kwargs)
         context['has_rating'] = False
         return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.object.csv_ranking:
+            raise Http404()
+
+        # If the csv_ranking is an url, redirect to it
+        # (the check is not perfect, but it's good enough)
+        if self.object.csv_ranking.startswith('http'):
+            return redirect(self.object.csv_ranking)
+
+        return super().get(request, *args, **kwargs)
 
 
 class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):

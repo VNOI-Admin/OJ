@@ -100,6 +100,10 @@
             white-space: nowrap;
         }
 
+        .select2-container {
+            z-index: 1;
+        }
+
         #search-contest, #search-contest + .select2 {
             margin-top: 0.5em;
         }
@@ -108,26 +112,72 @@
             width: 200px;
             height: 2.3em;
         }
+
+        #org-dropdown-check-list {
+            display: inline-block;
+        }
+
+        #org-check-list-wrapper {
+            display: none;
+            background: #ffffff;
+            border: 1px solid gray;
+            padding: 10px;
+
+            right: auto;
+            position: absolute;
+            z-index: 1;
+        }
+
+        #org-check-list li {
+            list-style: none;
+        }
+
+        #org-dropdown-check-list.visible #org-check-list-wrapper {
+            display: block;
+        }
+
+        #org-check-list-wrapper button {
+            margin-bottom: 5px;
+            margin-left: 5px;
+        }
+
+        #org-check-list {
+            border-bottom: 1px solid gray;
+
+            /* reset properties of the parent elements */
+            color: black;
+            text-align: left;
+            font-weight: normal;
+        }
+
+        .filter-checklist-button {
+            float: right;
+        }
+
+        .select2-selection__rendered {
+            cursor: text;
+            overflow: initial !important;
+            width: 260px !important;
+        }
+
+        .select2-selection__rendered > li {
+            color: black;
+        }
+
+        #select2-org-check-list-results > li {
+            color: black;
+        }
+        #select2-org-check-list-results > li:hover {
+            background: #aaaaaa !important;
+        }
+
+        .select2-results__option[aria-selected=true] {
+            background: #cdcdcd !important;
+        }
     </style>
 {% endblock %}
 
 {% block users_js_media %}
-    {% if can_edit %}
-        <script type="text/javascript">
-            $(function () {
-                $('a.disqualify-participation').click(function (e) {
-                    e.preventDefault();
-                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to disqualify this participation?') }}"))
-                        $(this).closest('form').submit();
-                })
-                $('a.un-disqualify-participation').click(function (e) {
-                    e.preventDefault();
-                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to un-disqualify this participation?') }}"))
-                        $(this).closest('form').submit();
-                })
-            });
-        </script>
-    {% endif %}
     {% if not contest.ended %}
         <script type="text/javascript">
             $(function () {
@@ -160,8 +210,12 @@
                             $('.personal-info').show();
                             $('#show-personal-info-checkbox').prop('checked', true);
                         }
+                        {% if tab == 'ranking' %}
+                            window.applyRankingFilter();
+                        {% endif %}
                         window.firstSolve();
                         window.totalAC();
+                        window.enableAdminOperations();
                     }).always(function () {
                         ranking_outdated = false;
                         setTimeout(update_ranking, 10000);
@@ -215,6 +269,16 @@
                 $('#show-personal-info-checkbox').prop('checked', true);
             }
 
+            {% if show_virtual %}
+                $('#show-virtual-participations-checkbox').prop('checked', true);
+            {% endif %}
+
+            $('#show-virtual-participations-checkbox').click(function () {
+                const parser = new URL(window.location.href);
+                parser.searchParams.set('show_virtual', '{{ 'false' if show_virtual else 'true' }}');
+                window.location.href = parser.href;
+            });
+
             var contest_key = '{{contest.key}}';
 
             $("a#cache_alert").click(function () {
@@ -237,17 +301,216 @@
                 $("a#frozen_alert").click();
             }
 
-            function convertToSeconds(timeString) {
-                const time = timeString.split(':').map(Number); // time = [hour, minute, second]
-                return time[0] * 60 * 60 + time[1] * 60 + time[2];
+            // hack to keep scroll position after selecting option
+            // https://stackoverflow.com/questions/55045146/select2-do-not-scroll-on-selection
+            // scrollAfterSelect is only available after v4.0.6
+            $(function() {
+                $('#org-check-list').select2({
+                    multiple: true,
+                    closeOnSelect: false,
+                    placeholder: '{{ _('Search organizations') }}',
+                });
+
+                var selection = $('#org-check-list').data().select2.selection;
+                var results = $('#org-check-list').data().select2.results;
+
+                $('#org-check-list').on('select2:selecting', function(e) {
+                    let id = e.params.args.data.id;
+                    let val = $(e.target).val().concat([id]);
+                    $(e.target).val(val).trigger('change');
+
+                    if (selection.$search.val() != '') {
+                        selection.$search.val('');
+                        selection.trigger('query', {});
+                    } else {
+                        results.setClasses();
+                    }
+
+                    return false;
+                });
+
+                $('#org-check-list').on('select2:unselecting', function(e) {
+                    let id = e.params.args.data.id;
+                    let val = $(e.target).val().filter(function(v) { return v != id; });
+                    $(e.target).val(val).trigger('change');
+
+                    if (selection.$search.val() != '') {
+                        selection.$search.val('');
+                        selection.trigger('query', {});
+                    } else {
+                        results.setClasses();
+                    }
+
+                    return false;
+                });
+
+                $('#org-check-list').data().select2.toggleDropdown = function () {
+                    selection.$search.trigger('focus');
+
+                    if (!this.isOpen()) {
+                        this.open();
+                    }
+                }
+
+                $('#filter-by-organization-button').click(function () {
+                    $('#org-check-list-wrapper').toggle();
+                    $('#org-check-list').select2('open');
+                });
+            });
+
+            if (localStorage.getItem(`filter-cleared-${contest_key}`) === null) {
+                localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
             }
 
-            function timeComparison(sub1, sub2) {
-                if (!sub2) return;
-                return sub1['time'] < sub2['time'];
+            if (localStorage.getItem(`filter-selected-orgs-${contest_key}`) === null) {
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, []);
             }
+
+            $('#apply-organization-filter').click(function () {
+                $('#org-check-list-wrapper').hide();
+
+                let selected_orgs = $('#org-check-list').val();
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, selected_orgs);
+                window.applyRankingFilter();
+                window.totalAC();
+            });
+
+            $('#clear-organization-filter').click(function () {
+                $('#org-check-list').val(null).trigger('change');
+                $('#apply-organization-filter').click();
+            });
+
+            // hide checklist by clicking outside
+            $(document).mouseup(function (e) {
+                e.stopPropagation();
+
+                // if clicked on the filter button
+                // then this function should not do anything
+                if ($('#filter-by-organization-button').has(e.target).length !== 0) {
+                    return;
+                }
+
+                if ($('#select2-org-check-list-results').has(e.target).length !== 0) {
+                    return;
+                }
+
+                if ($(e.target).attr('id') && $(e.target).attr('id').startsWith('select2-org-check-list-result')) {
+                    return;
+                }
+
+                // check if the clicked area is the checklist or not
+                if ($('#org-dropdown-check-list').has(e.target).length === 0) {
+                    $('#apply-organization-filter').click();
+                }
+            });
+
+            window.getOrganizationCodes = function () {
+                let org_list = []
+
+                $('#users-table > tbody > *').each(function () {
+                    let org_anchor = $(this).find("div > div > .personal-info > .organization > a")[0];
+
+                    if (org_anchor) {
+                        org_list.push(org_anchor.text);
+                    }
+                });
+
+                org_list.sort();
+                org_list.push("Other");
+
+                org_list = new Set(org_list);
+
+                let org_options = $('#org-check-list');
+                org_options.empty();
+
+                org_list.forEach(function (org) {
+                    org_options.append(
+                        `<option value="${org}">${org}</option>`
+                    );
+                });
+            };
+
+            window.getOrganizationCodes();
+
+            function extractCurrentAbsRank(row_text) {
+                let paren_surround_text = row_text.match(/\(([^)]+)\)/);
+                let current_abs_rank
+                    = (paren_surround_text !== null)
+                    ? paren_surround_text[1]
+                    : row_text;
+                return current_abs_rank;
+            }
+
+            window.clearRankingFilter = function () {
+                if (localStorage.getItem(`filter-cleared-${contest_key}`) == 'true') {
+                    return;
+                }
+
+                $('#users-table > tbody > tr[id]').each(function () {
+                    $(this).show();
+                    $(this).find("td")[0].innerHTML = extractCurrentAbsRank($(this).find("td")[0].innerText);
+                });
+
+                localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
+            };
+
+            window.applyRankingFilter = function () {
+                let counter = 0;
+                let previous_abs_rank = -1;
+                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`);
+
+                if (!selected_orgs.length) {
+                    window.clearRankingFilter();
+                    return;
+                }
+
+                $('#users-table > tbody > tr[id]').each(function () {
+                    let row = $(this);
+
+                    let org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
+                    let org = org_anchor ? org_anchor.text : 'Other';
+
+                    if (!selected_orgs.includes(org)) {
+                        row.hide();
+                        return;
+                    }
+
+                    row.show();
+                    let current_abs_rank = extractCurrentAbsRank(row.find("td")[0].innerText);
+
+                    if (previous_abs_rank == -1 || previous_abs_rank != current_abs_rank) {
+                        ++counter;
+                    }
+
+                    row.find("td")[0].innerHTML = `${counter}<br>(${current_abs_rank})`;
+                    previous_abs_rank = current_abs_rank;
+                });
+
+                if (counter > 0) {
+                    localStorage.setItem(`filter-cleared-${contest_key}`, 'false');
+                }
+            };
+
+            window.applyRankingFilter();
+
+            window.restoreChecklistOptions = function () {
+                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`).split(',');
+                $('#org-check-list').val(selected_orgs).trigger('change');
+            };
+
+            window.restoreChecklistOptions();
 
             window.firstSolve = function() {
+                function convertToSeconds(timeString) {
+                    const time = timeString.split(':').map(Number); // time = [hour, minute, second]
+                    return time[0] * 60 * 60 + time[1] * 60 + time[2];
+                }
+
+                function timeComparison(sub1, sub2) {
+                    if (!sub2) return;
+                    return sub1['time'] < sub2['time'];
+                }
+
                 let firstSolves = {};
 
                 $('td.full-score a').each(function () {
@@ -291,29 +554,41 @@
             window.firstSolve();
 
             window.totalAC = function() {
-                let arr = {};
+                // Problems are indexed from 0
+                let total_ac = {};
+
+                // Number of columns before first problem
+                let offset = {% if is_ICPC_format %}4{% else %}3{% endif %};
 
                 $('td.full-score').each(function () {
-                    arr[$(this).index() - 2] = (arr[$(this).index() - 2] + 1) || 1;
+                    if ($(this).parent().is(':hidden')) {
+                        return;
+                    }
+
+                    total_ac[$(this).index() - offset] = (total_ac[$(this).index() - offset] || 0) + 1;
                 });
                 $('td.total-ac').each(function () {
-                    $(this).text(arr[$(this).index() - 1]);
+                    // There is exactly one column (Total AC) before first problem
+                    $(this).text(total_ac[$(this).index() - 1]);
                 });
             };
 
             window.totalAC();
 
-            {% if tab == 'ranking' %}
-                {% if show_virtual %}
-                    $('#show-virtual-participations-checkbox').prop('checked', true);
-                {% endif %}
+            window.enableAdminOperations = function () {
+                $('a.disqualify-participation').click(function (e) {
+                    e.preventDefault();
+                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to disqualify this participation?') }}"))
+                        $(this).closest('form').submit();
+                })
+                $('a.un-disqualify-participation').click(function (e) {
+                    e.preventDefault();
+                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to un-disqualify this participation?') }}"))
+                        $(this).closest('form').submit();
+                })
+            };
 
-                $('#show-virtual-participations-checkbox').click(function () {
-                    const parser = new URL(window.location.href);
-                    parser.searchParams.set('show_virtual', '{{ 'false' if show_virtual else 'true' }}');
-                    window.location.href = parser.href;
-                });
-            {% endif %}
+            window.enableAdminOperations();
         });
 
         {% if tab == 'ranking' %}
@@ -361,6 +636,11 @@
                 });
 
                 $('table#users-table tbody tr').each(function () {
+                    // Skip hidden row (due to filtering)
+                    if ($(this).is(':hidden')) {
+                        return;
+                    }
+
                     var row_data = [];
                     $(this).find('td').each(function () {
                         var $col = $(this);
@@ -402,6 +682,22 @@
             {% if contest.can_see_full_scoreboard(request.user) %}
                 <input id="search-contest" type="text" placeholder="{{ _('View user participation') }}">
             {% endif %}
+        {% endif %}
+        {% if tab == 'ranking' %}
+            <div id="org-dropdown-check-list">
+                <button id="filter-by-organization-button" class="inline-button">
+                    <i class="tab-icon fa fa-filter"></i>
+                    <b>{{ _('Filter') }}</b>
+                </button>
+
+                <div id="org-check-list-wrapper">
+                    <div>
+                        <button id="apply-organization-filter" class="inline-button filter-checklist-button">{{ _('Apply') }}</button>
+                        <button id="clear-organization-filter" class="inline-button filter-checklist-button">{{ _('Clear') }}</button>
+                    </div>
+                    <select id="org-check-list" name="orgs[]" multiple="multiple"></select>
+                </div>
+            </div>
         {% endif %}
         {% if tab != 'official_ranking' %}
             <input id="show-personal-info-checkbox" type="checkbox" style="vertical-align: bottom">
