@@ -369,7 +369,7 @@
             $('#apply-organization-filter').click(function () {
                 $('#org-check-list-wrapper').hide();
 
-                let selected_orgs = $('#org-check-list').val();
+                let selected_orgs = $('#org-check-list').val().map(x => x.trim());
                 localStorage.setItem(`filter-selected-orgs-${contest_key}`, selected_orgs);
                 window.applyRankingFilter();
                 window.totalAC();
@@ -470,7 +470,7 @@
                     let org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
                     let org = org_anchor ? org_anchor.text : 'Other';
 
-                    if (!selected_orgs.includes(org)) {
+                    if (!selected_orgs.includes(org.trim())) {
                         row.hide();
                         return;
                     }
