@@ -489,19 +489,22 @@
 
             window.enableAdminOperations();
 
+            function replaceOrgImageWithName (el) {
+                const parentEl = el.parentNode;
+                const siblingEl = el.nextSibling.nextSibling;
+                el.style.display = "none";
+                siblingEl.classList = "";
+            }
+
             window.loadOrgLogo = function () {
-                $('.uni-logo').each((index, el) => {
-                    if (el.complete) {
-                        if (el.naturalWidth !== 0) return ;
-                        const parentEl = el.parentNode;
-                        const siblingEl = el.nextSibling.nextSibling;
-                        el.parentNode.removeChild(el);
-                        siblingEl.classList = "";
+                const allImg = $('.uni-logo');
+                allImg.each((i, el) => {
+                    if (el.src == window.location.href) {
+                        replaceOrgImageWithName(el);
                     }
-                });
+                })
             }
             window.loadOrgLogo();
-            setInterval(window.loadOrgLogo, 1000);
         });
 
         {% if tab == 'ranking' %}
