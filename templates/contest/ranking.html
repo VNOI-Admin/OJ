@@ -630,17 +630,19 @@
 
             window.enableAdminOperations();
 
+            function replaceOrgImageWithName (el) {
+                const parentEl = el.parentNode;
+                const siblingEl = el.nextSibling.nextSibling;
+                el.parentNode.removeChild(el);
+                siblingEl.classList = "";
+            }
+
             window.loadOrgLogo = function () {
-                $('.uni-logo').ready(() => {
-                    $('.uni-logo').each((index, el) => {
-                        if (el.complete) {
-                            if (el.naturalWidth !== 0) return ;
-                            const parentEl = el.parentNode;
-                            const siblingEl = el.nextSibling.nextSibling;
-                            el.parentNode.removeChild(el);
-                            siblingEl.classList = "";
-                        }
-                    });
+                $('.uni-logo').each(function (i, el) {
+                    const url = el.src.split('/');
+                    if (url[url.length - 1] == '') {
+                        replaceOrgImageWithName(el);
+                    }
                 })
             }
             window.loadOrgLogo();
