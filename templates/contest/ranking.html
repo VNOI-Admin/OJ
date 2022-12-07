@@ -255,7 +255,6 @@
                         window.firstSolve();
                         window.totalAC();
                         window.enableAdminOperations();
-                        console.log(`aaa`);
                         window.loadOrgLogo();
                     }).always(function () {
                         ranking_outdated = false;
@@ -639,16 +638,12 @@
             }
 
             window.loadOrgLogo = function () {
-                console.log(`before each`);
-                let ok = 0;
                 const allImg = $('.uni-logo');
                 allImg.each((i, el) => {
                     if (el.src == window.location.href) {
-                        console.log(el);
                         replaceOrgImageWithName(el);
                     }
                 })
-                console.log(`after each`);
             }
             window.loadOrgLogo();
         });
