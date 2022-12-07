@@ -41,7 +41,7 @@ def get_org(name):
         is_unlisted=False,
         )[0]
     if not org.logo_override_image:
-        org.logo_override_image = f'/media/logo/{logo}'
+        org.logo_override_image = f'/martor/logo/{logo}'
         org.save()
     return org
 
