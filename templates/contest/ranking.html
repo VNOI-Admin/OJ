@@ -22,6 +22,7 @@
 
         #users-table {
             font-size: 14px;
+            border-collapse: collapse;
         }
 
         .user-name a, .user-name form {
@@ -112,6 +113,14 @@
         .virtual-participation {
             color: grey;
             float: right
+        }
+
+        .fa-heart {
+            color: red;
+        }
+
+        .fa-heart-o {
+            color: black;
         }
     </style>
 
@@ -256,6 +265,7 @@
                         window.totalAC();
                         window.enableAdminOperations();
                         window.loadOrgLogo();
+                        window.applyFavoriteUsers();
                     }).always(function () {
                         ranking_outdated = false;
                         setTimeout(update_ranking, 10000);
@@ -539,6 +549,64 @@
             };
 
             window.restoreChecklistOptions();
+
+            window.applyFavoriteUsers = function() {
+                let fav_users = localStorage.getItem(`favorite-users-${contest_key}`)?.split(',');
+                if (!fav_users) return;
+
+                let index = 0;
+                let table_body = $('#users-table > tbody').get(0);
+
+                $('#users-table > tbody > .favorite').each(function () {
+                    this.remove();
+                });
+
+                $('#users-table > tbody > tr[id]:not(.favorite)').each(function () {
+                    let row = $(this);
+                    let user_name = row.find(".user-name > .info-container > div > span > a")[0].text.trim();
+                    let fav_button = row.find('.user-name > .info-container > div > i').get(0);
+
+                    if (!fav_users.includes(user_name)) {
+                        fav_button.classList.add('fa-heart-o');
+                        return;
+                    }
+
+                    fav_button.classList.remove('fa-heart-o');
+
+                    let new_row = row.clone();
+                    new_row.addClass('favorite');
+                    table_body.insertBefore(new_row.get(0), table_body.children[index++]);
+                });
+
+                $(table_body.children[index - 1]).css('border-bottom', 'thick solid black');
+            }
+
+            window.applyFavoriteUsers();
+
+            $(document).ready(() => {
+                $('#users-table').on('click', '.fav-button', function() {
+                    let is_fav = !this.classList.contains('fa-heart-o');
+                    let user_name = $(this.parentNode).find('span > a')[0].textContent.trim();
+                    let fav_users = localStorage.getItem(`favorite-users-${contest_key}`)?.split(',');
+                    if (!fav_users) fav_users = [];
+
+                    if (!is_fav) {
+                        fav_users.push(user_name);
+                        this.classList.remove('fa-heart-o');
+                    } else {
+                        this.classList.add('fa-heart-o');
+
+                        // https://stackoverflow.com/a/3954451
+                        let id = fav_users.indexOf(user_name);
+                        if (id !== -1) {
+                            fav_users.splice(id, 1);
+                        }
+                    }
+
+                    localStorage.setItem(`favorite-users-${contest_key}`, fav_users);
+                    window.applyFavoriteUsers();
+                });
+            });
 
             window.firstSolve = function() {
                 function convertToSeconds(timeString) {
