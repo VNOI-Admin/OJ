@@ -75,7 +75,7 @@ def get_checker(validators_path):
 
 
 @transaction.atomic
-def update_problem_testcases(problem, testcases, test_file_path, checker_path, problem_type):
+def update_problem_testcases(problem, testcases, test_file_path, checker_path, problem_type, float_checker):
     # delete old testcases
     problem.cases.all().delete()
     files = []
@@ -112,6 +112,12 @@ def update_problem_testcases(problem, testcases, test_file_path, checker_path, p
                 problem_data.interactive = True
                 problem_data.grader = 'interactive'
                 problem_data.custom_grader.save('checker.cpp', File(checker))
+
+            if float_checker != 0:
+                problem_data.checker = 'floatsabs'
+                problem_data.checker_args = json.dumps({
+                    "precision": float_checker,
+                })
         except Exception:
             problem_data = ProblemData(
                 problem=problem,
@@ -197,6 +203,16 @@ def create_problem(problem_name, icpc_folder):
         # small hack to make the `open with` work without any modification
         checker_path = os.path.join(problem_folder, 'problem.yaml')
 
+    float_checker = 0
+    if problem_setting.get('validator_flags', None):
+        flags = problem_setting['validator_flags'].split(' ')
+        if len(flags) != 2 and flags[0] != 'float_tolerance':
+            raise CommandError(f'Unsupported validator flags: {flags}')
+        float_checker = int(flags[1].split('-')[-1])
+
+    if float_checker and problem_type != NORMAL:
+        raise CommandError('Float checker only support normal problem type')
+
     if problem_type != INTERACTIVE:
         print('Add sample testcases into problem')
         description = ''
@@ -211,8 +227,8 @@ def create_problem(problem_name, icpc_folder):
         problem.description = description
         problem.save()
 
-    update_problem_testcases(problem, testcases, os.path.join(test_path, test_zip_name), checker_path, problem_type)
-    return n_sample, n_secret, problem_type
+    update_problem_testcases(problem, testcases, os.path.join(test_path, test_zip_name), checker_path, problem_type, float_checker)
+    return n_sample, n_secret, problem_type, float_checker
 
 
 class Command(BaseCommand):
@@ -240,12 +256,14 @@ class Command(BaseCommand):
         for problem in problems:
             try:
                 print('=============================')
-                n_sample, n_secret, problem_type = create_problem(problem, icpc_folder)
+                n_sample, n_secret, problem_type, float_checker = create_problem(problem, icpc_folder)
                 msg = ''
                 if problem_type == CHECKER:
                     msg = ' [custom checker]'
                 elif problem_type == INTERACTIVE:
                     msg = ' [interactive]'
+                if float_checker > 0:
+                    msg = f' [float checker, precisions: {float_checker}]'
 
                 messages[problem] = f'{n_sample} samples, {n_secret} secrets{msg}.'
                 print('Succeed.')
