@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='judge',
             name='auth_key',
-            field=models.CharField(help_text='A key to authenticate this judge', max_length=100, verbose_name='authentication key'),
+            field=models.CharField(help_text='A key to authenticate this judge.', max_length=100, verbose_name='authentication key'),
         ),
         migrations.AlterField(
             model_name='language',
@@ -159,12 +159,12 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='profile',
             name='is_totp_enabled',
-            field=models.BooleanField(default=False, help_text='check to enable TOTP-based two-factor authentication', verbose_name='TOTP 2FA enabled'),
+            field=models.BooleanField(default=False, help_text='Check to enable TOTP-based two-factor authentication.', verbose_name='TOTP 2FA enabled'),
         ),
         migrations.AlterField(
             model_name='profile',
             name='scratch_codes',
-            field=judge.models.profile.EncryptedNullCharField(blank=True, help_text='JSON array of 16 character base32-encoded codes                                                         for scratch codes', max_length=255, null=True, validators=[django.core.validators.RegexValidator('^(\\[\\])?$|^\\[("[A-Z0-9]{16}", *)*"[A-Z0-9]{16}"\\]$', 'Scratch codes must be empty or a JSON array of                                                                  16-character base32 codes')], verbose_name='scratch codes'),
+            field=judge.models.profile.EncryptedNullCharField(blank=True, help_text='JSON array of 16-character Base32-encoded codes for scratch codes.', max_length=255, null=True, validators=[django.core.validators.RegexValidator('^(\\[\\])?$|^\\[("[A-Z0-9]{16}", *)*"[A-Z0-9]{16}"\\]$', 'Scratch codes must be empty or a JSON array of 16-character Base32 codes.')], verbose_name='scratch codes'),
         ),
         migrations.AlterField(
             model_name='profile',
