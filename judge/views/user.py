@@ -16,7 +16,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
-from django.db.models import Count, F, Max, Min, Prefetch
+from django.db.models import Count, F, FilteredRelation, Max, Min, Prefetch, Q
 from django.db.models.expressions import Value
 from django.db.models.fields import DateField
 from django.db.models.functions import Cast, Coalesce, ExtractYear
@@ -34,7 +34,7 @@ from reversion import revisions
 
 from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
     newsletter_id
-from judge.models import BlogPost, BlogVote, Organization, Profile, Rating, Submission
+from judge.models import BlogPost, Organization, Profile, Rating, Submission
 from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
@@ -44,7 +44,6 @@ from judge.utils.celery import task_status_by_id, task_status_url_by_id
 from judge.utils.problems import contest_completed_ids, user_completed_ids
 from judge.utils.pwned import PwnedPasswordsValidator
 from judge.utils.ranker import ranker
-from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
@@ -264,9 +263,10 @@ class UserBlogPage(CustomUserMixin, PostListBase):
             queryset = queryset.filter(visible=True, publish_on__lte=timezone.now())
 
         if self.request.user.is_authenticated:
-            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
             profile = self.request.profile
-            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
+            queryset = queryset.annotate(
+                my_vote=FilteredRelation('votes', condition=Q(votes__voter_id=profile.id)),
+            ).annotate(vote_score=Coalesce(F('my_vote__score'), Value(0)))
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
