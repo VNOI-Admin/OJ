@@ -1,4 +1,5 @@
 @use 'sass:color';
+@import "vars-common";
 
 $color_primary0: #fff;
 $color_primary5: #f8f8f8;   // light background
@@ -16,12 +17,4 @@ $color_link200: #faa700;    // active
 
 $color_pageBg: color.adjust($color_primary5, $lightness: 10%);
 
-$highlight_blue: #1ba94c;
-$announcement_red: #ae0000;
-
-$base_font_size: 15px;
-$widget_border_radius: 4px;
-
-$table_header_rounding: 6px;
-
-$monospace-fonts: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+$path_to_root: '.';     // relative path from style.css to STATIC_ROOT
