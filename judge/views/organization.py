@@ -2,6 +2,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.models import Group
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Count, Q
 from django.db.models.expressions import Value
@@ -302,6 +303,10 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             # short_name is show in ranking
             org.short_name = org.slug[:20]
             org.save()
+            all_admins = org.admins.all()
+            g = Group.objects.get(name='Org Admin')
+            for admin in all_admins:
+                admin.user.groups.add(g)
 
             return HttpResponseRedirect(self.get_success_url())
 
