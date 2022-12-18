@@ -304,7 +304,7 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             org.short_name = org.slug[:20]
             org.save()
             all_admins = org.admins.all()
-            g = Group.objects.get(name='Org Admin')
+            g = Group.objects.get(name=settings.GROUP_PERMISSION_FOR_ORG_ADMIN)
             for admin in all_admins:
                 admin.user.groups.add(g)
 
@@ -312,7 +312,6 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
 
     def dispatch(self, request, *args, **kwargs):
         if self.has_permission():
-            # should I also delete this?
             if self.request.user.profile.admin_of.count() >= settings.VNOJ_ORGANIZATION_ADMIN_LIMIT and \
                not self.request.user.has_perm('spam_organization'):
                 return render(request, 'organization/create-limit-error.html', {
