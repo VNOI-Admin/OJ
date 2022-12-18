@@ -399,7 +399,12 @@ class OrganizationForm(ModelForm):
         if HeavyPreviewPageDownWidget is not None:
             widgets = {'about': HeavyPreviewPageDownWidget(preview=reverse_lazy('organization_preview'))}
         if HeavySelect2MultipleWidget is not None:
-            widgets.update({'admins': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'})})
+            widgets.update({
+                'admins': HeavySelect2MultipleWidget(
+                    data_view='profile_select2',
+                    attrs={'style': 'width: 100%'},
+                ),
+            })
 
 
 class CustomAuthenticationForm(AuthenticationForm):
