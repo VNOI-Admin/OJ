@@ -37,6 +37,12 @@
     content: "🧑‍🏫";
 }
 
+.deleted-user, .deleted-user a {
+    color: #999;
+    font-weight: normal;
+    text-decoration: line-through $color_primary100;
+}
+
 @mixin rate-svg-color($color) {
     circle {
         stroke: $color;
