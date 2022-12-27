@@ -656,3 +656,6 @@ class JudgeHandler(ZlibPacketHandler):
                 'organizations':
                 [x[0] for x in Profile.objects.get(id=data['user_id']).organizations.values_list('id')],
             })
+
+    def on_cleanup(self):
+        db.connection.close()
