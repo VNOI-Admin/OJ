@@ -13,7 +13,7 @@
     background: rgba(0, 0, 0, 0.01);
 
     &.striped tr:nth-child(even) {
-        background: #f7f7f7;
+        background: transparent;
     }
 
     td:first-child {
