@@ -22,7 +22,6 @@ from judge.models import (BlogPost, BlogVote, Comment, Contest, Language,
 from judge.tasks import on_new_blogpost
 from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
-from judge.utils.problems import user_completed_ids
 from judge.utils.tickets import filter_visible_tickets
 from judge.utils.views import TitleMixin, generic_message
 
@@ -180,16 +179,6 @@ class PostList(PostListBase):
         context['language_count'] = Language.objects.count
 
         now = timezone.now()
-
-        # Dashboard stuff
-        if self.request.user.is_authenticated:
-            user = self.request.profile
-            context['recently_attempted_problems'] = (Submission.objects.filter(user=user)
-                                                      .exclude(problem__in=user_completed_ids(user))
-                                                      .values_list('problem__code', 'problem__name', 'problem__points')
-                                                      .annotate(points=Max('points'), latest=Max('date'))
-                                                      .order_by('-latest')
-                                                      [:settings.DMOJ_BLOG_RECENTLY_ATTEMPTED_PROBLEMS_COUNT])
 
         visible_contests = Contest.get_visible_contests(self.request.user).filter(is_visible=True) \
                                   .order_by('start_time')
