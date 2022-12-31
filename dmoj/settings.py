@@ -711,6 +711,8 @@ WEBAUTHN_RP_ID = None
 
 DESCRIPTION_MAX_LENGTH = 200
 
+GROUP_PERMISSION_FOR_ORG_ADMIN = 'Org Admin'
+
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
         exec(f.read(), globals())
