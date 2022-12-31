@@ -16,9 +16,11 @@ from judge.utils.timedelta import nice_repr
 @register_contest_format('ioi')
 class LegacyIOIContestFormat(DefaultContestFormat):
     name = gettext_lazy('IOI (pre-2016)')
-    config_defaults = {'cumtime': False}
+    config_defaults = {'cumtime': False, 'tiebreak': False}
     """
         cumtime: Specify True if time penalties are to be computed. Defaults to False.
+        tiebreak: Specify True if ties are to be broken by the last score-altering submission time.
+    Defaults to False.
     """
 
     @classmethod
@@ -42,6 +44,7 @@ class LegacyIOIContestFormat(DefaultContestFormat):
 
     def update_participation(self, participation):
         cumtime = 0
+        last_submission_time = 0
         score = 0
         format_data = {}
 
@@ -53,8 +56,11 @@ class LegacyIOIContestFormat(DefaultContestFormat):
                                              .values_list('problem_id', 'time', 'points'))
 
         for problem_id, time, points in queryset:
+            dt = (time - participation.start).total_seconds()
+            if self.config['tiebreak'] and points:
+                last_submission_time = max(last_submission_time, dt)
+
             if self.config['cumtime']:
-                dt = (time - participation.start).total_seconds()
                 if points:
                     cumtime += dt
             else:
@@ -65,7 +71,7 @@ class LegacyIOIContestFormat(DefaultContestFormat):
 
         participation.cumtime = max(cumtime, 0)
         participation.score = round(score, self.contest.points_precision)
-        participation.tiebreaker = 0
+        participation.tiebreaker = last_submission_time
         participation.format_data = format_data
         participation.save()
 
