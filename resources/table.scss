@@ -12,8 +12,12 @@
     margin-bottom: 0.5em;
     background: rgba(0, 0, 0, 0.01);
 
-    &.striped tr:nth-child(even) {
-        background: #f7f7f7;
+    &.striped tr:nth-child(2n) {
+        background: #d9d9d942;
+    }
+    
+    &.striped tr {
+        backdrop-filter: blur(3px);
     }
 
     td:first-child {
