@@ -6,7 +6,18 @@
                 {{ (_('Please read the [guidelines][0] before commenting.') + '\n\n  [0]: /about/comment/')|markdown('blog', strip_paragraphs=True) }}
             </div>
             <hr><br>
+        {% else %}
+            <div class="alert alert-warning comment-lock">
+                {{ _('Comments are disabled on this page.') }}
+            </div>
         {% endif %}
+
+        {% if not comment_lock and not has_comments %}
+            <p class="no-comments-message">{{ _('There are no comments at the moment.') }}</p>
+        {% else %}
+            <div class="comment-header-space"></div>
+        {% endif %}
+
         {% if has_comments %}
             <ul class="comments top-level-comments new-comments">
                 {% set logged_in = request.user.is_authenticated %}
@@ -127,8 +138,6 @@
                     {% endwith %}
                 {% endfor %}
             </ul>
-        {% elif not comment_lock %}
-            <p class="no-comments-message">{{ _('There are no comments at the moment.') }}</p>
         {% endif %}
 
         {% if request.user.is_authenticated and comment_form and not comment_lock %}
@@ -159,12 +168,6 @@
                         <input style="float:right" type="submit" value="{{ _('Post!') }}" class="button">
                     </form>
                 {% endif %}
-            </div>
-        {% endif %}
-
-        {% if comment_lock %}
-            <div class="alert alert-warning">
-                {{ _('Comments are disabled on this page.') }}
             </div>
         {% endif %}
     </div>
