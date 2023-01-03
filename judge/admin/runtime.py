@@ -72,9 +72,9 @@ class JudgeAdmin(VersionAdmin):
         (None, {'fields': ('name', 'auth_key', 'is_blocked', 'is_disabled')}),
         (_('Description'), {'fields': ('description',)}),
         (_('Information'), {'fields': ('created', 'online', 'last_ip', 'start_time', 'ping', 'load')}),
-        (_('Capabilities'), {'fields': ('runtimes', 'problems')}),
+        (_('Capabilities'), {'fields': ('runtimes',)}),
     )
-    list_display = ('name', 'online', 'start_time', 'ping', 'load', 'last_ip')
+    list_display = ('name', 'online', 'is_disabled', 'start_time', 'ping', 'load', 'last_ip')
     ordering = ['-online', 'name']
     formfield_overrides = {
         TextField: {'widget': AdminMartorWidget},
@@ -100,7 +100,7 @@ class JudgeAdmin(VersionAdmin):
     def disable_view(self, request, id):
         judge = get_object_or_404(Judge, id=id)
         judge.toggle_disabled()
-        return HttpResponseRedirect(reverse('admin:judge_judge_changelist'))
+        return HttpResponseRedirect(reverse('admin:judge_judge_change', args=(judge.id,)))
 
     def get_readonly_fields(self, request, obj=None):
         if obj is not None and obj.online:
