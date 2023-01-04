@@ -39,7 +39,7 @@ def vote_blog(request, delta):
     if 'id' not in request.POST or len(request.POST['id']) > 10:
         return HttpResponseBadRequest()
 
-    if not request.user.is_staff and not request.profile.has_enough_solves:
+    if request.profile.is_new_user:
         return HttpResponseBadRequest(_('You must solve at least %d problems before you can vote.')
                                       % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT,
                                       content_type='text/plain')

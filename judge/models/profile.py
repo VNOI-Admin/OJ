@@ -212,6 +212,10 @@ class Profile(models.Model):
         return self.problem_count >= settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
 
     @cached_property
+    def is_new_user(self):
+        return not self.user.is_staff and not self.has_enough_solves
+
+    @cached_property
     def can_tag_problems(self):
         if self.allow_tagging:
             if self.user.has_perm('judge.add_tagproblem'):
