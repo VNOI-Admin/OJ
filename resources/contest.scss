@@ -113,6 +113,10 @@
     }
 }
 
+.top-pagination-bar {
+    justify-content: space-between;
+}
+
 .contest-list {
     td {
         vertical-align: middle !important;
@@ -130,21 +134,10 @@
         height: 4em;
     }
 
-    .floating-time-left {
-        position: absolute;
-        left: 0;
-    }
-
-    .floating-time-right {
-        position: absolute;
-        right: 0;
-        line-height: 1.2em;
-    }
-
-    .floating-time {
-        position: absolute;
-        right: 0;
-        bottom: 0;
+    .time-left {
+        text-align: left;
+        color: $color_primary50;
+        padding-top: 0.5em;
     }
 
     .contest-tags {
