@@ -290,7 +290,7 @@ class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
         context['vote_hide_threshold'] = settings.DMOJ_COMMENT_VOTE_HIDE_THRESHOLD
 
         if self.request.user.is_authenticated:
-            context['is_new_user'] = not self.request.user.is_staff and not self.request.profile.has_any_solves
+            context['is_new_user'] = not self.request.user.is_staff and not self.request.profile.has_enough_solves
 
         return context
 

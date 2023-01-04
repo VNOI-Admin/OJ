@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import F, Max, Sum
+from django.db.models import Max, Sum
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -208,8 +208,8 @@ class Profile(models.Model):
         return self.username_display_override or self.username
 
     @cached_property
-    def has_any_solves(self):
-        return self.submission_set.filter(points=F('problem__points')).exists()
+    def has_enough_solves(self):
+        return self.problem_count >= settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
 
     @cached_property
     def can_tag_problems(self):
