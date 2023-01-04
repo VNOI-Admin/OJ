@@ -4843,7 +4843,7 @@ msgstr "Bạn còn lại %(countdown)s thời gian."
 
 #: templates/contest/contest.html:67
 #, python-format
-msgid "Contest ends in %(countdown)s"
+msgid "Contest ends in %(countdown)s "
 msgstr "Kỳ thi sẽ kết thúc sau %(countdown)s."
 
 #: templates/contest/contest.html:74 templates/contest/contest.html:78

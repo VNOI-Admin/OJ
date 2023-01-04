@@ -1,0 +1,18 @@
+archive: sochinhphuong.zip
+checker: standard
+test_cases:
+- in: sochinhphuong.1.in
+  out: sochinhphuong.1.out
+  points: 20
+- in: sochinhphuong.2.in
+  out: sochinhphuong.2.out
+  points: 20
+- in: sochinhphuong.3.in
+  out: sochinhphuong.3.out
+  points: 20
+- in: sochinhphuong.4.in
+  out: sochinhphuong.4.out
+  points: 20
+- in: sochinhphuong.5.in
+  out: sochinhphuong.5.out
+  points: 20

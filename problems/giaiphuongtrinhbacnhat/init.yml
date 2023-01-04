@@ -1,0 +1,18 @@
+archive: giaiphuongtrinhbacnhat.zip
+checker: standard
+test_cases:
+- in: giaiphuongtrinhbacnhat.1.in
+  out: giaiphuongtrinhbacnhat.1.out
+  points: 5
+- in: giaiphuongtrinhbacnhat.2.in
+  out: giaiphuongtrinhbacnhat.2.out
+  points: 5
+- in: giaiphuongtrinhbacnhat.3.in
+  out: giaiphuongtrinhbacnhat.3.out
+  points: 5
+- in: giaiphuongtrinhbacnhat.4.in
+  out: giaiphuongtrinhbacnhat.4.out
+  points: 5
+- in: giaiphuongtrinhbacnhat.5.in
+  out: giaiphuongtrinhbacnhat.5.out
+  points: 5

@@ -1,0 +1,18 @@
+archive: tinhtongsphanso.zip
+checker: standard
+test_cases:
+- in: tinhtongsphanso.1.in
+  out: tinhtongsphanso.1.out
+  points: 1
+- in: tinhtongsphanso.2.in
+  out: tinhtongsphanso.2.out
+  points: 1
+- in: tinhtongsphanso.3.in
+  out: tinhtongsphanso.3.out
+  points: 1
+- in: tinhtongsphanso.4.in
+  out: tinhtongsphanso.4.out
+  points: 1
+- in: tinhtongsphanso.5.in
+  out: tinhtongsphanso.5.out
+  points: 1
