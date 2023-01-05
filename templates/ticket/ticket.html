@@ -214,7 +214,7 @@
                         update_ticket_state(open);
                     },
                     error: function (data) {
-                        alert('Could not change ticket: ' + data.responseText);
+                        alert('{{ _('Could not change ticket: {error}') }}'.replace('{error}', data.responseText));
                     }
                 });
             });
@@ -366,7 +366,6 @@
                 <div class="info">
                     <a href="{{ url('user_page', request.user.username) }}" class="user">
                         <img src="{{ gravatar(request.user, 135) }}" class="gravatar">
-                        <div class="username {{ request.profile.css_class }}">{{ request.profile.display_name }}</div>
                     </a>
                 </div>
                 <div class="detail">
@@ -379,7 +378,7 @@
                             </div>
                         {% endif %}
                         <div class="body-block">{{ form.body }}</div>
-                        <input style="float:right" type="submit" value="{{ _('Post') }}" class="button">
+                        <input style="float:right" type="submit" value="{{ _('Post!') }}" class="button">
                     </form>
                 </div>
             </section>

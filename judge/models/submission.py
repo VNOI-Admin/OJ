@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from reversion import revisions
 
 from judge.judgeapi import abort_submission, judge_submission
 from judge.models.problem import Problem, SubmissionSourceAccess, TranslatedProblemForeignKeyQuerySet
@@ -27,7 +28,7 @@ SUBMISSION_RESULT = (
     ('RTE', _('Runtime Error')),
     ('CE', _('Compile Error')),
     ('IE', _('Internal Error')),
-    ('SC', _('Short circuit')),
+    ('SC', _('Short Circuited')),
     ('AB', _('Aborted')),
 )
 
@@ -45,6 +46,7 @@ SUBMISSION_SEARCHABLE_STATUS = \
     SUBMISSION_RESULT + tuple([status for status in SUBMISSION_STATUS if status not in SUBMISSION_RESULT])
 
 
+@revisions.register(follow=['test_cases'])
 class Submission(models.Model):
     RESULT = SUBMISSION_RESULT
     STATUS = SUBMISSION_STATUS
@@ -53,7 +55,7 @@ class Submission(models.Model):
     USER_DISPLAY_CODES = {
         'AC': _('Accepted'),
         'WA': _('Wrong Answer'),
-        'SC': 'Short Circuited',
+        'SC': _('Short Circuited'),
         'TLE': _('Time Limit Exceeded'),
         'MLE': _('Memory Limit Exceeded'),
         'OLE': _('Output Limit Exceeded'),
@@ -104,7 +106,7 @@ class Submission(models.Model):
 
     @property
     def result_class(self):
-        # This exists to save all these conditionals from being executed (slowly) in each row.jade template
+        # This exists to save all these conditionals from being executed (slowly) in each row.html template
         if self.status in ('IE', 'CE'):
             return self.status
         return Submission.result_class_from_code(self.result, self.case_points, self.case_total)
@@ -125,9 +127,15 @@ class Submission(models.Model):
     def is_locked(self):
         return self.locked_after is not None and self.locked_after < timezone.now()
 
-    def judge(self, *args, force_judge=False, **kwargs):
+    def judge(self, *args, rejudge=False, force_judge=False, rejudge_user=None, **kwargs):
         if force_judge or not self.is_locked:
-            judge_submission(self, *args, **kwargs)
+            if rejudge:
+                with revisions.create_revision(manage_manually=True):
+                    if rejudge_user:
+                        revisions.set_user(rejudge_user)
+                    revisions.set_comment('Rejudged')
+                    revisions.add_to_revision(self)
+            judge_submission(self, *args, rejudge=rejudge, **kwargs)
 
     judge.alters_data = True
 
@@ -195,7 +203,9 @@ class Submission(models.Model):
             return self.contest_object.key
 
     def __str__(self):
-        return 'Submission %d of %s by %s' % (self.id, self.problem, self.user.user.username)
+        return _('Submission %(id)d of %(problem)s by %(user)s') % {
+            'id': self.id, 'problem': self.problem, 'user': self.user.user.username,
+        }
 
     def get_absolute_url(self):
         return reverse('submission_status', args=(self.id,))
@@ -236,9 +246,10 @@ class SubmissionSource(models.Model):
     source = models.TextField(verbose_name=_('source code'), max_length=65536)
 
     def __str__(self):
-        return 'Source of %s' % self.submission
+        return _('Source of %(submission)s') % {'submission': self.submission}
 
 
+@revisions.register()
 class SubmissionTestCase(models.Model):
     RESULT = SUBMISSION_RESULT
 

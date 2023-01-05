@@ -3,6 +3,8 @@ from collections import namedtuple
 from random import random
 from threading import RLock
 
+from judge.judge_priority import REJUDGE_PRIORITY
+
 try:
     from llist import dllist
 except ImportError:
@@ -27,8 +29,14 @@ class JudgeList(object):
     def _handle_free_judge(self, judge):
         with self.lock:
             node = self.queue.first
+            priority = 0
             while node:
-                if not isinstance(node.value, PriorityMarker):
+                if isinstance(node.value, PriorityMarker):
+                    priority = node.value.priority + 1
+                elif priority >= REJUDGE_PRIORITY and len(self.judges) > 1 and sum(
+                        not judge.working for judge in self.judges) <= 1:
+                    return
+                else:
                     id, problem, language, source, judge_id, banned_judges = node.value
                     if judge.name not in banned_judges and judge.can_judge(problem, language, judge_id):
                         self.submission_map[id] = judge
@@ -71,6 +79,13 @@ class JudgeList(object):
                     pass
             self.judges.discard(judge)
 
+            # Since we reserve a judge for high priority submissions when there are more than one,
+            # we'll need to start judging if there is exactly one judge and it's free.
+            if len(self.judges) == 1:
+                judge = next(iter(self.judges))
+                if not judge.working:
+                    self._handle_free_judge(judge)
+
     def __iter__(self):
         return iter(self.judges)
 
@@ -109,17 +124,21 @@ class JudgeList(object):
 
             candidates = [
                 judge for judge in self.judges
-                if not judge.working and
-                judge.name not in banned_judges and
+                if judge.name not in banned_judges and
                 judge.can_judge(problem, language, judge_id)
             ]
+            available = [judge for judge in candidates if not judge.working]
             if judge_id:
-                logger.info('Specified judge %s is%savailable', judge_id, ' ' if candidates else ' not ')
+                logger.info('Specified judge %s is%savailable', judge_id, ' ' if available else ' not ')
             else:
-                logger.info('Free judges: %d', len(candidates))
-            if candidates:
+                logger.info('Free judges: %d', len(available))
+
+            if len(candidates) > 1 and len(available) == 1 and priority >= REJUDGE_PRIORITY:
+                available = []
+
+            if available:
                 # Schedule the submission on the judge reporting least load.
-                judge = min(candidates, key=lambda judge: (judge.load, random()))
+                judge = min(available, key=lambda judge: (judge.load, random()))
                 logger.info('Dispatched submission %d to: %s', id, judge.name)
                 self.submission_map[id] = judge
                 try:

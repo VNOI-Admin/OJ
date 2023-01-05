@@ -40,23 +40,23 @@ class EncryptedNullCharField(EncryptedCharField):
 class Organization(models.Model):
     name = models.CharField(max_length=128, verbose_name=_('organization title'))
     slug = models.SlugField(max_length=128, verbose_name=_('organization slug'),
-                            help_text=_('Organization name shown in URL'))
+                            help_text=_('Organization name shown in URLs.'))
     short_name = models.CharField(max_length=20, verbose_name=_('short name'),
-                                  help_text=_('Displayed beside user name during contests'))
+                                  help_text=_('Displayed beside user name during contests.'))
     about = models.TextField(verbose_name=_('organization description'))
     admins = models.ManyToManyField('Profile', verbose_name=_('administrators'), related_name='admin_of',
-                                    help_text=_('Those who can edit this organization'))
+                                    help_text=_('Those who can edit this organization.'))
     creation_date = models.DateTimeField(verbose_name=_('creation date'), auto_now_add=True)
     is_open = models.BooleanField(verbose_name=_('is open organization?'),
-                                  help_text=_('Allow joining organization'), default=False)
+                                  help_text=_('Allow joining organization.'), default=False)
     is_unlisted = models.BooleanField(verbose_name=_('is unlisted organization?'),
                                       help_text=_('Organization will not be listed'), default=True)
     slots = models.IntegerField(verbose_name=_('maximum size'), null=True, blank=True,
                                 help_text=_('Maximum amount of users in this organization, '
-                                            'only applicable to private organizations'))
-    access_code = models.CharField(max_length=7, help_text=_('Student access code'),
+                                            'only applicable to private organizations.'))
+    access_code = models.CharField(max_length=7, help_text=_('Student access code.'),
                                    verbose_name=_('access code'), null=True, blank=True)
-    logo_override_image = models.CharField(verbose_name=_('Logo override image'), default='', max_length=150,
+    logo_override_image = models.CharField(verbose_name=_('logo override image'), default='', max_length=150,
                                            blank=True,
                                            help_text=_('This image will replace the default site logo for users '
                                                        'viewing the organization.'))
@@ -96,7 +96,7 @@ class Organization(models.Model):
         elif isinstance(item, Profile):
             return self.members.filter(id=item.id).exists()
         else:
-            raise TypeError('Organization membership test must be Profile or primany key')
+            raise TypeError('Organization membership test must be Profile or primary key.')
 
     def __str__(self):
         return self.name
@@ -119,10 +119,19 @@ class Organization(models.Model):
         verbose_name_plural = _('organizations')
 
 
+class Badge(models.Model):
+    name = models.CharField(max_length=128, verbose_name=_('badge name'))
+    mini = models.URLField(verbose_name=_('mini badge URL'), blank=True)
+    full_size = models.URLField(verbose_name=_('full size badge URL'), blank=True)
+
+    def __str__(self):
+        return self.name
+
+
 class Profile(models.Model):
     user = models.OneToOneField(User, verbose_name=_('user associated'), on_delete=models.CASCADE)
     about = models.TextField(verbose_name=_('self-description'), null=True, blank=True)
-    timezone = models.CharField(max_length=50, verbose_name=_('location'), choices=TIMEZONE,
+    timezone = models.CharField(max_length=50, verbose_name=_('time zone'), choices=TIMEZONE,
                                 default=settings.DEFAULT_USER_TIME_ZONE)
     language = models.ForeignKey('Language', verbose_name=_('preferred language'), on_delete=models.SET_DEFAULT,
                                  default=Language.get_default_language_pk)
@@ -133,6 +142,8 @@ class Profile(models.Model):
     ace_theme = models.CharField(max_length=30, choices=ACE_THEMES, default='github')
     last_access = models.DateTimeField(verbose_name=_('last access time'), default=now)
     ip = models.GenericIPAddressField(verbose_name=_('last IP'), blank=True, null=True)
+    badges = models.ManyToManyField(Badge, verbose_name=_('badges'), blank=True, related_name='users')
+    display_badge = models.ForeignKey(Badge, verbose_name=_('display badge'), null=True, on_delete=models.SET_NULL)
     organizations = SortedManyToManyField(Organization, verbose_name=_('organization'), blank=True,
                                           related_name='members', related_query_name='member')
     display_rank = models.CharField(max_length=10, default='user', verbose_name=_('display rank'),
@@ -153,32 +164,32 @@ class Profile(models.Model):
                                            null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
     math_engine = models.CharField(verbose_name=_('math engine'), choices=MATH_ENGINES_CHOICES, max_length=4,
                                    default=settings.MATHOID_DEFAULT_TYPE,
-                                   help_text=_('the rendering engine used to render math'))
+                                   help_text=_('The rendering engine used to render math.'))
     is_totp_enabled = models.BooleanField(verbose_name=_('TOTP 2FA enabled'), default=False,
-                                          help_text=_('check to enable TOTP-based two-factor authentication'))
+                                          help_text=_('Check to enable TOTP-based two-factor authentication.'))
     is_webauthn_enabled = models.BooleanField(verbose_name=_('WebAuthn 2FA enabled'), default=False,
-                                              help_text=_('check to enable WebAuthn-based two-factor authentication'))
+                                              help_text=_('Check to enable WebAuthn-based two-factor authentication.'))
     totp_key = EncryptedNullCharField(max_length=32, null=True, blank=True, verbose_name=_('TOTP key'),
-                                      help_text=_('32 character base32-encoded key for TOTP'),
+                                      help_text=_('32-character Base32-encoded key for TOTP.'),
                                       validators=[RegexValidator('^$|^[A-Z2-7]{32}$',
-                                                                 _('TOTP key must be empty or base32'))])
+                                                                 _('TOTP key must be empty or Base32.'))])
     scratch_codes = EncryptedNullCharField(max_length=255, null=True, blank=True, verbose_name=_('scratch codes'),
-                                           help_text=_('JSON array of 16 character base32-encoded codes \
-                                                        for scratch codes'),
+                                           help_text=_('JSON array of 16-character Base32-encoded codes '
+                                                       'for scratch codes.'),
                                            validators=[
                                                RegexValidator(r'^(\[\])?$|^\[("[A-Z0-9]{16}", *)*"[A-Z0-9]{16}"\]$',
-                                                              _('Scratch codes must be empty or a JSON array of \
-                                                                 16-character base32 codes'))])
+                                                              _('Scratch codes must be empty or a JSON array of '
+                                                                '16-character Base32 codes.'))])
     last_totp_timecode = models.IntegerField(verbose_name=_('last TOTP timecode'), default=0)
     api_token = models.CharField(max_length=64, null=True, verbose_name=_('API token'),
-                                 help_text=_('64 character hex-encoded API access token'),
+                                 help_text=_('64-character hex-encoded API access token.'),
                                  validators=[RegexValidator('^[a-f0-9]{64}$',
                                                             _('API token must be None or hexadecimal'))])
     notes = models.TextField(verbose_name=_('internal notes'), null=True, blank=True,
                              help_text=_('Notes for administrators regarding this user.'))
     data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
     username_display_override = models.CharField(max_length=100, blank=True, verbose_name=_('display name override'),
-                                                 help_text=_('Name displayed in place of username'))
+                                                 help_text=_('Name displayed in place of username.'))
 
     @cached_property
     def organization(self):
@@ -240,17 +251,19 @@ class Profile(models.Model):
     calculate_points.alters_data = True
 
     def calculate_contribution_points(self):
-        from judge.models import Comment, Ticket
+        from judge.models import BlogPost, Comment, Ticket
         old_pp = self.contribution_points
         # Because the aggregate function can return None
         # So we use `X or 0` to get 0 if X is None
         # Please note that `0 or X` will return None if X is None
-        total_comment_scores = Comment.objects.filter(author=self.id) \
+        total_comment_scores = Comment.objects.filter(author=self.id, hidden=False) \
+            .aggregate(sum=Sum('score'))['sum'] or 0
+        total_blog_scores = BlogPost.objects.filter(authors=self.id, visible=True, organization=None) \
             .aggregate(sum=Sum('score'))['sum'] or 0
         count_good_tickets = Ticket.objects.filter(user=self.id, is_contributive=True) \
             .count()
         count_suggested_problem = self.suggested_problems.filter(is_public=True).count()
-        new_pp = total_comment_scores * settings.VNOJ_CP_COMMENT + \
+        new_pp = (total_comment_scores + total_blog_scores) * settings.VNOJ_CP_COMMENT + \
             count_good_tickets * settings.VNOJ_CP_TICKET + \
             count_suggested_problem * settings.VNOJ_CP_PROBLEM
         if new_pp != old_pp:
@@ -382,7 +395,7 @@ class WebAuthnCredential(models.Model):
         )
 
     def __str__(self):
-        return f'WebAuthn credential: {self.name}'
+        return _('WebAuthn credential: %(name)s') % {'name': self.name}
 
     class Meta:
         verbose_name = _('WebAuthn credential')

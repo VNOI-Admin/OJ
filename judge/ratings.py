@@ -151,8 +151,7 @@ def rate_contest(contest):
                   times=Coalesce(Subquery(rating_subquery.order_by().values('user_id')
                                           .annotate(count=Count('id')).values('count')), 0)) \
         .exclude(user_id__in=contest.rate_exclude.all()) \
-        .filter(virtual=0, is_disqualified=False).values('id', 'user_id', 'score', 'cumtime', 'tiebreaker',
-                                                         'last_rating', 'last_mean', 'times')
+        .filter(virtual=0).values('id', 'user_id', 'score', 'cumtime', 'tiebreaker', 'last_mean', 'times')
     if not contest.rate_all:
         users = users.filter(submissions__gt=0)
     if contest.rating_floor is not None:

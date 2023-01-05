@@ -2,8 +2,11 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.models import Group
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Count, Q
+from django.db.models.expressions import Value
+from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -16,9 +19,11 @@ from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateR
 from reversion import revisions
 
 from judge.forms import OrganizationForm
-from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, Problem, Profile
+from judge.models import BlogPost, BlogVote, Comment, Contest, Language, Organization, OrganizationRequest, \
+    Problem, Profile
 from judge.tasks import on_new_problem
 from judge.utils.ranker import ranker
+from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
@@ -65,7 +70,8 @@ class OrganizationDetailView(OrganizationMixin, DetailView):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         if self.object.slug != kwargs['slug']:
-            return HttpResponsePermanentRedirect(reverse('organization_home', args=(self.object.id, self.object.slug)))
+            return HttpResponsePermanentRedirect(reverse(
+                request.resolver_match.url_name, args=(self.object.id, self.object.slug)))
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
 
@@ -91,7 +97,7 @@ class OrganizationUsers(QueryStringSortMixin, OrganizationDetailView):
         context['title'] = self.object.name
         context['users'] = \
             ranker(self.object.members.filter(is_unlisted=False).order_by(self.order)
-                   .select_related('user').defer('about', 'user_script', 'notes'))
+                   .select_related('user', 'display_badge').defer('about', 'user_script', 'notes'))
         context['partial'] = True
         context['is_admin'] = self.can_edit_organization()
         context['kick_url'] = reverse('organization_user_kick', args=[self.object.id, self.object.slug])
@@ -134,6 +140,8 @@ class LeaveOrganization(OrganizationMembershipChange):
     def handle(self, request, org, profile):
         if not profile.organizations.filter(id=org.id).exists():
             return generic_message(request, _('Leaving organization'), _('You are not in "%s".') % org.short_name)
+        if org.is_admin(profile):
+            return generic_message(request, _('Leaving organization'), _('You cannot leave an organization you own.'))
         profile.organizations.remove(org)
 
 
@@ -294,8 +302,11 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             # slug is show in url
             # short_name is show in ranking
             org.short_name = org.slug[:20]
-            org.admins.add(self.request.user.profile)
             org.save()
+            all_admins = org.admins.all()
+            g = Group.objects.get(name=settings.GROUP_PERMISSION_FOR_ORG_ADMIN)
+            for admin in all_admins:
+                admin.user.groups.add(g)
 
             return HttpResponseRedirect(self.get_success_url())
 
@@ -357,7 +368,12 @@ class KickUserWidgetView(LoginRequiredMixin, OrganizationMixin, SingleObjectMixi
 
         if not organization.members.filter(id=user.id).exists():
             return generic_message(request, _("Can't kick user"),
-                                   _('The user you are trying to kick is not in organization: %s.') %
+                                   _('The user you are trying to kick is not in organization: %s') %
+                                   organization.name, status=400)
+
+        if organization.admins.filter(id=user.id).exists():
+            return generic_message(request, _("Can't kick user"),
+                                   _('The user you are trying to kick is an admin of organization: %s.') %
                                    organization.name, status=400)
 
         organization.members.remove(user)
@@ -444,6 +460,11 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
             else:
                 # Org admin can view public posts & their own posts
                 queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
+
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
+            profile = self.request.profile
+            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 

@@ -1,16 +1,42 @@
-<section class="{% if post.sticky %}sticky {% endif %}post">
-    <h2 class="title">
-        <a href="{{ url('blog_post', post.id, post.slug) }}">{% if not post.visible %}<i class="fa fa-lock" style="color: red"></i> {% endif %}{{ post.title }}</a>
-    </h2>
-    <span class="time">
-        {%- if post.sticky %}<i title="Sticky" class="fa fa-star fa-fw"></i>{% endif -%}
-        {% with authors=post.authors.all() %}
-            {%- if authors -%}
-                <span class="post-authors">{{ link_users(authors) }}</span>
-            {%- endif -%}
-        {% endwith %}
-        {{ relative_time(post.publish_on, abs=_('posted on {time}'), rel=_('posted {time}')) -}}
-    </span>
+{% set logged_in = request.user.is_authenticated %}
+{% set profile = request.profile if logged_in else None %}
+<section class="{% if post.sticky %}sticky {% endif %}post" id="post-{{ post.id }}">
+    <div style="display: flex; gap: 0.5em;">
+        <div class="vote">
+            {% if logged_in %}
+                <a href="javascript:blog_upvote({{ post.id }})"
+                class="upvote-link fa fa-chevron-up fa-fw{% if post.vote_score == 1 %} voted{% endif %}"></a>
+            {% else %}
+                <a href="javascript:alert('{{ _('Please log in to vote')|escapejs }}')" title="{{ _('Please log in to vote') }}"
+                class="upvote-link fa fa-chevron-up fa-fw"></a>
+            {% endif %}
+            <br>
+            <div id="post-score" class="comment-score">{{ post.score }}</div>
+            {% if logged_in %}
+                <a href="javascript:blog_downvote({{ post.id }})"
+                class="downvote-link fa fa-chevron-down fa-fw{% if post.vote_score == -1 %} voted{% endif %}"></a>
+            {% else %}
+                <a href="javascript:alert('{{ _('Please log in to vote')|escapejs }}')" title="{{ _('Please log in to vote') }}"
+                class="downvote-link fa fa-chevron-down fa-fw"></a>
+            {% endif %}
+        </div>
+        <div>
+            <h2 class="title">
+                <a href="{{ url('blog_post', post.id, post.slug) }}">{% if not post.visible %}<i class="fa fa-lock" style="color: red"></i> {% endif %}{{ post.title }}</a>
+            </h2>
+            <span class="time">
+                {%- if post.sticky %}<i title="Sticky" class="fa fa-star fa-fw"></i>{% endif -%}
+                {% with authors=post.authors.all() %}
+                    {%- if authors -%}
+                        <span class="post-authors">{{ link_users(authors) }}</span>
+                    {%- endif -%}
+                {% endwith %}
+                {% with abs=_('posted on {time}'), rel=_('posted {time}') %}
+                    {{ relative_time(post.publish_on, abs=abs, rel=rel) }}
+                {% endwith %}
+            </span>
+        </div>
+    </div>
     <div class="summary content-description blog-body">
         {% cache 86400 'post_summary' post.id %}
             {{ post.summary|default(post.content, true)|markdown('blog', 'svg', lazy_load=True)|reference|str|safe }}

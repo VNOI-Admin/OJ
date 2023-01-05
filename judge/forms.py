@@ -37,15 +37,11 @@ two_factor_validators_by_length = {
         'err': _('Invalid two-factor authentication token.'),
     },
     16: {
-        'regex_validator': RegexValidator('^[A-Z0-9]{16}$', _('Scratch codes must be 16 base32 characters.')),
+        'regex_validator': RegexValidator('^[A-Z0-9]{16}$', _('Scratch codes must be 16 Base32 characters.')),
         'verify': lambda code, profile: code not in json.loads(profile.scratch_codes),
         'err': _('Invalid scratch code.'),
     },
 }
-
-
-def fix_unicode(string, unsafe=tuple('\u202a\u202b\u202d\u202e')):
-    return string + (sum(k in unsafe for k in string) - string.count('\u202c')) * '\u202c'
 
 
 class ProfileForm(ModelForm):
@@ -55,8 +51,9 @@ class ProfileForm(ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['about', 'organizations', 'timezone', 'language', 'ace_theme', 'user_script']
+        fields = ['about', 'display_badge', 'organizations', 'timezone', 'language', 'ace_theme', 'user_script']
         widgets = {
+            'display_badge': Select2Widget(attrs={'style': 'width:200px'}),
             'user_script': AceWidget(theme='github'),
             'timezone': Select2Widget(attrs={'style': 'width:200px'}),
             'language': Select2Widget(attrs={'style': 'width:200px'}),
@@ -97,6 +94,12 @@ class ProfileForm(ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(ProfileForm, self).__init__(*args, **kwargs)
+
+        self.fields['display_badge'].required = False
+        self.fields['display_badge'].queryset = self.instance.badges.all()
+        if not self.fields['display_badge'].queryset:
+            self.fields.pop('display_badge')
+
         if not user.has_perm('judge.edit_all_organization'):
             self.fields['organizations'].queryset = Organization.objects.filter(
                 Q(is_open=True, is_unlisted=False) | Q(id__in=user.profile.organizations.all()),
@@ -392,9 +395,16 @@ class TagProblemAssignForm(Form):
 class OrganizationForm(ModelForm):
     class Meta:
         model = Organization
-        fields = ['name', 'slug', 'is_open', 'about', 'logo_override_image']
+        fields = ['name', 'slug', 'is_open', 'about', 'logo_override_image', 'admins']
         if HeavyPreviewPageDownWidget is not None:
             widgets = {'about': HeavyPreviewPageDownWidget(preview=reverse_lazy('organization_preview'))}
+        if HeavySelect2MultipleWidget is not None:
+            widgets.update({
+                'admins': HeavySelect2MultipleWidget(
+                    data_view='profile_select2',
+                    attrs={'style': 'width: 100%'},
+                ),
+            })
 
 
 class CustomAuthenticationForm(AuthenticationForm):

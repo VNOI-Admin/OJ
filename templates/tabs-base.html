@@ -8,8 +8,10 @@
 
 <div class="page-title">
     <div class="tabs">
-        <h2>{{ content_title or title }}</h2>
-        <span class="spacer"></span>
+        {% if not left_align_tabs %}
+            <h2>{{ content_title or title }}</h2>
+            <span class="spacer"></span>
+        {% endif %}
         {% block post_tab_spacer %}{% endblock %}
         <ul>
             {% block tabs %}{% endblock %}

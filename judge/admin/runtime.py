@@ -45,7 +45,7 @@ class GenerateKeyTextInput(TextInput):
         text = super(TextInput, self).render(name, value, attrs)
         return mark_safe(text + format_html(
             """\
-<a href="#" onclick="return false;" class="button" id="id_{0}_regen">Regenerate</a>
+<a href="#" onclick="return false;" class="button" id="id_{0}_regen">{1}</a>
 <script type="text/javascript">
 django.jQuery(document).ready(function ($) {{
     $('#id_{0}_regen').click(function () {{
@@ -56,7 +56,7 @@ django.jQuery(document).ready(function ($) {{
     }});
 }});
 </script>
-""", name))
+""", name, _('Regenerate')))
 
 
 class JudgeAdminForm(ModelForm):
