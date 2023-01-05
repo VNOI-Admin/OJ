@@ -4938,8 +4938,8 @@ msgstr "%(time_limit)s giữa %(start_time)s và %(end_time)s"
 
 #: templates/contest/contest.html:79
 #, python-format
-msgid "%(length)s long starting on %(start_time)s"
-msgstr "%(length)s tính từ %(start_time)s"
+msgid "%(length)s long starting on %(start_time)s and ending on %(end_time)s"
+msgstr "%(length)s tính từ %(start_time)s và kết thúc vào %(end_time)s"
 
 #: templates/contest/contest.html:89
 #, python-format
