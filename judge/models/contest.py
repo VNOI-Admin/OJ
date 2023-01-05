@@ -10,7 +10,7 @@ from django.db.models import CASCADE, Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from jsonfield import JSONField
 from lupa import LuaRuntime
 from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MOSS_LANG_PYTHON
@@ -89,7 +89,7 @@ class Contest(models.Model):
     time_limit = models.DurationField(verbose_name=_('time limit'), blank=True, null=True)
     frozen_last_minutes = models.IntegerField(verbose_name=_('frozen last minutes'), default=0,
                                               help_text=_('If set, the scoreboard will be frozen for the last X '
-                                                          'minutes. Only available for ICPC format.'))
+                                                          'minutes. Only available for ICPC and VNOJ format.'))
     is_visible = models.BooleanField(verbose_name=_('publicly visible'), default=False,
                                      help_text=_('Should be set even for organization-private contests, where it '
                                                  'determines whether the contest is visible to members of the '
@@ -100,8 +100,8 @@ class Contest(models.Model):
                                                      related_name='view_contest_scoreboard',
                                                      help_text=_('These users will be able to view the scoreboard.'))
     scoreboard_visibility = models.CharField(verbose_name=_('scoreboard visibility'), default=SCOREBOARD_VISIBLE,
-                                             max_length=1, help_text=_('Scoreboard visibility through the duration '
-                                                                       'of the contest'), choices=SCOREBOARD_VISIBILITY)
+                                             help_text=_('Scoreboard visibility through the duration of the contest'),
+                                             max_length=1, choices=SCOREBOARD_VISIBILITY)
     scoreboard_cache_timeout = models.PositiveIntegerField(verbose_name=('scoreboard cache timeout'), default=0,
                                                            help_text=_('How long should the scoreboard be cached. '
                                                                        'Set to 0 to disable caching.'))
@@ -114,10 +114,10 @@ class Contest(models.Model):
     push_announcements = models.BooleanField(verbose_name=_('push announcements'),
                                              help_text=_('Notify users when there are new announcements.'),
                                              default=False)
-    rating_floor = models.IntegerField(verbose_name=('rating floor'), help_text=_('Rating floor for contest'),
-                                       null=True, blank=True)
-    rating_ceiling = models.IntegerField(verbose_name=('rating ceiling'), help_text=_('Rating ceiling for contest'),
-                                         null=True, blank=True)
+    rating_floor = models.IntegerField(verbose_name=_('rating floor'), null=True, blank=True,
+                                       help_text=_('Do not rate users who have a lower rating.'))
+    rating_ceiling = models.IntegerField(verbose_name=_('rating ceiling'), null=True, blank=True,
+                                         help_text=_('Do not rate users who have a higher rating.'))
     rate_all = models.BooleanField(verbose_name=_('rate all'), help_text=_('Rate all users who joined.'), default=False)
     rate_exclude = models.ManyToManyField(Profile, verbose_name=_('exclude from ratings'), blank=True,
                                           related_name='rate_exclude+')
@@ -144,7 +144,7 @@ class Contest(models.Model):
     organizations = models.ManyToManyField(Organization, blank=True, verbose_name=_('organizations'),
                                            help_text=_('If private, only these organizations may see the contest'))
     og_image = models.CharField(verbose_name=_('OpenGraph image'), default='', max_length=150, blank=True)
-    logo_override_image = models.CharField(verbose_name=_('Logo override image'), default='', max_length=150,
+    logo_override_image = models.CharField(verbose_name=_('logo override image'), default='', max_length=150,
                                            blank=True,
                                            help_text=_('This image will replace the default site logo for users '
                                                        'inside the contest.'))
@@ -166,10 +166,10 @@ class Contest(models.Model):
                               help_text=_('A JSON object to serve as the configuration for the chosen contest format '
                                           'module. Leave empty to use None. Exact format depends on the contest format '
                                           'selected.'))
-    problem_label_script = models.TextField(verbose_name='contest problem label script', blank=True,
-                                            help_text='A custom Lua function to generate problem labels. Requires a '
-                                                      'single function with an integer parameter, the zero-indexed '
-                                                      'contest problem index, and returns a string, the label.')
+    problem_label_script = models.TextField(verbose_name=_('contest problem label script'), blank=True,
+                                            help_text=_('A custom Lua function to generate problem labels. Requires a '
+                                                        'single function with an integer parameter, the zero-indexed '
+                                                        'contest problem index, and returns a string, the label.'))
     locked_after = models.DateTimeField(verbose_name=_('contest lock'), null=True, blank=True,
                                         help_text=_('Prevent submissions from this contest '
                                                     'from being rejudged after this date.'))
@@ -182,6 +182,11 @@ class Contest(models.Model):
     disallow_virtual = models.BooleanField(verbose_name=_('Disallow virtual joining'),
                                            help_text=_('Disallow virtual joining after contest has ended.'),
                                            default=False)
+
+    ranking_access_code = models.CharField(verbose_name=_('ranking access code'),
+                                           help_text=_('An optional code to view the contest ranking. '
+                                                       'Leave it blank to disable.'),
+                                           blank=True, default='', max_length=255)
 
     @cached_property
     def format_class(self):
@@ -220,7 +225,8 @@ class Contest(models.Model):
     def is_in_contest(self, user):
         if user.is_authenticated:
             profile = user.profile
-            return profile and profile.current_contest is not None and profile.current_contest.contest == self
+            return profile and profile.current_contest is not None and profile.current_contest.contest == self \
+                and profile.current_contest.contest.can_join
         return False
 
     def can_see_own_scoreboard(self, user):
@@ -228,7 +234,7 @@ class Contest(models.Model):
             return True
         if not self.can_join:
             return False
-        if not self.show_scoreboard and not self.is_in_contest(user):
+        if not self.show_scoreboard and not self.is_in_contest(user) and not self.has_completed_contest(user):
             return False
         return True
 
@@ -367,7 +373,8 @@ class Contest(models.Model):
     def is_frozen(self):
         if self.frozen_last_minutes == 0:
             return False
-        if self.format.name == contest_format.ICPCContestFormat.name:
+        if self.format.name == contest_format.ICPCContestFormat.name or \
+           self.format.name == contest_format.VNOJContestFormat.name:
             # Keep frozen even if the contest is ended
             return self._now >= self.frozen_time
         return False
@@ -607,13 +614,12 @@ class ContestParticipation(models.Model):
 
     def __str__(self):
         if self.spectate:
-            return gettext('%(user)s spectating in %(contest)s') % \
-                ({'user': self.user.username, 'contest': self.contest.name})
+            return _('%(user)s spectating in %(contest)s') % {'user': self.user.username, 'contest': self.contest.name}
         if self.virtual:
-            return gettext('%(user)s in %(contest)s, v%(virtual)d') % \
-                ({'user': self.user.username, 'contest': self.contest.name, 'virtual': self.virtual})
-        return gettext('%(user)s in %(contest)s') % \
-            ({'user': self.user.username, 'contest': self.contest.name})
+            return _('%(user)s in %(contest)s, v%(id)d') % {
+                'user': self.user.username, 'contest': self.contest.name, 'id': self.virtual,
+            }
+        return _('%(user)s in %(contest)s') % {'user': self.user.username, 'contest': self.contest.name}
 
     class Meta:
         verbose_name = _('contest participation')

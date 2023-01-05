@@ -66,8 +66,8 @@ class License(models.Model):
     link = models.CharField(max_length=256, verbose_name=_('link'))
     name = models.CharField(max_length=256, verbose_name=_('full name'))
     display = models.CharField(max_length=256, blank=True, verbose_name=_('short name'),
-                               help_text=_('Displayed on pages under this license'))
-    icon = models.CharField(max_length=256, blank=True, verbose_name=_('icon'), help_text=_('URL to the icon'))
+                               help_text=_('Displayed on pages under this license.'))
+    icon = models.CharField(max_length=256, blank=True, verbose_name=_('icon'), help_text=_('URL to the icon.'))
     text = models.TextField(verbose_name=_('license text'))
 
     def __str__(self):
@@ -88,7 +88,8 @@ class TranslatedProblemQuerySet(SearchQuerySet):
     def add_i18n_name(self, language):
         queryset = self._clone()
         alias = unique_together_left_join(queryset, ProblemTranslation, 'problem', 'language', language)
-        return queryset.annotate(i18n_name=RawSQL('%s.name' % alias, ()))
+        return queryset.annotate(i18n_name=Coalesce(RawSQL('%s.name' % alias, ()), F('name'),
+                                                    output_field=models.CharField()))
 
 
 class TranslatedProblemForeignKeyQuerySet(QuerySet):
@@ -116,6 +117,12 @@ class ProblemTestcaseAccess:
     AUTHOR_ONLY = 'O'
 
 
+class ProblemTestcaseResultAccess:
+    ALL_TEST_CASE = 'A'
+    ONLY_BATCH_RESULT = 'B'
+    ONLY_SUBMISSION_RESULT = 'S'
+
+
 class Problem(models.Model):
     SUBMISSION_SOURCE_ACCESS = (
         (SubmissionSourceAccess.FOLLOW, _('Follow global setting')),
@@ -130,13 +137,17 @@ class Problem(models.Model):
         (ProblemTestcaseAccess.ALWAYS, _('Always visible')),
     )
 
+    PROBLEM_TESTCASE_RESULT_ACCESS = (
+        (ProblemTestcaseResultAccess.ALL_TEST_CASE, _('Show all testcase result')),
+        (ProblemTestcaseResultAccess.ONLY_BATCH_RESULT, _('Show batch result only')),
+        (ProblemTestcaseResultAccess.ONLY_SUBMISSION_RESULT, _('Show submission result only')),
+    )
+
     code = models.CharField(max_length=32, verbose_name=_('problem code'), unique=True,
                             validators=[RegexValidator('^[a-z0-9_]+$', _('Problem code must be ^[a-z0-9_]+$'))],
-                            help_text=_('A short, unique code for the problem, '
-                                        'used in the url after /problem/'))
+                            help_text=_('A short, unique code for the problem, used in the url after /problem/'))
     name = models.CharField(max_length=100, verbose_name=_('problem name'), db_index=True,
-                            help_text=_('The full name of the problem, '
-                                        'as shown in the problem list.'))
+                            help_text=_('The full name of the problem, as shown in the problem list.'))
     pdf_url = models.CharField(max_length=200, verbose_name=_('PDF statement URL'), blank=True,
                                help_text=_('URL to PDF statement. The PDF file must be embeddable (Mobile web browsers'
                                            'may not support embedding). Fallback included.'))
@@ -155,8 +166,7 @@ class Problem(models.Model):
                                      help_text=_(
                                          'These users will be able to view the private problem, but not edit it.'))
     types = models.ManyToManyField(ProblemType, verbose_name=_('problem types'),
-                                   help_text=_('The type of problem, '
-                                               "as shown on the problem's page."))
+                                   help_text=_("The type of problem, as shown on the problem's page."))
     group = models.ForeignKey(ProblemGroup, verbose_name=_('problem group'), on_delete=CASCADE,
                               help_text=_('The group of problem, shown under Category in the problem list.'))
     time_limit = models.FloatField(verbose_name=_('time limit'),
@@ -181,7 +191,8 @@ class Problem(models.Model):
     is_manually_managed = models.BooleanField(verbose_name=_('manually managed'), db_index=True, default=False,
                                               help_text=_('Whether judges should be allowed to manage data or not.'))
     date = models.DateTimeField(verbose_name=_('date of publishing'), null=True, blank=True, db_index=True,
-                                help_text=_("Doesn't have magic ability to auto-publish due to backward compatibility"))
+                                help_text=_(
+                                    "Doesn't have the magic ability to auto-publish due to backward compatibility."))
     banned_users = models.ManyToManyField(Profile, verbose_name=_('personae non gratae'), blank=True,
                                           help_text=_('Bans the selected users from submitting to this problem.'))
     license = models.ForeignKey(License, null=True, blank=True, on_delete=SET_NULL,
@@ -200,6 +211,11 @@ class Problem(models.Model):
                                                 default=ProblemTestcaseAccess.AUTHOR_ONLY,
                                                 choices=PROBLEM_TESTCASE_ACCESS)
 
+    testcase_result_visibility_mode = models.CharField(verbose_name=_('Testcase result visibility'), max_length=1,
+                                                       default=ProblemTestcaseResultAccess.ALL_TEST_CASE,
+                                                       choices=PROBLEM_TESTCASE_RESULT_ACCESS,
+                                                       help_text=_('What testcase result should be showed to users?'))
+
     objects = TranslatedProblemQuerySet.as_manager()
     tickets = GenericRelation('Ticket')
 
@@ -208,6 +224,11 @@ class Problem(models.Model):
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
 
     suggester = models.ForeignKey(Profile, blank=True, null=True, related_name='suggested_problems', on_delete=SET_NULL)
+
+    allow_view_feedback = models.BooleanField(
+        help_text=_('Allow user to view checker feedback.'),
+        default=False,
+    )
 
     __original_points = None
 
@@ -252,10 +273,14 @@ class Problem(models.Model):
         # If we don't want to check if the user is in a contest containing that problem.
         if not skip_contest_problem_check and user.is_authenticated:
             # If user is currently in a contest containing that problem.
-            current = user.profile.current_contest_id
+            current = user.profile.current_contest
             if current is not None:
+                # If contest has not started (for joining contest in advance).
+                if not current.contest.can_join:
+                    return False
+
                 from judge.models import ContestProblem
-                if ContestProblem.objects.filter(problem_id=self.id, contest__users__id=current).exists():
+                if ContestProblem.objects.filter(problem_id=self.id, contest__users__id=current.id).exists():
                     return True
 
         # Problem is public.
@@ -518,9 +543,10 @@ class Problem(models.Model):
         grader_args = self.data_files.grader_args
         if grader_args:
             grader_args = json.loads(grader_args)
-            if grader_args.get('io_method') == 'file':
-                # ProblemDataCompiler makes sure that if io_method is 'file',
-                # io_input_file and io_output_file are always set.
+            if grader_args.get('io_method', '') == 'file':
+                if grader_args.get('io_input_file', '') == '' or grader_args.get('io_output_file', '') == '':
+                    return {'method': 'unknown'}
+
                 return {
                     'method': 'file',
                     'input': grader_args['io_input_file'],

@@ -17,7 +17,7 @@
         <span class="language">{{ submission.language.short_display_name }}</span>
     </div>
 </div>
-
+{% set can_view_testcase_status = request.user.is_superuser or submission.problem.testcase_result_visibility_mode == 'A' %}
 <div class="sub-main">
     <div class="sub-info{% if submission.status == 'G' %} sub-info-grading{% endif %}">
         {% if show_problem %}
@@ -38,7 +38,7 @@
         </div>
     </div>
 
-    {% if submission.status == 'G' %}
+    {% if submission.status == 'G' and can_view_testcase_status %}
         <div class="sub-testcase">
             {%- if submission.current_testcase > 0 -%}
                 {{ _('Case #%(case)s', case=submission.current_testcase) }}
@@ -53,11 +53,15 @@
             <a href="{{ url('submission_status', submission.id) }}">
                 <i class="fa fa-eye fa-fw"></i><span class="label">{{ _('view') }}</span>
             </a> ·
-            {% if not submission.language.file_only or request.user.is_superuser %}
-                    <a href="{{ url('submission_source', submission.id) }}">
-                        {{ _('source') }}
-                    </a>
-                {% endif %}
+            {% if not submission.language.file_only %}
+                <a href="{{ url('submission_source', submission.id) }}">
+                    <i class="fa fa-file-code-o fa-fw"></i><span class="label">{{ _('source') }}</span>
+                </a>
+            {% else %}
+                <a href="{{ url('submission_source_download', submission.id) }}">
+                    <i class="fa fa-download fa-fw"></i><span class="label">{{ _('download') }}</span>
+                </a>
+            {% endif %}
             {% if perms.judge.rejudge_submission and can_edit %} ·
                 {% if not submission.is_locked %}
                     <a href="#" onclick="rejudge_submission({{ submission.id }}, event);return false">
@@ -71,22 +75,25 @@
                     </span>
                 {% endif %}
             {% endif %}
-            {% if can_edit %} ·
-            <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">
-                {{ _('diff') }}
-            </a> ·
-                {% if request.user.is_superuser %}
-                <a href="{{ url('admin:judge_submission_change', submission.id) }}">
-                    <i class="fa fa-cog fa-fw"></i><span class="label">{{ _('admin') }}</span>
-                </a>
+            {% if can_edit %}
+                {% if not submission.language.file_only %} ·
+                    <a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">
+                        <i class="fa fa-files-o fa-fw"></i><span class="label">{{ _('diff') }}</span>
+                    </a>
+                {% endif %}
+                {% if request.user.is_superuser %} ·
+                    <a href="{{ url('admin:judge_submission_change', submission.id) }}">
+                        <i class="fa fa-cog fa-fw"></i><span class="label">{{ _('admin') }}</span>
+                    </a>
                 {% endif %}
             {% endif %}
         </div></div>
     {% endif %}
 </div>
 
+
 <div class="sub-usage">
-    {% if submission.status in ('QU', 'P', 'G', 'CE', 'IE', 'AB') %}
+    {% if submission.status in ('QU', 'P', 'G', 'CE', 'IE', 'AB') or not can_view_testcase_status %}
         <div class="time">---</div>
         <div class="memory">---</div>
     {% else %}
@@ -97,7 +104,7 @@
         {% else %}
             <div class="time">---</div>
         {% endif %}
-        {# No one actually like IEC prefixes, Jinja2. #}
+        {# No one actually likes IEC prefixes, Jinja2. #}
         <div class="memory">{{ (submission.memory_bytes|filesizeformat(True)).replace('i', '') }}</div>
     {% endif %}
 </div>

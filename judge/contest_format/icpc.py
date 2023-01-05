@@ -2,11 +2,12 @@ from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import connection
+from django.db.models import Max
 from django.template.defaultfilters import floatformat, pluralize
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext as _, gettext_lazy, ungettext
+from django.utils.translation import gettext as _, gettext_lazy, ngettext
 
 from judge.contest_format.default import DefaultContestFormat
 from judge.contest_format.registry import register_contest_format
@@ -102,6 +103,12 @@ class ICPCContestFormat(DefaultContestFormat):
                         # We should always display the penalty, even if the user has a score of 0
                         tries = subs.count()
                         frozen_tries = tries
+                        # the raw SQL query above returns the first submission with the
+                        # largest points. However, for computing & showing frozen scoreboard,
+                        # if the largest points is 0, we need to get the last submission.
+                        time = subs.aggregate(time=Max('submission__date'))['time']
+                        # time can be None if there all of submissions are CE or IE.
+                        is_frozen_sub = (participation.is_frozen and time and time >= frozen_time)
                 else:
                     tries = 0
                     # Don't need to set frozen_tries = 0 because we've initialized it with 0
@@ -210,7 +217,7 @@ class ICPCContestFormat(DefaultContestFormat):
 
         penalty = self.config['penalty']
         if penalty:
-            yield ungettext(
+            yield ngettext(
                 'Each submission before the first maximum score submission will incur a **penalty of %d minute**.',
                 'Each submission before the first maximum score submission will incur a **penalty of %d minutes**.',
                 penalty,
@@ -222,7 +229,7 @@ class ICPCContestFormat(DefaultContestFormat):
                     'a non-zero score, followed by the time of the last score altering submission.')
 
         if self.contest.frozen_last_minutes:
-            yield ungettext(
+            yield ngettext(
                 'The scoreboard will be frozen in the **last %d minute**.',
                 'The scoreboard will be frozen in the **last %d minutes**.',
                 self.contest.frozen_last_minutes,

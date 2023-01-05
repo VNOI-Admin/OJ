@@ -118,15 +118,20 @@ class JudgeHandler(ZlibPacketHandler):
 
     def _authenticate(self, id, key):
         try:
-            judge = Judge.objects.get(name=id, is_blocked=False)
+            judge = Judge.objects.get(name=id)
         except Judge.DoesNotExist:
-            result = False
-        else:
-            result = hmac.compare_digest(judge.auth_key, key)
+            return False
 
-        if not result:
+        if not hmac.compare_digest(judge.auth_key, key):
+            logger.warning('Judge authentication failure: %s', self.client_address)
             json_log.warning(self._make_json_log(action='auth', judge=id, info='judge failed authentication'))
-        return result
+            return False
+
+        if judge.is_blocked:
+            json_log.warning(self._make_json_log(action='auth', judge=id, info='judge authenticated but is blocked'))
+            return False
+
+        return True
 
     def _connected(self):
         judge = self.judge = Judge.objects.get(name=self.name)
@@ -172,7 +177,6 @@ class JudgeHandler(ZlibPacketHandler):
             return
 
         if not self._authenticate(packet['id'], packet['key']):
-            logger.warning('Authentication failure: %s', self.client_address)
             self.close()
             return
 
@@ -326,7 +330,7 @@ class JudgeHandler(ZlibPacketHandler):
             logger.exception('Error in packet handling (Judge-side): %s', self.name)
             self._packet_exception()
             # You can't crash here because you aren't so sure about the judges
-            # not being malicious or simply malforms. THIS IS A SERVER!
+            # not being malicious or simply malformed. THIS IS A SERVER!
 
     def _packet_exception(self):
         json_log.exception(self._make_json_log(sub=self._working, info='packet processing exception'))
@@ -568,6 +572,9 @@ class JudgeHandler(ZlibPacketHandler):
                 time=test_case.time, memory=test_case.memory, feedback=test_case.feedback,
                 extended_feedback=test_case.extended_feedback, output=test_case.output,
                 points=test_case.points, total=test_case.total, status=test_case.status,
+                voluntary_context_switches=result.get('voluntary-context-switches', 0),
+                involuntary_context_switches=result.get('involuntary-context-switches', 0),
+                runtime_version=result.get('runtime-version', ''),
             ))
 
         do_post = True

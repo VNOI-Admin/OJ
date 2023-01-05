@@ -4,7 +4,6 @@
 
 {% block title_row %}
     {% set tab = 'detail' %}
-    {% set title = contest.name %}
     {% include "contest/contest-tabs.html" %}
     {% if contest.is_organization_private %}
         <span class="organization-tags">
@@ -45,46 +44,47 @@
                 {{- contest.start_time|utc|date('Y-m-d\TH:i:s') }}" class="date">
             {%- if contest.is_in_contest(request.user) and not request.participation.live -%}
                 {% if request.participation.spectate %}
-                    {%- trans countdown=contest.time_before_end|as_countdown -%} Spectating, contest ends in {{countdown}}. {%- endtrans -%}
+                    {{- _('Spectating, contest ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) -}}
                 {% elif request.participation.end_time %}
-                    {%- trans countdown=request.participation.time_remaining|as_countdown -%} Participating virtually, {{countdown}} remaining. {%- endtrans -%}
+                    {{- _('Participating virtually, %(countdown)s remaining.', countdown=as_countdown(request.participation.time_remaining)) -}}
                 {% else %}
                     {{- _('Participating virtually.') -}}
                 {% endif %}
             {%- else -%}
                 {% if contest.start_time > now %}
-                    {%- trans countdown=contest.time_before_start|as_countdown -%} Starting in {{countdown}}. {%- endtrans -%}
+                    {{- _('Starting in %(countdown)s.', countdown=as_countdown(contest.time_before_start)) -}}
                 {% elif contest.end_time < now %}
                     {{- _('Contest is over.') -}}
                 {% else %}
                     {%- if has_joined -%}
                         {% if live_participation.ended %}
-                            {%- trans countdown=contest.time_before_end|as_countdown -%} Your time is up! Contest ends in {{countdown}}. {%- endtrans -%}
+                            {{- _('Your time is up! Contest ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) -}}
                         {% else %}
-                            {%- trans countdown=live_participation.time_remaining|as_countdown -%} You have {{countdown}} remaining. {%- endtrans -%}
+                            {{- _('You have %(countdown)s remaining.', countdown=as_countdown(live_participation.time_remaining)) -}}
                         {% endif %}
                     {%- else -%}
-                        {%- trans countdown=contest.time_before_end|as_countdown -%} Contest ends in {{countdown}} {%- endtrans -%}
+                        {{ _('Contest ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) }}
                     {%- endif -%}
                 {% endif %}
             {%- endif -%}
         </a>
         <div id="time">
-            {% if contest.time_limit %}
-                {% trans trimmed start_time=contest.start_time|date(_("F j, Y, G:i T")), end_time=contest.end_time|date(_("F j, Y, G:i T")), time_limit=contest.time_limit|timedelta('localized-no-seconds') %}
-                    <b>{{ time_limit }}</b> window between <b>{{ start_time }}</b> and <b>{{ end_time }}</b>
-                {% endtrans %}
-            {% else %}
-                {% trans trimmed length=contest.contest_window_length|timedelta("localized-no-seconds"), start_time=contest.start_time|date(_("F j, Y, G:i T")),end_time=contest.end_time|date(_("F j, Y, G:i T")) %}
-                    <b>{{ length }}</b> long starting on <b>{{ start_time }}</b> and ending on <b>{{ end_time }}</b>
-                {% endtrans %}
-            {% endif %}
+            {% with start_time=contest.start_time|date(_("F j, Y, G:i T")) %}
+                {% if contest.time_limit %}
+                    {% set end_time=contest.end_time|date(_("F j, Y, G:i T")) %}
+                    {% set time_limit=contest.time_limit|timedelta('localized-no-seconds') %}
+                    {{ _('%(time_limit)s window between %(start_time)s and %(end_time)s', start_time=bold(start_time), end_time=bold(end_time), time_limit=bold(time_limit)) }}
+                {% else %}
+                    {% set length=contest.contest_window_length|timedelta('localized-no-seconds') %}
+                    {{ _('%(length)s long starting on %(start_time)s and ending on %(end_time)s', start_time=bold(start_time), length=bold(length)), end_time=bold(end_time)) }}
+                {% endif %}
+            {% endwith %}
         </div>
         {% if contest.show_short_display %}
             <div id="details">
                 <ul>
                     {% with authors=contest.authors.all() %}
-                        {% if authors %}
+                        {% if not contest.hide_problem_authors and authors %}
                             <li>
                                 {% trans trimmed count=authors|length, link_authors=link_users(authors) %}
                                     The author of this contest is {{ link_authors }}.
@@ -95,7 +95,7 @@
                         {% endif %}
                     {% endwith %}
                     {% with testers=contest.testers.all() %}
-                        {% if testers %}
+                        {% if not contest.hide_problem_authors and testers %}
                             <li>
                                 {% trans trimmed count=testers|length, link_testers=link_users(testers) %}
                                     Special thanks to {{ link_testers }} for testing and feedback on the problems.
@@ -133,13 +133,6 @@
                         {% endif %}
                     </li>
                     <li>
-                        {% filter markdown('default') %}
-                            {% trans trimmed count=metadata.problem_count %}
-                                There is **{{ count }}** problem in this contest.
-                            {% pluralize count %}
-                                There are **{{ count }}** problems in this contest.
-                            {% endtrans %}
-                        {% endfilter %}
                         <ul>
                             <li>
                                 {% if metadata.has_partials %}
@@ -270,6 +263,8 @@
                 {% endfor %}
                 </tbody>
             </table>
+
+            <a class="button" style="width: fit-content" href="{{ url('contest_all_problems', contest.key) }}">{{ _('All problems') }}</a>
         </div>
         {% if has_announcements or can_edit %}
         <div class="contest-clartifications">

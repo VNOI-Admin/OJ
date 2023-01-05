@@ -1,6 +1,10 @@
 {% extends "base.html" %}
 
+{% set logged_in = request.user.is_authenticated %}
+{% set profile = request.profile if logged_in else None %}
+
 {% block js_media %}
+    {% include "blog/media-js.html" %}
     {% include "comments/media-js.html" %}
 {% endblock %}
 
@@ -8,34 +12,60 @@
     {% include "comments/media-css.html" %}
 {% endblock %}
 
-{% block header %}
-    {% if post.organization %}
-        <span class="organization-tag" style="display: inline;">
-            <a href="{{ post.organization.get_absolute_url() }}">
-                <i class="fa fa-lock"></i> {{ post.organization.name }}
-            </a>
-        </span>
-    {% endif %}
-    {% if post.is_editable_by(request.user) %}
-        <div class="title-line-action">[<a href="{{ url('blog_post_edit', post.id, post.slug) }}">{{ _('Edit') }}</a>]
+{% block title_row %}
+<div id="post-{{ post.id }}" style="display: flex; gap: 0.5em;">
+    <div class="vote">
+        {% if logged_in %}
+            <a href="javascript:blog_upvote({{ post.id }})"
+            class="upvote-link fa fa-chevron-up fa-fw{% if post.vote_score == 1 %} voted{% endif %}"></a>
+        {% else %}
+            <a href="javascript:alert('{{ _('Please log in to vote')|escapejs }}')" title="{{ _('Please log in to vote') }}"
+            class="upvote-link fa fa-chevron-up fa-fw"></a>
+        {% endif %}
+        <br>
+        <div id="post-score" class="comment-score">{{ post.score }}</div>
+        {% if logged_in %}
+            <a href="javascript:blog_downvote({{ post.id }})"
+            class="downvote-link fa fa-chevron-down fa-fw{% if post.vote_score == -1 %} voted{% endif %}"></a>
+        {% else %}
+            <a href="javascript:alert('{{ _('Please log in to vote')|escapejs }}')" title="{{ _('Please log in to vote') }}"
+            class="downvote-link fa fa-chevron-down fa-fw"></a>
+        {% endif %}
+    </div>
+    <div style="width: 100%;">
+        <h2 style="color:#393630; display:inline">
+            {% block content_title %}
+                {% if content_title %}{{ content_title }}{% else %}{{ title }}{% endif %}
+            {% endblock %}
+        </h2>
+        {% if post.organization %}
+            <span class="organization-tag" style="display: inline;">
+                <a href="{{ post.organization.get_absolute_url() }}">
+                    <i class="fa fa-lock"></i> {{ post.organization.name }}
+                </a>
+            </span>
+        {% endif %}
+        {% if post.is_editable_by(request.user) %}
+            <div class="title-line-action">[<a href="{{ url('blog_post_edit', post.id, post.slug) }}">{{ _('Edit') }}</a>]</div>
+        {% endif %}
+        <div class="time">
+            {% with authors=post.authors.all() %}
+                {%- if authors -%}
+                    <span class="post-authors">{{ link_users(authors) }}</span>
+                {%- endif -%}
+            {% endwith %}
+            <span class="post-time">
+                {% trans trimmed time=post.publish_on|date(_("N j, Y, g:i a")) %}
+                    posted on {{ time }}
+                {% endtrans %}
+            </span>
         </div>
-    {% endif %}
+    </div>
+</div>
 {% endblock %}
 
 {% block body %}
     <div class="post-full">
-        <div class="time">
-            {% with authors=post.authors.all() %}
-                {% if authors %}
-                    <span class="post-authors">{{ link_users(authors) }}</span>
-                {% endif %}
-            {% endwith %}
-            <span class="post-time">
-                {%- trans time=post.publish_on|date(_("N j, Y, G:i")) -%}
-                    posted on {{ time }}
-                {%- endtrans -%}
-            </span>
-        </div>
         <div class="body content-description">
             {% cache 86400 'post_content' post.id MATH_ENGINE %}
                 {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}

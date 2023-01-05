@@ -126,7 +126,8 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
             'fields': (
                 'code', 'name', 'suggester', 'is_public', 'is_manually_managed', 'date', 'authors',
                 'curators', 'testers', 'is_organization_private', 'organizations', 'submission_source_visibility_mode',
-                'testcase_visibility_mode', 'is_full_markup', 'pdf_url', 'source', 'description', 'license',
+                'testcase_visibility_mode', 'testcase_result_visibility_mode', 'allow_view_feedback',
+                'is_full_markup', 'pdf_url', 'source', 'description', 'license',
             ),
         }),
         (_('Social Media'), {'classes': ('collapse',), 'fields': ('og_image', 'summary')}),
@@ -152,14 +153,11 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         actions = super(ProblemAdmin, self).get_actions(request)
 
         if request.user.has_perm('judge.change_public_visibility'):
-            func, name, desc = self.get_action('make_public')
+            func, name, desc = self.get_action('make_public_and_update_publish_date')
             actions[name] = (func, name, desc)
 
             func, name, desc = self.get_action('make_private')
             actions[name] = (func, name, desc)
-
-        func, name, desc = self.get_action('update_publish_date')
-        actions[name] = (func, name, desc)
 
         return actions
 
@@ -189,23 +187,16 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         from judge.tasks import rescore_problem
         transaction.on_commit(rescore_problem.s(problem_id, publicy_changed).delay)
 
-    def update_publish_date(self, request, queryset):
-        count = queryset.update(date=timezone.now())
-        self.message_user(request, ngettext("%d problem's publish date successfully updated.",
-                                            "%d problems' publish date successfully updated.",
-                                            count) % count)
-
-    update_publish_date.short_description = _('Set publish date to now')
-
-    def make_public(self, request, queryset):
-        count = queryset.update(is_public=True)
+    def make_public_and_update_publish_date(self, request, queryset):
+        count = queryset.update(is_public=True, date=timezone.now())
         for problem_id in queryset.values_list('id', flat=True):
             self._rescore(request, problem_id, True)
+
         self.message_user(request, ngettext('%d problem successfully marked as public.',
                                             '%d problems successfully marked as public.',
                                             count) % count)
 
-    make_public.short_description = _('Mark problems as public')
+    make_public_and_update_publish_date.short_description = _('Mark problems as public and set publish date to now')
 
     def make_private(self, request, queryset):
         count = queryset.update(is_public=False)

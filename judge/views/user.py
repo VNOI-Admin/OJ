@@ -17,8 +17,9 @@ from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.db.models import Count, F, Max, Min, Prefetch
+from django.db.models.expressions import Value
 from django.db.models.fields import DateField
-from django.db.models.functions import Cast, ExtractYear
+from django.db.models.functions import Cast, Coalesce, ExtractYear
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -33,7 +34,8 @@ from reversion import revisions
 
 from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
     newsletter_id
-from judge.models import BlogPost, Organization, Profile, Rating, Submission
+from judge.models import BlogPost, BlogVote, Organization, Profile, Rating, Submission
+from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
@@ -42,6 +44,7 @@ from judge.utils.celery import task_status_by_id, task_status_url_by_id
 from judge.utils.problems import contest_completed_ids, user_completed_ids
 from judge.utils.pwned import PwnedPasswordsValidator
 from judge.utils.ranker import ranker
+from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
@@ -49,7 +52,7 @@ from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleOb
 from judge.views.blog import PostListBase
 from .contests import ContestRanking
 
-__all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserDownloadData', 'UserPrepareData',
+__all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserCommentPage', 'UserDownloadData', 'UserPrepareData',
            'users', 'edit_profile']
 
 
@@ -174,12 +177,6 @@ class CustomPasswordChangeView(PasswordChangeView):
         self.request.session['password_pwned'] = False
         return super().form_valid(form)
 
-    def dispatch(self, request, *args, **kwargs):
-        if request.official_contest_mode:
-            return generic_message(request, _('Permission denied'),
-                                   _('You cannot change your password.'))
-        return super().dispatch(request, *args, **kwargs)
-
 
 EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
@@ -198,7 +195,7 @@ class UserAboutPage(UserPage):
             'ranking': rating.rank,
             'link': '%s#!%s' % (reverse('contest_ranking', args=(rating.contest.key,)), self.object.user.username),
             'timestamp': (rating.contest.end_time - EPOCH).total_seconds() * 1000,
-            'date': date_format(rating.contest.end_time, _('M j, Y, G:i')),
+            'date': date_format(timezone.localtime(rating.contest.end_time), _('M j, Y, G:i')),
             'class': rating_class(rating.rating),
             'height': '%.3fem' % rating_progress(rating.rating),
         } for rating in ratings]))
@@ -238,7 +235,7 @@ class UserAboutPage(UserPage):
 
 
 class UserBan(UserMixin, TitleMixin, SingleObjectFormView):
-    title = _('Ban user')
+    title = gettext_lazy('Ban user')
     template_name = 'user/ban.html'
     form_class = UserBanForm
 
@@ -263,10 +260,44 @@ class UserBlogPage(CustomUserMixin, PostListBase):
     def get_queryset(self):
         queryset = BlogPost.objects.filter(authors=self.user, organization=None)
 
-        if self.request.user != self.user.user:
+        if self.request.user != self.user.user and not self.request.user.is_superuser:
             queryset = queryset.filter(visible=True, publish_on__lte=timezone.now())
 
+        if self.request.user.is_authenticated:
+            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
+            profile = self.request.profile
+            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
+
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
+
+
+class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
+    template_name = 'user/comment.html'
+    model = Comment
+    paginate_by = 10
+    context_object_name = 'comments'
+    title = None
+
+    def get_queryset(self):
+        return Comment.get_newest_visible_comments(viewer=self.request.user,
+                                                   author=self.user,
+                                                   batch=2 * self.paginate_by)
+
+    def get_context_data(self, **kwargs):
+        context = super(UserCommentPage, self).get_context_data(**kwargs)
+        context['first_page_href'] = None
+        context['title'] = self.title or _('Page %d of Comments') % context['page_obj'].number
+        context['vote_hide_threshold'] = settings.DMOJ_COMMENT_VOTE_HIDE_THRESHOLD
+
+        if self.request.user.is_authenticated:
+            context['is_new_user'] = not self.request.user.is_staff and not self.request.profile.has_any_solves
+
+        return context
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.user.is_superuser:
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class UserProblemsPage(UserPage):
@@ -521,8 +552,9 @@ class UserList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
                 .prefetch_related(Prefetch('user', queryset=User.objects.only('username', 'first_name')))
                 .prefetch_related(Prefetch('organizations',
                                   queryset=Organization.objects.filter(is_unlisted=False).only('name', 'id', 'slug')))
-                .only('display_rank', 'user', 'points', 'rating', 'performance_points',
-                      'problem_count', 'organizations'))
+                .select_related('display_badge')
+                .only('display_rank', 'display_badge', 'user', 'points', 'rating', 'performance_points',
+                      'problem_count', 'organizations', 'username_display_override'))
 
     def get_context_data(self, **kwargs):
         context = super(UserList, self).get_context_data(**kwargs)
@@ -555,7 +587,9 @@ class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView
                 .prefetch_related(Prefetch('user', queryset=User.objects.only('username', 'first_name')))
                 .prefetch_related(Prefetch('organizations',
                                   queryset=Organization.objects.filter(is_unlisted=False).only('name', 'id', 'slug')))
-                .only('display_rank', 'user', 'organizations', 'rating', 'contribution_points'))
+                .select_related('display_badge')
+                .only('display_rank', 'display_badge', 'user', 'organizations', 'rating', 'contribution_points',
+                      'username_display_override'))
 
     def get_context_data(self, **kwargs):
         context = super(ContribList, self).get_context_data(**kwargs)
@@ -623,13 +657,17 @@ class UserLogoutView(TitleMixin, TemplateView):
 
 
 class CustomPasswordResetView(PasswordResetView):
+    title = gettext_lazy('Password reset')
     from_email = settings.SERVER_EMAIL
+    template_name = 'registration/password_reset.html'
+    html_email_template_name = 'registration/password_reset_email.html'
+    email_template_name = 'registration/password_reset_email.txt'
 
     def post(self, request, *args, **kwargs):
         key = f'pwreset!{request.META["REMOTE_ADDR"]}'
         cache.add(key, 0, timeout=settings.DMOJ_PASSWORD_RESET_LIMIT_WINDOW)
         if cache.incr(key) > settings.DMOJ_PASSWORD_RESET_LIMIT_COUNT:
-            return HttpResponse('You sent in too many password reset requests. Please try again later.',
+            return HttpResponse(_('You have sent too many password reset requests. Please try again later.'),
                                 content_type='text/plain', status=429)
 
         domain = get_current_site(request).domain

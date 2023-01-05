@@ -213,23 +213,22 @@ function count_down(label) {
 }
 
 function register_time(elems, limit) {
-    limit = limit || 300;
+    limit = 60;
     elems.each(function () {
         var outdated = false;
         var $this = $(this);
         var time = moment($this.attr('data-iso'));
         var rel_format = $this.attr('data-format');
-        var abs = $this.text();
 
         function update() {
             if ($('body').hasClass('window-hidden'))
                 return outdated = true;
             outdated = false;
-            if (moment().diff(time, 'days') > limit) {
-                $this.text(abs);
-                return;
+            if (moment().diff(time, 'seconds') < limit) {
+                $this.text(rel_format.replace('{time}', time.fromNow()));
+            } else {
+                $this.text(rel_format.replace('{time}', time.format("h:mm:ss a, DD/MM/YYYY")));
             }
-            $this.text(rel_format.replace('{time}', time.fromNow()));
             setTimeout(update, 10000);
         }
 

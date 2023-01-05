@@ -12,7 +12,7 @@ django-redis
 dmoj-wpadmin @ git+https://github.com/DMOJ/dmoj-wpadmin.git
 lxml
 Pygments
-mistune
+mistune<2
 social-auth-app-django
 pytz
 django-statici18n
@@ -36,8 +36,10 @@ lupa
 martor @ git+https://github.com/VNOI-Admin/martor.git
 netaddr
 webauthn<1
-bleach
+bleach<5
 markdown2 @ git+https://github.com/VNOI-Admin/python-markdown2.git
 discord-webhook
-django-admin-sortable2
+django-admin-sortable2<2
 icalendar
+# This is a celery dependency whose latest major version is breaking everything.
+importlib-metadata<5

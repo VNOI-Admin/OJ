@@ -64,7 +64,7 @@ class ContestProblemInlineForm(ModelForm):
 class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
     model = ContestProblem
     verbose_name = _('Problem')
-    verbose_name_plural = 'Problems'
+    verbose_name_plural = _('Problems')
     fields = ('problem', 'points', 'partial', 'is_pretested', 'max_submissions', 'output_prefix_override', 'order',
               'rejudge_column', 'rescore_column')
     readonly_fields = ('rejudge_column', 'rescore_column')
@@ -73,8 +73,8 @@ class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
     def rejudge_column(self, obj):
         if obj.id is None:
             return ''
-        return format_html('<a class="button rejudge-link" href="{}">Rejudge</a>',
-                           reverse('admin:judge_contest_rejudge', args=(obj.contest.id, obj.id)))
+        return format_html('<a class="button rejudge-link" href="{0}">{1}</a>',
+                           reverse('admin:judge_contest_rejudge', args=(obj.contest.id, obj.id)), _('Rejudge'))
     rejudge_column.short_description = ''
 
     def rescore_column(self, obj):
@@ -146,8 +146,8 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         (_('Settings'), {'fields': ('is_visible', 'use_clarifications', 'push_announcements', 'disallow_virtual',
                                     'hide_problem_tags', 'hide_problem_authors', 'show_short_display',
                                     'run_pretests_only', 'locked_after', 'scoreboard_visibility',
-                                    'scoreboard_cache_timeout', 'show_submission_list', 'points_precision',
-                                    'banned_judges')}),
+                                    'ranking_access_code', 'scoreboard_cache_timeout', 'show_submission_list',
+                                    'points_precision', 'banned_judges')}),
         (_('Scheduling'), {'fields': ('start_time', 'end_time', 'time_limit')}),
         (_('Details'), {'fields': ('description', 'og_image', 'logo_override_image', 'tags', 'summary')}),
         (_('Format'), {'fields': ('format_name', 'frozen_last_minutes', 'format_config', 'problem_label_script')}),
@@ -297,7 +297,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
     def rejudge_view(self, request, contest_id, problem_id):
         queryset = ContestSubmission.objects.filter(problem_id=problem_id).select_related('submission')
         for model in queryset:
-            model.submission.judge(rejudge=True)
+            model.submission.judge(rejudge=True, rejudge_user=request.user)
 
         self.message_user(request, ngettext('%d submission was successfully scheduled for rejudging.',
                                             '%d submissions were successfully scheduled for rejudging.',

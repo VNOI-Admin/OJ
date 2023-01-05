@@ -9,7 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import FormView, ListView, View
 from requests.exceptions import ReadTimeout
 from reversion import revisions
@@ -54,7 +54,7 @@ class TagProblemMixin(object):
 
 class TagProblemList(TitleMixin, ListView):
     model = TagProblem
-    title = _('Tag problem list')
+    title = gettext_lazy('Tag problem list')
     context_object_name = 'tagproblems'
     template_name = 'tag/list.html'
     paginate_by = 50
@@ -139,7 +139,7 @@ class TagFindProblem(View):
 
 
 class TagProblemCreate(LoginRequiredMixin, TagAllowingMixin, TitleMixin, FormView):
-    title = _('Create new tag problem')
+    title = gettext_lazy('Create new tag problem')
     template_name = 'tag/create.html'
     form_class = TagProblemCreateForm
 

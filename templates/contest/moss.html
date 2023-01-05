@@ -4,7 +4,6 @@
 
 {% block title_row %}
     {% set tab = 'moss' %}
-    {% set title = contest.name %}
     {% include "contest/contest-tabs.html" %}
 {% endblock %}
 
@@ -25,10 +24,8 @@
     <script type="text/javascript">
         $(function () {
             $('.contest-moss').click(function () {
-                return confirm('{{ _('Are you sure you want MOSS the contest?') }}');
+                return confirm('{{ _('Are you sure you want to MOSS the contest?') }}');
             });
-        });
-        $(function () {
             $('.contest-moss-delete').click(function () {
                 return confirm('{{ _('Are you sure you want to delete the MOSS results?') }}');
             });
@@ -55,7 +52,11 @@
                         {% for result in results %}
                             <td>
                                 {% if result.submission_count %}
-                                    <a href="{{ result.url }}">{{ result.submission_count }} {{_('submissions')}}</a>
+                                    <a href="{{ result.url }}">{% trans trimmed count=result.submission_count %}
+                                        {{ count }} submission
+                                    {% pluralize %}
+                                        {{ count }} submissions
+                                    {% endtrans %}</a>
                                 {% else %}
                                     {{ _('No submissions') }}
                                 {% endif %}

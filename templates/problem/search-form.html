@@ -22,6 +22,11 @@
                 </div>
             {% endif %}
             <div>
+                <input id="has_public_editorial" type="checkbox" name="has_public_editorial" value="1"
+                        {% if has_public_editorial %} checked{% endif %}>
+                <label for="has_public_editorial">{{ _('Has editorial') }}</label>
+            </div>
+            <div>
                 <input id="show_types" type="checkbox" name="show_types" value="1"
                         {% if show_types %} checked{% endif %}>
                 <label for="show_types">{{ _('Show problem types') }}</label>
@@ -46,7 +51,7 @@
                 <select id="types" name="type" multiple>
                     {% for type in problem_types %}
                         <option value="{{ type.id }}"{% if type.id in selected_types %} selected{% endif %}>
-                            {{ type.full_name }}
+                            {{ user_trans(type.full_name) }}
                         </option>
                     {% endfor %}
                 </select>

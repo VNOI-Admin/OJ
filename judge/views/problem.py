@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import F, Prefetch, Q
+from django.db.models import BooleanField, Case, F, Prefetch, Q, When
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -113,8 +113,9 @@ class ProblemSolution(SolvedProblemMixin, ProblemMixin, TitleMixin, CommentedDet
         return _('Editorial for {0}').format(self.object.name)
 
     def get_content_title(self):
-        return format_html(_(u'Editorial for <a href="{1}">{0}</a>'), self.object.name,
-                           reverse('problem_detail', args=[self.object.code]))
+        return mark_safe(escape(_('Editorial for {0}')).format(
+            format_html('<a href="{1}">{0}</a>', self.object.name, reverse('problem_detail', args=[self.object.code])),
+        ))
 
     def get_context_data(self, **kwargs):
         context = super(ProblemSolution, self).get_context_data(**kwargs)
@@ -145,9 +146,15 @@ class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMi
 
     def get_context_data(self, **kwargs):
         context = super(ProblemRaw, self).get_context_data(**kwargs)
-        context['problem_name'] = self.object.name
+
+        try:
+            trans = self.object.translations.get(language=self.request.LANGUAGE_CODE)
+        except ProblemTranslation.DoesNotExist:
+            trans = None
+
+        context['problem_name'] = self.object.name if trans is None else trans.name
         context['url'] = self.request.build_absolute_uri()
-        context['description'] = self.object.description
+        context['description'] = self.object.description if trans is None else trans.description
         return context
 
     def get(self, request, *args, **kwargs):
@@ -308,7 +315,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
     template_name = 'problem/list.html'
     paginate_by = 50
     sql_sort = frozenset(('points', 'ac_rate', 'user_count', 'code', 'date'))
-    manual_sort = frozenset(('name', 'group', 'solved', 'type'))
+    manual_sort = frozenset(('name', 'group', 'solved', 'type', 'editorial'))
     all_sorts = sql_sort | manual_sort
     default_desc = frozenset(('points', 'ac_rate', 'user_count'))
     # Default sort by date
@@ -330,6 +337,8 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
             queryset = queryset.order_by('i18n_name', self.order, 'name', 'id')
         elif sort_key == 'group':
             queryset = queryset.order_by(self.order + '__name', 'name', 'id')
+        elif sort_key == 'editorial':
+            queryset = queryset.order_by(self.order.replace('editorial', 'has_public_editorial'), 'id')
         elif sort_key == 'solved':
             if self.request.user.is_authenticated:
                 profile = self.request.profile
@@ -386,6 +395,13 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
                                         .values_list('problem__id', flat=True))
         if self.show_types:
             queryset = queryset.prefetch_related('types')
+        queryset = queryset.annotate(has_public_editorial=Case(
+            When(solution__is_public=True, solution__publish_on__lte=timezone.now(), then=True),
+            default=False,
+            output_field=BooleanField(),
+        ))
+        if self.has_public_editorial:
+            queryset = queryset.filter(has_public_editorial=True)
         if self.category is not None:
             queryset = queryset.filter(group__id=self.category)
         if self.selected_types:
@@ -416,6 +432,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         context = super(ProblemList, self).get_context_data(**kwargs)
         context['hide_solved'] = int(self.hide_solved)
         context['show_types'] = int(self.show_types)
+        context['has_public_editorial'] = int(self.has_public_editorial)
         context['full_text'] = int(self.full_text)
         context['category'] = self.category
         context['categories'] = ProblemGroup.objects.all()
@@ -459,6 +476,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         self.hide_solved = self.GET_with_session(request, 'hide_solved')
         self.show_types = self.GET_with_session(request, 'show_types')
         self.full_text = self.GET_with_session(request, 'full_text')
+        self.has_public_editorial = self.GET_with_session(request, 'has_public_editorial')
 
         self.search_query = None
         self.category = None
@@ -499,6 +517,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
 
 
 class SuggestList(ProblemList):
+    title = gettext_lazy('Suggested problem list')
     template_name = 'problem/suggest-list.html'
     permission_required = 'superuser'
 
@@ -625,13 +644,13 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
             Submission.objects.filter(user=self.request.profile, rejudged_date__isnull=True)
                               .exclude(status__in=['D', 'IE', 'CE', 'AB']).count() >= settings.DMOJ_SUBMISSION_LIMIT
         ):
-            return HttpResponse('<h1>You submitted too many submissions.</h1>', status=429)
+            return HttpResponse(format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429)
         if not self.object.allowed_languages.filter(id=form.cleaned_data['language'].id).exists():
             raise PermissionDenied()
         if not self.request.user.is_superuser and self.object.banned_users.filter(id=self.request.profile.id).exists():
             return generic_message(self.request, _('Banned from submitting'),
                                    _('You have been declared persona non grata for this problem. '
-                                     'You are permanently barred from submitting this problem.'))
+                                     'You are permanently barred from submitting to this problem.'))
         # Must check for zero and not None. None means infinite submissions remaining.
         if self.remaining_submission_count == 0:
             return generic_message(self.request, _('Too many submissions'),
@@ -715,7 +734,9 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
                 request.user.username,
                 kwargs.get(self.slug_url_kwarg),
             )
-            return HttpResponseForbidden('<h1>You are not allowed to submit to this problem.</h1>')
+            return HttpResponseForbidden(
+                format_html('<h1>{0}</h1>', _('You are not allowed to submit to this problem.')),
+            )
 
     def dispatch(self, request, *args, **kwargs):
         submission_id = kwargs.get('submission')
@@ -735,7 +756,7 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
 
 
 class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObjectFormView):
-    title = _('Clone Problem')
+    title = gettext_lazy('Clone Problem')
     template_name = 'problem/clone.html'
     form_class = ProblemCloneForm
     permission_required = 'judge.clone_problem'

@@ -69,21 +69,33 @@
     {% if not submission.language.file_only or request.user.is_superuser %}
         <div><a href="{{ url('submission_source', submission.id) }}">{{ _('View source') }}</a></div>
     {% endif %}
+    {% if submission.language.file_only %}
+        <div><a href="{{ url('submission_source_download', submission.id) }}">{{ _('Download') }}</a></div>
+    {% endif %}
     {% if (request.user == submission.user.user or perms.judge.resubmit_other) and not submission.language.file_only %}
         <div><a href="{{ url('problem_submit', submission.problem.code, submission.id) }}">{{ _('Resubmit') }}</a></div>
     {% endif %}
     {% set can_edit = submission.problem.is_editable_by(request.user) %}
     {% if perms.judge.rejudge_submission and can_edit and not submission.is_locked %}
+        {% compress js %}
+            <script type="text/javascript">
+                window.confirm_and_rejudge = function (form) {
+                    if (confirm("{{ _('Are you sure you want to rejudge?') }}")) {
+                        form.submit();
+                    }
+                };
+            </script>
+        {% endcompress %}
         <div>
             <form action="{{ url('submission_rejudge') }}" method="post">
                 {% csrf_token %}
-                <a href="#" onclick="parentNode.submit()">{{ _('Rejudge') }}</a>
+                <a href="#" onclick="confirm_and_rejudge(parentNode)">{{ _('Rejudge') }}</a>
                 <input type="hidden" name="id" value="{{ submission.id }}">
                 <input type="hidden" name="path" value="{{ url('submission_status', submission.id) }}">
             </form>
         </div>
     {% endif %}
-    {% if can_edit %}
+    {% if can_edit and not submission.language.file_only %}
         <div><a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">{{ _('Diff this submission') }}</a></div>
     {% endif %}
 

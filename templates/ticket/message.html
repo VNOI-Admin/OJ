@@ -2,12 +2,16 @@
     <div class="info">
         <a href="{{ url('user_page', message.user.user.username) }}" class="user">
             <img src="{{ gravatar(message.user, 135) }}" class="gravatar">
-            <div class="username {{ message.user.css_class }}">{{ message.user.display_name }}</div>
         </a>
     </div>
     <div class="detail">
         <div class="header">
-            <span class="time">{{ relative_time(message.time, abs=_('messaged on {time}'), rel=_('messaged {time}')) }}</span>
+            {{ link_user(message.user) }}&nbsp;
+            <span class="time">
+                {% with abs=_('messaged on {time}'), rel=_('messaged {time}') %}
+                    {{ relative_time(message.time, abs=abs, rel=rel) }}
+                {% endwith %}
+            </span>
             <span class="operation">
                 {% if perms.judge.change_ticket and perms.judge.change_ticketmessage %}
                     <a href="{{ url('admin:judge_ticket_change', ticket.id) }}"

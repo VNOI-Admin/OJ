@@ -20,13 +20,13 @@ class CommentForm(ModelForm):
 class CommentAdmin(VersionAdmin):
     fieldsets = (
         (None, {'fields': ('author', 'page', 'parent', 'time', 'score', 'hidden')}),
-        ('Content', {'fields': ('body',)}),
+        (_('Content'), {'fields': ('body',)}),
     )
-    list_display = ['author', 'linked_page', 'time']
+    list_display = ['author', 'linked_page', 'time', 'score', 'hidden']
     search_fields = ['author__user__username', 'page', 'body']
     actions = ['hide_comment', 'unhide_comment']
     list_filter = ['hidden']
-    readonly_fields = ['time']
+    readonly_fields = ['time', 'score']
     actions_on_top = True
     actions_on_bottom = True
     form = CommentForm
@@ -37,6 +37,7 @@ class CommentAdmin(VersionAdmin):
 
     def hide_comment(self, request, queryset):
         count = queryset.update(hidden=True)
+        queryset.author.calculate_contribution_points()
         self.message_user(request, ngettext('%d comment successfully hidden.',
                                             '%d comments successfully hidden.',
                                             count) % count)
@@ -44,6 +45,7 @@ class CommentAdmin(VersionAdmin):
 
     def unhide_comment(self, request, queryset):
         count = queryset.update(hidden=False)
+        queryset.author.calculate_contribution_points()
         self.message_user(request, ngettext('%d comment successfully unhidden.',
                                             '%d comments successfully unhidden.',
                                             count) % count)

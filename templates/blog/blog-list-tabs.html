@@ -1,0 +1,6 @@
+{% extends "tabs-base.html" %}
+
+{% block tabs %}
+    {{ make_tab('home', 'fa-newspaper-o', newsfeed_link, _('Newsfeed')) }}
+    {{ make_tab('blog_list', 'fa-user', all_blogs_link, _('Blogs')) }}
+{% endblock %}
