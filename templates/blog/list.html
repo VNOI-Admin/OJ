@@ -161,12 +161,7 @@
                                     <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
                                 </div>
                                 <div class="time">
-<<<<<<< HEAD
-                                    {%- trans countdown=contest.time_before_end|as_countdown,end_time=contest.end_time|date(_("F j, Y, G:i T"))-%} Ends in {{countdown}}{%- endtrans -%}
-                                    {%-  trans end_time=contest.end_time|date(_("F j, Y, G:i T"))-%}&nbsp {{end_time}}{%- endtrans -%}
-=======
                                     {{ _('Ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) }}
->>>>>>> 2803281c21513f354e8b92bba47a82fb128faa23
                                 </div>
                             </div>
                         {% endfor %}
