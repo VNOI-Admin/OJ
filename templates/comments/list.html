@@ -146,7 +146,7 @@
                 {% endblock %}
                 {% if is_new_user %}
                     <div style="margin-bottom: 0" class="alert alert-info">
-                        {{ _('You need to have solved at least 5 problems before your voice can be heard.') }}
+                        {{ interact_min_problem_count_msg }}
                     </div>
                 {% else %}
                     <form class="comment-submit-form" action="" method="post">

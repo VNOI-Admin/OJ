@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import PermissionDenied
@@ -32,7 +33,8 @@ def vote_comment(request, delta):
         return HttpResponseBadRequest()
 
     if request.profile.is_new_user:
-        return HttpResponseBadRequest(_('You must solve at least one problem before you can vote.'),
+        return HttpResponseBadRequest(_('You must solve at least %d problems before you can vote.')
+                                        % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT,
                                       content_type='text/plain')
 
     if request.profile.mute:

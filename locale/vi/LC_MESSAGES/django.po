@@ -493,10 +493,11 @@ msgstr " Lý Do:"
 msgid "Your part is silent, little toad."
 msgstr "Im lặng đi, bạn không có quyền nói ở đây."
 
-#: judge/comments.py:50 templates/comments/list.html:149
-msgid ""
-"You need to have solved at least one problem before your voice can be heard."
-msgstr "Bạn cần giải được ít nhất một bài trước khi bình luận."
+#: judge/comments.py:50 judge/view/user.py:294
+#, python-format
+msgid "You need to have solved at least %d problems "
+"before your voice can be heard."
+msgstr "Bạn cần giải được ít nhất %d bài trước khi bình luận."
 
 #: judge/comments.py:94
 msgid "Posted comment"
@@ -738,10 +739,11 @@ msgstr "Đăng ký để nhận các cập nhật về kỳ thi"
 msgid "Enable experimental features"
 msgstr "Bật các tính năng đang thử nghiệm"
 
-#: judge/forms.py:81
-msgid "You must solve at least one problem before you can update your profile."
+#: judge/forms.py:85
+#, python-format
+msgid "You must solve at least %d problems before you can update your profile."
 msgstr ""
-"Bạn phải giải ít nhất một bài trước khi có thể bỏ thay đổi thông tin người "
+"Bạn phải giải ít nhất %d bài trước khi có thể bỏ thay đổi thông tin người "
 "dùng"
 
 #: judge/forms.py:90 judge/views/organization.py:131
@@ -3435,8 +3437,9 @@ msgid "Messing around, are we?"
 msgstr ""
 
 #: judge/views/blog.py:43 judge/views/comment.py:35
-msgid "You must solve at least one problem before you can vote."
-msgstr "Bạn phải giải ít nhất một bài trước khi có thể bỏ phiếu."
+#, python-format
+msgid "You must solve at least %d problems before you can vote."
+msgstr "Bạn phải giải ít nhất %d bài trước khi có thể bỏ phiếu."
 
 #: judge/views/blog.py:58
 msgid "Blog post not found."

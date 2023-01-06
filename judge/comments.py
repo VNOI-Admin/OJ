@@ -118,6 +118,8 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
             profile = self.request.profile
             unique_together_left_join(queryset, CommentVote, 'comment', 'voter', profile.id)
             context['is_new_user'] = profile.is_new_user
+            context['interact_min_problem_count_msg'] = _('You need to have solved at least %d problems '
+                                                          'before your voice can be heard.') % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
         context['comment_list'] = queryset
         context['vote_hide_threshold'] = settings.DMOJ_COMMENT_VOTE_HIDE_THRESHOLD
 
