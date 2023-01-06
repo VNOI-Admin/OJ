@@ -291,8 +291,9 @@ class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
 
         if self.request.user.is_authenticated:
             context['is_new_user'] = self.request.profile.is_new_user
-            context['interact_min_problem_count_msg'] = _('You need to have solved at least %d problems '
-                                                          'before your voice can be heard.') % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
+            context['interact_min_problem_count_msg'] = \
+                _('You need to have solved at least %d problems before your voice can be heard.') \
+                % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
 
         return context
 

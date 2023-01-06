@@ -743,7 +743,7 @@ msgstr "Bật các tính năng đang thử nghiệm"
 #, python-format
 msgid "You must solve at least %d problems before you can update your profile."
 msgstr ""
-"Bạn phải giải ít nhất %d bài trước khi có thể bỏ thay đổi thông tin người "
+"Bạn phải giải ít nhất %d bài trước khi có thể thay đổi thông tin người "
 "dùng"
 
 #: judge/forms.py:90 judge/views/organization.py:131

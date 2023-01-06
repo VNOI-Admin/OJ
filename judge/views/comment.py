@@ -34,7 +34,7 @@ def vote_comment(request, delta):
 
     if request.profile.is_new_user:
         return HttpResponseBadRequest(_('You must solve at least %d problems before you can vote.')
-                                        % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT,
+                                      % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT,
                                       content_type='text/plain')
 
     if request.profile.mute:
