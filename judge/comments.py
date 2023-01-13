@@ -46,9 +46,9 @@ class CommentForm(ModelForm):
             if profile.mute:
                 suffix_msg = '' if profile.ban_reason is None else _(' Reason: ') + profile.ban_reason
                 raise ValidationError(_('Your part is silent, little toad.') + suffix_msg)
-            elif not self.request.user.is_staff and not profile.has_any_solves:
-                raise ValidationError(_('You need to have solved at least one problem '
-                                        'before your voice can be heard.'))
+            elif profile.is_new_user:
+                raise ValidationError(_('You need to have solved at least %d problems '
+                                        'before your voice can be heard.') % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT)
         return super(CommentForm, self).clean()
 
 
@@ -117,7 +117,10 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
             queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(CommentVote, 'score'), Value(0)))
             profile = self.request.profile
             unique_together_left_join(queryset, CommentVote, 'comment', 'voter', profile.id)
-            context['is_new_user'] = not self.request.user.is_staff and not profile.has_any_solves
+            context['is_new_user'] = profile.is_new_user
+            context['interact_min_problem_count_msg'] = \
+                _('You need to have solved at least %d problems before your voice can be heard.') \
+                % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
         context['comment_list'] = queryset
         context['vote_hide_threshold'] = settings.DMOJ_COMMENT_VOTE_HIDE_THRESHOLD
 

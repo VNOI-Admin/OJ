@@ -90,6 +90,8 @@ VNOJ_TESTCASE_HARD_LIMIT = 100
 # If a user without the `create_mass_testcases` permission create more than this amount of test
 # they will receive a warning
 VNOJ_TESTCASE_SOFT_LIMIT = 50
+# Minimum problem count required to interact (comment, vote and update profile)
+VNOJ_INTERACT_MIN_PROBLEM_COUNT = 5
 # Minimum problem count required to create new blogs
 VNOJ_BLOG_MIN_PROBLEM_COUNT = 10
 
