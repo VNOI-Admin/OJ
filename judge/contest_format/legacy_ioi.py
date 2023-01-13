@@ -77,7 +77,7 @@ class LegacyIOIContestFormat(DefaultContestFormat):
     def display_user_problem(self, participation, contest_problem, frozen=False):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
         if format_data:
-            show_time = self.config['cumtime'] or self.config['last_score_altering']
+            show_time = self.config['cumtime'] or self.config.get('last_score_altering', False)
             return format_html(
                 '<td class="{state}"><a href="{url}">{points}<div class="solving-time">{time}</div></a></td>',
                 state=(('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
@@ -91,7 +91,7 @@ class LegacyIOIContestFormat(DefaultContestFormat):
             return mark_safe('<td></td>')
 
     def display_participation_result(self, participation, frozen=False):
-        show_time = self.config['cumtime'] or self.config['last_score_altering']
+        show_time = self.config['cumtime'] or self.config.get('last_score_altering', False)
         return format_html(
             '<td class="user-points"><a href="{url}">{points}<div class="solving-time">{cumtime}</div></a></td>',
             url=reverse('contest_all_user_submissions',
