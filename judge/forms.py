@@ -77,8 +77,9 @@ class ProfileForm(ModelForm):
             )
 
     def clean_about(self):
-        if 'about' in self.changed_data and not self.instance.has_any_solves:
-            raise ValidationError(_('You must solve at least one problem before you can update your profile.'))
+        if 'about' in self.changed_data and not self.instance.has_enough_solves:
+            raise ValidationError(_('You must solve at least %d problems before you can update your profile.')
+                                  % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT)
         return self.cleaned_data['about']
 
     def clean(self):

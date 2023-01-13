@@ -508,9 +508,10 @@ msgstr ""
 msgid "Your part is silent, little toad."
 msgstr ""
 
-#: judge/comments.py:50 templates/comments/list.html:147
-msgid ""
-"You need to have solved at least one problem before your voice can be heard."
+#: judge/comments.py:50 judge/view/user.py:294
+#, python-format
+msgid "You need to have solved at least %d problems "
+"before your voice can be heard."
 msgstr ""
 
 #: judge/comments.py:94
@@ -743,7 +744,8 @@ msgid "Enable experimental features"
 msgstr ""
 
 #: judge/forms.py:85
-msgid "You must solve at least one problem before you can update your profile."
+#, python-format
+msgid "You must solve at least %d problems before you can update your profile."
 msgstr ""
 
 #: judge/forms.py:94 judge/views/organization.py:131
@@ -3336,7 +3338,8 @@ msgid "Messing around, are we?"
 msgstr ""
 
 #: judge/views/blog.py:43 judge/views/comment.py:35
-msgid "You must solve at least one problem before you can vote."
+#, python-format
+msgid "You must solve at least %d problems before you can vote."
 msgstr ""
 
 #: judge/views/blog.py:58
