@@ -77,7 +77,7 @@ class BlogPostAdmin(VersionAdmin):
         (_('Summary'), {'classes': ('collapse',), 'fields': ('summary',)}),
     )
     prepopulated_fields = {'slug': ('title',)}
-    list_display = ('id', 'title', 'visible', 'sticky', 'publish_on')
+    list_display = ('id', 'title', 'visible', 'global_post', 'sticky', 'publish_on')
     list_display_links = ('id', 'title')
     ordering = ('-publish_on',)
     form = BlogPostForm
