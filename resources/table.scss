@@ -11,6 +11,7 @@
     margin-right: auto;
     margin-bottom: 0.5em;
     background: rgba($color_primary100, 0.01);
+    backdrop-filter: blur(3px);
 
     &.striped tr:nth-child(2n) {
         background: rgba($color_primary100, 0.03);
@@ -32,7 +33,6 @@
     }
 
     td {
-        backdrop-filter: blur(3px);
         border-color: $color_primary25;
         border-width: 0 1px 1px 0;
         border-style: solid;
