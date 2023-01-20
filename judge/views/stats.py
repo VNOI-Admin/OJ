@@ -3,7 +3,6 @@ import datetime
 
 from django.conf import settings
 from django.db.models import Count, DateField, F, FloatField, Q
-from django.db.models.expressions import ExpressionWrapper
 from django.db.models.functions import Cast
 from django.http import HttpResponseForbidden, JsonResponse
 from django.http.response import HttpResponseBadRequest
@@ -44,7 +43,7 @@ def submission_data(start_date, end_date, utc_offset):
     queue_time = (
         # Divide by 1000000 to convert microseconds to seconds
         queryset.filter(judged_date__isnull=False, rejudged_date__isnull=True)
-        .annotate(queue_time=ExpressionWrapper((F('judged_date') - F('date')) / 1000000, output_field=FloatField()))
+        .annotate(queue_time=Cast(F('judged_date') - F('date'), FloatField()) / 1000000.0)
         .order_by('queue_time').values_list('queue_time', flat=True)
     )
 
