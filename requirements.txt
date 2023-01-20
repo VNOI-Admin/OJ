@@ -11,7 +11,7 @@ django-impersonate
 django-redis
 dmoj-wpadmin @ git+https://github.com/DMOJ/dmoj-wpadmin.git
 lxml
-Pygments
+Pygments<2.12
 mistune<2
 social-auth-app-django
 pytz
