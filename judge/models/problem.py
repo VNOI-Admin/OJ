@@ -88,6 +88,14 @@ class TranslatedProblemQuerySet(SearchQuerySet):
             'translations', condition=Q(translations__language=language),
         )).annotate(i18n_name=Coalesce(F('i18n_translation__name'), F('name'), output_field=models.CharField()))
 
+    def add_i18n_description(self, language):
+        return self.annotate(i18n_translation=FilteredRelation(
+            'translations', condition=Q(translations__language=language),
+        )).annotate(i18n_description=Coalesce(
+            F('i18n_translation__description'), F('description'),
+            output_field=models.TextField()),
+        )
+
 
 class SubmissionSourceAccess:
     ALWAYS = 'A'
