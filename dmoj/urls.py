@@ -9,6 +9,7 @@ from django.templatetags.static import static
 from django.urls import include, path, re_path, reverse
 from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import RedirectView
 from martor.views import markdown_search_user
 
@@ -119,7 +120,7 @@ urlpatterns = [
         path('', problem.ProblemDetail.as_view(), name='problem_detail'),
         path('/edit', problem.ProblemEdit.as_view(), name='problem_edit'),
         path('/editorial', problem.ProblemSolution.as_view(), name='problem_editorial'),
-        path('/raw', problem.ProblemRaw.as_view(), name='problem_raw'),
+        path('/raw', xframe_options_sameorigin(problem.ProblemRaw.as_view()), name='problem_raw'),
         path('/pdf', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/pdf/<slug:language>', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/clone', problem.ProblemClone.as_view(), name='problem_clone'),
