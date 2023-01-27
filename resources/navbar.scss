@@ -1,5 +1,5 @@
 // Navbar should look the same in every theme, so vars-common should be enough.
-@import "vars";
+@import "vars-common";
 
 #user-links {
     top: 0;
@@ -63,16 +63,16 @@
     left: 0;
     width: 100%;
     height: 56px;
-    background: $color_primary75;
+    background: #231f20;
 }
 
 #nav-shadow {
     height: 3px;
-    background: linear-gradient(rgba($color_primary75, 0.5), transparent);
+    background: linear-gradient(rgba(0, 0, 0, 0.5), transparent);
 }
 
 #nav-container {
-    background: $color_primary75;
+    background: #231f20;
 
     // opacity: 0.77
     // filter: alpha(opacity=77)
@@ -145,7 +145,7 @@ nav {
                 left: 5px;
                 display: none;
                 color: #fff;
-                background: $color_primary75;
+                background: #231f20;
                 margin: 0 !important;
                 box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
 
@@ -164,7 +164,7 @@ nav {
                         font-size: 0.8em;
                         line-height: 18px;
                         display: block;
-                        border-left: 4px solid lightskyblue;
+                        border-left: 4px solid $highlight_blue;
                         white-space: nowrap;
                     }
                 }
@@ -212,11 +212,6 @@ nav {
         height: 36px;
     }
 
-    #nav-shadow {
-        height: 3px;
-        background: linear-gradient(rgba($color_primary75, 0.5), transparent);
-    }
-
     #navicon {
         transition-duration: 0.25s;
         display: block;
@@ -241,7 +236,7 @@ nav {
         margin: 0;
         position: fixed;
         top: 36px;
-        background: $color_primary75;
+        background: #231f20;
         bottom: 0;
         width: 8em;
         left: 0;
