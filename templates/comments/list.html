@@ -2,7 +2,7 @@
     <div id="comments" class="comment-area">
         <h2><i style="padding-right: 0.3em" class="fa fa-comments"></i>{{ _('Comments') }}</h2>
         {% if not comment_lock %}
-            <div class="alert alert-warning" style="width: 100%">
+            <div class="alert alert-warning">
                 {{ (_('Please read the [guidelines][0] before commenting.') + '\n\n  [0]: /about/comment/')|markdown('blog', strip_paragraphs=True) }}
             </div>
             <hr><br>
