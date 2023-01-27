@@ -35,10 +35,6 @@ span.organization {
 }
 
 #users-table, #organization-table {
-    th a {
-        color: white;
-    }
-
     th.rank, th.points, th.problems, th.username {
         white-space: nowrap;
     }
@@ -61,6 +57,15 @@ span.organization {
 
         &.highlight {
             background: rgba($color_link200, 0.2);
+        }
+    }
+
+    th a {
+        color: $color_primary0;
+
+        &:link,
+        &:visited {
+            color: $color_primary0;
         }
     }
 }
