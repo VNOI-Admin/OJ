@@ -48,6 +48,7 @@ CUSTOM_CHECKERS = (
     ('cms', _('CMS checker')),
     ('coci', _('COCI checker')),
     ('peg', _('PEG checker')),
+    ('default', _('DMOJ checker')),
 )
 
 
