@@ -143,15 +143,8 @@ class ProblemDataCompiler(object):
                 except Exception as e:
                     raise ProblemDataError(e)
 
-                # Python checker doesn't need to use bridged
-                # so we return the name directly
-                if checker_ext == 'py':
-                    return custom_checker_path[1]
-
                 if checker_ext not in ['cpp', 'pas', 'java']:
-                    raise ProblemDataError(_("Why don't you use a cpp/pas/py/java checker?"))
-                # the cpp checker will be handled
-                # right below here, outside of this scope
+                    raise ProblemDataError(_('Only C++, Pascal, or Java checkers are supported.'))
 
             if case.checker_args:
                 return {
@@ -223,13 +216,6 @@ class ProblemDataCompiler(object):
                 # Check: https://github.com/DMOJ/judge-server/issues/730
                 if grader_args.get('allow_main', False):
                     init['signature_grader']['allow_main'] = True
-                return
-
-            if case.grader == 'custom_judge':
-                file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
-                if file_ext != 'py':
-                    raise ProblemDataError(_('Only accept `.py` custom judge'))
-                init['custom_judge'] = file_name
                 return
 
         for i, case in enumerate(self.cases, 1):
