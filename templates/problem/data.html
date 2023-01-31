@@ -112,8 +112,8 @@
                         if (!($file_name == '')) {
                             $file_name = $file_name.split('/').pop()
                             $file_ext = $file_name.split('.').pop()
-                            if (!(['cpp', 'py', 'pas', 'java'].includes($file_ext))) {
-                                alert("{{ _('Expected checker\'s extension must be in [cpp, py, pas, java], found ') }}'" + $file_ext + "'");
+                            if (!(['cpp', 'pas', 'java'].includes($file_ext))) {
+                                alert("{{ _('Expected checker\'s extension must be in [cpp, pas, java], found ') }}'" + $file_ext + "'");
                             }
                             else {
                                 $lang = $file_ext.toUpperCase();

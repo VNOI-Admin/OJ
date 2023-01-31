@@ -3340,8 +3340,8 @@ msgid "How did you corrupt the custom checker path?"
 msgstr "Phá kiểu gì mà mất tiêu checker rồi?"
 
 #: judge/utils/problem_data.py:152
-msgid "Why don't you use a cpp/pas/py/java checker?"
-msgstr "Vui lòng sử dụng checker viết bằng C++, Pascal, Python hoặc Java."
+msgid "Only C++, Pascal, or Java checkers are supported."
+msgstr "Chỉ hỗ trợ checker viết bằng C++, Pascal hoặc Java."
 
 #: judge/utils/problem_data.py:166
 msgid "How did you corrupt the custom grader path?"
