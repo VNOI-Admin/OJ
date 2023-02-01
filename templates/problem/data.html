@@ -522,6 +522,8 @@
                     }).catch(function(err) {
                         console.log(err);
                         console.error("Failed to open as ZIP file");
+                        alert('Test file must be a zip file');
+                        event.target.value = "";
                     })
                 };
                 reader.readAsArrayBuffer(fileInput);
