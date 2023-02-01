@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2023-01-27 09:32+0000\n"
+"POT-Creation-Date: 2023-02-01 05:19+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -294,7 +294,7 @@ msgstr "Phân loại"
 #: judge/admin/problem.py:135 templates/blog/top-pp.html:9
 #: templates/contest/contest.html:203 templates/contest/edit.html:116
 #: templates/contest/official-ranking-table.html:11
-#: templates/organization/list.html:24 templates/problem/data.html:672
+#: templates/organization/list.html:24 templates/problem/data.html:674
 #: templates/problem/list.html:182 templates/user/base-users-table.html:10
 #: templates/user/user-problems.html:60
 msgid "Points"
@@ -2270,36 +2270,36 @@ msgstr ""
 msgid "Output Only"
 msgstr ""
 
-#: judge/models/problem_data.py:38
-msgid "Custom Grader"
-msgstr ""
-
-#: judge/models/problem_data.py:42
+#: judge/models/problem_data.py:41
 msgid "Standard Input/Output"
 msgstr "Đầu vào/ra chuẩn"
 
-#: judge/models/problem_data.py:43
+#: judge/models/problem_data.py:42
 msgid "Via files"
 msgstr "Sử dụng file"
 
-#: judge/models/problem_data.py:47
+#: judge/models/problem_data.py:46
 msgid "Themis checker"
 msgstr ""
 
-#: judge/models/problem_data.py:48
+#: judge/models/problem_data.py:47
 msgid "Testlib checker"
 msgstr ""
 
-#: judge/models/problem_data.py:49
+#: judge/models/problem_data.py:48
 msgid "CMS checker"
 msgstr ""
 
-#: judge/models/problem_data.py:50
+#: judge/models/problem_data.py:49
 msgid "COCI checker"
 msgstr ""
 
-#: judge/models/problem_data.py:51
+#: judge/models/problem_data.py:50
 msgid "PEG checker"
+msgstr ""
+
+#: judge/models/problem_data.py:51
+msgid "DMOJ checker"
 msgstr ""
 
 #: judge/models/problem_data.py:58
@@ -3339,68 +3339,64 @@ msgstr "Không được để nhóm test rỗng."
 msgid "How did you corrupt the custom checker path?"
 msgstr "Phá kiểu gì mà mất tiêu checker rồi?"
 
-#: judge/utils/problem_data.py:152
+#: judge/utils/problem_data.py:147
 msgid "Only C++, Pascal, or Java checkers are supported."
 msgstr "Chỉ hỗ trợ checker viết bằng C++, Pascal hoặc Java."
 
-#: judge/utils/problem_data.py:166
+#: judge/utils/problem_data.py:159
 msgid "How did you corrupt the custom grader path?"
 msgstr "Phá kiểu gì mà mất tiêu grader rồi?"
 
-#: judge/utils/problem_data.py:185
+#: judge/utils/problem_data.py:178
 msgid "You must specify both input and output files."
 msgstr ""
 
-#: judge/utils/problem_data.py:189
+#: judge/utils/problem_data.py:182
 msgid "Input/Output file must be a string."
 msgstr "Tên file input/output phải là xâu."
 
-#: judge/utils/problem_data.py:200
+#: judge/utils/problem_data.py:193
 msgid "Only accept `.cpp` interactor"
 msgstr "Chỉ chấp nhận `.cpp` interactor"
 
-#: judge/utils/problem_data.py:212
+#: judge/utils/problem_data.py:205
 msgid "Only accept `.cpp` entry"
 msgstr "Chỉ chấp nhận `.cpp`"
 
-#: judge/utils/problem_data.py:215
+#: judge/utils/problem_data.py:208
 msgid "Only accept `.h` header"
 msgstr "Chỉ chấp nhận file header `.h`"
 
-#: judge/utils/problem_data.py:231
-msgid "Only accept `.py` custom judge"
-msgstr "Chỉ chấP nhận `.py` grader"
-
-#: judge/utils/problem_data.py:243
+#: judge/utils/problem_data.py:229
 #, python-format
 msgid "Points must be defined for non-batch case #%d."
 msgstr "Test #%d phải được set điểm vì không nằm trong nhóm nào."
 
-#: judge/utils/problem_data.py:248
+#: judge/utils/problem_data.py:234
 #, python-format
 msgid "Input file for case %(case)d does not exist: %(file)s"
 msgstr "Không tìm thấy file input của case %(case)d: %(file)s"
 
-#: judge/utils/problem_data.py:251
+#: judge/utils/problem_data.py:237
 #, python-format
 msgid "Output file for case %(case)d does not exist: %(file)s"
 msgstr "Không tìm thấy file output của case %(case)d: %(file)s"
 
-#: judge/utils/problem_data.py:276
+#: judge/utils/problem_data.py:262
 #, python-format
 msgid "Batch start case #%d requires points."
 msgstr "Bắt đầu nhóm, case #%d yêu cầu điểm."
 
-#: judge/utils/problem_data.py:297
+#: judge/utils/problem_data.py:283
 #, python-format
 msgid "Attempt to end batch outside of one in case #%d."
 msgstr "Kết thúc nhóm nhưng không có bắt đầu ở case #%d"
 
-#: judge/utils/problem_data.py:315
+#: judge/utils/problem_data.py:301
 msgid "How did you corrupt the zip path?"
 msgstr ""
 
-#: judge/utils/problem_data.py:321
+#: judge/utils/problem_data.py:307
 msgid "How did you corrupt the generator path?"
 msgstr ""
 
@@ -5761,7 +5757,7 @@ msgid "There are no requests to approve."
 msgstr "Không có yêu cầu để chấp nhận."
 
 #: templates/organization/requests/pending.html:17
-#: templates/problem/data.html:676
+#: templates/problem/data.html:678
 msgid "Delete?"
 msgstr "Xoá?"
 
@@ -5811,9 +5807,8 @@ msgid "precision (decimal digits)"
 msgstr ""
 
 #: templates/problem/data.html:116
-msgid "Expected checker's extension must be in [cpp, py, pas, java], found "
-msgstr ""
-"Trình chấm ngoài phải có đuôi file là cpp, py, pas hoặc java, không phải "
+msgid "Expected checker's extension must be in [cpp, pas, java], found "
+msgstr "Trình chấm ngoài phải có đuôi file là cpp, pas hoặc java, không phải "
 
 #: templates/problem/data.html:236
 msgid "Instruction"
@@ -5867,56 +5862,60 @@ msgid ""
 "saved!"
 msgstr "Do đó, chỉ ${window.testcase_limit} các test đầu tiên sẽ được lưu lại!"
 
-#: templates/problem/data.html:636
+#: templates/problem/data.html:525
+msgid "Test file must be a ZIP file"
+msgstr "Tập tin dữ liệu phải có định dạng ZIP"
+
+#: templates/problem/data.html:638
 msgid "View YAML"
 msgstr "Xem YAML"
 
-#: templates/problem/data.html:655
+#: templates/problem/data.html:657
 msgid "Test cases have been filled automatically!"
 msgstr "Các test đã được điền tự động!"
 
-#: templates/problem/data.html:657
+#: templates/problem/data.html:659
 msgid "Test cases have been filled automatically and **not saved yet**!"
 msgstr "Các test dưới đây được điền tự động và **chưa được lưu lại**!"
 
-#: templates/problem/data.html:659
+#: templates/problem/data.html:661
 msgid ""
 "Please modify the table below if needed and press the `Apply` button to save!"
 msgstr "Hãy chỉnh sửa bảng dưới đây nếu cần thiết, và nhấn nút `Apply` để lưu!"
 
-#: templates/problem/data.html:669
+#: templates/problem/data.html:671
 msgid "Type"
 msgstr "Kiểu"
 
-#: templates/problem/data.html:670
+#: templates/problem/data.html:672
 msgid "Input file"
 msgstr "Tập tin đầu vào"
 
-#: templates/problem/data.html:671
+#: templates/problem/data.html:673
 msgid "Output file"
 msgstr "Tập tin đầu ra"
 
-#: templates/problem/data.html:673
+#: templates/problem/data.html:675
 msgid "Pretest?"
 msgstr ""
 
-#: templates/problem/data.html:674
+#: templates/problem/data.html:676
 msgid "Generator args"
 msgstr "Tham số trình sinh tests"
 
-#: templates/problem/data.html:711
+#: templates/problem/data.html:713
 msgid "Edit generator args"
 msgstr "Sửa tham số trình sinh test"
 
-#: templates/problem/data.html:721
+#: templates/problem/data.html:723
 msgid "Apply!"
 msgstr ""
 
-#: templates/problem/data.html:722
+#: templates/problem/data.html:724
 msgid "Add new case"
 msgstr "Thêm test mới"
 
-#: templates/problem/data.html:724
+#: templates/problem/data.html:726
 msgid "Save"
 msgstr "Lưu"
 
