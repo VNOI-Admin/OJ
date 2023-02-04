@@ -19,10 +19,6 @@
             height: 70px
         }
 
-        .grayed {
-            color: #666;
-        }
-
         .inline-header {
             float: left;
             font-size: 1.1em;
@@ -31,7 +27,6 @@
         }
 
         .block-header {
-            color: #666;
             font-size: 1.1em;
         }
 
@@ -277,9 +272,9 @@
             {% if form_user.first_name %}
                 <table>
                     <tr>
-                        <td><div class="block-header">{{ _('Full name') }}:</div></td>
+                        <td><div class="block-header grayed">{{ _('Full name') }}:</div></td>
                         {% if form.display_badge %}
-                            <td><div class="block-header">{{ _('Display badge') }}:</div></td>
+                            <td><div class="block-header grayed">{{ _('Display badge') }}:</div></td>
                         {% endif %}
                     </tr>
                     <tr>
@@ -293,7 +288,7 @@
             {% endif %}
 
             {% if form.about %}
-                <div style="padding-top:0.5em" class="block-header">{{ _('Self-description:') }}</div>
+                <div style="padding-top:0.5em" class="block-header grayed">{{ _('Self-description:') }}</div>
                     {{ form.about }}
                 <hr>
             {% endif %}
@@ -400,7 +395,7 @@
                 </div>
                 {% if form.organizations %}
                     <div class="pane">
-                        <div style="padding-bottom:0.3em; margin-top:0.3em" class="block-header">
+                        <div style="padding-bottom:0.3em; margin-top:0.3em" class="block-header grayed">
                             {{ _('Affiliated organizations') }}:
                         </div>
                         {{ form.organizations }}
@@ -412,7 +407,7 @@
             <div class="settings" style="padding-top:0.7em">
                 <div class="pane">
                     <span class="inline-header grayed">
-                        <div style="padding-bottom:0.4em" class="block-header">
+                        <div style="padding-bottom:0.4em" class="block-header grayed">
                             {{- _('Security keys:') -}}
                         </div>
                         <table class="table">
