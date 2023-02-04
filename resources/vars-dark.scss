@@ -18,4 +18,13 @@ $color_link200: #d83;   // active
 
 $color_pageBg: #222;    // #222 because some elements should be darker than pageBg
 
+$color_rating_none: #aaa;
+$color_rating_newbie: #988f81;
+$color_rating_pupil: #72ff72;
+$color_rating_specialist: #57fcf2;
+$color_rating_expert: #337dff;
+$color_rating_candidate_master: #ff55ff;
+$color_rating_master: #ff981a;
+$color_rating_grandmaster: #ff1a1a;
+
 $path_to_root: '..';    // relative path from style.css to STATIC_ROOT

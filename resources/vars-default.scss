@@ -19,4 +19,13 @@ $color_link200: #faa700;    // active
 
 $color_pageBg: color.adjust($color_primary5, $lightness: 10%);
 
+$color_rating_none: #999;
+$color_rating_newbie: #808080;
+$color_rating_pupil: #008000;
+$color_rating_specialist: #03a89e;
+$color_rating_expert: #0000ff;
+$color_rating_candidate_master: #aa00aa;
+$color_rating_master: #ff8c00;
+$color_rating_grandmaster: #ff0000;
+
 $path_to_root: '.';     // relative path from style.css to STATIC_ROOT
