@@ -810,6 +810,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         users, problems = self.get_ranking_list()
 
         return loader.render_to_string(self.ranking_table_template_name, request=self.request, context={
+            'table_id': 'ranking-table',
             'users': users,
             'problems': problems,
             'contest': self.object,

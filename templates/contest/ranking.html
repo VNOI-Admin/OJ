@@ -8,19 +8,23 @@
 
 {% block users_media %}
     <style>
-        #users-table .username {
+        #ranking-table .username {
             min-width: 20em;
         }
 
-        #users-table td {
+        #ranking-table .rating-column {
+            min-width: 3em;
+        }
+
+        #ranking-table td {
             height: 2.5em;
         }
 
-        #users-table a {
+        #ranking-table a {
             display: block;
         }
 
-        #users-table {
+        #ranking-table {
             font-size: 14px;
         }
 
@@ -28,15 +32,15 @@
             display: inline-block !important;
         }
 
-        #users-table th a, #users-table th a:link, #users-table th a:visited {
+        #ranking-table th a, #ranking-table th a:link, #ranking-table th a:visited {
             color: white;
         }
 
-        #users-table th a:hover {
+        #ranking-table th a:hover {
             color: #0F0;
         }
 
-        #users-table td:not(.user-name, .personal-info) a:hover {
+        #ranking-table td:not(.user-name, .personal-info) a:hover {
             text-decoration: underline;
         }
 
@@ -205,7 +209,7 @@
                     $.ajax({
                         url: queryParam ? queryParam + '&raw' : '?raw',
                     }).done(function (data) {
-                        $('#users-table').html(data);
+                        $('#ranking-table').html(data);
                         if (localStorage.getItem('show-personal-info') == 'true') {
                             $('.personal-info').show();
                             $('#show-personal-info-checkbox').prop('checked', true);
@@ -407,7 +411,7 @@
             window.getOrganizationCodes = function () {
                 let org_list = []
 
-                $('#users-table > tbody > *').each(function () {
+                $('#ranking-table > tbody > *').each(function () {
                     let org_anchor = $(this).find("div > div > .personal-info > .organization > a")[0];
 
                     if (org_anchor) {
@@ -446,7 +450,7 @@
                     return;
                 }
 
-                $('#users-table > tbody > tr[id]').each(function () {
+                $('#ranking-table > tbody > tr[id]').each(function () {
                     $(this).show();
                     $(this).find("td")[0].innerHTML = extractCurrentAbsRank($(this).find("td")[0].innerText);
                 });
@@ -464,7 +468,7 @@
                     return;
                 }
 
-                $('#users-table > tbody > tr[id]').each(function () {
+                $('#ranking-table > tbody > tr[id]').each(function () {
                     let row = $(this);
 
                     let org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
@@ -608,7 +612,7 @@
 
                 var csv = [];
 
-                $('table#users-table thead tr').each(function () {
+                $('#ranking-table thead tr').each(function () {
                     var header = [];
                     $(this).find('th').each(function () {
                         var $col = $(this);
@@ -635,7 +639,7 @@
                     csv.push(header.join(','));
                 });
 
-                $('table#users-table tbody tr').each(function () {
+                $('#ranking-table tbody tr').each(function () {
                     // Skip hidden row (due to filtering)
                     if ($(this).is(':hidden')) {
                         return;
