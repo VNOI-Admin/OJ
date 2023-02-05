@@ -95,13 +95,6 @@ svg.rate-box {
     &.rate-grandmaster, &.rate-international-grandmaster, &.rate-legendary-grandmaster {
         @include rate-svg-color($color_rating_grandmaster);
     }
-
-    &.rate-target {
-        circle:last-child {
-            stroke: none;
-            fill: #FF0000;
-        }
-    }
 }
 
 .rating {
