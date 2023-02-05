@@ -34,7 +34,7 @@ span.organization {
     padding-left: 0.5em;
 }
 
-#users-table, #organization-table {
+.users-table {
     th.rank, th.points, th.problems, th.username {
         white-space: nowrap;
     }
@@ -47,7 +47,9 @@ span.organization {
     th.username {
         width: 100%;
     }
+}
 
+.users-table, .organization-table {
     tr {
         transition: background-color linear .2s;
 

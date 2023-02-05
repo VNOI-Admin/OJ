@@ -1,7 +1,7 @@
 <div class="blog-sidebox sidebox">
     <h3>{{ _('Top contributors') }} <i class="fa fa-trophy"></i></h3>
     <div class="sidebox-content" style="padding: unset; border: unset;">
-        <table id="users-table" class="table" style="margin-bottom: unset;">
+        <table class="users-table table" style="margin-bottom: unset;">
             <thead>
                 <tr>
                     <th class="header rank" style="border-top-left-radius: unset; padding: 4px 9px 4px 9px;"> # </th>
@@ -13,12 +13,12 @@
                 {% for user in top_contrib %}
                     <tr id="user-{{ loop.index }}">
                         <td>{{ loop.index }}</td>
-                        <td class="user-name"> 
-                            <div style="float:left"> 
+                        <td class="user-name">
+                            <div style="float:left">
                                 {{ link_user(user) }}
-                            </div> 
+                            </div>
                         </td>
-                        
+
                         <td class="user-contrib">
                             {{ user.contribution_points }}
                         </td>
