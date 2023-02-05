@@ -47,6 +47,13 @@ span.organization {
     th.username {
         width: 100%;
     }
+
+    .personal-info {
+        a, span {
+            color: $color_primary50;
+            font-weight: 600;
+        }
+    }
 }
 
 .users-table, .organization-table {

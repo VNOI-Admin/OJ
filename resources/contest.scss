@@ -195,8 +195,13 @@ form.contest-join-pseudotab {
 #ranking-table {
     font-size: 14px;
 
-    .username {
+    .user-name {
         min-width: 20em;
+        position: relative;
+    }
+
+    .userinfo a, .user-name a, .user-name form {
+        display: inline-block !important;
     }
 
     .rating-column {
@@ -207,12 +212,12 @@ form.contest-join-pseudotab {
         height: 2.5em;
     }
 
-    a {
-        display: block;
+    td:not(.user-name, .personal-info) a:hover {
+        text-decoration: underline;
     }
 
-    .user-name a, .user-name form {
-        display: inline-block !important;
+    a {
+        display: block;
     }
 
     /* Make problem table headers green on hover */
@@ -220,12 +225,8 @@ form.contest-join-pseudotab {
         color: #0F0;
     }
 
-    th a, #ranking-table th a:link, #ranking-table th a:visited {
-        color: white;
-    }
-
-    td:not(.user-name, .personal-info) a:hover {
-        text-decoration: underline;
+    th a, th a:link, th a:visited {
+        color: $color_primary0;
     }
 
     .rank {
@@ -237,11 +238,11 @@ form.contest-join-pseudotab {
     }
 
     .disqualified {
-        background-color: #ffa8a8 !important;
+        background-color: $color_contest_ranking_disqualified !important;
     }
 
     .point-denominator {
-        border-top: 1px solid gray;
+        border-top: 1px solid $color_primary50;
         font-size: 0.7em;
     }
 
@@ -251,11 +252,6 @@ form.contest-join-pseudotab {
 
     .personal-info {
         display: none;
-
-        a {
-            color: gray !important;
-            font-weight: 600;
-        }
     }
 
     .virtual-participation {
