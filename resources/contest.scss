@@ -191,3 +191,75 @@ form.contest-join-pseudotab {
 
     padding: 0 5px;
 }
+
+#ranking-table {
+    font-size: 14px;
+
+    .username {
+        min-width: 20em;
+    }
+
+    .rating-column {
+        min-width: 3em;
+    }
+
+    td {
+        height: 2.5em;
+    }
+
+    a {
+        display: block;
+    }
+
+    .user-name a, .user-name form {
+        display: inline-block !important;
+    }
+
+    /* Make problem table headers green on hover */
+    th a:hover {
+        color: #0F0;
+    }
+
+    th a, #ranking-table th a:link, #ranking-table th a:visited {
+        color: white;
+    }
+
+    td:not(.user-name, .personal-info) a:hover {
+        text-decoration: underline;
+    }
+
+    .rank {
+        min-width: 2.4em
+    }
+
+    .points {
+        min-width: 2.4em;
+    }
+
+    .disqualified {
+        background-color: #ffa8a8 !important;
+    }
+
+    .point-denominator {
+        border-top: 1px solid gray;
+        font-size: 0.7em;
+    }
+
+    .start-time {
+        display: none;
+    }
+
+    .personal-info {
+        display: none;
+
+        a {
+            color: gray !important;
+            font-weight: 600;
+        }
+    }
+
+    .virtual-participation {
+        color: grey;
+        float: right
+    }
+}
