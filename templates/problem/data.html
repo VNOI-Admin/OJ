@@ -22,6 +22,7 @@
             });
 
             var select2_settings = {
+                theme: '{{ DMOJ_SELECT2_THEME }}',
                 ajax: {
                     transport: function (params, success) {
                         success({results: valid_files_options});
