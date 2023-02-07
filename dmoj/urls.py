@@ -9,6 +9,7 @@ from django.templatetags.static import static
 from django.urls import include, path, re_path, reverse
 from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import RedirectView
 from martor.views import markdown_search_user
 
@@ -119,7 +120,7 @@ urlpatterns = [
         path('', problem.ProblemDetail.as_view(), name='problem_detail'),
         path('/edit', problem.ProblemEdit.as_view(), name='problem_edit'),
         path('/editorial', problem.ProblemSolution.as_view(), name='problem_editorial'),
-        path('/raw', problem.ProblemRaw.as_view(), name='problem_raw'),
+        path('/raw', xframe_options_sameorigin(problem.ProblemRaw.as_view()), name='problem_raw'),
         path('/pdf', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/pdf/<slug:language>', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/clone', problem.ProblemClone.as_view(), name='problem_clone'),
@@ -311,29 +312,19 @@ urlpatterns = [
     path('status/', status.status_all, name='status_all'),
     path('status/oj/', status.status_oj, name='status_oj'),
 
-    path('api/', include([
-        path('contest/list', api.api_v1_contest_list),
-        path('contest/info/<str:contest>', api.api_v1_contest_detail),
-        path('problem/list', api.api_v1_problem_list),
-        path('problem/info/<str:problem>', api.api_v1_problem_info),
-        path('user/list', api.api_v1_user_list),
-        path('user/info/<str:user>', api.api_v1_user_info),
-        path('user/submissions/<str:user>', api.api_v1_user_submissions),
-        path('user/ratings/<int:page>', api.api_v1_user_ratings),
-        path('v2/', include([
-            path('contests', api.api_v2.APIContestList.as_view()),
-            path('contest/<str:contest>', api.api_v2.APIContestDetail.as_view()),
-            path('problems', api.api_v2.APIProblemList.as_view()),
-            path('problem/<str:problem>', api.api_v2.APIProblemDetail.as_view()),
-            path('users', api.api_v2.APIUserList.as_view()),
-            path('user/<str:user>', api.api_v2.APIUserDetail.as_view()),
-            path('submissions', api.api_v2.APISubmissionList.as_view()),
-            path('submission/<int:submission>', api.api_v2.APISubmissionDetail.as_view()),
-            path('organizations', api.api_v2.APIOrganizationList.as_view()),
-            path('participations', api.api_v2.APIContestParticipationList.as_view()),
-            path('languages', api.api_v2.APILanguageList.as_view()),
-            path('judges', api.api_v2.APIJudgeList.as_view()),
-        ])),
+    path('api/v2/', include([
+        path('contests', api.api_v2.APIContestList.as_view()),
+        path('contest/<str:contest>', api.api_v2.APIContestDetail.as_view()),
+        path('problems', api.api_v2.APIProblemList.as_view()),
+        path('problem/<str:problem>', api.api_v2.APIProblemDetail.as_view()),
+        path('users', api.api_v2.APIUserList.as_view()),
+        path('user/<str:user>', api.api_v2.APIUserDetail.as_view()),
+        path('submissions', api.api_v2.APISubmissionList.as_view()),
+        path('submission/<int:submission>', api.api_v2.APISubmissionDetail.as_view()),
+        path('organizations', api.api_v2.APIOrganizationList.as_view()),
+        path('participations', api.api_v2.APIContestParticipationList.as_view()),
+        path('languages', api.api_v2.APILanguageList.as_view()),
+        path('judges', api.api_v2.APIJudgeList.as_view()),
     ])),
 
     path('posts/', paged_list_view(blog.PostList, 'blog_post_list')),
@@ -414,16 +405,16 @@ urlpatterns = [
     ])),
 
     path('sitemap.xml', sitemap, {'sitemaps': {
-        'problem': ProblemSitemap,
-        'user': UserSitemap,
         'home': HomePageSitemap,
-        'contest': ContestSitemap,
-        'organization': OrganizationSitemap,
-        'blog': BlogPostSitemap,
-        'solutions': SolutionSitemap,
         'pages': UrlSitemap([
             {'location': '/about/', 'priority': 0.9},
         ]),
+        'problem': ProblemSitemap,
+        'solutions': SolutionSitemap,
+        'blog': BlogPostSitemap,
+        'contest': ContestSitemap,
+        'organization': OrganizationSitemap,
+        'user': UserSitemap,
     }}),
 
     path('judge-select2/', include([

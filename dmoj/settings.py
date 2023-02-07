@@ -2,10 +2,10 @@
 Django settings for dmoj project.
 
 For more information on this file, see
-https://docs.djangoproject.com/en/2.2/topics/settings/
+https://docs.djangoproject.com/en/3.2/topics/settings/
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/2.2/ref/settings/
+https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -20,7 +20,7 @@ from jinja2 import select_autoescape
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '5*9f5q57mqmlz2#f$x1h76&jxy#yortjl1v+l*6hd18$d*yx#0'
@@ -35,7 +35,7 @@ CSRF_FAILURE_VIEW = 'judge.views.widgets.csrf_failure'
 SITE_ID = 1
 SITE_NAME = 'DMOJ'
 SITE_LONG_NAME = 'DMOJ: Modern Online Judge'
-SITE_ADMIN_EMAIL = False
+SITE_ADMIN_EMAIL = ''
 
 DMOJ_REQUIRE_STAFF_2FA = True
 # Display warnings that admins will not perform 2FA recovery.
@@ -49,7 +49,7 @@ DMOJ_SSL = 1
 # Refer to dmoj.ca/post/103-point-system-rework
 DMOJ_PP_STEP = 0.98514
 DMOJ_PP_ENTRIES = 300
-DMOJ_PP_BONUS_FUNCTION = lambda n: 0.05 * n # 15 * (1 - 0.997 ** n)  # noqa: E731; 100 bai nua diem: 0.9930924
+DMOJ_PP_BONUS_FUNCTION = lambda n: 0.05 * n  # 15 * (1 - 0.997 ** n)  # noqa: E731; 100 bai nua diem: 0.9930924
 
 VNOJ_ORG_PP_STEP = 0.95
 VNOJ_ORG_PP_ENTRIES = 100
@@ -59,9 +59,9 @@ VNOJ_OFFICIAL_CONTEST_MODE = False
 
 # Contribution points function
 # Both should be int
-VNOJ_CP_COMMENT = 1  # Each comment vote equals 1 CP
-VNOJ_CP_TICKET = 10  # Each good ticket equals CP
-VNOJ_CP_PROBLEM = 20 # Each suggested problem equal 20 CP
+VNOJ_CP_COMMENT = 1   # Each comment vote equals 1 CP
+VNOJ_CP_TICKET = 10   # Each good ticket equals CP
+VNOJ_CP_PROBLEM = 20  # Each suggested problem equal 20 CP
 
 VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
 
@@ -109,7 +109,7 @@ OJ_PROBLEM_PRESET = [
         'regex': r'^https://codeforces\.com/problemset/problem/(?P<contestid>\w+)/(?P<index>\w+)$',
         'codename': 'CF_%s_%s',
         'judge': 'Codeforces',
-        },
+    },
     {
         'regex': r'^https://codeforces\.com/contest/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
         'codename': 'CF_%s_%s',
@@ -152,7 +152,7 @@ OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
 # Urls of discord webhook.
 # https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
 DISCORD_WEBHOOK = {
-    'default': None, # use this link if the specific link not found
+    'default': None,  # use this link if the specific link not found
     'on_new_ticket': None,
     'on_new_comment': None,
     'on_new_problem': None,
@@ -169,7 +169,7 @@ NODEJS = '/usr/bin/node'
 EXIFTOOL = '/usr/bin/exiftool'
 ACE_URL = '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3'
 SELECT2_JS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js'
-DEFAULT_SELECT2_CSS = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'
+SELECT2_CSS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'
 
 DMOJ_CAMO_URL = None
 DMOJ_CAMO_KEY = None
@@ -185,7 +185,7 @@ DMOJ_PROBLEM_HOT_PROBLEM_COUNT = 7
 DMOJ_PROBLEM_STATEMENT_DISALLOWED_CHARACTERS = {'“', '”', '‘', '’', '−', 'ﬀ', 'ﬁ', 'ﬂ', 'ﬃ', 'ﬄ'}
 DMOJ_RATING_COLORS = True
 DMOJ_EMAIL_THROTTLING = (10, 60)
-VNOJ_DISCORD_WEBHOOK_THROTTLING = (10, 60) # Max 10 messages in 60 seconds
+VNOJ_DISCORD_WEBHOOK_THROTTLING = (10, 60)  # Max 10 messages in 60 seconds
 DMOJ_STATS_LANGUAGE_THRESHOLD = 10
 DMOJ_SUBMISSIONS_REJUDGE_LIMIT = 10
 # Maximum number of submissions a single user can queue without the `spam_submission` permission
@@ -193,7 +193,6 @@ DMOJ_SUBMISSION_LIMIT = 2
 # Whether to allow users to view source code: 'all' | 'all-solved' | 'only-own'
 DMOJ_SUBMISSION_SOURCE_VISIBILITY = 'all-solved'
 DMOJ_BLOG_NEW_PROBLEM_COUNT = 7
-DMOJ_BLOG_RECENTLY_ATTEMPTED_PROBLEMS_COUNT = 7
 DMOJ_TOTP_TOLERANCE_HALF_MINUTES = 1
 DMOJ_SCRATCH_CODES_COUNT = 5
 DMOJ_USER_MAX_ORGANIZATION_COUNT = 3
@@ -208,6 +207,7 @@ DMOJ_CONTEST_DATA_CACHE = ''
 DMOJ_CONTEST_DATA_INTERNAL = ''
 DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT = datetime.timedelta(days=1)
 DMOJ_COMMENT_VOTE_HIDE_THRESHOLD = -5
+DMOJ_COMMENT_REPLY_TIMEFRAME = datetime.timedelta(days=365)
 DMOJ_PDF_PROBLEM_CACHE = ''
 DMOJ_PDF_PROBLEM_TEMP_DIR = tempfile.gettempdir()
 DMOJ_STATS_SUBMISSION_RESULT_COLORS = {
@@ -221,6 +221,12 @@ DMOJ_API_PAGE_SIZE = 1000
 
 DMOJ_PASSWORD_RESET_LIMIT_WINDOW = 3600
 DMOJ_PASSWORD_RESET_LIMIT_COUNT = 10
+
+# At the bare minimum, dark and light theme CSS file locations must be declared
+DMOJ_THEME_CSS = {
+    'light': 'style.css',
+    'dark': 'dark/style.css',
+}
 
 MARKDOWN_STYLES = {}
 MARKDOWN_DEFAULT_STYLE = {}
@@ -266,7 +272,6 @@ USE_SELENIUM = False
 SELENIUM_CUSTOM_CHROME_PATH = None
 SELENIUM_CHROMEDRIVER_PATH = 'chromedriver'
 
-PYGMENT_THEME = 'pygment-github.css'
 INLINE_JQUERY = True
 INLINE_FONTAWESOME = True
 JQUERY_JS = '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'
@@ -308,7 +313,7 @@ else:
                     'children': [
                         'judge.TagGroup',
                         'judge.Tag',
-                    ]
+                    ],
                 },
                 ('judge.Submission', 'fa-check-square-o'),
                 {
@@ -444,6 +449,7 @@ SILENCED_SYSTEM_CHECKS = ['urls.W002', 'fields.W342']
 ROOT_URLCONF = 'dmoj.urls'
 LOGIN_REDIRECT_URL = '/user'
 WSGI_APPLICATION = 'dmoj.wsgi.application'
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 TEMPLATES = [
     {
@@ -466,6 +472,7 @@ TEMPLATES = [
                 'judge.template_context.general_info',
                 'judge.template_context.site',
                 'judge.template_context.site_name',
+                'judge.template_context.site_theme',
                 'judge.template_context.misc_config',
                 'judge.template_context.math_setting',
                 'social_django.context_processors.backends',
@@ -531,8 +538,8 @@ BLEACH_USER_SAFE_ATTRS = {
     'dfn': ['title'],
     'time': ['datetime'],
     'data': ['value'],
-    'td':  ['colspan', 'rowspan'],
-    'th':  ['colspan', 'rowspan'],
+    'td': ['colspan', 'rowspan'],
+    'th': ['colspan', 'rowspan'],
     'audio': ['autoplay', 'controls', 'crossorigin', 'muted', 'loop', 'preload', 'src'],
     'video': ['autoplay', 'controls', 'crossorigin', 'height', 'muted', 'loop', 'poster', 'preload', 'src', 'width'],
     'source': ['src', 'srcset', 'type'],
@@ -617,7 +624,7 @@ SUBMISSION_FILE_UPLOAD_URL_PREFIX = '/submission_file'
 SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission_file'
 
 # Database
-# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
+# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -645,7 +652,7 @@ EVENT_DAEMON_SUBMISSION_KEY = '6Sdmkx^%pk@GsifDfXcwX*Y7LRF%RGT8vmFpSxFBT$fwS7trc
 EVENT_DAEMON_CONTEST_KEY = '&w7hB-.9WnY2Jj^Qm+|?o6a<!}_2Wiw+?(_Yccqq{uR;:kWQP+3R<r(ICc|4^dDeEuJE{*D;Gg@K(4K>'
 
 # Internationalization
-# https://docs.djangoproject.com/en/2.2/topics/i18n/
+# https://docs.djangoproject.com/en/3.2/topics/i18n/
 
 # Whatever you do, this better be one of the entries in `LANGUAGES`.
 LANGUAGE_CODE = 'en'
@@ -659,7 +666,7 @@ USE_TZ = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.2/howto/static-files/
+# https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 DMOJ_RESOURCES = os.path.join(BASE_DIR, 'resources')
 STATICFILES_FINDERS = (
@@ -702,8 +709,6 @@ SOCIAL_AUTH_GITHUB_SECURE_SCOPE = ['user:email']
 SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
 SOCIAL_AUTH_SLUGIFY_USERNAMES = True
 SOCIAL_AUTH_SLUGIFY_FUNCTION = 'judge.social_auth.slugify_username'
-
-JUDGE_AMQP_PATH = None
 
 MOSS_API_KEY = None
 

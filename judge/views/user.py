@@ -16,7 +16,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
-from django.db.models import Count, F, Max, Min, Prefetch
+from django.db.models import Count, F, FilteredRelation, Max, Min, Prefetch, Q
 from django.db.models.expressions import Value
 from django.db.models.fields import DateField
 from django.db.models.functions import Cast, Coalesce, ExtractYear
@@ -34,7 +34,7 @@ from reversion import revisions
 
 from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
     newsletter_id
-from judge.models import BlogPost, BlogVote, Organization, Profile, Rating, Submission
+from judge.models import BlogPost, Organization, Profile, Submission
 from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
@@ -44,7 +44,6 @@ from judge.utils.celery import task_status_by_id, task_status_url_by_id
 from judge.utils.problems import contest_completed_ids, user_completed_ids
 from judge.utils.pwned import PwnedPasswordsValidator
 from judge.utils.ranker import ranker
-from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
@@ -200,16 +199,6 @@ class UserAboutPage(UserPage):
             'height': '%.3fem' % rating_progress(rating.rating),
         } for rating in ratings]))
 
-        if ratings:
-            user_data = self.object.ratings.aggregate(Min('rating'), Max('rating'))
-            global_data = Rating.objects.aggregate(Min('rating'), Max('rating'))
-            min_ever, max_ever = global_data['rating__min'], global_data['rating__max']
-            min_user, max_user = user_data['rating__min'], user_data['rating__max']
-            delta = max_user - min_user
-            ratio = (max_ever - max_user) / (max_ever - min_ever) if max_ever != min_ever else 1.0
-            context['max_graph'] = max_user + ratio * delta
-            context['min_graph'] = min_user + ratio * delta - delta
-
         user_timezone = settings.DEFAULT_USER_TIME_ZONE
         if self.request is not None and self.request.profile is not None:
             user_timezone = user_timezone or self.request.profile.timezone
@@ -264,9 +253,10 @@ class UserBlogPage(CustomUserMixin, PostListBase):
             queryset = queryset.filter(visible=True, publish_on__lte=timezone.now())
 
         if self.request.user.is_authenticated:
-            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
             profile = self.request.profile
-            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
+            queryset = queryset.annotate(
+                my_vote=FilteredRelation('votes', condition=Q(votes__voter_id=profile.id)),
+            ).annotate(vote_score=Coalesce(F('my_vote__score'), Value(0)))
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 
@@ -456,7 +446,7 @@ class UserDownloadData(LoginRequiredMixin, UserDataMixin, View):
 @login_required
 def edit_profile(request):
     if request.profile.mute:
-        raise Http404()
+        return generic_message(request, _("Can't edit profile"), _('Your part is silent, little toad.'), status=403)
     if request.method == 'POST':
         form = ProfileForm(request.POST, instance=request.profile, user=request.user)
         form_user = UserForm(request.POST, instance=request.user)

@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import Max, Sum
+from django.db.models import F, Max, Sum
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -21,7 +21,7 @@ from fernet_fields import EncryptedCharField
 from pyotp.utils import strings_equal
 from sortedm2m.fields import SortedManyToManyField
 
-from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, TIMEZONE
+from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, SITE_THEMES, TIMEZONE
 from judge.models.runtime import Language
 from judge.ratings import rating_class
 from judge.utils.float_compare import float_compare_equal
@@ -139,7 +139,8 @@ class Profile(models.Model):
     performance_points = models.FloatField(default=0, db_index=True)
     contribution_points = models.IntegerField(default=0, db_index=True)
     problem_count = models.IntegerField(default=0, db_index=True)
-    ace_theme = models.CharField(max_length=30, choices=ACE_THEMES, default='github')
+    ace_theme = models.CharField(max_length=30, verbose_name=_('Ace theme'), choices=ACE_THEMES, default='github')
+    site_theme = models.CharField(max_length=10, verbose_name=_('site theme'), choices=SITE_THEMES, default='auto')
     last_access = models.DateTimeField(verbose_name=_('last access time'), default=now)
     ip = models.GenericIPAddressField(verbose_name=_('last IP'), blank=True, null=True)
     badges = models.ManyToManyField(Badge, verbose_name=_('badges'), blank=True, related_name='users')
@@ -234,13 +235,14 @@ class Profile(models.Model):
                            .annotate(max_points=Max('submission__points')).order_by('-max_points')
                            .values_list('max_points', flat=True).filter(max_points__gt=0)
         )
-        extradata = (
-            public_problems.filter(submission__user=self, submission__result='AC').values('id').distinct().count()
-        )
         bonus_function = settings.DMOJ_PP_BONUS_FUNCTION
         points = sum(data)
-        problems = len(data)
-        pp = sum(x * y for x, y in zip(table, data)) + bonus_function(extradata)
+        problems = (
+            public_problems.filter(submission__user=self, submission__result='AC',
+                                   submission__case_points__gte=F('submission__case_total'))
+            .values('id').distinct().count()
+        )
+        pp = sum(x * y for x, y in zip(table, data)) + bonus_function(problems)
         if not float_compare_equal(self.points, points) or \
            problems != self.problem_count or \
            not float_compare_equal(self.performance_points, pp):

@@ -13,7 +13,7 @@
     color: #55ACEE;
 }
 
-.facebook-this it {
+.facebook-this i {
     color: #133783;
 }
 
@@ -47,24 +47,20 @@
         background: #265a88;
     }
 
+    &:active {
+        border-color: #245580;
+        background: #265a88;
+    }
+
+    &.full {
+        padding: 6px 0;
+    }
+
     &.disabled {
         background: linear-gradient(to bottom, darkgray 0, gray 100%) repeat-x !important;
         border-color: grey !important;
         cursor: not-allowed;
     }
-}
-
-.button.full, input[type=submit].full, button.full {
-    padding: 6px 0;
-}
-
-button:hover, button:hover, input[type=submit]:hover {
-    background: #265a88;
-}
-
-.button:active, button:active, input[type=submit]:hover {
-    border-color: #245580;
-    background: #265a88;
 }
 
 .inline-button {
@@ -76,17 +72,28 @@ button:hover, button:hover, input[type=submit]:hover {
 input {
     &[type=text], &[type=password], &[type=email], &[type=number], &[type=url] {
         padding: 4px 8px;
-        color: #555;
-        background: #FFF none;
-        border: 1px solid $border_gray;
+        color: $color_primary75;
+        background: $color_primary0 none;
+        border: 1px solid $color_primary25;
         border-radius: $widget_border_radius;
-        box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+        box-shadow: 0 1px 1px rgba($color_primary100, 0.075) inset;
         transition: border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
         box-sizing: border-box;
 
         // Need this explicitly because UA stylesheet for Chrome on 4k makes
         // everything look bad otherwise (forces it to 9.3px)
         font-size: $base_font_size;
+
+        &:hover {
+            border-color: rgba(82, 168, 236, 0.8);
+            box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 4px rgba(82, 168, 236, 0.6);
+        }
+
+        &:focus {
+            border-color: rgba(82, 168, 236, 0.8);
+            box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+            outline: 0;
+        }
     }
 
     &[type=number] {
@@ -100,39 +107,24 @@ input {
 
 textarea {
     padding: 4px 8px;
-    color: #555;
-    background: #FFF none;
-    border: 1px solid $border_gray;
+    color: $color_primary75;
+    background: $color_primary0 none;
+    border: 1px solid $color_primary25;
     border-radius: $widget_border_radius;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.075) inset;
+    box-shadow: 0 1px 1px rgba($color_primary100, 0.075) inset;
     transition: border-color 0.15s ease-in-out 0s, box-shadow 0.15s ease-in-out 0s;
     box-sizing: border-box;
 }
 
 textarea:hover {
     border-color: rgba(82, 168, 236, 0.8);
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 4px rgba(82, 168, 236, 0.6);
-}
-
-input {
-    &[type="text"]:hover, &[type="password"]:hover {
-        border-color: rgba(82, 168, 236, 0.8);
-        box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 4px rgba(82, 168, 236, 0.6);
-    }
+    box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 4px rgba(82, 168, 236, 0.6);
 }
 
 textarea:focus {
     border-color: rgba(82, 168, 236, 0.8);
-    box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+    box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
     outline: 0;
-}
-
-input {
-    &[type="text"]:focus, &[type="password"]:focus {
-        border-color: rgba(82, 168, 236, 0.8);
-        box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
-        outline: 0;
-    }
 }
 
 // Bootstrap-y copy button
@@ -142,10 +134,10 @@ input {
     display: block;
     font-size: 12px;
     font-weight: bold;
-    color: #767676;
+    color: $color_primary50;
     cursor: pointer;
-    background-color: #FFF;
-    border: 1px solid #E1E1E8;
+    background-color: $color_pageBg;
+    border: 1px solid $color_primary25;
     border-radius: 0 $widget_border_radius;
     position: absolute;
     padding: 5px 8px;
@@ -158,28 +150,25 @@ input {
 
 // Bootstrap-y tabs
 .ul_tab_a_active {
-    color: black;
+    color: $color_primary100;
     cursor: default;
-    background-color: #fff;
-    border: 1px solid $border_gray;
-    border-bottom-color: transparent;
+    border: 1px solid $color_primary25;
+    border-bottom-color: $color_pageBg;
     border-image: none;
 }
 
 .tabs {
-    border-bottom: 1px solid $border_gray;
+    border-bottom: 1px solid $color_primary25;
     margin: 0 0 8px;
     width: 100%;
     display: flex;
-
-    &.tabs-no-flex {
-        display: block;
-    }
+    justify-content: space-between;
+    flex-wrap: wrap;
 
     .tab {
         .tab-icon {
             padding-right: 0.3em;
-            color: gray;
+            color: $color_primary50;
 
             &.fa-plus {
                 color: green !important;
@@ -196,13 +185,13 @@ input {
             }
 
             .tab-icon {
-                color: black;
+                color: $color_primary100;
             }
         }
     }
 
     h2 {
-        color: #393630;
+        color: $color_primary75;
     }
 
     > ul {
@@ -238,7 +227,7 @@ input {
                 position: relative;
                 display: block;
                 padding: 10px 15px;
-                color: #555;
+                color: $color_primary50;
                 text-decoration: none;
                 white-space: nowrap;
             }
@@ -248,15 +237,13 @@ input {
 
 // Bootstrap-y pagination
 ul.pagination a:hover {
-    color: #FFF;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba($color_primary100, 0.55);
 }
 
 ul.pagination {
     display: inline-block;
     padding-left: 0;
     margin: 0;
-    border-radius: $widget_border_radius;
 
     > {
         li {
@@ -272,7 +259,6 @@ ul.pagination {
 
             &:last-child > {
                 a, span {
-                    margin-left: 0;
                     border-top-right-radius: $widget_border_radius;
                     border-bottom-right-radius: $widget_border_radius;
                 }
@@ -285,38 +271,22 @@ ul.pagination {
                     padding: 4px 12px;
                     line-height: 1.42857;
                     text-decoration: none;
-                    color: #FFF;
-                    background-color: $widget_black;
-                    border: 1px solid #505050;
+                    color: $color_primary0;
+                    background-color: $color_primary75;
+                    border: 1px solid $color_primary50;
                     margin-left: -1px;
                 }
             }
         }
 
         .disabled-page > {
-            a {
-                color: #888;
-                background-color: $widget_black;
-                border-color: #282828;
-            }
-
-            span {
-                color: #888;
-                background-color: $widget_black;
-                border-color: #505050;
+            a, span {
+                color: $color_primary50;
             }
         }
 
         .active-page > {
-            a {
-                z-index: 2;
-                color: #FFF;
-                background-color: $highlight_blue;
-                border-color: transparent;
-                cursor: default;
-            }
-
-            span {
+            a, span {
                 z-index: 2;
                 color: #FFF;
                 background-color: $highlight_blue;
@@ -328,9 +298,10 @@ ul.pagination {
 }
 
 .top-pagination-bar {
-    margin-top: 11px;
-    margin-bottom: 7px;
+    margin: 11px 0 7px;
     display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
 }
 
 .bottom-pagination-bar {
@@ -420,21 +391,26 @@ a.close {
 }
 
 .form-submit-group {
-    border-top: 1px solid #EEE;
+    border-top: 1px solid rgba($color_primary100, 0.1);
     margin-top: 0.8em;
     padding-top: 0.5em;
     text-align: right;
 }
 
+ul.select2-results__options {
+    color: black;
+}
+
 ul.select2-selection__rendered {
     padding: 0 5px !important;
+    color: black;
 }
 
 .sidebox h3 {
     margin: 0 -5px;
-    background: $widget_black;
+    background: $color_primary75;
     border-radius: $widget_border_radius $widget_border_radius 0 0;
-    color: white;
+    color: $color_primary0;
     padding-top: 5px;
     padding-bottom: 5px;
     padding-left: 7px;
@@ -442,13 +418,13 @@ ul.select2-selection__rendered {
 }
 
 .sidebox h3 .fa {
-    color: white;
+    color: $color_primary0;
     float: right;
     margin: 0.2em 0.4em 0 0;
 }
 
 .sidebox-content {
-    border: 1px solid $border_gray;
+    border: 1px solid $color_primary25;
     border-top: none;
     margin: 0 -5px;
     padding: 1px 0.5em 3px;
@@ -533,8 +509,8 @@ ul.select2-selection__rendered {
 }
 
 details {
-    border: 1px solid $border_gray;
-    background: $background_light_gray;
+    border: 1px solid $color_primary25;
+    background: $color_primary5;
     padding: 5px 10px;
     border-radius: 4px;
 }

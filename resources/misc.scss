@@ -1,18 +1,17 @@
 @import "vars";
 
 #judge-versions {
-    display: block;
-
     .version {
         font-family: $monospace-fonts;
     }
 
     .version-blank {
-        background: #eee;
+        background: $color_primary10;
     }
 
     .version-latest {
-        background: #b3ff3fe6;
+        background: #af3c;
+        color: black;
     }
 
     .version-outdated {
@@ -20,28 +19,9 @@
         color: white;
     }
 
-    tbody {
-        display: block;
-    }
-
-    tr {
-        display: flex;
-        flex-direction: row;
-        padding: 0;
-
-        &:first-child {
-            position: sticky;
-            top: 42px;
-            line-height: 1.8em;
-        }
-    }
-
-    td, th {
-        display: block;
-        flex: 1 0 110px;
-        overflow-x: hidden;
-        height: auto;
-        padding: 7px 5px;
+    tr:first-child {
+        position: sticky;
+        top: 43px;
     }
 }
 
@@ -75,4 +55,8 @@
     justify-content: center;
     align-content: center;
     padding-top: 5%;
+}
+
+.grayed {
+    color: $color_primary75;
 }

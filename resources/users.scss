@@ -6,10 +6,8 @@ td.user-name, td.personal-info, td.organization-name {
 }
 
 tr {
-    padding-bottom: 96px;
-
     &:target {
-        background: #fff897;
+        background: rgba($color_link200, 0.2);
     }
 
     td.full-score, td.failed-score, td.partial-score {
@@ -37,31 +35,37 @@ span.organization {
 }
 
 #users-table, #organization-table {
-    th a {
-        color: white;
-    }
-
-    .username {
-        width: 100%;
-    }
-
-    .header {
-        vertical-align: middle;
-    }
-
-    .rank, .points, .problems, .username {
+    th.rank, th.points, th.problems, th.username {
         white-space: nowrap;
+    }
+
+    th.rank {
+        padding-left: 5px;
+        padding-right: 5px;
+    }
+
+    th.username {
+        width: 100%;
     }
 
     tr {
         transition: background-color linear .2s;
 
         &:hover {
-            background: #EAEAEA;
+            background: rgba($color_primary100, 0.05);
         }
 
         &.highlight {
-            background: #fff897;
+            background: rgba($color_link200, 0.2);
+        }
+    }
+
+    th a {
+        color: $color_primary0;
+
+        &:link,
+        &:visited {
+            color: $color_primary0;
         }
     }
 }
@@ -78,71 +82,14 @@ span.organization {
     .select2-selection__rendered {
         cursor: text;
     }
-
-    .select2-results__option {
-        position: relative;
-    }
-
-    .select2-results__option--highlighted {
-        background-color: #DEDEDE !important;
-    }
-
-    li.select2-results__option--highlighted a.user-redirect {
-        display: inline-block;
-    }
 }
 
-a.user-redirect {
-    color: #2980b9;
-    vertical-align: middle;
-    font-size: 1.2em;
-    position: absolute;
-    right: 0.8em;
-    display: none;
-
-    &:hover {
-        text-shadow: 0 0 2px blue;
-    }
-}
-
-a.edit-profile {
-    float: right;
-    padding-top: 1em;
-}
-
-.user-problem-group {
-    h3 {
-        font-weight: 600;
-        font-size: 1.25em;
-        margin-bottom: -10px;
-        max-height: 20%;
-        line-height: 2.5em;
-    }
-    ul {
-        -webkit-columns: 300px 4;
-        -moz-columns: 300px 4;
-        columns: 300px 4;
-        list-style-type: none;
-        margin-top: 0;
-        margin-left: -20px;
-        margin-bottom: 0;
-    }
-    a img {
-        max-width: 1em;
-        margin-right: 3px;
-        padding-bottom: 1px;
-        vertical-align: middle;
-    }
-}
-
-.user-info-cell {
-    padding-left: 15px;
-    border-left: 1px solid #CCC;
-}
-
-.contest-history-cell {
-    border-left: 1px solid #CCC;
-    padding: 0 0.5em;
+.user-problem-group h3 {
+    font-weight: 600;
+    font-size: 1.25em;
+    margin-bottom: -10px;
+    max-height: 20%;
+    line-height: 2.5em;
 }
 
 .hide-solved-problems {
@@ -161,20 +108,23 @@ a.edit-profile {
     top: 50%;
     width: 100000px;
     height: 1px;
-    background: rgba(0, 0, 0, 0.2);
+    background: $color_primary25;
     right: 100%;
     margin-right: 5px;
 }
 
 .user-info-page {
     display: flex;
-    max-width: 100%;
-    min-height: 0;
 }
 
 .user-sidebar {
-    flex: 0 0 150px;
-    padding-left: 1em;
+    width: 150px;
+    padding-left: 15px;
+}
+
+img.user-gravatar {
+    display: block;
+    border-radius: 6px;
 }
 
 .user-content {
@@ -189,7 +139,6 @@ a.edit-profile {
     }
 
     .user-sidebar {
-        width: 150px;
         margin: 0 auto;
     }
 
@@ -204,12 +153,8 @@ a.edit-profile {
         font-size: 1.4em;
     }
 
-    .pp-scaled {
-        font-size: 0.8em;
-    }
-
     .pp-weighted {
-        color: #777;
+        color: $color_primary50;
     }
 
     div.sub-pp {
@@ -218,24 +163,11 @@ a.edit-profile {
         width: unset;
         border-left: none;
     }
-
-    td.problem-name {
-        text-align: left;
-        padding-left: 1em;
-    }
-
-    td.problem-score {
-        width: 80px;
-    }
-
-    td.problem-category {
-        width: 100px;
-    }
 }
 
 #pp-load-link-wrapper {
     text-align: center;
-    border: 1px solid #ccc;
+    border: 1px solid $color_primary25;
 }
 
 #pp-load-more-link {
@@ -278,12 +210,12 @@ a.edit-profile {
         }
         #year {
             font-size: 1.25em;
-            color: #444;
+            color: $color_primary75;
         }
     }
 
     #submission-activity-display {
-        border: 1px solid $border_gray;
+        border: 1px solid $color_primary25;
         border-radius: $table_header_rounding;
 
         .info-bar {
@@ -304,17 +236,15 @@ a.edit-profile {
             font-size: 0.75em;
             line-height: 1;
             font-weight: 100;
-            color: #444;
+            color: $color_primary75;
         }
 
         #submission-total-count {
             align-self: center;
             padding-left: 8%;
             font-size: 0.85em;
-        }
 
-        @media(max-width: 1000px) {
-            #submission-total-count {
+            @media (max-width: 1000px) {
                 padding-left: 5px;
             }
         }
@@ -325,13 +255,12 @@ a.edit-profile {
 
             th.submission-date-col {
                 width: 8%;
-            }
 
-            @media (max-width: 1000px) {
-                th.submission-date-col {
+                @media (max-width: 1000px) {
                     display: none;
                 }
             }
+
             td {
                 border-radius: 20%;
 
@@ -345,7 +274,7 @@ a.edit-profile {
                 }
 
                 &.activity-blank {
-                    background-color: white;
+                    background-color: $color_pageBg;
                 }
                 &.activity-0 {
                     background-color: #ddd;

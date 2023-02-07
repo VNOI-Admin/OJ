@@ -35,7 +35,6 @@ GRADERS = (
     ('interactive', _('Interactive')),
     ('signature', _('Function Signature Grading (IOI-style)')),
     ('output_only', _('Output Only')),
-    ('custom_judge', _('Custom Grader')),
 )
 
 IO_METHODS = (
@@ -49,6 +48,7 @@ CUSTOM_CHECKERS = (
     ('cms', _('CMS checker')),
     ('coci', _('COCI checker')),
     ('peg', _('PEG checker')),
+    ('default', _('DMOJ checker')),
 )
 
 
@@ -64,6 +64,8 @@ class ProblemData(models.Model):
     feedback = models.TextField(verbose_name=_('init.yml generation feedback'), blank=True)
     checker = models.CharField(max_length=10, verbose_name=_('checker'), choices=CHECKERS, default='standard')
     grader = models.CharField(max_length=30, verbose_name=_('Grader'), choices=GRADERS, default='standard')
+    unicode = models.BooleanField(verbose_name=_('enable unicode'), null=True, blank=True)
+    nobigmath = models.BooleanField(verbose_name=_('disable bigInteger / bigDecimal'), null=True, blank=True)
     checker_args = models.TextField(verbose_name=_('checker arguments'), blank=True,
                                     help_text=_('Checker arguments as a JSON object.'))
 
@@ -72,14 +74,14 @@ class ProblemData(models.Model):
                                       blank=True,
                                       upload_to=problem_directory_file,
                                       validators=[FileExtensionValidator(
-                                          allowed_extensions=['cpp', 'py', 'pas', 'java'],
+                                          allowed_extensions=['cpp', 'pas', 'java'],
                                       )])
 
     custom_grader = models.FileField(verbose_name=_('custom grader file'), storage=problem_data_storage,
                                      null=True,
                                      blank=True,
                                      upload_to=problem_directory_file,
-                                     validators=[FileExtensionValidator(allowed_extensions=['cpp', 'py'])])
+                                     validators=[FileExtensionValidator(allowed_extensions=['cpp'])])
 
     custom_header = models.FileField(verbose_name=_('custom header file'), storage=problem_data_storage,
                                      null=True,

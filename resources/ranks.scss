@@ -1,5 +1,7 @@
+@import "vars";
+
 .admin a, .admin {
-    color: black !important;
+    color: $color_primary100 !important;
     font-weight: bold !important;
 }
 
@@ -35,6 +37,12 @@
     content: "🧑‍🏫";
 }
 
+.deleted-user, .deleted-user a {
+    color: #999;
+    font-weight: normal;
+    text-decoration: line-through $color_primary100;
+}
+
 @mixin rate-svg-color($color) {
     circle {
         stroke: $color;
@@ -56,39 +64,36 @@ svg.rate-box {
         visibility: hidden;
     }
 
+    &.rate-primary0 {
+        @include rate-svg-color($color_primary0);
+    }
+
     &.rate-newbie {
-        @include rate-svg-color(#808080);
+        @include rate-svg-color($color_rating_newbie);
     }
 
     &.rate-pupil {
-        @include rate-svg-color(#008000);
+        @include rate-svg-color($color_rating_pupil);
     }
 
     &.rate-specialist {
-        @include rate-svg-color(#03A89E);
+        @include rate-svg-color($color_rating_specialist);
     }
 
     &.rate-expert {
-        @include rate-svg-color(#0000FF);
+        @include rate-svg-color($color_rating_expert);
     }
 
     &.rate-candidate-master {
-        @include rate-svg-color(#AA00AA);
+        @include rate-svg-color($color_rating_candidate_master);
     }
 
     &.rate-master, &.rate-international-master {
-        @include rate-svg-color(#FF8C00);
+        @include rate-svg-color($color_rating_master);
     }
 
     &.rate-grandmaster, &.rate-international-grandmaster, &.rate-legendary-grandmaster {
-        @include rate-svg-color(#FF0000);
-    }
-
-    &.rate-target {
-        circle:last-child {
-            stroke: none;
-            fill: #FF0000;
-        }
+        @include rate-svg-color($color_rating_grandmaster);
     }
 }
 
@@ -97,43 +102,43 @@ svg.rate-box {
 }
 
 .rate-none, .rate-none a {
-    color: #999;
+    color: $color_rating_none;
     font-weight: normal;
 }
 
 .rate-newbie, .rate-newbie a {
-    color: #808080;
+    color: $color_rating_newbie;
 }
 
 .rate-pupil, .rate-pupil a {
-    color: #008000;
+    color: $color_rating_pupil;
 }
 
 .rate-specialist, .rate-specialist a {
-    color: #03A89E;
+    color: $color_rating_specialist;
 }
 
 .rate-expert, .rate-expert a {
-    color: #0000FF;
+    color: $color_rating_expert;
 }
 
 .rate-candidate-master, .rate-candidate-master a {
-    color: #AA00AA;
+    color: $color_rating_candidate_master;
 }
 
 .rate-master, .rate-master a,
 .rate-international-master, .rate-international-master a {
-    color: #FF8C00;
+    color: $color_rating_master;
 }
 
 .rate-grandmaster, .rate-grandmaster a,
 .rate-international-grandmaster, .rate-international-grandmaster a,
 .rate-legendary-grandmaster, .rate-legendary-grandmaster a {
-    color: #FF0000;
+    color: $color_rating_grandmaster;
 }
 
 .rate-legendary-grandmaster a::first-letter {
-    color: black;
+    color: $color_primary0;
 }
 
 .rate-group {
@@ -143,10 +148,11 @@ svg.rate-box {
 
     .rating {
         display: inline-block;
+        vertical-align: middle;
     }
 
     .rate-box {
         margin-right: 0.2em;
-        vertical-align: bottom;
+        vertical-align: middle;
     }
 }

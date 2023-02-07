@@ -4,8 +4,8 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.contrib.auth.models import Group
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.db.models import Count, Q
-from django.db.models.expressions import Value
+from django.db.models import Count, FilteredRelation, Q
+from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponsePermanentRedirect, HttpResponseRedirect
@@ -19,11 +19,10 @@ from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateR
 from reversion import revisions
 
 from judge.forms import OrganizationForm
-from judge.models import BlogPost, BlogVote, Comment, Contest, Language, Organization, OrganizationRequest, \
+from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
     Problem, Profile
 from judge.tasks import on_new_problem
 from judge.utils.ranker import ranker
-from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.views import QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
@@ -129,7 +128,9 @@ class JoinOrganization(OrganizationMembershipChange):
         if profile.organizations.filter(is_open=True).count() >= max_orgs:
             return generic_message(
                 request, _('Joining organization'),
-                _('You may not be part of more than {count} public organizations.').format(count=max_orgs),
+                ngettext('You may not be part of more than {count} public organization.',
+                         'You may not be part of more than {count} public organizations.',
+                         max_orgs).format(count=max_orgs),
             )
 
         profile.organizations.add(org)
@@ -247,9 +248,11 @@ class OrganizationRequestView(OrganizationRequestBaseView):
                 to_approve = sum(form.cleaned_data['state'] == 'A' for form in formset.forms if form not in deleted_set)
                 can_add = organization.slots - organization.members.count()
                 if to_approve > can_add:
-                    messages.error(request, _('Your organization can only receive %(can_add)d more members. '
-                                              'You cannot approve %(to_approve)d users.') %
-                                             ({'can_add': can_add, 'to_approve': to_approve}))
+                    msg1 = ngettext('Your organization can only receive %d more member.',
+                                    'Your organization can only receive %d more members.', can_add) % can_add
+                    msg2 = ngettext('You cannot approve %d user.',
+                                    'You cannot approve %d users.', to_approve) % to_approve
+                    messages.error(request, msg1 + '\n' + msg2)
                     return self.render_to_response(self.get_context_data(object=organization))
 
             approved, rejected = 0, 0
@@ -462,9 +465,10 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
                 queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
 
         if self.request.user.is_authenticated:
-            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
             profile = self.request.profile
-            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
+            queryset = queryset.annotate(
+                my_vote=FilteredRelation('votes', condition=Q(votes__voter_id=profile.id)),
+            ).annotate(vote_score=Coalesce(F('my_vote__score'), Value(0)))
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
 

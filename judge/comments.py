@@ -3,12 +3,13 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.contenttypes.models import ContentType
 from django.core.exceptions import ValidationError
-from django.db.models import Count
-from django.db.models.expressions import Value
+from django.db.models import Count, FilteredRelation, Q
+from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import ModelForm
 from django.http import HttpResponseBadRequest, HttpResponseForbidden, HttpResponseNotFound, HttpResponseRedirect
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.translation import gettext as _
 from django.views.generic import View
@@ -18,8 +19,7 @@ from reversion import revisions
 from reversion.models import Revision, Version
 
 from judge.dblock import LockModel
-from judge.models import Comment, CommentLock, CommentVote
-from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
+from judge.models import Comment, CommentLock
 from judge.widgets import HeavyPreviewPageDownWidget
 
 
@@ -79,10 +79,14 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
             try:
                 parent = int(parent)
             except ValueError:
+                return HttpResponseBadRequest()
+            try:
+                parent_comment = Comment.objects.get(hidden=False, id=parent, page=page)
+            except Comment.DoesNotExist:
                 return HttpResponseNotFound()
-            else:
-                if not Comment.objects.filter(hidden=False, id=parent, page=page).exists():
-                    return HttpResponseNotFound()
+            if not (self.request.user.has_perm('judge.change_comment') or
+                    parent_comment.time > timezone.now() - settings.DMOJ_COMMENT_REPLY_TIMEFRAME):
+                return HttpResponseForbidden()
 
         form = CommentForm(request, request.POST)
         if form.is_valid():
@@ -114,14 +118,16 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
                            .defer('author__about').annotate(revisions=Count('versions'))
 
         if self.request.user.is_authenticated:
-            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(CommentVote, 'score'), Value(0)))
             profile = self.request.profile
-            unique_together_left_join(queryset, CommentVote, 'comment', 'voter', profile.id)
+            queryset = queryset.annotate(
+                my_vote=FilteredRelation('votes', condition=Q(votes__voter_id=profile.id)),
+            ).annotate(vote_score=Coalesce(F('my_vote__score'), Value(0)))
             context['is_new_user'] = profile.is_new_user
             context['interact_min_problem_count_msg'] = \
                 _('You need to have solved at least %d problems before your voice can be heard.') \
                 % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
         context['comment_list'] = queryset
         context['vote_hide_threshold'] = settings.DMOJ_COMMENT_VOTE_HIDE_THRESHOLD
+        context['reply_cutoff'] = timezone.now() - settings.DMOJ_COMMENT_REPLY_TIMEFRAME
 
         return context

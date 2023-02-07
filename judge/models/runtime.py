@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
-from judge.judgeapi import disconnect_judge
+from judge.judgeapi import disconnect_judge, update_disable_judge
 
 __all__ = ['Language', 'RuntimeVersion', 'Judge']
 
@@ -138,6 +138,8 @@ class Judge(models.Model):
     is_blocked = models.BooleanField(verbose_name=_('block judge'), default=False,
                                      help_text=_('Whether this judge should be blocked from connecting, '
                                                  'even if its key is correct.'))
+    is_disabled = models.BooleanField(verbose_name=_('disable judge'), default=False,
+                                      help_text=_('Whether this judge should be removed from judging queue.'))
     online = models.BooleanField(verbose_name=_('judge online status'), default=False)
     start_time = models.DateTimeField(verbose_name=_('judge start time'), null=True)
     ping = models.FloatField(verbose_name=_('response time'), null=True)
@@ -155,6 +157,13 @@ class Judge(models.Model):
         disconnect_judge(self, force=force)
 
     disconnect.alters_data = True
+
+    def toggle_disabled(self):
+        self.is_disabled = not self.is_disabled
+        update_disable_judge(self)
+        self.save(update_fields=['is_disabled'])
+
+    toggle_disabled.alters_data = True
 
     @classmethod
     def runtime_versions(cls):

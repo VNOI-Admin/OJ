@@ -12,11 +12,10 @@ dmoj-site.pid
 dmoj-site.sock
 uwsgi.ini
 .fuse_hidden*
-resources/style.css
-resources/content-description.css
-resources/ranks.css
-resources/table.css
+resources/dark
 resources/martor-description.css
+resources/style.css
+resources/vars.scss
 sass_processed
 bridge_log.txt
 _mytempfile/

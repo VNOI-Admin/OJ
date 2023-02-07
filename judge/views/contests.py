@@ -288,7 +288,7 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
             .add_i18n_name(self.request.LANGUAGE_CODE)
 
         # convert to problem points in contest instead of actual points
-        points_list = self.object.contest_problems.values_list('points').order_by('order')
+        points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
         for idx, p in enumerate(context['contest_problems']):
             p.points = points_list[idx][0]
 
@@ -343,10 +343,11 @@ class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
                 default=False,
                 output_field=BooleanField(),
             )) \
-            .add_i18n_name(self.request.LANGUAGE_CODE)
+            .add_i18n_name(self.request.LANGUAGE_CODE) \
+            .add_i18n_description(self.request.LANGUAGE_CODE)
 
         # convert to problem points in contest instead of actual points
-        points_list = self.object.contest_problems.values_list('points').order_by('order')
+        points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
         for idx, p in enumerate(context['contest_problems']):
             p.points = points_list[idx][0]
 
@@ -549,12 +550,11 @@ class ContestLeave(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
         return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
 
 
-ContestDay = namedtuple('ContestDay', 'date weekday is_pad is_today starts ends oneday')
+ContestDay = namedtuple('ContestDay', 'date is_pad is_today starts ends oneday')
 
 
 class ContestCalendar(TitleMixin, ContestListMixin, TemplateView):
     firstweekday = SUNDAY
-    weekday_classes = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
     template_name = 'contest/calendar.html'
 
     def get(self, request, *args, **kwargs):
@@ -562,7 +562,7 @@ class ContestCalendar(TitleMixin, ContestListMixin, TemplateView):
             self.year = int(kwargs['year'])
             self.month = int(kwargs['month'])
         except (KeyError, ValueError):
-            raise ImproperlyConfigured(_('ContestCalendar requires integer year and month'))
+            raise ImproperlyConfigured('ContestCalendar requires integer year and month')
         self.today = timezone.now().date()
         return self.render()
 
@@ -590,9 +590,9 @@ class ContestCalendar(TitleMixin, ContestListMixin, TemplateView):
         starts, ends, oneday = self.get_contest_data(make_aware(datetime.combine(calendar[0][0], time.min)),
                                                      make_aware(datetime.combine(calendar[-1][-1], time.min)))
         return [[ContestDay(
-            date=date, weekday=self.weekday_classes[weekday], is_pad=date.month != self.month,
+            date=date, is_pad=date.month != self.month,
             is_today=date == self.today, starts=starts[date], ends=ends[date], oneday=oneday[date],
-        ) for weekday, date in enumerate(week)] for week in calendar]
+        ) for date in week] for week in calendar]
 
     def get_context_data(self, **kwargs):
         context = super(ContestCalendar, self).get_context_data(**kwargs)

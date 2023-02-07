@@ -5,10 +5,8 @@
 <head>
     {% if is_pdf_render %}
         <link rel="stylesheet" href="style.css">
-        <link rel="stylesheet" href="pygment-github.css" type="text/css">
     {% else %}
         <link rel="stylesheet" href="{{ static('style.css') }}">
-        <link rel="stylesheet" href="{{ static('pygment-github.css') }}" type="text/css">
     {% endif %}
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <style>
@@ -62,7 +60,7 @@
 </head>
 
 <body>
-<h2 style="color:#393630; display: inline-block;">{{ problem_name }}</h2>
+<h2 style="display: inline-block;">{{ problem_name }}</h2>
 <hr>
 <div align="center" style="position: relative;">
     <div class="problem-info-entry">

@@ -283,7 +283,7 @@ class ProblemPdfView(ProblemMixin, SingleObjectMixin, View):
                 }).replace('"//', '"https://').replace("'//", "'https://")
                 maker.title = problem_name
 
-                assets = ['style.css', 'pygment-github.css']
+                assets = ['style.css']
                 if maker.math_engine == 'jax':
                     assets.append('mathjax_config.js')
                 for file in assets:
@@ -453,8 +453,9 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         if not points:
             return 0, 0, {}
         if len(points) == 1:
-            return points[0], points[0] + 1, {
-                'min': points[0],
+            return points[0] - 1, points[0] + 1, {
+                'min': points[0] - 1,
+                '50%': points[0],
                 'max': points[0] + 1,
             }
 
@@ -506,7 +507,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
             return generic_message(request, 'FTS syntax error', e.args[1], status=400)
 
     def post(self, request, *args, **kwargs):
-        to_update = ('hide_solved', 'show_types', 'full_text')
+        to_update = ('hide_solved', 'show_types', 'has_public_editorial', 'full_text')
         for key in to_update:
             if key in request.GET:
                 val = request.GET.get(key) == '1'

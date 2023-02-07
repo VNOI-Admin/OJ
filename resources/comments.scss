@@ -7,45 +7,29 @@
 
 a {
     &.upvote-link, &.downvote-link {
-        color: black;
+        color: $color_primary100;
     }
 
     &.voted {
-        text-shadow: 0 0 4px black, 0 0 9px blue;
-    }
-}
-
-.comment-area {
-    margin-right: 30px;
-
-    h2 {
-        margin-bottom: 20px;
+        text-shadow: 0 0 4px $color_primary100, 0 0 9px blue;
     }
 }
 
 .no-comments-message {
-    margin-top: -15px;
-    margin-left: 2.75em;
+    margin: 10px 0 15px 2.75em;
 }
 
-.comment-author {
-    font-weight: bold;
-    color: #333;
-}
-
-.comment-header {
-    color: rgba(1, 1, 1, 1);
-    background: rgba(0, 0, 0, 0.1);
-    padding: 5px 10px 5px 5px;
-    margin-left: 30px;
-    border: 1px solid $border_gray;
-    border-radius: $widget_border_radius;
-    display: flex;
+.comment-header-space {
+    height: 20px;
 }
 
 .comment-lock {
-    width: 100%;
-    padding-left: 14px;
+    margin: 0 0 5px;
+}
+
+.comments.top-level-comments {
+    padding: 0;
+    margin: 0 0 5px;
 }
 
 .comment-spacer {
@@ -54,14 +38,14 @@ a {
 
 .comment-edits:not(:empty) {
     padding-right: 2px;
-    color: #444;
+    color: $color_primary75;
 }
 
 .comment-operation {
     flex: auto;
 
     .fa {
-        color: #444;
+        color: $color_primary75;
     }
 
     a + a {
@@ -69,17 +53,15 @@ a {
     }
 }
 
-.comments.top-level-comments {
-    margin-right: -26px;
-}
-
-.comment-submit {
+.form-area.comment-submit {
+    padding-left: 15px;
+    padding-right: 15px;
     width: 100%;
+    box-sizing: border-box;
 }
 
 .comment-post-wrapper {
-    padding-bottom: 2px;
-    padding-right: 10px;
+    padding-bottom: 5px;
 
     input, textarea {
         min-width: 100%;
@@ -90,22 +72,10 @@ a {
     }
 }
 
-.comment-box {
-    border-radius: $widget_border_radius;
-    padding: 5px 10px 10px 15px;
-    border: 1px solid $border_gray;
-    background: rgba(0, 0, 0, 0.01);
-}
-
 .comment {
     list-style: none none;
     border-radius: $widget_border_radius;
-    margin: 0px -4px 10px -40px;
-
-    &:target > .comment-box {
-        border-left: 10px solid $highlight_blue;
-        padding-left: 5px;
-    }
+    margin: 0 0 5px;
 
     &:before {
         display: block;
@@ -117,31 +87,108 @@ a {
 }
 
 .reply-comment {
-    margin: 0 23px 10px -40px;
-}
-
-@media (max-width: 760px) {
-    .comments {
-        padding-inline-start: 5%;
-    }
-    .comment {
-        margin-left: -5%;
-    }
-}
-
-.comment-author {
-    margin-bottom: 1em;
-
-    img {
-        width: 1.25em;
-        height: 1.25em;
-        border-radius: 0.2em;
-        vertical-align: bottom;
-        margin-right: 0.3em;
-    }
+    margin: 0 0 5px;
 }
 
 .comment-body {
     word-wrap: break-word;
     word-break: break-word;
+}
+
+.previous-revision, .next-revision {
+    color: $color_primary75;
+}
+
+.new-comments {
+    .comment-display {
+        display: flex;
+        padding-left: 1em;
+        padding-top: 0.5em !important;
+        border: 1px solid $color_primary25;
+        background: $color_primary5;
+        border-radius: $widget_border_radius;
+    }
+
+    .comment .detail {
+        margin: 0px 15px 0px;
+        width: 100%;
+
+        .header {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            padding: 2px 0px;
+            font-weight: normal;
+            border-bottom: 1px $color_primary50 solid;
+            color: $color_primary50;
+            text-align: right;
+        }
+    }
+
+    .comment:target > .comment-display {
+        border: 1px solid $highlight_blue;
+        border-left: 10px solid $highlight_blue;
+        padding-left: 5px;
+    }
+
+    .comment-edits {
+        padding-right: 0.75em;
+    }
+
+    .header i {
+        color: $color_primary50 !important;
+    }
+
+    .info {
+        padding-top: 0.4em;
+        display: flex;
+    }
+
+    .gravatar {
+        width: 75px;
+        max-width: 75px;
+    }
+
+    .gravatar-mobile {
+        display: none;
+    }
+
+    .gravatar-main {
+        display: unset;
+    }
+
+    .vote {
+        margin-right: 1em;
+        height: 75px;
+        padding-top: 0.4em;
+    }
+
+    @media (max-width: 760px) {
+        .gravatar {
+            width: 10px;
+            max-width: 10px;
+        }
+
+        .gravatar-mobile {
+            display: unset;
+        }
+
+        .gravatar-main {
+            display: none;
+        }
+
+        .vote {
+            margin-right: 0em;
+        }
+    }
+}
+
+.bad-comment {
+    opacity: 0.3;
+
+    &:hover {
+        opacity: 1;
+        /* This is necessary to prevent random flickering */
+        transform: translatez(0);
+    }
 }
