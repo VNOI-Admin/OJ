@@ -139,7 +139,7 @@ class Profile(models.Model):
     performance_points = models.FloatField(default=0, db_index=True)
     contribution_points = models.IntegerField(default=0, db_index=True)
     problem_count = models.IntegerField(default=0, db_index=True)
-    ace_theme = models.CharField(max_length=30, verbose_name=_('Ace theme'), choices=ACE_THEMES, default='github')
+    ace_theme = models.CharField(max_length=30, verbose_name=_('Ace theme'), choices=ACE_THEMES, default='auto')
     site_theme = models.CharField(max_length=10, verbose_name=_('site theme'), choices=SITE_THEMES, default='auto')
     last_access = models.DateTimeField(verbose_name=_('last access time'), default=now)
     ip = models.GenericIPAddressField(verbose_name=_('last IP'), blank=True, null=True)
@@ -224,6 +224,15 @@ class Profile(models.Model):
             if self.rating is not None and self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING:
                 return True
         return False
+
+    @cached_property
+    def resolved_ace_theme(self):
+        if self.ace_theme != 'auto':
+            return self.ace_theme
+        if self.site_theme != 'auto':
+            return settings.DMOJ_THEME_DEFAULT_ACE_THEME.get(self.site_theme)
+        # This must be resolved client-side using prefers-color-scheme.
+        return None
 
     _pp_table = [pow(settings.DMOJ_PP_STEP, i) for i in range(settings.DMOJ_PP_ENTRIES)]
 

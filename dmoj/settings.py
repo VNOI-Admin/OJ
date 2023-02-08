@@ -227,6 +227,11 @@ DMOJ_THEME_CSS = {
     'light': 'style.css',
     'dark': 'dark/style.css',
 }
+# At the bare minimum, dark and light ace themes must be declared
+DMOJ_THEME_DEFAULT_ACE_THEME = {
+    'light': 'github',
+    'dark': 'twilight',
+}
 DMOJ_SELECT2_THEME = 'dmoj'
 
 MARKDOWN_STYLES = {}
@@ -725,3 +730,7 @@ try:
         exec(f.read(), globals())
 except IOError:
     pass
+
+# Compute these values after local_settings.py is loaded
+ACE_DEFAULT_LIGHT_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['light']
+ACE_DEFAULT_DARK_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['dark']

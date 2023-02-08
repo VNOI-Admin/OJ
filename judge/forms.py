@@ -58,7 +58,6 @@ class ProfileForm(ModelForm):
                   'site_theme', 'user_script']
         widgets = {
             'display_badge': Select2Widget(attrs={'style': 'width:200px'}),
-            'user_script': AceWidget(theme='github'),
             'timezone': Select2Widget(attrs={'style': 'width:200px'}),
             'language': Select2Widget(attrs={'style': 'width:200px'}),
             'ace_theme': Select2Widget(attrs={'style': 'width:200px'}),
