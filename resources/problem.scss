@@ -1,54 +1,26 @@
 @import "vars";
 
 #problem-table {
-    td {
-        &.solved {
-            width: 2.4em;
-            text-align: center;
+    td, th {
+        // Text columns are left-aligned
+        &.problem-code, &.problem-name, &.category, &.types {
+            text-align: left;
+            padding: 0 1em;
+        }
+
+        // Numeric columns are center-aligned
+        &.solved, &.points, &.ac-rate, &.editorial, &.users {
+            padding: 0 10px;
+            white-space: nowrap;
         }
 
         &.problem-code {
-            width: 5em;
-            text-align: left;
-            padding-left: 0.5em;
-            word-break: break-word;
+            word-break: break-all;
         }
+    }
 
-        &.problem-name {
-            text-align: left;
-            padding-left: 0.5em;
-        }
-
-        &.category {
-            width: 5em;
-            text-align: left;
-            padding: 0 1em;
-        }
-
-        &.types {
-            width: 5em;
-            text-align: left;
-            padding: 0 1em;
-            word-break: break-word;
-        }
-
-        &.p {
-            width: 3em;
-            text-align: center;
-            padding: 0 1em;
-        }
-
-        &.ac-rate {
-            width: 3em;
-            white-space: nowrap;
-            padding: 0 1em;
-        }
-
-        &.users {
-            width: 3em;
-            text-align: center;
-            padding: 0 1em;
-        }
+    th a {
+        color: inherit;
     }
 
     tr {
@@ -395,12 +367,6 @@ ul.problem-list {
     #problem-table tr .category {
         display: none;
     }
-}
-
-#problem-table th a {
-    color: inherit;
-    display: block;
-    padding: 4px 10px;
 }
 
 #category, #types {
