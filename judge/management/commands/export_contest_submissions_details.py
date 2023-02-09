@@ -11,7 +11,7 @@ from judge.utils.raw_sql import use_straight_join
 # ANSI sequences representing text colors and text weight,
 # which may display dirty text in raw text files.
 # The following regex is to filter such sequences.
-ansi_escape = re.compile(r'''
+ansi_escape = re.compile(r"""
     \x1B  # ESC
     (?:   # 7-bit C1 Fe (except CSI)
         [@-Z\\-_]
@@ -21,7 +21,8 @@ ansi_escape = re.compile(r'''
         [ -/]*  # Intermediate bytes
         [@-~]   # Final byte
     )
-''', re.VERBOSE)
+""", re.VERBOSE)
+
 
 class Command(BaseCommand):
     help = 'export contest submissions details'
