@@ -258,4 +258,8 @@ form.contest-join-pseudotab {
         color: grey;
         float: right
     }
+
+    .user-points, .user-points a {
+        color: $color_primary100;
+    }
 }
