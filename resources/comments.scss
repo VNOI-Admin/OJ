@@ -11,7 +11,7 @@ a {
     }
 
     &.voted {
-        text-shadow: 0 0 4px $color_primary100, 0 0 9px blue;
+        text-shadow: 0 0 7px $color_primary100, 0 0 15px $color_voted_mark;
     }
 }
 
