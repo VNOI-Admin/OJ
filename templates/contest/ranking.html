@@ -238,6 +238,7 @@
             // scrollAfterSelect is only available after v4.0.6
             $(function() {
                 $('#org-check-list').select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}',
                     multiple: true,
                     closeOnSelect: false,
                     placeholder: '{{ _('Search organizations') }}',

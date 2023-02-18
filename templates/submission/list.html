@@ -85,6 +85,7 @@
                 }).css({'visibility': 'visible'});
 
                 $('#organization').select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}',
                     multiple: 0,
                     matcher: idAndTextMatcher,
                     width: '100%',
