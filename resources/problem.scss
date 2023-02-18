@@ -1,5 +1,49 @@
 @import "vars";
 
+#tagproblem-table, #tag-table {
+    td, th {
+        &.problem-name {
+            text-align: left;
+        }
+
+        &.problem-code, &.judge {
+            white-space: nowrap;
+        }
+
+        &.problem-code {
+            width: 20%;
+        }
+
+        &.problem-name {
+            width: 65%;
+        }
+
+        &.judge {
+            width: 15%;
+        }
+    }
+
+    tr {
+        transition: background-color linear 0.2s;
+
+        &:hover {
+            background: rgba($color_primary100, 0.05);
+        }
+    }
+}
+
+#tagproblem-table {
+    .row-tag-list {
+        font-size: 0.75em;
+        padding-top: 1px;
+        text-align: right;
+
+        &, a {
+            color: grey !important;
+        }
+    }
+}
+
 #problem-table {
     td, th {
         // Text columns are left-aligned
