@@ -23,16 +23,8 @@
             overflow: initial !important
         }
 
-        .select2-results__option--highlighted {
-            background-color: #DEDEDE !important;
-        }
-
         .select2-results__option {
             white-space: nowrap;
-        }
-
-        .select2-container {
-            z-index: 1;
         }
 
         #search-contest, #search-contest + .select2 {
@@ -44,66 +36,8 @@
             height: 2.3em;
         }
 
-        #org-dropdown-check-list {
-            display: inline-block;
-        }
-
-        #org-check-list-wrapper {
-            display: none;
-            background: #ffffff;
-            border: 1px solid gray;
-            padding: 10px;
-
-            right: auto;
-            position: absolute;
-            z-index: 1;
-        }
-
-        #org-check-list li {
-            list-style: none;
-        }
-
-        #org-dropdown-check-list.visible #org-check-list-wrapper {
-            display: block;
-        }
-
-        #org-check-list-wrapper button {
-            margin-bottom: 5px;
-            margin-left: 5px;
-        }
-
-        #org-check-list {
-            border-bottom: 1px solid gray;
-
-            /* reset properties of the parent elements */
-            color: black;
-            text-align: left;
-            font-weight: normal;
-        }
-
         .filter-checklist-button {
             float: right;
-        }
-
-        .select2-selection__rendered {
-            cursor: text;
-            overflow: initial !important;
-            width: 260px !important;
-        }
-
-        .select2-selection__rendered > li {
-            color: black;
-        }
-
-        #select2-org-check-list-results > li {
-            color: black;
-        }
-        #select2-org-check-list-results > li:hover {
-            background: #aaaaaa !important;
-        }
-
-        .select2-results__option[aria-selected=true] {
-            background: #cdcdcd !important;
         }
     </style>
 {% endblock %}
