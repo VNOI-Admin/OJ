@@ -57,7 +57,7 @@ class UserSelect2View(Select2View):
         return JsonResponse({
             'results': [
                 {
-                    'text': smart_text(self.get_name(obj)),
+                    'text': smart_str(self.get_name(obj)),
                     'id': obj.pk,
                 } for obj in qs],
         })
@@ -83,7 +83,7 @@ class OrganizationUserSelect2View(Select2View):
         return JsonResponse({
             'results': [
                 {
-                    'text': smart_text(self.get_name(obj)),
+                    'text': smart_str(self.get_name(obj)),
                     'id': obj.pk,
                 } for obj in qs],
         })
