@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import BooleanField, Case, F, Prefetch, Q, When
+from django.db.models import BooleanField, Case, Exists, F, OuterRef, Prefetch, Q, When
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -381,9 +381,11 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
     def get_filter(self):
         filter = Q(is_public=True) & Q(is_organization_private=False)
         if self.profile is not None:
-            filter |= Q(authors=self.profile)
-            filter |= Q(curators=self.profile)
-            filter |= Q(testers=self.profile)
+            # This is way faster than the obvious |= Q(authors=self.profile) et al. because we are not doing
+            # joins and then cleaning it up with .distinct().
+            filter |= Exists(Problem.authors.through.objects.filter(problem=OuterRef('pk'), profile=self.profile))
+            filter |= Exists(Problem.curators.through.objects.filter(problem=OuterRef('pk'), profile=self.profile))
+            filter |= Exists(Problem.testers.through.objects.filter(problem=OuterRef('pk'), profile=self.profile))
         return filter
 
     def get_normal_queryset(self):
