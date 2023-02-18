@@ -263,3 +263,38 @@ form.contest-join-pseudotab {
         color: $color_primary100;
     }
 }
+
+#org-dropdown-check-list {
+    display: inline-block;
+}
+
+#org-check-list-wrapper {
+    display: none;
+    background: $color_primary0;
+    border: 1px solid gray;
+    padding: 10px;
+
+    right: auto;
+    position: absolute;
+    z-index: 1;
+
+    button {
+        margin-bottom: 5px;
+        margin-left: 5px;
+    }
+
+    #org-check-list {
+        border-bottom: 1px solid gray;
+        color: $color_primary100;
+        text-align: left;
+        font-weight: normal;
+
+        li {
+            list-style: none;
+        }
+    }
+
+    .select2-selection__rendered {
+        width: 260px !important;
+    }
+}
