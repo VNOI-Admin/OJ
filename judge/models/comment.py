@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import CASCADE, Count
+from django.db.models import CASCADE
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -57,7 +57,7 @@ class Comment(MPTTModel):
             queryset = cls.objects.filter(hidden=False)
 
         queryset = (queryset.prefetch_related('author__user', 'author__display_badge')
-                    .defer('author__about', 'body').order_by('-id').annotate(revisions=Count('versions')))
+                    .defer('author__about', 'body').order_by('-id'))
 
         problem_cache = CacheDict(lambda code: Problem.objects.defer('description', 'summary').get(code=code))
         solution_cache = CacheDict(lambda code: Solution.objects.defer('content').get(problem__code=code))
