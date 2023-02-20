@@ -362,9 +362,9 @@ class Problem(models.Model):
             q = Q(is_public=True)
             if not (user.has_perm('judge.see_organization_problem') or edit_public_problem):
                 # Either not organization private or in the organization.
-                q &= (
-                    Q(is_organization_private=False) |
-                    Q(is_organization_private=True, organizations__in=user.profile.organizations.all())
+                q &= Q(is_organization_private=False) | cls.organization_filter_q(
+                    # Avoids needlessly joining Organization
+                    Profile.organizations.through.objects.filter(profile=user.profile).values('organization_id'),
                 )
 
             # Suggesters should be able to view suggesting problems
@@ -384,6 +384,12 @@ class Problem(models.Model):
         q |= Exists(Problem.authors.through.objects.filter(problem=OuterRef('pk'), profile=profile))
         q |= Exists(Problem.curators.through.objects.filter(problem=OuterRef('pk'), profile=profile))
         q |= Exists(Problem.testers.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        return q
+
+    @classmethod
+    def organization_filter_q(cls, queryset):
+        q = Q(is_organization_private=True)
+        q &= Exists(Problem.organizations.through.objects.filter(problem=OuterRef('pk'), organization__in=queryset))
         return q
 
     @classmethod
