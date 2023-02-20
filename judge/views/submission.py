@@ -16,7 +16,7 @@ from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpRespo
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.functional import cached_property, lazy
+from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
@@ -27,6 +27,7 @@ from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
 from judge.models.problem import ProblemTestcaseResultAccess, SubmissionSourceAccess
 from judge.utils.infinite_paginator import InfinitePaginationMixin
+from judge.utils.lazy import memo_lazy
 from judge.utils.problem_data import get_problem_testcases_data
 from judge.utils.problems import get_result_data, user_completed_ids, user_editable_ids, user_tester_ids
 from judge.utils.raw_sql import join_sql_subquery, use_straight_join
@@ -450,9 +451,11 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         context['dynamic_update'] = False
         context['dynamic_contest_id'] = self.in_contest and self.contest.id
         context['show_problem'] = self.show_problem
-        context['completed_problem_ids'] = lazy(user_completed_ids, set)(self.request.profile) if authenticated else []
-        context['editable_problem_ids'] = lazy(user_editable_ids, set)(self.request.profile) if authenticated else []
-        context['tester_problem_ids'] = lazy(user_tester_ids, set)(self.request.profile) if authenticated else []
+
+        profile = self.request.profile
+        context['completed_problem_ids'] = memo_lazy(lambda: user_completed_ids(profile), set) if authenticated else []
+        context['editable_problem_ids'] = memo_lazy(lambda: user_editable_ids(profile), set) if authenticated else []
+        context['tester_problem_ids'] = memo_lazy(lambda: user_tester_ids(profile), set) if authenticated else []
 
         context['all_languages'] = Language.objects.all().values_list('key', 'name')
         context['selected_languages'] = self.selected_languages
