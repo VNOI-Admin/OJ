@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
-from django.db.models import CASCADE, F, FilteredRelation, Q, SET_NULL
+from django.db.models import CASCADE, Exists, F, FilteredRelation, OuterRef, Q, SET_NULL
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils import timezone
@@ -371,13 +371,20 @@ class Problem(models.Model):
             if edit_suggesting_problem:
                 q |= Q(suggester__isnull=False, is_public=False)
 
-            # Authors, curators, and testers should always have access, so OR at the very end.
-            q |= Q(authors=user.profile)
-            q |= Q(curators=user.profile)
-            q |= Q(testers=user.profile)
+            # Authors, curators, and testers should always have access.
+            q = cls.q_add_author_curator_tester(q, user.profile)
             queryset = queryset.filter(q)
 
         return queryset
+
+    @classmethod
+    def q_add_author_curator_tester(cls, q, profile):
+        # This is way faster than the obvious |= Q(authors=profile) et al. because we are not doing
+        # joins and forcing the user to clean it up with .distinct().
+        q |= Exists(Problem.authors.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        q |= Exists(Problem.curators.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        q |= Exists(Problem.testers.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        return q
 
     @classmethod
     def get_public_problems(cls):
