@@ -233,6 +233,12 @@ class OrganizationRequestBaseView(LoginRequiredMixin, SingleObjectTemplateRespon
             raise PermissionDenied()
         return organization
 
+    def get_requests(self):
+        queryset = self.object.requests.select_related('user__user').defer(
+            'user__about', 'user__notes', 'user__user_script',
+        )
+        return queryset
+
     def get_context_data(self, **kwargs):
         context = super(OrganizationRequestBaseView, self).get_context_data(**kwargs)
         context['title'] = _('Managing join requests for %s') % self.object.name
@@ -254,15 +260,16 @@ class OrganizationRequestView(OrganizationRequestBaseView):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        self.formset = OrganizationRequestFormSet(
-            queryset=OrganizationRequest.objects.filter(state='P', organization=self.object),
-        )
+        self.formset = OrganizationRequestFormSet(queryset=self.get_requests())
         context = self.get_context_data(object=self.object)
         return self.render_to_response(context)
 
+    def get_requests(self):
+        return super().get_requests().filter(state='P')
+
     def post(self, request, *args, **kwargs):
         self.object = organization = self.get_object()
-        self.formset = formset = OrganizationRequestFormSet(request.POST, request.FILES)
+        self.formset = formset = OrganizationRequestFormSet(request.POST, request.FILES, queryset=self.get_requests())
         if formset.is_valid():
             if organization.slots is not None:
                 deleted_set = set(formset.deleted_forms)
@@ -304,7 +311,7 @@ class OrganizationRequestLog(OrganizationRequestBaseView):
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationRequestLog, self).get_context_data(**kwargs)
-        context['requests'] = self.object.requests.filter(state__in=self.states)
+        context['requests'] = self.get_requests().filter(state__in=self.states)
         return context
 
 
