@@ -1,7 +1,0 @@
-<span class="{{ profile.css_class }}">
-    <a href="{{ url('user_page', user.username) }}" style="display: inline-flex; align-items: center;">{{ profile.display_name }}
-    {% if profile.display_badge %}
-        <img src="{{ profile.display_badge.mini }}" title="{{ profile.display_badge.name }}" style="height: 1em; width: auto; margin-left: 0.25em;" />
-    {% endif %}
-    </a>
-</span>
