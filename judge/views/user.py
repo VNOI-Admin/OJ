@@ -13,7 +13,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission, User
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetView, redirect_to_login
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.db.models import Count, F, FilteredRelation, Max, Min, Prefetch, Q
@@ -39,7 +38,6 @@ from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
-from judge.template_context import MiscConfigDict
 from judge.utils.celery import task_status_by_id, task_status_url_by_id
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.problems import contest_completed_ids, user_completed_ids
@@ -662,9 +660,8 @@ class CustomPasswordResetView(PasswordResetView):
             return HttpResponse(_('You have sent too many password reset requests. Please try again later.'),
                                 content_type='text/plain', status=429)
 
-        domain = get_current_site(request).domain
         self.extra_email_context = {
-            'misc_config': MiscConfigDict(domain=domain),
+            'misc_config': request.misc_config,
         }
 
         return super().post(request, *args, **kwargs)
