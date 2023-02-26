@@ -153,8 +153,13 @@ def link_user(user):
     else:
         raise ValueError('Expected profile or user, got %s' % (type(user),))
 
-    display_badge_img = (f'<img src="{escape(profile.display_badge.mini)}" title="{escape(profile.display_badge.name)}"'
-                         f' style="height: 1em; width: auto; margin-left: 0.25em;" />' if profile.display_badge else '')
+    if isinstance(profile, Profile) and profile.display_badge:
+        display_badge_img = f'<img src="{escape(profile.display_badge.mini)}"' \
+                            f' title="{escape(profile.display_badge.name)}"' \
+                            f' style="height: 1em; width: auto; margin-left: 0.25em;" />'
+    else:
+        display_badge_img = ''
+
     return mark_safe(f'<span class="{profile.css_class}">'
                      f'<a href="{escape(reverse("user_page", args=[user.username]))}"'
                      f' style="display: inline-flex; align-items: center;">'
