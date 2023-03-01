@@ -140,7 +140,8 @@ class Problem(models.Model):
                             validators=[RegexValidator('^[a-z0-9_]+$', _('Problem code must be ^[a-z0-9_]+$'))],
                             help_text=_('A short, unique code for the problem, used in the url after /problem/'))
     name = models.CharField(max_length=100, verbose_name=_('problem name'), db_index=True,
-                            help_text=_('The full name of the problem, as shown in the problem list.'))
+                            help_text=_('The full name of the problem, as shown in the problem list.'),
+                            validators=[disallowed_characters_validator])
     pdf_url = models.CharField(max_length=200, verbose_name=_('PDF statement URL'), blank=True,
                                help_text=_('URL to PDF statement. The PDF file must be embeddable (Mobile web browsers'
                                            'may not support embedding). Fallback included.'))
