@@ -71,7 +71,7 @@ class BaseOrganizationListView(OrganizationMixin, ListView):
     slug_url_kwarg = 'slug'
 
     def get_object(self):
-        return Organization.objects.get(id=self.kwargs.get('pk'))
+        return get_object_or_404(Organization, id=self.kwargs.get('pk'))
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(organization=self.object, **kwargs)
