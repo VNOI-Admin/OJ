@@ -530,7 +530,7 @@ BLEACH_USER_SAFE_TAGS = [
 
 BLEACH_USER_SAFE_ATTRS = {
     '*': ['id', 'class', 'style', 'data', 'height'],
-    'img': ['src', 'alt', 'title', 'width', 'height', 'data-src'],
+    'img': ['src', 'alt', 'title', 'width', 'height', 'data-src', 'align'],
     'a': ['href', 'alt', 'title'],
     'iframe': ['src', 'height', 'width', 'allow'],
     'abbr': ['title'],
