@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
@@ -295,13 +297,27 @@ class BlogPostCreate(TitleMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             raise PermissionDenied()
+
+        user = request.user
+
         # hasattr(self, 'organization') -> admin org
-        if request.official_contest_mode or request.user.profile.problem_count < settings.VNOJ_BLOG_MIN_PROBLEM_COUNT \
-                and not request.user.is_superuser and not hasattr(self, 'organization'):
+        if request.official_contest_mode or user.profile.problem_count < settings.VNOJ_BLOG_MIN_PROBLEM_COUNT \
+                and not user.is_superuser and not hasattr(self, 'organization'):
             return generic_message(request, _('Permission denied'),
                                    _('You cannot create blog post.\n'
                                      'Note: You need to solve at least %d problems to create new blog post.')
                                    % settings.VNOJ_BLOG_MIN_PROBLEM_COUNT)
+
+        if not user.is_superuser:
+            user_latest_blog = BlogPost.objects.filter(publish_on__lte=timezone.now(), authors__in=[user.profile]) \
+                                               .order_by('-publish_on')[:1]
+
+            if len(user_latest_blog) > 0:
+                time_diff = (datetime.now(timezone.utc) - user_latest_blog[0].publish_on).seconds
+                if time_diff < settings.VNOJ_BLOG_COOLDOWN * 60:
+                    return HttpResponseBadRequest(_('You can only create a blog after {0} minutes '
+                                                    'since your latest blog')
+                                                  .format(settings.VNOJ_BLOG_COOLDOWN), content_type='text/plain')
         return super().dispatch(request, *args, **kwargs)
 
 
