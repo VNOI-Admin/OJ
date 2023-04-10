@@ -23,11 +23,11 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonRespons
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
-from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from reversion import revisions
@@ -286,7 +286,7 @@ class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
                 % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
 
         return context
-    
+
     @method_decorator(require_POST)
     def delete_comments(self, request, *args, **kwargs):
         if not request.user.is_superuser:
