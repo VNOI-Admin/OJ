@@ -27,6 +27,7 @@ from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
+from django.utils.decorators import method_decorator
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from reversion import revisions
@@ -285,10 +286,23 @@ class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
                 % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
 
         return context
+    
+    @method_decorator(require_POST)
+    def delete_comments(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied()
+
+        user_id = User.objects.get(username=kwargs['user']).id
+        user = Profile.objects.get(user=user_id)
+        for comment in Comment.get_newest_visible_comments(viewer=request.user, author=user, batch=2 * self.paginate_by):
+            comment.get_descendants(include_self=True).update(hidden=True)
+        return HttpResponseRedirect(reverse('user_comment', args=(user.user.username,)))
 
     def dispatch(self, request, *args, **kwargs):
         if not self.request.user.is_superuser:
             raise PermissionDenied()
+        if request.method == 'POST':
+            return self.delete_comments(request, *args, **kwargs)
         return super().dispatch(request, *args, **kwargs)
 
 
