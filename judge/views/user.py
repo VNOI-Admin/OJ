@@ -294,7 +294,8 @@ class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
 
         user_id = User.objects.get(username=kwargs['user']).id
         user = Profile.objects.get(user=user_id)
-        for comment in Comment.get_newest_visible_comments(viewer=request.user, author=user, batch=2 * self.paginate_by):
+        for comment in Comment.get_newest_visible_comments(viewer=request.user, author=user, 
+                                                           batch=2 * self.paginate_by):
             comment.get_descendants(include_self=True).update(hidden=True)
         return HttpResponseRedirect(reverse('user_comment', args=(user.user.username,)))
 
