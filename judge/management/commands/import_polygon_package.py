@@ -11,6 +11,7 @@ from operator import itemgetter
 from django.conf import settings
 from django.contrib.sites.models import Site
 from django.core.files import File
+from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.urls import reverse
@@ -255,23 +256,39 @@ def parse_statements(problem_meta, root, package):
     problem_meta['translations'] = []
     problem_meta['tutorial'] = ''
 
-    image_cache = {}
+    def process_images(text):
+        image_cache = problem_meta['image_cache']
 
-    def save_image(image_path):
-        norm_path = os.path.normpath(os.path.join(statement_folder, image_path))
-        sha1 = hashlib.sha1()
-        sha1.update(package.open(norm_path, 'r').read())
-        sha1 = sha1.hexdigest()
+        def save_image(image_path):
+            norm_path = os.path.normpath(os.path.join(statement_folder, image_path))
+            sha1 = hashlib.sha1()
+            sha1.update(package.open(norm_path, 'r').read())
+            sha1 = sha1.hexdigest()
 
-        if sha1 not in image_cache:
-            image = File(
-                file=package.open(norm_path, 'r'),
-                name=os.path.basename(image_path),
+            if sha1 not in image_cache:
+                image = File(
+                    file=package.open(norm_path, 'r'),
+                    name=os.path.basename(image_path),
+                )
+                data = json.loads(django_uploader(image))
+                image_cache[sha1] = data['link']
+
+            return image_cache[sha1]
+
+        for image_path in set(re.findall(r'!\[image\]\((.+?)\)', text)):
+            text = text.replace(
+                f'![image]({image_path})',
+                f'![image]({save_image(image_path)})',
             )
-            data = json.loads(django_uploader(image))
-            image_cache[sha1] = data['link']
 
-        return image_cache[sha1]
+        for img_tag in set(re.findall(r'<\s*img[^>]*>', text)):
+            image_path = re.search(r'<\s*img[^>]+src\s*=\s*(["\'])(.*?)\1[^>]*>', text).group(2)
+            text = text.replace(
+                img_tag,
+                img_tag.replace(image_path, save_image(image_path)),
+            )
+
+        return text
 
     def parse_problem_properties(problem_properties):
         description = ''
@@ -303,20 +320,6 @@ def parse_statements(problem_meta, root, package):
         if problem_properties['notes'] != '':
             description += '\n## Notes\n\n'
             description += pandoc_tex_to_markdown(problem_properties['notes'])
-
-        # Images
-        for image_path in set(re.findall(r'!\[image\]\((.+?)\)', description)):
-            description = description.replace(
-                f'![image]({image_path})',
-                f'![image]({save_image(image_path)})',
-            )
-
-        for img_tag in set(re.findall(r'<\s*img[^>]*>', description)):
-            image_path = re.search(r'<\s*img[^>]+src\s*=\s*(["\'])(.*?)\1[^>]*>', description).group(2)
-            description = description.replace(
-                img_tag,
-                img_tag.replace(image_path, save_image(image_path)),
-            )
 
         return description
 
@@ -351,7 +354,7 @@ def parse_statements(problem_meta, root, package):
         description = parse_problem_properties(problem_properties)
         translations.append({
             'language': language,
-            'description': description,
+            'description': process_images(description),
         })
 
         tutorial = problem_properties['tutorial']
@@ -377,6 +380,9 @@ def parse_statements(problem_meta, root, package):
         problem_meta['tutorial'] = next(t for t in tutorials if t['language'] == main_language)['tutorial']
     elif len(tutorials) > 0:
         problem_meta['tutorial'] = tutorials[0]['tutorial']
+
+    # Process images for only the selected tutorial
+    problem_meta['tutorial'] = process_images(problem_meta['tutorial'])
 
     for t in translations:
         language = t['language']
@@ -545,6 +551,7 @@ class Command(BaseCommand):
 
         # A dictionary to hold all problem information.
         problem_meta = {}
+        problem_meta['image_cache'] = {}
         problem_meta['code'] = problem_code
         problem_meta['tmp_dir'] = tempfile.TemporaryDirectory()
         problem_meta['authors'] = problem_authors
@@ -555,6 +562,11 @@ class Command(BaseCommand):
             parse_statements(problem_meta, root, package)
             create_problem(problem_meta)
         except Exception:
+            # Remove imported images
+            for image_url in problem_meta['image_cache'].values():
+                path = default_storage.path(os.path.join(settings.MARTOR_UPLOAD_MEDIA_DIR, os.path.basename(image_url)))
+                os.remove(path)
+
             raise
         finally:
             problem_meta['tmp_dir'].cleanup()
