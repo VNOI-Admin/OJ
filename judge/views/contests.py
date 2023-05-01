@@ -440,7 +440,7 @@ class ContestAccessCodeForm(forms.Form):
         self.fields['access_code'].widget.attrs.update({'autocomplete': 'off'})
 
 
-class ContestRegister(LoginRequiredMixin, ContestMixin, BaseDetailView):
+class ContestRegister(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         return self.ask_for_access_code()
@@ -487,7 +487,7 @@ class ContestRegister(LoginRequiredMixin, ContestMixin, BaseDetailView):
 
             try:
                 ContestParticipation.objects.get(
-                    contest=contest, user=profile, virtual=0
+                    contest=contest, user=profile, virtual=0,
                 )
             except ContestParticipation.DoesNotExist:
                 if requires_access_code:
@@ -495,7 +495,7 @@ class ContestRegister(LoginRequiredMixin, ContestMixin, BaseDetailView):
 
                 ContestParticipation.objects.create(
                     contest=contest, user=profile, virtual=0,
-                    real_start=datetime(1, 1, 1)
+                    real_start=datetime(1, 1, 1),
                 )
             else:
                 return generic_message(request, _('Already registered'),
