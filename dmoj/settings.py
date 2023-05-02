@@ -530,7 +530,7 @@ BLEACH_USER_SAFE_TAGS = [
 
 BLEACH_USER_SAFE_ATTRS = {
     '*': ['id', 'class', 'style', 'data', 'height'],
-    'img': ['src', 'alt', 'title', 'width', 'height', 'data-src'],
+    'img': ['src', 'alt', 'title', 'width', 'height', 'data-src', 'align'],
     'a': ['href', 'alt', 'title'],
     'iframe': ['src', 'height', 'width', 'allow'],
     'abbr': ['title'],
@@ -542,6 +542,7 @@ BLEACH_USER_SAFE_ATTRS = {
     'audio': ['autoplay', 'controls', 'crossorigin', 'muted', 'loop', 'preload', 'src'],
     'video': ['autoplay', 'controls', 'crossorigin', 'height', 'muted', 'loop', 'poster', 'preload', 'src', 'width'],
     'source': ['src', 'srcset', 'type'],
+    'li': ['value'],
 }
 
 MARKDOWN_STAFF_EDITABLE_STYLE = {

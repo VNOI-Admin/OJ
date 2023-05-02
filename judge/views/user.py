@@ -550,7 +550,7 @@ class UserList(QueryStringSortMixin, InfinitePaginationMixin, DiggPaginatorMixin
     paginate_by = 100
     all_sorts = frozenset(('points', 'problem_count', 'rating', 'performance_points'))
     default_desc = all_sorts
-    default_sort = '-performance_points'
+    default_sort = '-rating'
 
     def get_queryset(self):
         return (Profile.objects.filter(is_unlisted=False).order_by(self.order)
