@@ -13,6 +13,10 @@
 
 {% block body %}
     {% block before_comments %}{% endblock %}
+        <form action="{{url('user_comment', user.username)}}" method="post">
+            {% csrf_token %}
+            <button type="submit">Delete all comments</button>
+        </form>
         <ul class="comments top-level-comments new-comments">
             {% set logged_in = request.user.is_authenticated %}
             {% for comment in comments %}
