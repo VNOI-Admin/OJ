@@ -20,6 +20,10 @@
                 });
             {% endif %}
 
+            $('.register-warning').click(function () {
+                return confirm('{{ _('Are you sure you want to register?') }}');
+            });
+
             {% if hide_private_contests is not none %}
                 {% if hide_private_contests %}
                     $('#hide-private-contests-checkbox').prop('checked', true);
@@ -120,12 +124,12 @@
     {% else %}
         {{ contest.user_count }}
     {% endif %}
-    <span title="{%- trans count=contest.virtual_count - contest.user_count -%}
+    <span title="{%- trans count=contest.virtual_count -%}
         This contest has {{count}} virtual participation
         {%- pluralize -%}
         This contest has {{count}} virtual participations
         {%- endtrans -%}"
-        style="opacity: 50%;">({{ contest.virtual_count - contest.user_count }})</span>
+        style="opacity: 50%;">({{ contest.virtual_count }})</span>
 {% endmacro %}
 
 {% macro contest_join(contest, request, finished_contests) %}
@@ -138,14 +142,52 @@
                            value="{{ _('Spectate') }}">
                 </form>
             {% else %}
-                <form action="{{ url('contest_join', contest.key) }}" method="post">
-                    {% csrf_token %}
-                    <input type="submit" class="unselectable button full participate-button join-warning"
-                           value="{{ _('Join') }}">
-                </form>
+                {% if not request.profile or not contest.require_registration or contest in request.profile.registered_contests %}
+                    <form action="{{ url('contest_join', contest.key) }}" method="post">
+                        {% csrf_token %}
+                        <input type="submit" class="unselectable button full participate-button join-warning"
+                            value="{{ _('Join') }}">
+                    </form>
+                {% else %}
+                    <span>Registration closed</span>
+                {% endif %}
+            {% endif %}
+            {% if contest.require_registration and not contest.time_before_register %}
+                <div style="padding-top: 0.5em">
+                    <span style="opacity: 50%">Registered users: </span>
+                    <span>{{ contest.user_count }}</span>
+                </div>
             {% endif %}
         </td>
     {% endif %}
+{% endmacro %}
+
+{% macro contest_register(contest, request) %}
+    <td>    
+        {% if request.profile not in contest.authors.all() and request.profile not in contest.curators.all() and request.profile not in contest.testers.all() %}
+            {% if request.profile and contest in request.profile.registered_contests %}
+                <span style="color: #87ab69"><b>Already registered</b></span>
+            {% elif not contest.can_register %}
+                {% if contest.time_before_register %}
+                    <span class="time">{%- trans countdown=contest.time_before_register|as_countdown -%} Registration in {{countdown}} {%- endtrans -%}</span>
+                {% else %}
+                    <span>Registration closed</span>
+                {% endif %}
+            {% else %}
+                <form action="{{ url('contest_register', contest.key) }}" method="post">
+                    {% csrf_token %}
+                    <input type="submit" class="unselectable button full participate-button register-warning" style="background: linear-gradient(to bottom, #87ab69 0, #4b6043 100%) repeat-x"
+                            value="{{ _('Register') }}">  
+                </form>
+            {% endif %}
+        {% endif %}
+        {% if not contest.time_before_register %}
+            <div style="padding-top: 0.5em">
+                <span style="opacity: 50%">Registered users: </span>
+                <span>{{ contest.user_count }}</span>
+            </div>
+        {% endif %}
+    </td>
 {% endmacro %}
 
 {% block body %}
@@ -155,10 +197,10 @@
             <table class="contest-list table striped">
                 <thead>
                 <tr>
-                    <th style="width:90%">{{ _('Contest') }}</th>
+                    <th style="width:80%">{{ _('Contest') }}</th>
                     <th>{{ _('Users') }}</th>
                     {% if not request.in_contest %}
-                        <th style="width:15%"></th>
+                        <th style="width:20%"></th>
                     {% endif %}
                 </tr>
                 </thead>
@@ -197,7 +239,7 @@
             <table class="contest-list table striped">
                 <thead>
                 <tr>
-                    <th style="width:90%">{{ _('Contest') }}</th>
+                    <th style="width:80%">{{ _('Contest') }}</th>
                     <th>{{ _('Users') }}</th>
                     {% if not request.in_contest %}
                         <th style="width:15%"></th>
@@ -222,7 +264,11 @@
                         <td>
                             {{ user_count(contest, request.user) }}
                         </td>
-                        {{ contest_join(contest, request, finished_contests) }}
+                        {% if contest.require_registration and request.profile and contest not in request.profile.registered_contests %}
+                            {{ contest_register(contest, request) }}
+                        {% else %}
+                            {{ contest_join(contest, request, finished_contests) }}
+                        {% endif %}
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -236,6 +282,7 @@
                 <thead>
                 <tr>
                     <th>{{ _('Contest') }}</th>
+                    <th style="width:20%"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -253,6 +300,9 @@
                                 {% endif %}
                             </div>
                         </td>
+                        {% if contest.require_registration %}
+                            {{ contest_register(contest, request) }}
+                        {% endif %}
                     </tr>
                 {% endfor %}
                 </tbody>
@@ -279,7 +329,7 @@
             <table class="contest-list table striped">
                 <thead>
                 <tr>
-                    <th style="width:90%">
+                    <th style="width:80%">
                         <a href="{{ sort_links.name }}" class="contest-sort-link">{{ _('Contest') }}{{ sort_order.name }}</a>
                     </th>
                     <th>

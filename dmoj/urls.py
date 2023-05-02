@@ -239,6 +239,7 @@ urlpatterns = [
         path('/ranking/', contests.ContestRanking.as_view(), name='contest_ranking'),
         path('/public_ranking/', contests.ContestPublicRanking.as_view(), name='contest_public_ranking'),
         path('/official_ranking/', contests.ContestOfficialRanking.as_view(), name='contest_official_ranking'),
+        path('/register', contests.ContestRegister.as_view(), name='contest_register'),
         path('/join', contests.ContestJoin.as_view(), name='contest_join'),
         path('/leave', contests.ContestLeave.as_view(), name='contest_leave'),
         path('/stats', contests.ContestStats.as_view(), name='contest_stats'),
