@@ -18,5 +18,9 @@
                     '{{ _('Joining this contest will leave %(contest)s.', contest=request.participation.contest.name) }}');
             });
         {% endif %}
+
+        $('.register-warning').click(function () {
+            return confirm('{{ _('Are you sure you want to register?') }}');
+        });
     });
 </script>

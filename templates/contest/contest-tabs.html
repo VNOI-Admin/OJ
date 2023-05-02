@@ -31,7 +31,7 @@
     {% endif %}
 
     {% if request.user.is_authenticated %}
-        {% if contest.can_join or is_editor or is_tester %}
+        {% if contest.can_join or contest.require_registration or is_editor or is_tester %}
             {% set in_contest = contest.is_in_contest(request.user) %}
             {% if contest.ended %}
                 {# Allow users to leave the virtual contest #}
@@ -69,13 +69,27 @@
                         <input type="submit" value="{{ _('Spectate contest') }}" class="contest-join">
                     </form>
                 {% else %}
-                    <form action="{{ url('contest_join', contest.key) }}" method="post"
-                          class="contest-join-pseudotab unselectable button">
-                        {% csrf_token %}
-                        <input type="submit"
-                               class="contest-join{% if not has_joined %} first-join{% endif %}"
-                               value="{{ _('Join contest') }}">
-                    </form>
+                    {% if contest.require_registration and contest not in request.profile.registered_contests %}
+                        {% if contest.can_register %}
+                            <form action="{{ url('contest_register', contest.key) }}" method="post"
+                                class="contest-join-pseudotab unselectable button" style="background: linear-gradient(to bottom, #87ab69 0, #4b6043 100%) repeat-x">
+                                {% csrf_token %}
+                                <input type="submit"
+                                    class="register-warning"
+                                    value="{{ _('Register') }}">
+                            </form>
+                        {% endif %}
+                    {% else %}
+                        {% if contest.can_join %}
+                            <form action="{{ url('contest_join', contest.key) }}" method="post"
+                                class="contest-join-pseudotab unselectable button">
+                                {% csrf_token %}
+                                <input type="submit"
+                                    class="contest-join{% if not has_joined %} first-join{% endif %}"
+                                    value="{{ _('Join contest') }}">
+                            </form>
+                        {% endif %}
+                    {% endif %}
                 {% endif %}
             {% endif %}
         {% endif %}
