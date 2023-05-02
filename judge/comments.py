@@ -75,9 +75,7 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
             return HttpResponseForbidden()
 
         if not request.user.is_superuser:
-            user_latest_comments = Comment.get_newest_visible_comments(viewer=request.user,
-                                                                       author=request.user.profile,
-                                                                       n=1)
+            user_latest_comments = Comment.objects.filter(author=request.profile).order_by('-time')[:1]
 
             if len(user_latest_comments) > 0:
                 time_diff = (datetime.now(timezone.utc) - user_latest_comments[0].time).seconds
