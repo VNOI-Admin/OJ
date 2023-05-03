@@ -214,6 +214,14 @@ class Contest(models.Model):
         # Django will complain if you didn't fill in start_time or end_time, so we don't have to.
         if self.start_time and self.end_time and self.start_time >= self.end_time:
             raise ValidationError('What is this? A contest that ended before it starts?')
+
+        if self.registration_start and self.registration_end and \
+                self.registration_start >= self.registration_end:
+            raise ValidationError('Registration window must start before it ends.')
+
+        if self.registration_end and self.end_time and self.registration_end >= self.end_time:
+            raise ValidationError('Registration window must end before the contest ends.')
+
         self.format_class.validate(self.format_config)
 
         try:
