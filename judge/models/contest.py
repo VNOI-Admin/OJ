@@ -319,8 +319,11 @@ class Contest(models.Model):
     def can_register(self):
         if not self.require_registration:
             return False
-        return (self._now <= self.registration_end if self.registration_end else True) \
-            and (self.registration_start <= self._now if self.registration_start else True)
+        if self.registration_start and self._now < self.registration_start:
+            return False
+        if self.registration_end and self._now > self.registration_end:
+            return False
+        return True
 
     @cached_property
     def can_join(self):
