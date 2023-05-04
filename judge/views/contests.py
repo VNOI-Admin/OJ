@@ -495,7 +495,7 @@ class ContestRegister(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View)
 
                 ContestParticipation.objects.create(
                     contest=contest, user=profile, virtual=0,
-                    real_start=datetime(1970, 1, 1),
+                    real_start=datetime(1970, 1, 1, tzinfo=timezone.utc),
                 )
             else:
                 return generic_message(request, _('Already registered'),
@@ -604,7 +604,7 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
                     real_start=timezone.now(),
                 )
             else:
-                if participation.real_start.date() == date(1970, 1, 1):
+                if participation.pre_registered:
                     # Pre-registered. First time joining.
                     participation.real_start = timezone.now()
                     participation.save()

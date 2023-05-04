@@ -1,6 +1,6 @@
 import hashlib
 import hmac
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -607,6 +607,10 @@ class ContestParticipation(models.Model):
     @property
     def spectate(self):
         return self.virtual == self.SPECTATE
+
+    @cached_property
+    def pre_registered(self):
+        return self.real_start.astimezone(timezone.utc).date() == date(1970, 1, 1)
 
     @cached_property
     def start(self):
