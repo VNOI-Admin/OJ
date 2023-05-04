@@ -627,6 +627,8 @@ class ContestParticipation(models.Model):
                 return self.real_start + contest.time_limit
             else:
                 return self.real_start + (contest.end_time - contest.start_time)
+        if self.pre_registered:
+            return contest.end_time
         return contest.end_time if contest.time_limit is None else \
             min(self.real_start + contest.time_limit, contest.end_time)
 
