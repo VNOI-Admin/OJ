@@ -237,8 +237,8 @@ class Profile(models.Model):
         return None
 
     @cached_property
-    def registered_contests(self):
-        return [participation.contest for participation in self.contest_history.filter(virtual=0).all()]
+    def registered_contest_ids(self):
+        return set(self.contest_history.filter(virtual=0).values_list('contest_id', flat=True))
 
     _pp_table = [pow(settings.DMOJ_PP_STEP, i) for i in range(settings.DMOJ_PP_ENTRIES)]
 
