@@ -159,7 +159,7 @@
                 <span style="color: #87ab69"><b>Already registered</b></span>
             {% elif not contest.can_register %}
                 {% if contest.time_before_register %}
-                    <span class="time">{%- trans countdown=contest.time_before_register|as_countdown -%} Registration in {{countdown}} {%- endtrans -%}</span>
+                    <span class="time">{{ _('Registration opens in %(countdown)s', countdown=as_countdown(contest.time_before_register)) }}</span>
                 {% else %}
                     <span>Registration closed</span>
                 {% endif %}
