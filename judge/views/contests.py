@@ -495,7 +495,7 @@ class ContestRegister(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View)
 
                 ContestParticipation.objects.create(
                     contest=contest, user=profile, virtual=0,
-                    real_start=datetime(1, 1, 1),
+                    real_start=datetime(1970, 1, 1, tzinfo=timezone.utc),
                 )
             else:
                 return generic_message(request, _('Already registered'),
@@ -551,8 +551,17 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
                                    _('You have been declared persona non grata for this contest. '
                                      'You are permanently barred from joining this contest.'))
 
-        requires_access_code = not self.can_edit and (contest.ended or not contest.require_registration) \
-            and contest.access_code and access_code != contest.access_code
+        # Conditions for joining a contest:
+        #   - If contest has ended, allow virtual joining iif:
+        #       - contest.disallow_virtual is False
+        #       - requires_access_code is False
+        #   - If contest is ongoing, allow joining iff:
+        #       - Not editor or tester
+        #       - Registered if registration is required
+        #       - requires_access_code is False
+        #   - Editors/Testers can only spectate live contests and only when requires_access_code is False.
+
+        requires_access_code = (not self.can_edit and contest.access_code and access_code != contest.access_code)
         if contest.ended:
             if contest.disallow_virtual:
                 return generic_message(request, _('Virtual joining not allowed'),
@@ -577,14 +586,13 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
         else:
             SPECTATE = ContestParticipation.SPECTATE
             LIVE = ContestParticipation.LIVE
+            can_only_spectate = self.is_editor or self.is_tester
             try:
                 participation = ContestParticipation.objects.get(
-                    contest=contest, user=profile, virtual=(SPECTATE if self.is_editor or self.is_tester else LIVE),
+                    contest=contest, user=profile, virtual=(SPECTATE if can_only_spectate else LIVE),
                 )
-                if participation.real_start.date() == date(1, 1, 1):
-                    participation.real_start = timezone.now()
             except ContestParticipation.DoesNotExist:
-                if not self.is_editor and not self.is_tester and contest.require_registration:
+                if contest.require_registration and not can_only_spectate:
                     return generic_message(request, _('Not registered'),
                                            _('You are not registered for this contest.'))
 
@@ -592,10 +600,15 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
                     raise ContestAccessDenied()
 
                 participation = ContestParticipation.objects.create(
-                    contest=contest, user=profile, virtual=(SPECTATE if self.is_editor or self.is_tester else LIVE),
+                    contest=contest, user=profile, virtual=(SPECTATE if can_only_spectate else LIVE),
                     real_start=timezone.now(),
                 )
             else:
+                if participation.pre_registered:
+                    # Pre-registered. First time joining.
+                    participation.real_start = timezone.now()
+                    participation.save()
+
                 if participation.ended:
                     participation = ContestParticipation.objects.get_or_create(
                         contest=contest, user=profile, virtual=SPECTATE,

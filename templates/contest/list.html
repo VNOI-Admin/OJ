@@ -142,34 +142,24 @@
                            value="{{ _('Spectate') }}">
                 </form>
             {% else %}
-                {% if not request.profile or not contest.require_registration or contest in request.profile.registered_contests %}
-                    <form action="{{ url('contest_join', contest.key) }}" method="post">
-                        {% csrf_token %}
-                        <input type="submit" class="unselectable button full participate-button join-warning"
-                            value="{{ _('Join') }}">
-                    </form>
-                {% else %}
-                    <span>Registration closed</span>
-                {% endif %}
-            {% endif %}
-            {% if contest.require_registration and not contest.time_before_register %}
-                <div style="padding-top: 0.5em">
-                    <span style="opacity: 50%">Registered users: </span>
-                    <span>{{ contest.user_count }}</span>
-                </div>
+                <form action="{{ url('contest_join', contest.key) }}" method="post">
+                    {% csrf_token %}
+                    <input type="submit" class="unselectable button full participate-button join-warning"
+                        value="{{ _('Join') }}">
+                </form>
             {% endif %}
         </td>
     {% endif %}
 {% endmacro %}
 
 {% macro contest_register(contest, request) %}
-    <td>    
+    <td>
         {% if request.profile not in contest.authors.all() and request.profile not in contest.curators.all() and request.profile not in contest.testers.all() %}
-            {% if request.profile and contest in request.profile.registered_contests %}
+            {% if request.profile and contest.id in request.profile.registered_contest_ids %}
                 <span style="color: #87ab69"><b>Already registered</b></span>
             {% elif not contest.can_register %}
                 {% if contest.time_before_register %}
-                    <span class="time">{%- trans countdown=contest.time_before_register|as_countdown -%} Registration in {{countdown}} {%- endtrans -%}</span>
+                    <span class="time">{{ _('Registration opens in %(countdown)s', countdown=as_countdown(contest.time_before_register)) }}</span>
                 {% else %}
                     <span>Registration closed</span>
                 {% endif %}
@@ -177,7 +167,7 @@
                 <form action="{{ url('contest_register', contest.key) }}" method="post">
                     {% csrf_token %}
                     <input type="submit" class="unselectable button full participate-button register-warning" style="background: linear-gradient(to bottom, #87ab69 0, #4b6043 100%) repeat-x"
-                            value="{{ _('Register') }}">  
+                            value="{{ _('Register') }}">
                 </form>
             {% endif %}
         {% endif %}
@@ -264,7 +254,7 @@
                         <td>
                             {{ user_count(contest, request.user) }}
                         </td>
-                        {% if contest.require_registration and request.profile and contest not in request.profile.registered_contests %}
+                        {% if contest.require_registration %}
                             {{ contest_register(contest, request) }}
                         {% else %}
                             {{ contest_join(contest, request, finished_contests) }}

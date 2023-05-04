@@ -1,6 +1,6 @@
 import hashlib
 import hmac
-from datetime import timedelta
+from datetime import date, timedelta
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -214,6 +214,14 @@ class Contest(models.Model):
         # Django will complain if you didn't fill in start_time or end_time, so we don't have to.
         if self.start_time and self.end_time and self.start_time >= self.end_time:
             raise ValidationError('What is this? A contest that ended before it starts?')
+
+        if self.registration_start and self.registration_end and \
+                self.registration_start >= self.registration_end:
+            raise ValidationError('Registration window must start before it ends.')
+
+        if self.registration_end and self.end_time and self.registration_end >= self.end_time:
+            raise ValidationError('Registration window must end before the contest ends.')
+
         self.format_class.validate(self.format_config)
 
         try:
@@ -319,8 +327,11 @@ class Contest(models.Model):
     def can_register(self):
         if not self.require_registration:
             return False
-        return (self._now <= self.registration_end if self.registration_end else True) \
-            and (self.registration_start <= self._now if self.registration_start else True)
+        if self.registration_start and self._now < self.registration_start:
+            return False
+        if self.registration_end and self._now > self.registration_end:
+            return False
+        return True
 
     @cached_property
     def can_join(self):
@@ -598,6 +609,10 @@ class ContestParticipation(models.Model):
         return self.virtual == self.SPECTATE
 
     @cached_property
+    def pre_registered(self):
+        return self.real_start.astimezone(timezone.utc).date() == date(1970, 1, 1)
+
+    @cached_property
     def start(self):
         contest = self.contest
         return contest.start_time if contest.time_limit is None and (self.live or self.spectate) else self.real_start
@@ -612,6 +627,8 @@ class ContestParticipation(models.Model):
                 return self.real_start + contest.time_limit
             else:
                 return self.real_start + (contest.end_time - contest.start_time)
+        if self.pre_registered:
+            return contest.end_time
         return contest.end_time if contest.time_limit is None else \
             min(self.real_start + contest.time_limit, contest.end_time)
 
