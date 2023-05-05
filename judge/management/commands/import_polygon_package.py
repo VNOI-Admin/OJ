@@ -282,7 +282,7 @@ def parse_statements(problem_meta, root, package):
             )
 
         for img_tag in set(re.findall(r'<\s*img[^>]*>', text)):
-            image_path = re.search(r'<\s*img[^>]+src\s*=\s*(["\'])(.*?)\1[^>]*>', text).group(2)
+            image_path = re.search(r'<\s*img[^>]+src\s*=\s*(["\'])(.*?)\1[^>]*>', img_tag).group(2)
             text = text.replace(
                 img_tag,
                 img_tag.replace(image_path, save_image(image_path)),
