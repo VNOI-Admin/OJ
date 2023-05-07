@@ -1,5 +1,6 @@
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -18,8 +19,9 @@ from django.urls import reverse
 from django.utils import timezone, translation
 from lxml import etree as ET
 
-from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemTranslation, \
-    ProblemType, Profile, Solution
+from judge.models import (Language, Problem, ProblemData, ProblemGroup,
+                          ProblemTestCase, ProblemTranslation, ProblemType,
+                          Profile, Solution)
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import django_uploader
 
@@ -179,18 +181,33 @@ def parse_tests(problem_meta, root, package):
     total_points = 0
 
     groups = testset.find('groups')
+
+    # multiply by POINT_FACTOR to keep precision
+    POINT_FACTOR = 10 ** 6
+    groups_points = [] if groups is None else [int(float(group.get('points', 0)) * POINT_FACTOR) for group in groups.getchildren()]
+    testset_points = [int(float(test.get('points', 0)) * POINT_FACTOR) for test in testset.find('tests').getchildren()]
+
+    points_gcd = 0
+    for points in groups_points + testset_points:
+        points_gcd = math.gcd(points_gcd, points)
+
+    points_gcd = points_gcd or 1 # prevent division by zero
+
+    def scale_points(points: str):
+        return int(float(points) * POINT_FACTOR) // points_gcd
+
     if groups is not None:
         for group in groups.getchildren():
             points_policy = group.get('points-policy')
             if points_policy == 'complete-group':
-                points = int(float(group.get('points', 0)))
+                points = scale_points(group.get('points', 0))
                 problem_meta['batches'][group.get('name')] = {'points': points, 'cases': []}
                 total_points += points
 
     for i, test in enumerate(testset.find('tests').getchildren(), start=1):
         input_path = input_path_pattern % i
         answer_path = answer_path_pattern % i
-        points = int(float(test.get('points', 0)))
+        points = scale_points(test.get('points', 0))
         total_points += points
 
         tests_zip.writestr(f'{i:02d}.inp', package.read(input_path))
