@@ -501,7 +501,6 @@ class ContestRegister(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View)
                 return generic_message(request, _('Already registered'),
                                        _('You have already registered for this contest.'))
 
-        profile.save()
         contest._updating_stats_only = True
         contest.update_user_count()
         return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
@@ -557,7 +556,7 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
         #       - requires_access_code is False
         #   - If contest is ongoing, allow joining iff:
         #       - Not editor or tester
-        #       - Registered if registration is required
+        #       - Registered if registration windows has ended
         #       - requires_access_code is False
         #   - Editors/Testers can only spectate live contests and only when requires_access_code is False.
 
@@ -592,7 +591,7 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
                     contest=contest, user=profile, virtual=(SPECTATE if can_only_spectate else LIVE),
                 )
             except ContestParticipation.DoesNotExist:
-                if contest.require_registration and not can_only_spectate:
+                if contest.require_registration and not contest.can_register and not can_only_spectate:
                     return generic_message(request, _('Not registered'),
                                            _('You are not registered for this contest.'))
 
