@@ -89,7 +89,7 @@
                 {% endif %}
             {% endif %}
         {% endif %}
-    {% elif contest.can_join %}
+    {% elif (contest.can_join and not contest.require_registration) or contest.can_register %}
         <form action="{{ url('auth_login') }}" method="get"
               class="contest-join-pseudotab unselectable button">
             <input type="hidden" name="next" value="{{ LOGIN_RETURN_PATH|urlencode }}">
