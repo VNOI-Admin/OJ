@@ -551,7 +551,7 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
                                      'You are permanently barred from joining this contest.'))
 
         # Conditions for joining a contest:
-        #   - If contest has ended, allow virtual joining iif:
+        #   - If contest has ended, allow virtual joining iff:
         #       - contest.disallow_virtual is False
         #       - requires_access_code is False
         #   - If contest is ongoing, allow joining iff:
