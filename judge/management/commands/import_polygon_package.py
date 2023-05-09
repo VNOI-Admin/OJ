@@ -41,8 +41,8 @@ function Math(m)
 end
 
 function Image(el)
-    -- And line breaks before the image
-    return {pandoc.RawInline('markdown', '\\n\\n'), el}
+    -- And blank lines before and after the image for caption to work
+    return {pandoc.RawInline('markdown', '\\n\\n'), el, pandoc.RawInline('markdown', '\\n\\n')}
 end
 
 function Code(el)
