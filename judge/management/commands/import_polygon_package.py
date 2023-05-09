@@ -24,8 +24,6 @@ from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import django_uploader
 
 PANDOC_FILTER = """
-local List = require 'pandoc.List'
-
 function normalize_quote(text)
     -- These four quotes are disallowed characters.
     -- See DMOJ_PROBLEM_STATEMENT_DISALLOWED_CHARACTERS
@@ -39,7 +37,7 @@ end
 function Math(m)
     -- Fix math delimiters
     local delimiter = m.mathtype == 'InlineMath' and '~' or '$$'
-    return pandoc.RawInline('markdown', delimiter .. m.text .. delimiter)
+    return pandoc.RawInline('html', delimiter .. m.text .. delimiter)
 end
 
 function Image(el)
@@ -69,27 +67,83 @@ function Quoted(el)
 end
 
 function Str(el)
-    -- en dash and em dash would still show up correctly if we don't escape
-    -- them, but they would be hardly noticeable while editing.
-    el.text = el.text:gsub('\\u{2013}', '&ndash;')
-    el.text = el.text:gsub('\\u{2014}', '&mdash;')
+    -- en dash and em dash would still show up correctly if we don't escape them,
+    -- but they would be hardly noticeable while editing.
+    local res = {}
+    local part = ''
+    for c in el.text:gmatch(utf8.charpattern) do
+        if c == '\\u{2013}' then
+            -- en dash
+            if part ~= '' then
+                table.insert(res, pandoc.Str(part))
+                part = ''
+            end
+            table.insert(res, pandoc.RawInline('html', '&ndash;'))
+        elseif c == '\\u{2014}' then
+            -- em dash
+            if part ~= '' then
+                table.insert(res, pandoc.Str(part))
+                part = ''
+            end
+            table.insert(res, pandoc.RawInline('html', '&mdash;'))
+        else
+            part = part .. c
+        end
+    end
+    if part ~= '' then
+        table.insert(res, pandoc.Str(part))
+    end
 
     -- Normalize quotes
     el.text = normalize_quote(el.text)
 
-    return el
+    return res
 end
 
 function Div(el)
-    -- Currently only used for <center>
-    -- FIXME: What about other classes?
-    local res = List:new{}
-    table.insert(res, pandoc.RawBlock('markdown', '<' .. el.classes[1] .. '>'))
-    for _, block in ipairs(el.content) do
-        table.insert(res, block)
+    if el.classes[1] == 'center' then
+        local res = {}
+        table.insert(res, pandoc.RawBlock('markdown', '<' .. el.classes[1] .. '>'))
+        for _, block in ipairs(el.content) do
+            table.insert(res, block)
+        end
+        table.insert(res, pandoc.RawBlock('markdown', '</' .. el.classes[1] .. '>'))
+        return res
+
+    elseif el.classes[1] == 'epigraph' then
+        local filter = {
+            Math = Math,
+            Code = Code,
+            Quoted = Quoted,
+            Str = Str,
+            Para = function (s)
+                return pandoc.Plain(s.content)
+            end,
+            Span = function (s)
+                return s.content
+            end
+        }
+
+        function renderHTML(el)
+            local doc = pandoc.Pandoc({el})
+            local rendered = pandoc.write(doc:walk(filter), 'html')
+            return pandoc.RawBlock('markdown', rendered)
+        end
+
+        local res = {}
+        table.insert(res, pandoc.RawBlock('markdown', '<div style="margin-left: 67%;">'))
+        if el.content[1] then
+            table.insert(res, renderHTML(el.content[1]))
+        end
+        table.insert(res, pandoc.RawBlock('markdown', '<div style="border-top: 1px solid #888;"></div>'))
+        if el.content[2] then
+            table.insert(res, renderHTML(el.content[2]))
+        end
+        table.insert(res, pandoc.RawBlock('markdown', '</div>'))
+        return res
     end
-    table.insert(res, pandoc.RawBlock('markdown', '</' .. el.classes[1] .. '>'))
-    return res
+
+    return nil
 end
 """
 
