@@ -54,6 +54,14 @@ end
 function CodeBlock(el)
     -- Normalize quotes
     el.text = normalize_quote(el.text)
+
+    -- Set language to empty string if it's nil
+    -- This is a hack to force backtick code blocks instead of indented code blocks
+    -- See https://github.com/jgm/pandoc/issues/7033
+    if el.classes[1] == nil then
+        el.classes[1] = ''
+    end
+
     return el
 end
 
