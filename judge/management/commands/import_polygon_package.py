@@ -156,6 +156,25 @@ end
 """
 
 
+def pandoc_tex_to_markdown(tex):
+    tmp_dir = tempfile.TemporaryDirectory()
+    with open(os.path.join(tmp_dir.name, 'temp.tex'), 'w') as f:
+        f.write(tex)
+    with open(os.path.join(tmp_dir.name, 'filter.lua'), 'w') as f:
+        f.write(PANDOC_FILTER)
+    subprocess.run(['pandoc', '--lua-filter=filter.lua', '-t', 'gfm', '-o', 'temp.md', 'temp.tex'], cwd=tmp_dir.name)
+    with open(os.path.join(tmp_dir.name, 'temp.md'), 'r') as f:
+        md = f.read()
+    tmp_dir.cleanup()
+
+    return md
+
+
+def pandoc_get_version():
+    parts = subprocess.check_output(['pandoc', '--version']).decode().splitlines()[0].split(' ')[1].split('.')
+    return tuple(map(int, parts))
+
+
 def parse_checker(problem_meta, root, package):
     checker = root.find('.//checker')
     if checker is None:
@@ -295,20 +314,6 @@ def parse_tests(problem_meta, root, package):
             problem_meta['grader_args']['io_method'] = 'file'
             problem_meta['grader_args']['io_input_file'] = io_input_file
             problem_meta['grader_args']['io_output_file'] = io_output_file
-
-
-def pandoc_tex_to_markdown(tex):
-    tmp_dir = tempfile.TemporaryDirectory()
-    with open(os.path.join(tmp_dir.name, 'temp.tex'), 'w') as f:
-        f.write(tex)
-    with open(os.path.join(tmp_dir.name, 'filter.lua'), 'w') as f:
-        f.write(PANDOC_FILTER)
-    subprocess.run(['pandoc', '--lua-filter=filter.lua', '-t', 'gfm', '-o', 'temp.md', 'temp.tex'], cwd=tmp_dir.name)
-    with open(os.path.join(tmp_dir.name, 'temp.md'), 'r') as f:
-        md = f.read()
-    tmp_dir.cleanup()
-
-    return md
 
 
 def parse_statements(problem_meta, root, package):
@@ -586,6 +591,8 @@ class Command(BaseCommand):
         # Check if pandoc is available
         if not shutil.which('pandoc'):
             raise CommandError('pandoc not installed')
+        if pandoc_get_version() < (3, 0, 0):
+            raise CommandError('pandoc version must be at least 3.0.0')
 
         # Let's validate the problem code right now.
         # We don't want to have done everything and still fail because
