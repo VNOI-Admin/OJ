@@ -24,8 +24,6 @@ from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import django_uploader
 
 PANDOC_FILTER = """
-local List = require 'pandoc.List'
-
 function normalize_quote(text)
     -- These four quotes are disallowed characters.
     -- See DMOJ_PROBLEM_STATEMENT_DISALLOWED_CHARACTERS
@@ -39,12 +37,12 @@ end
 function Math(m)
     -- Fix math delimiters
     local delimiter = m.mathtype == 'InlineMath' and '~' or '$$'
-    return pandoc.RawInline('markdown', delimiter .. m.text .. delimiter)
+    return pandoc.RawInline('html', delimiter .. m.text .. delimiter)
 end
 
 function Image(el)
-    -- And line breaks before the image
-    return {pandoc.RawInline('markdown', '\\n\\n'), el}
+    -- And blank lines before and after the image for caption to work
+    return {pandoc.RawInline('markdown', '\\n\\n'), el, pandoc.RawInline('markdown', '\\n\\n')}
 end
 
 function Code(el)
@@ -56,6 +54,14 @@ end
 function CodeBlock(el)
     -- Normalize quotes
     el.text = normalize_quote(el.text)
+
+    -- Set language to empty string if it's nil
+    -- This is a hack to force backtick code blocks instead of indented code blocks
+    -- See https://github.com/jgm/pandoc/issues/7033
+    if el.classes[1] == nil then
+        el.classes[1] = ''
+    end
+
     return el
 end
 
@@ -69,29 +75,104 @@ function Quoted(el)
 end
 
 function Str(el)
-    -- en dash and em dash would still show up correctly if we don't escape
-    -- them, but they would be hardly noticeable while editing.
-    el.text = el.text:gsub('\\u{2013}', '&ndash;')
-    el.text = el.text:gsub('\\u{2014}', '&mdash;')
+    -- en dash and em dash would still show up correctly if we don't escape them,
+    -- but they would be hardly noticeable while editing.
+    local res = {}
+    local part = ''
+    for c in el.text:gmatch(utf8.charpattern) do
+        if c == '\\u{2013}' then
+            -- en dash
+            if part ~= '' then
+                table.insert(res, pandoc.Str(part))
+                part = ''
+            end
+            table.insert(res, pandoc.RawInline('html', '&ndash;'))
+        elseif c == '\\u{2014}' then
+            -- em dash
+            if part ~= '' then
+                table.insert(res, pandoc.Str(part))
+                part = ''
+            end
+            table.insert(res, pandoc.RawInline('html', '&mdash;'))
+        else
+            part = part .. c
+        end
+    end
+    if part ~= '' then
+        table.insert(res, pandoc.Str(part))
+    end
 
     -- Normalize quotes
     el.text = normalize_quote(el.text)
 
-    return el
+    return res
 end
 
 function Div(el)
-    -- Currently only used for <center>
-    -- FIXME: What about other classes?
-    local res = List:new{}
-    table.insert(res, pandoc.RawBlock('markdown', '<' .. el.classes[1] .. '>'))
-    for _, block in ipairs(el.content) do
-        table.insert(res, block)
+    if el.classes[1] == 'center' then
+        local res = {}
+        table.insert(res, pandoc.RawBlock('markdown', '<' .. el.classes[1] .. '>'))
+        for _, block in ipairs(el.content) do
+            table.insert(res, block)
+        end
+        table.insert(res, pandoc.RawBlock('markdown', '</' .. el.classes[1] .. '>'))
+        return res
+
+    elseif el.classes[1] == 'epigraph' then
+        local filter = {
+            Math = Math,
+            Code = Code,
+            Quoted = Quoted,
+            Str = Str,
+            Para = function (s)
+                return pandoc.Plain(s.content)
+            end,
+            Span = function (s)
+                return s.content
+            end
+        }
+
+        function renderHTML(el)
+            local doc = pandoc.Pandoc({el})
+            local rendered = pandoc.write(doc:walk(filter), 'html')
+            return pandoc.RawBlock('markdown', rendered)
+        end
+
+        local res = {}
+        table.insert(res, pandoc.RawBlock('markdown', '<div style="margin-left: 67%;">'))
+        if el.content[1] then
+            table.insert(res, renderHTML(el.content[1]))
+        end
+        table.insert(res, pandoc.RawBlock('markdown', '<div style="border-top: 1px solid #888;"></div>'))
+        if el.content[2] then
+            table.insert(res, renderHTML(el.content[2]))
+        end
+        table.insert(res, pandoc.RawBlock('markdown', '</div>'))
+        return res
     end
-    table.insert(res, pandoc.RawBlock('markdown', '</' .. el.classes[1] .. '>'))
-    return res
+
+    return nil
 end
 """
+
+
+def pandoc_tex_to_markdown(tex):
+    tmp_dir = tempfile.TemporaryDirectory()
+    with open(os.path.join(tmp_dir.name, 'temp.tex'), 'w') as f:
+        f.write(tex)
+    with open(os.path.join(tmp_dir.name, 'filter.lua'), 'w') as f:
+        f.write(PANDOC_FILTER)
+    subprocess.run(['pandoc', '--lua-filter=filter.lua', '-t', 'gfm', '-o', 'temp.md', 'temp.tex'], cwd=tmp_dir.name)
+    with open(os.path.join(tmp_dir.name, 'temp.md'), 'r') as f:
+        md = f.read()
+    tmp_dir.cleanup()
+
+    return md
+
+
+def pandoc_get_version():
+    parts = subprocess.check_output(['pandoc', '--version']).decode().splitlines()[0].split(' ')[1].split('.')
+    return tuple(map(int, parts))
 
 
 def parse_checker(problem_meta, root, package):
@@ -233,20 +314,6 @@ def parse_tests(problem_meta, root, package):
             problem_meta['grader_args']['io_method'] = 'file'
             problem_meta['grader_args']['io_input_file'] = io_input_file
             problem_meta['grader_args']['io_output_file'] = io_output_file
-
-
-def pandoc_tex_to_markdown(tex):
-    tmp_dir = tempfile.TemporaryDirectory()
-    with open(os.path.join(tmp_dir.name, 'temp.tex'), 'w') as f:
-        f.write(tex)
-    with open(os.path.join(tmp_dir.name, 'filter.lua'), 'w') as f:
-        f.write(PANDOC_FILTER)
-    subprocess.run(['pandoc', '--lua-filter=filter.lua', '-t', 'gfm', '-o', 'temp.md', 'temp.tex'], cwd=tmp_dir.name)
-    with open(os.path.join(tmp_dir.name, 'temp.md'), 'r') as f:
-        md = f.read()
-    tmp_dir.cleanup()
-
-    return md
 
 
 def parse_statements(problem_meta, root, package):
@@ -524,6 +591,8 @@ class Command(BaseCommand):
         # Check if pandoc is available
         if not shutil.which('pandoc'):
             raise CommandError('pandoc not installed')
+        if pandoc_get_version() < (3, 0, 0):
+            raise CommandError('pandoc version must be at least 3.0.0')
 
         # Let's validate the problem code right now.
         # We don't want to have done everything and still fail because
