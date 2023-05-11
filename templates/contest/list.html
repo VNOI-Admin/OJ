@@ -292,6 +292,8 @@
                         </td>
                         {% if contest.require_registration %}
                             {{ contest_register(contest, request) }}
+                        {% else %}
+                            <td></td>
                         {% endif %}
                     </tr>
                 {% endfor %}
