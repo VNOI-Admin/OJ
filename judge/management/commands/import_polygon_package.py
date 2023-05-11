@@ -250,50 +250,92 @@ def parse_tests(problem_meta, root, package):
     print(f'Time limit: {problem_meta["time_limit"]}s')
     print(f'Memory limit: {problem_meta["memory_limit"] // 1024}MB')
 
-    problem_meta['cases'] = []
     problem_meta['batches'] = {}
+    problem_meta['normal_cases'] = []
     problem_meta['zipfile'] = os.path.join(problem_meta['tmp_dir'].name, 'tests.zip')
-    tests_zip = zipfile.ZipFile(problem_meta['zipfile'], 'w')
 
-    input_path_pattern = testset.find('input-path-pattern').text
-    answer_path_pattern = testset.find('answer-path-pattern').text
-    total_points = 0
+    # Tests can be aggregated into batches (called groups in Polygon).
+    # Each batch can have one of two point policies:
+    #    - complete-group: contestant gets points only if all tests in the batch are solved.
+    #    - each-test: contestant gets points for each test solved
+    # Our judge only supports complete-group batches.
+    # For each-test batches, their tests are added as normal tests.
+    # Each batch can also have a list of dependencies, which are other batches
+    # that must be fully solved before the batch is run.
+    # To support dependencies, we just add all dependent tests before the actual tests.
+    # (There is actually a more elegant way to do this by using field `dependencies` in init.yml,
+    # but site does not support it yet)
+    # Our judge does cache result for each test, so the same test will not be run twice.
+    # In addition, we only support dependencies for complete-group batches.
+    # (Technically, we could support dependencies for each-test batch by splitting it
+    # into multiple complete-group batches, but that's too complicated)
 
     groups = testset.find('groups')
     if groups is not None:
         for group in groups.getchildren():
+            name = group.get('name')
+            points = int(float(group.get('points', 0)))
             points_policy = group.get('points-policy')
-            if points_policy == 'complete-group':
-                points = int(float(group.get('points', 0)))
-                problem_meta['batches'][group.get('name')] = {'points': points, 'cases': []}
-                total_points += points
+            dependencies = group.find('dependencies')
+            if dependencies is None:
+                dependencies = []
+            else:
+                dependencies = [d.get('group') for d in dependencies.getchildren()]
 
-    for i, test in enumerate(testset.find('tests').getchildren(), start=1):
-        input_path = input_path_pattern % i
-        answer_path = answer_path_pattern % i
-        points = int(float(test.get('points', 0)))
-        total_points += points
+            assert points_policy in ['complete-group', 'each-test']
+            if points_policy == 'each-test' and len(dependencies) > 0:
+                raise CommandError('dependencies are only supported for batches with complete-group point policy')
 
-        tests_zip.writestr(f'{i:02d}.inp', package.read(input_path))
-        tests_zip.writestr(f'{i:02d}.out', package.read(answer_path))
+            problem_meta['batches'][name] = {
+                'name': name,
+                'points': points,
+                'points_policy': points_policy,
+                'dependencies': dependencies,
+                'cases': [],
+            }
 
-        group = test.get('group', '')
-        if group in problem_meta['batches']:
-            problem_meta['batches'][group]['cases'].append({
-                'input_file': f'{i:02d}.inp',
-                'output_file': f'{i:02d}.out',
-            })
-        else:
-            problem_meta['cases'].append({
+    with zipfile.ZipFile(problem_meta['zipfile'], 'w') as tests_zip:
+        input_path_pattern = testset.find('input-path-pattern').text
+        answer_path_pattern = testset.find('answer-path-pattern').text
+        for i, test in enumerate(testset.find('tests').getchildren(), start=1):
+            input_path = input_path_pattern % i
+            answer_path = answer_path_pattern % i
+            points = int(float(test.get('points', 0)))
+            case_data = {
                 'input_file': f'{i:02d}.inp',
                 'output_file': f'{i:02d}.out',
                 'points': points,
-            })
+            }
 
-    tests_zip.close()
+            tests_zip.writestr(f'{i:02d}.inp', package.read(input_path))
+            tests_zip.writestr(f'{i:02d}.out', package.read(answer_path))
 
-    print(f'Found {len(testset.find("tests").getchildren())} testcases!')
+            group = test.get('group', '')
+            if group in problem_meta['batches']:
+                problem_meta['batches'][group]['cases'].append(case_data)
+            else:
+                problem_meta['normal_cases'].append(case_data)
 
+    each_test_batches = []
+    for batch in problem_meta['batches'].values():
+        if batch['points_policy'] == 'each-test':
+            each_test_batches.append(batch['name'])
+            problem_meta['normal_cases'] += batch['cases']
+            continue
+
+        # Polygon guarantees no cycles
+        dependent_cases = []
+        for dependency in batch['dependencies']:
+            dependent_cases += problem_meta['batches'][dependency]['cases']
+        batch['cases'] = dependent_cases + batch['cases']
+    for batch in each_test_batches:
+        del problem_meta['batches'][batch]
+
+    print(f'Found {len(testset.find("tests").getchildren())} tests!')
+    print(f'Parsed as {len(problem_meta["batches"])} batches and {len(problem_meta["normal_cases"])} normal tests!')
+
+    total_points = (sum(b['points'] for b in problem_meta['batches'].values()) +
+                    sum(c['points'] for c in problem_meta['normal_cases']))
     if total_points == 0:
         print('Total points is zero. Set partial to False')
         problem_meta['partial'] = False
@@ -554,7 +596,7 @@ def create_problem(problem_meta):
         end_batch = ProblemTestCase(dataset=problem, order=order, type='E', is_pretest=False)
         end_batch.save()
 
-    for case_data in problem_meta['cases']:
+    for case_data in problem_meta['normal_cases']:
         order += 1
         case = ProblemTestCase(
             dataset=problem,
