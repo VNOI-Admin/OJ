@@ -357,7 +357,7 @@ def parse_tests(problem_meta, root, package):
     print(f'Parsed as {len(problem_meta["batches"])} batches and {len(problem_meta["normal_cases"])} normal tests!')
 
     total_points = (sum(b['points'] for b in problem_meta['batches'].values()) +
-                    sum(c['points'] for c in problem_meta['normal_cases']))
+                    sum(problem_meta['cases_data'][i]['points'] for i in problem_meta['normal_cases']))
     if total_points == 0:
         print('Total points is zero. Set partial to False')
         problem_meta['partial'] = False
