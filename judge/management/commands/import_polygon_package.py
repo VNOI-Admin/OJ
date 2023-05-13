@@ -250,6 +250,7 @@ def parse_tests(problem_meta, root, package):
     print(f'Time limit: {problem_meta["time_limit"]}s')
     print(f'Memory limit: {problem_meta["memory_limit"] // 1024}MB')
 
+    problem_meta['cases_data'] = []
     problem_meta['batches'] = {}
     problem_meta['normal_cases'] = []
     problem_meta['zipfile'] = os.path.join(problem_meta['tmp_dir'].name, 'tests.zip')
@@ -297,24 +298,43 @@ def parse_tests(problem_meta, root, package):
     with zipfile.ZipFile(problem_meta['zipfile'], 'w') as tests_zip:
         input_path_pattern = testset.find('input-path-pattern').text
         answer_path_pattern = testset.find('answer-path-pattern').text
-        for i, test in enumerate(testset.find('tests').getchildren(), start=1):
-            input_path = input_path_pattern % i
-            answer_path = answer_path_pattern % i
+        for i, test in enumerate(testset.find('tests').getchildren()):
             points = int(float(test.get('points', 0)))
-            case_data = {
-                'input_file': f'{i:02d}.inp',
-                'output_file': f'{i:02d}.out',
-                'points': points,
-            }
+            input_path = input_path_pattern % (i + 1)
+            answer_path = answer_path_pattern % (i + 1)
+            input_file = f'{(i + 1):02d}.inp'
+            output_file = f'{(i + 1):02d}.out'
 
-            tests_zip.writestr(f'{i:02d}.inp', package.read(input_path))
-            tests_zip.writestr(f'{i:02d}.out', package.read(answer_path))
+            tests_zip.writestr(input_file, package.read(input_path))
+            tests_zip.writestr(output_file, package.read(answer_path))
+
+            problem_meta['cases_data'].append({
+                'index': i,
+                'input_file': input_file,
+                'output_file': output_file,
+                'points': points,
+            })
 
             group = test.get('group', '')
             if group in problem_meta['batches']:
-                problem_meta['batches'][group]['cases'].append(case_data)
+                problem_meta['batches'][group]['cases'].append(i)
             else:
-                problem_meta['normal_cases'].append(case_data)
+                problem_meta['normal_cases'].append(i)
+
+    def get_tests_by_batch(name):
+        batch = problem_meta['batches'][name]
+
+        if len(batch['dependencies']) == 0:
+            return batch['cases']
+
+        # Polygon guarantees no cycles
+        cases = set(batch['cases'])
+        for dependency in batch['dependencies']:
+            cases.update(get_tests_by_batch(dependency))
+
+        batch['dependencies'] = []
+        batch['cases'] = list(cases)
+        return batch['cases']
 
     each_test_batches = []
     for batch in problem_meta['batches'].values():
@@ -323,13 +343,15 @@ def parse_tests(problem_meta, root, package):
             problem_meta['normal_cases'] += batch['cases']
             continue
 
-        # Polygon guarantees no cycles
-        dependent_cases = []
-        for dependency in batch['dependencies']:
-            dependent_cases += problem_meta['batches'][dependency]['cases']
-        batch['cases'] = dependent_cases + batch['cases']
+        batch['cases'] = get_tests_by_batch(batch['name'])
+
     for batch in each_test_batches:
         del problem_meta['batches'][batch]
+
+    # Sort tests by index
+    problem_meta['normal_cases'].sort()
+    for batch in problem_meta['batches'].values():
+        batch['cases'].sort()
 
     print(f'Found {len(testset.find("tests").getchildren())} tests!')
     print(f'Parsed as {len(problem_meta["batches"])} batches and {len(problem_meta["normal_cases"])} normal tests!')
@@ -580,8 +602,9 @@ def create_problem(problem_meta):
         start_batch = ProblemTestCase(dataset=problem, order=order, type='S', points=batch['points'], is_pretest=False)
         start_batch.save()
 
-        for case_data in batch['cases']:
+        for case_index in batch['cases']:
             order += 1
+            case_data = problem_meta['cases_data'][case_index]
             case = ProblemTestCase(
                 dataset=problem,
                 order=order,
@@ -596,8 +619,9 @@ def create_problem(problem_meta):
         end_batch = ProblemTestCase(dataset=problem, order=order, type='E', is_pretest=False)
         end_batch.save()
 
-    for case_data in problem_meta['normal_cases']:
+    for case_index in problem_meta['normal_cases']:
         order += 1
+        case_data = problem_meta['cases_data'][case_index]
         case = ProblemTestCase(
             dataset=problem,
             order=order,
