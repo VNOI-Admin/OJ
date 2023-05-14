@@ -79,8 +79,8 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
 
             if len(user_latest_comments) > 0:
                 time_diff = (datetime.now(timezone.utc) - user_latest_comments[0].time).seconds
-                if time_diff < settings.VNOJ_COMMENT_COOLDOWN * 60:
-                    return HttpResponseBadRequest(_('You can only comment after {0} minutes '
+                if time_diff < settings.VNOJ_COMMENT_COOLDOWN:
+                    return HttpResponseBadRequest(_('You can only comment after {0} seconds '
                                                     'since your latest comment')
                                                   .format(settings.VNOJ_COMMENT_COOLDOWN), content_type='text/plain')
 

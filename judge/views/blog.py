@@ -314,8 +314,8 @@ class BlogPostCreate(TitleMixin, CreateView):
 
             if len(user_latest_blog) > 0:
                 time_diff = (datetime.now(timezone.utc) - user_latest_blog[0].publish_on).seconds
-                if time_diff < settings.VNOJ_BLOG_COOLDOWN * 60:
-                    return HttpResponseBadRequest(_('You can only create a blog after {0} minutes '
+                if time_diff < settings.VNOJ_BLOG_COOLDOWN:
+                    return HttpResponseBadRequest(_('You can only create a blog after {0} seconds '
                                                     'since your latest blog')
                                                   .format(settings.VNOJ_BLOG_COOLDOWN), content_type='text/plain')
         return super().dispatch(request, *args, **kwargs)
