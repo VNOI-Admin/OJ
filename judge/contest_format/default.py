@@ -49,19 +49,26 @@ class DefaultContestFormat(BaseContestFormat):
         from judge.models import ContestSubmission, Submission
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
         first_solve = False
-        submissions = ContestSubmission.objects.filter(problem=contest_problem, points=contest_problem.points, participation=participation)
-        first_submission = Submission.objects.filter(problem=contest_problem.problem, date__gt=self.contest.start_time, date__lt=self.contest.end_time).order_by('-points', 'date').first()
-        for tmp in Submission.objects.filter(problem=contest_problem.problem, date__gt=self.contest.start_time, date__lt=self.contest.end_time).order_by('-points', 'date'):
+        submissions = ContestSubmission.objects.filter(problem=contest_problem,
+                                                       points=contest_problem.points,
+                                                       participation=participation)
+        first_submission = Submission.objects.filter(problem=contest_problem.problem,
+                                                     date__gt=self.contest.start_time,
+                                                     date__lt=self.contest.end_time).order_by('-points', 'date').first()
+        for tmp in Submission.objects.filter(problem=contest_problem.problem,
+                                             date__gt=self.contest.start_time,
+                                             date__lt=self.contest.end_time).order_by('-points', 'date'):
             print(tmp.user, tmp.points)
         if submissions and first_submission:
             print(submissions[0].participation.user, first_submission.user)
             if (submissions[0].participation.user == first_submission.user):
                 first_solve = True
-                
+
         if format_data:
             return format_html(
                 '<td class="{state}"><a href="{url}">{points}<div class="solving-time">{time}</div></a></td>',
-                state=(('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else 'first-solve ' if first_solve else '') +
+                state=(('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested
+                        else 'first-solve ' if first_solve else '') +
                        self.best_solution_state(format_data['points'], contest_problem.points)),
                 url=reverse('contest_user_submissions',
                             args=[self.contest.key, participation.user.user.username, contest_problem.problem.code]),
