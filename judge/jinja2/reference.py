@@ -162,7 +162,7 @@ def link_user(user):
 
     return mark_safe(f'<span class="{profile.css_class}">'
                      f'<a href="{escape(reverse("user_page", args=[user.username]))}"'
-                     f' style="display: inline-flex; align-items: center;">'
+                     f' style="display: inline-block; align-items: center;">'
                      f'{escape(profile.display_name)}</a>{display_badge_img}</span>')
 
 
