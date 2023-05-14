@@ -310,10 +310,10 @@ class BlogPostCreate(TitleMixin, CreateView):
 
         if not user.is_superuser:
             user_latest_blog = BlogPost.objects.filter(publish_on__lte=timezone.now(), authors__in=[user.profile]) \
-                                               .order_by('-publish_on')[:1]
+                                               .order_by('-publish_on').first()
 
-            if len(user_latest_blog) > 0:
-                time_diff = (datetime.now(timezone.utc) - user_latest_blog[0].publish_on).seconds
+            if user_latest_blog is not None:
+                time_diff = (datetime.now(timezone.utc) - user_latest_blog.publish_on).seconds
                 if time_diff < settings.VNOJ_BLOG_COOLDOWN:
                     remaining_minutes, remaining_seconds = divmod(settings.VNOJ_BLOG_COOLDOWN - time_diff, 60)
                     return HttpResponseBadRequest(_('You can only create a blog after {0} minutes and {1} seconds.')
