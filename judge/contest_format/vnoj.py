@@ -34,7 +34,7 @@ SELECT MAX(cs.points) as `points`, (
     SELECT MIN(csub.date)
         FROM judge_contestsubmission ccs LEFT OUTER JOIN
                 judge_submission csub ON (csub.id = ccs.submission_id)
-        WHERE ccs.problem_id = cp.id AND ccs.participation_id = %s AND ccs.points = MAX(cs.points)AND csub.date < %s
+        WHERE ccs.problem_id = cp.id AND ccs.participation_id = %s AND ccs.points = MAX(cs.points) AND csub.date < %s
 ) AS `time`, cp.id AS `prob`
 FROM judge_contestproblem cp INNER JOIN
         judge_contestsubmission cs ON (cs.problem_id = cp.id AND cs.participation_id = %s) LEFT OUTER JOIN
@@ -163,7 +163,26 @@ class VNOJContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def display_user_problem(self, participation, contest_problem, frozen=False):
+    def get_first_solves(self, problems, participations, frozen=False):
+        first_solves = {}
+
+        for problem in problems:
+            min_time = None
+            for participation in participations:
+                format_data = (participation.format_data or {}).get(str(problem.id))
+                if format_data:
+                    has_pending = bool(format_data.get('pending', 0))
+                    prefix = 'frozen_' if frozen and has_pending else ''
+                    points = format_data[prefix + 'points']
+                    time = format_data[prefix + 'time']
+
+                    if points == problem.points and (min_time is None or min_time > time):
+                        min_time = time
+                        first_solves[str(problem.id)] = participation.id
+
+        return first_solves
+
+    def display_user_problem(self, participation, contest_problem, first_solves, frozen=False):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
 
         if format_data:
@@ -184,6 +203,7 @@ class VNOJContestFormat(DefaultContestFormat):
 
             state = (('pending ' if frozen and has_pending else '') +
                      ('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
+                     ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
                      self.best_solution_state(format_data[prefix + 'points'], contest_problem.points))
 
             url = reverse('contest_user_submissions',
@@ -191,7 +211,7 @@ class VNOJContestFormat(DefaultContestFormat):
 
             points = floatformat(format_data[prefix + 'points'], -self.contest.points_precision)
             time = nice_repr(timedelta(seconds=format_data[prefix + 'time']), 'noday')
-            pending = format_html(' <small style="color:black;" class="ahihi">[{pending}]</small>',
+            pending = format_html(' <small style="color:black;">[{pending}]</small>',
                                   pending=floatformat(format_data['pending'])) if frozen and has_pending else ''
 
             if frozen and has_pending:

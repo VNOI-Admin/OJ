@@ -829,12 +829,12 @@ ContestRankingProfile = namedtuple(
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
 
 
-def make_contest_ranking_profile(contest, participation, contest_problems, frozen=False):
+def make_contest_ranking_profile(contest, participation, contest_problems, first_solves, frozen=False):
     def display_user_problem(contest_problem):
         # When the contest format is changed, `format_data` might be invalid.
         # This will cause `display_user_problem` to error, so we display '???' instead.
         try:
-            return contest.format.display_user_problem(participation, contest_problem, frozen)
+            return contest.format.display_user_problem(participation, contest_problem, first_solves, frozen)
         except (KeyError, TypeError, ValueError):
             return mark_safe('<td>???</td>')
 
@@ -858,8 +858,10 @@ def make_contest_ranking_profile(contest, participation, contest_problems, froze
 
 
 def base_contest_ranking_list(contest, problems, queryset, frozen=False):
-    return [make_contest_ranking_profile(contest, participation, problems, frozen) for participation in
-            queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')]
+    queryset = queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')
+    first_solves = contest.format.get_first_solves(problems, queryset, frozen)
+    return [make_contest_ranking_profile(contest, participation, problems, first_solves, frozen) for participation
+            in queryset]
 
 
 def base_contest_ranking_queryset(contest):

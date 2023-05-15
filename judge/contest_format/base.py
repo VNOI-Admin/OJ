@@ -48,14 +48,27 @@ class BaseContestFormat(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def display_user_problem(self, participation, contest_problem, frozen=False):
+    def get_first_solves(self, problems, participations, frozen=False):
+        """
+        Returns a dictionary mapping ContestProblem to the first ContestParticipation that solves it.
+
+        :param problems: A list of ContestProblem objects.
+        :param participations: A list of ContestParticipation objects.
+        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC/VNOJ format.
+        :return: A dictionary mapping ContestProblem's ID to ContestParticipation's ID, or None if no solves yet.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def display_user_problem(self, participation, contest_problem, first_solves, frozen=False):
         """
         Returns the HTML fragment to show a user's performance on an individual problem. This is expected to use
         information from the format_data field instead of computing it from scratch.
 
         :param participation: The ContestParticipation object linking the user to the contest.
         :param contest_problem: The ContestProblem object representing the problem in question.
-        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC format.
+        :param first_solves: The dictionary returned by get_first_solves.
+        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC/VNOJ format.
         :return: An HTML fragment, marked as safe for Jinja2.
         """
         raise NotImplementedError()
@@ -67,7 +80,7 @@ class BaseContestFormat(metaclass=ABCMeta):
         information from the format_data field instead of computing it from scratch.
 
         :param participation: The ContestParticipation object.
-        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC format.
+        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC/VNOJ format.
         :return: An HTML fragment, marked as safe for Jinja2.
         """
         raise NotImplementedError()

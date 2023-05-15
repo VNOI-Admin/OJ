@@ -144,7 +144,25 @@ class ICPCContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def display_user_problem(self, participation, contest_problem, frozen=False):
+    def get_first_solves(self, problems, participations, frozen=False):
+        first_solves = {}
+
+        prefix = 'frozen_' if frozen else ''
+        for problem in problems:
+            min_time = None
+            for participation in participations:
+                format_data = (participation.format_data or {}).get(str(problem.id))
+                if format_data:
+                    points = format_data[prefix + 'points']
+                    time = format_data['time']
+
+                    if points == problem.points and (min_time is None or min_time > time):
+                        min_time = time
+                        first_solves[str(problem.id)] = participation.id
+
+        return first_solves
+
+    def display_user_problem(self, participation, contest_problem, first_solves, frozen=False):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
         if format_data:
             # This prefix is used to help get the correct data from the format_data dictionary
@@ -163,6 +181,7 @@ class ICPCContestFormat(DefaultContestFormat):
             # The cell will have `pending` css class if there is a new score-changing submission after the frozen time
             state = (('pending ' if frozen and format_data['is_frozen'] else '') +
                      ('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
+                     ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
                      self.best_solution_state(format_data[prefix + 'points'], contest_problem.points))
             url = reverse('contest_user_submissions',
                           args=[self.contest.key, participation.user.user.username, contest_problem.problem.code])
