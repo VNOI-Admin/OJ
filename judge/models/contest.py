@@ -215,9 +215,11 @@ class Contest(models.Model):
         if self.start_time and self.end_time and self.start_time >= self.end_time:
             raise ValidationError('What is this? A contest that ended before it starts?')
 
-        if self.registration_start and self.registration_end and \
-                self.registration_start >= self.registration_end:
+        if self.registration_start and self.registration_end and self.registration_start >= self.registration_end:
             raise ValidationError('Registration window must start before it ends.')
+
+        if self.registration_start and self.start_time and self.registration_start >= self.start_time:
+            raise ValidationError('Registration window must start before the contest starts.')
 
         if self.registration_end and self.end_time and self.registration_end >= self.end_time:
             raise ValidationError('Registration window must end before the contest ends.')

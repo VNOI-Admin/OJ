@@ -254,10 +254,10 @@
                         <td>
                             {{ user_count(contest, request.user) }}
                         </td>
-                        {% if contest.require_registration %}
-                            {{ contest_register(contest, request) }}
-                        {% else %}
+                        {% if not contest.require_registration or contest.can_register %}
                             {{ contest_join(contest, request, finished_contests) }}
+                        {% else %}
+                            {{ contest_register(contest, request) }}
                         {% endif %}
                     </tr>
                 {% endfor %}
@@ -292,6 +292,8 @@
                         </td>
                         {% if contest.require_registration %}
                             {{ contest_register(contest, request) }}
+                        {% else %}
+                            <td></td>
                         {% endif %}
                     </tr>
                 {% endfor %}
