@@ -239,6 +239,11 @@ def parse_assets(problem_meta, root, package):
         with open(problem_meta['custom_grader'], 'wb') as f:
             f.write(package.read(path))
 
+        print('NOTE: checker is ignored when using interactive grader')
+        print('If you use custom checker, please merge it with the interactor')
+        problem_meta['checker'] = 'standard'
+        return
+
     # Parse checker
     checker = root.find('.//checker')
     if checker is None:
