@@ -78,7 +78,6 @@
                         {% if tab == 'ranking' %}
                             window.applyRankingFilter();
                         {% endif %}
-                        window.totalAC();
                         window.enableAdminOperations();
                     }).always(function () {
                         ranking_outdated = false;
@@ -238,7 +237,6 @@
                 let selected_orgs = $('#org-check-list').val().map(x => x.trim());
                 localStorage.setItem(`filter-selected-orgs-${contest_key}`, selected_orgs);
                 window.applyRankingFilter();
-                window.totalAC();
             });
 
             $('#clear-organization-filter').click(function () {
@@ -365,28 +363,6 @@
             };
 
             window.restoreChecklistOptions();
-
-            window.totalAC = function() {
-                // Problems are indexed from 0
-                let total_ac = {};
-
-                // Number of columns before first problem
-                let offset = {% if is_ICPC_format %}4{% else %}3{% endif %};
-
-                $('td.full-score').each(function () {
-                    if ($(this).parent().is(':hidden')) {
-                        return;
-                    }
-
-                    total_ac[$(this).index() - offset] = (total_ac[$(this).index() - offset] || 0) + 1;
-                });
-                $('td.total-ac').each(function () {
-                    // There is exactly one column (Total AC) before first problem
-                    $(this).text(total_ac[$(this).index() - 1]);
-                });
-            };
-
-            window.totalAC();
 
             window.enableAdminOperations = function () {
                 $('a.disqualify-participation').click(function (e) {

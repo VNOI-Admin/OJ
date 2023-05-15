@@ -48,6 +48,18 @@ class BaseContestFormat(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
+    def get_total_ac(self, problems, participations, frozen=False):
+        """
+        Returns a dictionary mapping ContestProblem to the total number of accepted submissions.
+
+        :param problems: A list of ContestProblem objects.
+        :param participations: A list of ContestParticipation objects.
+        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC/VNOJ format.
+        :return: A dictionary mapping ContestProblem's ID to total number of accepted submissions.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
     def get_first_solves(self, problems, participations, frozen=False):
         """
         Returns a dictionary mapping ContestProblem to the first ContestParticipation that solves it.
