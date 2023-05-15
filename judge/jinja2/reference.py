@@ -24,7 +24,7 @@ def get_user(username, data):
         return element
 
     element = Element('span', {'class': Profile.get_user_css_class(*data)})
-    link = Element('a', {'href': reverse('user_page', args=[username])})
+    link = Element('a', {'href': reverse('user_page', args=[username]), 'style': 'display: inline-block;'})
     link.text = username
     element.append(link)
     return element
@@ -162,7 +162,7 @@ def link_user(user):
 
     return mark_safe(f'<span class="{profile.css_class}">'
                      f'<a href="{escape(reverse("user_page", args=[user.username]))}"'
-                     f' style="display: inline-block; align-items: center;">'
+                     f' style="display: inline-block;">'
                      f'{escape(profile.display_name)}</a>{display_badge_img}</span>')
 
 
