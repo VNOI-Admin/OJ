@@ -18,7 +18,7 @@ from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template import loader
+from django.template.loader import get_template
 from django.template.defaultfilters import date as date_filter, floatformat
 from django.urls import reverse
 from django.utils import timezone
@@ -893,7 +893,7 @@ def get_contest_ranking_list(request, contest, participation=None, ranking_list=
 
 class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/ranking.html'
-    ranking_table_template_name = 'contest/ranking-table.html'
+    ranking_table_template = get_template('contest/ranking-table.html')
     tab = None
 
     def get_title(self):
@@ -916,7 +916,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     def get_rendered_ranking_table(self):
         users, problems = self.get_ranking_list()
 
-        return loader.render_to_string(self.ranking_table_template_name, request=self.request, context={
+        return self.ranking_table_template.render(request=self.request, context={
             'table_id': 'ranking-table',
             'users': users,
             'problems': problems,
@@ -1043,7 +1043,7 @@ class ContestPublicRanking(ContestRanking):
 
 class ContestOfficialRanking(ContestRankingBase):
     template_name = 'contest/official-ranking.html'
-    ranking_table_template_name = 'contest/official-ranking-table.html'
+    ranking_table_template = get_template('contest/official-ranking-table.html')
     tab = 'official_ranking'
 
     def get_title(self):
