@@ -24,7 +24,7 @@ from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import django_uploader
 
 PANDOC_FILTER = r"""
-function normalize_quote(text)
+local function normalize_quote(text)
     -- These four quotes are disallowed characters.
     -- See DMOJ_PROBLEM_STATEMENT_DISALLOWED_CHARACTERS
     text = text:gsub('\u{2018}', "'") -- left single quote
@@ -32,6 +32,21 @@ function normalize_quote(text)
     text = text:gsub('\u{201C}', '"') -- left double quote
     text = text:gsub('\u{201D}', '"') -- right double quote
     return text
+end
+
+local function escape_html(s)
+    return s:gsub('[<>&"\']',
+        function(x)
+            if x == '<' then
+                return '&lt;'
+            elseif x == '>' then
+                return '&gt;'
+            elseif x == '&' then
+                return '&amp;'
+            else
+                return x
+        end
+    end)
 end
 
 function Math(m)
@@ -46,9 +61,10 @@ function Image(el)
 end
 
 function Code(el)
-    -- Normalize quotes
-    el.text = normalize_quote(el.text)
-    return el
+    -- Normalize quotes and render similar to Codeforces
+    local text = normalize_quote(el.text)
+    text = escape_html(text)
+    return pandoc.RawInline('html', '<span style="font-family: courier new,monospace;">' .. text .. '</span>')
 end
 
 function CodeBlock(el)
