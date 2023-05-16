@@ -195,8 +195,36 @@ class VNOJContestFormat(DefaultContestFormat):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
 
         if format_data:
+            first_solved = first_solves.get(str(contest_problem.id), None) == participation.id
+            url = reverse('contest_user_submissions',
+                          args=[self.contest.key, participation.user.user.username, contest_problem.problem.code])
+
+            if not frozen:
+                # Fast path for non-frozen contests
+                penalty = format_html(
+                    '<small style="color:red"> ({penalty})</small>',
+                    penalty=floatformat(format_data['penalty']),
+                ) if format_data['penalty'] else ''
+
+                state = (('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
+                         ('first-solve ' if first_solved else '') +
+                         self.best_solution_state(format_data['points'], contest_problem.points))
+
+                points = floatformat(format_data['points'], -self.contest.points_precision)
+                time = nice_repr(timedelta(seconds=format_data['time']), 'noday')
+
+                return format_html(
+                    '<td class="{state}"><a href="{url}"><div>{points}{penalty}</div>'
+                    '<div class="solving-time">{time}</div></a></td>',
+                    state=state,
+                    url=url,
+                    points=points,
+                    penalty=penalty,
+                    time=time,
+                )
+
             # This prefix is used to help get the correct data from the format_data dictionary
-            has_pending = frozen and bool(format_data.get('pending', 0))
+            has_pending = bool(format_data.get('pending', 0))
             prefix = 'frozen_' if has_pending else ''
 
             # AC before frozen_time
@@ -211,11 +239,8 @@ class VNOJContestFormat(DefaultContestFormat):
 
             state = (('pending ' if has_pending else '') +
                      ('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
-                     ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
+                     ('first-solve ' if first_solved else '') +
                      self.best_solution_state(format_data[prefix + 'points'], contest_problem.points))
-
-            url = reverse('contest_user_submissions',
-                          args=[self.contest.key, participation.user.user.username, contest_problem.problem.code])
 
             points = floatformat(format_data[prefix + 'points'], -self.contest.points_precision)
             time = nice_repr(timedelta(seconds=format_data[prefix + 'time']), 'noday')
