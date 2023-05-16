@@ -91,7 +91,7 @@ function Quoted(el)
 end
 
 function Str(el)
-    -- en dash and em dash would still show up correctly if we don't escape them,
+    -- en dash/em dash/non-breaking space would still show up correctly if we don't escape them,
     -- but they would be hardly noticeable while editing.
     local res = {}
     local part = ''
@@ -110,6 +110,13 @@ function Str(el)
                 part = ''
             end
             table.insert(res, pandoc.RawInline('html', '&mdash;'))
+        elseif c == '\u{00A0}' then
+            -- Non-breaking space
+            if part ~= '' then
+                table.insert(res, pandoc.Str(part))
+                part = ''
+            end
+            table.insert(res, pandoc.RawInline('html', '&nbsp;'))
         else
             part = part .. c
         end
