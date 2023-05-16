@@ -163,30 +163,16 @@ class VNOJContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def get_total_ac(self, problems, participations, frozen=False):
+    def get_first_solves_and_total_ac(self, problems, participations, frozen=False):
+        first_solves = {}
         total_ac = {}
 
         for problem in problems:
             problem_id = str(problem.id)
-            total_ac[problem_id] = 0
-            for participation in participations:
-                format_data = (participation.format_data or {}).get(problem_id)
-                if format_data:
-                    has_pending = bool(format_data.get('pending', 0))
-                    prefix = 'frozen_' if frozen and has_pending else ''
-                    points = format_data[prefix + 'points']
-
-                    if points == problem.points:
-                        total_ac[problem_id] += 1
-
-        return total_ac
-
-    def get_first_solves(self, problems, participations, frozen=False):
-        first_solves = {}
-
-        for problem in problems:
-            problem_id = str(problem.id)
             min_time = None
+            first_solves[problem_id] = None
+            total_ac[problem_id] = 0
+
             for participation in participations:
                 format_data = (participation.format_data or {}).get(problem_id)
                 if format_data:
@@ -195,11 +181,13 @@ class VNOJContestFormat(DefaultContestFormat):
                     points = format_data[prefix + 'points']
                     time = format_data[prefix + 'time']
 
-                    if points == problem.points and (min_time is None or min_time > time):
-                        min_time = time
-                        first_solves[problem_id] = participation.id
+                    if points == problem.points:
+                        total_ac[problem_id] += 1
+                        if min_time is None or min_time > time:
+                            min_time = time
+                            first_solves[problem_id] = participation.id
 
-        return first_solves
+        return first_solves, total_ac
 
     def display_user_problem(self, participation, contest_problem, first_solves, frozen=False):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))

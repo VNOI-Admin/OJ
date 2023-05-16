@@ -859,13 +859,10 @@ def make_contest_ranking_profile(contest, participation, contest_problems, first
 
 def base_contest_ranking_list(contest, problems, queryset, frozen=False):
     queryset = queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')
-    first_solves = contest.format.get_first_solves(problems, queryset, frozen)
-    total_ac = contest.format.get_total_ac(problems, queryset, frozen)
-    return (
-        [make_contest_ranking_profile(contest, participation, problems, first_solves, frozen) for participation
-            in queryset],
-        total_ac,
-    )
+    first_solves, total_ac = contest.format.get_first_solves_and_total_ac(problems, queryset, frozen)
+    users = [make_contest_ranking_profile(contest, participation, problems, first_solves, frozen) for participation
+             in queryset]
+    return users, total_ac
 
 
 def base_contest_ranking_queryset(contest):
