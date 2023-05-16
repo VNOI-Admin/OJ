@@ -163,7 +163,9 @@ class ICPCContestFormat(DefaultContestFormat):
 
                     if points == problem.points:
                         total_ac[problem_id] += 1
-                        if min_time is None or min_time > time:
+
+                        # Only acknowledge first solves for live participations
+                        if participation.virtual == 0 and (min_time is None or min_time > time):
                             min_time = time
                             first_solves[problem_id] = participation.id
 
