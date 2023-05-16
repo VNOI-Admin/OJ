@@ -69,7 +69,7 @@ class BaseContestFormat(metaclass=ABCMeta):
 
         :param participation: The ContestParticipation object linking the user to the contest.
         :param contest_problem: The ContestProblem object representing the problem in question.
-        :param first_solves: The dictionary returned by get_first_solves.
+        :param first_solves: The first dictionary returned by get_first_solves_and_total_ac.
         :param frozen: Whether the ranking is frozen or not. Only useful for ICPC/VNOJ format.
         :return: An HTML fragment, marked as safe for Jinja2.
         """
