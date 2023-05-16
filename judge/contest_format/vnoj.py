@@ -194,21 +194,20 @@ class VNOJContestFormat(DefaultContestFormat):
 
         if format_data:
             # This prefix is used to help get the correct data from the format_data dictionary
-            has_pending = bool(format_data.get('pending', 0))
-
-            prefix = 'frozen_' if frozen and has_pending else ''
+            has_pending = frozen and bool(format_data.get('pending', 0))
+            prefix = 'frozen_' if has_pending else ''
 
             # AC before frozen_time
-            if format_data[prefix + 'points'] == contest_problem.points:
+            if has_pending and format_data[prefix + 'points'] == contest_problem.points:
+                has_pending = False
                 prefix = ''
-                frozen = False
 
             penalty = format_html(
                 '<small style="color:red"> ({penalty})</small>',
                 penalty=floatformat(format_data[prefix + 'penalty']),
             ) if format_data[prefix + 'penalty'] else ''
 
-            state = (('pending ' if frozen and has_pending else '') +
+            state = (('pending ' if has_pending else '') +
                      ('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
                      ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
                      self.best_solution_state(format_data[prefix + 'points'], contest_problem.points))
@@ -219,9 +218,9 @@ class VNOJContestFormat(DefaultContestFormat):
             points = floatformat(format_data[prefix + 'points'], -self.contest.points_precision)
             time = nice_repr(timedelta(seconds=format_data[prefix + 'time']), 'noday')
             pending = format_html(' <small style="color:black;">[{pending}]</small>',
-                                  pending=floatformat(format_data['pending'])) if frozen and has_pending else ''
+                                  pending=floatformat(format_data['pending'])) if has_pending else ''
 
-            if frozen and has_pending:
+            if has_pending:
                 time = '?'
                 # hide penalty if there are pending submissions
                 penalty = ''
