@@ -554,6 +554,7 @@ def create_problem(problem_meta):
     problem.save()
     problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
     problem.authors.set(problem_meta['authors'])
+    problem.curators.set(problem_meta['curators'])
     problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
     problem.save()
 
@@ -648,7 +649,8 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('package', help='path to package in zip format')
         parser.add_argument('code', help='problem code')
-        parser.add_argument('--authors', help='VNOI username of author of the problem', nargs='+')
+        parser.add_argument('--authors', help='username of problem author', nargs='*')
+        parser.add_argument('--curators', help='username of problem curator', nargs='*')
 
     def handle(self, *args, **options):
         # Force using English
@@ -684,12 +686,23 @@ class Command(BaseCommand):
 
             problem_authors.append(profile)
 
+        problem_curators_args = options['curators'] or []
+        problem_curators = []
+        for username in problem_curators_args:
+            try:
+                profile = Profile.objects.get(user__username=username)
+            except Profile.DoesNotExist:
+                raise CommandError(f'user {username} does not exist')
+
+            problem_curators.append(profile)
+
         # A dictionary to hold all problem information.
         problem_meta = {}
         problem_meta['image_cache'] = {}
         problem_meta['code'] = problem_code
         problem_meta['tmp_dir'] = tempfile.TemporaryDirectory()
         problem_meta['authors'] = problem_authors
+        problem_meta['curators'] = problem_curators
 
         try:
             parse_checker(problem_meta, root, package)
