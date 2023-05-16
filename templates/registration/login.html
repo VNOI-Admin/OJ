@@ -26,6 +26,16 @@
     </style>
 {% endblock %}
 
+{% block js_media %}
+<script>
+    $(document).ready(function () {
+        $("#ip-login-button").click(function () {
+            $("input[name='ip-login']").val("true");
+        });
+    });
+</script>
+{% endblock %}
+
 {% block body %}
     <div class="auth-flow-form">
         <form action="" method="post" class="form-area">
@@ -57,7 +67,10 @@
             </table>
             <hr>
             <button style="float:right;" type="submit">{{ _('Login!') }}</button>
+            <!-- TODO: enabled if allowing login by ip address -->
+            <button style="float:right; margin-right: 0.5em" type="submit" id="ip-login-button" formnovalidate>{{_('Login by IP Address!')}}</button>
             <input type="hidden" name="next" value="{{ next }}">
+            <input type="hidden" name="ip-login" value="false">
         </form>
         <a href="{{ url('password_reset') }}">{{ _('Forgot your password?') }}</a>
 

@@ -6,6 +6,7 @@ import pyotp
 import webauthn
 from django import forms
 from django.conf import settings
+from django.contrib.auth import authenticate
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
@@ -45,6 +46,15 @@ two_factor_validators_by_length = {
         'err': _('Invalid scratch code.'),
     },
 }
+
+
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
 
 
 class ProfileForm(ModelForm):
@@ -428,13 +438,37 @@ class CustomAuthenticationForm(AuthenticationForm):
                 getattr(settings, 'SOCIAL_AUTH_%s_SECRET' % key, None))
 
     def clean(self):
-        username = self.cleaned_data.get('username')
+        is_ip_login = self.request.POST.get('ip-login', 'false') == 'true'
+
         try:
-            user = User.objects.get(username=username)
-        except User.DoesNotExist:
+            if is_ip_login:
+                ip = get_client_ip(self.request)
+                user = Profile.objects.filter(ip=ip).select_related('user').first().user
+            else:
+                username = self.cleaned_data.get('username')
+                user = User.objects.get(username=username)
+        except (Profile.DoesNotExist, User.DoesNotExist):
             user = None
+
         if user is not None:
             self.confirm_login_allowed(user)
+
+        if is_ip_login:
+            # a hack to remove the username/password errors, since we don't need them
+            del self.errors['username']
+            del self.errors['password']
+
+            # set the password to the user's password to pass the form_valid check
+            self.cleaned_data['password'] = user.password
+
+            # super.clean() will skip the check, since there is no username/password when logging in by IP address,
+            # so this is a hack to process that manually
+            self.user_cache = authenticate(self.request, ip_address=ip)
+            if self.user_cache is None:
+                raise self.get_invalid_login_error()
+            else:
+                self.confirm_login_allowed(self.user_cache)
+
         return super(CustomAuthenticationForm, self).clean()
 
     def confirm_login_allowed(self, user):

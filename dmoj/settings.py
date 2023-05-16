@@ -687,6 +687,7 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.facebook.FacebookOAuth2',
     'judge.social_auth.GitHubSecureEmailOAuth2',
     'django.contrib.auth.backends.ModelBackend',
+    'judge.ip_based_auth.IPBasedAuthBackend',
 )
 
 SOCIAL_AUTH_PIPELINE = (
