@@ -28,4 +28,5 @@ revisions.register(Language)
 revisions.register(Comment, fields=['author', 'time', 'page', 'score', 'body', 'hidden', 'parent'])
 revisions.register(TagProblem)
 revisions.register(TagData, follow=['problem'])
+revisions.register(Ticket)
 del revisions
