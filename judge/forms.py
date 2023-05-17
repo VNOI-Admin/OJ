@@ -443,7 +443,12 @@ class CustomAuthenticationForm(AuthenticationForm):
         try:
             if is_ip_login:
                 ip = get_client_ip(self.request)
-                user = Profile.objects.filter(ip=ip).select_related('user').first().user
+                profile = Profile.objects.filter(ip=ip).select_related('user').first()
+
+                if profile is None:
+                    raise Profile.DoesNotExist
+
+                user = profile.user
             else:
                 username = self.cleaned_data.get('username')
                 user = User.objects.get(username=username)
@@ -459,7 +464,8 @@ class CustomAuthenticationForm(AuthenticationForm):
             del self.errors['password']
 
             # set the password to the user's password to pass the form_valid check
-            self.cleaned_data['password'] = user.password
+            if user is not None:
+                self.cleaned_data['password'] = user.password
 
             # super.clean() will skip the check, since there is no username/password when logging in by IP address,
             # so this is a hack to process that manually
