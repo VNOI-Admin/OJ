@@ -34,19 +34,16 @@ local function normalize_quote(text)
     return text
 end
 
-local function escape_html(s)
-    return s:gsub('[<>&"\']',
-        function(x)
-            if x == '<' then
-                return '&lt;'
-            elseif x == '>' then
-                return '&gt;'
-            elseif x == '&' then
-                return '&amp;'
-            else
-                return x
-        end
-    end)
+local function escape_html_content(text)
+    -- Escape HTML/Markdown syntax characters
+    text = text:gsub('&', '&amp;') -- must be first
+    text = text:gsub('<', "&lt;")
+    text = text:gsub('>', "&gt;")
+    text = text:gsub('*', '\\*')
+    text = text:gsub('_', '\\_')
+    text = text:gsub('%$', '<span>%$</span>')
+    text = text:gsub('~', '<span>~</span>')
+    return text
 end
 
 function Math(m)
@@ -63,7 +60,7 @@ end
 function Code(el)
     -- Normalize quotes and render similar to Codeforces
     local text = normalize_quote(el.text)
-    text = escape_html(text)
+    text = escape_html_content(text)
     return pandoc.RawInline('html', '<span style="font-family: courier new,monospace;">' .. text .. '</span>')
 end
 
