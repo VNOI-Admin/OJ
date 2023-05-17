@@ -35,7 +35,7 @@ local function normalize_quote(text)
 end
 
 local function escape_html_content(text)
-    -- Escape HTML/Markdown syntax characters
+    -- Escape HTML/Markdown/MathJax syntax characters
     text = text:gsub('&', '&amp;') -- must be first
     text = text:gsub('<', "&lt;")
     text = text:gsub('>', "&gt;")
