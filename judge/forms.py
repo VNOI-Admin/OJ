@@ -438,7 +438,7 @@ class CustomAuthenticationForm(AuthenticationForm):
                 getattr(settings, 'SOCIAL_AUTH_%s_SECRET' % key, None))
 
     def clean(self):
-        is_ip_login = self.request.POST.get('ip-login', 'false') == 'true'
+        is_ip_login = settings.VNOJ_ALLOW_LOGIN_BY_IP_ADDRESS and self.request.POST.get('ip-login', 'false') == 'true'
 
         try:
             if is_ip_login:

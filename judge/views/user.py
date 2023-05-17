@@ -153,7 +153,10 @@ class UserPage(TitleMixin, UserMixin, DetailView):
 
 class CustomLoginView(LoginView):
     template_name = 'registration/login.html'
-    extra_context = {'title': gettext_lazy('Login')}
+    extra_context = {
+        'title': gettext_lazy('Login'),
+        'allow_login_by_ip_address': settings.VNOJ_ALLOW_LOGIN_BY_IP_ADDRESS
+    }
     authentication_form = CustomAuthenticationForm
     redirect_authenticated_user = True
 
