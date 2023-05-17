@@ -176,7 +176,16 @@ end
 """
 
 
+# Polygon uses some custom macros: https://polygon.codeforces.com/docs/statements-tex-manual
+# For example, \bf is deprecated in modern LaTeX, but Polygon treats it the same as \textbf
+# and recommends writing \bf{...} instead of \textbf{...} for brevity.
+# Similar for \it, \tt, \t
+# We just redefine them to their modern counterparts.
+# Note that this would break {\bf abcd}, but AFAIK Polygon never recommends that so it's fine.
 TEX_MACROS = r"""
+\renewcommand{\bf}{\textbf}
+\renewcommand{\it}{\textit}
+\renewcommand{\tt}{\texttt}
 \renewcommand{\t}{\texttt}
 """
 
