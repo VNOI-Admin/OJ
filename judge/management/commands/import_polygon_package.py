@@ -91,6 +91,9 @@ function Quoted(el)
 end
 
 function Str(el)
+    -- Normalize quotes
+    el.text = normalize_quote(el.text)
+
     -- en dash/em dash/non-breaking space would still show up correctly if we don't escape them,
     -- but they would be hardly noticeable while editing.
     local res = {}
@@ -124,9 +127,6 @@ function Str(el)
     if part ~= '' then
         table.insert(res, pandoc.Str(part))
     end
-
-    -- Normalize quotes
-    el.text = normalize_quote(el.text)
 
     return res
 end
