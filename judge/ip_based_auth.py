@@ -6,7 +6,7 @@ from judge.models import Profile
 class IPBasedAuthBackend(ModelBackend):
     def authenticate(self, request, ip_address=None):
         try:
-            profile = Profile.objects.filter(ip=ip_address).select_related('user').first()
+            profile = Profile.objects.filter(ip=ip_address).order_by('-last_access').select_related('user').first()
             if profile is None:
                 return None
             return profile.user

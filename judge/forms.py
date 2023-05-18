@@ -443,7 +443,7 @@ class CustomAuthenticationForm(AuthenticationForm):
         try:
             if is_ip_login:
                 ip = get_client_ip(self.request)
-                profile = Profile.objects.filter(ip=ip).select_related('user').first()
+                profile = Profile.objects.filter(ip=ip).order_by('-last_access').select_related('user').first()
 
                 if profile is None:
                     raise Profile.DoesNotExist
