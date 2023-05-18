@@ -23,14 +23,26 @@ from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTe
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import django_uploader
 
-PANDOC_FILTER = """
-function normalize_quote(text)
+PANDOC_FILTER = r"""
+local function normalize_quote(text)
     -- These four quotes are disallowed characters.
     -- See DMOJ_PROBLEM_STATEMENT_DISALLOWED_CHARACTERS
-    text = text:gsub('\\u{2018}', "'") -- left single quote
-    text = text:gsub('\\u{2019}', "'") -- right single quote
-    text = text:gsub('\\u{201C}', '"') -- left double quote
-    text = text:gsub('\\u{201D}', '"') -- right double quote
+    text = text:gsub('\u{2018}', "'") -- left single quote
+    text = text:gsub('\u{2019}', "'") -- right single quote
+    text = text:gsub('\u{201C}', '"') -- left double quote
+    text = text:gsub('\u{201D}', '"') -- right double quote
+    return text
+end
+
+local function escape_html_content(text)
+    -- Escape HTML/Markdown/MathJax syntax characters
+    text = text:gsub('&', '&amp;') -- must be first
+    text = text:gsub('<', "&lt;")
+    text = text:gsub('>', "&gt;")
+    text = text:gsub('*', '\\*')
+    text = text:gsub('_', '\\_')
+    text = text:gsub('%$', '<span>%$</span>')
+    text = text:gsub('~', '<span>~</span>')
     return text
 end
 
@@ -42,13 +54,14 @@ end
 
 function Image(el)
     -- And blank lines before and after the image for caption to work
-    return {pandoc.RawInline('markdown', '\\n\\n'), el, pandoc.RawInline('markdown', '\\n\\n')}
+    return {pandoc.RawInline('markdown', '\n\n'), el, pandoc.RawInline('markdown', '\n\n')}
 end
 
 function Code(el)
-    -- Normalize quotes
-    el.text = normalize_quote(el.text)
-    return el
+    -- Normalize quotes and render similar to Codeforces
+    local text = normalize_quote(el.text)
+    text = escape_html_content(text)
+    return pandoc.RawInline('html', '<span style="font-family: courier new,monospace;">' .. text .. '</span>')
 end
 
 function CodeBlock(el)
@@ -75,25 +88,35 @@ function Quoted(el)
 end
 
 function Str(el)
-    -- en dash and em dash would still show up correctly if we don't escape them,
+    -- Normalize quotes
+    el.text = normalize_quote(el.text)
+
+    -- en dash/em dash/non-breaking space would still show up correctly if we don't escape them,
     -- but they would be hardly noticeable while editing.
     local res = {}
     local part = ''
     for c in el.text:gmatch(utf8.charpattern) do
-        if c == '\\u{2013}' then
+        if c == '\u{2013}' then
             -- en dash
             if part ~= '' then
                 table.insert(res, pandoc.Str(part))
                 part = ''
             end
             table.insert(res, pandoc.RawInline('html', '&ndash;'))
-        elseif c == '\\u{2014}' then
+        elseif c == '\u{2014}' then
             -- em dash
             if part ~= '' then
                 table.insert(res, pandoc.Str(part))
                 part = ''
             end
             table.insert(res, pandoc.RawInline('html', '&mdash;'))
+        elseif c == '\u{00A0}' then
+            -- Non-breaking space
+            if part ~= '' then
+                table.insert(res, pandoc.Str(part))
+                part = ''
+            end
+            table.insert(res, pandoc.RawInline('html', '&nbsp;'))
         else
             part = part .. c
         end
@@ -101,9 +124,6 @@ function Str(el)
     if part ~= '' then
         table.insert(res, pandoc.Str(part))
     end
-
-    -- Normalize quotes
-    el.text = normalize_quote(el.text)
 
     return res
 end
@@ -156,16 +176,37 @@ end
 """
 
 
+# Polygon uses some custom macros: https://polygon.codeforces.com/docs/statements-tex-manual
+# For example, \bf is deprecated in modern LaTeX, but Polygon treats it the same as \textbf
+# and recommends writing \bf{...} instead of \textbf{...} for brevity.
+# Similar for \it, \tt, \t
+# We just redefine them to their modern counterparts.
+# Note that this would break {\bf abcd}, but AFAIK Polygon never recommends that so it's fine.
+TEX_MACROS = r"""
+\renewcommand{\bf}{\textbf}
+\renewcommand{\it}{\textit}
+\renewcommand{\tt}{\texttt}
+\renewcommand{\t}{\texttt}
+"""
+
+
 def pandoc_tex_to_markdown(tex):
-    tmp_dir = tempfile.TemporaryDirectory()
-    with open(os.path.join(tmp_dir.name, 'temp.tex'), 'w') as f:
-        f.write(tex)
-    with open(os.path.join(tmp_dir.name, 'filter.lua'), 'w') as f:
-        f.write(PANDOC_FILTER)
-    subprocess.run(['pandoc', '--lua-filter=filter.lua', '-t', 'gfm', '-o', 'temp.md', 'temp.tex'], cwd=tmp_dir.name)
-    with open(os.path.join(tmp_dir.name, 'temp.md'), 'r') as f:
-        md = f.read()
-    tmp_dir.cleanup()
+    tex = TEX_MACROS + tex
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        with open(os.path.join(tmp_dir, 'temp.tex'), 'w', encoding='utf-8') as f:
+            f.write(tex)
+
+        with open(os.path.join(tmp_dir, 'filter.lua'), 'w', encoding='utf-8') as f:
+            f.write(PANDOC_FILTER)
+
+        subprocess.run(
+            ['pandoc', '--lua-filter=filter.lua', '-t', 'gfm', '-o', 'temp.md', 'temp.tex'],
+            cwd=tmp_dir,
+            check=True,
+        )
+
+        with open(os.path.join(tmp_dir, 'temp.md'), 'r', encoding='utf-8') as f:
+            md = f.read()
 
     return md
 
