@@ -27,7 +27,7 @@ Please describe the tests that you ran to verify your changes. Provide instructi
 _Put an `x` in the boxes that apply. You can also fill these out after creating the PR. If you're unsure about any of them, don't hesitate to ask. We're here to help! This is simply a reminder of what we are going to look for before merging your code._
 
 - [ ] I have explained the purpose of this PR.
-- [ ] I have performed a self-review of my own code
+- [ ] I have performed a self-review of my own x
 - [ ] I have commented my code, particularly in hard-to-understand areas
 - [ ] I have made corresponding changes to the README/documentation
 - [ ] Any dependent changes have been merged and published in downstream modules
