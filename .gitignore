@@ -14,6 +14,7 @@ uwsgi.ini
 .fuse_hidden*
 resources/dark
 resources/martor-description.css
+resources/select2-dmoj.css
 resources/style.css
 resources/vars.scss
 sass_processed
