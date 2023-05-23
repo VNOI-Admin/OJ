@@ -4631,7 +4631,7 @@ msgstr "Báo cáo mới"
 
 #: templates/blog/list.html:111 templates/contest/list.html:192
 msgid "Ongoing contests"
-msgstr "Kỳ thi đang diễn ra"
+msgstr "Các kỳ thi đang diễn ra"
 
 #: templates/blog/list.html:119
 #, python-format
@@ -4640,7 +4640,7 @@ msgstr "Kết thúc trong %(countdown)s."
 
 #: templates/blog/list.html:129 templates/contest/list.html:229
 msgid "Upcoming contests"
-msgstr "Kỳ thi sắp tới"
+msgstr "Các kỳ thi sắp tới"
 
 #: templates/blog/list.html:137 templates/contest/contest.html:55
 #, python-format
