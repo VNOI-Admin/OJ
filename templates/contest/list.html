@@ -16,7 +16,18 @@
             {% if not request.official_contest_mode %}
                 $('.join-warning').click(function () {
                     return confirm('{{ _('Are you sure you want to join?') }}\n' +
-                        '{{ _('Joining a contest for the first time starts your timer, after which it becomes unstoppable.') }}');
+                        '{{ _('Joining a contest for the first time starts your timer, after which it becomes unstoppable.') }}'
+                        {% if request.in_contest %}
+                            + '\n{{ _('Joining this contest will leave %(contest)s.', contest=request.participation.contest.name) }}'
+                        {% endif %}
+                    );
+                });
+            {% endif %}
+
+            {% if request.in_contest %}
+                $('.spectate-warning').click(function () {
+                    return confirm('{{ _('Are you sure you want to spectate?') }}\n' +
+                        '{{ _('Spectating this contest will leave %(contest)s.', contest=request.participation.contest.name) }}');
                 });
             {% endif %}
 
@@ -133,12 +144,14 @@
 {% endmacro %}
 
 {% macro contest_join(contest, request, finished_contests) %}
-    {% if not request.in_contest %}
+    {% if request.in_contest and contest.key == request.participation.contest.key %}
+        <td><span>Already joined</span></td>
+    {% else %}
         <td>
             {% if contest.key in finished_contests or request.profile in contest.authors.all() or request.profile in contest.curators.all() or request.profile in contest.testers.all() %}
                 <form action="{{ url('contest_join', contest.key) }}" method="post">
                     {% csrf_token %}
-                    <input type="submit" class="unselectable button full participate-button"
+                    <input type="submit" class="unselectable button full participate-button spectate-warning"
                            value="{{ _('Spectate') }}">
                 </form>
             {% else %}
@@ -189,9 +202,7 @@
                 <tr>
                     <th style="width:80%">{{ _('Contest') }}</th>
                     <th>{{ _('Users') }}</th>
-                    {% if not request.in_contest %}
-                        <th style="width:20%"></th>
-                    {% endif %}
+                    <th style="width:20%"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -231,9 +242,7 @@
                 <tr>
                     <th style="width:80%">{{ _('Contest') }}</th>
                     <th>{{ _('Users') }}</th>
-                    {% if not request.in_contest %}
-                        <th style="width:15%"></th>
-                    {% endif %}
+                    <th style="width:15%"></th>
                 </tr>
                 </thead>
                 <tbody>
