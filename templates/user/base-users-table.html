@@ -1,3 +1,4 @@
+{% spaceless %}
 <table {% if table_id %}id="{{ table_id }}"{% endif %} class="users-table table striped">
     <thead>
         <tr>
@@ -60,3 +61,4 @@
     {% block after_user_list scoped %}{% endblock %}
     </tbody>
 </table>
+{% endspaceless %}

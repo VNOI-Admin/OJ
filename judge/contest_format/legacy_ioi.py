@@ -74,13 +74,41 @@ class LegacyIOIContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def display_user_problem(self, participation, contest_problem, frozen=False):
+    def get_first_solves_and_total_ac(self, problems, participations, frozen=False):
+        first_solves = {}
+        total_ac = {}
+
+        show_time = self.config['cumtime'] or self.config.get('last_score_altering', False)
+        for problem in problems:
+            problem_id = str(problem.id)
+            min_time = None
+            first_solves[problem_id] = None
+            total_ac[problem_id] = 0
+
+            for participation in participations:
+                format_data = (participation.format_data or {}).get(problem_id)
+                if format_data:
+                    points = format_data['points']
+                    time = format_data['time']
+
+                    if points == problem.points:
+                        total_ac[problem_id] += 1
+
+                        # Only acknowledge first solves for live participations
+                        if show_time and participation.virtual == 0 and (min_time is None or min_time > time):
+                            min_time = time
+                            first_solves[problem_id] = participation.id
+
+        return first_solves, total_ac
+
+    def display_user_problem(self, participation, contest_problem, first_solves, frozen=False):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
         if format_data:
             show_time = self.config['cumtime'] or self.config.get('last_score_altering', False)
             return format_html(
                 '<td class="{state}"><a href="{url}">{points}<div class="solving-time">{time}</div></a></td>',
                 state=(('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
+                       ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
                        self.best_solution_state(format_data['points'], contest_problem.points)),
                 url=reverse('contest_user_submissions',
                             args=[self.contest.key, participation.user.user.username, contest_problem.problem.code]),
