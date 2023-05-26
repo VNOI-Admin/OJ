@@ -299,7 +299,7 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['metadata'] = {
             'has_public_editorials': any(
                 problem.is_public and problem.has_public_editorial for problem in context['contest_problems']
-            ),
+            ) if self.object.ended else False,
         }
         context['metadata'].update(
             **self.object.contest_problems
@@ -342,11 +342,6 @@ class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
         context = super(ContestAllProblems, self).get_context_data(**kwargs)
         context['contest_problems'] = Problem.objects.filter(contests__contest=self.object) \
             .order_by('contests__order') \
-            .annotate(has_public_editorial=Case(
-                When(solution__is_public=True, solution__publish_on__lte=timezone.now(), then=True),
-                default=False,
-                output_field=BooleanField(),
-            )) \
             .add_i18n_name(self.request.LANGUAGE_CODE) \
             .add_i18n_description(self.request.LANGUAGE_CODE)
 
