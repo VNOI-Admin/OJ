@@ -18,8 +18,8 @@ from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
-from django.template import loader
 from django.template.defaultfilters import date as date_filter, floatformat
+from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -824,12 +824,12 @@ ContestRankingProfile = namedtuple(
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
 
 
-def make_contest_ranking_profile(contest, participation, contest_problems, frozen=False):
+def make_contest_ranking_profile(contest, participation, contest_problems, first_solves, frozen=False):
     def display_user_problem(contest_problem):
         # When the contest format is changed, `format_data` might be invalid.
         # This will cause `display_user_problem` to error, so we display '???' instead.
         try:
-            return contest.format.display_user_problem(participation, contest_problem, frozen)
+            return contest.format.display_user_problem(participation, contest_problem, first_solves, frozen)
         except (KeyError, TypeError, ValueError):
             return mark_safe('<td>???</td>')
 
@@ -853,8 +853,11 @@ def make_contest_ranking_profile(contest, participation, contest_problems, froze
 
 
 def base_contest_ranking_list(contest, problems, queryset, frozen=False):
-    return [make_contest_ranking_profile(contest, participation, problems, frozen) for participation in
-            queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')]
+    queryset = queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')
+    first_solves, total_ac = contest.format.get_first_solves_and_total_ac(problems, queryset, frozen)
+    users = [make_contest_ranking_profile(contest, participation, problems, first_solves, frozen) for participation
+             in queryset]
+    return users, total_ac
 
 
 def base_contest_ranking_queryset(contest):
@@ -879,14 +882,15 @@ def contest_ranking_list(contest, problems, frozen=False):
 
 def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list, ranker=ranker):
     problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
-    users = ranker(ranking_list(contest, problems), key=attrgetter('points', 'cumtime', 'tiebreaker'))
+    users, total_ac = ranking_list(contest, problems)
+    users = ranker(users, key=attrgetter('points', 'cumtime', 'tiebreaker'))
 
-    return users, problems
+    return users, problems, total_ac
 
 
 class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/ranking.html'
-    ranking_table_template_name = 'contest/ranking-table.html'
+    ranking_table_template = get_template('contest/ranking-table.html')
     tab = None
 
     def get_title(self):
@@ -907,12 +911,13 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             raise Http404()
 
     def get_rendered_ranking_table(self):
-        users, problems = self.get_ranking_list()
+        users, problems, total_ac = self.get_ranking_list()
 
-        return loader.render_to_string(self.ranking_table_template_name, request=self.request, context={
+        return self.ranking_table_template.render(request=self.request, context={
             'table_id': 'ranking-table',
             'users': users,
             'problems': problems,
+            'total_ac': total_ac,
             'contest': self.object,
             'has_rating': self.object.ratings.exists(),
             'is_frozen': self.is_frozen,
@@ -1036,7 +1041,7 @@ class ContestPublicRanking(ContestRanking):
 
 class ContestOfficialRanking(ContestRankingBase):
     template_name = 'contest/official-ranking.html'
-    ranking_table_template_name = 'contest/official-ranking-table.html'
+    ranking_table_template = get_template('contest/official-ranking-table.html')
     tab = 'official_ranking'
 
     def get_title(self):
@@ -1057,7 +1062,7 @@ class ContestOfficialRanking(ContestRankingBase):
 
         users = list(zip(range(1, len(users) + 1), users))
 
-        return users, problems
+        return users, problems, {}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
