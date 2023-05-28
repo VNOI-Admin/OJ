@@ -389,6 +389,17 @@ def parse_tests(problem_meta, root, package):
     for batch in each_test_batches:
         del problem_meta['batches'][batch]
 
+    # Ignore zero-point batches
+    zero_point_batches = [name for name, batch in problem_meta['batches'].items() if batch['points'] == 0]
+    if len(zero_point_batches) > 0:
+        print('Found zero-point batches:', ', '.join(zero_point_batches))
+        print('Would you like ignore them (y/n)? ', end='', flush=True)
+        if input().lower() in ['y', 'yes']:
+            problem_meta['batches'] = {
+                name: batch for name, batch in problem_meta['batches'].items() if batch['points'] > 0
+            }
+            print(f'Ignored {len(zero_point_batches)} zero-point batches')
+
     # Sort tests by index
     problem_meta['normal_cases'].sort()
     for batch in problem_meta['batches'].values():
