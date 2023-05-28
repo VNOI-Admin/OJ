@@ -139,6 +139,7 @@
             }
 
             window.load_dynamic_update = function () {
+                event_dispatcher.auto_reconnect = true;
                 event_dispatcher.on('ticket-{{ ticket.id }}', function (message) {
                         console.log(message);
                         switch (message.type) {
