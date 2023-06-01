@@ -162,6 +162,7 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
         if not subs:
             raise Submission.DoesNotExist()
 
+        subs = subs.order_by('id')
         context['submissions'] = subs.filter(language__file_only=False)
 
         # If we have associated data we can do better than just guess
