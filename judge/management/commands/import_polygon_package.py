@@ -512,6 +512,11 @@ def parse_statements(problem_meta, root, package):
         description += '\n## Output\n\n'
         description += pandoc_tex_to_markdown(problem_properties['output'])
 
+        # Interaction
+        if problem_properties['interaction'] is not None:
+            description += '\n## Interaction\n\n'
+            description += pandoc_tex_to_markdown(problem_properties['interaction'])
+
         # Scoring
         if problem_properties['scoring'] is not None:
             description += '\n## Scoring\n\n'
