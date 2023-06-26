@@ -13,7 +13,10 @@
         <div class="user-sidebar">
             <img src="{{ gravatar(user, 135) }}" class="user-gravatar">
             <br>
-
+            <div>
+                <b class="semibold">{{ _('Email:') }}</b>
+                <span style="word-wrap: break-word;">{{ user.user.email }}</span>
+            </div>
             <div><b>
                     {{ _('Problems solved:') }} {{ user.problem_count }}
             </b></div>
