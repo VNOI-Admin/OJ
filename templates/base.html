@@ -193,6 +193,12 @@
             }
         }
     </script>
+    <script>
+        $(document).ready(function() {
+            const styleEl = document.querySelector('p style');
+            styleEl?.remove();
+        });
+    </script>
     <noscript>
         <style>
             #content {
