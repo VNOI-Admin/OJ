@@ -1,5 +1,0 @@
-archive: gapdoi.zip
-test_cases:
-- {in: gapdoi.1.in, out: gapdoi.1.out, points: 1}
-- {in: gapdoi.2.in, out: gapdoi.2.out, points: 2}
-- {in: gapdoi.3.in, out: gapdoi.3.out, points: 2}

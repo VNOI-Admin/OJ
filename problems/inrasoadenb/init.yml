@@ -1,5 +1,0 @@
-archive: inrasoadenb.zip
-test_cases:
-- {in: inrasoadenb.1.in, out: inrasoadenb.1.out, points: 25}
-- {in: inrasoadenb.2.in, out: inrasoadenb.2.out, points: 50}
-- {in: inrasoadenb.3.in, out: inrasoadenb.3.out, points: 50}
