@@ -4605,6 +4605,10 @@ msgstr "Kết thúc trong %(countdown)s."
 msgid "Upcoming contests"
 msgstr "Kỳ thi sắp tới"
 
+#: templates/blog/list.html:95
+msgid "Other OJ Websites"
+msgstr "Các Website OJ khác"
+
 #: templates/blog/list.html:182 templates/contest/contest.html:55
 #, python-format
 msgid "Starting in %(countdown)s."

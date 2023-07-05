@@ -229,7 +229,7 @@ header {
 }
 
 #nav-container {
-    background: $widget_black;
+    background: #0845b9;
 
     // opacity: 0.77
     // filter: alpha(opacity=77)
@@ -292,15 +292,16 @@ nav {
 
                 &:hover {
                     color: #FFF;
-                    background: rgba(255, 255, 255, 0.25);
+                    background: #28197cb5;
                     margin: 0;
                 }
 
                 &.active {
                     color: #FFF;
 
+                    background-color: #19106a;
                     border: 5px solid transparent;
-                    border-bottom: 5px solid $highlight_blue;
+                    // border-bottom: 5px solid $highlight_blue;
                     padding: 9px 2px;
                 }
 
@@ -315,7 +316,7 @@ nav {
                 left: 5px;
                 display: none;
                 color: #fff;
-                background: $widget_black;
+                background: #0845b9;
                 margin: 0 !important;
                 box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
 
@@ -334,7 +335,7 @@ nav {
                         font-size: 0.8em;
                         line-height: 18px;
                         display: block;
-                        border-left: 4px solid lightskyblue;
+                        border-left: 4px solid #bb8305;
                         white-space: nowrap;
                     }
                 }

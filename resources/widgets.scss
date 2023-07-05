@@ -192,7 +192,7 @@ input {
 
         &.active {
             a, span {
-                border-top-color: $highlight_blue !important;
+                border-top-color: #19106a !important;
             }
 
             .tab-icon {
@@ -249,7 +249,7 @@ input {
 // Bootstrap-y pagination
 ul.pagination a:hover {
     color: #FFF;
-    background: rgba(0, 0, 0, 0.55);
+    background: rgba(40, 25, 124, 0.7098039216);
 }
 
 ul.pagination {
@@ -286,8 +286,8 @@ ul.pagination {
                     line-height: 1.42857;
                     text-decoration: none;
                     color: #FFF;
-                    background-color: $widget_black;
-                    border: 1px solid #505050;
+                    background-color: #0845b9;
+                    border: 1px solid #5250b7;
                     margin-left: -1px;
                 }
             }
@@ -295,15 +295,15 @@ ul.pagination {
 
         .disabled-page > {
             a {
-                color: #888;
-                background-color: $widget_black;
-                border-color: #282828;
+                color: #FFF;
+                background-color: #0845b9;
+                border-color: #5250b7;
             }
 
             span {
-                color: #888;
-                background-color: $widget_black;
-                border-color: #505050;
+                color: #FFF;
+                background-color: #0845b9;
+                border-color: #5250b7;
             }
         }
 
@@ -311,16 +311,16 @@ ul.pagination {
             a {
                 z-index: 2;
                 color: #FFF;
-                background-color: $highlight_blue;
-                border-color: transparent;
+                background-color: #19106a;
+                border-color: #5250b7;
                 cursor: default;
             }
 
             span {
                 z-index: 2;
                 color: #FFF;
-                background-color: $highlight_blue;
-                border-color: transparent;
+                background-color: #19106a;
+                border-color: #5250b7;
                 cursor: default;
             }
         }
@@ -432,7 +432,7 @@ ul.select2-selection__rendered {
 
 .sidebox h3 {
     margin: 0 -5px;
-    background: $widget_black;
+    background: #0845b9;
     border-radius: $widget_border_radius $widget_border_radius 0 0;
     color: white;
     padding-top: 5px;
