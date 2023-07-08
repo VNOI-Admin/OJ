@@ -487,6 +487,9 @@ TEMPLATES = [
                 'judge.jinja2.DMOJExtension',
                 'judge.jinja2.spaceless.SpacelessExtension',
             ],
+            'bytecode_cache': {
+                'enabled': True,
+            },
         },
     },
     {
