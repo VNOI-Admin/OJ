@@ -55,6 +55,7 @@ VNOJ_ORG_PP_ENTRIES = 100
 VNOJ_ORG_PP_SCALE = 1
 
 VNOJ_OFFICIAL_CONTEST_MODE = False
+VNOJ_ALLOW_LOGIN_BY_IP_ADDRESS = False
 
 # Contribution points function
 # Both should be int
@@ -690,6 +691,7 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.facebook.FacebookOAuth2',
     'judge.social_auth.GitHubSecureEmailOAuth2',
     'django.contrib.auth.backends.ModelBackend',
+    'judge.ip_based_auth.IPBasedAuthBackend',
 )
 
 SOCIAL_AUTH_PIPELINE = (

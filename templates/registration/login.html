@@ -26,6 +26,18 @@
     </style>
 {% endblock %}
 
+{% block js_media %}
+    {% if allow_login_by_ip_address %}
+        <script>
+            $(document).ready(function () {
+                $("#ip-login-button").click(function () {
+                    $("input[name='ip-login']").val("true");
+                });
+            });
+        </script>
+    {% endif %}
+{% endblock %}
+
 {% block body %}
     <div class="auth-flow-form">
         <form action="" method="post" class="form-area">
@@ -57,7 +69,11 @@
             </table>
             <hr>
             <button style="float:right;" type="submit">{{ _('Login!') }}</button>
+            {% if allow_login_by_ip_address %}
+                <button style="float:right; margin-right: 0.5em" type="submit" id="ip-login-button" formnovalidate>{{_('Login by IP Address!')}}</button>
+            {% endif %}
             <input type="hidden" name="next" value="{{ next }}">
+            <input type="hidden" name="ip-login" value="false">
         </form>
         <a href="{{ url('password_reset') }}">{{ _('Forgot your password?') }}</a>
 
