@@ -42,7 +42,7 @@ class Command(BaseCommand):
             user = profile.user
             data['users'].append({
                 'userId': user.id,
-                'username': user.username,
+                'username': profile.display_name,
                 'fullName': user.first_name or profile.display_name,
             })
 
