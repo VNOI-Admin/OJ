@@ -49,6 +49,41 @@
             }
         })
 
+        const cardGroups = document.querySelectorAll('.card-group');
+        const buttons = document.querySelector('.buttons');
+
+        for (let i = 0; i < cardGroups.length; i++) {
+            const btn = document.createElement('button');
+            btn.classList.add('btn');
+            if (!i) btn.classList.add('active');
+            buttons.append(btn);
+        }
+
+        const btns = document.querySelectorAll('.btn');
+        btns.forEach((btn, i) => {
+            btn.addEventListener('click', () => {
+                let currentActiveIndex = 0;
+                btns.forEach((btn, i) => {
+                    if (btn.classList.contains('active')) currentActiveIndex = i;
+                    btn.classList.remove('active')
+                });
+                btn.classList.add('active');
+                if (i > currentActiveIndex) {
+                    cardGroups[i].dataset.status = 'active-right';
+                } else {
+                    cardGroups[i].dataset.status = 'active-left';
+                }
+                cardGroups.forEach(cardGroup => {
+                    if (cardGroup.dataset.status === 'active') {
+                        if (i > currentActiveIndex) cardGroup.dataset.status = 'hidden-left';
+                        else cardGroup.dataset.status = 'hidden-right';
+                    }
+                });
+                setTimeout(() => {
+                    cardGroups[i].dataset.status = 'active';
+                });
+            })
+        })
     });
 </script>
 {% endblock %}
@@ -87,7 +122,7 @@
                     </tr>
                     <tr>
                         <td>
-                            <a href="#this-week"><img class="logo-grid-icon logo-bottom-left" style="float:right" src="{{ static('VNOIO.png') }}" data-title="This week in community" data-content="What is currently on the front page of the newspaper?"></a>
+                            <a href="#team"><img class="logo-grid-icon logo-bottom-left" style="float:right" src="{{ static('VNOIO.png') }}" data-title="VNOI Team" data-content="Meet the excellent team's members who try their best to contribute to the community"></a>
                         </td>
                         <td>
                             <a href="{{ url('home') }}"><img class="logo-grid-icon logo-bottom-right" style="float:left" src="{{ static('VNOII.png') }}" data-title="Return to the ship" data-content="Get back to your adventure. Write your own Hall of Fame."></a>
@@ -97,9 +132,6 @@
             </div>
         </div>
     </section>
-
-        <section id="contests" class="hall-section">
-        </section>
 
     <section id="server-stats" class="hall-section">
         <div class="hall-content">
@@ -115,16 +147,16 @@
                             <img src="{{ static('stage.png') }}"/>
                             <div class="ranking">
                                 <div class="rank3">
-                                    <p class="rank3__content__info__name">{{ ratings[2].user.username|truncate(14) }}</p>
-                                    <p class="rank3__content__info__rating">Rating: {{ ratings[2].rating }}</p>
+                                    <p class="rank3__content__info__name {{ratings[1].css_class}}">{{ ratings[1].user.username|truncate(14) }}</p>
+                                    <p class="rank3__content__info__rating">Rating: {{ ratings[1].rating }}</p>
                                 </div>
                                 <div class="rank1">
-                                    <p class="rank1__content__info__name">{{ ratings[0].user.username|truncate(14) }}</p>
+                                    <p class="rank1__content__info__name {{ratings[0].css_class}}">{{ ratings[0].user.username|truncate(14) }}</p>
                                     <p class="rank1__content__info__rating">Rating: {{ ratings[0].rating }}</p>
                                 </div>
                                 <div class="rank2">
-                                    <p class="rank2__content__info__name">{{ ratings[1].user.username|truncate(14) }}</p>
-                                    <p class="rank2__content__info__rating">Rating: {{ ratings[1].rating }}</p>
+                                    <p class="rank2__content__info__name {{ratings[2].css_class}}">{{ ratings[2].user.username|truncate(14) }}</p>
+                                    <p class="rank2__content__info__rating">Rating: {{ ratings[2].rating }}</p>
                                 </div>
                             </div>
                         </div>
@@ -138,9 +170,9 @@
                                 {% for user in ratings %}
                                     {% if loop.index > 3 %}
                                         <tr>
-                                            <td>{{ loop.index }}</td>
-                                            <td>{{ user }}</td>
-                                            <td>{{ user.rating }}</td>
+                                            <td class="text-black">{{ loop.index }}</td>
+                                            <td class="{{ user.css_class }}">{{user.username}}</td>
+                                            <td class="text-black">{{ user.rating }}</td>
                                         </tr>
                                     {% endif %}
                                 {% endfor %}
@@ -159,16 +191,16 @@
                             <img src="{{ static('stage.png') }}"/>
                             <div class="ranking">
                                 <div class="rank3">
-                                    <p class="rank3__content__info__name">{{ problem_solvers[2].user.username|truncate(14) }}</p>
-                                    <p class="rank3__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[2].performance_points | float) }}</p>
+                                    <p class="rank3__content__info__name {{ problem_solvers[1].css_class}}">{{ problem_solvers[1].user.username|truncate(14) }}</p>
+                                    <p class="rank3__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[1].performance_points | float) }}</p>
                                 </div>
                                 <div class="rank1">
-                                    <p class="rank1__content__info__name">{{ problem_solvers[0].user.username|truncate(14) }}</p>
+                                    <p class="rank1__content__info__name {{ problem_solvers[0].css_class}}">{{ problem_solvers[0].user.username|truncate(14) }}</p>
                                     <p class="rank1__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[0].performance_points | float) }}</p>
                                 </div>
                                 <div class="rank2">
-                                    <p class="rank2__content__info__name">{{ problem_solvers[1].user.username|truncate(14) }}</p>
-                                    <p class="rank2__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[1].performance_points | float) }}</p>
+                                    <p class="rank2__content__info__name {{ problem_solvers[2].css_class}}">{{ problem_solvers[2].user.username|truncate(14) }}</p>
+                                    <p class="rank2__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[2].performance_points | float) }}</p>
                                 </div>
                             </div>
                         </div>
@@ -182,9 +214,9 @@
                                 {% for user in problem_solvers %}
                                     {% if loop.index > 3 %}
                                         <tr>
-                                            <td>{{ loop.index }}</td>
-                                            <td>{{ user }}</td>
-                                            <td>{{'%0.2f'| format(user.performance_points | float) }}</td>
+                                            <td class="text-black">{{ loop.index }}</td>
+                                            <td class="{{ user.css_class }}">{{user.username}}</td>
+                                            <td class="text-black">{{ '%0.2f'| format(user.performance_points | float) }}</td>
                                         </tr>
                                     {% endif %}
                                 {% endfor %}
@@ -203,16 +235,16 @@
                             <img src="{{ static('stage.png') }}"/>
                             <div class="ranking">
                                 <div class="rank3">
-                                    <p class="rank3__content__info__name">{{ contributors[2].user.username|truncate(14) }}</p>
-                                    <p class="rank3__content__info__rating">CP: {{ contributors[2].contribution_points }}</p>
+                                    <p class="rank3__content__info__name {{ contributors[1].css_class}}">{{ contributors[1].user.username|truncate(14) }}</p>
+                                    <p class="rank3__content__info__rating">CP: {{ contributors[1].contribution_points }}</p>
                                 </div>
                                 <div class="rank1">
-                                    <p class="rank1__content__info__name">{{ contributors[0].user.username|truncate(14) }}</p>
+                                    <p class="rank1__content__info__name {{ contributors[0].css_class}}">{{ contributors[0].user.username|truncate(14) }}</p>
                                     <p class="rank1__content__info__rating">CP: {{ contributors[0].contribution_points }}</p>
                                 </div>
                                 <div class="rank2">
-                                    <p class="rank2__content__info__name">{{ contributors[1].user.username|truncate(14) }}</p>
-                                    <p class="rank2__content__info__rating">CP: {{ contributors[1].contribution_points }}</p>
+                                    <p class="rank2__content__info__name {{ contributors[2].css_class}}">{{ contributors[2].user.username|truncate(14) }}</p>
+                                    <p class="rank2__content__info__rating">CP: {{ contributors[2].contribution_points }}</p>
                                 </div>
                             </div>
                         </div>
@@ -226,9 +258,9 @@
                                 {% for user in contributors %}
                                     {% if loop.index > 3 %}
                                         <tr>
-                                            <td>{{ loop.index }}</td>
-                                            <td>{{ user }}</td>
-                                            <td>{{ user.contribution_points }}</td>
+                                            <td class="text-black">{{ loop.index }}</td>
+                                            <td class="{{ user.css_class }}">{{user.username}}</td>
+                                            <td class="text-black">{{ user.contribution_points }}</td>
                                         </tr>
                                     {% endif %}
                                 {% endfor %}
@@ -240,7 +272,159 @@
         </div>
     </section>
 
-    <section id="this-week" class="hall-section">
+    <!-- <section id="this-week" class="hall-section">
         <div class="hall-content">This is the this-week part</div>
+    </section> -->
+    <section id="team" class="hall-section">
+        <div class="hall-content">
+            <h2>Team Members</h2>
+            <div class="card-groups-container">
+                <div class="card-groups">
+                    <div class="card-group" data-status="active" data-group="0">
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card-group" data-status="hidden" data-group="1">
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="card-group" data-status="hidden" data-group="2">
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                        <div class="member-card">
+                            <img src="https://placehold.co/600x400/EEE/31343C" />
+                            <h3 class="member-card__name">Member Name</h3>
+                            <p class="member-card__role">Member role</p>
+                            <p>
+                                Lorem ipsum dolor sit amet, consectetur adipisicing elit. Ut
+                                consequuntur modi voluptates facere debitis officia quibusdam ad,
+                                cum velit hic, quisquam atque aliquid tenetur, quidem inventore
+                                ipsa optio delectus amet.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                <div class="buttons">
+                    <!-- <button class="btn active"></button>
+                    <button class="btn"></button> -->
+                </div>
+            </div>
+        </div>
     </section>
+
 {% endblock %}
