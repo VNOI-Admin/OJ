@@ -216,16 +216,41 @@ def pandoc_get_version():
     return tuple(map(int, parts))
 
 
-def parse_checker(problem_meta, root, package):
+def parse_assets(problem_meta, root, package):
+    # Parse interactor
+    interactor = root.find('.//interactor')
+    if interactor is None:
+        print('Use standard grader')
+        problem_meta['grader'] = 'standard'
+    else:
+        print('Found interactor')
+        print('Use interactive grader')
+        problem_meta['grader'] = 'interactive'
+        problem_meta['custom_grader'] = os.path.join(problem_meta['tmp_dir'].name, 'interactor.cpp')
+
+        source = interactor.find('source')
+        if source is None:
+            raise CommandError('interactor source not found. how possible?')
+
+        path = source.get('path')
+        if not path.lower().endswith('.cpp'):
+            raise CommandError('interactor must use C++')
+
+        with open(problem_meta['custom_grader'], 'wb') as f:
+            f.write(package.read(path))
+
+        print('NOTE: checker is ignored when using interactive grader')
+        print('If you use custom checker, please merge it with the interactor')
+        problem_meta['checker'] = 'standard'
+        return
+
+    # Parse checker
     checker = root.find('.//checker')
     if checker is None:
         raise CommandError('checker not found')
 
     if checker.get('type') != 'testlib':
         raise CommandError('not a testlib checker. how possible?')
-
-    print('Use standard grader')
-    problem_meta['grader'] = 'standard'
 
     checker_name = checker.get('name')
     if checker_name is None:
@@ -487,6 +512,11 @@ def parse_statements(problem_meta, root, package):
         description += '\n## Output\n\n'
         description += pandoc_tex_to_markdown(problem_properties['output'])
 
+        # Interaction
+        if problem_properties['interaction'] is not None:
+            description += '\n## Interaction\n\n'
+            description += pandoc_tex_to_markdown(problem_properties['interaction'])
+
         # Scoring
         if problem_properties['scoring'] is not None:
             description += '\n## Scoring\n\n'
@@ -645,6 +675,11 @@ def create_problem(problem_meta):
         problem_data.checker_args = json.dumps(problem_meta['checker_args'])
         problem_data.save()
 
+    if 'custom_grader' in problem_meta:
+        with open(problem_meta['custom_grader'], 'rb') as f:
+            problem_data.custom_grader = File(f)
+            problem_data.save()
+
     order = 0
 
     for batch in problem_meta['batches'].values():
@@ -757,7 +792,7 @@ class Command(BaseCommand):
         problem_meta['curators'] = problem_curators
 
         try:
-            parse_checker(problem_meta, root, package)
+            parse_assets(problem_meta, root, package)
             parse_tests(problem_meta, root, package)
             parse_statements(problem_meta, root, package)
             create_problem(problem_meta)
