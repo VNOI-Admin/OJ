@@ -520,21 +520,29 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
                 state='P',
                 organization=self.object).count()
 
+        user = self.request.user
         if context['is_member'] or \
-           self.request.user.has_perm('judge.see_organization_problem') or \
-           self.request.user.has_perm('judge.edit_all_problem'):
+           user.has_perm('judge.see_organization_problem') or \
+           user.has_perm('judge.edit_all_problem'):
             context['new_problems'] = Problem.objects.filter(
                 is_public=True, is_organization_private=True,
                 organizations=self.object) \
                 .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
 
-        if context['is_member'] or \
-           self.request.user.has_perm('judge.see_private_contest') or \
-           self.request.user.has_perm('judge.edit_all_contest'):
-            context['new_contests'] = Contest.objects.filter(
+        see_private_contest = user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')
+        if context['is_member'] or see_private_contest:
+            new_contests = Contest.objects.filter(
                 is_visible=True, is_organization_private=True,
                 organizations=self.object) \
-                .order_by('-end_time', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
+                .order_by('-end_time', '-id')
+
+            if not see_private_contest:
+                _filter = Q(is_private=False)
+                if user.is_authenticated:
+                    _filter |= Q(private_contestants=user.profile)
+                new_contests = new_contests.filter(_filter)
+
+            context['new_contests'] = new_contests[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
 
         return context
 
@@ -567,15 +575,15 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
         if self.request.user.has_perm('judge.see_private_problem'):
             return Q(organizations=self.organization)
 
-        filter = Q(is_public=True)
+        _filter = Q(is_public=True)
 
         # Authors, curators, and testers should always have access, so OR at the very end.
         if self.profile is not None:
-            filter |= Q(authors=self.profile)
-            filter |= Q(curators=self.profile)
-            filter |= Q(testers=self.profile)
+            _filter |= Q(authors=self.profile)
+            _filter |= Q(curators=self.profile)
+            _filter |= Q(testers=self.profile)
 
-        return filter & Q(organizations=self.organization)
+        return _filter & Q(organizations=self.organization)
 
 
 class ContestListOrganization(CustomOrganizationMixin, ContestList):
