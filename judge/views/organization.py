@@ -537,10 +537,10 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
                 .order_by('-end_time', '-id')
 
             if not see_private_contest:
-                filter = Q(is_private=False)
+                _filter = Q(is_private=False)
                 if user.is_authenticated:
-                    filter |= Q(private_contestants=user.profile)
-                new_contests = new_contests.filter(filter)
+                    _filter |= Q(private_contestants=user.profile)
+                new_contests = new_contests.filter(_filter)
 
             context['new_contests'] = new_contests[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
 
@@ -575,15 +575,15 @@ class ProblemListOrganization(CustomOrganizationMixin, ProblemList):
         if self.request.user.has_perm('judge.see_private_problem'):
             return Q(organizations=self.organization)
 
-        filter = Q(is_public=True)
+        _filter = Q(is_public=True)
 
         # Authors, curators, and testers should always have access, so OR at the very end.
         if self.profile is not None:
-            filter |= Q(authors=self.profile)
-            filter |= Q(curators=self.profile)
-            filter |= Q(testers=self.profile)
+            _filter |= Q(authors=self.profile)
+            _filter |= Q(curators=self.profile)
+            _filter |= Q(testers=self.profile)
 
-        return filter & Q(organizations=self.organization)
+        return _filter & Q(organizations=self.organization)
 
 
 class ContestListOrganization(CustomOrganizationMixin, ContestList):

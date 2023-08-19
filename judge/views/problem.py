@@ -374,14 +374,14 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         return queryset.search(query, queryset.BOOLEAN).extra(order_by=['-relevance'])
 
     def get_filter(self):
-        filter = Q(is_public=True) & Q(is_organization_private=False)
+        _filter = Q(is_public=True) & Q(is_organization_private=False)
         if self.profile is not None:
-            filter = Problem.q_add_author_curator_tester(filter, self.profile)
-        return filter
+            _filter = Problem.q_add_author_curator_tester(_filter, self.profile)
+        return _filter
 
     def get_normal_queryset(self):
-        filter = self.get_filter()
-        queryset = Problem.objects.filter(filter).select_related('group').defer('description', 'summary')
+        _filter = self.get_filter()
+        queryset = Problem.objects.filter(_filter).select_related('group').defer('description', 'summary')
 
         if self.profile is not None and self.hide_solved:
             queryset = queryset.exclude(id__in=Submission.objects.filter(user=self.profile, points=F('problem__points'))
