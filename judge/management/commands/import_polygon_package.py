@@ -1,5 +1,6 @@
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
@@ -341,7 +342,7 @@ def parse_tests(problem_meta, root, package):
     if groups is not None:
         for group in groups.getchildren():
             name = group.get('name')
-            points = int(float(group.get('points', 0)))
+            points = float(group.get('points', 0))
             points_policy = group.get('points-policy')
             dependencies = group.find('dependencies')
             if dependencies is None:
@@ -365,7 +366,7 @@ def parse_tests(problem_meta, root, package):
         input_path_pattern = testset.find('input-path-pattern').text
         answer_path_pattern = testset.find('answer-path-pattern').text
         for i, test in enumerate(testset.find('tests').getchildren()):
-            points = int(float(test.get('points', 0)))
+            points = float(test.get('points', 0))
             input_path = input_path_pattern % (i + 1)
             answer_path = answer_path_pattern % (i + 1)
             input_file = f'{(i + 1):02d}.inp'
@@ -413,6 +414,20 @@ def parse_tests(problem_meta, root, package):
 
     for batch in each_test_batches:
         del problem_meta['batches'][batch]
+
+    # Normalize points if necessary
+    # Polygon allows fractional points, but DMOJ does not
+    all_points = [batch['points'] for batch in problem_meta['batches'].values()] + \
+                 [problem_meta['cases_data'][i]['points'] for i in problem_meta['normal_cases']]
+    if any(not p.is_integer() for p in all_points):
+        print('Found fractional points. Normalize to integers')
+        all_points = [int(p * 1000) for p in all_points]
+        gcd = math.gcd(*all_points)
+        for batch in problem_meta['batches'].values():
+            batch['points'] = int(batch['points'] * 1000) // gcd
+        for i in problem_meta['normal_cases']:
+            case_data = problem_meta['cases_data'][i]
+            case_data['points'] = int(case_data['points'] * 1000) // gcd
 
     # Ignore zero-point batches
     zero_point_batches = [name for name, batch in problem_meta['batches'].items() if batch['points'] == 0]
