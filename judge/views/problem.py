@@ -1,7 +1,6 @@
 import logging
 import os
 import re
-import zipfile
 from datetime import timedelta
 from operator import itemgetter
 from random import randrange
@@ -670,22 +669,11 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
                 self.new_submission.save()
 
             submission_file = form.files.get('submission_file', None)
-            if submission_file is not None:
-                if self.new_submission.language.key == 'SCRATCH':
-                    try:
-                        archive = zipfile.ZipFile(submission_file.file)
-                        submission_file.file = archive.open('project.json')
-                        submission_file.name = 'dummy.json'
-                    except (zipfile.BadZipFile, KeyError):
-                        pass
-
-                source_url = submission_uploader(
-                    submission_file=submission_file,
-                    problem_code=self.new_submission.problem.code,
-                    user_id=self.new_submission.user.user.id,
-                )
-            else:
-                source_url = ''
+            source_url = submission_uploader(
+                submission_file=submission_file,
+                problem_code=self.new_submission.problem.code,
+                user_id=self.new_submission.user.user.id,
+            ) if submission_file else ''
 
             source = SubmissionSource(submission=self.new_submission, source=form.cleaned_data['source'] + source_url)
             source.save()
