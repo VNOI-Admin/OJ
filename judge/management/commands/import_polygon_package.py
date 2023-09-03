@@ -362,7 +362,7 @@ def parse_tests(problem_meta, root, package):
                 'cases': [],
             }
 
-    with zipfile.ZipFile(problem_meta['zipfile'], 'w') as tests_zip:
+    with zipfile.ZipFile(problem_meta['zipfile'], 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as tests_zip:
         input_path_pattern = testset.find('input-path-pattern').text
         answer_path_pattern = testset.find('answer-path-pattern').text
         for i, test in enumerate(testset.find('tests').getchildren()):
