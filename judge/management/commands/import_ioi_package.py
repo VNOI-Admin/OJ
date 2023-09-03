@@ -101,6 +101,7 @@ def parse_assets_and_tests(problem_meta, root, package):
 
     test_files = [file for file in package.namelist() if not file.endswith('/') and
                   file.startswith(problem_meta['zip_prefix'] + 'tests/')]
+    test_files.sort()
     assert len(test_files) % 2 == 0
     with zipfile.ZipFile(problem_meta['zipfile'], 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as tests_zip:
         for file in test_files:
