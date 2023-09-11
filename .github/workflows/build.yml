@@ -44,11 +44,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: Set up Node 14
-        uses: actions/setup-node@v2
+      - name: Install Node.js
+        uses: actions/setup-node@v3
         with:
-          node-version: '14'
+          node-version: '18.x'
       - name: Install npm packages
-        run: npm install -g sass postcss-cli postcss autoprefixer
+        run: npm install
       - name: Build style.css
         run: ./make_style.sh
