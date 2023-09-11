@@ -1,206 +1,272 @@
-var config = require('./config');
-var set = require('simplesets').Set;
-var queue = require('qu');
-var WebSocketServer = require('ws').Server;
-var wss_receiver = new WebSocketServer({host: config.get_host, port: config.get_port});
-var wss_sender = new WebSocketServer({host: config.post_host, port: config.post_port});
-var messages = new queue();
-var followers = new set();
-var pollers = new set();
-var max_queue = config.max_queue || 50;
-var long_poll_timeout = config.long_poll_timeout || 60000;
-var message_id = Date.now();
+// @ts-check
+/**
+ * @typedef {import("./types.js").Message} Message
+ * @typedef {import("./types.js").WebSocketExtended} WebSocketExtended
+ * @typedef {import("./types.js").IncomingMessageExtended} IncomingMessageExtended
+ * @typedef {import("./types.js").ServerResponseExtended} ServerResponseExtended
+ * @typedef {import("./types.js").WebSocketRawExtended} WebSocketRawExtended
+ */
+import { createServer } from "http";
+import { WebSocketServer } from "ws";
 
-if (typeof String.prototype.startsWith != 'function') {
-    String.prototype.startsWith = function (str){
-        return this.slice(0, str.length) == str;
-    };
-}
+import config from "./config.js";
+import { Queue } from "./queue.js";
 
-messages.catch_up = function (client) {
-    this.each(function (message) {
-        if (message.id > client.last_msg)
-            client.got_message(message);
-    });
-};
-
-messages.post = function (channel, message) {
-    message = {
-        id: ++message_id,
-        channel: channel,
-        message: message
-    };
-    this.push(message);
-    if (this.length > max_queue)
-        this.shift();
-    followers.each(function (client) {
-        client.got_message(message);
-    });
-    pollers.each(function (request) {
-        request.got_message(message);
-    });
-    return message.id;
-};
-
-messages.last = function () {
-    return this.tail().id;
-};
-
-wss_receiver.on('connection', function (socket) {
-    socket.channel = null;
-    socket.last_msg = 0;
-
-    var commands = {
-        start_msg: function (request) {
-            socket.last_msg = request.start;
-        },
-        set_filter: function (request) {
-            var filter = {};
-            if (Array.isArray(request.filter) && request.filter.length > 0 &&
-                request.filter.every(function (channel, index, array) {
-                    if (typeof channel != 'string')
-                        return false;
-                    filter[channel] = true;
-                    return true;
-            })) {
-                socket.filter = filter;
-                followers.add(socket);
-                messages.catch_up(socket);
-            } else {
-                socket.send(JSON.stringify({
-                    status: 'error',
-                    code: 'invalid-filter',
-                    message: 'invalid filter: ' + request.filter
-                }));
-            }
-        },
-    };
-
-    socket.got_message = function (message) {
-        if (message.channel in socket.filter)
-            socket.send(JSON.stringify(message));
-        socket.last_msg = message.id;
-    };
-
-    socket.on('message', function (request) {
-        try {
-            request = JSON.parse(request);
-        } catch (err) {
-            socket.send(JSON.stringify({
-                status: 'error',
-                code: 'syntax-error',
-                message: err.message
-            }));
-            return;
-        }
-        request.command = request.command.replace(/-/g, '_');
-        if (request.command in commands)
-            commands[request.command](request);
-        else
-            socket.send(JSON.stringify({
-                status: 'error',
-                code: 'bad-command',
-                message: 'bad command: ' + request.command
-            }));
-    });
-
-    socket.on('close', function(code, message) {
-        followers.remove(socket);
-    });
+const wssReceiver = new WebSocketServer({
+  host: config.get_host,
+  port: config.get_port,
+});
+const wssSender = new WebSocketServer({
+  host: config.post_host,
+  port: config.post_port,
 });
 
-wss_sender.on('connection', function (socket) {
-    var commands = {
-        post: function (request) {
-            if (typeof request.channel != 'string')
-                return {
-                    status: 'error',
-                    code: 'invalid-channel'
-                };
-            return {
-                status: 'success',
-                id: messages.post(request.channel, request.message)
-            };
-        },
-        last_msg: function (request) {
-            return {
-                status: 'success',
-                id: message_id,
-            };
-        }
-    };
-    socket.on('message', function (request) {
-        try {
-            request = JSON.parse(request);
-        } catch (err) {
-            socket.send(JSON.stringify({
-                status: 'error',
-                code: 'syntax-error',
-                message: err.message
-            }));
-            return;
-        }
-        request.command = request.command.replace(/-/g, '_');
-        if (request.command in commands)
-            socket.send(JSON.stringify(commands[request.command](request)));
-        else
-            socket.send(JSON.stringify({
-                status: 'error',
-                code: 'bad-command',
-                message: 'bad command: ' + request.command
-            }));
-    });
+/**
+ * @type {Queue<Message>}
+ */
+const messages = new Queue();
+/**
+ * @type {Set<WebSocketExtended>}
+ */
+const followers = new Set();
+/**
+ * @type {Set<IncomingMessageExtended>}
+ */
+const pollers = new Set();
+const maxQueue = config.max_queue || 50;
+const longPollTimeout = config.long_poll_timeout || 60000;
+let messageId = Date.now();
+
+/**
+ * @param {WebSocketExtended} client
+ */
+const messagesCatchUp = (client) => {
+  messages.forEach((message) => {
+    if (message.id > client.lastMessage) {
+      client.gotMessage(message);
+    }
+  });
+};
+
+/**
+ * Post a message.
+ * @param {string} channel
+ * @param {string} message
+ * @returns
+ */
+const messagesPost = (channel, message) => {
+  /**
+   * @type {Message}
+   */
+  const resolvedMessage = {
+    id: ++messageId,
+    channel: channel,
+    message: message,
+  };
+  messages.push(resolvedMessage);
+  if (messages.length > maxQueue) {
+    messages.pop();
+  }
+  followers.forEach((client) => {
+    client.gotMessage(resolvedMessage);
+  });
+  pollers.forEach((request) => {
+    request.gotMessage(resolvedMessage);
+  });
+  return resolvedMessage.id;
+};
+
+wssReceiver.on("connection", (/** @type {WebSocketExtended} */ socket) => {
+  socket.lastMessage = 0;
+  const commands = {
+    /**
+     * @param {WebSocketRawExtended} request
+     */
+    start_msg(request) {
+      socket.lastMessage = request.start;
+    },
+    /**
+     * @param {WebSocketRawExtended} request
+     */
+    set_filter(request) {
+      /**
+       * @type {Record<string, boolean>}
+       */
+      const filter = {};
+      if (
+        Array.isArray(request.filter) &&
+        request.filter.length > 0 &&
+        request.filter.every((channel) => {
+          if (typeof channel !== "string") {
+            return false;
+          }
+          filter[channel] = true;
+          return true;
+        })
+      ) {
+        socket.filter = filter;
+        followers.add(socket);
+        messagesCatchUp(socket);
+      } else {
+        socket.send(
+          JSON.stringify({
+            status: "error",
+            code: "invalid-filter",
+            message: "invalid filter: " + request.filter,
+          }),
+        );
+      }
+    },
+  };
+
+  socket.gotMessage = (message) => {
+    if (message.channel in socket.filter) {
+      socket.send(JSON.stringify(message));
+    }
+    socket.lastMessage = message.id;
+  };
+
+  socket.on("message", (/** @type {WebSocketRawExtended}*/ request) => {
+    try {
+      request = JSON.parse(request.toString());
+    } catch (err) {
+      socket.send(
+        JSON.stringify({
+          status: "error",
+          code: "syntax-error",
+          message: err.message,
+        }),
+      );
+      return;
+    }
+    request.command = request.command.replace(/-/g, "_");
+    if (request.command in commands) {
+      commands[request.command](request);
+    } else {
+      socket.send(
+        JSON.stringify({
+          status: "error",
+          code: "bad-command",
+          message: `bad command: ${request.command}`,
+        }),
+      );
+      return;
+    }
+  });
+
+  socket.on("close", () => {
+    followers.delete(socket);
+  });
 });
 
-var url = require('url');
-require('http').createServer(function (req, res) {
-    var parts = url.parse(req.url, true);
+wssSender.on("connection", (socket) => {
+  const commands = {
+    /**
+     * @param {WebSocketRawExtended} request
+     * @returns
+     */
+    post(request) {
+      if (typeof request.channel !== "string") {
+        return {
+          status: "error",
+          code: "invalid-channel",
+        };
+      }
+      return {
+        status: "success",
+        id: messagesPost(request.channel, request.message),
+      };
+    },
+    last_msg() {
+      return {
+        status: "success",
+        id: messageId,
+      };
+    },
+  };
+  socket.on("message", (/** @type {WebSocketRawExtended}*/ request) => {
+    try {
+      request = JSON.parse(request.toString());
+    } catch (err) {
+      return socket.send(
+        JSON.stringify({
+          status: "error",
+          code: "syntax-error",
+          message: err.message,
+        }),
+      );
+    }
+    request.command = request.command.replace(/-/g, "_");
+    if (request.command in commands) {
+      socket.send(JSON.stringify(commands[request.command](request)));
+    } else {
+      socket.send(
+        JSON.stringify({
+          status: "error",
+          code: "bad-command",
+          message: "bad command: " + request.command,
+        }),
+      );
+    }
+  });
+});
 
-    if (!parts.pathname.startsWith('/channels/')) {
-        res.writeHead(404, {'Content-Type': 'text/plain'});
-        res.end('404 Not Found');
-        return;
+createServer(
+  // @ts-expect-error We can't pass generics to `createServer`.
+  (/** @type {IncomingMessageExtended} */ req, /** @type {ServerResponseExtended} */ res) => {
+    const parts = req.url ? new URL(req.url, "http://n") : undefined;
+
+    if (!parts?.pathname.startsWith("/channels/")) {
+      res.writeHead(404, { "Content-Type": "text/plain" });
+      res.end("404 Not Found");
+      return;
     }
 
-    var channels = decodeURI(parts.pathname).slice(10).split('|');
+    const channels = decodeURI(parts.pathname).slice(10).split("|");
     if (channels.length == 1 && !channels[0].length) {
-        res.writeHead(400, {'Content-Type': 'text/plain'});
-        res.end('400 Bad Request');
-        return;
+      res.writeHead(400, { "Content-Type": "text/plain" });
+      res.end("400 Bad Request");
+      return;
     }
 
     req.channels = {};
-    req.last_msg = parseInt(parts.query.last);
-    if (isNaN(req.last_msg)) req.last_msg = 0;
+    req.lastMessage = parseInt(parts.searchParams.get("last") || "0");
+    if (isNaN(req.lastMessage)) {
+      req.lastMessage = 0;
+    }
 
-    channels.forEach(function (channel) {
-        req.channels[channel] = true;
+    channels.forEach((channel) => {
+      req.channels[channel] = true;
     });
 
-    req.on('close', function () {
-        pollers.remove(req);
+    req.on("close", () => {
+      pollers.delete(req);
     });
 
-    req.got_message = function (message) {
-        if (message.channel in req.channels) {
-            res.writeHead(200, {'Content-Type': 'application/json'});
-            res.end(JSON.stringify(message));
-            pollers.remove(req);
-            return true;
-        }
-        return false;
+    req.gotMessage = (message) => {
+      if (message.channel in req.channels) {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify(message));
+        pollers.delete(req);
+        return true;
+      }
+      return false;
     };
-    var got = false;
-    messages.each(function (message) {
-        if (!got && message.id > req.last_msg)
-            got = req.got_message(message);
+    let got = false;
+    messages.forEach((message) => {
+      if (!got && message.id > req.lastMessage) {
+        got = req.gotMessage(message);
+      }
     });
     if (!got) {
-        pollers.add(req);
-        res.setTimeout(long_poll_timeout, function () {
-            pollers.remove(req);
-            res.writeHead(504, {'Content-Type': 'application/json'});
-            res.end('{"error": "timeout"}');
-        });
+      pollers.add(req);
+      res.setTimeout(longPollTimeout, () => {
+        pollers.delete(req);
+        res.writeHead(504, { "Content-Type": "application/json" });
+        res.end('{"error": "timeout"}');
+      });
     }
-}).listen(config.http_port, config.http_host);
+  },
+).listen(config.http_port, config.http_host, () => {
+  console.log(`Websocket daemon listening on http://${config.http_host}:${config.http_port}`);
+});

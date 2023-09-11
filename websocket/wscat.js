@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+// @ts-check
 
 /*!
  * ws: a node.js websocket client
@@ -9,215 +10,261 @@
 /**
  * Module dependencies.
  */
-
-var WebSocket = require('ws')
-  , fs = require('fs')
-  , program = require('commander')
-  , util = require('util')
-  , events = require('events')
-  , readline = require('readline');
+import { Command } from "@commander-js/extra-typings";
+import events from "events";
+import readline from "readline";
+import { WebSocket, WebSocketServer } from "ws";
 
 /**
  * InputReader - processes console input
  */
-
-function Console() {
-  this.stdin = process.stdin;
-  this.stdout = process.stdout;
-
-  this.readlineInterface = readline.createInterface(this.stdin, this.stdout);
-
-  var self = this;
-  this.readlineInterface.on('line', function(data) {
-    self.emit('line', data);
+class Console extends events.EventEmitter {
+  static colors = /** @type {const} */ ({
+    red: "\x1b[31m",
+    green: "\x1b[32m",
+    yellow: "\x1b[33m",
+    cyan: "\x1b[36m",
+    blue: "\x1b[34m",
+    default: "\x1b[39m",
   });
-  this.readlineInterface.on('close', function() {
-    self.emit('close');
-  });
+  constructor() {
+    super();
+    /**
+     * Console's readline interface.
+     * @type {readline.Interface}
+     * @public
+     */
+    this.readlineInterface = readline.createInterface(process.stdin, process.stdout);
 
-  this._resetInput = function() {
-    self.clear();
+    this.readlineInterface.on("line", (data) => {
+      this.emit("line", data);
+    });
+
+    this.readlineInterface.on("close", () => {
+      this.emit("close");
+    });
+  }
+  /**
+   * Wrapper of readline interface's prompt.
+   */
+  prompt() {
+    this.readlineInterface.prompt();
+  }
+  /**
+   * Clears stdout.
+   */
+  clear() {
+    process.stdout.write("\x1b[2K\x1b[E");
+  }
+  /**
+   * Clears stdout, then prints message with color.
+   * @param {string} message
+   * @param {string} [color]
+   */
+  print(message, color = Console.colors.default) {
+    this.clear();
+    process.stdout.write(`${color}${message}${Console.colors.default}\n`);
+    this.prompt();
+  }
+  /**
+   * Pauses stdin.
+   */
+  pause() {
+    process.stdin.on("keypress", this.clear);
+  }
+  /**
+   * Clears stdin.
+   */
+  resume() {
+    process.stdin.removeListener("keypress", this.clear);
   }
 }
-util.inherits(Console, events.EventEmitter);
 
-Console.Colors = {
-  Red: '\033[31m',
-  Green: '\033[32m',
-  Yellow: '\033[33m',
-  Cyan: '\033[36m',
-  Blue: '\033[34m',
-  Default: '\033[39m'
-};
-
-Console.prototype.prompt = function() {
-  this.readlineInterface.prompt();
-}
-
-Console.prototype.print = function(msg, color) {
-  this.clear();
-  color = color || Console.Colors.Default;
-  this.stdout.write(color + msg + Console.Colors.Default + '\n');
-  this.prompt();
-}
-
-Console.prototype.clear = function() {
-  this.stdout.write('\033[2K\033[E');
-}
-
-Console.prototype.pause = function() {
-  this.stdin.on('keypress', this._resetInput);
-}
-
-Console.prototype.resume = function() {
-  this.stdin.removeListener('keypress', this._resetInput);
-}
-
-function appender(xs) {
-  xs = xs || [];
-  return function (x) {
+/**
+ * Creates a function that pushs an element to an array, then returns that array
+ * immediately.
+ * @template T
+ * @param {T[]} xs
+ * @returns
+ */
+const appender = (xs = []) => {
+  /**
+   * @param {T} x
+   */
+  return (x) => {
     xs.push(x);
     return xs;
-  }
-}
+  };
+};
 
+/**
+ * Assigns keys to its corresponding values on an object and returns it.
+ * @param {Record<string, string>} obj
+ * @param {[string, string][]} kvals
+ * @returns
+ */
 function into(obj, kvals) {
-  kvals.forEach(function (kv) {
+  kvals.forEach((kv) => {
     obj[kv[0]] = kv[1];
   });
   return obj;
 }
 
-function splitOnce(sep, str) { // sep can be either String or RegExp
-  var tokens = str.split(sep);
-  return [tokens[0], str.replace(sep, '').substr(tokens[0].length)];
-}
+/**
+ * Splits a string by a separator once.
+ * @param {string | RegExp} sep
+ * @param {string} str
+ * @returns {[string, string]}
+ */
+const splitOnce = (sep, str) => {
+  const tokens = str.split(sep);
+  return [tokens[0], str.replace(sep, "").substring(tokens[0].length)];
+};
 
 /**
  * The actual application
  */
-
-var version = '1.0';//JSON.parse(fs.readFileSync(__dirname + '/../package.json', 'utf8')).version;
-program
+const version = "1.0"; //JSON.parse(fs.readFileSync(__dirname + '/../package.json', 'utf8')).version;
+const program = new Command()
   .version(version)
-  .usage('[options] <url>')
-  .option('-l, --listen <port>', 'listen on port')
-  .option('-c, --connect <url>', 'connect to a websocket server')
-  .option('-p, --protocol <version>', 'optional protocol version')
-  .option('-o, --origin <origin>', 'optional origin')
-  .option('--host <host>', 'optional host')
-  .option('-s, --subprotocol <protocol>', 'optional subprotocol')
-  .option('-n, --no-check', 'Do not check for unauthorized certificates')
-  .option('-H, --header <header:value>', 'Set an HTTP header. Repeat to set multiple. (--connect only)', appender(), [])
-  .option('--auth <username:password>', 'Add basic HTTP authentication header. (--connect only)')
+  .usage("[options] <url>")
+  .option("-l, --listen <port>", "Listen on port")
+  .option("-c, --connect <url>", "Connect to a websocket server")
+  .option("-p, --protocol <version>", "Specify an optional protocol version (--connect only)")
+  .option("-o, --origin <origin>", "Specify an optional origin (--connect only)")
+  .option("--host <host>", "Specify an optional host")
+  .option("-s, --subprotocol <protocol>", "optional subprotocol (--connect only)")
+  .option("-n, --no-check", "Do not check for unauthorized certificates (--connect only)")
+  .option(
+    "-H, --header <header:value>",
+    "Set an HTTP header. Repeat to set multiple. (--connect only)",
+    appender(),
+    [],
+  )
+  .option("--auth <username:password>", "Add basic HTTP authentication header. (--connect only)")
   .parse(process.argv);
 
-if (program.listen && program.connect) {
-  console.error('\033[33merror: use either --listen or --connect\033[39m');
+const programOptions = program.opts();
+
+if (programOptions.listen && programOptions.connect) {
+  console.error("\x1b[33merror: use either --listen or --connect\x1b[39m");
   process.exit(-1);
-}
-else if (program.listen) {
-  var wsConsole = new Console();
+} else if (programOptions.listen) {
+  const wsConsole = new Console();
   wsConsole.pause();
-  var options = {};
-  if (program.protocol) options.protocolVersion = program.protocol;
-  if (program.origin) options.origin = program.origin;
-  if (program.subprotocol) options.protocol = program.subprotocol;
-  if (!program.check) options.rejectUnauthorized = program.check;
-  var ws = null;
-  var wss = new WebSocket.Server({port: program.listen}, function() {
-    wsConsole.print('listening on port ' + program.listen + ' (press CTRL+C to quit)', Console.Colors.Green);
+  const { host } = programOptions;
+  /**
+   * @type {import("ws").WebSocket | null}
+   */
+  let ws = null;
+  const wss = new WebSocketServer({ port: +programOptions.listen, host }, () => {
+    wsConsole.print(
+      `listening on port ${programOptions.listen} (press Ctrl+C to quit)`,
+      Console.colors.green,
+    );
     wsConsole.clear();
   });
-  wsConsole.on('close', function() {
+  wsConsole.on("close", function () {
     if (ws) {
       try {
         ws.close();
-      }
-      catch (e) {}
+      } catch (e) {}
     }
     process.exit(0);
   });
-  wsConsole.on('line', function(data) {
+  wsConsole.on("line", (data) => {
     if (ws) {
-      ws.send(data, {mask: false});
+      ws.send(data, { mask: false });
       wsConsole.prompt();
     }
   });
-  wss.on('connection', function(newClient) {
+  wss.on("connection", (newClient) => {
     if (ws) {
       // limit to one client
       newClient.terminate();
       return;
-    };
+    }
     ws = newClient;
     wsConsole.resume();
     wsConsole.prompt();
-    wsConsole.print('client connected', Console.Colors.Green);
-    ws.on('close', function() {
-      wsConsole.print('disconnected', Console.Colors.Green);
+    wsConsole.print("client connected", Console.colors.green);
+    ws.on("close", () => {
+      wsConsole.print("disconnected", Console.colors.green);
       wsConsole.clear();
       wsConsole.pause();
       ws = null;
     });
-    ws.on('error', function(code, description) {
-      wsConsole.print('error: ' + code + (description ? ' ' + description : ''), Console.Colors.Yellow);
+    ws.on("error", (code, description) => {
+      wsConsole.print(
+        `error: ${code} ${description ? ` ${description}` : ""}`,
+        Console.colors.yellow,
+      );
     });
-    ws.on('message', function(data, flags) {
-      wsConsole.print('< ' + data, Console.Colors.Blue);
+    ws.on("message", (data) => {
+      wsConsole.print(`< ${data}`, Console.colors.blue);
     });
   });
-  wss.on('error', function(error) {
-    wsConsole.print('error: ' + error.toString(), Console.Colors.Yellow);
+  wss.on("error", function (error) {
+    wsConsole.print(`error: ${error.toString()}`, Console.colors.yellow);
     process.exit(-1);
   });
-}
-else if (program.connect) {
-  var wsConsole = new Console();
-  var options = {};
-  if (program.protocol) options.protocolVersion = program.protocol;
-  if (program.origin) options.origin = program.origin;
-  if (program.subprotocol) options.protocol = program.subprotocol;
-  if (program.host) options.host = program.host;
-  if (!program.check) options.rejectUnauthorized = program.check;
-  var headers = into({}, (program.header || []).map(function (s) {
-                                                      return splitOnce(':', s)
-                                                    }));
-  if (program.auth) {
-    headers['Authorization'] = 'Basic ' + new Buffer(program.auth).toString('base64');
+} else if (programOptions.connect) {
+  const wsConsole = new Console();
+  const {
+    protocol,
+    origin,
+    subprotocol,
+    host,
+    check: rejectUnauthorized,
+    header,
+    auth,
+  } = programOptions;
+  const headers = into(
+    {},
+    (header || []).map((s) => splitOnce(":", s)),
+  );
+  if (auth) {
+    headers["Authorization"] = `Basic ${Buffer.from(auth).toString("base64")}`;
   }
-  options.headers = headers;
-  var ws = new WebSocket(program.connect, options);
-  ws.on('open', function() {
-    wsConsole.print('connected (press CTRL+C to quit)', Console.Colors.Green);
-    wsConsole.on('line', function(data) {
-      ws.send(data, {mask: true});
+  const ws = new WebSocket(programOptions.connect, {
+    protocolVersion: protocol ? +protocol : undefined,
+    origin,
+    protocol: subprotocol,
+    host,
+    rejectUnauthorized,
+    headers,
+  });
+  ws.on("open", () => {
+    wsConsole.print("connected (press CTRL+C to quit)", Console.colors.green);
+    wsConsole.on("line", (data) => {
+      ws.send(data, { mask: true });
       wsConsole.prompt();
     });
   });
-  ws.on('close', function() {
-    wsConsole.print('disconnected', Console.Colors.Green);
+  ws.on("close", () => {
+    wsConsole.print("disconnected", Console.colors.green);
     wsConsole.clear();
     process.exit();
   });
-  ws.on('error', function(code, description) {
-    wsConsole.print('error: ' + code + (description ? ' ' + description : ''), Console.Colors.Yellow);
+  ws.on("error", (code, description) => {
+    wsConsole.print(
+      "error: " + code + (description ? " " + description : ""),
+      Console.colors.yellow,
+    );
     process.exit(-1);
   });
-  ws.on('message', function(data, flags) {
-    wsConsole.print('< ' + data, Console.Colors.Cyan);
+  ws.on("message", (data) => {
+    wsConsole.print("< " + data, Console.colors.cyan);
   });
-  wsConsole.on('close', function() {
+  wsConsole.on("close", () => {
     if (ws) {
       try {
         ws.close();
-      }
-      catch(e) {}
+      } catch (e) {}
       process.exit();
     }
   });
-}
-else {
-  console.error('\033[33merror: use either --listen or --connect\033[39m');
+} else {
+  console.error("\x1b[33merror: use either --listen or --connect\x1b[39m");
   process.exit(-1);
 }
