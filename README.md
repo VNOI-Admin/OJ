@@ -18,6 +18,8 @@ Refer to the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/site
 
 ### Additional step in installation:
 
+- You needn't run `npm install *package_name*` commands mentioned in the page. They should be replaced with one `npm install` before you start installing. 
+
 - You **have to** define `DMOJ_PROBLEM_DATA_ROOT` in `local_settings.py`, which should be the path to the directory that contains your problems' tests.
 
 - Regarding disabling full-text search, please read [this issue](https://github.com/VNOI-Admin/OJ/issues/4) for more information.
