@@ -8,7 +8,6 @@
   "dependencies": {
     "@commander-js/extra-typings": "11.0.0",
     "commander": "11.0.0",
-    "qu": "0.1.0",
     "ws": "8.14.0"
   },
   "devDependencies": {

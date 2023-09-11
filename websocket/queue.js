@@ -1,3 +1,4 @@
+// Source: https://github.com/skeggse/qu/blob/master/lib/qu.js (this code was not licensed at the time of writing).
 // @ts-check
 /**
  * @template T
