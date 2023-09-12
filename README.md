@@ -10,13 +10,13 @@ Check out its features [here](https://github.com/DMOJ/online-judge#features).
 
 Additional features:
 
-- Aside from Python checkers [here](https://docs.dmoj.ca/#/problem_format/custom_checkers), we can also write a custom C++ checker using `testlib.h`.
+- Aside from Python checkers [here](https://vnoi-admin.github.io/vnoj-docs/#/problem_format/custom_checkers), we can also write a custom C++ checker using `testlib.h`.
 
 ## Installation
 
-Refer to the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/site/installation). Almost all installation steps remain the same as the docs, but there are several minor differences, including cloning this repo instead of DMOJ's repo.
+Refer to the install documentation [here](https://vnoi-admin.github.io/vnoj-docs/#/site/installation). Almost all installation steps remain the same as the docs, but there are several minor differences, including cloning this repo instead of DMOJ's repo.
 
-### Additional step in installation:
+### Additional steps in installation:
 
 - You needn't run `npm install *package_name*` commands mentioned in the page. They should be replaced with one `npm install` before you begin setting up the project. 
 
@@ -26,7 +26,7 @@ Refer to the install documentation at [docs.dmoj.ca](https://docs.dmoj.ca/#/site
 
 - To sync the judge server and the site's cache, change the cache framework (`CACHES`) to `memcached` or `redis` instead of the default (local-memory caching).
 
-- The home button in the admin dashboard (/admin) will redirect to `localhost:8081` if you use `python3 manage.py loaddata demo`, there are 2 ways to change that:
+- The home button in the admin dashboard (/admin) links to `localhost:8081` if you use `python3 manage.py loaddata demo`, there are 2 ways to change that:
 
   1. You can change that in [demo.json](/judge/fixtures/demo.json)
   2. You can go to the admin page, scroll down to find the `Sites` setting and change `localhost:8081` to your domain.
