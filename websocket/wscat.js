@@ -164,7 +164,7 @@ if (programOptions.listen && programOptions.connect) {
     );
     wsConsole.clear();
   });
-  wsConsole.on("close", function () {
+  wsConsole.on("close", () => {
     if (ws) {
       try {
         ws.close();
@@ -204,7 +204,7 @@ if (programOptions.listen && programOptions.connect) {
       wsConsole.print(`< ${data}`, Console.colors.blue);
     });
   });
-  wss.on("error", function (error) {
+  wss.on("error", (error) => {
     wsConsole.print(`error: ${error.toString()}`, Console.colors.yellow);
     process.exit(-1);
   });
