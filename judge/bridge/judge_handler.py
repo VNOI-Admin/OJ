@@ -3,14 +3,11 @@ import json
 import logging
 import threading
 import time
-import urllib.parse
 from collections import deque, namedtuple
 from operator import itemgetter
 
 from django import db
 from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator
 from django.utils import timezone
 
 from judge import event_poster as event
@@ -18,11 +15,11 @@ from judge.bridge.base_handler import ZlibPacketHandler, proxy_list
 from judge.caching import finished_submission
 from judge.models import Judge, Language, LanguageLimit, Problem, Profile, \
     RuntimeVersion, Submission, SubmissionTestCase
+from judge.utils.url import get_absolute_submission_file_url
 
 logger = logging.getLogger('judge.bridge')
 json_log = logging.getLogger('judge.json.bridge')
 
-URL_VALIDATOR = URLValidator()
 UPDATE_RATE_LIMIT = 5
 UPDATE_RATE_TIME = 0.5
 SubmissionData = namedtuple(
@@ -33,20 +30,6 @@ SubmissionData = namedtuple(
 
 def _ensure_connection():
     db.connection.close_if_unusable_or_obsolete()
-
-
-def get_submission_file_url(source):
-    """ Get absolute URL to submission file
-    We cannot simply return domain + source, because
-    in the future, we might want to serve this by MEDIA_URL
-    """
-    try:
-        # If source is a valid url,
-        # it might be serve by a MEDIA_URL
-        URL_VALIDATOR(source)
-        return source
-    except ValidationError:
-        return urllib.parse.urljoin(settings.SITE_FULL_URL, source)
 
 
 class JudgeHandler(ZlibPacketHandler):
@@ -257,7 +240,7 @@ class JudgeHandler(ZlibPacketHandler):
             'submission-id': id,
             'problem-id': problem,
             'language': language,
-            'source': source if not data.file_only else get_submission_file_url(source),
+            'source': source if not data.file_only else get_absolute_submission_file_url(source),
             'time-limit': data.time,
             'memory-limit': data.memory,
             'short-circuit': data.short_circuit,
