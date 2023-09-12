@@ -1,6 +1,6 @@
 # VNOJ: VNOI Online Judge [![Build Status](https://github.com/VNOI-Admin/OJ/workflows/build/badge.svg)](https://github.com/VNOI-Admin/OJ/actions/) [![AGPL License](https://img.shields.io/badge/license-AGPLv3.0-blue.svg)](http://www.gnu.org/licenses/agpl-3.0) [![Discord link](https://img.shields.io/discord/660930260405190688?color=%237289DA&label=Discord&logo=Discord)](https://discord.com/invite/TDyYVyd)
 
-As a fork of [DMOJ](https://github.com/DMOJ/online-judge), VNOJ serves as [VNOI](https://vnoi.info/)'s official online judge and hosts its programming contests.
+As a fork of [DMOJ](https://github.com/DMOJ/online-judge), VNOJ serves as [VNOI](https://team.vnoi.info/)'s official online judge and hosts its programming contests.
 
 See it live at [oj.vnoi.info](https://oj.vnoi.info/)!
 
@@ -8,17 +8,11 @@ See it live at [oj.vnoi.info](https://oj.vnoi.info/)!
 
 Check out its features [here](https://github.com/DMOJ/online-judge#features).
 
-Additional features:
-
-- Aside from Python checkers [here](https://vnoi-admin.github.io/vnoj-docs/#/problem_format/custom_checkers), we can also write a custom C++ checker using `testlib.h`.
-
 ## Installation
 
 Refer to the install documentation [here](https://vnoi-admin.github.io/vnoj-docs/#/site/installation). Almost all installation steps remain the same as the docs, but there are several minor differences, including cloning this repo instead of DMOJ's repo.
 
-### Additional steps in installation:
-
-- You needn't run `npm install *package_name*` commands mentioned in the page. They should be replaced with one `npm install` before you begin setting up the project. 
+### Additional installation steps
 
 - You **have to** define `DMOJ_PROBLEM_DATA_ROOT` in `local_settings.py`, which should be the path to the directory that contains your problems' tests.
 
