@@ -49,6 +49,6 @@ jobs:
         with:
           node-version: '18.x'
       - name: Install npm packages
-        run: npm install
+        run: npm ci
       - name: Build style.css
         run: ./make_style.sh
