@@ -1,4 +1,4 @@
-{% with pdf_url=problem.pdf_url %}
+{% with pdf_url=problem.absolute_pdf_url %}
 {% if pdf_url %}
     <p>{{ _("In case the statement didn't load correctly, you can download the statement here: ") }}<a href="{{ pdf_url }}">{{ _("Statement") }}</a></p>
     <object id="pdfContainer" data="{{ pdf_url }}" type="application/pdf" height="1000" style="width: 100%;" ></object>
