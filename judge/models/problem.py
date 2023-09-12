@@ -20,6 +20,7 @@ from judge.models.problem_data import problem_data_storage
 from judge.models.profile import Organization, Profile
 from judge.models.runtime import Language
 from judge.user_translations import gettext as user_gettext
+from judge.utils.url import get_absolute_pdf_url
 
 __all__ = ['ProblemGroup', 'ProblemType', 'Problem', 'ProblemTranslation', 'ProblemClarification', 'License',
            'Solution', 'SubmissionSourceAccess', 'TranslatedProblemQuerySet']
@@ -235,6 +236,10 @@ class Problem(models.Model):
         # We only set original points it is not deferred
         if 'points' in self.__dict__:
             self.__original_points = self.points
+
+    @property
+    def absolute_pdf_url(self):
+        return get_absolute_pdf_url(self.pdf_url) if self.pdf_url else None
 
     @cached_property
     def types_list(self):
