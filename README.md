@@ -26,7 +26,7 @@ Refer to the install documentation [here](https://vnoi-admin.github.io/vnoj-docs
 
 - To sync the judge server and the site's cache, change the cache framework (`CACHES`) to `memcached` or `redis` instead of the default (local-memory caching).
 
-- The home button in the admin dashboard (/admin) links to `localhost:8081` if you use `python3 manage.py loaddata demo`, there are 2 ways to change that:
+- If you use `python3 manage.py loaddata demo`, the home button in the admin dashboard (/admin) links you to `localhost:8081`, there are 2 ways to change that:
 
   1. You can change that in [demo.json](/judge/fixtures/demo.json)
   2. You can go to the admin page, scroll down to find the `Sites` setting and change `localhost:8081` to your domain.
