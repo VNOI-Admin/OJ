@@ -1,3 +1,2 @@
-mysqlclient
 uwsgi
 websocket-client
