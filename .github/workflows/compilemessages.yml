@@ -11,19 +11,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - name: Set up Python 3.7
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: '3.7'
+        python-version: '3.11'
     - name: Checkout submodules
       run: |
         git submodule init
         git submodule update
     - name: Install requirements
       run: |
-         sudo apt-get install gettext
-         pip install -r requirements.txt
-         pip install pymysql
+        sudo apt-get install gettext
+        pip install -r requirements.txt
+        pip install pymysql
     - name: Check .po file validity
       run: |
         fail=0
