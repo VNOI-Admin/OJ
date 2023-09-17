@@ -2,6 +2,7 @@ import bisect
 import datetime
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db.models import Count, DateField, F, FloatField, Q
 from django.db.models.expressions import ExpressionWrapper
 from django.db.models.functions import Cast
@@ -169,7 +170,28 @@ class HoFView(TitleMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
+        current_year = datetime.datetime.now().year
+        current_month = datetime.datetime.now().month
+        top_monthly = cache.get('top_monthly' + str(current_month))
         contests = Contest.objects.filter(is_rated=True)[:3]
+        if not top_monthly:
+            contest_in_current_month = Contest.objects.filter(start_time__year=current_year, start_time__month=current_month, is_rated=True)
+            monthly_perf = {}
+            if contest_in_current_month.exists():
+                for contest in contest_in_current_month:
+                    participated_users = contest.users.filter(virtual=ContestParticipation.LIVE)
+                    for index, user in enumerate(participated_users):
+                        if user.user.username not in monthly_perf:
+                            monthly_perf[user.user.username] = 100 - index
+                        else:
+                            monthly_perf[user.user.username] += 100 - index
+            monthly_perf = sorted(monthly_perf.items(), key=lambda x: x[1], reverse=True)
+            for user in monthly_perf:
+                top_monthly.append(Profile.objects.get(user__username=user[0]))
+            if top_monthly:
+                cache.set('top_monthly' + str(current_month), top_monthly[:9], 60 * 60 * 24 * 30)
+        if top_monthly:
+            context['top_monthly'] = top_monthly[:9]
         contest_top_users = [contest.users.filter(virtual=ContestParticipation.LIVE)
                              .annotate(submission_count=Count('submission'))
                              .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker', '-submission_count')[:3]

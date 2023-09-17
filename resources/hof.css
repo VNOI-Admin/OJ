@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;500;700&display=swap');
 html {
 	scroll-behavior: smooth;
 	overflow-anchor: none;
@@ -579,4 +580,129 @@ p {
 .btn.active {
 	background-color: #fff;
 	color: #202124;
+}
+
+.go-up {
+	position: fixed;
+	bottom: 3rem;
+	right: 3rem;
+	z-index: 100;
+	background-color: #fff;
+	color: #000;
+	height: 50px;
+	aspect-ratio: 1/1;
+	border-radius: 50%;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	opacity: 0;
+	pointer-events: none;
+	transition: all 0.25s ease-in-out;
+	cursor: pointer;
+}
+
+.go-up.active {
+	opacity: 1;
+	pointer-events: all;
+}
+
+.container {
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.wrapper {
+	width: 80%;
+	padding: 3rem;
+	color: #000;
+	background-color: #fff;
+	border-radius: 4px;
+}
+
+.section-title {
+	font-weight: 600;
+	margin-bottom: 1rem;
+}
+
+.recent {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+	justify-content: space-between;
+	gap: 2rem;
+}
+
+.contests-table {
+	width: 100%;
+	border-collapse: collapse;
+}
+
+.contest {
+	padding: 2rem;
+	border-radius: 4px;
+	background: #F3F3F4;
+	text-overflow: ellipsis;
+  	overflow: hidden; 
+	white-space: nowrap;
+	box-shadow: 1px 1px 5px rgba(0, 0, 0, 0.3);
+	font-family: 'Open Sans', sans-serif;
+	transition: all 0.25s ease-in-out;
+}
+
+.contest:hover {
+	background-color: #b8b8bd;
+}
+
+.contest h4 {
+	font-size: 1.4rem;
+}
+
+.contest .date {
+	font-size: 1rem;
+	color: #0C73BC;
+	margin: 0;
+	padding: 0;
+	margin-bottom: 1rem;
+}
+
+.contest td {
+	text-align: center;
+}
+
+.medal-1 svg {
+	fill: #FFC413;
+}
+.medal-2 svg {
+	fill: #d6d6d6;
+}
+.medal-3 svg {
+	fill: #D6782F;
+}
+
+.medal svg {
+	width: 24px;
+	height: 24px;
+}
+
+td:not(:first-child) {
+  padding: 0.5rem 0;
+}
+
+.top-monthly__container {
+	padding: 2rem 2rem;
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	border-radius: 4px;
+	background-color: #F3F3F4;
+	text-align: center;
+	gap: 2rem;
+}
+
+.rank {
+	display: flex;
+	align-items: center;
+	gap: 1rem;
+	font-size: 1.2rem;
 }
