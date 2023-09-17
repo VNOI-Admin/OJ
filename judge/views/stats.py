@@ -175,7 +175,8 @@ class HoFView(TitleMixin, TemplateView):
         top_monthly = cache.get('top_monthly' + str(current_month))
         contests = Contest.objects.filter(is_rated=True)[:3]
         if not top_monthly:
-            contest_in_current_month = Contest.objects.filter(start_time__year=current_year, start_time__month=current_month, is_rated=True)
+            contest_in_current_month = Contest.objects.filter(start_time__year=current_year,
+                                                              start_time__month=current_month, is_rated=True)
             monthly_perf = {}
             if contest_in_current_month.exists():
                 for contest in contest_in_current_month:
