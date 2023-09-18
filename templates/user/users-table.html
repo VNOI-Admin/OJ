@@ -2,7 +2,7 @@
 
 {% block after_rank_head %}
     <th class="header rank" style="width: 5%;">
-        {% if sort_links %}<a href="{{ sort_links.rating }}">{% endif %}
+        {% if sort_links %}<a href="{{ sort_links.rating }}">{% endif -%}
         <span class="rate-group">
             <svg class="rate-box rate-primary0" viewBox="0 0 16 16">
                 <circle cx="8" cy="8" r="7"></circle>
@@ -19,7 +19,7 @@
 
 {% block after_point_head %}
     <th class="problems">
-        {% if sort_links %}<a href="{{ sort_links.problem_count }}">{% endif %}
+        {% if sort_links %}<a href="{{ sort_links.problem_count }}">{% endif -%}
         {{ _('Problems count') }}
         {%- if sort_links %}{{ sort_order.problem_count }}</a>{% endif %}
     </th>

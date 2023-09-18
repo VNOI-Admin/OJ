@@ -7,11 +7,11 @@
             <th class="header username">{{ _('Username') }}</th>
             {% block before_point_head %}{% endblock %}
             <th class="header points">
-                {% block point_head %}
-                    {% if sort_links %}<a href="{{ sort_links.performance_points }}">{% endif %}
+                {%- block point_head %}
+                    {% if sort_links %}<a href="{{ sort_links.performance_points }}">{% endif -%}
                     {{ _('Points') }}
                     {%- if sort_links %}{{ sort_order.performance_points }}</a>{% endif %}
-                {% endblock %}
+                {% endblock -%}
             </th>
             {% block after_point_head %}{% endblock %}
         </tr>
@@ -20,9 +20,7 @@
     <tbody>
     {% for rank, user in users %}
         <tr id="user-{{ user.user.username }}" {% block row_extra scoped %}{% endblock %}>
-            <td>
-                {{ rank }}
-            </td>
+            <td>{{ rank }}</td>
             {% block after_rank scoped %}{% endblock %}
             <td class="user-name">
                 <div>
@@ -52,7 +50,7 @@
             {% block before_point scoped %}{% endblock %}
             {% block point scoped %}
                 <td title="{{ user.performance_points|floatformat(2) }}" class="user-points">
-                    {{ user.performance_points|floatformat(2) }}
+                    {{- user.performance_points|floatformat(2) -}}
                 </td>
             {% endblock %}
             {% block after_point scoped %}{% endblock %}
