@@ -27,4 +27,4 @@ class SpacelessExtension(Extension):
         ).set_lineno(lineno)
 
     def _strip_spaces(self, caller=None):
-        return Markup(re.sub(r'>\s+<', '><', caller().unescape().strip()))
+        return Markup(re.sub(r'>\s+<', '><', caller().strip()))
