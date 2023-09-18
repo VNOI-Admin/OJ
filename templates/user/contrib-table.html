@@ -1,7 +1,7 @@
 {% extends "user/base-users-table.html" %}
 
 {% block point_head %}
-    {% if sort_links %}<a href="{{ sort_links.contribution_points }}">{% endif %}
+    {% if sort_links %}<a href="{{ sort_links.contribution_points }}">{% endif -%}
     {{ _('Contribution points') }}
     {%- if sort_links %}{{ sort_order.contribution_points }}</a>{% endif %}
 {% endblock %}

@@ -15,16 +15,19 @@
                 {% csrf_token %}
                 <input type="hidden" name="participation" value="{{ user.participation.id }}">
                 {% if user.participation.is_disqualified %}
-                    <a href="#" title="{{ _('Un-Disqualify') }}"
-                       class="un-disqualify-participation"><i class="fa fa-undo fa-fw"></i></a>
+                    <a href="#" title="{{ _('Un-Disqualify') }}" class="un-disqualify-participation">
+                        <i class="fa fa-undo fa-fw"></i>
+                    </a>
                 {% else %}
-                    <a href="#" title="{{ _('Disqualify') }}"
-                       class="disqualify-participation"><i class="fa fa-trash fa-fw"></i></a>
+                    <a href="#" title="{{ _('Disqualify') }}" class="disqualify-participation">
+                        <i class="fa fa-trash fa-fw"></i>
+                    </a>
                 {% endif %}
             </form>
             {% if perms.judge.change_contestparticipation %}
-                <a href="{{ url('admin:judge_contestparticipation_change', user.participation.id) }}"
-                   title="{{ _('Admin') }}" class="edit-participation"><i class="fa fa-cog fa-fw"></i></a>
+                <a href="{{ url('admin:judge_contestparticipation_change', user.participation.id) }}" title="{{ _('Admin') }}" class="edit-participation">
+                    <i class="fa fa-cog fa-fw"></i>
+                </a>
             {% endif %}
         </span>
     {% endif %}
@@ -58,8 +61,8 @@
     {% endif %}
     {% for problem in problems %}
         <th class="points header"><a href="{{ url('problem_detail', problem.problem.code) }}">
-            {{- contest.get_label_for_problem(loop.index0) }}
-            {% if not is_ICPC_format %}
+            {{- contest.get_label_for_problem(loop.index0) -}}
+            {%- if not is_ICPC_format %}
             <div class="point-denominator">{{ problem.points }}</div>
             {% endif %}
             <div class="problem-code" style="display: none;">{{ problem.problem.code }}</div>
@@ -71,9 +74,9 @@
 {% endblock %}
 
 {% block row_extra %}
-    {% if user.participation.is_disqualified %}
+    {% if user.participation.is_disqualified -%}
         class="disqualified"
-    {% endif %}
+    {%- endif %}
 {% endblock %}
 
 {% block after_point %}
