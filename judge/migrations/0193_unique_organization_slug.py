@@ -26,11 +26,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='organization',
             name='slug',
-            field=models.SlugField(
-                help_text='Organization name shown in URL',
-                max_length=128,
-                unique=True,
-                verbose_name='organization slug',
-            ),
+            field=models.SlugField(help_text='Organization name shown in URLs.', max_length=128, unique=True, verbose_name='organization slug'),
         ),
     ]
