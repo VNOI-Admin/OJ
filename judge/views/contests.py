@@ -369,11 +369,12 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
     def form_valid(self, form):
         contest = self.object
 
-        tags = contest.tags.all()
-        organizations = contest.organizations.all()
-        private_contestants = contest.private_contestants.all()
-        view_contest_scoreboard = contest.view_contest_scoreboard.all()
-        contest_problems = contest.contest_problems.all()
+        # Using list() to force QuerySets evaluation, as `contest.pk = None` affects these queries
+        tags = list(contest.tags.all())
+        organizations = list(contest.organizations.all())
+        private_contestants = list(contest.private_contestants.all())
+        view_contest_scoreboard = list(contest.view_contest_scoreboard.all())
+        contest_problems = list(contest.contest_problems.all())
         old_key = contest.key
 
         contest.pk = None
