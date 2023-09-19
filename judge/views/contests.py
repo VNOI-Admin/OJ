@@ -17,9 +17,9 @@ from django.db.models import BooleanField, Case, Count, F, FloatField, IntegerFi
 from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
-from django.template import loader
+from django.shortcuts import get_object_or_404, redirect, render
 from django.template.defaultfilters import date as date_filter, floatformat
+from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -28,7 +28,7 @@ from django.utils.safestring import mark_safe
 from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import FormView, ListView, TemplateView
-from django.views.generic.detail import BaseDetailView, DetailView, SingleObjectMixin, View
+from django.views.generic.detail import DetailView, SingleObjectMixin, View
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import BaseListView
 from icalendar import Calendar as ICalendar, Event
@@ -115,6 +115,10 @@ class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestL
             if search_query:
                 query_set = query_set.filter(Q(key__icontains=search_query) | Q(name__icontains=search_query))
         return query_set
+
+    def get_paginator(self, queryset, per_page, orphans=0, allow_empty_first_page=True, **kwargs):
+        return super().get_paginator(queryset, per_page, orphans, allow_empty_first_page,
+                                     count=self.get_queryset().values('id').count(), **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(ContestList, self).get_context_data(**kwargs)
@@ -288,14 +292,14 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
             .add_i18n_name(self.request.LANGUAGE_CODE)
 
         # convert to problem points in contest instead of actual points
-        points_list = self.object.contest_problems.values_list('points').order_by('order')
+        points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
         for idx, p in enumerate(context['contest_problems']):
             p.points = points_list[idx][0]
 
         context['metadata'] = {
             'has_public_editorials': any(
                 problem.is_public and problem.has_public_editorial for problem in context['contest_problems']
-            ),
+            ) if self.object.ended else False,
         }
         context['metadata'].update(
             **self.object.contest_problems
@@ -324,6 +328,27 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
         context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD)
+
+        return context
+
+
+class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
+    template_name = 'contest/contest-all-problems.html'
+
+    def get_title(self):
+        return self.object.name
+
+    def get_context_data(self, **kwargs):
+        context = super(ContestAllProblems, self).get_context_data(**kwargs)
+        context['contest_problems'] = Problem.objects.filter(contests__contest=self.object) \
+            .order_by('contests__order') \
+            .add_i18n_name(self.request.LANGUAGE_CODE) \
+            .add_i18n_description(self.request.LANGUAGE_CODE)
+
+        # convert to problem points in contest instead of actual points
+        points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
+        for idx, p in enumerate(context['contest_problems']):
+            p.points = points_list[idx][0]
 
         return context
 
@@ -410,7 +435,88 @@ class ContestAccessCodeForm(forms.Form):
         self.fields['access_code'].widget.attrs.update({'autocomplete': 'off'})
 
 
-class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
+class ContestRegister(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return self.ask_for_access_code()
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        try:
+            return self.register_contest(request)
+        except ContestAccessDenied:
+            if request.POST.get('access_code'):
+                return self.ask_for_access_code(ContestAccessCodeForm(request.POST))
+            else:
+                return HttpResponseRedirect(request.path)
+
+    def register_contest(self, request, access_code=None):
+        contest = self.object
+        profile = request.profile
+
+        if self.is_editor or self.is_tester:
+            return generic_message(request, _('Cannot register'),
+                                   _('You cannot register for this contest.'))
+
+        if not request.user.is_superuser and contest.banned_users.filter(id=profile.id).exists():
+            return generic_message(request, _('Banned from joining'),
+                                   _('You have been declared persona non grata for this contest. '
+                                     'You are permanently barred from joining this contest.'))
+
+        if not contest.require_registration:
+            return generic_message(request, _('Cannot register'),
+                                   _('Registration is not required for this contest.'))
+
+        if not contest.can_register:
+            return generic_message(request, _('Cannot register'),
+                                   _('You cannot register for this contest now.'))
+
+        requires_access_code = (not self.can_edit and contest.access_code and access_code != contest.access_code)
+        if contest.ended:
+            return generic_message(request, _('Contest has ended'),
+                                   _('"%s" has ended.') % contest.name)
+        else:
+            if self.is_editor or self.is_tester:
+                return generic_message(request, _('Cannot register'),
+                                       _('You cannot register for this contest.'))
+
+            try:
+                ContestParticipation.objects.get(
+                    contest=contest, user=profile, virtual=0,
+                )
+            except ContestParticipation.DoesNotExist:
+                if requires_access_code:
+                    raise ContestAccessDenied()
+
+                ContestParticipation.objects.create(
+                    contest=contest, user=profile, virtual=0,
+                    real_start=datetime(1970, 1, 1, tzinfo=timezone.utc),
+                )
+            else:
+                return generic_message(request, _('Already registered'),
+                                       _('You have already registered for this contest.'))
+
+        contest._updating_stats_only = True
+        contest.update_user_count()
+        return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
+
+    def ask_for_access_code(self, form=None):
+        contest = self.object
+        wrong_code = False
+        if form:
+            if form.is_valid():
+                if form.cleaned_data['access_code'] == contest.access_code:
+                    return self.register_contest(self.request, form.cleaned_data['access_code'])
+                wrong_code = True
+        else:
+            form = ContestAccessCodeForm()
+        return render(self.request, 'contest/access_code.html', {
+            'form': form, 'wrong_code': wrong_code,
+            'title': _('Enter access code for "%s"') % contest.name,
+        })
+
+
+class ContestJoin(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         return self.ask_for_access_code()
@@ -439,6 +545,16 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
                                    _('You have been declared persona non grata for this contest. '
                                      'You are permanently barred from joining this contest.'))
 
+        # Conditions for joining a contest:
+        #   - If contest has ended, allow virtual joining iff:
+        #       - contest.disallow_virtual is False
+        #       - requires_access_code is False
+        #   - If contest is ongoing, allow joining iff:
+        #       - Not editor or tester
+        #       - Registered if registration windows has ended
+        #       - requires_access_code is False
+        #   - Editors/Testers can only spectate live contests and only when requires_access_code is False.
+
         requires_access_code = (not self.can_edit and contest.access_code and access_code != contest.access_code)
         if contest.ended:
             if contest.disallow_virtual:
@@ -464,19 +580,29 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
         else:
             SPECTATE = ContestParticipation.SPECTATE
             LIVE = ContestParticipation.LIVE
+            can_only_spectate = self.is_editor or self.is_tester
             try:
                 participation = ContestParticipation.objects.get(
-                    contest=contest, user=profile, virtual=(SPECTATE if self.is_editor or self.is_tester else LIVE),
+                    contest=contest, user=profile, virtual=(SPECTATE if can_only_spectate else LIVE),
                 )
             except ContestParticipation.DoesNotExist:
+                if contest.require_registration and not contest.can_register and not can_only_spectate:
+                    return generic_message(request, _('Not registered'),
+                                           _('You are not registered for this contest.'))
+
                 if requires_access_code:
                     raise ContestAccessDenied()
 
                 participation = ContestParticipation.objects.create(
-                    contest=contest, user=profile, virtual=(SPECTATE if self.is_editor or self.is_tester else LIVE),
+                    contest=contest, user=profile, virtual=(SPECTATE if can_only_spectate else LIVE),
                     real_start=timezone.now(),
                 )
             else:
+                if participation.pre_registered:
+                    # Pre-registered. First time joining.
+                    participation.real_start = timezone.now()
+                    participation.save()
+
                 if participation.ended:
                     participation = ContestParticipation.objects.get_or_create(
                         contest=contest, user=profile, virtual=SPECTATE,
@@ -505,7 +631,7 @@ class ContestJoin(LoginRequiredMixin, ContestMixin, BaseDetailView):
         })
 
 
-class ContestLeave(LoginRequiredMixin, ContestMixin, BaseDetailView):
+class ContestLeave(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
     def dispatch(self, request, *args, **kwargs):
         if request.method != 'POST':
             return HttpResponseForbidden()
@@ -524,12 +650,11 @@ class ContestLeave(LoginRequiredMixin, ContestMixin, BaseDetailView):
         return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
 
 
-ContestDay = namedtuple('ContestDay', 'date weekday is_pad is_today starts ends oneday')
+ContestDay = namedtuple('ContestDay', 'date is_pad is_today starts ends oneday')
 
 
 class ContestCalendar(TitleMixin, ContestListMixin, TemplateView):
     firstweekday = SUNDAY
-    weekday_classes = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat']
     template_name = 'contest/calendar.html'
 
     def get(self, request, *args, **kwargs):
@@ -537,7 +662,7 @@ class ContestCalendar(TitleMixin, ContestListMixin, TemplateView):
             self.year = int(kwargs['year'])
             self.month = int(kwargs['month'])
         except (KeyError, ValueError):
-            raise ImproperlyConfigured(_('ContestCalendar requires integer year and month'))
+            raise ImproperlyConfigured('ContestCalendar requires integer year and month')
         self.today = timezone.now().date()
         return self.render()
 
@@ -565,9 +690,9 @@ class ContestCalendar(TitleMixin, ContestListMixin, TemplateView):
         starts, ends, oneday = self.get_contest_data(make_aware(datetime.combine(calendar[0][0], time.min)),
                                                      make_aware(datetime.combine(calendar[-1][-1], time.min)))
         return [[ContestDay(
-            date=date, weekday=self.weekday_classes[weekday], is_pad=date.month != self.month,
+            date=date, is_pad=date.month != self.month,
             is_today=date == self.today, starts=starts[date], ends=ends[date], oneday=oneday[date],
-        ) for weekday, date in enumerate(week)] for week in calendar]
+        ) for date in week] for week in calendar]
 
     def get_context_data(self, **kwargs):
         context = super(ContestCalendar, self).get_context_data(**kwargs)
@@ -699,12 +824,12 @@ ContestRankingProfile = namedtuple(
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
 
 
-def make_contest_ranking_profile(contest, participation, contest_problems, frozen=False):
+def make_contest_ranking_profile(contest, participation, contest_problems, first_solves, frozen=False):
     def display_user_problem(contest_problem):
         # When the contest format is changed, `format_data` might be invalid.
         # This will cause `display_user_problem` to error, so we display '???' instead.
         try:
-            return contest.format.display_user_problem(participation, contest_problem, frozen)
+            return contest.format.display_user_problem(participation, contest_problem, first_solves, frozen)
         except (KeyError, TypeError, ValueError):
             return mark_safe('<td>???</td>')
 
@@ -728,8 +853,11 @@ def make_contest_ranking_profile(contest, participation, contest_problems, froze
 
 
 def base_contest_ranking_list(contest, problems, queryset, frozen=False):
-    return [make_contest_ranking_profile(contest, participation, problems, frozen) for participation in
-            queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')]
+    queryset = queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')
+    first_solves, total_ac = contest.format.get_first_solves_and_total_ac(problems, queryset, frozen)
+    users = [make_contest_ranking_profile(contest, participation, problems, first_solves, frozen) for participation
+             in queryset]
+    return users, total_ac
 
 
 def base_contest_ranking_queryset(contest):
@@ -754,14 +882,15 @@ def contest_ranking_list(contest, problems, frozen=False):
 
 def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list, ranker=ranker):
     problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
-    users = ranker(ranking_list(contest, problems), key=attrgetter('points', 'cumtime', 'tiebreaker'))
+    users, total_ac = ranking_list(contest, problems)
+    users = ranker(users, key=attrgetter('points', 'cumtime', 'tiebreaker'))
 
-    return users, problems
+    return users, problems, total_ac
 
 
 class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/ranking.html'
-    ranking_table_template_name = 'contest/ranking-table.html'
+    ranking_table_template = get_template('contest/ranking-table.html')
     tab = None
 
     def get_title(self):
@@ -777,12 +906,18 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     def is_frozen(self):
         return False
 
-    def get_rendered_ranking_table(self):
-        users, problems = self.get_ranking_list()
+    def check_can_see_own_scoreboard(self):
+        if not self.object.can_see_own_scoreboard(self.request.user):
+            raise Http404()
 
-        return loader.render_to_string(self.ranking_table_template_name, request=self.request, context={
+    def get_rendered_ranking_table(self):
+        users, problems, total_ac = self.get_ranking_list()
+
+        return self.ranking_table_template.render(request=self.request, context={
+            'table_id': 'ranking-table',
             'users': users,
             'problems': problems,
+            'total_ac': total_ac,
             'contest': self.object,
             'has_rating': self.object.ratings.exists(),
             'is_frozen': self.is_frozen,
@@ -794,8 +929,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        if not self.object.can_see_own_scoreboard(self.request.user):
-            raise Http404()
+        self.check_can_see_own_scoreboard()
 
         context['rendered_ranking_table'] = self.get_rendered_ranking_table()
         context['tab'] = self.tab
@@ -805,8 +939,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         if 'raw' in request.GET:
             self.object = self.get_object()
 
-            if not self.object.can_see_own_scoreboard(self.request.user):
-                raise Http404()
+            self.check_can_see_own_scoreboard()
 
             return HttpResponse(self.get_rendered_ranking_table(), content_type='text/plain')
 
@@ -832,7 +965,7 @@ class ContestRanking(ContestRankingBase):
     @property
     def bypass_cache_ranking(self):
         return self.object.scoreboard_cache_timeout == 0 or self.can_edit or \
-            (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user.profile))
+            (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user))
 
     def get_ranking_queryset(self):
         if self.is_frozen:
@@ -843,6 +976,19 @@ class ContestRanking(ContestRankingBase):
             queryset = queryset.filter(virtual=ContestParticipation.LIVE)
         return queryset
 
+    def get_full_ranking_list(self):
+        if 'show_virtual' in self.request.GET:
+            self.show_virtual = self.request.session['show_virtual'] \
+                              = self.request.GET.get('show_virtual').lower() == 'true'
+        else:
+            self.show_virtual = self.request.session.get('show_virtual', False)
+
+        queryset = self.get_ranking_queryset()
+        return get_contest_ranking_list(
+            self.request, self.object,
+            ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=self.is_frozen),
+        )
+
     def get_ranking_list(self):
         if not self.object.can_see_full_scoreboard(self.request.user):
             queryset = self.object.users.filter(user=self.request.profile, virtual=ContestParticipation.LIVE)
@@ -852,18 +998,7 @@ class ContestRanking(ContestRankingBase):
                 ranker=lambda users, key: ((_('???'), user) for user in users),
             )
 
-        if 'show_virtual' in self.request.GET:
-            self.show_virtual = self.request.session['show_virtual'] \
-                              = self.request.GET.get('show_virtual').lower() == 'true'
-        else:
-            self.show_virtual = self.request.session.get('show_virtual', False)
-
-        queryset = self.get_ranking_queryset()
-
-        return get_contest_ranking_list(
-            self.request, self.object,
-            ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=self.is_frozen),
-        )
+        return self.get_full_ranking_list()
 
     def get_rendered_ranking_table(self):
         if self.bypass_cache_ranking:
@@ -885,9 +1020,28 @@ class ContestRanking(ContestRankingBase):
         return context
 
 
+class ContestPublicRanking(ContestRanking):
+    def check_can_see_own_scoreboard(self):
+        # ignore this check, we want to show the scoreboard to everyone
+        pass
+
+    def get_ranking_list(self):
+        # ignore the `can_see_full_scoreboard` check
+        return self.get_full_ranking_list()
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        ranking_access_code = self.object.ranking_access_code
+        if not ranking_access_code or ranking_access_code != request.GET.get('code'):
+            return generic_message(request, _('Ranking access code required'),
+                                   _('You need to provide a valid ranking access code to access this page.'))
+
+        return super().get(request, *args, **kwargs)
+
+
 class ContestOfficialRanking(ContestRankingBase):
     template_name = 'contest/official-ranking.html'
-    ranking_table_template_name = 'contest/official-ranking-table.html'
+    ranking_table_template = get_template('contest/official-ranking-table.html')
     tab = 'official_ranking'
 
     def get_title(self):
@@ -896,7 +1050,7 @@ class ContestOfficialRanking(ContestRankingBase):
     def get_ranking_list(self):
         def display_points(points):
             return format_html(
-                u'<td class="user-points">{points}</td>',
+                '<td class="user-points">{points}</td>',
                 points=floatformat(points),
             )
 
@@ -908,15 +1062,24 @@ class ContestOfficialRanking(ContestRankingBase):
 
         users = list(zip(range(1, len(users) + 1), users))
 
-        return users, problems
+        return users, problems, {}
 
     def get_context_data(self, **kwargs):
-        if not self.object.csv_ranking:
-            raise Http404()
-
         context = super().get_context_data(**kwargs)
         context['has_rating'] = False
         return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.object.csv_ranking:
+            raise Http404()
+
+        # If the csv_ranking is an url, redirect to it
+        # (the check is not perfect, but it's good enough)
+        if self.object.csv_ranking.startswith('http'):
+            return redirect(self.object.csv_ranking)
+
+        return super().get(request, *args, **kwargs)
 
 
 class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
@@ -924,9 +1087,10 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
 
     def get_title(self):
         if self.profile == self.request.profile:
-            return _('Your participation in %s') % self.object.name
-        return _("%(user)s's participation in %(contest)s") % \
-                ({'user': self.profile.username, 'contest': self.object.name})
+            return _('Your participation in %(contest)s') % {'contest': self.object.name}
+        return _("%(user)s's participation in %(contest)s") % {
+            'user': self.profile.username, 'contest': self.object.name,
+        }
 
     def get_ranking_list(self):
         if not self.object.can_see_full_scoreboard(self.request.user) and self.profile != self.request.profile:

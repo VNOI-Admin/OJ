@@ -1,24 +1,8 @@
 from django.shortcuts import render
-from django.utils.decorators import method_decorator
 from django.views.generic import FormView
 from django.views.generic.detail import SingleObjectMixin
 
 from judge.utils.diggpaginator import DiggPaginator
-
-
-def class_view_decorator(function_decorator):
-    """Convert a function based decorator into a class based decorator usable
-    on class based Views.
-
-    Can't subclass the `View` as it breaks inheritance (super in particular),
-    so we monkey-patch instead.
-    """
-
-    def simple_decorator(View):
-        View.dispatch = method_decorator(function_decorator)(View.dispatch)
-        return View
-
-    return simple_decorator
 
 
 def generic_message(request, title, message, status=None):
@@ -113,7 +97,7 @@ class QueryStringSortMixin(object):
         links[current] = sort_prefix + ('' if self.order.startswith('-') else '-') + current
 
         order = {key: '' for key in self.all_sorts}
-        order[current] = ' \u25BE' if self.order.startswith('-') else u' \u25B4'
+        order[current] = ' \u25BE' if self.order.startswith('-') else ' \u25B4'
         return {'sort_links': links, 'sort_order': order}
 
     def get_sort_paginate_context(self):

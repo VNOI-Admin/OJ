@@ -13,10 +13,9 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission, User
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetView, redirect_to_login
 from django.contrib.contenttypes.models import ContentType
-from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
-from django.db.models import Count, F, Max, Min, Prefetch
+from django.db.models import Count, F, FilteredRelation, Max, Min, Prefetch, Q
 from django.db.models.expressions import Value
 from django.db.models.fields import DateField
 from django.db.models.functions import Cast, Coalesce, ExtractYear
@@ -24,6 +23,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonRespons
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
 from django.utils.safestring import mark_safe
@@ -34,16 +34,16 @@ from reversion import revisions
 
 from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
     newsletter_id
-from judge.models import BlogPost, BlogVote, Organization, Profile, Rating, Submission
+from judge.models import BlogPost, Organization, Profile, Submission
+from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
-from judge.template_context import MiscConfigDict
 from judge.utils.celery import task_status_by_id, task_status_url_by_id
+from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.problems import contest_completed_ids, user_completed_ids
 from judge.utils.pwned import PwnedPasswordsValidator
 from judge.utils.ranker import ranker
-from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
@@ -51,7 +51,7 @@ from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleOb
 from judge.views.blog import PostListBase
 from .contests import ContestRanking
 
-__all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserDownloadData', 'UserPrepareData',
+__all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserCommentPage', 'UserDownloadData', 'UserPrepareData',
            'users', 'edit_profile']
 
 
@@ -130,7 +130,7 @@ class UserPage(TitleMixin, UserMixin, DetailView):
 
         context['hide_solved'] = int(self.hide_solved)
         context['authored'] = self.object.authored_problems.filter(is_public=True, is_organization_private=False) \
-                                  .order_by('code')
+                                  .select_related('group').order_by('code')
         rating = self.object.ratings.order_by('-contest__end_time')[:1]
         context['rating'] = rating[0] if rating else None
 
@@ -199,16 +199,6 @@ class UserAboutPage(UserPage):
             'height': '%.3fem' % rating_progress(rating.rating),
         } for rating in ratings]))
 
-        if ratings:
-            user_data = self.object.ratings.aggregate(Min('rating'), Max('rating'))
-            global_data = Rating.objects.aggregate(Min('rating'), Max('rating'))
-            min_ever, max_ever = global_data['rating__min'], global_data['rating__max']
-            min_user, max_user = user_data['rating__min'], user_data['rating__max']
-            delta = max_user - min_user
-            ratio = (max_ever - max_user) / (max_ever - min_ever) if max_ever != min_ever else 1.0
-            context['max_graph'] = max_user + ratio * delta
-            context['min_graph'] = min_user + ratio * delta - delta
-
         user_timezone = settings.DEFAULT_USER_TIME_ZONE
         if self.request is not None and self.request.profile is not None:
             user_timezone = user_timezone or self.request.profile.timezone
@@ -259,15 +249,62 @@ class UserBlogPage(CustomUserMixin, PostListBase):
     def get_queryset(self):
         queryset = BlogPost.objects.filter(authors=self.user, organization=None)
 
-        if self.request.user != self.user.user:
+        if self.request.user != self.user.user and not self.request.user.is_superuser:
             queryset = queryset.filter(visible=True, publish_on__lte=timezone.now())
 
         if self.request.user.is_authenticated:
-            queryset = queryset.annotate(vote_score=Coalesce(RawSQLColumn(BlogVote, 'score'), Value(0)))
             profile = self.request.profile
-            unique_together_left_join(queryset, BlogVote, 'blog', 'voter', profile.id)
+            queryset = queryset.annotate(
+                my_vote=FilteredRelation('votes', condition=Q(votes__voter_id=profile.id)),
+            ).annotate(vote_score=Coalesce(F('my_vote__score'), Value(0)))
 
         return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
+
+
+class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
+    template_name = 'user/comment.html'
+    model = Comment
+    paginate_by = 10
+    context_object_name = 'comments'
+    title = None
+
+    def get_queryset(self):
+        return Comment.get_newest_visible_comments(viewer=self.request.user,
+                                                   author=self.user,
+                                                   batch=2 * self.paginate_by)
+
+    def get_context_data(self, **kwargs):
+        context = super(UserCommentPage, self).get_context_data(**kwargs)
+        context['first_page_href'] = None
+        context['title'] = self.title or _('Page %d of Comments') % context['page_obj'].number
+        context['vote_hide_threshold'] = settings.DMOJ_COMMENT_VOTE_HIDE_THRESHOLD
+
+        if self.request.user.is_authenticated:
+            context['is_new_user'] = self.request.profile.is_new_user
+            context['interact_min_problem_count_msg'] = \
+                _('You need to have solved at least %d problems before your voice can be heard.') \
+                % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
+
+        return context
+
+    @method_decorator(require_POST)
+    def delete_comments(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied()
+
+        user_id = User.objects.get(username=kwargs['user']).id
+        user = Profile.objects.get(user=user_id)
+        for comment in Comment.get_newest_visible_comments(viewer=request.user, author=user,
+                                                           batch=2 * self.paginate_by):
+            comment.get_descendants(include_self=True).update(hidden=True)
+        return HttpResponseRedirect(reverse('user_comment', args=(user.user.username,)))
+
+    def dispatch(self, request, *args, **kwargs):
+        if not self.request.user.is_superuser:
+            raise PermissionDenied()
+        if request.method == 'POST':
+            return self.delete_comments(request, *args, **kwargs)
+        return super().dispatch(request, *args, **kwargs)
 
 
 class UserProblemsPage(UserPage):
@@ -423,7 +460,7 @@ class UserDownloadData(LoginRequiredMixin, UserDataMixin, View):
 @login_required
 def edit_profile(request):
     if request.profile.mute:
-        raise Http404()
+        return generic_message(request, _("Can't edit profile"), _('Your part is silent, little toad.'), status=403)
     if request.method == 'POST':
         form = ProfileForm(request.POST, instance=request.profile, user=request.user)
         form_user = UserForm(request.POST, instance=request.user)
@@ -463,15 +500,13 @@ def edit_profile(request):
                 form.fields['newsletter'].initial = subscription.subscribed
         form.fields['test_site'].initial = request.user.has_perm('judge.test_site')
 
-    tzmap = settings.TIMEZONE_MAP
     return render(request, 'user/edit-profile.html', {
         'require_staff_2fa': settings.DMOJ_REQUIRE_STAFF_2FA, 'form_user': form_user,
         'form': form, 'title': _('Edit profile'), 'profile': request.profile,
         'can_download_data': bool(settings.DMOJ_USER_DATA_DOWNLOAD),
         'has_math_config': bool(settings.MATHOID_URL),
         'ignore_user_script': True,
-        'TIMEZONE_MAP': tzmap or 'http://momentjs.com/static/img/world.png',
-        'TIMEZONE_BG': settings.TIMEZONE_BG if tzmap else '#4E7CAD',
+        'TIMEZONE_MAP': settings.TIMEZONE_MAP,
     })
 
 
@@ -507,7 +542,7 @@ def generate_scratch_codes(request):
     return JsonResponse({'data': {'codes': profile.generate_scratch_codes()}})
 
 
-class UserList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
+class UserList(QueryStringSortMixin, InfinitePaginationMixin, DiggPaginatorMixin, TitleMixin, ListView):
     model = Profile
     title = gettext_lazy('Leaderboard')
     context_object_name = 'users'
@@ -515,10 +550,10 @@ class UserList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView):
     paginate_by = 100
     all_sorts = frozenset(('points', 'problem_count', 'rating', 'performance_points'))
     default_desc = all_sorts
-    default_sort = '-performance_points'
+    default_sort = '-rating'
 
     def get_queryset(self):
-        return (Profile.objects.filter(is_unlisted=False).order_by(self.order)
+        return (Profile.objects.filter(is_unlisted=False).order_by(self.order, 'id')
                 .prefetch_related(Prefetch('user', queryset=User.objects.only('username', 'first_name')))
                 .prefetch_related(Prefetch('organizations',
                                   queryset=Organization.objects.filter(is_unlisted=False).only('name', 'id', 'slug')))
@@ -553,7 +588,7 @@ class ContribList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ListView
     default_sort = '-contribution_points'
 
     def get_queryset(self):
-        return (Profile.objects.filter(is_unlisted=False).order_by(self.order)
+        return (Profile.objects.filter(is_unlisted=False).order_by(self.order, 'id')
                 .prefetch_related(Prefetch('user', queryset=User.objects.only('username', 'first_name')))
                 .prefetch_related(Prefetch('organizations',
                                   queryset=Organization.objects.filter(is_unlisted=False).only('name', 'id', 'slug')))
@@ -594,9 +629,13 @@ def user_ranking_redirect(request):
     except KeyError:
         raise Http404()
     user = get_object_or_404(Profile, user__username=username)
-    rank = Profile.objects.filter(is_unlisted=False, performance_points__gt=user.performance_points).count()
+    # Assume using MySQL. NULL is considered smaller than any non-NULL value.
+    if user.rating is None:
+        rank = Profile.objects.filter(is_unlisted=False, rating__isnull=False).count()
+    else:
+        rank = Profile.objects.filter(is_unlisted=False, rating__gt=user.rating).count()
     rank += Profile.objects.filter(
-        is_unlisted=False, performance_points__exact=user.performance_points, id__lt=user.id,
+        is_unlisted=False, rating__exact=user.rating, id__lt=user.id,
     ).count()
     page = rank // UserList.paginate_by
     return HttpResponseRedirect('%s%s#!%s' % (reverse('user_list'), '?page=%d' % (page + 1) if page else '', username))
@@ -627,18 +666,21 @@ class UserLogoutView(TitleMixin, TemplateView):
 
 
 class CustomPasswordResetView(PasswordResetView):
+    title = gettext_lazy('Password reset')
     from_email = settings.SERVER_EMAIL
+    template_name = 'registration/password_reset.html'
+    html_email_template_name = 'registration/password_reset_email.html'
+    email_template_name = 'registration/password_reset_email.txt'
 
     def post(self, request, *args, **kwargs):
         key = f'pwreset!{request.META["REMOTE_ADDR"]}'
         cache.add(key, 0, timeout=settings.DMOJ_PASSWORD_RESET_LIMIT_WINDOW)
         if cache.incr(key) > settings.DMOJ_PASSWORD_RESET_LIMIT_COUNT:
-            return HttpResponse('You sent in too many password reset requests. Please try again later.',
+            return HttpResponse(_('You have sent too many password reset requests. Please try again later.'),
                                 content_type='text/plain', status=429)
 
-        domain = get_current_site(request).domain
         self.extra_email_context = {
-            'misc_config': MiscConfigDict(domain=domain),
+            'misc_config': request.misc_config,
         }
 
         return super().post(request, *args, **kwargs)

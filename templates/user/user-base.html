@@ -2,28 +2,6 @@
 
 {% block media %}
     {% block user_media %}{% endblock %}
-
-    <style>
-        .user-gravatar {
-            display: block;
-            padding-right: 15px;
-            width: 135px;
-        }
-
-        .user-gravatar img {
-            width: 135px;
-            height: 135px;
-            display: block;
-            border-radius: 6px;
-        }
-
-        .page-title {
-            display: -webkit-box;
-            display: -webkit-flex;
-            display: -ms-flexbox;
-            display: flex;
-        }
-    </style>
 {% endblock %}
 
 {% block js_media %}
@@ -33,11 +11,14 @@
 {% block body %}
     <div class="user-info-page">
         <div class="user-sidebar">
-            <div class="user-gravatar">
-                <img src="{{ gravatar(user, 135) }}" width="135px" height="135px">
-            </div>
+            <img src="{{ gravatar(user, 135) }}" class="user-gravatar">
             <br>
-
+            {% if user.user == request.user or request.user.is_superuser %}
+                <div>
+                    <b class="semibold">{{ _('Email:') }}</b>
+                    <span style="word-wrap: break-word;">{{ user.user.email }}</span>
+                </div>
+            {% endif %}
             <div><b>
                     {{ _('Problems solved:') }} {{ user.problem_count }}
             </b></div>

@@ -1,30 +1,8 @@
-from copy import copy
-
 from django.db import connections
-from django.db.models import Field
-from django.db.models.expressions import RawSQL
 from django.db.models.sql.constants import INNER, LOUTER
 from django.db.models.sql.datastructures import Join
 
 from judge.utils.cachedict import CacheDict
-
-
-def unique_together_left_join(queryset, model, link_field_name, filter_field_name, filter_value, parent_model=None):
-    link_field = copy(model._meta.get_field(link_field_name).remote_field)
-    filter_field = model._meta.get_field(filter_field_name)
-
-    def restrictions(where_class, alias, related_alias):
-        cond = where_class()
-        cond.add(filter_field.get_lookup('exact')(filter_field.get_col(alias), filter_value), 'AND')
-        return cond
-
-    link_field.get_extra_restriction = restrictions
-
-    if parent_model is not None:
-        parent_alias = parent_model._meta.db_table
-    else:
-        parent_alias = queryset.query.get_initial_alias()
-    return queryset.query.join(Join(model._meta.db_table, parent_alias, None, LOUTER, link_field, True))
 
 
 class RawSQLJoin(Join):
@@ -40,8 +18,9 @@ class RawSQLJoin(Join):
 
 
 class FakeJoinField:
-    def __init__(self, joining_columns):
+    def __init__(self, joining_columns, related_model):
         self.joining_columns = joining_columns
+        self.related_model = related_model
 
     def get_joining_columns(self):
         return self.joining_columns
@@ -50,24 +29,20 @@ class FakeJoinField:
         pass
 
 
-def join_sql_subquery(queryset, subquery, params, join_fields, alias, join_type=INNER, parent_model=None):
+def join_sql_subquery(
+        queryset, subquery, params, join_fields, alias, related_model, join_type=INNER, parent_model=None):
     if parent_model is not None:
         parent_alias = parent_model._meta.db_table
     else:
         parent_alias = queryset.query.get_initial_alias()
-    queryset.query.external_aliases.add(alias)
-    join = RawSQLJoin(subquery, params, parent_alias, alias, join_type, FakeJoinField(join_fields), join_type == LOUTER)
+    if isinstance(queryset.query.external_aliases, dict):  # Django 3.x
+        queryset.query.external_aliases[alias] = True
+    else:
+        queryset.query.external_aliases.add(alias)
+    join = RawSQLJoin(subquery, params, parent_alias, alias, join_type, FakeJoinField(join_fields, related_model),
+                      join_type == LOUTER)
     queryset.query.join(join)
     join.table_alias = alias
-
-
-def RawSQLColumn(model, field=None):
-    if isinstance(model, Field):
-        field = model
-        model = field.model
-    if isinstance(field, str):
-        field = model._meta.get_field(field)
-    return RawSQL('%s.%s' % (model._meta.db_table, field.get_attname_column()[1]), ())
 
 
 def make_straight_join_query(QueryType):

@@ -7,7 +7,7 @@ from judge.models import BlogPost, Contest, Organization, Problem, Solution
 
 
 class ProblemSitemap(Sitemap):
-    changefreq = 'daily'
+    changefreq = 'weekly'
     priority = 0.8
 
     def items(self):
@@ -18,7 +18,7 @@ class ProblemSitemap(Sitemap):
 
 
 class UserSitemap(Sitemap):
-    changefreq = 'hourly'
+    changefreq = 'weekly'
     priority = 0.5
 
     def items(self):
@@ -30,7 +30,7 @@ class UserSitemap(Sitemap):
 
 class ContestSitemap(Sitemap):
     changefreq = 'hourly'
-    priority = 0.5
+    priority = 0.7
 
     def items(self):
         return Contest.objects.filter(is_visible=True, is_private=False,
@@ -41,7 +41,7 @@ class ContestSitemap(Sitemap):
 
 
 class OrganizationSitemap(Sitemap):
-    changefreq = 'hourly'
+    changefreq = 'weekly'
     priority = 0.5
 
     def items(self):
@@ -63,12 +63,12 @@ class BlogPostSitemap(Sitemap):
 
 
 class SolutionSitemap(Sitemap):
-    changefreq = 'hourly'
+    changefreq = 'weekly'
     priority = 0.8
 
     def items(self):
-        return (Solution.objects.filter(is_public=True, publish_on__lte=timezone.now(), problem__isnull=False)
-                .values_list('problem__code'))
+        return (Solution.objects.filter(is_public=True, publish_on__lte=timezone.now(),
+                                        problem__in=Problem.get_public_problems()).values_list('problem__code'))
 
     def location(self, obj):
         return reverse('problem_editorial', args=obj)
@@ -76,7 +76,7 @@ class SolutionSitemap(Sitemap):
 
 class HomePageSitemap(Sitemap):
     priority = 1.0
-    changefreq = 'daily'
+    changefreq = 'hourly'
 
     def items(self):
         return ['home']
@@ -100,3 +100,17 @@ class UrlSitemap(Sitemap):
 
     def changefreq(self, obj):
         return obj.get('changefreq', 'daily') if isinstance(obj, dict) else 'daily'
+
+
+sitemaps = {
+    'home': HomePageSitemap,
+    'pages': UrlSitemap([
+        {'location': '/about/', 'priority': 0.9},
+    ]),
+    'problem': ProblemSitemap,
+    'solutions': SolutionSitemap,
+    'blog': BlogPostSitemap,
+    'contest': ContestSitemap,
+    'organization': OrganizationSitemap,
+    'user': UserSitemap,
+}

@@ -17,7 +17,7 @@
 
     {% if is_admin %}
         <style>
-            th.personal-info, td.personal-info {
+            th.username, td.user-name {
                 border-right: none;
             }
         </style>
@@ -43,4 +43,7 @@
 {% endblock %}
 {% block title_ruler %}{% endblock %}
 
-{% block users_table %}{% include "organization/users-table.html" %}{% endblock %}
+{% block users_table %}
+    {% set table_id='organization-users-table' %}
+    {% include "organization/users-table.html" %}
+{% endblock %}

@@ -37,9 +37,9 @@ def checker_args_cleaner(self):
         return ''
     try:
         if not isinstance(json.loads(data), dict):
-            raise ValidationError(_('Checker arguments must be a JSON object'))
+            raise ValidationError(_('Checker arguments must be a JSON object.'))
     except ValueError:
-        raise ValidationError(_('Checker arguments is invalid JSON'))
+        raise ValidationError(_('Checker arguments is invalid JSON.'))
     return data
 
 
@@ -162,6 +162,7 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
         if not subs:
             raise Submission.DoesNotExist()
 
+        subs = subs.order_by('id')
         context['submissions'] = subs.filter(language__file_only=False)
 
         # If we have associated data we can do better than just guess

@@ -25,7 +25,7 @@ class NavigationBarAdmin(DraggableMPTTAdmin):
         self.__save_model_calls = 0
 
     def linked_path(self, obj):
-        return format_html(u'<a href="{0}" target="_blank">{0}</a>', obj.path)
+        return format_html('<a href="{0}" target="_blank">{0}</a>', obj.path)
     linked_path.short_description = _('link path')
 
     def save_model(self, request, obj, form, change):
@@ -77,7 +77,7 @@ class BlogPostAdmin(VersionAdmin):
         (_('Summary'), {'classes': ('collapse',), 'fields': ('summary',)}),
     )
     prepopulated_fields = {'slug': ('title',)}
-    list_display = ('id', 'title', 'visible', 'sticky', 'publish_on')
+    list_display = ('id', 'title', 'visible', 'global_post', 'sticky', 'publish_on')
     list_display_links = ('id', 'title')
     ordering = ('-publish_on',)
     form = BlogPostForm

@@ -5,6 +5,7 @@ from urllib.parse import urljoin
 from ansi2html import Ansi2HTMLConverter
 from django.contrib.auth.models import AbstractUser
 from django.urls import reverse
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from lxml.html import Element
 
@@ -18,12 +19,12 @@ rereference = re.compile(r'\[(r?user):(\w+)\]')
 
 def get_user(username, data):
     if not data:
-        element = Element('span')
+        element = Element('span', {'class': 'deleted-user'})
         element.text = username
         return element
 
     element = Element('span', {'class': Profile.get_user_css_class(*data)})
-    link = Element('a', {'href': reverse('user_page', args=[username])})
+    link = Element('a', {'href': reverse('user_page', args=[username]), 'style': 'display: inline-block;'})
     link.text = username
     element.append(link)
     return element
@@ -142,7 +143,6 @@ def item_title(item):
 
 
 @registry.function
-@registry.render_with('user/link.html')
 def link_user(user):
     if isinstance(user, Profile):
         user, profile = user.user, user
@@ -152,7 +152,18 @@ def link_user(user):
         user, profile = user.user, user
     else:
         raise ValueError('Expected profile or user, got %s' % (type(user),))
-    return {'user': user, 'profile': profile}
+
+    if isinstance(profile, Profile) and profile.display_badge:
+        display_badge_img = f'<img src="{escape(profile.display_badge.mini)}"' \
+                            f' title="{escape(profile.display_badge.name)}"' \
+                            f' style="height: 1em; width: auto; margin-left: 0.25em;" />'
+    else:
+        display_badge_img = ''
+
+    return mark_safe(f'<span class="{profile.css_class}">'
+                     f'<a href="{escape(reverse("user_page", args=[user.username]))}"'
+                     f' style="display: inline-block;">'
+                     f'{escape(profile.display_name)}</a>{display_badge_img}</span>')
 
 
 @registry.function

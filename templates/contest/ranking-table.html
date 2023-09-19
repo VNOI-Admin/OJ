@@ -1,20 +1,5 @@
 {% extends "user/base-users-table.html" %}
 
-{% block after_point_head %}
-    {% if is_ICPC_format %}
-        <th class="penalty">{{ _('Penalty') }}</th>
-    {% endif %}
-    {% if has_rating %}
-        <th class="rating-column">{{ _('Rating') }}</th>
-    {% endif %}
-{% endblock %}
-
-{% block after_point %}
-    {% if has_rating %}
-        <td class="rating-column">{% if user.participation_rating %}{{ rating_number(user.participation_rating) }}{% endif %}</td>
-    {% endif %}
-{% endblock %}
-
 {% block user_name_display scoped %}
     {% if user.virtual > 0 %}
     {{ link_user(user) }}<sup class="virtual-participation" title="{{ _("%(cnt)s virtual participation of this user", cnt=ordinal(user.virtual)) }}">[{{user.virtual}}]</sup>
@@ -23,19 +8,7 @@
     {% endif %}
 {% endblock %}
 
-{% block user_name_data %}
-    {% if not contest.ended %}
-        {% if not user.participation.ended %}
-            <div class="start-time active">
-                {% with abs=_('Started on {time}'), rel=_('Started {time}') %}
-                    {{ relative_time(user.participation.start, abs=abs, rel=rel) }}
-                {% endwith %}
-            </div>
-        {% else %}
-            <div class="start-time">{{ _('Participation ended.') }}</div>
-        {% endif %}
-    {% endif %}
-
+{% block admin_operations %}
     {% if can_edit %}
         <span class="contest-participation-operation">
             <form action="{{ url('contest_participation_disqualify', contest.key) }}" method="post">
@@ -57,6 +30,20 @@
     {% endif %}
 {% endblock %}
 
+{% block user_name_data %}
+    {% if not contest.ended %}
+        {% if not user.participation.ended %}
+            <div class="start-time active">
+                {% with abs=_('Started on {time}'), rel=_('Started {time}') %}
+                    {{ relative_time(user.participation.start, abs=abs, rel=rel) }}
+                {% endwith %}
+            </div>
+        {% else %}
+            <div class="start-time">{{ _('Participation ended.') }}</div>
+        {% endif %}
+    {% endif %}
+{% endblock %}
+
 {% block personal_info_data scoped %}
     {% if user.organization %}
         <span class="organization"><a href="{{ user.organization.get_absolute_url() }}">
@@ -65,7 +52,10 @@
     {% endif %}
 {% endblock %}
 
-{% block before_point_head %}
+{% block after_point_head %}
+    {% if is_ICPC_format %}
+        <th class="penalty">{{ _('Penalty') }}</th>
+    {% endif %}
     {% for problem in problems %}
         <th class="points header"><a href="{{ url('problem_detail', problem.problem.code) }}">
             {{- contest.get_label_for_problem(loop.index0) }}
@@ -75,6 +65,9 @@
             <div class="problem-code" style="display: none;">{{ problem.problem.code }}</div>
         </a></th>
     {% endfor %}
+    {% if has_rating %}
+        <th class="rating-column">{{ _('Rating') }}</th>
+    {% endif %}
 {% endblock %}
 
 {% block row_extra %}
@@ -83,10 +76,19 @@
     {% endif %}
 {% endblock %}
 
-{% block before_point %}
+{% block after_point %}
     {% for cell in user.problem_cells %}
         {{ cell }}
     {% endfor %}
+    {% if has_rating %}
+        <td class="rating-column">
+            {% if user.participation_rating %}
+                {% cache 86400 'rating_number' user.participation_rating %}
+                    {{ rating_number(user.participation_rating) }}
+                {% endcache %}
+            {% endif %}
+        </td>
+    {% endif %}
 {% endblock %}
 
 {% block point %}
@@ -95,10 +97,12 @@
 
 {% block after_user_list %}
     <tr>
-        <td colspan=2>Total AC</td>
+        <td colspan={% if is_ICPC_format %}4{% else %}3{% endif %}>Total AC</td>
         {% for problem in problems %}
-            <td class="total-ac" id='{{- contest.get_label_for_problem(loop.index0) }}-total'>0</td>
+            <td class="total-ac" id='{{- contest.get_label_for_problem(loop.index0) }}-total'>{{ total_ac.get(str(problem.id), 0) }}</td>
         {% endfor %}
-        <td colspan=2></td>
+        {% if has_rating %}
+            <td></td>
+        {% endif %}
     </tr>
 {% endblock %}

@@ -16,7 +16,8 @@ from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, 
 from django.forms.widgets import DateTimeInput
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse, reverse_lazy
-from django.utils.translation import gettext_lazy as _
+from django.utils.text import format_lazy
+from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from django_ace import AceWidget
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, LanguageLimit, \
@@ -31,21 +32,19 @@ two_factor_validators_by_length = {
     TOTP_CODE_LENGTH: {
         'regex_validator': RegexValidator(
             f'^[0-9]{{{TOTP_CODE_LENGTH}}}$',
-            _(f'Two-factor authentication tokens must be {TOTP_CODE_LENGTH} decimal digits.'),
+            format_lazy(ngettext_lazy('Two-factor authentication tokens must be {count} decimal digit.',
+                                      'Two-factor authentication tokens must be {count} decimal digits.',
+                                      TOTP_CODE_LENGTH), count=TOTP_CODE_LENGTH),
         ),
         'verify': lambda code, profile: not profile.check_totp_code(code),
         'err': _('Invalid two-factor authentication token.'),
     },
     16: {
-        'regex_validator': RegexValidator('^[A-Z0-9]{16}$', _('Scratch codes must be 16 base32 characters.')),
+        'regex_validator': RegexValidator('^[A-Z0-9]{16}$', _('Scratch codes must be 16 Base32 characters.')),
         'verify': lambda code, profile: code not in json.loads(profile.scratch_codes),
         'err': _('Invalid scratch code.'),
     },
 }
-
-
-def fix_unicode(string, unsafe=tuple('\u202a\u202b\u202d\u202e')):
-    return string + (sum(k in unsafe for k in string) - string.count('\u202c')) * '\u202c'
 
 
 class ProfileForm(ModelForm):
@@ -55,13 +54,14 @@ class ProfileForm(ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['about', 'display_badge', 'organizations', 'timezone', 'language', 'ace_theme', 'user_script']
+        fields = ['about', 'display_badge', 'organizations', 'timezone', 'language', 'ace_theme',
+                  'site_theme', 'user_script']
         widgets = {
             'display_badge': Select2Widget(attrs={'style': 'width:200px'}),
-            'user_script': AceWidget(theme='github'),
             'timezone': Select2Widget(attrs={'style': 'width:200px'}),
             'language': Select2Widget(attrs={'style': 'width:200px'}),
             'ace_theme': Select2Widget(attrs={'style': 'width:200px'}),
+            'site_theme': Select2Widget(attrs={'style': 'width:200px'}),
         }
 
         # Make sure that users cannot change their `about` in contest mode
@@ -81,8 +81,9 @@ class ProfileForm(ModelForm):
             )
 
     def clean_about(self):
-        if 'about' in self.changed_data and not self.instance.has_any_solves:
-            raise ValidationError(_('You must solve at least one problem before you can update your profile.'))
+        if 'about' in self.changed_data and not self.instance.has_enough_solves:
+            raise ValidationError(_('You must solve at least %d problems before you can update your profile.')
+                                  % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT)
         return self.cleaned_data['about']
 
     def clean(self):
@@ -90,8 +91,9 @@ class ProfileForm(ModelForm):
         max_orgs = settings.DMOJ_USER_MAX_ORGANIZATION_COUNT
 
         if sum(org.is_open for org in organizations) > max_orgs:
-            raise ValidationError(
-                _('You may not be part of more than {count} public organizations.').format(count=max_orgs))
+            raise ValidationError(ngettext_lazy('You may not be part of more than {count} public organization.',
+                                                'You may not be part of more than {count} public organizations.',
+                                                max_orgs).format(count=max_orgs))
 
         return self.cleaned_data
 
@@ -399,9 +401,16 @@ class TagProblemAssignForm(Form):
 class OrganizationForm(ModelForm):
     class Meta:
         model = Organization
-        fields = ['name', 'slug', 'is_open', 'about', 'logo_override_image']
+        fields = ['name', 'slug', 'is_open', 'about', 'logo_override_image', 'admins']
         if HeavyPreviewPageDownWidget is not None:
             widgets = {'about': HeavyPreviewPageDownWidget(preview=reverse_lazy('organization_preview'))}
+        if HeavySelect2MultipleWidget is not None:
+            widgets.update({
+                'admins': HeavySelect2MultipleWidget(
+                    data_view='profile_select2',
+                    attrs={'style': 'width: 100%'},
+                ),
+            })
 
 
 class CustomAuthenticationForm(AuthenticationForm):
@@ -451,7 +460,7 @@ class NoAutoCompleteCharField(forms.CharField):
 class TOTPForm(Form):
     TOLERANCE = settings.DMOJ_TOTP_TOLERANCE_HALF_MINUTES
 
-    totp_or_scratch_code = NoAutoCompleteCharField(required=False)
+    totp_or_scratch_code = NoAutoCompleteCharField(required=False, widget=forms.TextInput(attrs={'autofocus': True}))
 
     def __init__(self, *args, **kwargs):
         self.profile = kwargs.pop('profile')

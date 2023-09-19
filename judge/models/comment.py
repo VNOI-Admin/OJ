@@ -1,7 +1,6 @@
 import itertools
 
 from django.conf import settings
-from django.contrib.contenttypes.fields import GenericRelation
 from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
@@ -12,7 +11,6 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
-from reversion.models import Version
 
 from judge.models.contest import Contest
 from judge.models.interface import BlogPost
@@ -27,18 +25,6 @@ comment_validator = RegexValidator(r'^\w+:[a-z0-9A-Z_]+$',
                                    _(r'Page code must be ^\w+:[a-z0-9A-Z_]+$'))
 
 
-class VersionRelation(GenericRelation):
-    def __init__(self):
-        super(VersionRelation, self).__init__(Version, object_id_field='object_id')
-
-    def get_extra_restriction(self, where_class, alias, remote_alias):
-        cond = super(VersionRelation, self).get_extra_restriction(where_class, alias, remote_alias)
-        field = self.remote_field.model._meta.get_field('db')
-        lookup = field.get_lookup('exact')(field.get_col(remote_alias), 'default')
-        cond.add(lookup, 'AND')
-        return cond
-
-
 class Comment(MPTTModel):
     author = models.ForeignKey(Profile, verbose_name=_('commenter'), on_delete=CASCADE)
     time = models.DateTimeField(verbose_name=_('posted time'), auto_now_add=True)
@@ -46,10 +32,10 @@ class Comment(MPTTModel):
                             validators=[comment_validator])
     score = models.IntegerField(verbose_name=_('votes'), default=0)
     body = models.TextField(verbose_name=_('body of comment'), max_length=8192)
-    hidden = models.BooleanField(verbose_name=_('hide the comment'), default=0)
+    hidden = models.BooleanField(verbose_name=_('hidden'), default=0)
     parent = TreeForeignKey('self', verbose_name=_('parent'), null=True, blank=True, related_name='replies',
                             on_delete=CASCADE)
-    versions = VersionRelation()
+    revisions = models.IntegerField(verbose_name=_('revisions'), default=0)
 
     class Meta:
         verbose_name = _('comment')
@@ -64,9 +50,14 @@ class Comment(MPTTModel):
         self.author.update_contribution_points(delta * settings.VNOJ_CP_COMMENT)
 
     @classmethod
-    def most_recent(cls, user, n, batch=None):
-        queryset = cls.objects.filter(hidden=False).select_related('author__user', 'author__display_badge') \
-            .defer('author__about', 'body').order_by('-id')
+    def get_newest_visible_comments(cls, viewer, author=None, n=None, batch=None):
+        if author is not None:
+            queryset = cls.objects.filter(hidden=False, author=author)
+        else:
+            queryset = cls.objects.filter(hidden=False)
+
+        queryset = (queryset.prefetch_related('author__user', 'author__display_badge')
+                    .defer('author__about', 'body').order_by('-id'))
 
         problem_cache = CacheDict(lambda code: Problem.objects.defer('description', 'summary').get(code=code))
         solution_cache = CacheDict(lambda code: Solution.objects.defer('content').get(problem__code=code))
@@ -74,13 +65,14 @@ class Comment(MPTTModel):
         blog_cache = CacheDict(lambda id: BlogPost.objects.defer('summary', 'content').get(id=id))
         problemtag_cache = CacheDict(lambda code: TagProblem.objects.get(code=code))
 
-        problem_access = CacheDict(lambda code: problem_cache[code].is_accessible_by(user))
-        solution_access = CacheDict(lambda code: problem_access[code] and solution_cache[code].is_accessible_by(user))
-        contest_access = CacheDict(lambda key: contest_cache[key].is_accessible_by(user))
-        blog_access = CacheDict(lambda id: blog_cache[id].can_see(user))
+        problem_access = CacheDict(lambda code: problem_cache[code].is_accessible_by(viewer))
+        solution_access = CacheDict(lambda code: problem_access[code] and solution_cache[code].is_accessible_by(viewer))
+        contest_access = CacheDict(lambda key: contest_cache[key].is_accessible_by(viewer))
+        blog_access = CacheDict(lambda id: blog_cache[id].can_see(viewer))
 
         if batch is None:
             batch = 2 * n
+
         output = []
         for i in itertools.count(0):
             slice = queryset[i * batch:i * batch + batch]
@@ -111,9 +103,13 @@ class Comment(MPTTModel):
                 else:
                     if has_access:
                         output.append(comment)
-                if len(output) >= n:
+                if n is not None and len(output) >= n:
                     return output
         return output
+
+    @classmethod
+    def most_recent(cls, user, n, batch=None):
+        return cls.get_newest_visible_comments(viewer=user, n=n, batch=batch)
 
     @cached_property
     def link(self):

@@ -12,23 +12,6 @@
         #problem-table th {
             padding: 0;
         }
-
-        a.hot-problem-link:hover > .hot-problem-count {
-            visibility: visible;
-        }
-
-        span.hot-problem-count {
-            color: #555;
-            font-size: 0.75em;
-            vertical-align: super;
-            visibility: hidden;
-            padding-left: 0.25em;
-            position: relative;
-        }
-
-        ul.problem-list {
-            padding: 0 !important;
-        }
     </style>
 {% endblock %}
 
@@ -59,9 +42,13 @@
                     $form.submit();
                 }
 
-                $category.select2().css({'visibility': 'visible'}).change(clean_submit);
-                $('#types').select2({multiple: 1, placeholder: '{{ _('Filter by type...') }}'})
-                    .css({'visibility': 'visible'});
+                $category.select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}'
+                }).css({'visibility': 'visible'}).change(clean_submit);
+                $('#types').select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}',
+                    multiple: 1, placeholder: '{{ _('Filter by type...') }}'
+                }).css({'visibility': 'visible'});
 
                 // This is incredibly nasty to do but it's needed because otherwise the select2 steals the focus
                 $search.keypress(function (e) {
@@ -88,9 +75,7 @@
 
                 var info_float = $('.info-float');
                 var container = $('#content-right');
-                if (window.bad_browser) {
-                    container.css('float', 'right');
-                } else if (!featureTest('position', 'sticky')) {
+                if (!featureTest('position', 'sticky')) {
                     fix_div(info_float, 55);
                     $(window).resize(function () {
                         info_float.width(container.width());
@@ -180,7 +165,7 @@
                         <a href="{{ sort_links.group }}">{{ _('Category') }}{{ sort_order.group }}</a>
                     </th>
                     {% if show_types %}
-                        <th>
+                        <th class="types">
                             <a href="{{ sort_links.type }}">{{ _('Types') }}{{ sort_order.type }}</a>
                         </th>
                     {% endif %}

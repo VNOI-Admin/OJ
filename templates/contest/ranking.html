@@ -7,75 +7,6 @@
 {% endblock %}
 
 {% block users_media %}
-    <style>
-        #users-table .username {
-            min-width: 20em;
-        }
-
-        #users-table td {
-            height: 2.5em;
-        }
-
-        #users-table a {
-            display: block;
-        }
-
-        #users-table {
-            font-size: 14px;
-        }
-
-        .user-name a, .user-name form {
-            display: inline-block !important;
-        }
-
-        #users-table th a, #users-table th a:link, #users-table th a:visited {
-            color: white;
-        }
-
-        #users-table th a:hover {
-            color: #0F0;
-        }
-
-        #users-table td:not(.user-name, .personal-info) a:hover {
-            text-decoration: underline;
-        }
-
-        .rank {
-            min-width: 2.4em
-        }
-
-        .points {
-            min-width: 2.4em;
-        }
-
-        .disqualified {
-            background-color: #ffa8a8 !important;
-        }
-
-        .point-denominator {
-            border-top: 1px solid gray;
-            font-size: 0.7em;
-        }
-
-        .start-time {
-            display: none;
-        }
-
-        .personal-info {
-            display: none;
-        }
-
-        .personal-info a {
-            color: gray !important;
-            font-weight: 600;
-        }
-
-        .virtual-participation {
-            color: grey;
-            float: right
-        }
-    </style>
-
     {% if is_ICPC_format %}
         {% include "contest/media-icpc-css.html" %}
     {% else %}
@@ -92,10 +23,6 @@
             overflow: initial !important
         }
 
-        .select2-results__option--highlighted {
-            background-color: #DEDEDE !important;
-        }
-
         .select2-results__option {
             white-space: nowrap;
         }
@@ -108,26 +35,14 @@
             width: 200px;
             height: 2.3em;
         }
+
+        .filter-checklist-button {
+            float: right;
+        }
     </style>
 {% endblock %}
 
 {% block users_js_media %}
-    {% if can_edit %}
-        <script type="text/javascript">
-            $(function () {
-                $('a.disqualify-participation').click(function (e) {
-                    e.preventDefault();
-                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to disqualify this participation?') }}"))
-                        $(this).closest('form').submit();
-                })
-                $('a.un-disqualify-participation').click(function (e) {
-                    e.preventDefault();
-                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to un-disqualify this participation?') }}"))
-                        $(this).closest('form').submit();
-                })
-            });
-        </script>
-    {% endif %}
     {% if not contest.ended %}
         <script type="text/javascript">
             $(function () {
@@ -151,16 +66,19 @@
                     if ($('body').hasClass('window-hidden')) {
                         return ranking_outdated = true;
                     }
+                    var queryParam = window.location.search
                     $.ajax({
-                        url: '?raw'
+                        url: queryParam ? queryParam + '&raw' : '?raw',
                     }).done(function (data) {
-                        $('#users-table').html(data);
+                        $('#ranking-table').html(data);
                         if (localStorage.getItem('show-personal-info') == 'true') {
                             $('.personal-info').show();
                             $('#show-personal-info-checkbox').prop('checked', true);
                         }
-                        window.firstSolve();
-                        window.totalAC();
+                        {% if tab == 'ranking' %}
+                            window.applyRankingFilter();
+                        {% endif %}
+                        window.enableAdminOperations();
                     }).always(function () {
                         ranking_outdated = false;
                         setTimeout(update_ranking, 10000);
@@ -183,6 +101,7 @@
             })).attr('placeholder');
 
             $('#search-contest').select2({
+                theme: '{{ DMOJ_SELECT2_THEME }}',
                 placeholder: placeholder,
                 ajax: {
                     url: '{{ url('contest_user_search_select2_ajax', contest.key) }}'
@@ -214,6 +133,16 @@
                 $('#show-personal-info-checkbox').prop('checked', true);
             }
 
+            {% if show_virtual %}
+                $('#show-virtual-participations-checkbox').prop('checked', true);
+            {% endif %}
+
+            $('#show-virtual-participations-checkbox').click(function () {
+                const parser = new URL(window.location.href);
+                parser.searchParams.set('show_virtual', '{{ 'false' if show_virtual else 'true' }}');
+                window.location.href = parser.href;
+            });
+
             var contest_key = '{{contest.key}}';
 
             $("a#cache_alert").click(function () {
@@ -236,74 +165,219 @@
                 $("a#frozen_alert").click();
             }
 
-            function timeComparison(sub1, sub2) {
-                if (!sub2) return;
-                return sub1['time'] < sub2['time'];
-            }
-
-            window.firstSolve = function() {
-                let firstSolves = {};
-
-                $('td.full-score a').each(function () {
-                    if ($(this).parent().parent().find('.virtual-participation').length) {
-                        // Skip virtual participation
-                        return;
-                    }
-
-                    let href = this['attributes']['href']['value'];
-                    if (href.includes('submissions')) {
-                        let time = $(this).find('.solving-time').text()
-                        if (time.length == 0) {
-                            return;
-                        }
-                        let hrefElement = href.split('/');
-
-                        let problem = hrefElement[hrefElement.length - 2];
-
-                        let curSub = {
-                            'td': $(this).parent(),
-                            'time': time,
-                        }
-
-                        let fs = firstSolves[problem];
-
-                        if (fs == null || timeComparison(curSub, fs)) {
-                            firstSolves[problem] = curSub;
-                        }
-                    }
+            // hack to keep scroll position after selecting option
+            // https://stackoverflow.com/questions/55045146/select2-do-not-scroll-on-selection
+            // scrollAfterSelect is only available after v4.0.6
+            $(function() {
+                $('#org-check-list').select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}',
+                    multiple: true,
+                    closeOnSelect: false,
+                    placeholder: '{{ _('Search organizations') }}',
                 });
 
-                for (let problem in firstSolves) {
-                    firstSolves[problem]['td'].addClass('first-solve');
+                var selection = $('#org-check-list').data().select2.selection;
+                var results = $('#org-check-list').data().select2.results;
+
+                $('#org-check-list').on('select2:selecting', function(e) {
+                    let id = e.params.args.data.id;
+                    let val = $(e.target).val().concat([id]);
+                    $(e.target).val(val).trigger('change');
+
+                    if (selection.$search.val() != '') {
+                        selection.$search.val('');
+                        selection.trigger('query', {});
+                    } else {
+                        results.setClasses();
+                    }
+
+                    return false;
+                });
+
+                $('#org-check-list').on('select2:unselecting', function(e) {
+                    let id = e.params.args.data.id;
+                    let val = $(e.target).val().filter(function(v) { return v != id; });
+                    $(e.target).val(val).trigger('change');
+
+                    if (selection.$search.val() != '') {
+                        selection.$search.val('');
+                        selection.trigger('query', {});
+                    } else {
+                        results.setClasses();
+                    }
+
+                    return false;
+                });
+
+                $('#org-check-list').data().select2.toggleDropdown = function () {
+                    selection.$search.trigger('focus');
+
+                    if (!this.isOpen()) {
+                        this.open();
+                    }
                 }
+
+                $('#filter-by-organization-button').click(function () {
+                    $('#org-check-list-wrapper').toggle();
+                    $('#org-check-list').select2('open');
+                });
+            });
+
+            if (localStorage.getItem(`filter-cleared-${contest_key}`) === null) {
+                localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
             }
 
-            window.firstSolve();
+            if (localStorage.getItem(`filter-selected-orgs-${contest_key}`) === null) {
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, []);
+            }
 
-            window.totalAC = function() {
-                let arr = {};
+            $('#apply-organization-filter').click(function () {
+                $('#org-check-list-wrapper').hide();
 
-                $('td.full-score').each(function () {
-                    arr[$(this).index() - 2] = (arr[$(this).index() - 2] + 1) || 1;
+                let selected_orgs = $('#org-check-list').val().map(x => x.trim());
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, selected_orgs);
+                window.applyRankingFilter();
+            });
+
+            $('#clear-organization-filter').click(function () {
+                $('#org-check-list').val(null).trigger('change');
+                $('#apply-organization-filter').click();
+            });
+
+            // hide checklist by clicking outside
+            $(document).mouseup(function (e) {
+                e.stopPropagation();
+
+                // if clicked on the filter button
+                // then this function should not do anything
+                if ($('#filter-by-organization-button').has(e.target).length !== 0) {
+                    return;
+                }
+
+                if ($('#select2-org-check-list-results').has(e.target).length !== 0) {
+                    return;
+                }
+
+                if ($(e.target).attr('id') && $(e.target).attr('id').startsWith('select2-org-check-list-result')) {
+                    return;
+                }
+
+                // check if the clicked area is the checklist or not
+                if ($('#org-dropdown-check-list').has(e.target).length === 0) {
+                    $('#apply-organization-filter').click();
+                }
+            });
+
+            window.getOrganizationCodes = function () {
+                let org_list = []
+
+                $('#ranking-table > tbody > *').each(function () {
+                    let org_anchor = $(this).find("div > div > .personal-info > .organization > a")[0];
+
+                    if (org_anchor) {
+                        org_list.push(org_anchor.text);
+                    }
                 });
-                $('td.total-ac').each(function () {
-                    $(this).text(arr[$(this).index() - 1]);
+
+                org_list.sort();
+                org_list.push("Other");
+
+                org_list = new Set(org_list);
+
+                let org_options = $('#org-check-list');
+                org_options.empty();
+
+                org_list.forEach(function (org) {
+                    org_options.append(
+                        `<option value="${org}">${org}</option>`
+                    );
                 });
             };
 
-            window.totalAC();
+            window.getOrganizationCodes();
 
-            {% if tab == 'ranking' %}
-                {% if show_virtual %}
-                    $('#show-virtual-participations-checkbox').prop('checked', true);
-                {% endif %}
+            function extractCurrentAbsRank(row_text) {
+                let paren_surround_text = row_text.match(/\(([^)]+)\)/);
+                let current_abs_rank
+                    = (paren_surround_text !== null)
+                    ? paren_surround_text[1]
+                    : row_text;
+                return current_abs_rank;
+            }
 
-                $('#show-virtual-participations-checkbox').click(function () {
-                    const parser = new URL(window.location.href);
-                    parser.searchParams.set('show_virtual', '{{ 'false' if show_virtual else 'true' }}');
-                    window.location.href = parser.href;
+            window.clearRankingFilter = function () {
+                if (localStorage.getItem(`filter-cleared-${contest_key}`) == 'true') {
+                    return;
+                }
+
+                $('#ranking-table > tbody > tr[id]').each(function () {
+                    $(this).show();
+                    $(this).find("td")[0].innerHTML = extractCurrentAbsRank($(this).find("td")[0].innerText);
                 });
-            {% endif %}
+
+                localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
+            };
+
+            window.applyRankingFilter = function () {
+                let counter = 0;
+                let previous_abs_rank = -1;
+                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`);
+
+                if (!selected_orgs.length) {
+                    window.clearRankingFilter();
+                    return;
+                }
+
+                $('#ranking-table > tbody > tr[id]').each(function () {
+                    let row = $(this);
+
+                    let org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
+                    let org = org_anchor ? org_anchor.text : 'Other';
+
+                    if (!selected_orgs.includes(org.trim())) {
+                        row.hide();
+                        return;
+                    }
+
+                    row.show();
+                    let current_abs_rank = extractCurrentAbsRank(row.find("td")[0].innerText);
+
+                    if (previous_abs_rank == -1 || previous_abs_rank != current_abs_rank) {
+                        ++counter;
+                    }
+
+                    row.find("td")[0].innerHTML = `${counter}<br>(${current_abs_rank})`;
+                    previous_abs_rank = current_abs_rank;
+                });
+
+                if (counter > 0) {
+                    localStorage.setItem(`filter-cleared-${contest_key}`, 'false');
+                }
+            };
+
+            window.applyRankingFilter();
+
+            window.restoreChecklistOptions = function () {
+                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`).split(',');
+                $('#org-check-list').val(selected_orgs).trigger('change');
+            };
+
+            window.restoreChecklistOptions();
+
+            window.enableAdminOperations = function () {
+                $('a.disqualify-participation').click(function (e) {
+                    e.preventDefault();
+                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to disqualify this participation?') }}"))
+                        $(this).closest('form').submit();
+                })
+                $('a.un-disqualify-participation').click(function (e) {
+                    e.preventDefault();
+                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to un-disqualify this participation?') }}"))
+                        $(this).closest('form').submit();
+                })
+            };
+
+            window.enableAdminOperations();
         });
 
         {% if tab == 'ranking' %}
@@ -323,7 +397,7 @@
 
                 var csv = [];
 
-                $('table#users-table thead tr').each(function () {
+                $('#ranking-table thead tr').each(function () {
                     var header = [];
                     $(this).find('th').each(function () {
                         var $col = $(this);
@@ -350,7 +424,12 @@
                     csv.push(header.join(','));
                 });
 
-                $('table#users-table tbody tr').each(function () {
+                $('#ranking-table tbody tr').each(function () {
+                    // Skip hidden row (due to filtering)
+                    if ($(this).is(':hidden')) {
+                        return;
+                    }
+
                     var row_data = [];
                     $(this).find('td').each(function () {
                         var $col = $(this);
@@ -387,11 +466,27 @@
 {% endblock %}
 
 {% block before_users_table %}
-    <div style="margin-bottom: 0.5em">
+    <div style="margin-bottom: 1.25em">
         {% if tab == 'participation' %}
             {% if contest.can_see_full_scoreboard(request.user) %}
                 <input id="search-contest" type="text" placeholder="{{ _('View user participation') }}">
             {% endif %}
+        {% endif %}
+        {% if tab == 'ranking' %}
+            <div id="org-dropdown-check-list">
+                <button id="filter-by-organization-button" class="inline-button">
+                    <i class="tab-icon fa fa-filter"></i>
+                    <b>{{ _('Filter') }}</b>
+                </button>
+
+                <div id="org-check-list-wrapper">
+                    <div>
+                        <button id="apply-organization-filter" class="inline-button filter-checklist-button">{{ _('Apply') }}</button>
+                        <button id="clear-organization-filter" class="inline-button filter-checklist-button">{{ _('Clear') }}</button>
+                    </div>
+                    <select id="org-check-list" name="orgs[]" multiple="multiple"></select>
+                </div>
+            </div>
         {% endif %}
         {% if tab != 'official_ranking' %}
             <input id="show-personal-info-checkbox" type="checkbox" style="vertical-align: bottom">

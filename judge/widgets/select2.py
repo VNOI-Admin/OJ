@@ -46,9 +46,6 @@ from django.core import signing
 from django.forms.models import ModelChoiceIterator
 from django.urls import reverse_lazy
 
-DEFAULT_SELECT2_JS = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js'
-DEFAULT_SELECT2_CSS = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'
-
 __all__ = ['Select2Widget', 'Select2MultipleWidget', 'Select2TagWidget',
            'HeavySelect2Widget', 'HeavySelect2MultipleWidget', 'HeavySelect2TagWidget',
            'AdminSelect2Widget', 'AdminSelect2MultipleWidget', 'AdminHeavySelect2Widget',
@@ -67,6 +64,7 @@ class Select2Mixin(object):
     def build_attrs(self, base_attrs, extra_attrs=None):
         """Add select2 data attributes."""
         attrs = super(Select2Mixin, self).build_attrs(base_attrs, extra_attrs)
+        attrs.setdefault('data-theme', settings.DMOJ_SELECT2_THEME)
         if self.is_required:
             attrs.setdefault('data-allow-clear', 'false')
         else:
@@ -105,7 +103,7 @@ class AdminSelect2Mixin(Select2Mixin):
     def media(self):
         return forms.Media(
             js=['admin/js/jquery.init.js', settings.SELECT2_JS_URL, 'django_select2.js'],
-            css={'screen': [settings.SELECT2_CSS_URL]},
+            css={'screen': [settings.SELECT2_CSS_URL, 'select2-dmoj.css']},
         )
 
 
@@ -217,7 +215,8 @@ class HeavySelect2Mixin(Select2Mixin):
             chosen.queryset = chosen.queryset.filter(pk__in=[
                 int(i) for i in result if isinstance(i, int) or i.isdigit()
             ])
-            self.choices = set(chosen)
+            # https://code.djangoproject.com/ticket/33155
+            self.choices = {(value if isinstance(value, str) else value.value, label) for value, label in chosen}
         return result
 
 

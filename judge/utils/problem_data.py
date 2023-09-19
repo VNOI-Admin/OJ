@@ -143,15 +143,8 @@ class ProblemDataCompiler(object):
                 except Exception as e:
                     raise ProblemDataError(e)
 
-                # Python checker doesn't need to use bridged
-                # so we return the name directly
-                if checker_ext == 'py':
-                    return custom_checker_path[1]
-
-                if checker_ext != 'cpp' and checker_ext != 'pas':
-                    raise ProblemDataError(_("Why don't you use a cpp/pas/py checker?"))
-                # the cpp checker will be handled
-                # right below here, outside of this scope
+                if checker_ext not in ['cpp', 'pas', 'java']:
+                    raise ProblemDataError(_('Only C++, Pascal, or Java checkers are supported.'))
 
             if case.checker_args:
                 return {
@@ -225,13 +218,6 @@ class ProblemDataCompiler(object):
                     init['signature_grader']['allow_main'] = True
                 return
 
-            if case.grader == 'custom_judge':
-                file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
-                if file_ext != 'py':
-                    raise ProblemDataError(_('Only accept `.py` custom judge'))
-                init['custom_judge'] = file_name
-                return
-
         for i, case in enumerate(self.cases, 1):
             if case.type == 'C':
                 data = {}
@@ -294,7 +280,7 @@ class ProblemDataCompiler(object):
                 case.save(update_fields=('checker_args', 'input_file', 'output_file'))
             elif case.type == 'E':
                 if not batch:
-                    raise ProblemDataError(_('Attempt to end batch outside of one in case #%d') % i)
+                    raise ProblemDataError(_('Attempt to end batch outside of one in case #%d.') % i)
                 case.is_pretest = batch['is_pretest']
                 case.input_file = ''
                 case.output_file = ''
@@ -321,23 +307,40 @@ class ProblemDataCompiler(object):
                 raise ProblemDataError(_('How did you corrupt the generator path?'))
             init['generator'] = generator_path[1]
 
-        pretests = [case for case in cases if case['is_pretest']]
+        pretest_test_cases = []
+        test_cases = []
+        hints = []
+
         for case in cases:
+            if case['is_pretest']:
+                pretest_test_cases.append(case)
+            else:
+                test_cases.append(case)
+
             del case['is_pretest']
-        if pretests:
-            init['pretest_test_cases'] = pretests
-        if cases:
-            init['test_cases'] = cases
+
+        if pretest_test_cases:
+            init['pretest_test_cases'] = pretest_test_cases
+        if test_cases:
+            init['test_cases'] = test_cases
         if self.data.output_limit is not None:
             init['output_limit_length'] = self.data.output_limit
         if self.data.output_prefix is not None:
             init['output_prefix_length'] = self.data.output_prefix
+        if self.data.unicode:
+            hints.append('unicode')
+        if self.data.nobigmath:
+            hints.append('nobigmath')
         if self.data.checker:
             init['checker'] = make_checker(self.data)
         else:
             self.data.checker_args = ''
         if self.data.grader:
             make_grader(init, self.data)
+
+        if hints:
+            init['hints'] = hints
+
         return init
 
     def compile(self):

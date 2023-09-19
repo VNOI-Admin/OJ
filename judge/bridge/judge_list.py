@@ -33,8 +33,8 @@ class JudgeList(object):
             while node:
                 if isinstance(node.value, PriorityMarker):
                     priority = node.value.priority + 1
-                elif priority >= REJUDGE_PRIORITY and len(self.judges) > 1 and sum(
-                        not judge.working for judge in self.judges) <= 1:
+                elif priority >= REJUDGE_PRIORITY and self.count_not_disabled() > 1 and sum(
+                        not judge.working and not judge.is_disabled for judge in self.judges) <= 1:
                     return
                 else:
                     id, problem, language, source, judge_id, banned_judges = node.value
@@ -52,6 +52,9 @@ class JudgeList(object):
                         break
                 node = node.next
 
+    def count_not_disabled(self):
+        return sum(not judge.is_disabled for judge in self.judges)
+
     def register(self, judge):
         with self.lock:
             # Disconnect all judges with the same name, see <https://github.com/DMOJ/online-judge/issues/828>
@@ -68,6 +71,12 @@ class JudgeList(object):
     def update_problems(self, judge):
         with self.lock:
             self._handle_free_judge(judge)
+
+    def update_disable_judge(self, judge_id, is_disabled):
+        with self.lock:
+            for judge in self.judges:
+                if judge.name == judge_id:
+                    judge.is_disabled = is_disabled
 
     def remove(self, judge):
         with self.lock:
@@ -124,21 +133,21 @@ class JudgeList(object):
 
             candidates = [
                 judge for judge in self.judges
-                if not judge.working and
-                judge.name not in banned_judges and
+                if judge.name not in banned_judges and
                 judge.can_judge(problem, language, judge_id)
             ]
+            available = [judge for judge in candidates if not judge.working and not judge.is_disabled]
             if judge_id:
-                logger.info('Specified judge %s is%savailable', judge_id, ' ' if candidates else ' not ')
+                logger.info('Specified judge %s is%savailable', judge_id, ' ' if available else ' not ')
             else:
-                logger.info('Free judges: %d', len(candidates))
+                logger.info('Free judges: %d', len(available))
 
-            if len(self.judges) > 1 and len(candidates) == 1 and priority >= REJUDGE_PRIORITY:
-                candidates = []
+            if len(candidates) > 1 and len(available) == 1 and priority >= REJUDGE_PRIORITY:
+                available = []
 
-            if candidates:
+            if available:
                 # Schedule the submission on the judge reporting least load.
-                judge = min(candidates, key=lambda judge: (judge.load, random()))
+                judge = min(available, key=lambda judge: (judge.load, random()))
                 logger.info('Dispatched submission %d to: %s', id, judge.name)
                 self.submission_map[id] = judge
                 try:

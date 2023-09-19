@@ -10,51 +10,6 @@
     <link rel="alternate" type="application/rss+xml" href="{{ url('comment_rss') }}" title="RSS Comment Feed">
     <link rel="alternate" type="application/atom+xml" href="{{ url('problem_atom') }}" title="Atom Problem Feed">
     <link rel="alternate" type="application/rss+xml" href="{{ url('problem_rss') }}" title="RSS Problem Feed">
-    <style>
-        .post {
-            margin: 0 0.5em;
-        }
-
-        .post:first-child {
-            margin-top: 0.6em;
-        }
-
-        .comment-count {
-            font-size: 12px;
-        }
-
-        .comment-icon {
-            padding: 0.1em 0.2em 0 0.5em;
-        }
-
-        .comment-count-link {
-            color: #555;
-        }
-
-        .own-open-tickets .title a, .open-tickets .title a {
-            display: block;
-        }
-
-        .own-open-tickets .object, .open-tickets .object {
-            margin-left: 1em;
-            font-style: italic;
-        }
-
-        .open-tickets .author {
-            margin-left: 1em;
-        }
-
-        table.bottom td.left {
-            text-align: left;
-            border-right: none !important;
-            border-top: none !important;
-        }
-
-        table.bottom td.right {
-            text-align: right;
-            border-top: none !important;
-        }
-    </style>
 {% endblock %}
 
 {% block js_media %}
@@ -161,7 +116,7 @@
                                     <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
                                 </div>
                                 <div class="time">
-                                    {%- trans countdown=contest.time_before_end|as_countdown -%} Ends in {{countdown}} {%- endtrans -%}
+                                    {{ _('Ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) }}
                                 </div>
                             </div>
                         {% endfor %}
@@ -179,7 +134,7 @@
                                     <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
                                 </div>
                                 <div class="time">
-                                    {%- trans countdown=contest.time_before_start|as_countdown -%} Starting in {{countdown}}. {%- endtrans -%}
+                                    {{ _('Starting in %(countdown)s.', countdown=as_countdown(contest.time_before_start)) }}
                                 </div>
                             </div>
                         {% endfor %}

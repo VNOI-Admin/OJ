@@ -8,8 +8,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
-from django.db.models import CASCADE, F, Q, QuerySet, SET_NULL
-from django.db.models.expressions import RawSQL
+from django.db.models import CASCADE, Exists, F, FilteredRelation, OuterRef, Q, SET_NULL
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils import timezone
@@ -21,10 +20,9 @@ from judge.models.problem_data import problem_data_storage
 from judge.models.profile import Organization, Profile
 from judge.models.runtime import Language
 from judge.user_translations import gettext as user_gettext
-from judge.utils.raw_sql import RawSQLColumn, unique_together_left_join
 
 __all__ = ['ProblemGroup', 'ProblemType', 'Problem', 'ProblemTranslation', 'ProblemClarification', 'License',
-           'Solution', 'SubmissionSourceAccess', 'TranslatedProblemQuerySet', 'TranslatedProblemForeignKeyQuerySet']
+           'Solution', 'SubmissionSourceAccess', 'TranslatedProblemQuerySet']
 
 
 def disallowed_characters_validator(text):
@@ -66,8 +64,8 @@ class License(models.Model):
     link = models.CharField(max_length=256, verbose_name=_('link'))
     name = models.CharField(max_length=256, verbose_name=_('full name'))
     display = models.CharField(max_length=256, blank=True, verbose_name=_('short name'),
-                               help_text=_('Displayed on pages under this license'))
-    icon = models.CharField(max_length=256, blank=True, verbose_name=_('icon'), help_text=_('URL to the icon'))
+                               help_text=_('Displayed on pages under this license.'))
+    icon = models.CharField(max_length=256, blank=True, verbose_name=_('icon'), help_text=_('URL to the icon.'))
     text = models.TextField(verbose_name=_('license text'))
 
     def __str__(self):
@@ -86,22 +84,17 @@ class TranslatedProblemQuerySet(SearchQuerySet):
         super(TranslatedProblemQuerySet, self).__init__(('code', 'name', 'description'), **kwargs)
 
     def add_i18n_name(self, language):
-        queryset = self._clone()
-        alias = unique_together_left_join(queryset, ProblemTranslation, 'problem', 'language', language)
-        return queryset.annotate(i18n_name=Coalesce(RawSQL('%s.name' % alias, ()), F('name'),
-                                                    output_field=models.CharField()))
+        return self.annotate(i18n_translation=FilteredRelation(
+            'translations', condition=Q(translations__language=language),
+        )).annotate(i18n_name=Coalesce(F('i18n_translation__name'), F('name'), output_field=models.CharField()))
 
-
-class TranslatedProblemForeignKeyQuerySet(QuerySet):
-    def add_problem_i18n_name(self, key, language, name_field=None):
-        queryset = self._clone() if name_field is None else self.annotate(_name=F(name_field))
-        alias = unique_together_left_join(queryset, ProblemTranslation, 'problem', 'language', language,
-                                          parent_model=Problem)
-        # You must specify name_field if Problem is not yet joined into the QuerySet.
-        kwargs = {key: Coalesce(RawSQL('%s.name' % alias, ()),
-                                F(name_field) if name_field else RawSQLColumn(Problem, 'name'),
-                                output_field=models.CharField())}
-        return queryset.annotate(**kwargs)
+    def add_i18n_description(self, language):
+        return self.annotate(i18n_translation=FilteredRelation(
+            'translations', condition=Q(translations__language=language),
+        )).annotate(i18n_description=Coalesce(
+            F('i18n_translation__description'), F('description'),
+            output_field=models.TextField()),
+        )
 
 
 class SubmissionSourceAccess:
@@ -145,11 +138,10 @@ class Problem(models.Model):
 
     code = models.CharField(max_length=32, verbose_name=_('problem code'), unique=True,
                             validators=[RegexValidator('^[a-z0-9_]+$', _('Problem code must be ^[a-z0-9_]+$'))],
-                            help_text=_('A short, unique code for the problem, '
-                                        'used in the url after /problem/'))
+                            help_text=_('A short, unique code for the problem, used in the url after /problem/'))
     name = models.CharField(max_length=100, verbose_name=_('problem name'), db_index=True,
-                            help_text=_('The full name of the problem, '
-                                        'as shown in the problem list.'))
+                            help_text=_('The full name of the problem, as shown in the problem list.'),
+                            validators=[disallowed_characters_validator])
     pdf_url = models.CharField(max_length=200, verbose_name=_('PDF statement URL'), blank=True,
                                help_text=_('URL to PDF statement. The PDF file must be embeddable (Mobile web browsers'
                                            'may not support embedding). Fallback included.'))
@@ -168,8 +160,7 @@ class Problem(models.Model):
                                      help_text=_(
                                          'These users will be able to view the private problem, but not edit it.'))
     types = models.ManyToManyField(ProblemType, verbose_name=_('problem types'),
-                                   help_text=_('The type of problem, '
-                                               "as shown on the problem's page."))
+                                   help_text=_("The type of problem, as shown on the problem's page."))
     group = models.ForeignKey(ProblemGroup, verbose_name=_('problem group'), on_delete=CASCADE,
                               help_text=_('The group of problem, shown under Category in the problem list.'))
     time_limit = models.FloatField(verbose_name=_('time limit'),
@@ -194,7 +185,8 @@ class Problem(models.Model):
     is_manually_managed = models.BooleanField(verbose_name=_('manually managed'), db_index=True, default=False,
                                               help_text=_('Whether judges should be allowed to manage data or not.'))
     date = models.DateTimeField(verbose_name=_('date of publishing'), null=True, blank=True, db_index=True,
-                                help_text=_("Doesn't have magic ability to auto-publish due to backward compatibility"))
+                                help_text=_(
+                                    "Doesn't have the magic ability to auto-publish due to backward compatibility."))
     banned_users = models.ManyToManyField(Profile, verbose_name=_('personae non gratae'), blank=True,
                                           help_text=_('Bans the selected users from submitting to this problem.'))
     license = models.ForeignKey(License, null=True, blank=True, on_delete=SET_NULL,
@@ -275,10 +267,14 @@ class Problem(models.Model):
         # If we don't want to check if the user is in a contest containing that problem.
         if not skip_contest_problem_check and user.is_authenticated:
             # If user is currently in a contest containing that problem.
-            current = user.profile.current_contest_id
+            current = user.profile.current_contest
             if current is not None:
+                # If contest has not started (for joining contest in advance).
+                if not current.contest.can_join:
+                    return False
+
                 from judge.models import ContestProblem
-                if ContestProblem.objects.filter(problem_id=self.id, contest__users__id=current).exists():
+                if ContestProblem.objects.filter(problem_id=self.id, contest__users__id=current.id).exists():
                     return True
 
         # Problem is public.
@@ -367,22 +363,35 @@ class Problem(models.Model):
             q = Q(is_public=True)
             if not (user.has_perm('judge.see_organization_problem') or edit_public_problem):
                 # Either not organization private or in the organization.
-                q &= (
-                    Q(is_organization_private=False) |
-                    Q(is_organization_private=True, organizations__in=user.profile.organizations.all())
+                q &= Q(is_organization_private=False) | cls.organization_filter_q(
+                    # Avoids needlessly joining Organization
+                    Profile.organizations.through.objects.filter(profile=user.profile).values('organization_id'),
                 )
 
             # Suggesters should be able to view suggesting problems
             if edit_suggesting_problem:
                 q |= Q(suggester__isnull=False, is_public=False)
 
-            # Authors, curators, and testers should always have access, so OR at the very end.
-            q |= Q(authors=user.profile)
-            q |= Q(curators=user.profile)
-            q |= Q(testers=user.profile)
+            # Authors, curators, and testers should always have access.
+            q = cls.q_add_author_curator_tester(q, user.profile)
             queryset = queryset.filter(q)
 
         return queryset
+
+    @classmethod
+    def q_add_author_curator_tester(cls, q, profile):
+        # This is way faster than the obvious |= Q(authors=profile) et al. because we are not doing
+        # joins and forcing the user to clean it up with .distinct().
+        q |= Exists(Problem.authors.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        q |= Exists(Problem.curators.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        q |= Exists(Problem.testers.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        return q
+
+    @classmethod
+    def organization_filter_q(cls, queryset):
+        q = Q(is_organization_private=True)
+        q &= Exists(Problem.organizations.through.objects.filter(problem=OuterRef('pk'), organization__in=queryset))
+        return q
 
     @classmethod
     def get_public_problems(cls):
@@ -650,8 +659,8 @@ class LanguageLimit(models.Model):
 
 
 class Solution(models.Model):
-    problem = models.OneToOneField(Problem, on_delete=SET_NULL, verbose_name=_('associated problem'),
-                                   null=True, blank=True, related_name='solution')
+    problem = models.OneToOneField(Problem, on_delete=CASCADE, verbose_name=_('associated problem'),
+                                   blank=True, related_name='solution')
     is_public = models.BooleanField(verbose_name=_('public visibility'), default=False)
     publish_on = models.DateTimeField(verbose_name=_('publish date'))
     authors = models.ManyToManyField(Profile, verbose_name=_('authors'), blank=True)

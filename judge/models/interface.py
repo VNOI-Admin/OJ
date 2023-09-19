@@ -16,8 +16,8 @@ __all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost']
 
 
 class MiscConfig(models.Model):
-    key = models.CharField(max_length=30, db_index=True)
-    value = models.TextField(blank=True)
+    key = models.CharField(max_length=30, verbose_name=_('key'), db_index=True)
+    value = models.TextField(verbose_name=_('value'), blank=True)
 
     def __str__(self):
         return self.key
@@ -73,7 +73,7 @@ class BlogPost(models.Model):
     publish_on = models.DateTimeField(verbose_name=_('publish after'))
     content = models.TextField(verbose_name=_('post content'))
     summary = models.TextField(verbose_name=_('post summary'), blank=True)
-    og_image = models.CharField(verbose_name=_('openGraph image'), default='', max_length=150, blank=True)
+    og_image = models.CharField(verbose_name=_('OpenGraph image'), default='', max_length=150, blank=True)
     score = models.IntegerField(verbose_name=_('votes'), default=0)
     global_post = models.BooleanField(verbose_name=_('global post'), default=False,
                                       help_text=_('Display this blog post at the homepage.'))

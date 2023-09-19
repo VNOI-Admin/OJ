@@ -8,7 +8,7 @@ from django.contrib.auth.password_validation import get_default_password_validat
 from django.db import transaction
 from django.forms import ChoiceField, ModelChoiceField
 from django.shortcuts import render
-from django.utils.translation import gettext, gettext_lazy as _
+from django.utils.translation import gettext, gettext_lazy as _, ngettext
 from registration.backends.default.views import (ActivationView as OldActivationView,
                                                  RegistrationView as OldRegistrationView)
 from registration.forms import RegistrationForm
@@ -25,7 +25,7 @@ bad_mail_regex = list(map(re.compile, settings.BAD_MAIL_PROVIDER_REGEX))
 class CustomRegistrationForm(RegistrationForm):
     username = forms.RegexField(regex=re.compile(r'^\w+$', re.ASCII), max_length=30, label=_('Username'),
                                 error_messages={'invalid': _('A username must contain letters, '
-                                                             'numbers, or underscores')})
+                                                             'numbers, or underscores.')})
     full_name = forms.CharField(max_length=30, label=_('Full name'), required=False)
     timezone = ChoiceField(label=_('Timezone'), choices=TIMEZONE,
                            widget=Select2Widget(attrs={'style': 'width:100%'}))
@@ -53,6 +53,15 @@ class CustomRegistrationForm(RegistrationForm):
                                                     'Please use a reputable email provider.'))
         return self.cleaned_data['email']
 
+    def clean_organizations(self):
+        organizations = self.cleaned_data.get('organizations') or []
+        max_orgs = settings.DMOJ_USER_MAX_ORGANIZATION_COUNT
+        if len(organizations) > max_orgs:
+            raise forms.ValidationError(ngettext('You may not be part of more than {count} public organization.',
+                                                 'You may not be part of more than {count} public organizations.',
+                                                 max_orgs).format(count=max_orgs))
+        return self.cleaned_data['organizations']
+
 
 class RegistrationView(OldRegistrationView):
     title = _('Register')
@@ -62,9 +71,7 @@ class RegistrationView(OldRegistrationView):
     def get_context_data(self, **kwargs):
         if 'title' not in kwargs:
             kwargs['title'] = self.title
-        tzmap = settings.TIMEZONE_MAP
-        kwargs['TIMEZONE_MAP'] = tzmap or 'http://momentjs.com/static/img/world.png'
-        kwargs['TIMEZONE_BG'] = settings.TIMEZONE_BG if tzmap else '#4E7CAD'
+        kwargs['TIMEZONE_MAP'] = settings.TIMEZONE_MAP
         kwargs['password_validators'] = get_default_password_validators()
         kwargs['tos_url'] = settings.TERMS_OF_SERVICE_URL
         return super(RegistrationView, self).get_context_data(**kwargs)

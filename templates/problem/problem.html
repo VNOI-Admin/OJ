@@ -95,7 +95,7 @@
                 </a>
             {% endif %}
         {% endif %}
-        <h2 style="color:#393630; display: inline-block">{{ title }}</h2>
+        <h2 style="display: inline-block">{{ title }}</h2>
         {% if problem.is_organization_private %}
             <span class="organization-tags">
                 {% for org in problem.organizations.all() %}
@@ -359,24 +359,7 @@
             {{ _('This problem cannot be accessed by normal users until it is approved by an admin or staff. Please make sure that all the data for this problem is correct.') }}
         </div>
     {% endif %}
-    {% cache 86400 'problem_html' problem.id MATH_ENGINE LANGUAGE_CODE %}
-        {{ description|markdown(problem.markdown_style, MATH_ENGINE)|reference|str|safe }}
-    {% endcache %}
-
-    {% with pdf_url=problem.pdf_url %}
-        {% if pdf_url %}
-            <p>{{ _("In case the statement didn't load correctly, you can download the statement here: ") }}<a href="{{ pdf_url }}">{{ _("Statement") }}</a></p>
-            <object id="pdfContainer" data="{{ pdf_url }}" type="application/pdf" height="1000" style="width: 100%;" ></object>
-        {% endif %}
-    {% endwith %}
-
-    {% with license=problem.license %}
-        {% if license %}
-            <span class="license">
-            <a href="{{ url('license', license.key) }}">{{ license.display or license.name }}</a>
-        </span>
-        {% endif %}
-    {% endwith %}
+    {% include "problem/problem-detail.html" %}
 {% endblock %}
 
 {% block post_description_end %}

@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {% include "comments/base-media-js.html" %}
+{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'comments' %}
+    {% include "user/user-tabs.html" %}
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+    {% block before_comments %}{% endblock %}
+        <form action="{{url('user_comment', user.username)}}" method="post">
+            {% csrf_token %}
+            <button type="submit">Delete all comments</button>
+        </form>
+        <ul class="comments top-level-comments new-comments">
+            {% set logged_in = request.user.is_authenticated %}
+            {% for comment in comments %}
+                <li id="comment-{{ comment.id }}" data-revision="{{ comment.revisions - 1 }}"
+                    data-max-revision="{{ comment.revisions - 1 }}"
+                    data-revision-ajax="{{ url('comment_revision_ajax', comment.id) }}" class="comment">
+                    <div class="comment-display{% if comment.score <= vote_hide_threshold %} bad-comment{% endif %}">
+                        <div class="info">
+                            <div class="vote">
+                                {% if logged_in %}
+                                    <a href="javascript:comment_upvote({{ comment.id }})"
+                                    class="upvote-link fa fa-chevron-up fa-fw{% if comment.vote_score == 1 %} voted{% endif %}"></a>
+                                {% else %}
+                                    <a href="javascript:alert('{{ _('Please log in to vote')|escapejs }}')" title="{{ _('Please log in to vote') }}"
+                                    class="upvote-link fa fa-chevron-up fa-fw"></a>
+                                {% endif %}
+                                <br>
+                                <div class="comment-score">{{ comment.score }}</div>
+                                {% if logged_in %}
+                                    <a href="javascript:comment_downvote({{ comment.id }})"
+                                    class="downvote-link fa fa-chevron-down fa-fw{% if comment.vote_score == -1 %} voted{% endif %}"></a>
+                                {% else %}
+                                    <a href="javascript:alert('{{ _('Please log in to vote')|escapejs }}')" title="{{ _('Please log in to vote') }}"
+                                    class="downvote-link fa fa-chevron-down fa-fw"></a>
+                                {% endif %}
+                            </div>
+                            {% with author=comment.author, user=comment.author.user %}
+                                <a href="{{ url('user_page', user.username) }}" class="user gravatar-main">
+                                    <img src="{{ gravatar(author, 135) }}" class="gravatar">
+                                </a>
+                            {% endwith %}
+                        </div>
+                        <div class="detail">
+                            <div class="header">
+                                <span>
+                                    {% with author=comment.author, user=comment.author.user %}
+                                        <a href="{{ url('user_page', user.username) }}" class="user gravatar-mobile">
+                                            <img src="{{ gravatar(author, 135) }}" class="gravatar">
+                                        </a>
+                                    {% endwith %}
+                                    {{ link_user(comment.author) }}&nbsp;
+                                </span>
+                                {% with abs=_('commented on {time}'), rel=_('commented {time}') %}
+                                    {{ relative_time(comment.time, abs=abs, rel=rel) }}
+                                    →
+                                    <a href="{{ comment.link }}#comment-{{ comment.id }}">
+                                        {{ comment.page_title }}
+                                    </a>
+                                {% endwith %}
+                                <span class="comment-spacer"></span>
+                                <span class="comment-operation">
+                                {% if comment.revisions > 1 %}
+                                    <span class="comment-edits">
+                                        <a href="javascript:show_revision({{ comment.id }}, -1)"
+                                        class="previous-revision">&larr;</a>
+                                        <span class="comment-edit-text">
+                                            {% if comment.revisions > 2 %}
+                                                {% trans edits=comment.revisions - 1 %}edit {{ edits }}{% endtrans %}
+                                            {% else %}
+                                                {{ _('edited') }}
+                                            {% endif %}
+                                        </span>
+                                        <a href="javascript:show_revision({{ comment.id }}, 1)" style="visibility: hidden"
+                                        class="next-revision">&rarr;</a>
+                                    </span>
+                                {% else %}
+                                    <span class="comment-edits"></span>
+                                {% endif %}
+                                    <a href="{{ comment.link }}#comment-{{ comment.id }}" title="{{ _('Link') }}" class="comment-link">
+                                    <i class="fa fa-link fa-fw"></i>
+                                </a>
+                            </span>
+                            </div>
+                            <div class="content content-description">
+                                <div class="comment-body"{% if comment.score <= vote_hide_threshold %} style="display:none"{% endif %}>
+                                    {{ comment.body|markdown('comment', MATH_ENGINE, True)|reference|str|safe }}
+                                </div>
+                                {% if comment.score <= vote_hide_threshold %}
+                                    <div class="comment-body bad-comment-body">
+                                        <p>
+                                            {{ _('This comment is hidden due to too much negative feedback.') }}
+                                            <a href="javascript:comment_show_content({{ comment.id }})">{{ _('Show it anyway.') }}</a>
+                                        </p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            {% endfor %}
+        </ul>
+
+    {% if page_obj.has_other_pages() %}
+        <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+    {% endif %}
+    {% block after_comments %}{% endblock %}
+{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
+    {% include "comments/math.html" %}
+{% endblock %}

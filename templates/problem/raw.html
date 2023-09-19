@@ -1,15 +1,8 @@
-{% set is_pdf_render = math_engine is string %}
 {% set math_engine = math_engine or 'jax' %}
 <!DOCTYPE html>
 <html>
 <head>
-    {% if is_pdf_render %}
-        <link rel="stylesheet" href="style.css">
-        <link rel="stylesheet" href="pygment-github.css" type="text/css">
-    {% else %}
-        <link rel="stylesheet" href="{{ static('style.css') }}">
-        <link rel="stylesheet" href="{{ static('pygment-github.css') }}" type="text/css">
-    {% endif %}
+    <link rel="stylesheet" href="{{ urljoin(url, static('style.css')) }}">
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
     <style>
         html {
@@ -62,11 +55,11 @@
 </head>
 
 <body>
-<h2 style="color:#393630; display: inline-block;">{{ problem_name }}</h2>
+<h2 style="display: inline-block;">{{ problem_name }}</h2>
 <hr>
 <div align="center" style="position: relative;">
     <div class="problem-info-entry">
-        <b>{{ _('Time Limit:') }}</b> {{ problem.time_limit }}s
+        <b>{{ _('Time limit:') }}</b> {{ problem.time_limit }}s
         {% for name, limit in problem.language_time_limit %}
             <div class="lang-limit">
                 <span class="lang-name">{{ name }}</span>
@@ -75,7 +68,7 @@
         {% endfor %}
     </div>
     <div class="problem-info-entry">
-        <b>{{ _('Memory Limit:') }}</b> {{ problem.memory_limit|kbsimpleformat}}
+        <b>{{ _('Memory limit:') }}</b> {{ problem.memory_limit|kbsimpleformat}}
         {% for name, limit in problem.language_memory_limit %}
             <div class="lang-limit">
                 <span class="lang-name">{{ name }}</span>
@@ -86,22 +79,14 @@
 </div>
 <hr style="clear: both;">
 <div class="content-description printing">
-    {{ description|markdown(problem.markdown_style, 'tex' if math_engine == 'jax' else math_engine)|reference|absolutify(url)|str|safe }}
+    {{ description|markdown(problem.markdown_style, 'tex')|reference|absolutify(url)|str|safe }}
 </div>
-{% if math_engine == 'jax' %}
-    {% if is_pdf_render %}
-        <script type="text/javascript" src="mathjax_config.js"></script>
-    {% else %}
-        <script type="text/javascript" src="{{ static('mathjax_config.js') }}"></script>
-    {% endif %}
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js"></script>
-    <script type="text/javascript">
-        MathJax.typesetPromise().then(function () {
-            if (typeof window.callPhantom === 'function')
-                window.callPhantom({'action': 'snapshot'});
-            document.body.classList.add('math-loaded');
-        });
-    </script>
-{% endif %}
+<script type="text/javascript" src="{{ urljoin(url, static('mathjax_config.js')) }}"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.0/es5/tex-chtml.min.js"></script>
+<script type="text/javascript">
+    MathJax.typesetPromise().then(function () {
+        document.body.classList.add('math-loaded');
+    });
+</script>
 </body>
 </html>

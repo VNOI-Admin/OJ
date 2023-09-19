@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='language',
             name='common_name',
-            field=models.CharField(help_text='Common name for the language. For example, the common name for C++03, C++11, and C++14 would be "C++"', max_length=20, verbose_name='common name'),
+            field=models.CharField(help_text='Common name for the language. For example, the common name for C++03, C++11, and C++14 would be "C++".', max_length=20, verbose_name='common name'),
         ),
         migrations.AlterField(
             model_name='problemdata',

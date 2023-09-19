@@ -19,10 +19,6 @@
             height: 70px
         }
 
-        .grayed {
-            color: #666;
-        }
-
         .inline-header {
             float: left;
             font-size: 1.1em;
@@ -31,7 +27,6 @@
         }
 
         .block-header {
-            color: #666;
             font-size: 1.1em;
         }
 
@@ -58,7 +53,7 @@
 
         .pane {
             display: block;
-            width: 337px;
+            width: 340px;
         }
 
         .api-token {
@@ -91,7 +86,6 @@
             padding-top: 5px;
             font-size: 12px;
         }
-
     </style>
 {% endblock %}
 
@@ -105,7 +99,7 @@
             });
 
             $('#disable-2fa-button').click(function () {
-                alert("The administrators for this site require all the staff to have Two-factor Authentication enabled, so it may not be disabled at this time.");
+                alert("{{ _('The administrators for this site require all the staff to have Two-factor Authentication enabled, so it may not be disabled at this time.') }}");
             });
 
             $('#generate-api-token-button').click(function (event) {
@@ -113,7 +107,7 @@
                 if (confirm("{{ _('Are you sure you want to generate or regenerate your API token?') }}\n"
                           + "{{ _('This will invalidate any previous API tokens.') }} "
                           + "{{ _('It also allows access to your account without Two-factor Authentication.') }}\n\n"
-                          + "{{ _('You will not be able to view your api token after you leave this page!') }}")) {
+                          + "{{ _('You will not be able to view your API token after you leave this page!') }}")) {
                     $('#api-token').text("{{ _('Generating...') }}");
 
                     $.ajax({
@@ -205,20 +199,20 @@
         $(function () {
             $('#generate-scratch-codes-button').click(function(event) {
                 event.preventDefault();
-                if (confirm("{{ _('Are you sure you want to generate or regenerate a new set of scratch codes? \
-This will invalidate any previous scratch codes you have. \
-You will not be able to view your scratch codes after you leave this page!') }}")) {
+                if (confirm("{{ _('Are you sure you want to generate or regenerate a new set of scratch codes?') }}\n"
+                          + "{{ _('This will invalidate any previous scratch codes you have.') }}\n\n"
+                          + "{{ _('You will not be able to view your scratch codes after you leave this page!') }}")) {
                     $('#scratch-codes').text("{{ _('Generating...') }}");
 
-                    var copyButton;
                     $('pre code').each(function () {
-                        $(this).parent().before($('<div>', {'class': 'copy-clipboard', 'id': {}})
+                        var copyButton;
+                        $(this).parent().before($('<div>', {'class': 'copy-clipboard'})
                             .append(copyButton = $('<span>', {
                                 'class': 'btn-clipboard',
                                 'id': 'scratch-codes-copy-button',
                                 'data-clipboard-text': '',
-                                'title': 'Click to copy'
-                            }).text('Copy')));
+                                'title': '{{ _('Click to copy') }}'
+                            }).text('{{ _('Copy') }}')));
 
                         $(copyButton.get(0)).mouseleave(function () {
                             $(this).attr('class', 'btn-clipboard');
@@ -229,7 +223,7 @@ You will not be able to view your scratch codes after you leave this page!') }}"
 
                         curClipboard.on('success', function(e) {
                             e.clearSelection();
-                            showTooltip(e.trigger, _('Copied!'));
+                            showTooltip(e.trigger, '{{ _('Copied!') }}');
                         });
 
                         curClipboard.on('error', function(e) {
@@ -245,13 +239,8 @@ You will not be able to view your scratch codes after you leave this page!') }}"
                             $('#scratch-codes').text(data.data.codes.join('\n'));
                             $('#scratch-codes-copy-button').attr('data-clipboard-text', data.data.codes.join('\n'));
                             $('#generate-scratch-codes-button').text("{{ _('Regenerate') }}");
-                            $('.hidden-word').empty();
-                            $('#scratch-codes-text').text("{{ _('Below is a list of one-time use scratch codes. \
-                                                                 These codes can only be used once and are for emergency use. \
-                                                                 You can use these codes to login to your account or disable two-factor authentication. \
-                                                                 If you ever need more scratch codes, you can regenerate them on the edit profile tab. \
-                                                                 Please write these down and keep them in a secure location. \
-                                                                 These codes will never be shown again after you enable two-factor authentication.') }}");
+                            $('#hidden-word').hide();
+                            $('#scratch-codes-regen').show();
                         },
                     });
                 }
@@ -283,9 +272,9 @@ You will not be able to view your scratch codes after you leave this page!') }}"
             {% if form_user.first_name %}
                 <table>
                     <tr>
-                        <td><div class="block-header">{{ _('Full name') }}:</div></td>
+                        <td><div class="block-header grayed">{{ _('Full name') }}:</div></td>
                         {% if form.display_badge %}
-                            <td><div class="block-header">{{ _('Display badge') }}:</div></td>
+                            <td><div class="block-header grayed">{{ _('Display badge') }}:</div></td>
                         {% endif %}
                     </tr>
                     <tr>
@@ -299,7 +288,7 @@ You will not be able to view your scratch codes after you leave this page!') }}"
             {% endif %}
 
             {% if form.about %}
-                <div style="padding-top:0.5em" class="block-header">{{ _('Self-description') }}:</div>
+                <div style="padding-top:0.5em" class="block-header grayed">{{ _('Self-description:') }}</div>
                     {{ form.about }}
                 <hr>
             {% endif %}
@@ -308,24 +297,41 @@ You will not be able to view your scratch codes after you leave this page!') }}"
                 <div class="pane" style="vertical-align:top">
                     <table style="padding-right:0.8em">
                         <tr title="{{ _('Select your closest major city') }}">
-                            <td><label class="inline-header grayed">{{ _('Timezone') }}:</label></td>
+                            <td><label class="inline-header grayed">{{ _('Time zone:') }}</label></td>
                             <td><span class="fullwidth">{{ form.timezone }}</span></td>
                         </tr>
                         <tr>
-                            <td><label class="inline-header grayed">{{ _('Language') }}:</label></td>
+                            <td><label class="inline-header grayed">{{ _('Language:') }}</label></td>
                             <td><span class="fullwidth">{{ form.language }}</span></td>
                         </tr>
+                        <tr{% if not perms.judge.test_site %} style="display: none"{% endif %}>
+                            <td><label class="inline-header grayed">{{ _('Site theme:') }}</label></td>
+                            <td><span class="fullwidth">{{ form.site_theme }}</span></td>
+                        </tr>
                         <tr>
-                            <td><label class="inline-header grayed">{{ _('Editor theme') }}:</label></td>
+                            <td><label class="inline-header grayed">{{ _('Editor theme:') }}</label></td>
                             <td><span class="fullwidth">{{ form.ace_theme }}</span></td>
                         </tr>
                         {% if has_math_config %}
                             <tr>
-                                <td><label class="inline-header grayed">{{ _('Math engine') }}:</label></td>
+                                <td><label class="inline-header grayed">{{ _('Math engine:') }}</label></td>
                                 <td><span class="fullwidth">{{ form.math_engine }}</span></td>
                             </tr>
                         {% endif %}
                     </table>
+                </div>
+                {% if form.organizations %}
+                    <div class="pane">
+                        <div style="padding-bottom:0.3em; margin-top:0.3em" class="block-header grayed">
+                            {{ _('Affiliated organizations') }}:
+                        </div>
+                        {{ form.organizations }}
+                    </div>
+                {% endif %}
+            </div>
+            <hr>
+            <div class="settings" style="padding-top:0.7em">
+                <div class="pane">
                     <table border="0">
                         {% if form.newsletter %}
                             <tr><td>
@@ -342,8 +348,7 @@ You will not be able to view your scratch codes after you leave this page!') }}"
                             </label>
                         </td></tr>
                         <tr><td>
-                            <a href="http://www.gravatar.com/" title="{{ _('Change your avatar') }}"
-                               target="_blank" class="inline-header" rel="noopener">
+                            <a href="https://www.gravatar.com/" target="_blank" class="inline-header" rel="noopener">
                                 {{ _('Change your avatar') }}
                             </a>
                         </td></tr>
@@ -360,9 +365,11 @@ You will not be able to view your scratch codes after you leave this page!') }}"
                             </td></tr>
                         {% endif %}
                     </table>
+                </div>
+                <div class="pane">
                     <div>
                         {% if profile.is_totp_enabled %}
-                            <div class="block-header grayed">{{ _('Two-factor Authentication is enabled') }}:</div>
+                            <div class="block-header grayed">{{ _('Two-factor authentication is enabled:') }}</div>
                             <div class="block-buttons">
                                 {% if require_staff_2fa and request.user.is_staff and not profile.is_webauthn_enabled %}
                                     <a id="disable-2fa-button" class="button inline-button">{{ _('Disable') }}</a>
@@ -373,7 +380,7 @@ You will not be able to view your scratch codes after you leave this page!') }}"
                                 <a href="{{ url('refresh_2fa') }}" class="button inline-button">{{ _('Refresh') }}</a>
                             </div>
                             <div class="block-header grayed">
-                                {{ _('Scratch Codes:') }}
+                                {{ _('Scratch codes:') }}
                                 {% if profile.scratch_codes %}
                                     <a id="generate-scratch-codes-button" href="{{ url('generate_scratch_codes') }}"
                                        class="button inline-button">{{ _('Regenerate') }}</a>
@@ -382,33 +389,28 @@ You will not be able to view your scratch codes after you leave this page!') }}"
                                     <a id="generate-scratch-codes-button" href="{{ url('generate_scratch_codes') }}"
                                        class="button inline-button">{{ _('Generate') }}</a>
                                 {% endif %}
-                                <div id="scratch-codes-text"></div>
-                                <pre><code id="scratch-codes"></code></pre>
+                                <div style="display: none" id="scratch-codes-regen">
+                                    <div id="scratch-codes-text">
+                                        {{ _('Below is a list of one-time use scratch codes.') }}
+                                        {{ _('These codes can only be used once and are for emergency use.') }}
+                                        {{ _('You can use these codes to login to your account or disable two-factor authentication.') }}
+                                        {{ _('If you ever need more scratch codes, you can regenerate them here.') }}
+                                        {{ _('Please write these down and keep them in a secure location.') }}<br><br>
+                                        {{ _('You will not be able to view your scratch codes after you leave this page!') }}</div>
+                                    <pre><code id="scratch-codes"></code></pre>
+                                </div>
                             </div>
                         {% else %}
                             <span class="inline-header grayed">
-                                {{ _('Two-factor Authentication is disabled') }}:
+                                {{ _('Two-factor Authentication is disabled:') }}
                                 <a href="{{ url('enable_2fa') }}" class="button inline-button">{{ _('Enable') }}</a>
                             </span>
                         {% endif %}
                     </div>
-                </div>
-                {% if form.organizations %}
-                    <div class="pane">
-                        <div style="padding-bottom:0.3em; margin-top:0.3em" class="block-header">
-                            {{ _('Affiliated organizations') }}:
-                        </div>
-                        {{ form.organizations }}
-                    </div>
-                {% endif %}
-            </div>
-            <hr>
-            {% if HAS_WEBAUTHN %}
-            <div class="settings" style="padding-top:0.7em">
-                <div class="pane">
-                    <span class="inline-header grayed">
-                        <div style="padding-bottom:0.4em" class="block-header">
-                            {{ _('Security keys') }}:
+                    <span class="grayed">
+                    {% if HAS_WEBAUTHN %}
+                        <div style="padding-bottom:0.4em" class="block-header grayed">
+                            {{- _('Security keys:') -}}
                         </div>
                         <table class="table">
                             {% if profile.is_webauthn_enabled %}
@@ -429,11 +431,11 @@ You will not be able to view your scratch codes after you leave this page!') }}"
                                 <td><button id="new-webauthn" class="inline-button">{{ _('Add') }}</button></td>
                             </tr>
                         </table>
+                    {% endif %}
                     </span>
                 </div>
             </div>
             <hr>
-            {% endif %}
 
             <input type="submit" class="submit-bar" value="{{ _('Update profile') }}">
         </form>

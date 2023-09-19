@@ -9,12 +9,12 @@ from django.templatetags.static import static
 from django.urls import include, path, re_path, reverse
 from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import RedirectView
 from martor.views import markdown_search_user
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
-from judge.sitemap import BlogPostSitemap, ContestSitemap, HomePageSitemap, OrganizationSitemap, ProblemSitemap, \
-    SolutionSitemap, UrlSitemap, UserSitemap
+from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
     preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
     two_factor, user, widgets
@@ -56,12 +56,7 @@ register_patterns = [
         template_name='registration/password_change_done.html',
         title=_('Password change successful'),
     ), name='password_change_done'),
-    path('password/reset/', user.CustomPasswordResetView.as_view(
-        template_name='registration/password_reset.html',
-        html_email_template_name='registration/password_reset_email.html',
-        email_template_name='registration/password_reset_email.txt',
-        title=_('Password reset'),
-    ), name='password_reset'),
+    path('password/reset/', user.CustomPasswordResetView.as_view(), name='password_reset'),
     re_path(r'^password/reset/confirm/(?P<uidb64>[0-9A-Za-z]+)-(?P<token>.+)/$',
             auth_views.PasswordResetConfirmView.as_view(
                 template_name='registration/password_reset_confirm.html',
@@ -124,7 +119,7 @@ urlpatterns = [
         path('', problem.ProblemDetail.as_view(), name='problem_detail'),
         path('/edit', problem.ProblemEdit.as_view(), name='problem_edit'),
         path('/editorial', problem.ProblemSolution.as_view(), name='problem_editorial'),
-        path('/raw', problem.ProblemRaw.as_view(), name='problem_raw'),
+        path('/raw', xframe_options_sameorigin(problem.ProblemRaw.as_view()), name='problem_raw'),
         path('/pdf', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/pdf/<slug:language>', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/clone', problem.ProblemClone.as_view(), name='problem_clone'),
@@ -201,6 +196,7 @@ urlpatterns = [
         path('', user.UserAboutPage.as_view(), name='user_page'),
         path('/ban', user.UserBan.as_view(), name='user_ban'),
         path('/blog/', paged_list_view(user.UserBlogPage, 'user_blog')),
+        path('/comment/', paged_list_view(user.UserCommentPage, 'user_comment')),
         path('/solved/', include([
             path('', user.UserProblemsPage.as_view(), name='user_problems'),
             path('ajax', user.UserPerformancePointsAjax.as_view(), name='user_pp_ajax'),
@@ -234,13 +230,16 @@ urlpatterns = [
 
     path('contest/<str:contest>', include([
         path('', contests.ContestDetail.as_view(), name='contest_view'),
+        path('/all', contests.ContestAllProblems.as_view(), name='contest_all_problems'),
         path('/edit', contests.EditContest.as_view(), name='contest_edit'),
         path('/moss', contests.ContestMossView.as_view(), name='contest_moss'),
         path('/moss/delete', contests.ContestMossDelete.as_view(), name='contest_moss_delete'),
         path('/announce', contests.ContestAnnounce.as_view(), name='contest_announce'),
         path('/clone', contests.ContestClone.as_view(), name='contest_clone'),
         path('/ranking/', contests.ContestRanking.as_view(), name='contest_ranking'),
+        path('/public_ranking/', contests.ContestPublicRanking.as_view(), name='contest_public_ranking'),
         path('/official_ranking/', contests.ContestOfficialRanking.as_view(), name='contest_official_ranking'),
+        path('/register', contests.ContestRegister.as_view(), name='contest_register'),
         path('/join', contests.ContestJoin.as_view(), name='contest_join'),
         path('/leave', contests.ContestLeave.as_view(), name='contest_leave'),
         path('/stats', contests.ContestStats.as_view(), name='contest_stats'),
@@ -313,29 +312,19 @@ urlpatterns = [
     path('status/', status.status_all, name='status_all'),
     path('status/oj/', status.status_oj, name='status_oj'),
 
-    path('api/', include([
-        path('contest/list', api.api_v1_contest_list),
-        path('contest/info/<str:contest>', api.api_v1_contest_detail),
-        path('problem/list', api.api_v1_problem_list),
-        path('problem/info/<str:problem>', api.api_v1_problem_info),
-        path('user/list', api.api_v1_user_list),
-        path('user/info/<str:user>', api.api_v1_user_info),
-        path('user/submissions/<str:user>', api.api_v1_user_submissions),
-        path('user/ratings/<int:page>', api.api_v1_user_ratings),
-        path('v2/', include([
-            path('contests', api.api_v2.APIContestList.as_view()),
-            path('contest/<str:contest>', api.api_v2.APIContestDetail.as_view()),
-            path('problems', api.api_v2.APIProblemList.as_view()),
-            path('problem/<str:problem>', api.api_v2.APIProblemDetail.as_view()),
-            path('users', api.api_v2.APIUserList.as_view()),
-            path('user/<str:user>', api.api_v2.APIUserDetail.as_view()),
-            path('submissions', api.api_v2.APISubmissionList.as_view()),
-            path('submission/<int:submission>', api.api_v2.APISubmissionDetail.as_view()),
-            path('organizations', api.api_v2.APIOrganizationList.as_view()),
-            path('participations', api.api_v2.APIContestParticipationList.as_view()),
-            path('languages', api.api_v2.APILanguageList.as_view()),
-            path('judges', api.api_v2.APIJudgeList.as_view()),
-        ])),
+    path('api/v2/', include([
+        path('contests', api.api_v2.APIContestList.as_view()),
+        path('contest/<str:contest>', api.api_v2.APIContestDetail.as_view()),
+        path('problems', api.api_v2.APIProblemList.as_view()),
+        path('problem/<str:problem>', api.api_v2.APIProblemDetail.as_view()),
+        path('users', api.api_v2.APIUserList.as_view()),
+        path('user/<str:user>', api.api_v2.APIUserDetail.as_view()),
+        path('submissions', api.api_v2.APISubmissionList.as_view()),
+        path('submission/<int:submission>', api.api_v2.APISubmissionDetail.as_view()),
+        path('organizations', api.api_v2.APIOrganizationList.as_view()),
+        path('participations', api.api_v2.APIContestParticipationList.as_view()),
+        path('languages', api.api_v2.APILanguageList.as_view()),
+        path('judges', api.api_v2.APIJudgeList.as_view()),
     ])),
 
     path('posts/', paged_list_view(blog.PostList, 'blog_post_list')),
@@ -356,7 +345,6 @@ urlpatterns = [
         path('rejudge', widgets.rejudge_submission, name='submission_rejudge'),
         path('single_submission', submission.single_submission, name='submission_single_query'),
         path('submission_testcases', submission.SubmissionTestCaseQuery.as_view(), name='submission_testcases_query'),
-        path('detect_timezone', widgets.DetectTimezone.as_view(), name='detect_timezone'),
         path('status-table', status.status_table, name='status_table'),
 
         path('template', problem.LanguageTemplateAjax.as_view(), name='language_template_ajax'),
@@ -417,18 +405,7 @@ urlpatterns = [
         path('/notes', ticket.TicketNotesEditView.as_view(), name='ticket_notes'),
     ])),
 
-    path('sitemap.xml', sitemap, {'sitemaps': {
-        'problem': ProblemSitemap,
-        'user': UserSitemap,
-        'home': HomePageSitemap,
-        'contest': ContestSitemap,
-        'organization': OrganizationSitemap,
-        'blog': BlogPostSitemap,
-        'solutions': SolutionSitemap,
-        'pages': UrlSitemap([
-            {'location': '/about/', 'priority': 0.9},
-        ]),
-    }}),
+    path('sitemap.xml', sitemap, {'sitemaps': sitemaps}),
 
     path('judge-select2/', include([
         path('profile/', UserSelect2View.as_view(), name='profile_select2'),

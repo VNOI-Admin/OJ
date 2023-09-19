@@ -2,16 +2,15 @@
 Django settings for dmoj project.
 
 For more information on this file, see
-https://docs.djangoproject.com/en/2.2/topics/settings/
+https://docs.djangoproject.com/en/3.2/topics/settings/
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/2.2/ref/settings/
+https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import datetime
 import os
-import tempfile
 
 from django.utils.translation import gettext_lazy as _
 from django_jinja.builtins import DEFAULT_EXTENSIONS
@@ -20,7 +19,7 @@ from jinja2 import select_autoescape
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '5*9f5q57mqmlz2#f$x1h76&jxy#yortjl1v+l*6hd18$d*yx#0'
@@ -35,7 +34,7 @@ CSRF_FAILURE_VIEW = 'judge.views.widgets.csrf_failure'
 SITE_ID = 1
 SITE_NAME = 'DMOJ'
 SITE_LONG_NAME = 'DMOJ: Modern Online Judge'
-SITE_ADMIN_EMAIL = False
+SITE_ADMIN_EMAIL = ''
 
 DMOJ_REQUIRE_STAFF_2FA = True
 # Display warnings that admins will not perform 2FA recovery.
@@ -49,7 +48,7 @@ DMOJ_SSL = 1
 # Refer to dmoj.ca/post/103-point-system-rework
 DMOJ_PP_STEP = 0.98514
 DMOJ_PP_ENTRIES = 300
-DMOJ_PP_BONUS_FUNCTION = lambda n: 0.05 * n # 15 * (1 - 0.997 ** n)  # noqa: E731; 100 bai nua diem: 0.9930924
+DMOJ_PP_BONUS_FUNCTION = lambda n: 0.05 * n  # 15 * (1 - 0.997 ** n)  # noqa: E731; 100 bai nua diem: 0.9930924
 
 VNOJ_ORG_PP_STEP = 0.95
 VNOJ_ORG_PP_ENTRIES = 100
@@ -59,9 +58,9 @@ VNOJ_OFFICIAL_CONTEST_MODE = False
 
 # Contribution points function
 # Both should be int
-VNOJ_CP_COMMENT = 1  # Each comment vote equals 1 CP
-VNOJ_CP_TICKET = 10  # Each good ticket equals CP
-VNOJ_CP_PROBLEM = 20 # Each suggested problem equal 20 CP
+VNOJ_CP_COMMENT = 1   # Each comment vote equals 1 CP
+VNOJ_CP_TICKET = 10   # Each good ticket equals CP
+VNOJ_CP_PROBLEM = 20  # Each suggested problem equal 20 CP
 
 VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
 
@@ -90,6 +89,8 @@ VNOJ_TESTCASE_HARD_LIMIT = 100
 # If a user without the `create_mass_testcases` permission create more than this amount of test
 # they will receive a warning
 VNOJ_TESTCASE_SOFT_LIMIT = 50
+# Minimum problem count required to interact (comment, vote and update profile)
+VNOJ_INTERACT_MIN_PROBLEM_COUNT = 5
 # Minimum problem count required to create new blogs
 VNOJ_BLOG_MIN_PROBLEM_COUNT = 10
 
@@ -107,7 +108,7 @@ OJ_PROBLEM_PRESET = [
         'regex': r'^https://codeforces\.com/problemset/problem/(?P<contestid>\w+)/(?P<index>\w+)$',
         'codename': 'CF_%s_%s',
         'judge': 'Codeforces',
-        },
+    },
     {
         'regex': r'^https://codeforces\.com/contest/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
         'codename': 'CF_%s_%s',
@@ -150,7 +151,7 @@ OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
 # Urls of discord webhook.
 # https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
 DISCORD_WEBHOOK = {
-    'default': None, # use this link if the specific link not found
+    'default': None,  # use this link if the specific link not found
     'on_new_ticket': None,
     'on_new_comment': None,
     'on_new_problem': None,
@@ -163,51 +164,62 @@ DISCORD_WEBHOOK = {
 
 SITE_FULL_URL = None  # ie 'https://oj.vnoi.info', please remove the last / if needed
 
-NODEJS = '/usr/bin/node'
-EXIFTOOL = '/usr/bin/exiftool'
 ACE_URL = '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3'
 SELECT2_JS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js'
-DEFAULT_SELECT2_CSS = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'
+SELECT2_CSS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'
 
 DMOJ_CAMO_URL = None
 DMOJ_CAMO_KEY = None
 DMOJ_CAMO_HTTPS = False
 DMOJ_CAMO_EXCLUDE = ()
+
 DMOJ_PROBLEM_DATA_ROOT = None
+
 DMOJ_PROBLEM_MIN_TIME_LIMIT = 0  # seconds
 DMOJ_PROBLEM_MAX_TIME_LIMIT = 60  # seconds
 DMOJ_PROBLEM_MIN_MEMORY_LIMIT = 0  # kilobytes
 DMOJ_PROBLEM_MAX_MEMORY_LIMIT = 1048576  # kilobytes
 DMOJ_PROBLEM_MIN_PROBLEM_POINTS = 0
 DMOJ_PROBLEM_HOT_PROBLEM_COUNT = 7
-DMOJ_PROBLEM_STATEMENT_DISALLOWED_CHARACTERS = {'“', '”', '‘', '’'}
+
+DMOJ_PROBLEM_STATEMENT_DISALLOWED_CHARACTERS = {'“', '”', '‘', '’', '−', 'ﬀ', 'ﬁ', 'ﬂ', 'ﬃ', 'ﬄ'}
 DMOJ_RATING_COLORS = True
 DMOJ_EMAIL_THROTTLING = (10, 60)
-VNOJ_DISCORD_WEBHOOK_THROTTLING = (10, 60) # Max 10 messages in 60 seconds
-DMOJ_STATS_LANGUAGE_THRESHOLD = 10
-DMOJ_SUBMISSIONS_REJUDGE_LIMIT = 10
+VNOJ_DISCORD_WEBHOOK_THROTTLING = (10, 60)  # Max 10 messages in 60 seconds
+
 # Maximum number of submissions a single user can queue without the `spam_submission` permission
 DMOJ_SUBMISSION_LIMIT = 2
+DMOJ_SUBMISSIONS_REJUDGE_LIMIT = 10
+
 # Whether to allow users to view source code: 'all' | 'all-solved' | 'only-own'
 DMOJ_SUBMISSION_SOURCE_VISIBILITY = 'all-solved'
 DMOJ_BLOG_NEW_PROBLEM_COUNT = 7
-DMOJ_BLOG_RECENTLY_ATTEMPTED_PROBLEMS_COUNT = 7
 DMOJ_TOTP_TOLERANCE_HALF_MINUTES = 1
 DMOJ_SCRATCH_CODES_COUNT = 5
 DMOJ_USER_MAX_ORGANIZATION_COUNT = 3
+
 # Whether to allow users to download their data
 DMOJ_USER_DATA_DOWNLOAD = False
 DMOJ_USER_DATA_CACHE = ''
 DMOJ_USER_DATA_INTERNAL = ''
 DMOJ_USER_DATA_DOWNLOAD_RATELIMIT = datetime.timedelta(days=1)
+
 # Whether to allow contest authors to download contest data
 DMOJ_CONTEST_DATA_DOWNLOAD = False
 DMOJ_CONTEST_DATA_CACHE = ''
 DMOJ_CONTEST_DATA_INTERNAL = ''
 DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT = datetime.timedelta(days=1)
+
 DMOJ_COMMENT_VOTE_HIDE_THRESHOLD = -5
-DMOJ_PDF_PROBLEM_CACHE = ''
-DMOJ_PDF_PROBLEM_TEMP_DIR = tempfile.gettempdir()
+DMOJ_COMMENT_REPLY_TIMEFRAME = datetime.timedelta(days=365)
+
+DMOJ_PDF_PDFOID_URL = None
+# Optional but recommended to save resources, path on disk to cache PDFs
+DMOJ_PDF_PROBLEM_CACHE = None
+# Optional, URL serving DMOJ_PDF_PROBLEM_CACHE with X-Accel-Redirect
+DMOJ_PDF_PROBLEM_INTERNAL = None
+
+DMOJ_STATS_LANGUAGE_THRESHOLD = 10
 DMOJ_STATS_SUBMISSION_RESULT_COLORS = {
     'TLE': '#a3bcbd',
     'AC': '#00a92a',
@@ -219,6 +231,18 @@ DMOJ_API_PAGE_SIZE = 1000
 
 DMOJ_PASSWORD_RESET_LIMIT_WINDOW = 3600
 DMOJ_PASSWORD_RESET_LIMIT_COUNT = 10
+
+# At the bare minimum, dark and light theme CSS file locations must be declared
+DMOJ_THEME_CSS = {
+    'light': 'style.css',
+    'dark': 'dark/style.css',
+}
+# At the bare minimum, dark and light ace themes must be declared
+DMOJ_THEME_DEFAULT_ACE_THEME = {
+    'light': 'github',
+    'dark': 'twilight',
+}
+DMOJ_SELECT2_THEME = 'dmoj'
 
 MARKDOWN_STYLES = {}
 MARKDOWN_DEFAULT_STYLE = {}
@@ -241,31 +265,11 @@ BAD_MAIL_PROVIDERS = ()
 BAD_MAIL_PROVIDER_REGEX = ()
 NOFOLLOW_EXCLUDED = set()
 
-TIMEZONE_BG = None
-TIMEZONE_MAP = None
-TIMEZONE_DETECT_BACKEND = None
+TIMEZONE_MAP = 'https://static.dmoj.ca/assets/earth.jpg'
 
 TERMS_OF_SERVICE_URL = None
 DEFAULT_USER_LANGUAGE = 'CPP17'
 
-PHANTOMJS = ''
-PHANTOMJS_PDF_ZOOM = 0.75
-PHANTOMJS_PDF_TIMEOUT = 5.0
-PHANTOMJS_PAPER_SIZE = 'Letter'
-
-SLIMERJS = ''
-SLIMERJS_PDF_ZOOM = 0.75
-SLIMERJS_FIREFOX_PATH = ''
-SLIMERJS_PAPER_SIZE = 'Letter'
-
-PUPPETEER_MODULE = '/usr/lib/node_modules/puppeteer'
-PUPPETEER_PAPER_SIZE = 'Letter'
-
-USE_SELENIUM = False
-SELENIUM_CUSTOM_CHROME_PATH = None
-SELENIUM_CHROMEDRIVER_PATH = 'chromedriver'
-
-PYGMENT_THEME = 'pygment-github.css'
 INLINE_JQUERY = True
 INLINE_FONTAWESOME = True
 JQUERY_JS = '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'
@@ -298,6 +302,7 @@ else:
                     'children': [
                         'judge.ProblemGroup',
                         'judge.ProblemType',
+                        'judge.License',
                     ],
                 },
                 {
@@ -306,13 +311,13 @@ else:
                     'children': [
                         'judge.TagGroup',
                         'judge.Tag',
-                    ]
+                    ],
                 },
+                ('judge.Submission', 'fa-check-square-o'),
                 {
-                    'model': 'judge.Submission',
-                    'icon': 'fa-check-square-o',
+                    'model': 'judge.Language',
+                    'icon': 'fa-file-code-o',
                     'children': [
-                        'judge.Language',
                         'judge.Judge',
                     ],
                 },
@@ -324,19 +329,20 @@ else:
                         'judge.ContestTag',
                     ],
                 },
+                ('judge.Ticket', 'fa-bell'),
                 {
                     'model': 'auth.User',
                     'icon': 'fa-user',
                     'children': [
+                        'judge.Profile',
                         'auth.Group',
                         'registration.RegistrationProfile',
                     ],
                 },
                 {
-                    'model': 'judge.Profile',
-                    'icon': 'fa-user-plus',
+                    'model': 'judge.Organization',
+                    'icon': 'fa-users',
                     'children': [
-                        'judge.Organization',
                         'judge.OrganizationRequest',
                         'judge.Badge',
                     ],
@@ -345,16 +351,20 @@ else:
                     'model': 'judge.NavigationBar',
                     'icon': 'fa-bars',
                     'children': [
-                        'judge.MiscConfig',
-                        'judge.License',
                         'sites.Site',
                         'redirects.Redirect',
                     ],
                 },
                 ('judge.BlogPost', 'fa-rss-square'),
-                ('judge.Comment', 'fa-comment-o'),
+                {
+                    'model': 'judge.Comment',
+                    'icon': 'fa-comment-o',
+                    'children': [
+                        'judge.CommentLock',
+                    ],
+                },
                 ('flatpages.FlatPage', 'fa-file-text-o'),
-                ('judge.Solution', 'fa-pencil'),
+                ('judge.MiscConfig', 'fa-question-circle'),
             ],
             'dashboard': {
                 'breadcrumbs': True,
@@ -399,6 +409,7 @@ MIDDLEWARE = (
     'judge.middleware.APIMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'judge.middleware.MiscConfigMiddleware',
     'judge.middleware.DMOJLoginMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
@@ -437,6 +448,7 @@ SILENCED_SYSTEM_CHECKS = ['urls.W002', 'fields.W342']
 ROOT_URLCONF = 'dmoj.urls'
 LOGIN_REDIRECT_URL = '/user'
 WSGI_APPLICATION = 'dmoj.wsgi.application'
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 TEMPLATES = [
     {
@@ -459,6 +471,7 @@ TEMPLATES = [
                 'judge.template_context.general_info',
                 'judge.template_context.site',
                 'judge.template_context.site_name',
+                'judge.template_context.site_theme',
                 'judge.template_context.misc_config',
                 'judge.template_context.math_setting',
                 'social_django.context_processors.backends',
@@ -473,6 +486,9 @@ TEMPLATES = [
                 'judge.jinja2.DMOJExtension',
                 'judge.jinja2.spaceless.SpacelessExtension',
             ],
+            'bytecode_cache': {
+                'enabled': True,
+            },
         },
     },
     {
@@ -517,18 +533,19 @@ BLEACH_USER_SAFE_TAGS = [
 
 BLEACH_USER_SAFE_ATTRS = {
     '*': ['id', 'class', 'style', 'data', 'height'],
-    'img': ['src', 'alt', 'title', 'width', 'height', 'data-src'],
+    'img': ['src', 'alt', 'title', 'width', 'height', 'data-src', 'align'],
     'a': ['href', 'alt', 'title'],
     'iframe': ['src', 'height', 'width', 'allow'],
     'abbr': ['title'],
     'dfn': ['title'],
     'time': ['datetime'],
     'data': ['value'],
-    'td':  ['colspan', 'rowspan'],
-    'th':  ['colspan', 'rowspan'],
+    'td': ['colspan', 'rowspan'],
+    'th': ['colspan', 'rowspan'],
     'audio': ['autoplay', 'controls', 'crossorigin', 'muted', 'loop', 'preload', 'src'],
     'video': ['autoplay', 'controls', 'crossorigin', 'height', 'muted', 'loop', 'poster', 'preload', 'src', 'width'],
     'source': ['src', 'srcset', 'type'],
+    'li': ['value'],
 }
 
 MARKDOWN_STAFF_EDITABLE_STYLE = {
@@ -610,7 +627,7 @@ SUBMISSION_FILE_UPLOAD_URL_PREFIX = '/submission_file'
 SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission_file'
 
 # Database
-# https://docs.djangoproject.com/en/2.2/ref/settings/#databases
+# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -638,7 +655,7 @@ EVENT_DAEMON_SUBMISSION_KEY = '6Sdmkx^%pk@GsifDfXcwX*Y7LRF%RGT8vmFpSxFBT$fwS7trc
 EVENT_DAEMON_CONTEST_KEY = '&w7hB-.9WnY2Jj^Qm+|?o6a<!}_2Wiw+?(_Yccqq{uR;:kWQP+3R<r(ICc|4^dDeEuJE{*D;Gg@K(4K>'
 
 # Internationalization
-# https://docs.djangoproject.com/en/2.2/topics/i18n/
+# https://docs.djangoproject.com/en/3.2/topics/i18n/
 
 # Whatever you do, this better be one of the entries in `LANGUAGES`.
 LANGUAGE_CODE = 'en'
@@ -652,7 +669,7 @@ USE_TZ = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/2.2/howto/static-files/
+# https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 DMOJ_RESOURCES = os.path.join(BASE_DIR, 'resources')
 STATICFILES_FINDERS = (
@@ -696,8 +713,6 @@ SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
 SOCIAL_AUTH_SLUGIFY_USERNAMES = True
 SOCIAL_AUTH_SLUGIFY_FUNCTION = 'judge.social_auth.slugify_username'
 
-JUDGE_AMQP_PATH = None
-
 MOSS_API_KEY = None
 
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
@@ -706,8 +721,19 @@ WEBAUTHN_RP_ID = None
 
 DESCRIPTION_MAX_LENGTH = 200
 
+GROUP_PERMISSION_FOR_ORG_ADMIN = 'Org Admin'
+
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
         exec(f.read(), globals())
 except IOError:
     pass
+
+if DMOJ_PDF_PDFOID_URL:
+    # If a cache is configured, it must already exist and be a directory
+    assert DMOJ_PDF_PROBLEM_CACHE is None or os.path.isdir(DMOJ_PDF_PROBLEM_CACHE)
+    # If using X-Accel-Redirect, the cache directory must be configured
+    assert DMOJ_PDF_PROBLEM_INTERNAL is None or DMOJ_PDF_PROBLEM_CACHE is not None
+
+ACE_DEFAULT_LIGHT_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['light']
+ACE_DEFAULT_DARK_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['dark']

@@ -3,12 +3,11 @@ from functools import partial
 from django.conf import settings
 from django.contrib.auth.context_processors import PermWrapper
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.cache import cache
 from django.utils.functional import SimpleLazyObject, new_method_proxy
 
 from judge import event_poster as event
 from judge.utils.caniuse import CanIUse, SUPPORT
-from .models import MiscConfig, NavigationBar, Profile
+from .models import NavigationBar, Profile
 
 
 class FixedSimpleLazyObject(SimpleLazyObject):
@@ -25,13 +24,13 @@ def get_resource(request):
     else:
         scheme = 'http'
     return {
-        'PYGMENT_THEME': settings.PYGMENT_THEME,
         'INLINE_JQUERY': settings.INLINE_JQUERY,
         'INLINE_FONTAWESOME': settings.INLINE_FONTAWESOME,
         'JQUERY_JS': settings.JQUERY_JS,
         'FONTAWESOME_CSS': settings.FONTAWESOME_CSS,
         'DMOJ_SCHEME': scheme,
         'DMOJ_CANONICAL': settings.DMOJ_CANONICAL,
+        'DMOJ_SELECT2_THEME': settings.DMOJ_SELECT2_THEME,
     }
 
 
@@ -73,37 +72,8 @@ def site(request):
     return {'site': get_current_site(request)}
 
 
-class MiscConfigDict(dict):
-    __slots__ = ('language', 'site')
-
-    def __init__(self, language='', domain=None):
-        self.language = language
-        self.site = domain
-        super(MiscConfigDict, self).__init__()
-
-    def __missing__(self, key):
-        cache_key = 'misc_config:%s:%s:%s' % (self.site, self.language, key)
-        value = cache.get(cache_key)
-        if value is None:
-            keys = ['%s.%s' % (key, self.language), key] if self.language else [key]
-            if self.site is not None:
-                keys = ['%s:%s' % (self.site, key) for key in keys] + keys
-            map = dict(MiscConfig.objects.values_list('key', 'value').filter(key__in=keys))
-            for item in keys:
-                if item in map:
-                    value = map[item]
-                    break
-            else:
-                value = ''
-            cache.set(cache_key, value, 86400)
-        self[key] = value
-        return value
-
-
 def misc_config(request):
-    domain = get_current_site(request).domain
-    return {'misc_config': MiscConfigDict(domain=domain),
-            'i18n_config': MiscConfigDict(language=request.LANGUAGE_CODE, domain=domain)}
+    return {'misc_config': request.misc_config}
 
 
 def site_name(request):
@@ -112,10 +82,24 @@ def site_name(request):
             'SITE_ADMIN_EMAIL': settings.SITE_ADMIN_EMAIL}
 
 
+def site_theme(request):
+    # Middleware populating `profile` may not have loaded at this point if we're called from an error context.
+    if hasattr(request.user, 'profile'):
+        preferred_css = settings.DMOJ_THEME_CSS.get(request.profile.site_theme)
+    else:
+        preferred_css = None
+    return {
+        'DARK_STYLE_CSS': settings.DMOJ_THEME_CSS['dark'],
+        'LIGHT_STYLE_CSS': settings.DMOJ_THEME_CSS['light'],
+        'PREFERRED_STYLE_CSS': preferred_css,
+    }
+
+
 def math_setting(request):
     caniuse = CanIUse(request.META.get('HTTP_USER_AGENT', ''))
 
-    if request.user.is_authenticated:
+    # Middleware populating `profile` may not have loaded at this point if we're called from an error context.
+    if hasattr(request.user, 'profile'):
         engine = request.profile.math_engine
     else:
         engine = settings.MATHOID_DEFAULT_TYPE

@@ -1,0 +1,57 @@
+{% extends "common-content.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = '' %}
+    {% include "contest/contest-tabs.html" %}
+    {% if contest.is_organization_private %}
+        <span class="organization-tags">
+            {% for org in contest.organizations.all() %}
+                <span class="organization-tag">
+                    <a href="{{ org.get_absolute_url() }}">
+                        <i class="fa fa-lock"></i> {{ org.name }}
+                    </a>
+                </span>
+            {% endfor %}
+        </span>
+    {% endif %}
+{% endblock %}
+
+{% block body %}
+    {% set in_contest = contest.is_in_contest(request.user) %}
+    {% if in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
+        {% block description %}
+                {% for problem in contest_problems %}
+                    <div style="display: flex; flex-direction: column; align-items: center;">
+                        <div class="content-description" style="width: 70%;">
+                            <div class="problem_container">
+                                <div style="display: flex">
+                                    <h2 style="margin-top: 0.5em; margin-right: 0.5em;">{{ problem.i18n_name }}</h2>
+                                    <a href="{{ url('problem_submit', problem.code) }}" class="button" style="display: inline; margin: auto 0;">
+                                        {{ _('Submit') }}
+                                    </a>
+                                </div>
+
+                                <div>
+                                    <span><strong>Time limit:</strong> {{ problem.time_limit }} /</span>
+                                    <span><strong>Memory limit:</strong> {{ problem.memory_limit|kbsimpleformat }}</span>
+                                    <p><strong>Point:</strong> {{ problem.points }}</p>
+                                </div>
+                            </div>
+                            {% include "problem/problem-detail.html" %}
+                            <hr>
+                        </div>
+                    </div>
+                {% endfor %}
+        {% endblock %}
+    {% endif %}
+
+    <!-- <hr> -->
+{% endblock %}
+
+{% block description_end %}{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+{% endblock %}

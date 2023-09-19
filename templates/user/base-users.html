@@ -11,6 +11,7 @@
             }));
             var in_user_redirect = false;
             $('#search-handle').select2({
+                theme: '{{ DMOJ_SELECT2_THEME }}',
                 placeholder: '{{ _('Search by handle...') }}',
                 ajax: {
                     url: '{{ url('user_search_select2_ajax') }}'
@@ -22,14 +23,7 @@
                             'class': 'user-search-image', src: data.gravatar_url,
                             width: 24, height: 24
                         }))
-                        .append($('<span>', {'class': data.display_rank + ' user-search-name'}).text(data.text))
-                        .append($('<a>', {href: '/user/' + data.text, 'class': 'user-redirect'})
-                            .append($('<i>', {'class': 'fa fa-mail-forward'}))
-                            .mouseover(function () {
-                                in_user_redirect = true;
-                            }).mouseout(function () {
-                                in_user_redirect = false;
-                            }));
+                        .append($('<span>', {'class': data.display_rank + ' user-search-name'}).text(data.text));
                 }
             }).on('select2:selecting', function () {
                 return !in_user_redirect;
@@ -53,23 +47,18 @@
 
 {% block media %}
     {% block users_media %}{% endblock %}
-    <style>
-        .user-pagination {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: space-between;
-        }
-    </style>
 {% endblock %}
 
 {% block body %}
     {% if page_obj and page_obj.has_other_pages() %}
-        <div class="top-pagination-bar user-pagination">
+        <div class="top-pagination-bar">
             {% include "list-pages.html" %}
-            <form id="search-form" name="form" action="{{ url('user_ranking_redirect') }}" method="get">
-                <input id="search-handle" type="text" name="search"
-                       placeholder="{{ _('Search by handle...') }}">
-            </form>
+            {% if not organization %}
+                <form id="search-form" name="form" action="{{ url('user_ranking_redirect') }}" method="get">
+                    <input id="search-handle" type="text" name="search"
+                           placeholder="{{ _('Search by handle...') }}">
+                </form>
+            {% endif %}
         </div>
     {% endif %}
 
@@ -78,9 +67,7 @@
             {% block before_users_table %}{% endblock %}
 
             <div class="h-scrollable-table">
-                <table id="users-table" class="table">
-                    {% block users_table %}{% endblock %}
-                </table>
+                {% block users_table %}{% endblock %}
             </div>
         </div>
     </div>

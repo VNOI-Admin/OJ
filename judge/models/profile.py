@@ -21,7 +21,7 @@ from fernet_fields import EncryptedCharField
 from pyotp.utils import strings_equal
 from sortedm2m.fields import SortedManyToManyField
 
-from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, TIMEZONE
+from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, SITE_THEMES, TIMEZONE
 from judge.models.runtime import Language
 from judge.ratings import rating_class
 from judge.utils.float_compare import float_compare_equal
@@ -40,23 +40,23 @@ class EncryptedNullCharField(EncryptedCharField):
 class Organization(models.Model):
     name = models.CharField(max_length=128, verbose_name=_('organization title'))
     slug = models.SlugField(max_length=128, verbose_name=_('organization slug'),
-                            help_text=_('Organization name shown in URL'))
+                            help_text=_('Organization name shown in URLs.'))
     short_name = models.CharField(max_length=20, verbose_name=_('short name'),
-                                  help_text=_('Displayed beside user name during contests'))
+                                  help_text=_('Displayed beside user name during contests.'))
     about = models.TextField(verbose_name=_('organization description'))
     admins = models.ManyToManyField('Profile', verbose_name=_('administrators'), related_name='admin_of',
-                                    help_text=_('Those who can edit this organization'))
+                                    help_text=_('Those who can edit this organization.'))
     creation_date = models.DateTimeField(verbose_name=_('creation date'), auto_now_add=True)
     is_open = models.BooleanField(verbose_name=_('is open organization?'),
-                                  help_text=_('Allow joining organization'), default=False)
+                                  help_text=_('Allow joining organization.'), default=False)
     is_unlisted = models.BooleanField(verbose_name=_('is unlisted organization?'),
                                       help_text=_('Organization will not be listed'), default=True)
     slots = models.IntegerField(verbose_name=_('maximum size'), null=True, blank=True,
                                 help_text=_('Maximum amount of users in this organization, '
-                                            'only applicable to private organizations'))
-    access_code = models.CharField(max_length=7, help_text=_('Student access code'),
+                                            'only applicable to private organizations.'))
+    access_code = models.CharField(max_length=7, help_text=_('Student access code.'),
                                    verbose_name=_('access code'), null=True, blank=True)
-    logo_override_image = models.CharField(verbose_name=_('Logo override image'), default='', max_length=150,
+    logo_override_image = models.CharField(verbose_name=_('logo override image'), default='', max_length=150,
                                            blank=True,
                                            help_text=_('This image will replace the default site logo for users '
                                                        'viewing the organization.'))
@@ -96,7 +96,7 @@ class Organization(models.Model):
         elif isinstance(item, Profile):
             return self.members.filter(id=item.id).exists()
         else:
-            raise TypeError('Organization membership test must be Profile or primany key')
+            raise TypeError('Organization membership test must be Profile or primary key.')
 
     def __str__(self):
         return self.name
@@ -131,15 +131,16 @@ class Badge(models.Model):
 class Profile(models.Model):
     user = models.OneToOneField(User, verbose_name=_('user associated'), on_delete=models.CASCADE)
     about = models.TextField(verbose_name=_('self-description'), null=True, blank=True)
-    timezone = models.CharField(max_length=50, verbose_name=_('location'), choices=TIMEZONE,
+    timezone = models.CharField(max_length=50, verbose_name=_('time zone'), choices=TIMEZONE,
                                 default=settings.DEFAULT_USER_TIME_ZONE)
     language = models.ForeignKey('Language', verbose_name=_('preferred language'), on_delete=models.SET_DEFAULT,
                                  default=Language.get_default_language_pk)
-    points = models.FloatField(default=0, db_index=True)
-    performance_points = models.FloatField(default=0, db_index=True)
-    contribution_points = models.IntegerField(default=0, db_index=True)
-    problem_count = models.IntegerField(default=0, db_index=True)
-    ace_theme = models.CharField(max_length=30, choices=ACE_THEMES, default='github')
+    points = models.FloatField(default=0)
+    performance_points = models.FloatField(default=0)
+    contribution_points = models.IntegerField(default=0)
+    problem_count = models.IntegerField(default=0)
+    ace_theme = models.CharField(max_length=30, verbose_name=_('Ace theme'), choices=ACE_THEMES, default='auto')
+    site_theme = models.CharField(max_length=10, verbose_name=_('site theme'), choices=SITE_THEMES, default='auto')
     last_access = models.DateTimeField(verbose_name=_('last access time'), default=now)
     ip = models.GenericIPAddressField(verbose_name=_('last IP'), blank=True, null=True)
     badges = models.ManyToManyField(Badge, verbose_name=_('badges'), blank=True, related_name='users')
@@ -164,32 +165,32 @@ class Profile(models.Model):
                                            null=True, blank=True, related_name='+', on_delete=models.SET_NULL)
     math_engine = models.CharField(verbose_name=_('math engine'), choices=MATH_ENGINES_CHOICES, max_length=4,
                                    default=settings.MATHOID_DEFAULT_TYPE,
-                                   help_text=_('the rendering engine used to render math'))
+                                   help_text=_('The rendering engine used to render math.'))
     is_totp_enabled = models.BooleanField(verbose_name=_('TOTP 2FA enabled'), default=False,
-                                          help_text=_('check to enable TOTP-based two-factor authentication'))
+                                          help_text=_('Check to enable TOTP-based two-factor authentication.'))
     is_webauthn_enabled = models.BooleanField(verbose_name=_('WebAuthn 2FA enabled'), default=False,
-                                              help_text=_('check to enable WebAuthn-based two-factor authentication'))
+                                              help_text=_('Check to enable WebAuthn-based two-factor authentication.'))
     totp_key = EncryptedNullCharField(max_length=32, null=True, blank=True, verbose_name=_('TOTP key'),
-                                      help_text=_('32 character base32-encoded key for TOTP'),
+                                      help_text=_('32-character Base32-encoded key for TOTP.'),
                                       validators=[RegexValidator('^$|^[A-Z2-7]{32}$',
-                                                                 _('TOTP key must be empty or base32'))])
+                                                                 _('TOTP key must be empty or Base32.'))])
     scratch_codes = EncryptedNullCharField(max_length=255, null=True, blank=True, verbose_name=_('scratch codes'),
-                                           help_text=_('JSON array of 16 character base32-encoded codes '
-                                                       'for scratch codes'),
+                                           help_text=_('JSON array of 16-character Base32-encoded codes '
+                                                       'for scratch codes.'),
                                            validators=[
                                                RegexValidator(r'^(\[\])?$|^\[("[A-Z0-9]{16}", *)*"[A-Z0-9]{16}"\]$',
                                                               _('Scratch codes must be empty or a JSON array of '
-                                                                '16-character base32 codes'))])
+                                                                '16-character Base32 codes.'))])
     last_totp_timecode = models.IntegerField(verbose_name=_('last TOTP timecode'), default=0)
     api_token = models.CharField(max_length=64, null=True, verbose_name=_('API token'),
-                                 help_text=_('64 character hex-encoded API access token'),
+                                 help_text=_('64-character hex-encoded API access token.'),
                                  validators=[RegexValidator('^[a-f0-9]{64}$',
                                                             _('API token must be None or hexadecimal'))])
     notes = models.TextField(verbose_name=_('internal notes'), null=True, blank=True,
                              help_text=_('Notes for administrators regarding this user.'))
     data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
     username_display_override = models.CharField(max_length=100, blank=True, verbose_name=_('display name override'),
-                                                 help_text=_('Name displayed in place of username'))
+                                                 help_text=_('Name displayed in place of username.'))
 
     @cached_property
     def organization(self):
@@ -208,8 +209,12 @@ class Profile(models.Model):
         return self.username_display_override or self.username
 
     @cached_property
-    def has_any_solves(self):
-        return self.submission_set.filter(points=F('problem__points')).exists()
+    def has_enough_solves(self):
+        return self.problem_count >= settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT
+
+    @cached_property
+    def is_new_user(self):
+        return not self.user.is_staff and not self.has_enough_solves
 
     @cached_property
     def can_tag_problems(self):
@@ -219,6 +224,21 @@ class Profile(models.Model):
             if self.rating is not None and self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING:
                 return True
         return False
+
+    @cached_property
+    def resolved_ace_theme(self):
+        if self.ace_theme != 'auto':
+            return self.ace_theme
+        if not self.user.has_perm('judge.test_site'):
+            return settings.DMOJ_THEME_DEFAULT_ACE_THEME.get('light')
+        if self.site_theme != 'auto':
+            return settings.DMOJ_THEME_DEFAULT_ACE_THEME.get(self.site_theme)
+        # This must be resolved client-side using prefers-color-scheme.
+        return None
+
+    @cached_property
+    def registered_contest_ids(self):
+        return set(self.contest_history.filter(virtual=0).values_list('contest_id', flat=True))
 
     _pp_table = [pow(settings.DMOJ_PP_STEP, i) for i in range(settings.DMOJ_PP_ENTRIES)]
 
@@ -230,13 +250,14 @@ class Profile(models.Model):
                            .annotate(max_points=Max('submission__points')).order_by('-max_points')
                            .values_list('max_points', flat=True).filter(max_points__gt=0)
         )
-        extradata = (
-            public_problems.filter(submission__user=self, submission__result='AC').values('id').distinct().count()
-        )
         bonus_function = settings.DMOJ_PP_BONUS_FUNCTION
         points = sum(data)
-        problems = len(data)
-        pp = sum(x * y for x, y in zip(table, data)) + bonus_function(extradata)
+        problems = (
+            public_problems.filter(submission__user=self, submission__result='AC',
+                                   submission__case_points__gte=F('submission__case_total'))
+            .values('id').distinct().count()
+        )
+        pp = sum(x * y for x, y in zip(table, data)) + bonus_function(problems)
         if not float_compare_equal(self.points, points) or \
            problems != self.problem_count or \
            not float_compare_equal(self.performance_points, pp):
@@ -256,7 +277,7 @@ class Profile(models.Model):
         # Because the aggregate function can return None
         # So we use `X or 0` to get 0 if X is None
         # Please note that `0 or X` will return None if X is None
-        total_comment_scores = Comment.objects.filter(author=self.id) \
+        total_comment_scores = Comment.objects.filter(author=self.id, hidden=False) \
             .aggregate(sum=Sum('score'))['sum'] or 0
         total_blog_scores = BlogPost.objects.filter(authors=self.id, visible=True, organization=None) \
             .aggregate(sum=Sum('score'))['sum'] or 0
@@ -369,6 +390,13 @@ class Profile(models.Model):
         )
         verbose_name = _('user profile')
         verbose_name_plural = _('user profiles')
+
+        indexes = [
+            models.Index(fields=('is_unlisted', '-performance_points')),
+            models.Index(fields=('is_unlisted', '-contribution_points')),
+            models.Index(fields=('is_unlisted', '-rating')),
+            models.Index(fields=('is_unlisted', '-problem_count')),
+        ]
 
 
 class WebAuthnCredential(models.Model):

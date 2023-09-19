@@ -1,5 +1,4 @@
 from adminsortable2.admin import SortableInlineAdminMixin
-from django.conf.urls import url
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
@@ -7,7 +6,7 @@ from django.db.models import Q, TextField
 from django.forms import ModelForm, ModelMultipleChoiceField
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
-from django.urls import reverse, reverse_lazy
+from django.urls import path, reverse, reverse_lazy
 from django.utils import timezone
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _, ngettext
@@ -64,7 +63,7 @@ class ContestProblemInlineForm(ModelForm):
 class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
     model = ContestProblem
     verbose_name = _('Problem')
-    verbose_name_plural = 'Problems'
+    verbose_name_plural = _('Problems')
     fields = ('problem', 'points', 'partial', 'is_pretested', 'max_submissions', 'output_prefix_override', 'order',
               'rejudge_column', 'rescore_column')
     readonly_fields = ('rejudge_column', 'rescore_column')
@@ -73,8 +72,8 @@ class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
     def rejudge_column(self, obj):
         if obj.id is None:
             return ''
-        return format_html('<a class="button rejudge-link" href="{}">Rejudge</a>',
-                           reverse('admin:judge_contest_rejudge', args=(obj.contest.id, obj.id)))
+        return format_html('<a class="button rejudge-link" href="{0}">{1}</a>',
+                           reverse('admin:judge_contest_rejudge', args=(obj.contest.id, obj.id)), _('Rejudge'))
     rejudge_column.short_description = ''
 
     def rescore_column(self, obj):
@@ -146,9 +145,10 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         (_('Settings'), {'fields': ('is_visible', 'use_clarifications', 'push_announcements', 'disallow_virtual',
                                     'hide_problem_tags', 'hide_problem_authors', 'show_short_display',
                                     'run_pretests_only', 'locked_after', 'scoreboard_visibility',
-                                    'scoreboard_cache_timeout', 'show_submission_list', 'points_precision',
-                                    'banned_judges')}),
-        (_('Scheduling'), {'fields': ('start_time', 'end_time', 'time_limit')}),
+                                    'ranking_access_code', 'scoreboard_cache_timeout', 'show_submission_list',
+                                    'points_precision', 'banned_judges')}),
+        (_('Scheduling'), {'fields': ('start_time', 'end_time', 'registration_start', 'registration_end',
+                                      'time_limit')}),
         (_('Details'), {'fields': ('description', 'og_image', 'logo_override_image', 'tags', 'summary')}),
         (_('Format'), {'fields': ('format_name', 'frozen_last_minutes', 'format_config', 'problem_label_script')}),
         (_('Rating'), {'fields': ('is_rated', 'rate_all', 'rating_floor', 'rating_ceiling', 'rate_exclude')}),
@@ -287,11 +287,11 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
 
     def get_urls(self):
         return [
-            url(r'^rate/all/$', self.rate_all_view, name='judge_contest_rate_all'),
-            url(r'^(\d+)/rate/$', self.rate_view, name='judge_contest_rate'),
-            url(r'^(\d+)/rejudge/(\d+)/$', self.rejudge_view, name='judge_contest_rejudge'),
-            url(r'^(\d+)/rescore/(\d+)/$', self.rescore_view, name='judge_contest_rescore'),
-            url(r'^(\d+)/resend/(\d+)/$', self.resend_view, name='judge_contest_resend'),
+            path('rate/all/', self.rate_all_view, name='judge_contest_rate_all'),
+            path('<int:id>/rate/', self.rate_view, name='judge_contest_rate'),
+            path('<int:contest_id>/rejudge/<int:problem_id>/', self.rejudge_view, name='judge_contest_rejudge'),
+            path('<int:contest_id>/rescore/<int:problem_id>/', self.rescore_view, name='judge_contest_rescore'),
+            path('<int:contest_id>/resend/<int:announcement_id>/', self.resend_view, name='judge_contest_resend'),
         ] + super(ContestAdmin, self).get_urls()
 
     def rejudge_view(self, request, contest_id, problem_id):
@@ -345,7 +345,9 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         if 'problem_label_script' in form.base_fields:
             # form.base_fields['problem_label_script'] does not exist when the user has only view permission
             # on the model.
-            form.base_fields['problem_label_script'].widget = AceWidget('lua', request.profile.ace_theme)
+            form.base_fields['problem_label_script'].widget = AceWidget(
+                mode='lua', theme=request.profile.resolved_ace_theme,
+            )
 
         perms = ('edit_own_contest', 'edit_all_contest')
         form.base_fields['curators'].queryset = Profile.objects.filter(

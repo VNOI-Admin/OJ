@@ -2,7 +2,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models import F, Q
 from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404
-from django.utils.encoding import smart_text
+from django.utils.encoding import smart_str
 from django.views.generic.list import BaseListView
 
 from judge.jinja2.gravatar import gravatar
@@ -36,7 +36,7 @@ class Select2View(BaseListView):
         return JsonResponse({
             'results': [
                 {
-                    'text': smart_text(self.get_name(obj)),
+                    'text': smart_str(self.get_name(obj)),
                     'id': obj.pk,
                 } for obj in context['object_list']],
             'more': context['page_obj'].has_next(),
@@ -57,7 +57,7 @@ class UserSelect2View(Select2View):
         return JsonResponse({
             'results': [
                 {
-                    'text': smart_text(self.get_name(obj)),
+                    'text': smart_str(self.get_name(obj)),
                     'id': obj.pk,
                 } for obj in qs],
         })
@@ -83,7 +83,7 @@ class OrganizationUserSelect2View(Select2View):
         return JsonResponse({
             'results': [
                 {
-                    'text': smart_text(self.get_name(obj)),
+                    'text': smart_str(self.get_name(obj)),
                     'id': obj.pk,
                 } for obj in qs],
         })
@@ -123,7 +123,7 @@ class OrganizationSelect2View(Select2View):
 class ProblemSelect2View(Select2View):
     def get_queryset(self):
         return Problem.get_visible_problems(self.request.user) \
-                      .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term)).distinct()
+                      .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term))
 
 
 class ContestSelect2View(Select2View):
@@ -141,7 +141,7 @@ class UserSearchSelect2View(BaseListView):
     paginate_by = 20
 
     def get_queryset(self):
-        return _get_user_queryset(self.term)
+        return _get_user_queryset(self.term).filter(is_unlisted=False)
 
     def get(self, request, *args, **kwargs):
         self.request = request

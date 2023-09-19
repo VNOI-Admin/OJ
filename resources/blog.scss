@@ -4,30 +4,45 @@
     padding-right: 0em;
     flex: 73.5%;
     vertical-align: top;
-    margin-right: 0;
 
     .post {
-        padding-top: 0.5em;
+        margin: 0em 0.5em;
+
+        &:first-child {
+            margin-top: 1.1em;
+        }
+
+        &:last-child {
+            border-bottom: none;
+        }
 
         .title {
             font-weight: 600;
             font-size: 1.7em;
 
             a {
-                color: #5b80b9 !important;
+                color: $color_link50;
 
                 &:hover {
-                    color: #0645ad !important;
+                    color: $color_link100;
+                }
+
+                &:active {
+                    color: $color_link200;
                 }
             }
         }
 
-        &:last-child {
-            border-bottom: none;
+        .comment-count {
+            font-size: 12px;
+        }
 
-            .blog-body {
-                padding-bottom: none;
-            }
+        .comment-count-link {
+            color: $color_primary75;
+        }
+
+        .comment-icon {
+            padding: 0 0.2em 0 0.5em;
         }
 
         .blog-body {
@@ -51,11 +66,6 @@
 }
 
 .blog-sidebox {
-    h3 {
-        padding-bottom: 0.25em;
-        padding-left: 0.5em;
-    }
-
     ul {
         list-style: none;
         padding-left: 1em;
@@ -69,23 +79,10 @@
     .contest {
         padding: 1.25em 0 1.5em 0;
         text-align: center;
-        border-bottom: 1px solid $border_gray;
+        border-bottom: 1px solid $color_primary25;
 
         &:last-child {
             border-bottom: none;
-        }
-
-        .name {
-            font-size: 1.25em;
-            font-weight: 500;
-
-            a {
-                color: #5b80b9 !important;
-
-                &:hover {
-                    color: #0645ad !important;
-                }
-            }
         }
     }
 
@@ -101,7 +98,7 @@
     }
 
     .blog-content {
-        margin-right: 1em !important;
+        margin-right: 1em;
     }
 
     #mobile.tabs {
@@ -114,13 +111,12 @@
 }
 
 #mobile.tabs {
-    margin: 0;
-    margin-bottom: 1em;
+    margin: 0 0 1em;
 }
 
 .rssatom {
     text-align: right;
-    padding: 0.25em;
+    margin: 0.25em;
     display: block;
 
     span {
@@ -140,5 +136,16 @@
             text-align: center;
             display: block;
         }
+    }
+}
+
+.open-tickets {
+    .object {
+        margin-left: 1em;
+        font-style: italic;
+    }
+
+    .author {
+        margin-left: 1em;
     }
 }

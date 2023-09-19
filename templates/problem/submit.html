@@ -69,6 +69,7 @@
                 var customAdapter = $.fn.select2.amd.require('select2/data/customAdapter');
 
                 $("#id_language").select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}',
                     templateResult: format,
                     templateSelection: formatSelection,
                     resultsAdapter: customAdapter
@@ -229,134 +230,17 @@
                     );
                 }
             }
+
+            // https://stackoverflow.com/questions/43043113/how-to-force-reloading-a-page-when-using-browser-back-button#comment105570384_43043658
+            if (window.performance.getEntriesByType("navigation")[0].type === "back_forward") {
+                location.reload(true);
+            }
         </script>
     {% endcompress %}
 {% endblock %}
 
 {% block media %}
     {{ form.media.css }}
-    {% compress css %}
-        <style media="screen">
-            .hidden {
-                display: none;
-            }
-
-            #submit-wrapper {
-                margin-top: 0.7em;
-            }
-
-            #submit-wrapper #editor, #submit-wrapper #language {
-                margin-top: 4px;
-            }
-
-            #id_language {
-                width: 100%;
-            }
-
-            #file_drag {
-                border: 2px dashed #999;
-                border-radius : 7px;
-                color: #999;
-                cursor: pointer;
-                display: block;
-                padding: 1.5em;
-                text-align: center;
-                transition: background 0.3s, color 0.3s;
-            }
-
-            #file_drag:hover, #file_drag.hover {
-                background: #ddd;
-                border-style: solid;
-                box-shadow: inset 0 3px 4px #999;
-            }
-
-            #result-version-info {
-                border-bottom: 1px solid rgb(148, 148, 148);
-                margin: 0px 1em;
-                color: #757575;
-                font-weight: 600;
-                padding: 0.2em 0;
-                text-align: right;
-            }
-
-            #language-select2 .select2-results__message {
-                white-space: nowrap
-            }
-
-            #language-select2.select2-dropdown--above {
-                display: flex;
-                flex-direction: column-reverse;
-            }
-
-            #language-select2 .select2-results__option {
-                color: #757575 !important;
-                background: white !important;
-            }
-
-            #language-select2 .select2-results__option--highlighted {
-                text-decoration: underline;
-            }
-
-            #language-select2 .select2-results__option[aria-selected=true] {
-                font-weight: bold;
-                color: black !important;
-            }
-
-            #language-select2 .select2-results__option {
-                padding: 4px 0px;
-            }
-
-            #language-select2 .select2-results__options {
-                overflow-y: visible !important;
-            }
-
-            #language-select2 .select2-results__option {
-                break-inside: avoid-column;
-            }
-
-            #language-select2 .select2-results {
-                -webkit-columns: 10 7em;
-                -moz-columns: 10 7em;
-                columns: 10 7em;
-                padding-left: 1.5em;
-                padding-top: 0.5em;
-            }
-            .helptext {
-                font-size: 13px;
-                color: #999;
-                border-width: 0 0 1px 0;
-            }
-            .helptext::before {
-                font-family: FontAwesome;
-                font-style: normal;
-                font-weight: normal;
-                line-height: 1;
-                content: "\f05a";
-                padding-right: 5px;
-                font-size: 14px;
-            }
-            .errorlist {
-                background: rgba(255, 0, 0, 0.3);
-                border: 3px dashed red;
-                border-right: none;
-                border-left: solid red;
-                padding: 0 1em 0.1em 2em;
-                margin: 0.3em 0 0.5em 0;
-            }
-            .errornote {
-                border: 3px dashed #ffc000;
-                border-left: solid #ffc000;
-                padding: 0.7em 2em;
-                margin: 0 0 8px;
-                font-size: 13px !important;
-                font-weight: 400;
-            }
-            .required th::after {
-                content: "*";
-                color: red;
-            }
-        </style>
-    {% endcompress %}
 {% endblock %}
 
 {% block body %}

@@ -5,56 +5,40 @@
     width: 100%;
 
     th {
-        border-bottom: 1px solid $border_gray;
-
-        &.sun {
-            border-left: 1px solid $border_gray;
-        }
-
-        &.sun, &.mon, &.tue, &.wed, &.thu, &.fri, &.sat {
-            font-size: 0.95em;
-            border-right: 1px solid $border_gray;
-            background: $background_light_gray;
-        }
+        border: 1px solid $color_primary25;
+        background: $color_primary5;
     }
 
     td {
         height: 110px;
         width: 170px;
-        color: #000;
         vertical-align: top;
-        text-align: right;
-        font-size: 0.75em;
-        border-right: 1px solid $border_gray;
-        border-bottom: 1px solid $border_gray;
+        border: 1px solid $color_primary25;
         transition-duration: 0.2s;
 
         .num {
-            font-size: 1.1em;
+            text-align: right;
             font-weight: bold;
             display: block;
-            border-bottom: 1px dashed $border_gray;
+            border-bottom: 1px dashed $color_primary25;
             padding-right: 0.2em;
             margin-bottom: 0.4em;
         }
 
         ul {
-            text-decoration: none;
-            text-align: left;
+            font-size: 0.75em;
             padding: 0;
             margin: 0;
 
             li {
-                margin-left: 17px;
-                margin-bottom: 0.2em;
+                margin: 0 0 0.2em 17px;
 
                 i.fa {
-                    color: orange;
+                    color: $color_link200;
                 }
 
                 a {
-                    text-decoration: none;
-                    color: #222;
+                    color: $color_primary75;
 
                     &:hover {
                         text-decoration: underline;
@@ -64,36 +48,23 @@
         }
 
         &:hover {
-            background: rgba(0, 0, 255, 0.3);
-            color: white;
-
-            .num {
-                font-weight: bold;
-            }
-
-            ul li a {
-                font-weight: normal;
-            }
+            background: rgba($color_link100, 0.2);
         }
     }
 
     .noday {
-        background: #f1f1f1;
+        background: $color_primary10;
     }
 
     .today {
-        background: rgba(255, 255, 100, 0.5);
-    }
-
-    tr td:first-child {
-        border-left: 1px solid #aaa;
+        background: rgba($color_link200, 0.2);
     }
 }
 
 #banner {
-    border-bottom: 1px solid rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid $color_primary25;
     padding-bottom: 1em;
-    color: rgb(85, 85, 85);
+    color: $color_primary75;
     font-size: $base_font_size;
 
     a.date {
@@ -103,13 +74,14 @@
         line-height: 1.3;
         font-size: 2.3em;
         padding-bottom: 0.15em;
-
-        &:link, &:visited {
-            color: #5B80B9;
-        }
+        color: $color_link50;
 
         &:hover {
-            color: #0645AD;
+            color: $color_link100;
+        }
+
+        &:active {
+            color: $color_link200;
         }
     }
 
@@ -125,6 +97,10 @@
             margin: 0;
         }
     }
+}
+
+.top-pagination-bar {
+    justify-content: space-between;
 }
 
 .contest-list {
@@ -144,21 +120,10 @@
         height: 4em;
     }
 
-    .floating-time-left {
-        position: absolute;
-        left: 0;
-    }
-
-    .floating-time-right {
-        position: absolute;
-        right: 0;
-        line-height: 1.2em;
-    }
-
-    .floating-time {
-        position: absolute;
-        right: 0;
-        bottom: 0;
+    .time-left {
+        text-align: left;
+        color: $color_primary50;
+        padding-top: 0.5em;
     }
 
     .contest-tags {
@@ -177,7 +142,7 @@
     }
 
     a.contest-sort-link {
-        color: white;
+        color: $color_primary0;
     }
 }
 
@@ -214,9 +179,10 @@ form.contest-join-pseudotab {
 
 .contest-participation-operation {
     float: right;
+    display: flex;
 
     .fa {
-        color: #444;
+        color: $color_primary75;
     }
 
     a + a {
@@ -224,4 +190,111 @@ form.contest-join-pseudotab {
     }
 
     padding: 0 5px;
+}
+
+#ranking-table {
+    font-size: 14px;
+
+    .user-name {
+        min-width: 20em;
+        position: relative;
+    }
+
+    .userinfo a, .user-name a, .user-name form {
+        display: inline-block !important;
+    }
+
+    .rating-column {
+        min-width: 3em;
+    }
+
+    td {
+        height: 2.5em;
+    }
+
+    td:not(.user-name, .personal-info) a:hover {
+        text-decoration: underline;
+    }
+
+    a {
+        display: block;
+    }
+
+    /* Make problem table headers green on hover */
+    th a:hover {
+        color: #0F0;
+    }
+
+    th a, th a:link, th a:visited {
+        color: $color_primary0;
+    }
+
+    .rank {
+        min-width: 2.4em
+    }
+
+    .points {
+        min-width: 2.4em;
+    }
+
+    .disqualified {
+        background-color: $color_contest_ranking_disqualified !important;
+    }
+
+    .point-denominator {
+        border-top: 1px solid $color_primary50;
+        font-size: 0.7em;
+    }
+
+    .start-time {
+        display: none;
+    }
+
+    .personal-info {
+        display: none;
+    }
+
+    .virtual-participation {
+        color: grey;
+        float: right
+    }
+
+    .user-points, .user-points a {
+        color: $color_primary100;
+    }
+}
+
+#org-dropdown-check-list {
+    display: inline-block;
+}
+
+#org-check-list-wrapper {
+    display: none;
+    background: $color_primary0;
+    border: 1px solid gray;
+    padding: 10px;
+
+    right: auto;
+    position: absolute;
+    z-index: 1;
+
+    button {
+        margin-bottom: 5px;
+        margin-left: 5px;
+    }
+
+    #org-check-list {
+        border-bottom: 1px solid gray;
+        color: $color_primary100;
+        text-align: left;
+        font-weight: normal;
+
+        li {
+            list-style: none;
+        }
+    }
+
+    .select2-selection__rendered {
+        width: 260px !important;
+    }
 }

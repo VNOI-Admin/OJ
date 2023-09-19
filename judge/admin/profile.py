@@ -53,7 +53,7 @@ class WebAuthnInline(admin.TabularInline):
     readonly_fields = ('cred_id', 'public_key', 'counter')
     extra = 0
 
-    def has_add_permission(self, request):
+    def has_add_permission(self, request, obj=None):
         return False
 
 
@@ -121,8 +121,8 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
         for profile in queryset:
             profile.calculate_points()
             count += 1
-        self.message_user(request, ngettext('%d user has scores recalculated.',
-                                            '%d users have scores recalculated.',
+        self.message_user(request, ngettext('%d user had scores recalculated.',
+                                            '%d users had scores recalculated.',
                                             count) % count)
     recalculate_points.short_description = _('Recalculate scores')
 
@@ -140,5 +140,7 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
         form = super(ProfileAdmin, self).get_form(request, obj, **kwargs)
         if 'user_script' in form.base_fields:
             # form.base_fields['user_script'] does not exist when the user has only view permission on the model.
-            form.base_fields['user_script'].widget = AceWidget('javascript', request.profile.ace_theme)
+            form.base_fields['user_script'].widget = AceWidget(
+                mode='javascript', theme=request.profile.resolved_ace_theme,
+            )
         return form

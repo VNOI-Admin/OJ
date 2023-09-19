@@ -1,0 +1,50 @@
+@use 'sass:color';
+@import "vars-common";
+
+$is_light_theme: true;
+
+$color_primary0: #fff;
+$color_primary5: #f8f8f8;   // light background
+$color_primary10: #eee;     // background
+$color_primary25: #ccc;     // border
+$color_primary33: #aaa;     // widget
+$color_primary50: #808080;
+$color_primary66: #555;     // tabs
+$color_primary75: #231f20;  // widget
+$color_primary90: #111;
+$color_primary100: #000;
+
+$color_link50: #5b80b9;     // default (title)
+$color_link75: #1958c1;     // default
+$color_link100: #0645ad;    // hover
+$color_link200: #faa700;    // active
+
+$color_pageBg: color.adjust($color_primary5, $lightness: 10%);
+
+// custom one-off colours
+$color_contest_ranking_disqualified: #ffa8a8;
+
+$color_rating_none: #999;
+$color_rating_newbie: #808080;
+$color_rating_pupil: #008000;
+$color_rating_specialist: #03a89e;
+$color_rating_expert: #0000ff;
+$color_rating_candidate_master: #aa00aa;
+$color_rating_master: #ff8c00;
+$color_rating_grandmaster: #ff0000;
+
+$color_select2_search_dropdown: $color_primary0;
+
+$color_user_submission_activity0: #ddd;
+$color_user_submission_activity1: #9be9a8;
+$color_user_submission_activity2: #40c463;
+$color_user_submission_activity3: #2f9c4c;
+$color_user_submission_activity4: #216e39;
+
+$color_problem_submit_select2: #757575;
+
+$color_voted_mark: #0000ff;
+
+$path_to_root: '.';     // relative path from style.css to STATIC_ROOT
+
+@mixin vars-img {}

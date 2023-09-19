@@ -35,7 +35,7 @@ class Disconnect(Exception):
 # making it impossible to inherit __init__ sanely. While it lets you
 # use setup(), most tools will complain about uninitialized variables.
 # This metaclass will allow sane __init__ behaviour while also magically
-# calling the methods that handles the request.
+# calling the methods that handle the request.
 class RequestHandlerMeta(type):
     def __call__(cls, *args, **kwargs):
         handler = super().__call__(*args, **kwargs)
@@ -141,6 +141,9 @@ class ZlibPacketHandler(metaclass=RequestHandlerMeta):
     def on_timeout(self):
         pass
 
+    def on_cleanup(self):
+        pass
+
     def handle(self):
         try:
             tag = self.read_size()
@@ -187,6 +190,8 @@ class ZlibPacketHandler(metaclass=RequestHandlerMeta):
             if e.__class__.__name__ == 'cancel_wait_ex':
                 return
             raise
+        finally:
+            self.on_cleanup()
 
     def send(self, data):
         compressed = zlib.compress(data.encode('utf-8'))

@@ -19,6 +19,7 @@
 
     #content-left {
         flex: 5;
+        width: 100%;
 
         &.split-common-content {
             width: 70%;
@@ -72,7 +73,7 @@ a.view-pdf {
 }
 
 .info-float .fa {
-    color: #000;
+    color: $color_primary100;
     padding-right: 0.2em;
 }
 

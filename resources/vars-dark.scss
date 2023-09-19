@@ -1,0 +1,51 @@
+@import "vars-common";
+
+$is_light_theme: false;
+
+$color_primary0: #0f0f0f;
+$color_primary5: #111;      // light background
+$color_primary10: #181818;  // background
+$color_primary25: #3b3b3b;  // border
+$color_primary33: #555;     // widget
+$color_primary50: #808080;
+$color_primary66: #aaa;     // tabs
+$color_primary75: #ccc;     // widget
+$color_primary90: #eee;
+$color_primary100: #f8f8f8;
+
+$color_link50: #06d;    // default (title)
+$color_link75: #6bf;    // default
+$color_link100: #49e;   // hover
+$color_link200: #d83;   // active
+
+$color_pageBg: #222;    // #222 because some elements should be darker than pageBg
+
+// custom one-off colours
+$color_contest_ranking_disqualified: #622;
+
+$color_rating_none: #aaa;
+$color_rating_newbie: #988f81;
+$color_rating_pupil: #72ff72;
+$color_rating_specialist: #57fcf2;
+$color_rating_expert: #337dff;
+$color_rating_candidate_master: #ff55ff;
+$color_rating_master: #ff981a;
+$color_rating_grandmaster: #ff1a1a;
+
+$color_select2_search_dropdown: $color_primary10;
+
+$color_user_submission_activity0: #3b3b3b;
+$color_user_submission_activity1: #0e4429;
+$color_user_submission_activity2: #006d32;
+$color_user_submission_activity3: #26a641;
+$color_user_submission_activity4: #39d353;
+
+$color_problem_submit_select2: #8a8a8a;
+
+$color_voted_mark: #ffd300;
+
+$path_to_root: '..';    // relative path from style.css to STATIC_ROOT
+
+@mixin vars-img {
+    filter: invert(1) hue-rotate(180deg);
+}

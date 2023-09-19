@@ -17,6 +17,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='organization',
             name='is_open',
-            field=models.BooleanField(default=False, help_text='Allow joining organization', verbose_name='is open organization?'),
+            field=models.BooleanField(default=False, help_text='Allow joining organization.', verbose_name='is open organization?'),
         ),
     ]

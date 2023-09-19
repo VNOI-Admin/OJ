@@ -39,22 +39,24 @@
     <meta property="og:url"
           content="{{ DMOJ_SCHEME }}://{{ DMOJ_CANONICAL|default(site.domain) }}{{ request.get_full_path() }}">
 
-    <!--[if lt IE 9]>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv.min.js"></script>
-    <script>window.bad_browser = true</script>
-    <![endif]-->
     {% block meta %}{% endblock %}
     {% if not INLINE_FONTAWESOME %}
         <link rel="stylesheet" href="{{ FONTAWESOME_CSS }}">
     {% endif %}
     {% compress css %}
-        <link rel="stylesheet" href="{{ static('style.css') }}">
-        {% if PYGMENT_THEME %}
-            <link rel="stylesheet" href="{{ static(PYGMENT_THEME) }}">
-        {% endif %}{% if INLINE_FONTAWESOME %}
-        <link rel="stylesheet" href="{{ static('libs/fontawesome/font-awesome.css') }}">{% endif %}
+        {# TODO: once dark mode support is better, enable for all users by deleting the else branch #}
+        {% if perms.judge.test_site %}
+            {% if PREFERRED_STYLE_CSS is not none %}
+                <link rel="stylesheet" href="{{ static(PREFERRED_STYLE_CSS) }}">
+            {% else %}
+                <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}" media="(prefers-color-scheme: light)">
+                <link rel="stylesheet" href="{{ static(DARK_STYLE_CSS) }}" media="(prefers-color-scheme: dark)">
+            {% endif %}
+        {% else %}
+            <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}">
+        {% endif %}
+        {% if INLINE_FONTAWESOME %}<link rel="stylesheet" href="{{ static('libs/fontawesome/font-awesome.css') }}">{% endif %}
         <link rel="stylesheet" href="{{ static('source_sans_pro.css') }}">
-        <link rel="stylesheet" type="text/css" href="{{ static('libs/featherlight/featherlight.min.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ static('libs/clipboard/tooltip.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ static('libs/select2/select2.css') }}">
     {% endcompress %}
@@ -163,7 +165,7 @@
         </script>
     {% endif %}
 
-    {% if request.user.is_authenticated %}
+    {% if request.user.is_authenticated and not tfa_in_progress %}
         <script>
             window.user = {
                 email: '{{ request.user.email|escapejs }}',
@@ -180,7 +182,7 @@
     {% endif %}
 
     {# Don't run userscript since it may be malicious #}
-    {% if request.user.is_authenticated and request.profile.user_script and not request.user.is_impersonate and not ignore_user_script %}
+    {% if request.user.is_authenticated and request.profile.user_script and not request.user.is_impersonate and not tfa_in_progress and not ignore_user_script %}
         <script type="text/javascript">{{ request.profile.user_script|safe }}</script>
     {% endif %}
     <script>
@@ -239,8 +241,8 @@
                 <li>
                     <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %}">
                         {{ _(node.label) }}
-                        {% if not node.is_leaf_node %}
-                            <div href="javascript:void(0)" class="nav-expand">></div>
+                        {% if not node.is_leaf_node() %}
+                            <div class="nav-expand">&gt;</div>
                         {% endif %}
                     </a>
                     {% with children=node.get_children() %}
@@ -333,12 +335,13 @@
     <noscript>
         <div id="noscript">{{ _('This site works best with JavaScript enabled.') }}</div>
     </noscript>
-    <main id="content" style="padding-top: 1em;">
-        {% if i18n_config.top_notification %}
-            {{ render_django(i18n_config.top_notification) }}
+    <br>
+    <main id="content">
+        {% if misc_config.top_notification %}
+            {{ render_django(misc_config.top_notification) }}
         {% endif %}
         {% block title_row %}
-            <h2 style="color:#393630; display:inline">
+            <h2 style="display:inline">
                 {% block content_title %}
                     {% if content_title %}{{ content_title }}{% else %}{{ title }}{% endif %}
                 {% endblock %}
@@ -351,8 +354,8 @@
         <div id="content-body">{% block body %}{% endblock %}</div>
     </main>
 
-    {% if i18n_config.announcement %}
-        <div id="announcement">{{ i18n_config.announcement|safe }}</div>
+    {% if misc_config.announcement %}
+        <div id="announcement">{{ misc_config.announcement|safe }}</div>
     {% endif %}
 
     {% block bodyend %}{% endblock %}
@@ -362,8 +365,8 @@
             <br>
             {{_('proudly powered by %(dmoj)s', dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'))}} |
             {{_('follow us on %(github)s and %(facebook)s', github=safe('<a style="color: #808080" href="https://github.com/VNOI-Admin/OJ"><b>Github</b></a>'), facebook=safe('<a style="color: #808080" href="https://www.facebook.com/vnoi.wiki"><b>Facebook</b></a>'))}}
-            {% if i18n_config.footer %}
-                {{ i18n_config.footer|safe }} |
+            {% if misc_config.footer %}
+                {{ misc_config.footer|safe }} |
             {% endif %}
             <form id="set_language" action="{{ url('set_language') }}" method="post" style="display: inline">
                 {% csrf_token %}

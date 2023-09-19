@@ -22,6 +22,7 @@
             });
 
             var select2_settings = {
+                theme: '{{ DMOJ_SELECT2_THEME }}',
                 ajax: {
                     transport: function (params, success) {
                         success({results: valid_files_options});
@@ -93,7 +94,7 @@
                 var $precision = $('<input>', {
                     type: 'number',
                     value: try_parse_json($args.val()).precision || 6,
-                    title: 'precision (decimal digits)',
+                    title: '{{ _('precision (decimal digits)') }}',
                     style: 'width: 4em'
                 }).change(function () {
                     if ($checker.val().startsWith('floats'))
@@ -112,12 +113,13 @@
                         if (!($file_name == '')) {
                             $file_name = $file_name.split('/').pop()
                             $file_ext = $file_name.split('.').pop()
-                            if (!(['cpp', 'py', 'pas'].includes($file_ext))) {
-                                alert("{{ _('Expected checker\'s extension must be in [cpp, py, pas], found ') }}'" + $file_ext + "'");
+                            if (!(['cpp', 'pas', 'java'].includes($file_ext))) {
+                                alert("{{ _('Expected checker\'s extension must be in [cpp, pas, java], found ') }}'" + $file_ext + "'");
                             }
                             else {
                                 $lang = $file_ext.toUpperCase();
                                 if ($lang == "CPP") $lang = "CPP17";
+                                if ($lang == "JAVA") $lang = "JAVA8";
                                 $args.val(JSON.stringify({files: $file_name, lang: $lang, type: $custom_checker_type.find(":selected").val()}));
                                 if ($lang == "PY")
                                     $args.val('');
@@ -521,6 +523,8 @@
                     }).catch(function(err) {
                         console.log(err);
                         console.error("Failed to open as ZIP file");
+                        alert("{{ _('Test file must be a ZIP file') }}");
+                        event.target.value = "";
                     })
                 };
                 reader.readAsArrayBuffer(fileInput);

@@ -28,8 +28,11 @@
         $(function () {
             var $form = $('form#filter-form');
 
-            $('#judges').select2({multiple: 1, placeholder: '{{ _('Filter by online judge...') }}'})
-                    .css({'visibility': 'visible'});
+            $('#judges').select2({
+                theme: '{{ DMOJ_SELECT2_THEME }}',
+                multiple: 1,
+                placeholder: '{{ _('Filter by online judge...') }}',
+            }).css({'visibility': 'visible'});
 
             $('#go').click(function () {
                 $form.submit();

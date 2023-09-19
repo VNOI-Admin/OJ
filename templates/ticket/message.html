@@ -1,12 +1,12 @@
-<section id="message-{{ message.id }}" class="message">
+<section id="message-{{ message.id }}" class="ticket-message">
     <div class="info">
         <a href="{{ url('user_page', message.user.user.username) }}" class="user">
-            <img src="{{ gravatar(message.user, 135) }}" class="gravatar">
-            <div class="username {{ message.user.css_class }}">{{ message.user.display_name }}</div>
+            <img src="{{ gravatar(message.user, 80) }}" class="user-gravatar">
         </a>
     </div>
     <div class="detail">
         <div class="header">
+            {{ link_user(message.user) }}&nbsp;
             <span class="time">
                 {% with abs=_('messaged on {time}'), rel=_('messaged {time}') %}
                     {{ relative_time(message.time, abs=abs, rel=rel) }}

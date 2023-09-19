@@ -5,33 +5,9 @@
 {%- endmacro -%}
 
 {% block media %}
-    <link rel="stylesheet" type="text/css" href="{{ static('vnoj/accordion/accordion.css') }}">
-
     <style>
-        #tagproblem-table th {
-            padding: 0;
-        }
-
-        #tagproblem-table tr {
-            transition: background-color linear 0.2s;
-        }
-
-        #tagproblem-table tr:hover {
-            background: #eaeaea;
-        }
-
         .row-selected {
             background: #dff0d8;
-        }
-
-        .row-tag-list {
-            font-size: 0.75em;
-            padding-top: 1px;
-            text-align: right;
-        }
-
-        .row-tag-list a {
-            color: grey !important;
         }
 
         #judges {
@@ -46,7 +22,7 @@
 {% endblock %}
 
 {% block js_media %}
-    <script type="text/javascript" src="{{ static('vnoj/accordion/accordion.js') }}"></script>
+    <script type="text/javascript" src="{{ static('accordion.js') }}"></script>
 
     {% if selected_tag %}
         <script>
@@ -111,17 +87,19 @@
             <table id="tagproblem-table" class="table striped">
                 <thead>
                 <tr>
-                    <th style="width:20%">{{ _('Problem code') }}</th>
-                    <th style="width:65%">{{ _('Problem name') }}</th>
-                    <th style="width:15%;">{{ _('OJ') }}</th>
+                    <th class="problem-code">{{ _('Problem code') }}</th>
+                    <th class="problem-name">{{ _('Problem name') }}</th>
+                    <th class="judge">{{ _('OJ') }}</th>
                 </tr>
                 </thead>
                 <tbody>
                 {% for problem in tagproblems %}
                 {% set detail_link = url('tagproblem_detail', problem.code) %}
                     <tr>
-                        <td><a href="{{ detail_link }}">{{ problem.code }}</a></td>
-                        <td>
+                        <td class="problem-code">
+                            <a href="{{ detail_link }}">{{ problem.code }}</a>
+                        </td>
+                        <td class="problem-name">
                             <div style="float: left">
                                 <a href="{{ detail_link }}">{{ problem.name }}</a>
                             </div>
@@ -131,7 +109,9 @@
                                 {% endfor %}
                             </div>
                         </td>
-                        <td><a href="{{ problem.link }}">{{ problem.judge }}</a></td>
+                        <td class="judge">
+                            <a href="{{ problem.link }}">{{ problem.judge }}</a>
+                        </td>
                     </tr>
                 {% endfor %}
                 </tbody>
