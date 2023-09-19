@@ -11,9 +11,9 @@ from django.utils.dateparse import parse_datetime
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import TemplateView
 
-from judge.models import Profile, Contest, ContestParticipation, Problem, Submission
-from judge.utils.views import TitleMixin
+from judge.models import Contest, ContestParticipation, Problem, Profile, Submission
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
+from judge.utils.views import TitleMixin
 
 
 def generate_day_labels(start_date, end_date, utc_offset):
