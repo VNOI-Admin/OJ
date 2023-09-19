@@ -325,7 +325,7 @@ class JudgeHandler(ZlibPacketHandler):
             logger.warning('Unknown submission: %s', id)
 
     def on_supported_problems(self, packet):
-        logger.info('%s: Updated problem list', self.name)
+        logger.info('%s: Updating problem list', self.name)
         self._problems = packet['problems']
         self.problems = dict(self._problems)
         if not self.working:
@@ -334,6 +334,7 @@ class JudgeHandler(ZlibPacketHandler):
         self.judge.problems.set(
             Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True),
         )
+        logger.info('%s: Updated %d problems', self.name, len(self.problems))
         json_log.info(self._make_json_log(action='update-problems', count=len(self.problems)))
 
     def on_grading_begin(self, packet):
