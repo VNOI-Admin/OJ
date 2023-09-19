@@ -118,8 +118,8 @@ class JudgeHandler(ZlibPacketHandler):
         judge = self.judge = Judge.objects.get(name=self.name)
         judge.start_time = timezone.now()
         judge.online = True
-        judge.problems.set(Problem.objects.filter(code__in=list(self.problems.keys())))
-        judge.runtimes.set(Language.objects.filter(key__in=list(self.executors.keys())))
+        judge.problems.set(Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True))
+        judge.runtimes.set(Language.objects.filter(key__in=list(self.executors.keys())).values_list('id', flat=True))
 
         # Cache is_disabled for faster access
         self.is_disabled = judge.is_disabled
@@ -331,7 +331,9 @@ class JudgeHandler(ZlibPacketHandler):
         if not self.working:
             self.judges.update_problems(self)
 
-        self.judge.problems.set(Problem.objects.filter(code__in=list(self.problems.keys())))
+        self.judge.problems.set(
+            Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True),
+        )
         json_log.info(self._make_json_log(action='update-problems', count=len(self.problems)))
 
     def on_grading_begin(self, packet):
