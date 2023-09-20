@@ -13,6 +13,12 @@
                 time_24hr: true,
             });
         });
+
+        $(function () {
+            $('#delete-button').click(function () {
+                return confirm('{{ _('Are you sure you want to delete this blog post?') }}');
+            });
+        });
     </script>
     {{ form.media.js }}
 {% endblock %}
@@ -35,11 +41,17 @@
             {{ (_('Please read the [guidelines][0] before creating a new blog post.') + '\n\n  [0]: /about/blog/')|markdown('blog', strip_paragraphs=True) }}
         </div>
     {% endif %}
+    {% if delete %}
+        <form action="{{ url('blog_post_delete', post.id, post.slug) }}" method="post" id="deleteForm">
+            {% csrf_token %}
+        </form>
+    {% endif %}
     <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
         <table class="django-as-table">{{ form.as_table() }}</table>
         <hr>
-        <div style="display: flex; justify-content: flex-end;">
+        <div style="display: flex; justify-content: flex-end; gap: 0.5em;">
+            {% if delete %}<input type="submit" value="{{ _('Delete') }}" class="button" id="delete-button" form="deleteForm">{% endif %}
             <input type="submit" value="{% if edit %} {{ _('Update') }} {% else %} {{ _('Create') }} {% endif %}" class="button">
         </div>
     </form>

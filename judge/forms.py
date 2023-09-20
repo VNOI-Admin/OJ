@@ -631,11 +631,17 @@ class ProposeContestProblemFormSet(
 class BlogPostForm(ModelForm):
     def __init__(self, *args, **kwargs):
         kwargs.pop('org_pk', None)
+        self.user = kwargs.pop('user', None)
         super(BlogPostForm, self).__init__(*args, **kwargs)
+
+        if not self.user.has_perm('judge.mark_global_post'):
+            self.fields.pop('global_post')
+        if not self.user.has_perm('judge.pin_post'):
+            self.fields.pop('sticky')
 
     class Meta:
         model = BlogPost
-        fields = ['title', 'publish_on', 'visible', 'content']
+        fields = ['title', 'publish_on', 'visible', 'global_post', 'sticky', 'content']
         widgets = {
             'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'summary': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),

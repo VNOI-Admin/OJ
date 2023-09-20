@@ -128,6 +128,8 @@ class BlogPost(models.Model):
         permissions = (
             ('edit_all_post', _('Edit all posts')),
             ('edit_organization_post', _('Edit organization posts')),
+            ('mark_global_post', _('Mark post as global')),
+            ('pin_post', _('Pin post')),
         )
         verbose_name = _('blog post')
         verbose_name_plural = _('blog posts')
