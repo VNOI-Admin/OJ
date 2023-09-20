@@ -451,7 +451,7 @@ class CustomAuthenticationForm(AuthenticationForm):
         return super(CustomAuthenticationForm, self).clean()
 
     def confirm_login_allowed(self, user):
-        if not user.is_active and user.profile.ban_reason:
+        if user.profile.is_banned:
             raise forms.ValidationError(
                 _('This account has been banned. Reason: %s') % user.profile.ban_reason,
                 code='banned',

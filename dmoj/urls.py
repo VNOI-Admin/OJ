@@ -195,6 +195,7 @@ urlpatterns = [
     path('user/<str:user>', include([
         path('', user.UserAboutPage.as_view(), name='user_page'),
         path('/ban', user.UserBan.as_view(), name='user_ban'),
+        path('/unban', user.UserUnban.as_view(), name='user_unban'),
         path('/blog/', paged_list_view(user.UserBlogPage, 'user_blog')),
         path('/comment/', paged_list_view(user.UserCommentPage, 'user_comment')),
         path('/solved/', include([

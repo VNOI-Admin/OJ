@@ -19,6 +19,7 @@ from django.db.models import Count, F, FilteredRelation, Max, Min, Prefetch, Q
 from django.db.models.expressions import Value
 from django.db.models.fields import DateField
 from django.db.models.functions import Cast, Coalesce, ExtractYear
+from django.forms import Form
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -224,9 +225,11 @@ class UserAboutPage(UserPage):
 
 
 class UserBan(UserMixin, TitleMixin, SingleObjectFormView):
-    title = gettext_lazy('Ban user')
     template_name = 'user/ban.html'
     form_class = UserBanForm
+
+    def get_title(self):
+        return _('Ban {0}').format(self.object.user.username)
 
     def form_valid(self, form):
         user = self.object
@@ -238,9 +241,26 @@ class UserBan(UserMixin, TitleMixin, SingleObjectFormView):
         return HttpResponseRedirect(reverse('user_page', args=(user.user.username,)))
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.request.user.is_superuser:
+        self.object = self.get_object()
+        if not self.object.can_be_banned_by(self.request.user):
             raise PermissionDenied()
         return super().dispatch(request, *args, **kwargs)
+
+
+class UserUnban(UserBan):
+    form_class = Form
+
+    def get_title(self):
+        return _('Unban {0}').format(self.object.user.username)
+
+    def form_valid(self, form):
+        user = self.object
+        with revisions.create_revision(atomic=True):
+            user.unban_user()
+            revisions.set_user(self.request.user)
+            revisions.set_comment(_('Unbanned by %s') % self.request.user)
+
+        return HttpResponseRedirect(reverse('user_page', args=(user.user.username,)))
 
 
 class UserBlogPage(CustomUserMixin, PostListBase):
