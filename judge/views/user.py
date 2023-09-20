@@ -309,7 +309,7 @@ class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
 
     @method_decorator(require_POST)
     def delete_comments(self, request, *args, **kwargs):
-        if not request.user.is_superuser:
+        if not request.user.has_perm('judge.change_comment'):
             raise PermissionDenied()
 
         user_id = User.objects.get(username=kwargs['user']).id
@@ -320,7 +320,7 @@ class UserCommentPage(CustomUserMixin, DiggPaginatorMixin, ListView):
         return HttpResponseRedirect(reverse('user_comment', args=(user.user.username,)))
 
     def dispatch(self, request, *args, **kwargs):
-        if not self.request.user.is_superuser:
+        if not request.user.has_perm('judge.view_all_user_comment'):
             raise PermissionDenied()
         if request.method == 'POST':
             return self.delete_comments(request, *args, **kwargs)
