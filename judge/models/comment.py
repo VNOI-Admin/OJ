@@ -38,6 +38,9 @@ class Comment(MPTTModel):
     revisions = models.IntegerField(verbose_name=_('revisions'), default=0)
 
     class Meta:
+        permissions = (
+            ('view_all_user_comment', _('View all comments by a user')),
+        )
         verbose_name = _('comment')
         verbose_name_plural = _('comments')
 
