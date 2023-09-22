@@ -218,6 +218,13 @@ class Profile(models.Model):
         return not self.user.is_staff and not self.has_enough_solves
 
     @cached_property
+    def is_banned(self):
+        return self.ban_reason and not self.user.is_active
+
+    def can_be_banned_by(self, staff):
+        return self.user != staff and not self.user.is_superuser and staff.has_perm('judge.ban_user')
+
+    @cached_property
     def can_tag_problems(self):
         if self.allow_tagging:
             if self.user.has_perm('judge.add_tagproblem'):
@@ -360,6 +367,17 @@ class Profile(models.Model):
 
     ban_user.alters_data = True
 
+    def unban_user(self):
+        self.ban_reason = ''
+        self.display_rank = Profile._meta.get_field('display_rank').get_default()
+        self.is_unlisted = False
+        self.save(update_fields=['ban_reason', 'display_rank', 'is_unlisted'])
+
+        self.user.is_active = True
+        self.user.save(update_fields=['is_active'])
+
+    unban_user.alters_data = True
+
     def get_absolute_url(self):
         return reverse('user_page', args=(self.user.username,))
 
@@ -388,6 +406,7 @@ class Profile(models.Model):
             ('high_problem_timelimit', _('Can set high problem timelimit')),
             ('long_contest_duration', _('Can set long contest duration')),
             ('create_mass_testcases', _('Can create unlimitted number of testcases for a problem')),
+            ('ban_user', _('Ban users')),
         )
         verbose_name = _('user profile')
         verbose_name_plural = _('user profiles')
