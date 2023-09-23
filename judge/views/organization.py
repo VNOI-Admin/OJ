@@ -62,7 +62,7 @@ class OrganizationMixin(object):
             org = self.object
         if not self.request.user.is_authenticated:
             return False
-        return org.is_admin(self.request.profile)
+        return org.is_admin(self.request.profile) or self.request.user.has_perm('judge.edit_all_organization')
 
 
 class BaseOrganizationListView(OrganizationMixin, ListView):
@@ -451,7 +451,7 @@ class CustomOrganizationMixin(object):
             org = self.organization
         if not self.request.user.is_authenticated:
             return False
-        return org.is_admin(self.request.profile)
+        return org.is_admin(self.request.profile) or self.request.user.has_perm('judge.edit_all_organization')
 
 
 class CustomAdminOrganizationMixin(CustomOrganizationMixin):
