@@ -335,6 +335,7 @@ else:
                     'icon': 'fa-user',
                     'children': [
                         'judge.Profile',
+                        'judge.Badge',
                         'auth.Group',
                         'registration.RegistrationProfile',
                     ],
@@ -344,7 +345,6 @@ else:
                     'icon': 'fa-users',
                     'children': [
                         'judge.OrganizationRequest',
-                        'judge.Badge',
                     ],
                 },
                 {
