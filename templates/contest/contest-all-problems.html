@@ -19,35 +19,39 @@
 {% endblock %}
 
 {% block body %}
-    {% set in_contest = contest.is_in_contest(request.user) %}
-    {% if in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
-        {% block description %}
-                {% for problem in contest_problems %}
-                    <div style="display: flex; flex-direction: column; align-items: center;">
-                        <div class="content-description" style="width: 70%;">
-                            <div class="problem_container">
-                                <div style="display: flex">
-                                    <h2 style="margin-top: 0.5em; margin-right: 0.5em;">{{ problem.i18n_name }}</h2>
-                                    <a href="{{ url('problem_submit', problem.code) }}" class="button" style="display: inline; margin: auto 0;">
-                                        {{ _('Submit') }}
-                                    </a>
-                                </div>
-
-                                <div>
-                                    <span><strong>Time limit:</strong> {{ problem.time_limit }} /</span>
-                                    <span><strong>Memory limit:</strong> {{ problem.memory_limit|kbsimpleformat }}</span>
-                                    <p><strong>Point:</strong> {{ problem.points }}</p>
-                                </div>
-                            </div>
-                            {% include "problem/problem-detail.html" %}
-                            <hr>
-                        </div>
+    {% for problem in contest_problems %}
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <div class="content-description" style="width: 70%;">
+                <div class="problem_container">
+                    <div style="display: flex">
+                        <h2 style="margin-top: 0.5em; margin-right: 0.5em;">
+                            {% if problem.id in completed_problem_ids %}
+                                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                    <i class="solved-problem-color fa fa-check-circle"></i>
+                                </a>
+                            {% elif problem.id in attempted_problem_ids %}
+                                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                    <i class="attempted-problem-color fa fa-frown-o"></i>
+                                </a>
+                            {% endif %}
+                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                        </h2>
+                        <a href="{{ url('problem_submit', problem.code) }}" class="button" style="display: inline; margin: auto 0;">
+                            {{ _('Submit') }}
+                        </a>
                     </div>
-                {% endfor %}
-        {% endblock %}
-    {% endif %}
 
-    <!-- <hr> -->
+                    <div>
+                        <span><strong>{{ _('Time limit:') }}</strong> {{ problem.time_limit }}s /</span>
+                        <span><strong>{{ _('Memory limit:') }}</strong> {{ problem.memory_limit|kbsimpleformat }}</span>
+                        <p><strong>{{ _('Points:') }}</strong> {{ problem.points }}</p>
+                    </div>
+                </div>
+                {% include "problem/problem-detail.html" %}
+                <hr>
+            </div>
+        </div>
+    {% endfor %}
 {% endblock %}
 
 {% block description_end %}{% endblock %}
