@@ -192,6 +192,11 @@ class ContestMixin(object):
     def can_edit(self):
         return self.object.is_editable_by(self.request.user)
 
+    @cached_property
+    def can_view_all_problems(self):
+        return self.is_in_contest or self.is_editor or self.is_tester or self.request.user.is_superuser or \
+            not Problem.objects.filter(contests__contest=self.object, is_public=False).exists()
+
     def get_context_data(self, **kwargs):
         context = super(ContestMixin, self).get_context_data(**kwargs)
         if self.request.user.is_authenticated:
@@ -286,6 +291,7 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
 
     def get_context_data(self, **kwargs):
         context = super(ContestDetail, self).get_context_data(**kwargs)
+        context['can_view_all_problems'] = self.can_view_all_problems
         context['contest_problems'] = Problem.objects.filter(contests__contest=self.object) \
             .order_by('contests__order').defer('description') \
             .annotate(has_public_editorial=Case(
@@ -344,6 +350,10 @@ class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super(ContestAllProblems, self).get_context_data(**kwargs)
+
+        if not self.can_view_all_problems:
+            raise Http404()
+
         context['contest_problems'] = Problem.objects.filter(contests__contest=self.object) \
             .order_by('contests__order') \
             .add_i18n_name(self.request.LANGUAGE_CODE) \
