@@ -173,6 +173,10 @@ class ContestMixin(object):
     slug_url_kwarg = 'contest'
 
     @cached_property
+    def is_in_contest(self):
+        return self.object.is_in_contest(self.request.user)
+
+    @cached_property
     def is_editor(self):
         if not self.request.user.is_authenticated:
             return False
@@ -208,6 +212,7 @@ class ContestMixin(object):
             context['has_joined'] = False
 
         context['now'] = self.object._now
+        context['is_in_contest'] = self.is_in_contest
         context['is_editor'] = self.is_editor
         context['is_tester'] = self.is_tester
         context['can_edit'] = self.can_edit
@@ -268,8 +273,7 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
     def is_comment_locked(self):
         if self.object.use_clarifications:
             now = timezone.now()
-            if self.object.is_in_contest(self.request.user) or \
-                    (self.object.start_time <= now and now <= self.object.end_time):
+            if self.is_in_contest or (self.object.start_time <= now and now <= self.object.end_time):
                 return True
 
         return super(ContestDetail, self).is_comment_locked()

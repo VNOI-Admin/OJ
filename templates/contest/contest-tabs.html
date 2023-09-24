@@ -32,10 +32,9 @@
 
     {% if request.user.is_authenticated %}
         {% if contest.can_join or contest.require_registration or is_editor or is_tester %}
-            {% set in_contest = contest.is_in_contest(request.user) %}
             {% if contest.ended %}
                 {# Allow users to leave the virtual contest #}
-                {% if in_contest %}
+                {% if is_in_contest %}
                     <form action="{{ url('contest_leave', contest.key) }}" method="post"
                           class="contest-join-pseudotab unselectable button">
                         {% csrf_token %}
@@ -51,7 +50,7 @@
                 {% endif %}
             {% else %}
                 {# Allow users to leave the contest #}
-                {% if in_contest %}
+                {% if is_in_contest %}
                     <form action="{{ url('contest_leave', contest.key) }}" method="post"
                           class="contest-join-pseudotab unselectable button">
                         {% csrf_token %}

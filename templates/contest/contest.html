@@ -42,7 +42,7 @@
     <div id="banner">
         <a href="https://www.timeanddate.com/worldclock/fixedtime.html?msg={{ contest.name|urlquote('') }}&amp;iso=
                 {{- (contest.start_time if contest.start_time >= now else contest.end_time)|utc|date('Y-m-d\TH:i:s') }}" class="date">
-            {%- if contest.is_in_contest(request.user) and not request.participation.live -%}
+            {%- if is_in_contest and not request.participation.live -%}
                 {% if request.participation.spectate %}
                     {{- _('Spectating, contest ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) -}}
                 {% elif request.participation.end_time %}
@@ -184,8 +184,7 @@
         {% endif %}
     </div>
 
-    {% set in_contest = contest.is_in_contest(request.user) %}
-    {% if in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
+    {% if is_in_contest or contest.ended or request.user.is_superuser or is_editor or is_tester %}
         <div class="contest-problems">
             <h2 style="margin-bottom: 0.2em; float:left;"><i class="fa fa-fw fa-question-circle"></i>{{ _('Problems') }} </h2>
             {% if can_edit and can_download_data %}
@@ -243,7 +242,7 @@
                             {% endif %}
                         {% endif %}
                         <td style="text-align: left; padding-left: 2em;">
-                            {% if in_contest or problem.is_public or request.user.is_superuser or is_editor or is_tester %}
+                            {% if is_in_contest or problem.is_public or request.user.is_superuser or is_editor or is_tester %}
                                 <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
                             {% else %}
                                 {{ problem.i18n_name or problem.name }}
