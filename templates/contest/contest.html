@@ -242,7 +242,7 @@
                             {% endif %}
                         {% endif %}
                         <td style="text-align: left; padding-left: 2em;">
-                            {% if is_in_contest or problem.is_public or request.user.is_superuser or is_editor or is_tester %}
+                            {% if can_view_all_problems or problem.is_public %}
                                 <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
                             {% else %}
                                 {{ problem.i18n_name or problem.name }}
@@ -262,8 +262,9 @@
                 {% endfor %}
                 </tbody>
             </table>
-
+            {% if can_view_all_problems %}
             <a class="button" style="width: fit-content" href="{{ url('contest_all_problems', contest.key) }}">{{ _('All problems') }}</a>
+            {% endif %}
         </div>
         {% if has_announcements or can_edit %}
         <div class="contest-clartifications">
