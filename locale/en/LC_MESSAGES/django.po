@@ -2330,6 +2330,10 @@ msgid "Organization name shown in URL"
 msgstr ""
 
 #: judge/models/profile.py:45
+msgid "Organization slugs must begin with a letter."
+msgstr ""
+
+#: judge/models/profile.py:45
 msgid "Displayed beside user name during contests"
 msgstr ""
 

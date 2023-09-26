@@ -275,7 +275,9 @@ urlpatterns = [
 
     path('organizations/', organization.OrganizationList.as_view(), name='organization_list'),
     path('organizations/create', organization.CreateOrganization.as_view(), name='organization_create'),
-    path('org/<slug:slug>', include([
+    path('organization/<int:pk>-<path:suffix>',
+         lambda _, pk, suffix: HttpResponsePermanentRedirect('/organization/%s' % suffix)),
+    path('organization/<slug:slug>', include([
         path('', organization.OrganizationHome.as_view(), name='organization_home'),
         path('/users/', organization.OrganizationUsers.as_view(), name='organization_users'),
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
@@ -307,8 +309,6 @@ urlpatterns = [
 
         path('/', lambda _, slug: HttpResponsePermanentRedirect(reverse('organization_home', args=[slug]))),
     ])),
-    path('organization/<int:pk>-<path:suffix>',
-         lambda _, pk, suffix: HttpResponsePermanentRedirect('/org/%s' % suffix)),
 
     path('runtimes/', language.LanguageList.as_view(), name='runtime_list'),
     path('runtimes/matrix/', status.version_matrix, name='version_matrix'),
