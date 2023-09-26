@@ -71,7 +71,7 @@ class BaseOrganizationListView(OrganizationMixin, ListView):
     slug_url_kwarg = 'slug'
 
     def get_object(self):
-        return get_object_or_404(Organization, id=self.kwargs.get('pk'))
+        return get_object_or_404(Organization, slug=self.kwargs.get('slug'))
 
     def get_context_data(self, **kwargs):
         return super().get_context_data(organization=self.object, **kwargs)
@@ -119,7 +119,7 @@ class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizati
         context['users'] = ranker(context['users'])
         context['partial'] = True
         context['is_admin'] = self.can_edit_organization()
-        context['kick_url'] = reverse('organization_user_kick', args=[self.object.id, self.object.slug])
+        context['kick_url'] = reverse('organization_user_kick', args=[self.object.slug])
         context['first_page_href'] = '.'
         context.update(self.get_sort_context())
         context.update(self.get_sort_paginate_context())
@@ -201,7 +201,7 @@ class RequestJoinOrganization(LoginRequiredMixin, SingleObjectMixin, FormView):
         request.state = 'P'
         request.save()
         return HttpResponseRedirect(reverse('request_organization_detail', args=(
-            request.organization.id, request.organization.slug, request.id,
+            request.organization.slug, request.id,
         )))
 
 
@@ -432,9 +432,9 @@ class CustomOrganizationMixin(object):
         return context
 
     def dispatch(self, request, *args, **kwargs):
-        if 'pk' not in kwargs:
-            raise ImproperlyConfigured('Must pass a pk')
-        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        if 'slug' not in kwargs:
+            raise ImproperlyConfigured('Must pass a slug')
+        self.organization = get_object_or_404(Organization, slug=kwargs['slug'])
         self.object = self.organization
 
         if not self.allow_all_users and \
@@ -456,9 +456,9 @@ class CustomOrganizationMixin(object):
 
 class CustomAdminOrganizationMixin(CustomOrganizationMixin):
     def dispatch(self, request, *args, **kwargs):
-        if 'pk' not in kwargs:
-            raise ImproperlyConfigured('Must pass a pk')
-        self.organization = get_object_or_404(Organization, pk=kwargs['pk'])
+        if 'slug' not in kwargs:
+            raise ImproperlyConfigured('Must pass a slug')
+        self.organization = get_object_or_404(Organization, slug=kwargs['slug'])
         if self.can_edit_organization():
             return super(CustomAdminOrganizationMixin, self).dispatch(request, *args, **kwargs)
         raise PermissionDenied
@@ -503,7 +503,7 @@ class OrganizationHome(TitleMixin, CustomOrganizationMixin, PostListBase):
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationHome, self).get_context_data(**kwargs)
-        context['first_page_href'] = reverse('organization_home', args=[self.object.pk, self.object.slug])
+        context['first_page_href'] = reverse('organization_home', args=[self.object.slug])
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
         context['is_member'] = self.request.profile in self.object

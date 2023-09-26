@@ -103,10 +103,10 @@ class Organization(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('organization_home', args=(self.id, self.slug))
+        return reverse('organization_home', args=[self.slug])
 
     def get_users_url(self):
-        return reverse('organization_users', args=(self.id, self.slug))
+        return reverse('organization_users', args=[self.slug])
 
     class Meta:
         ordering = ['name']
