@@ -233,7 +233,7 @@ class OrganizationRequestBaseView(LoginRequiredMixin, SingleObjectTemplateRespon
     def get_requests(self):
         queryset = self.object.requests.select_related('user__user').defer(
             'user__about', 'user__notes', 'user__user_script',
-        )
+        ).order_by('-id')
         return queryset
 
     def get_context_data(self, **kwargs):
