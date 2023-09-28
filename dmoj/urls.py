@@ -275,7 +275,9 @@ urlpatterns = [
 
     path('organizations/', organization.OrganizationList.as_view(), name='organization_list'),
     path('organizations/create', organization.CreateOrganization.as_view(), name='organization_create'),
-    path('organization/<int:pk>-<slug:slug>', include([
+    path('organization/<int:pk>-<path:suffix>',
+         lambda _, pk, suffix: HttpResponsePermanentRedirect('/organization/%s' % suffix)),
+    path('organization/<slug:slug>', include([
         path('', organization.OrganizationHome.as_view(), name='organization_home'),
         path('/users/', organization.OrganizationUsers.as_view(), name='organization_users'),
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
@@ -305,7 +307,7 @@ urlpatterns = [
             path('new', organization.BlogPostCreateOrganization.as_view(), name='blog_post_create_organization'),
         ])),
 
-        path('/', lambda _, pk, slug: HttpResponsePermanentRedirect(reverse('organization_home', args=[pk, slug]))),
+        path('/', lambda _, slug: HttpResponsePermanentRedirect(reverse('organization_home', args=[slug]))),
     ])),
 
     path('runtimes/', language.LanguageList.as_view(), name='runtime_list'),

@@ -89,17 +89,17 @@
                 <div class="sidebox-content" style="padding: 1em;">
                     {% if request.user.is_authenticated %}
                         {% if is_member %}
-                            <form method="post" action="{{ url('leave_organization', organization.id, organization.slug) }}">
+                            <form method="post" action="{{ url('leave_organization', organization.slug) }}">
                                 {% csrf_token %}
                                 <input type="submit" class="unselectable button full leave-organization" value="{{ _('Leave organization') }}">
                             </form>
                         {% elif organization.is_open %}
-                            <form method="post" action="{{ url('join_organization', organization.id, organization.slug) }}">
+                            <form method="post" action="{{ url('join_organization', organization.slug) }}">
                                 {% csrf_token %}
                                 <input type="submit" class="unselectable button full" value="{{ _('Join organization') }}">
                             </form>
                         {% else %}
-                            <a href="{{ url('request_organization', organization.id, organization.slug) }}"
+                            <a href="{{ url('request_organization', organization.slug) }}"
                             class="unselectable button full">{{ _('Request membership') }}</a>
                         {% endif %}
                     {% endif %}
@@ -107,7 +107,7 @@
                     {% if can_edit %}
                         {% if not organization.is_open %}
                             <div>
-                                <a href="{{ url('organization_requests_pending', organization.id, organization.slug) }}">
+                                <a href="{{ url('organization_requests_pending', organization.slug) }}">
                                     {{ _('View requests') }}
                                     {% if num_requests %}<span class="badge">{{ num_requests }}</span>{% endif %}
                                 </a>
@@ -115,11 +115,11 @@
                         {% endif %}
                         {% if perms.judge.edit_organization_post %}
                             <div>
-                                <a href="{{ url('blog_post_create_organization', organization.id, organization.slug) }}">{{ _('Create blog post') }}</a>
+                                <a href="{{ url('blog_post_create_organization', organization.slug) }}">{{ _('Create blog post') }}</a>
                             </div>
                         {% endif %}
                         <div>
-                            <a href="{{ url('edit_organization', organization.id, organization.slug) }}">{{ _('Edit organization') }}</a>
+                            <a href="{{ url('edit_organization', organization.slug) }}">{{ _('Edit organization') }}</a>
                         </div>
                     {% endif %}
                     {% if perms.judge.change_organization %}

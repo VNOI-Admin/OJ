@@ -2423,6 +2423,10 @@ msgid "Organization name shown in URLs."
 msgstr "Tên viết tắt của tổ chức, được dùng trong đường dẫn tới tổ chức"
 
 #: judge/models/profile.py:45
+msgid "Organization slugs must begin with a letter."
+msgstr "Tên viết tắt của tổ chức phải bắt đầu bằng một chữ cái."
+
+#: judge/models/profile.py:45
 msgid "Displayed beside user name during contests."
 msgstr "Hiển thị bên cạnh tên trong các kỳ thi"
 

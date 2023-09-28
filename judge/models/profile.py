@@ -41,6 +41,8 @@ class Organization(models.Model):
     name = models.CharField(max_length=128, verbose_name=_('organization title'))
     slug = models.SlugField(max_length=128, verbose_name=_('organization slug'),
                             help_text=_('Organization name shown in URLs.'),
+                            validators=[RegexValidator(r'^[a-zA-Z]',
+                                                       _('Organization slugs must begin with a letter.'))],
                             unique=True)
     short_name = models.CharField(max_length=20, verbose_name=_('short name'),
                                   help_text=_('Displayed beside user name during contests.'))
@@ -103,10 +105,10 @@ class Organization(models.Model):
         return self.name
 
     def get_absolute_url(self):
-        return reverse('organization_home', args=(self.id, self.slug))
+        return reverse('organization_home', args=[self.slug])
 
     def get_users_url(self):
-        return reverse('organization_users', args=(self.id, self.slug))
+        return reverse('organization_users', args=[self.slug])
 
     class Meta:
         ordering = ['name']
