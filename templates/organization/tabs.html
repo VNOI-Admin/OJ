@@ -11,20 +11,20 @@
     <br>
     <div class="tabs">
         <ul>
-            {{ make_tab('home', 'fa-info-circle', url('organization_home', organization.pk, organization.slug), _('Home')) }}
+            {{ make_tab('home', 'fa-info-circle', url('organization_home', organization.slug), _('Home')) }}
             {{ make_tab('users', 'fa-university', organization.get_users_url(), _('Users')) }}
-            {{ make_tab('problem-list', 'fa-puzzle-piece', url('problem_list_organization', organization.pk, organization.slug), _('Problems list')) }}
-            {{ make_tab('contest-list', 'fa-trophy', url('contest_list_organization', organization.pk, organization.slug), _('Contests list')) }}
-            {{ make_tab('submission-list', 'fa-list', url('submission_list_organization', organization.pk, organization.slug), _('Submissions')) }}
+            {{ make_tab('problem-list', 'fa-puzzle-piece', url('problem_list_organization', organization.slug), _('Problems list')) }}
+            {{ make_tab('contest-list', 'fa-trophy', url('contest_list_organization', organization.slug), _('Contests list')) }}
+            {{ make_tab('submission-list', 'fa-list', url('submission_list_organization', organization.slug), _('Submissions')) }}
         </ul>
         <span class="spacer"></span>
         <ul>
             {% if organization.is_admin(request.profile) %}
                 {% if request.user.has_perm('judge.create_organization_problem') %}
-                    {{ make_tab('create', 'fa-plus', url('problem_create_organization', organization.id, organization.slug), _('Create new problem')) }}
+                    {{ make_tab('create', 'fa-plus', url('problem_create_organization', organization.slug), _('Create new problem')) }}
                 {% endif %}
                 {% if request.user.has_perm('judge.create_private_contest') %}
-                    {{ make_tab('create', 'fa-plus', url('contest_create_organization', organization.id, organization.slug), _('Create new contest')) }}
+                    {{ make_tab('create', 'fa-plus', url('contest_create_organization', organization.slug), _('Create new contest')) }}
                 {% endif %}
             {% endif %}
         </ul>
