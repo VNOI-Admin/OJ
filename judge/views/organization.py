@@ -174,8 +174,6 @@ class OrganizationRequestForm(Form):
 
 class RequestJoinOrganization(LoginRequiredMixin, SingleObjectMixin, FormView):
     model = Organization
-    slug_field = 'key'
-    slug_url_kwarg = 'key'
     template_name = 'organization/requests/request.html'
     form_class = OrganizationRequestForm
 
@@ -224,8 +222,6 @@ OrganizationRequestFormSet = modelformset_factory(OrganizationRequest, extra=0, 
 
 class OrganizationRequestBaseView(LoginRequiredMixin, SingleObjectTemplateResponseMixin, SingleObjectMixin, View):
     model = Organization
-    slug_field = 'key'
-    slug_url_kwarg = 'key'
     tab = None
 
     def get_object(self, queryset=None):
