@@ -123,10 +123,11 @@ class UserForm(ModelForm):
         # In contest mode, we don't want user to change their name.
         if settings.VNOJ_OFFICIAL_CONTEST_MODE:
             fields.remove('first_name')
+
     def clean_first_name(self):
-        first_name = self.cleaned_data["first_name"]
+        first_name = self.cleaned_data['first_name']
         if len(first_name) > 30:
-            raise ValidationError(_("Your full name is too long!"), code="NAME_LIMIT_EXCEEDED")
+            raise ValidationError(_('Your full name is too long!'), code='NAME_LIMIT_EXCEEDED')
         return first_name
 
 
