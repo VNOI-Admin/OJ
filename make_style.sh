@@ -1,20 +1,7 @@
 #!/bin/bash
-if ! [ -x "$(command -v npx sass)" ]; then
-  echo 'Error: sass is not installed.' >&2
-  exit 1
-fi
-
-if ! [ -x "$(command -v npx postcss)" ]; then
-  echo 'Error: postcss is not installed.' >&2
-  exit 1
-fi
-
-if ! [ -x "$(command -v npx autoprefixer)" ]; then
-  echo 'Error: autoprefixer is not installed.' >&2
-  exit 1
-fi
-
 cd "$(dirname "$0")" || exit
+
+node scripts/check-package-installed.js postcss sass || exit
 
 build_style() {
   echo "Creating $1 style..."
