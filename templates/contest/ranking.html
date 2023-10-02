@@ -8,19 +8,19 @@
 
 {% block users_media %}
     <style>
-        #users-table .username {
+        .users-table .username {
             min-width: 20em;
         }
 
-        #users-table td {
+        .users-table td {
             height: 2.5em;
         }
 
-        #users-table a {
+        .users-table a {
             display: block;
         }
 
-        #users-table {
+        .users-table {
             font-size: 14px;
             border-collapse: collapse;
         }
@@ -35,15 +35,15 @@
             justify-content: space-between;
         }
 
-        #users-table th a, #users-table th a:link, #users-table th a:visited {
+        .users-table th a, .users-table th a:link, .users-table th a:visited {
             color: white;
         }
 
-        #users-table th a:hover {
+        .users-table th a:hover {
             color: #0F0;
         }
 
-        #users-table td:not(.user-name, .personal-info) a:hover {
+        .users-table td:not(.user-name, .personal-info) a:hover {
             text-decoration: underline;
         }
 
@@ -475,6 +475,7 @@
             };
 
             window.applyRankingFilter();
+            console.log('hello');
 
             window.restoreChecklistOptions = function () {
                 let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`).split(',');
@@ -488,13 +489,13 @@
                 if (!fav_users) return;
 
                 let index = 0;
-                let table_body = $('#users-table > tbody').get(0);
+                let table_body = $('.users-table > tbody').get(0);
 
-                $('#users-table > tbody > .favorite').each(function () {
+                $('.users-table > tbody > .favorite').each(function () {
                     this.remove();
                 });
 
-                $('#users-table > tbody > tr[id]:not(.favorite)').each(function () {
+                $('.users-table > tbody > tr[id]:not(.favorite)').each(function () {
                     let row = $(this);
                     let user_name = row.find(".user-name > .info-container > div > span > a")[0].text.trim();
                     let fav_button = row.find('.user-name > .info-container > div > i').get(0);
@@ -517,7 +518,9 @@
             window.applyFavoriteUsers();
 
             $(document).ready(() => {
-                $('#users-table').on('click', '.fav-button', function() {
+                console.log('done');
+                $('.users-table').on('click', '.fav-button', function() {
+                    console.log('hehe');
                     let is_fav = !this.classList.contains('fa-heart-o');
                     let user_name = $(this.parentNode).find('span > a')[0].textContent.trim();
                     let fav_users = localStorage.getItem(`favorite-users-${contest_key}`)?.split(',');
