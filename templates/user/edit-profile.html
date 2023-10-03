@@ -260,14 +260,18 @@
 {% block body %}
     <div class="centered-form">
         <form id="edit-form" action="" method="post" class="form-area">
-            {% if form.errors %}
+            {% if form.errors or form_user.errors %}
                 <div class="alert alert-danger alert-dismissable">
                     <a href="#" class="close">x</a>
-                    {{ form.non_field_errors() }}
-                    {{ form.about.errors }}
+                    {% if form.errors %}
+                        {{ form.non_field_errors() }}
+                        {{ form.about.errors }}
+                    {% endif %}
+                    {% if form_user.errors %}
+                        {{ form_user.first_name.errors }}
+                    {% endif %}
                 </div>
             {% endif %}
-
             {% csrf_token %}
             {% if form_user.first_name %}
                 <table>
