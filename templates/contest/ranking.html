@@ -475,7 +475,6 @@
             };
 
             window.applyRankingFilter();
-            console.log('hello');
 
             window.restoreChecklistOptions = function () {
                 let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`).split(',');
@@ -518,9 +517,7 @@
             window.applyFavoriteUsers();
 
             $(document).ready(() => {
-                console.log('done');
                 $('.users-table').on('click', '.fav-button', function() {
-                    console.log('hehe');
                     let is_fav = !this.classList.contains('fa-heart-o');
                     let user_name = $(this.parentNode).find('span > a')[0].textContent.trim();
                     let fav_users = localStorage.getItem(`favorite-users-${contest_key}`)?.split(',');
