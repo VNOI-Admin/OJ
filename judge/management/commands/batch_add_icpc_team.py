@@ -32,7 +32,7 @@ def add_user(username, teamname, password, org, internalid):
     profile.organizations.set([org])
 
 
-ORG_ID_MAPPING: dict[str, int] = {}
+ORG_ID_MAPPING = {}
 
 def get_org(name):
     id = ORG_ID_MAPPING.get(name, None)
