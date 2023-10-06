@@ -26,17 +26,25 @@ def add_user(username, teamname, password, org, internalid):
     profile = Profile(user=usr)
     profile.username_display_override = teamname
     profile.language = Language.objects.get(key=settings.DEFAULT_USER_LANGUAGE)
+    profile.site_theme = 'light'
     profile.notes = internalid  # save the internal id for later use.
     profile.save()
     profile.organizations.set([org])
 
 
+ORG_ID_MAPPING: dict[str, int] = {}
+
 def get_org(name):
+    id = ORG_ID_MAPPING.get(name, None)
+    # to avoid duplicate slug
+    if id is None:
+        ORG_ID_MAPPING[name] = id = len(ORG_ID_MAPPING) + 1
+
     logo = LOGO_MAPPING.get(name, 'unk.png')
     org = Organization.objects.get_or_create(
         name=name,
-        slug='icpc',
-        short_name='icpc',
+        slug='icpc' + str(id),
+        short_name='icpc' + str(id),
         is_open=False,
         is_unlisted=False,
         )[0]
