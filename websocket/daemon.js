@@ -34,6 +34,8 @@ const followers = new Set();
  */
 const pollers = new Set();
 const maxQueue = config.max_queue || 50;
+const maxFilter = config.max_filter || 5;
+const maxBodySize = config.max_body_size || 200;
 const longPollTimeout = config.long_poll_timeout || 60000;
 let messageId = Date.now();
 
@@ -83,7 +85,17 @@ wssReceiver.on("connection", (/** @type {WebSocketExtended} */ socket) => {
      * @param {WebSocketRawExtended} request
      */
     start_msg(request) {
-      socket.lastMessage = request.start;
+      try {
+        socket.lastMessage = Number(request.start);
+      } catch (err) {
+        socket.send(
+          JSON.stringify({
+            status: "error",
+            code: "syntax-error",
+            message: "syntax error",
+          }),
+        );
+      }
     },
     /**
      * @param {WebSocketRawExtended} request
@@ -92,27 +104,32 @@ wssReceiver.on("connection", (/** @type {WebSocketExtended} */ socket) => {
       /**
        * @type {Record<string, boolean>}
        */
-      const filter = {};
-      if (
-        Array.isArray(request.filter) &&
-        request.filter.length > 0 &&
-        request.filter.every((channel) => {
-          if (typeof channel !== "string") {
-            return false;
-          }
-          filter[channel] = true;
-          return true;
-        })
-      ) {
-        socket.filter = filter;
-        followers.add(socket);
-        messagesCatchUp(socket);
-      } else {
+      try {
+        const filter = {};
+        if (
+          Array.isArray(request.filter) &&
+          request.filter.length > 0 &&
+          request.filter.length <= maxFilter &&
+          request.filter.every((channel) => {
+            if (typeof channel !== "string") {
+              return false;
+            }
+            filter[channel] = true;
+            return true;
+          })
+        ) {
+          socket.filter = filter;
+          followers.add(socket);
+          messagesCatchUp(socket);
+        } else {
+          throw new Error("invalid filter");
+        }
+      } catch (err) {
         socket.send(
           JSON.stringify({
             status: "error",
             code: "invalid-filter",
-            message: "invalid filter: " + request.filter,
+            message: "invalid filter",
           }),
         );
       }
@@ -128,26 +145,23 @@ wssReceiver.on("connection", (/** @type {WebSocketExtended} */ socket) => {
 
   socket.on("message", (/** @type {WebSocketRawExtended}*/ request) => {
     try {
+      request = request.toString();
+      if (request.length > maxBodySize) {
+        throw new Error("request entity too large");
+      }
       request = JSON.parse(request.toString());
+      request.command = request.command.replace(/-/g, "_");
+      if (request.command in commands) {
+        commands[request.command](request);
+      } else {
+        throw new Error("bad command");
+      }
     } catch (err) {
       socket.send(
         JSON.stringify({
           status: "error",
           code: "syntax-error",
-          message: err.message,
-        }),
-      );
-      return;
-    }
-    request.command = request.command.replace(/-/g, "_");
-    if (request.command in commands) {
-      commands[request.command](request);
-    } else {
-      socket.send(
-        JSON.stringify({
-          status: "error",
-          code: "bad-command",
-          message: `bad command: ${request.command}`,
+          message: "syntax error",
         }),
       );
       return;
