@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -71,6 +73,17 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
 
         if self.is_comment_locked():
             return HttpResponseForbidden()
+
+        if not request.user.is_superuser:
+            user_latest_comment = Comment.objects.filter(author=request.profile).order_by('-time').first()
+
+            if user_latest_comment is not None:
+                time_diff = (datetime.now(timezone.utc) - user_latest_comment.time).seconds
+                if time_diff < settings.VNOJ_COMMENT_COOLDOWN:
+                    remaining_minutes, remaining_seconds = divmod(settings.VNOJ_COMMENT_COOLDOWN - time_diff, 60)
+                    return HttpResponseBadRequest(_('You can only comment after {0} minutes and {1} seconds.')
+                                                  .format(remaining_minutes, remaining_seconds),
+                                                  content_type='text/plain')
 
         parent = request.POST.get('parent')
         if parent:

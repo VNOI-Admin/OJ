@@ -98,6 +98,12 @@ VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
 VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem
 
+# Cooldown time (seconds) between each comment
+VNOJ_COMMENT_COOLDOWN = 60
+
+# Cooldown time (seconds) between each blog post
+VNOJ_BLOG_COOLDOWN = 3 * 60 * 60
+
 # Some problems have a lot of testcases, and each testcase
 # has about 5~6 fields, so we need to raise this
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 3000
