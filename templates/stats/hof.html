@@ -115,6 +115,125 @@
         });
     });
 </script>
+<script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+<script>
+    const config = {
+  "particles": {
+    "number": {
+      "value": 80,
+      "density": {
+        "enable": true,
+        "value_area": 800
+      }
+    },
+    "color": {
+      "value": "#ffffff"
+    },
+    "shape": {
+      "type": "circle",
+      "stroke": {
+        "width": 0,
+        "color": "#000000"
+      },
+      "polygon": {
+        "nb_sides": 5
+      },
+      "image": {
+        "src": "img/github.svg",
+        "width": 100,
+        "height": 100
+      }
+    },
+    "opacity": {
+      "value": 0.5,
+      "random": false,
+      "anim": {
+        "enable": false,
+        "speed": 1,
+        "opacity_min": 0.1,
+        "sync": false
+      }
+    },
+    "size": {
+      "value": 3,
+      "random": true,
+      "anim": {
+        "enable": false,
+        "speed": 40,
+        "size_min": 0.1,
+        "sync": false
+      }
+    },
+    "line_linked": {
+      "enable": true,
+      "distance": 150,
+      "color": "#ffffff",
+      "opacity": 0.4,
+      "width": 1
+    },
+    "move": {
+      "enable": true,
+      "speed": 6,
+      "direction": "none",
+      "random": false,
+      "straight": false,
+      "out_mode": "out",
+      "bounce": false,
+      "attract": {
+        "enable": false,
+        "rotateX": 600,
+        "rotateY": 1200
+      }
+    }
+  },
+  "interactivity": {
+    "detect_on": "canvas",
+    "events": {
+      "onhover": {
+        "enable": true,
+        "mode": "repulse"
+      },
+      "onclick": {
+        "enable": true,
+        "mode": "push"
+      },
+      "resize": true
+    },
+    "modes": {
+      "grab": {
+        "distance": 400,
+        "line_linked": {
+          "opacity": 1
+        }
+      },
+      "bubble": {
+        "distance": 400,
+        "size": 40,
+        "duration": 2,
+        "opacity": 8,
+        "speed": 3
+      },
+      "repulse": {
+        "distance": 200,
+        "duration": 0.4
+      },
+      "push": {
+        "particles_nb": 4
+      },
+      "remove": {
+        "particles_nb": 2
+      }
+    }
+  },
+  "retina_detect": true
+}
+    $(document).ready(() => {
+        particlesJS('particles-js', config);
+    })
+    // particlesJS.load('particles-js', 'assets/particles.json', function() {
+    //     console.log('callback - particles.js config loaded');
+    // });
+</script>
 {% endblock %}
 
 {% block navbar %}
@@ -125,6 +244,7 @@
 
 {% block body %}
     <section id="intro" class="hall-section">
+        <div id="particles-js" style="position: absolute; width: 100vw; z-index: 0;"></div>
         <div class="hall-content hero-sub-page">
             <div class="hero-sub-page__content">
                 <h1 class="title">
@@ -143,10 +263,10 @@
                 <table style="padding-right: 2em; border-collapse: seperate; border-spacing: 1.5em;">
                     <tr>
                         <td>
-                            <a href="#contests"><img class="logo-grid-icon logo-top-left" style="float:right" src="{{ static('VNOIV.png') }}" data-title="Hall of Champions" data-content="Meet challengers from some of the latest contests."></a>
+                            <a href="#server-stats"><img class="logo-grid-icon logo-top-left" style="float:right" src="{{ static('VNOIV.png') }}" data-title="Hall of Champions" data-content="Meet challengers from some of the latest contests."></a>
                         </td>
                         <td>
-                            <a href="#server-stats"><img class="logo-grid-icon logo-top-right" style="float:left" src="{{ static('VNOIN.png') }}" data-title="Cracking the Stats" data-content="Top rating users. Top contributors. Top problem hunters. Everyone, everywhere, all at once."></a>
+                            <a href="#top-contests"><img class="logo-grid-icon logo-top-right" style="float:left" src="{{ static('VNOIN.png') }}" data-title="Cracking the Stats" data-content="Top rating users. Top contributors. Top problem hunters. Everyone, everywhere, all at once."></a>
                         </td>
                     </tr>
                     <tr>
@@ -164,147 +284,45 @@
 
     <section id="server-stats" class="hall-section">
         <div class="hall-content">
-            <div class="card-holder">
-                <div class="card rating-ranker">
-                    <div class="overlay"></div>
-                    <div class="circle">
-                        <i class="fa fa-graduation-cap"></i>
-                    </div>
-                    <p class="card-title">Rating rankers</p>
-                    <div class="card-content">
-                        <div class="stage">
-                            <img src="{{ static('stage.png') }}"/>
-                            <div class="ranking">
-                                <div class="rank3">
-                                    <p class="rank3__content__info__name {{ratings[1].css_class}}">{{ ratings[1].user.username|truncate(14) }}</p>
-                                    <p class="rank3__content__info__rating">Rating: {{ ratings[1].rating }}</p>
-                                </div>
-                                <div class="rank1">
-                                    <p class="rank1__content__info__name {{ratings[0].css_class}}">{{ ratings[0].user.username|truncate(14) }}</p>
-                                    <p class="rank1__content__info__rating">Rating: {{ ratings[0].rating }}</p>
-                                </div>
-                                <div class="rank2">
-                                    <p class="rank2__content__info__name {{ratings[2].css_class}}">{{ ratings[2].user.username|truncate(14) }}</p>
-                                    <p class="rank2__content__info__rating">Rating: {{ ratings[2].rating }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <table class="table" cellspacing="0" cellpadding="0">
-                            <thead>
-                                <th>Rank</th>
-                                <th>Username</th>
-                                <th>Rating</th>
-                            </thead>
-                            <tbody>
-                                {% for user in ratings %}
-                                    {% if loop.index > 3 %}
-                                        <tr>
-                                            <td class="text-black">{{ loop.index }}</td>
-                                            <td class="{{ user.css_class }}">{{user.username}}</td>
-                                            <td class="text-black">{{ user.rating }}</td>
-                                        </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+            <div class="ranking-container">
+                <div class="ranking-card">
+                    <h3 class="ranking-card__title">Problem solvers</h3>
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" style="fill: #000;" height="1em" viewBox="0 0 384 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M272 384c9.6-31.9 29.5-59.1 49.2-86.2l0 0c5.2-7.1 10.4-14.2 15.4-21.4c19.8-28.5 31.4-63 31.4-100.3C368 78.8 289.2 0 192 0S16 78.8 16 176c0 37.3 11.6 71.9 31.4 100.3c5 7.2 10.2 14.3 15.4 21.4l0 0c19.8 27.1 39.7 54.4 49.2 86.2H272zM192 512c44.2 0 80-35.8 80-80V416H112v16c0 44.2 35.8 80 80 80zM112 176c0 8.8-7.2 16-16 16s-16-7.2-16-16c0-61.9 50.1-112 112-112c8.8 0 16 7.2 16 16s-7.2 16-16 16c-44.2 0-80 35.8-80 80z"/></svg>
                 </div>
-                <div class="card problem-solver">
-                    <div class="overlay"></div>
-                    <div class="circle">
-                        <i class="fa fa-users"></i>
-                    </div>
-                    <p class="card-title">Problem Solvers</p>
-                    <div class="card-content">
-                        <div class="stage">
-                            <img src="{{ static('stage.png') }}"/>
-                            <div class="ranking">
-                                <div class="rank3">
-                                    <p class="rank3__content__info__name {{ problem_solvers[1].css_class}}">{{ problem_solvers[1].user.username|truncate(14) }}</p>
-                                    <p class="rank3__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[1].performance_points | float) }}</p>
-                                </div>
-                                <div class="rank1">
-                                    <p class="rank1__content__info__name {{ problem_solvers[0].css_class}}">{{ problem_solvers[0].user.username|truncate(14) }}</p>
-                                    <p class="rank1__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[0].performance_points | float) }}</p>
-                                </div>
-                                <div class="rank2">
-                                    <p class="rank2__content__info__name {{ problem_solvers[2].css_class}}">{{ problem_solvers[2].user.username|truncate(14) }}</p>
-                                    <p class="rank2__content__info__rating">PP: {{ '%0.2f'| format(problem_solvers[2].performance_points | float) }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <table class="table" cellspacing="0" cellpadding="0">
-                            <thead>
-                                <th>Rank</th>
-                                <th>Username</th>
-                                <th>Rating</th>
-                            </thead>
-                            <tbody>
-                                {% for user in problem_solvers %}
-                                    {% if loop.index > 3 %}
-                                        <tr>
-                                            <td class="text-black">{{ loop.index }}</td>
-                                            <td class="{{ user.css_class }}">{{user.username}}</td>
-                                            <td class="text-black">{{ '%0.2f'| format(user.performance_points | float) }}</td>
-                                        </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="ranking-card">
+                    <h3 class="ranking-card__title">Rating rankers</h3>
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" style="fill: #F4980A" height="1em" viewBox="0 0 640 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M353.8 54.1L330.2 6.3c-3.9-8.3-16.1-8.6-20.4 0L286.2 54.1l-52.3 7.5c-9.3 1.4-13.3 12.9-6.4 19.8l38 37-9 52.1c-1.4 9.3 8.2 16.5 16.8 12.2l46.9-24.8 46.6 24.4c8.6 4.3 18.3-2.9 16.8-12.2l-9-52.1 38-36.6c6.8-6.8 2.9-18.3-6.4-19.8l-52.3-7.5zM256 256c-17.7 0-32 14.3-32 32V480c0 17.7 14.3 32 32 32H384c17.7 0 32-14.3 32-32V288c0-17.7-14.3-32-32-32H256zM32 320c-17.7 0-32 14.3-32 32V480c0 17.7 14.3 32 32 32H160c17.7 0 32-14.3 32-32V352c0-17.7-14.3-32-32-32H32zm416 96v64c0 17.7 14.3 32 32 32H608c17.7 0 32-14.3 32-32V416c0-17.7-14.3-32-32-32H480c-17.7 0-32 14.3-32 32z"/></svg>
                 </div>
-                <div class="card contributor">
-                    <div class="overlay"></div>
-                    <div class="circle">
-                        <i class="fa fa-thumbs-up"></i>
-                    </div>
-                    <p class="card-title">Contributors</p>
-                    <div class="card-content">
-                        <div class="stage">
-                            <img src="{{ static('stage.png') }}"/>
-                            <div class="ranking">
-                                <div class="rank3">
-                                    <p class="rank3__content__info__name {{ contributors[1].css_class}}">{{ contributors[1].user.username|truncate(14) }}</p>
-                                    <p class="rank3__content__info__rating">CP: {{ contributors[1].contribution_points }}</p>
-                                </div>
-                                <div class="rank1">
-                                    <p class="rank1__content__info__name {{ contributors[0].css_class}}">{{ contributors[0].user.username|truncate(14) }}</p>
-                                    <p class="rank1__content__info__rating">CP: {{ contributors[0].contribution_points }}</p>
-                                </div>
-                                <div class="rank2">
-                                    <p class="rank2__content__info__name {{ contributors[2].css_class}}">{{ contributors[2].user.username|truncate(14) }}</p>
-                                    <p class="rank2__content__info__rating">CP: {{ contributors[2].contribution_points }}</p>
-                                </div>
-                            </div>
-                        </div>
-                        <table class="table" cellspacing="0" cellpadding="0">
-                            <thead>
-                                <th>Rank</th>
-                                <th>Username</th>
-                                <th>Contribution points</th>
-                            </thead>
-                            <tbody>
-                                {% for user in contributors %}
-                                    {% if loop.index > 3 %}
-                                        <tr>
-                                            <td class="text-black">{{ loop.index }}</td>
-                                            <td class="{{ user.css_class }}">{{user.username}}</td>
-                                            <td class="text-black">{{ user.contribution_points }}</td>
-                                        </tr>
-                                    {% endif %}
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="ranking-card">
+                    <h3 class="ranking-card__title">Contributors</h3>
+                    <svg class="icon" xmlns="http://www.w3.org/2000/svg" style="fill: #000;" height="1em" viewBox="0 0 640 512"><!--! Font Awesome Free 6.4.2 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license (Commercial License) Copyright 2023 Fonticons, Inc. --><path d="M144 0a80 80 0 1 1 0 160A80 80 0 1 1 144 0zM512 0a80 80 0 1 1 0 160A80 80 0 1 1 512 0zM0 298.7C0 239.8 47.8 192 106.7 192h42.7c15.9 0 31 3.5 44.6 9.7c-1.3 7.2-1.9 14.7-1.9 22.3c0 38.2 16.8 72.5 43.3 96c-.2 0-.4 0-.7 0H21.3C9.6 320 0 310.4 0 298.7zM405.3 320c-.2 0-.4 0-.7 0c26.6-23.5 43.3-57.8 43.3-96c0-7.6-.7-15-1.9-22.3c13.6-6.3 28.7-9.7 44.6-9.7h42.7C592.2 192 640 239.8 640 298.7c0 11.8-9.6 21.3-21.3 21.3H405.3zM224 224a96 96 0 1 1 192 0 96 96 0 1 1 -192 0zM128 485.3C128 411.7 187.7 352 261.3 352H378.7C452.3 352 512 411.7 512 485.3c0 14.7-11.9 26.7-26.7 26.7H154.7c-14.7 0-26.7-11.9-26.7-26.7z"/></svg>
                 </div>
             </div>
+        </div>
+        <div class="confetti top-left">
+            <svg width="120px" height="120px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <polyline fill="none" stroke="#999" stroke-width="2" points="4 16 16 16 16 4" transform="rotate(180 10 10)"/>
+            </svg> 
+        </div>
+        <div class="confetti top-right">
+            <svg width="120px" height="120px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" transform="matrix(6.123233995736766e-17,1,-1,6.123233995736766e-17,0,0)">
+                <polyline fill="none" stroke="#999" stroke-width="2" points="4 16 16 16 16 4" transform="rotate(180 10 10)"/>
+            </svg> 
+        </div>
+        <div class="confetti bottom-left">
+            <svg width="120px" height="120px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" transform="matrix(-1.8369701987210297e-16,-1,1,-1.8369701987210297e-16,0,0)">
+                <polyline fill="none" stroke="#999" stroke-width="2" points="4 16 16 16 16 4" transform="rotate(180 10 10)"/>
+            </svg> 
+        </div>
+        <div class="confetti bottom-right run-backward">
+            <img src="{{ static('VNOIV.png') }}" alt="Letter V in VNOI logo">
         </div>
     </section>
 
     <!-- <section id="this-week" class="hall-section">
         <div class="hall-content">This is the this-week part</div>
     </section> -->
-    <section id="top-contest" class="hall-section">
+    <section id="top-contests" class="hall-section">
         <div class="hall-content">
             <div class="container">
                 <div class="wrapper">
@@ -353,10 +371,27 @@
                 </div>
             </div>
         </div>
+        <div class="confetti top-left">
+            <svg width="120px" height="120px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <polyline fill="none" stroke="#999" stroke-width="2" points="4 16 16 16 16 4" transform="rotate(180 10 10)"/>
+            </svg> 
+        </div>
+        <div class="confetti top-right">
+            <svg width="120px" height="120px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" transform="matrix(6.123233995736766e-17,1,-1,6.123233995736766e-17,0,0)">
+                <polyline fill="none" stroke="#999" stroke-width="2" points="4 16 16 16 16 4" transform="rotate(180 10 10)"/>
+            </svg> 
+        </div>
+        <div class="confetti bottom-right">
+            <svg width="120px" height="120px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" transform="matrix(-1,1.2246467991473532e-16,-1.2246467991473532e-16,-1,0,0)">
+                <polyline fill="none" stroke="#999" stroke-width="2" points="4 16 16 16 16 4" transform="rotate(180 10 10)"/>
+            </svg> 
+        </div>
+        <div class="confetti bottom-left run-forward">
+            <img src="{{ static('VNOIN.png') }}" alt="Letter N in VNOI logo">
+        </div>
     </section>
     <section id="team" class="hall-section">
         <div class="hall-content">
-            <h2>Team Members</h2>
             <div class="card-groups-container">
                 <div class="card-groups">
                     <div class="card-group" data-status="active" data-group="0">
@@ -503,6 +538,24 @@
                     <button class="btn"></button> -->
                 </div>
             </div>
+        </div>
+        <div class="confetti top-left">
+            <svg width="120px" height="120px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <polyline fill="none" stroke="#999" stroke-width="2" points="4 16 16 16 16 4" transform="rotate(180 10 10)"/>
+            </svg> 
+        </div>
+        <div class="confetti top-right">
+            <svg width="120px" height="120px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" transform="matrix(6.123233995736766e-17,1,-1,6.123233995736766e-17,0,0)">
+                <polyline fill="none" stroke="#999" stroke-width="2" points="4 16 16 16 16 4" transform="rotate(180 10 10)"/>
+            </svg> 
+        </div>
+        <div class="confetti bottom-left">
+            <svg width="120px" height="120px" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" transform="matrix(-1.8369701987210297e-16,-1,1,-1.8369701987210297e-16,0,0)">
+                <polyline fill="none" stroke="#999" stroke-width="2" points="4 16 16 16 16 4" transform="rotate(180 10 10)"/>
+            </svg> 
+        </div>
+        <div class="confetti bottom-right run-backward">
+            <img src="{{ static('VNOIO.png') }}" alt="Letter O in VNOI logo">
         </div>
     </section>
     <div class="go-up">
