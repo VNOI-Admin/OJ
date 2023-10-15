@@ -74,6 +74,7 @@ class OrganizationMixin(object):
             return False
         return org.is_admin(self.request.profile) or self.request.user.has_perm('judge.edit_all_organization')
 
+
 # Use this mixin to mark a view is public for all users, including non-members
 class PublicOrganizationMixin(OrganizationMixin):
     pass
