@@ -74,16 +74,18 @@ class OrganizationMixin(object):
             return False
         return org.is_admin(self.request.profile) or self.request.user.has_perm('judge.edit_all_organization')
 
-
+# Use this mixin to mark a view is public for all users, including non-members
 class PublicOrganizationMixin(OrganizationMixin):
     pass
 
 
+# Use this mixin to mark a view is private for members only
 class PrivateOrganizationMixin(OrganizationMixin):
     # If the user has at least one of the following permissions,
     # they can access the private data even if they are not in the org
     permission_bypass = []
 
+    # Override this method to customize the permission check
     def can_access_this_view(self):
         if self.request.user.is_authenticated:
             if self.request.profile in self.organization:
@@ -104,7 +106,7 @@ class PrivateOrganizationMixin(OrganizationMixin):
         return super(PrivateOrganizationMixin, self).dispatch(request, *args, **kwargs)
 
 
-# this mixin is used to ensure that the user is an admin of the organization
+# Use this mixin to ensure that the user is an admin of the organization
 class AdminOrganizationMixin(PrivateOrganizationMixin):
     def can_access_this_view(self):
         return self.can_edit_organization()
