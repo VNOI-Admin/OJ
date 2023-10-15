@@ -92,17 +92,6 @@ class ProblemData(models.Model):
     grader_args = models.TextField(verbose_name=_('grader arguments'), blank=True,
                                    help_text=_('grader arguments as a JSON object'))
 
-    __original_zipfile = None
-
-    def __init__(self, *args, **kwargs):
-        super(ProblemData, self).__init__(*args, **kwargs)
-        self.__original_zipfile = self.zipfile
-
-    def save(self, *args, **kwargs):
-        if self.zipfile != self.__original_zipfile:
-            self.__original_zipfile.delete(save=False)
-        return super(ProblemData, self).save(*args, **kwargs)
-
     def has_yml(self):
         return problem_data_storage.exists('%s/init.yml' % self.problem.code)
 

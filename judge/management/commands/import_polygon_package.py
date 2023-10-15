@@ -636,18 +636,21 @@ def parse_statements(problem_meta, root, package):
 
 
 @transaction.atomic
-def create_problem(problem_meta):
-    print('Creating problem in database')
-    problem = Problem(
-        code=problem_meta['code'],
-        name=problem_meta['name'],
-        time_limit=problem_meta['time_limit'],
-        memory_limit=problem_meta['memory_limit'],
-        description=problem_meta['description'],
-        partial=problem_meta['partial'],
-        group=ProblemGroup.objects.order_by('id').first(),  # Uncategorized
-        points=0.0,
-    )
+def update_or_create_problem(problem_meta, do_update):
+    if do_update:
+        print('Updating problem in database')
+    else:
+        print('Creating problem in database')
+    problem, _ = Problem.objects.update_or_create(code=problem_meta['code'], defaults={
+        'code': problem_meta['code'],
+        'name': problem_meta['name'],
+        'time_limit': problem_meta['time_limit'],
+        'memory_limit': problem_meta['memory_limit'],
+        'description': problem_meta['description'],
+        'partial': problem_meta['partial'],
+        'group': ProblemGroup.objects.order_by('id').first(),  # Uncategorized
+        'points': 0.0,
+    })
     problem.save()
     problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
     problem.authors.set(problem_meta['authors'])
@@ -655,6 +658,7 @@ def create_problem(problem_meta):
     problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
     problem.save()
 
+    ProblemTranslation.objects.filter(problem=problem).delete()
     for tran in problem_meta['translations']:
         ProblemTranslation(
             problem=problem,
@@ -663,6 +667,7 @@ def create_problem(problem_meta):
             description=tran['description'],
         ).save()
 
+    Solution.objects.filter(problem=problem).delete()
     if problem_meta['tutorial'] != '':
         Solution(
             problem=problem,
@@ -672,13 +677,13 @@ def create_problem(problem_meta):
         ).save()
 
     with open(problem_meta['zipfile'], 'rb') as f:
-        problem_data = ProblemData(
-            problem=problem,
-            zipfile=File(f),
-            grader=problem_meta['grader'],
-            checker=problem_meta['checker'],
-            grader_args=json.dumps(problem_meta['grader_args']),
-        )
+        problem_data, _ = ProblemData.objects.update_or_create(problem=problem, defaults={
+            'problem': problem,
+            'zipfile': File(f),
+            'grader': problem_meta['grader'],
+            'checker': problem_meta['checker'],
+            'grader_args': json.dumps(problem_meta['grader_args']),
+        })
         problem_data.save()
 
     if problem_meta['checker'] == 'bridged':
@@ -694,6 +699,8 @@ def create_problem(problem_meta):
         with open(problem_meta['custom_grader'], 'rb') as f:
             problem_data.custom_grader = File(f)
             problem_data.save()
+
+    ProblemTestCase.objects.filter(dataset=problem).delete()
 
     order = 0
 
@@ -751,6 +758,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('package', help='path to package in zip format')
         parser.add_argument('code', help='problem code')
+        parser.add_argument('--update', help='update the problem if it exists', action='store_true')
         parser.add_argument('--authors', help='username of problem author', nargs='*')
         parser.add_argument('--curators', help='username of problem curator', nargs='*')
 
@@ -764,13 +772,18 @@ class Command(BaseCommand):
         if pandoc_get_version() < (3, 0, 0):
             raise CommandError('pandoc version must be at least 3.0.0')
 
+        do_update = options['update']
+
         # Let's validate the problem code right now.
         # We don't want to have done everything and still fail because
         # of invalid problem code.
         problem_code = options['code']
         Problem._meta.get_field('code').run_validators(problem_code)
         if Problem.objects.filter(code=problem_code).exists():
-            raise CommandError(f'problem with code {problem_code} already exists')
+            if not do_update:
+                raise CommandError(f'problem with code {problem_code} already exists')
+        elif do_update:
+            raise CommandError(f'problem with code {problem_code} not found')
 
         package = zipfile.ZipFile(options['package'], 'r')
         if 'problem.xml' not in package.namelist():
@@ -810,7 +823,7 @@ class Command(BaseCommand):
             parse_assets(problem_meta, root, package)
             parse_tests(problem_meta, root, package)
             parse_statements(problem_meta, root, package)
-            create_problem(problem_meta)
+            update_or_create_problem(problem_meta, do_update)
         except Exception:
             # Remove imported images
             for image_url in problem_meta['image_cache'].values():
