@@ -233,7 +233,7 @@
     <div id="nav-container">
         <a id="navicon" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
         <ul id="nav-list">
-            {% if request.organization is none %}
+            {% if request.organization is not defined %}
                 <li class="home-nav-element"><a href="{{ url('home') }}">{% include "site-logo-fragment.html" %}</a></li>
                 <li class="home-nav-element"><span class="nav-divider"></span></li>
                 <li class="home-menu-item"><a href="{{ url('home') }}" class="nav-home">{{ _('Home') }}</a></li>
@@ -251,13 +251,13 @@
                     </li>
                 {% endfor %}
             {% else %}
-            {% macro make_navbar_item(key, url, text) %}
-                <li>
-                    <a href="{{ url }}" class="nav-{{ key }}"><span>
-                        {{ text }}
-                    </a>
-                </li>
-            {% endmacro %}
+                {% macro make_navbar_item(key, url, text) %}
+                    <li>
+                        <a href="{{ url }}" class="nav-{{ key }}"><span>
+                            {{ text }}
+                        </a>
+                    </li>
+                {% endmacro %}
                 <!-- set org = request.org -->
                 {% set org = request.organization %}
                 <li class="home-nav-element"><a href="{{ url('organization_home', org.slug) }}">{% include "site-logo-fragment.html" %}</a></li>

@@ -201,6 +201,7 @@ class OrganizationSubdomainMiddleware(object):
         return self.get_response(request)
 
     def process_template_response(self, request, response):
-        if 'logo_override_image' not in response.context_data:
+        if hasattr(request, 'organization') and 'logo_override_image' not in response.context_data:
+            # inject the logo override image into the template context
             response.context_data['logo_override_image'] = request.organization.logo_override_image
         return response
