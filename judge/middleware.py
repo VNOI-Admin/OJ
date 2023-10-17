@@ -183,6 +183,7 @@ class MiscConfigMiddleware:
         request.misc_config = MiscConfigDict(language=request.LANGUAGE_CODE, domain=domain)
         return self.get_response(request)
 
+
 class OrganizationSubdomainMiddleware(object):
     def __init__(self, get_response):
         self.get_response = get_response
@@ -197,3 +198,8 @@ class OrganizationSubdomainMiddleware(object):
         print(subdomain)
         request.organization = get_object_or_404(Organization, slug=subdomain)
         return self.get_response(request)
+
+    def process_template_response(self, request, response):
+        if 'logo_override_image' not in response.context_data:
+            response.context_data['logo_override_image'] = request.organization.logo_override_image
+        return response
