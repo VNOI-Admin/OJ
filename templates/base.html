@@ -258,7 +258,6 @@
                         </a>
                     </li>
                 {% endmacro %}
-                <!-- set org = request.org -->
                 {% set org = request.organization %}
                 <li class="home-nav-element"><a href="{{ url('organization_home', org.slug) }}">{% include "site-logo-fragment.html" %}</a></li>
                 <li class="home-nav-element"><span class="nav-divider"></span></li>
