@@ -7,10 +7,10 @@
 {% endmacro %}
 
 <div class="page-title">
-    <h2>{{ content_title or title }}</h2>
-    <br>
-    <div class="tabs">
-        {% if request.organization is not defined %}
+    {% if request.organization is not defined %}
+        <h2>{{ content_title or title }}</h2>
+        <br>
+        <div class="tabs">
             <ul>
                 {{ make_tab('home', 'fa-info-circle', url('organization_home', organization.slug), _('Home')) }}
                 {{ make_tab('users', 'fa-university', organization.get_users_url(), _('Users')) }}
@@ -18,7 +18,10 @@
                 {{ make_tab('contest-list', 'fa-trophy', url('contest_list_organization', organization.slug), _('Contests list')) }}
                 {{ make_tab('submission-list', 'fa-list', url('submission_list_organization', organization.slug), _('Submissions')) }}
             </ul>
-        {% endif %}
+    {% else %}
+        <div class="tabs">
+        <h2>{{ content_title or title }}</h2>
+    {% endif %}
         <span class="spacer"></span>
         <ul>
             {% if organization.is_admin(request.profile) %}

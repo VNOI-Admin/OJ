@@ -161,7 +161,10 @@ class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizati
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationUsers, self).get_context_data(**kwargs)
-        context['title'] = _('Members')
+        if not self.is_in_organization_subdomain():
+            context['title'] = self.organization.name
+        else:
+            context['title'] = _('Members')
         context['users'] = ranker(context['users'])
         context['partial'] = True
         context['is_admin'] = self.can_edit_organization()
