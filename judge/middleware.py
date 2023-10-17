@@ -197,6 +197,10 @@ class OrganizationSubdomainMiddleware(object):
 
         print(subdomain)
         request.organization = get_object_or_404(Organization, slug=subdomain)
+        # if the user is trying to access the home page, redirect to the organization's home page
+        if request.path == '/':
+            return HttpResponseRedirect(request.organization.get_absolute_url())
+
         return self.get_response(request)
 
     def process_template_response(self, request, response):
