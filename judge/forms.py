@@ -198,7 +198,7 @@ class ProblemEditForm(ModelForm):
         if self.org_pk is None:
             return code
         org = Organization.objects.get(pk=self.org_pk)
-        prefix = ''.join(x for x in org.slug.lower() if x.isalpha()) + '_'
+        prefix = ''.join(x for x in org.slug.lower() if x.isalnum()) + '_'
         if not code.startswith(prefix):
             raise forms.ValidationError(_('Problem id code must starts with `%s`') % (prefix, ),
                                         'problem_id_invalid_prefix')
@@ -692,7 +692,7 @@ class ContestForm(ModelForm):
         if self.org_pk is None:
             return key
         org = Organization.objects.get(pk=self.org_pk)
-        prefix = ''.join(x for x in org.slug.lower() if x.isalpha()) + '_'
+        prefix = ''.join(x for x in org.slug.lower() if x.isalnum()) + '_'
         if not key.startswith(prefix):
             raise forms.ValidationError(_('Contest id must starts with `%s`') % (prefix, ),
                                         'contest_id_invalid_prefix')
