@@ -190,12 +190,9 @@ class OrganizationSubdomainMiddleware(object):
 
     def __call__(self, request):
         subdomain: str = request.get_host().split('.')[0]
-        # TODO: remove
-        subdomain = 'ctq'
         if subdomain.isnumeric() or subdomain in settings.VNOJ_IGNORED_ORGANIZATION_SUBDOMAINS:
             return self.get_response(request)
 
-        print(subdomain)
         request.organization = get_object_or_404(Organization, slug=subdomain)
         # if the user is trying to access the home page, redirect to the organization's home page
         if request.path == '/':
