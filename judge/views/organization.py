@@ -24,6 +24,7 @@ from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
     Problem, Profile
 from judge.tasks import on_new_problem
+from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.ranker import ranker
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
@@ -57,6 +58,12 @@ class OrganizationMixin(object):
 
         try:
             self.object = self.organization
+
+            # block the user from viewing other orgs in the subdomain
+            if self.is_in_organization_subdomain() and self.organization.pk != self.request.organization.pk:
+                return generic_message(request, _('Cannot view other organizations'),
+                                       _('You cannot view other organizations'), status=403)
+
             return super(OrganizationMixin, self).dispatch(request, *args, **kwargs)
         except Http404:
             slug = kwargs.get('slug', None)
@@ -73,6 +80,9 @@ class OrganizationMixin(object):
         if not self.request.user.is_authenticated:
             return False
         return org.is_admin(self.request.profile) or self.request.user.has_perm('judge.edit_all_organization')
+
+    def is_in_organization_subdomain(self):
+        return hasattr(self.request, 'organization')
 
 
 # Use this mixin to mark a view is public for all users, including non-members
@@ -151,7 +161,10 @@ class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizati
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationUsers, self).get_context_data(**kwargs)
-        context['title'] = self.object.name
+        if not self.is_in_organization_subdomain():
+            context['title'] = self.organization.name
+        else:
+            context['title'] = _('Members')
         context['users'] = ranker(context['users'])
         context['partial'] = True
         context['is_admin'] = self.can_edit_organization()
@@ -521,7 +534,8 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
 
     def get_context_data(self, **kwargs):
         context = super(ProblemListOrganization, self).get_context_data(**kwargs)
-        context['title'] = self.organization.name
+        if not self.is_in_organization_subdomain():
+            context['title'] = self.organization.name
         return context
 
     def get_filter(self):
@@ -562,11 +576,12 @@ class ContestListOrganization(PrivateOrganizationMixin, ContestList):
 
     def get_context_data(self, **kwargs):
         context = super(ContestListOrganization, self).get_context_data(**kwargs)
-        context['title'] = self.organization.name
+        if not self.is_in_organization_subdomain():
+            context['title'] = self.organization.name
         return context
 
 
-class SubmissionListOrganization(PrivateOrganizationMixin, SubmissionsListBase):
+class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMixin, SubmissionsListBase):
     template_name = 'organization/submission-list.html'
     permission_bypass = ['judge.view_all_submission']
 
@@ -577,8 +592,9 @@ class SubmissionListOrganization(PrivateOrganizationMixin, SubmissionsListBase):
 
     def get_context_data(self, **kwargs):
         context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
-        context['title'] = self.organization.name
-        context['content_title'] = self.organization.name
+        if not self.is_in_organization_subdomain():
+            context['title'] = self.organization.name
+            context['content_title'] = self.organization.name
         return context
 
 

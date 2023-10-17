@@ -9,11 +9,12 @@ from django.contrib.auth.models import User
 from django.contrib.sites.shortcuts import get_current_site
 from django.core.cache import cache
 from django.http import HttpResponse, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import Resolver404, resolve, reverse
 from django.utils.encoding import force_bytes
 from requests.exceptions import HTTPError
 
-from judge.models import MiscConfig
+from judge.models import MiscConfig, Organization
 
 try:
     import uwsgi
@@ -181,3 +182,26 @@ class MiscConfigMiddleware:
         domain = get_current_site(request).domain
         request.misc_config = MiscConfigDict(language=request.LANGUAGE_CODE, domain=domain)
         return self.get_response(request)
+
+
+class OrganizationSubdomainMiddleware(object):
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        subdomain: str = request.get_host().split('.')[0]
+        if subdomain.isnumeric() or subdomain in settings.VNOJ_IGNORED_ORGANIZATION_SUBDOMAINS:
+            return self.get_response(request)
+
+        request.organization = get_object_or_404(Organization, slug=subdomain)
+        # if the user is trying to access the home page, redirect to the organization's home page
+        if request.path == '/':
+            return HttpResponseRedirect(request.organization.get_absolute_url())
+
+        return self.get_response(request)
+
+    def process_template_response(self, request, response):
+        if hasattr(request, 'organization') and 'logo_override_image' not in response.context_data:
+            # inject the logo override image into the template context
+            response.context_data['logo_override_image'] = request.organization.logo_override_image
+        return response
