@@ -10,7 +10,7 @@
     <h2>{{ content_title or title }}</h2>
     <br>
     <div class="tabs">
-        {% if request.organization is none %}
+        {% if request.organization is not defined %}
             <ul>
                 {{ make_tab('home', 'fa-info-circle', url('organization_home', organization.slug), _('Home')) }}
                 {{ make_tab('users', 'fa-university', organization.get_users_url(), _('Users')) }}
