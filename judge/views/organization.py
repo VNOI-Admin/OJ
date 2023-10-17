@@ -57,6 +57,12 @@ class OrganizationMixin(object):
 
         try:
             self.object = self.organization
+
+            # block the user from viewing other orgs in the subdomain
+            if self.is_in_organization_subdomain() and self.organization.pk != self.request.organization.pk:
+                return generic_message(request, _('Cannot view other organizations'),
+                                       _('You cannot view other organizations'), status=403)
+
             return super(OrganizationMixin, self).dispatch(request, *args, **kwargs)
         except Http404:
             slug = kwargs.get('slug', None)
