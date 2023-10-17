@@ -74,6 +74,9 @@ class OrganizationMixin(object):
             return False
         return org.is_admin(self.request.profile) or self.request.user.has_perm('judge.edit_all_organization')
 
+    def is_in_organization_subdomain(self):
+        return hasattr(self.request, 'organization')
+
 
 # Use this mixin to mark a view is public for all users, including non-members
 class PublicOrganizationMixin(OrganizationMixin):
@@ -151,7 +154,7 @@ class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizati
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationUsers, self).get_context_data(**kwargs)
-        context['title'] = self.object.name
+        context['title'] = _('Members')
         context['users'] = ranker(context['users'])
         context['partial'] = True
         context['is_admin'] = self.can_edit_organization()
@@ -521,7 +524,8 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
 
     def get_context_data(self, **kwargs):
         context = super(ProblemListOrganization, self).get_context_data(**kwargs)
-        context['title'] = self.organization.name
+        if not self.is_in_organization_subdomain():
+            context['title'] = self.organization.name
         return context
 
     def get_filter(self):
@@ -562,7 +566,8 @@ class ContestListOrganization(PrivateOrganizationMixin, ContestList):
 
     def get_context_data(self, **kwargs):
         context = super(ContestListOrganization, self).get_context_data(**kwargs)
-        context['title'] = self.organization.name
+        if not self.is_in_organization_subdomain():
+            context['title'] = self.organization.name
         return context
 
 
@@ -577,8 +582,9 @@ class SubmissionListOrganization(PrivateOrganizationMixin, SubmissionsListBase):
 
     def get_context_data(self, **kwargs):
         context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
-        context['title'] = self.organization.name
-        context['content_title'] = self.organization.name
+        if not self.is_in_organization_subdomain():
+            context['title'] = self.organization.name
+            context['content_title'] = self.organization.name
         return context
 
 
