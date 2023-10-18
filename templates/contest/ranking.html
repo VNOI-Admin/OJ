@@ -39,6 +39,11 @@
         .filter-checklist-button {
             float: right;
         }
+
+        .select-container {
+            display: flex;
+            gap: 2em;
+        }
     </style>
 {% endblock %}
 
@@ -81,9 +86,10 @@
                         window.enableAdminOperations();
                         window.loadOrgLogo();
                         window.applyFavoriteUsers();
+                        window.applyTag();
                     }).always(function () {
                         ranking_outdated = false;
-                        setTimeout(update_ranking, 10000);
+                        // setTimeout(update_ranking, 10000);
                     });
                 }
                 $(window).on('dmoj:window-visible', function () {
@@ -91,7 +97,7 @@
                         update_ranking();
                     }
                 });
-                setTimeout(update_ranking, 10000);
+                // setTimeout(update_ranking, 10000);
             });
         </script>
     {% endif %}
@@ -225,6 +231,48 @@
                 });
             });
 
+            $(function() {
+                $('#tag-check-list').select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}',
+                    multiple: true,
+                    closeOnSelect: false,
+                    placeholder: '{{ _('Filter by group') }}',
+                });
+
+                const selection = $('#tag-check-list').data().select2.selection;
+                const results = $('#tag-check-list').data().select2.results;
+
+                $('#tag-check-list').on('select2:selecting', function(e) {
+                    let id = e.params.args.data.id;
+                    let val = $(e.target).val().concat([id]);
+                    $(e.target).val(val).trigger('change');
+
+                    if (selection.$search.val() != '') {
+                        selection.$search.val('');
+                        selection.trigger('query', {});
+                    } else {
+                        results.setClasses();
+                    }
+
+                    return false;
+                });
+
+                $('#tag-check-list').on('select2:unselecting', function(e) {
+                    const id = e.params.args.data.id;
+                    const val = $(e.target).val().filter(function(v) { return v != id; });
+                    $(e.target).val(val).trigger('change');
+
+                    if (selection.$search.val() != '') {
+                        selection.$search.val('');
+                        selection.trigger('query', {});
+                    } else {
+                        results.setClasses();
+                    }
+
+                    return false;
+                });
+            })
+
             if (localStorage.getItem(`filter-cleared-${contest_key}`) === null) {
                 localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
             }
@@ -233,16 +281,23 @@
                 localStorage.setItem(`filter-selected-orgs-${contest_key}`, []);
             }
 
+            if (localStorage.getItem(`filter-selected-group-${contest_key}`) === null) {
+                localStorage.setItem(`filter-selected-group-${contest_key}`, "");
+            }
+
             $('#apply-organization-filter').click(function () {
                 $('#org-check-list-wrapper').hide();
 
                 let selected_orgs = $('#org-check-list').val().map(x => x.trim());
+                let selected_group = $('#tag-check-list').val().map(x => x.trim());
                 localStorage.setItem(`filter-selected-orgs-${contest_key}`, selected_orgs);
+                localStorage.setItem(`filter-selected-group-${contest_key}`, selected_group);
                 window.applyRankingFilter();
             });
 
             $('#clear-organization-filter').click(function () {
                 $('#org-check-list').val(null).trigger('change');
+                $('#tag-check-list').val(null).trigger('change');
                 $('#apply-organization-filter').click();
             });
 
@@ -256,11 +311,15 @@
                     return;
                 }
 
-                if ($('#select2-org-check-list-results').has(e.target).length !== 0) {
+                if ($('#select2-org-check-list-results').has(e.target).length !== 0 || $('#select2-tag-check-list-results').has(e.target).length !== 0) {
                     return;
                 }
 
                 if ($(e.target).attr('id') && $(e.target).attr('id').startsWith('select2-org-check-list-result')) {
+                    return;
+                }
+
+                if ($(e.target).attr('id') && $(e.target).attr('id').startsWith('select2-tag-check-list-result')) {
                     return;
                 }
 
@@ -324,8 +383,9 @@
                 let counter = 0;
                 let previous_abs_rank = -1;
                 let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`);
+                let selected_group = localStorage.getItem(`filter-selected-group-${contest_key}`);
 
-                if (!selected_orgs.length) {
+                if (!selected_orgs.length && !selected_group.length) {
                     window.clearRankingFilter();
                     return;
                 }
@@ -336,7 +396,7 @@
                     let org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
                     let org = org_anchor ? org_anchor.text : 'Other';
 
-                    if (!selected_orgs.includes(org.trim())) {
+                    if (!selected_orgs.includes(org.trim()) && !selected_group.includes(row.data('user-group'))) {
                         row.hide();
                         return;
                     }
@@ -454,6 +514,27 @@
                 })
             }
             window.loadOrgLogo();
+
+            window.applyTag = function () {
+                const groups = [];
+                $('#ranking-table > tbody > tr[id]').each(function () {
+                    let row = $(this);
+                    
+                    if (groups.findIndex(x => x == row.data('user-group')) == -1) {
+                        row.addClass('top-team');
+                        groups.push(row.data('user-group'));
+                    }
+                });
+
+                let tag_options = $('#tag-check-list');
+                tag_options.empty();
+                groups.forEach(function (group) {
+                    tag_options.append(
+                        `<option value="${group}">${group}</option>`
+                    );
+                });
+            }
+            window.applyTag();
         });
 
         {% if tab == 'ranking' %}
@@ -556,11 +637,14 @@
                 </button>
 
                 <div id="org-check-list-wrapper">
-                    <div>
+                    <div style="margin-bottom: 30px;">
                         <button id="apply-organization-filter" class="inline-button filter-checklist-button">{{ _('Apply') }}</button>
                         <button id="clear-organization-filter" class="inline-button filter-checklist-button">{{ _('Clear') }}</button>
                     </div>
-                    <select id="org-check-list" name="orgs[]" multiple="multiple"></select>
+                    <div style="display: flex; gap: 2em;">
+                        <select id="org-check-list" name="orgs[]" multiple="multiple"></select>
+                        <select id="tag-check-list" name="tags[]" multiple="multiple"></select>
+                    </div>
                 </div>
             </div>
         {% endif %}
