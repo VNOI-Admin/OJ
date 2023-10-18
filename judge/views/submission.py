@@ -331,7 +331,7 @@ class SubmissionSourceDownload(SubmissionDetailBase):
 def abort_submission(request, submission):
     submission = get_object_or_404(Submission, id=int(submission))
     if (not request.user.has_perm('judge.abort_any_submission') and
-       (submission.rejudged_date is not None or request.profile != submission.user)):
+       (submission.rejudged_date is not None or request.profile != submission.user or request.official_contest_mode)):
         raise PermissionDenied()
     submission.abort()
     return HttpResponseRedirect(reverse('submission_status', args=(submission.id,)))
