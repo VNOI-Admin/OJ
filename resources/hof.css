@@ -2,7 +2,7 @@
 html {
 	scroll-behavior: smooth;
 	overflow-anchor: none;
-	scroll-snap-type: y proximity;
+	scroll-snap-type: y proximity;;
 }
 
 html::-webkit-scrollbar {
@@ -463,69 +463,6 @@ body {
 	width: 0.5em;
 }
 
-.card-groups-container {	
-	width: 100%;
-	height: 100%;
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	justify-content: center;
-}
-
-.card-groups {
-	width: 100%;
-	height: 520px;
-	position: relative;
-}
-
-.card-group {
-	display: flex;
-	gap: 2rem;
-	align-items: center;
-	justify-content: center;
-	margin-bottom: 2rem;
-	width: 100%;
-	top: 0;
-	position: absolute;
-	transition: all 1s cubic-bezier(0.23, 0.62, 0.72, 1.18);
-}
-
-.card-group[data-status='hidden'] {
-	opacity: 0;
-	scale: 0;
-}
-
-.card-group[data-status='hidden-left'] {
-	opacity: 0;
-	scale: 0;
-	transform: translateX(-100%);
-}
-
-.card-group[data-status='hidden-right'] {
-	opacity: 0;
-	scale: 0;
-	transform: translateX(100%);
-}
-
-.card-group[data-status='active'] {
-	opacity: 1;
-	scale: 1;
-}
-
-.card-group[data-status='active-right'] {
-	opacity: 0;
-	scale: 0;
-	transform: translateX(100%);
-	transition: none;
-}
-
-.card-group[data-status='active-left'] {
-	opacity: 0;
-	scale: 0;
-	transform: translateX(-100%);
-	transition: none;
-}
-
 h3 {
 	font-size: 1.5rem;
 	/* margin-bottom: 1rem; */
@@ -814,4 +751,60 @@ td:not(:first-child) {
 
 .confetti img {
 	height: 100px;
+}
+
+.team-info-container {
+	display: grid;
+	width: 90%;
+	grid-template-columns: 3fr 1fr;
+}
+
+.main-content {
+	background-color: #181818;
+	padding: 4em;
+	height: 600px;
+	overflow: auto;
+	border-radius: 4px;
+}
+
+.tabs-container {
+	place-self: center;
+}
+
+@keyframes rotate-star {
+	from {
+	  transform: rotate(0deg);
+	}
+	
+	20% {
+	  transform: rotate(calc(72deg * 1 * var(--star-rotate-step)));
+	}
+	
+	40% {
+	  transform: rotate(calc(72deg * 2 * var(--star-rotate-step)));
+	}
+	
+	60% {
+	  transform: rotate(calc(72deg * 3 * var(--star-rotate-step)));
+	}
+	
+	80% {
+	  transform: rotate(calc(72deg * 4 * var(--star-rotate-step)));
+	}
+	
+	100% {
+	  transform: rotate(calc(72deg * 5 * var(--star-rotate-step)));
+	}
+  }
+
+  #vnoi-container {
+	transform: translate(40px, 30px) scale(0.8);
+  }
+
+#svg_7 {
+	/* the star */
+	transform: translate(0px, -1px);
+	transform-origin: 64.37px 213.1px;
+	animation:
+	rotate-star calc(var(--duration)/ 2) infinite  cubic-bezier(0.667, -0.50, 0.333, 1.50);
 }
