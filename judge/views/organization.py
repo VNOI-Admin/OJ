@@ -604,7 +604,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
     def get_initial(self):
         initial = super(ProblemCreateOrganization, self).get_initial()
         initial = initial.copy()
-        initial['code'] = ''.join(x for x in self.organization.slug.lower() if x.isalnum()) + '_'
+        initial['code'] = self.organization.slug_prefix
         return initial
 
     def get_form_kwargs(self):
@@ -644,7 +644,7 @@ class BlogPostCreateOrganization(AdminOrganizationMixin, PermissionRequiredMixin
         with revisions.create_revision(atomic=True):
             post = form.save()
             post.authors.add(self.request.user.profile)
-            post.slug = ''.join(x for x in self.organization.slug.lower() if x.isalnum())  # Initial post slug
+            post.slug = self.organization.slug_prefix  # Initial post slug
             post.organization = self.organization
             post.save()
 
@@ -660,7 +660,7 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
     def get_initial(self):
         initial = super(ContestCreateOrganization, self).get_initial()
         initial = initial.copy()
-        initial['key'] = ''.join(x for x in self.organization.slug.lower() if x.isalnum()) + '_'
+        initial['key'] = self.organization.slug_prefix
         return initial
 
     def get_form_kwargs(self):

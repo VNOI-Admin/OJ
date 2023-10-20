@@ -22,6 +22,7 @@ from pyotp.utils import strings_equal
 from sortedm2m.fields import SortedManyToManyField
 
 from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, SITE_THEMES, TIMEZONE
+from judge.models.contest import Contest
 from judge.models.runtime import Language
 from judge.ratings import rating_class
 from judge.utils.float_compare import float_compare_equal
@@ -68,6 +69,10 @@ class Organization(models.Model):
 
     _pp_table = [pow(settings.VNOJ_ORG_PP_STEP, i) for i in range(settings.VNOJ_ORG_PP_ENTRIES)]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.__original_slug = self.slug
+
     def calculate_points(self, table=_pp_table):
         data = self.members.get_queryset().order_by('-performance_points') \
                    .values_list('performance_points', flat=True).filter(performance_points__gt=0)
@@ -83,6 +88,14 @@ class Organization(models.Model):
         if self.member_count != member_count:
             self.member_count = member_count
             self.save(update_fields=['member_count'])
+
+    @classmethod
+    def get_slug_prefix(cls, slug):
+        return ''.join(x for x in slug.lower() if x.isalnum()) + '_'
+
+    @cached_property
+    def slug_prefix(self):
+        return self.get_slug_prefix(self.slug)
 
     @cached_property
     def admins_list(self):
@@ -109,6 +122,20 @@ class Organization(models.Model):
 
     def get_users_url(self):
         return reverse('organization_users', args=[self.slug])
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+
+        if self.__original_slug and self.slug != self.__original_slug:
+            # Rename contests to new prefix
+            # TODO: rename problems
+            old_prefix = self.get_slug_prefix(self.__original_slug)
+            contests = Contest.objects.filter(organizations=self, key__startswith=old_prefix).all()
+            for contest in contests:
+                contest.key = self.slug_prefix + contest.key[len(old_prefix):]
+            Contest.objects.bulk_update(contests, ['key'])
+
+    save.alters_data = True
 
     class Meta:
         ordering = ['name']
