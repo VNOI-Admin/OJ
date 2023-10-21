@@ -277,8 +277,8 @@
                 localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
             }
 
-            if (localStorage.getItem(`filter-selected-orgs-${contest_key}`) === null) {
-                localStorage.setItem(`filter-selected-orgs-${contest_key}`, []);
+            if (localStorage.getItem(`filter-selected-orgs-${contest_key}`) === "") {
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, JSON.stringify([]));
             }
 
             if (localStorage.getItem(`filter-selected-group-${contest_key}`) === null) {
