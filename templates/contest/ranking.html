@@ -288,9 +288,12 @@
             $('#apply-organization-filter').click(function () {
                 $('#org-check-list-wrapper').hide();
 
-                let selected_orgs = $('#org-check-list').val().map(x => x.trim());
+                const selected_orgs = [];
+                $('#org-check-list').val().forEach(function (el) {
+                    selected_orgs.push(el.trim());
+                });
                 let selected_group = $('#tag-check-list').val().map(x => x.trim());
-                localStorage.setItem(`filter-selected-orgs-${contest_key}`, selected_orgs);
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, JSON.stringify(selected_orgs));
                 localStorage.setItem(`filter-selected-group-${contest_key}`, selected_group);
                 window.applyRankingFilter();
             });
@@ -382,7 +385,7 @@
             window.applyRankingFilter = function () {
                 let counter = 0;
                 let previous_abs_rank = -1;
-                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`);
+                let selected_orgs = JSON.parse(localStorage.getItem(`filter-selected-orgs-${contest_key}`));
                 let selected_group = localStorage.getItem(`filter-selected-group-${contest_key}`);
 
                 if (!selected_orgs.length && !selected_group.length) {
@@ -396,7 +399,14 @@
                     let org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
                     let org = org_anchor ? org_anchor.text : 'Other';
 
-                    if (!selected_orgs.includes(org.trim()) && !selected_group.includes(row.data('user-group'))) {
+                    let should_show_org = false;
+                    selected_orgs.forEach(function (selected_org) {
+                        if (selected_org === org.trim()) {
+                            should_show_org = true;
+                        }
+                    });
+
+                    if (!should_show_org) {
                         row.hide();
                         return;
                     }

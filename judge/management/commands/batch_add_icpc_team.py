@@ -72,6 +72,8 @@ class Command(BaseCommand):
         writer = csv.DictWriter(fout, fieldnames=['username', 'teamname', 'password', 'group'])
         writer.writeheader()
 
+        done_team_ids = set()
+
         for cnt, row in enumerate(reader, start=1):
             username = f'{prefix}{cnt}'
             teamname = row['name']
@@ -79,6 +81,9 @@ class Command(BaseCommand):
             password = generate_password()
             internalid = row['id']
             org_group = row['group']
+            if internalid in done_team_ids:
+                continue
+            done_team_ids.add(internalid)
 
             add_user(username, teamname, password, org, org_group, internalid)
 
