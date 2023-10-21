@@ -527,7 +527,7 @@
 
             window.applyTag = function () {
                 const groups = [];
-                $('#ranking-table > tbody > tr[id]').each(function () {
+                $('#ranking-table > tbody > tr[id] > td span').each(function () {
                     let row = $(this);
                     
                     if (groups.findIndex(x => x == row.data('user-group')) == -1) {

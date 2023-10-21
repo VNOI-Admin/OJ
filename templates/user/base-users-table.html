@@ -19,7 +19,7 @@
 
     <tbody>
     {% for rank, user in users %}
-        <tr data-user-group="{{ user.group }}" id="user-{{ user.user.username }}" {% block row_extra scoped %}{% endblock %}>
+        <tr id="user-{{ user.user.username }}" {% block row_extra scoped %}{% endblock %}>
             <td>{{ rank }}</td>
             {% block after_rank scoped %}{% endblock %}
             <td class="user-name">
