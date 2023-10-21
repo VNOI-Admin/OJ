@@ -237,6 +237,8 @@ class Profile(models.Model):
     data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
     username_display_override = models.CharField(max_length=100, blank=True, verbose_name=_('display name override'),
                                                  help_text=_('Name displayed in place of username.'))
+    # For ICPC only
+    group = models.TextField(verbose_name=_('uni group'), null=True, blank=True)
 
     @cached_property
     def organization(self):
