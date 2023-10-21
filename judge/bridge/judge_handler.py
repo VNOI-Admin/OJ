@@ -15,6 +15,7 @@ from judge.bridge.base_handler import ZlibPacketHandler, proxy_list
 from judge.caching import finished_submission
 from judge.models import Judge, Language, LanguageLimit, Problem, Profile, \
     RuntimeVersion, Submission, SubmissionTestCase
+from judge.models.problem import ProblemTestcaseResultAccess
 from judge.utils.url import get_absolute_submission_file_url
 
 logger = logging.getLogger('judge.bridge')
@@ -426,14 +427,7 @@ class JudgeHandler(ZlibPacketHandler):
 
         finished_submission(submission)
 
-        event.post('sub_%s' % submission.id_secret, {
-            'type': 'grading-end',
-            'time': time,
-            'memory': memory,
-            'points': float(points),
-            'total': float(problem.points),
-            'result': submission.result,
-        })
+        event.post('sub_%s' % submission.id_secret, {'type': 'grading-end'})
         if hasattr(submission, 'contest'):
             participation = submission.contest.participation
             event.post('contest_%d' % participation.contest_id, {'type': 'update'})
@@ -444,10 +438,7 @@ class JudgeHandler(ZlibPacketHandler):
         self._free_self(packet)
 
         if Submission.objects.filter(id=packet['submission-id']).update(status='CE', result='CE', error=packet['log']):
-            event.post('sub_%s' % Submission.get_id_secret(packet['submission-id']), {
-                'type': 'compile-error',
-                'log': packet['log'],
-            })
+            event.post('sub_%s' % Submission.get_id_secret(packet['submission-id']), {'type': 'compile-error'})
             self._post_update_submission(packet['submission-id'], 'compile-error', done=True)
             json_log.info(self._make_json_log(packet, action='compile-error', log=packet['log'],
                                               finish=True, result='CE'))
@@ -565,6 +556,12 @@ class JudgeHandler(ZlibPacketHandler):
                 runtime_version=result.get('runtime-version', ''),
             ))
 
+        SubmissionTestCase.objects.bulk_create(bulk_test_case_updates)
+
+        data = self._get_submission_cache(id)
+        if data['problem__testcase_result_visibility_mode'] != ProblemTestcaseResultAccess.ALL_TEST_CASE:
+            return
+
         do_post = True
 
         if id in self.update_counter:
@@ -580,13 +577,8 @@ class JudgeHandler(ZlibPacketHandler):
             self.update_counter[id] = (1, time.monotonic())
 
         if do_post:
-            event.post('sub_%s' % Submission.get_id_secret(id), {
-                'type': 'test-case',
-                'id': max_position,
-            })
+            event.post('sub_%s' % Submission.get_id_secret(id), {'type': 'test-case'})
             self._post_update_submission(id, state='test-case')
-
-        SubmissionTestCase.objects.bulk_create(bulk_test_case_updates)
 
     def on_malformed(self, packet):
         logger.error('%s: Malformed packet: %s', self.name, packet)
@@ -627,16 +619,18 @@ class JudgeHandler(ZlibPacketHandler):
         data.update(kwargs)
         return json.dumps(data)
 
-    def _post_update_submission(self, id, state, done=False):
-        if self._submission_cache_id == id:
-            data = self._submission_cache
-        else:
-            self._submission_cache = data = Submission.objects.filter(id=id).values(
-                'problem__is_public', 'contest_object_id',
+    def _get_submission_cache(self, id):
+        if self._submission_cache_id != id:
+            self._submission_cache = Submission.objects.filter(id=id).values(
+                'problem__is_public', 'problem__testcase_result_visibility_mode', 'contest_object_id',
                 'user_id', 'problem_id', 'status', 'language__key',
             ).get()
             self._submission_cache_id = id
 
+        return self._submission_cache
+
+    def _post_update_submission(self, id, state, done=False):
+        data = self._get_submission_cache(id)
         if data['problem__is_public']:
             event.post('submissions', {
                 'type': 'done-submission' if done else 'update-submission',
