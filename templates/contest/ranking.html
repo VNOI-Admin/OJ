@@ -365,18 +365,21 @@
                 $('#ranking-table > tbody > tr[id] > td span').each(function () {
                     let row = $(this);
 
-                    if (row.data('user-tag') == undefined) {
+                    const user_tag = row.data('user-tag');
+
+                    if (user_tag == undefined || user_tag == 'None') {
                         return;
                     }
 
-                    if (tags.findIndex(x => x == row.data('user-tag')) == -1) {
+                    if (tags.findIndex(x => x == user_tag) == -1) {
                         row.addClass('top-team');
-                        tags.push(row.data('user-tag'));
+                        tags.push(user_tag);
                     }
                 });
 
                 let tag_options = $('#tag-check-list');
                 tag_options.empty();
+                tags.sort();
                 tags.forEach(function (tag) {
                     tag_options.append(
                         `<option value="${tag}">${tag}</option>`
