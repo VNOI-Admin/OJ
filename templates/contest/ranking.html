@@ -89,7 +89,7 @@
                         window.applyTag();
                     }).always(function () {
                         ranking_outdated = false;
-                        // setTimeout(update_ranking, 10000);
+                        setTimeout(update_ranking, 10000);
                     });
                 }
                 $(window).on('dmoj:window-visible', function () {
@@ -97,7 +97,7 @@
                         update_ranking();
                     }
                 });
-                // setTimeout(update_ranking, 10000);
+                setTimeout(update_ranking, 10000);
             });
         </script>
     {% endif %}
