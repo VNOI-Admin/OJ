@@ -144,11 +144,13 @@ def item_title(item):
 
 @registry.function
 def link_user(user):
+    is_contest_ranking_profile = False
     if isinstance(user, Profile):
         user, profile = user.user, user
     elif isinstance(user, AbstractUser):
         profile = user.profile
     elif type(user).__name__ == 'ContestRankingProfile':
+        is_contest_ranking_profile = True
         user, profile = user.user, user
     else:
         raise ValueError('Expected profile or user, got %s' % (type(user),))
@@ -160,7 +162,7 @@ def link_user(user):
     else:
         display_badge_img = ''
 
-    return mark_safe(f'<span class="{profile.css_class}">'
+    return mark_safe(f'<span data-user-tag="{ profile.group if is_contest_ranking_profile else None }" class="{profile.css_class}">'
                      f'<a href="{escape(reverse("user_page", args=[user.username]))}"'
                      f' style="display: inline-block;">'
                      f'{escape(profile.display_name)}</a>{display_badge_img}</span>')
