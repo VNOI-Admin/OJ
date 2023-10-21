@@ -162,7 +162,7 @@ def link_user(user):
     else:
         display_badge_img = ''
 
-    return mark_safe(f'<span data-user-group="{ profile.group if is_contest_ranking_profile else None }" class="{profile.css_class}">'
+    return mark_safe(f'<span data-user-tag="{ profile.group if is_contest_ranking_profile else None }" class="{profile.css_class}">'
                      f'<a href="{escape(reverse("user_page", args=[user.username]))}"'
                      f' style="display: inline-block;">'
                      f'{escape(profile.display_name)}</a>{display_badge_img}</span>')
