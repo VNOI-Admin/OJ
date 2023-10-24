@@ -209,7 +209,7 @@
                 <tbody>
                 {% for problem in contest_problems %}
                     <tr>
-                        <td style="width: 1em;">{{loop.index}}</td>
+                        <td style="width: 1em;">{{contest.get_label_for_problem(loop.index0)}}</td>
                         {% if request.user.is_authenticated %}
                             {% if problem.id in completed_problem_ids %}
                                 <td style="width: 1em;">
