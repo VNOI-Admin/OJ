@@ -2,7 +2,7 @@
 html {
 	scroll-behavior: smooth;
 	overflow-anchor: none;
-	scroll-snap-type: y proximity;;
+	scroll-snap-type: y proximity;
 }
 
 html::-webkit-scrollbar {
@@ -16,7 +16,7 @@ footer {
 
 body {
 	color: white;
-	font-family: monospace !important;
+	font-family: "Open Sans", monospace !important;
 }
 
 #content {
@@ -651,11 +651,11 @@ td:not(:first-child) {
 }
 
 .ranking-card {
+	position: relative;
 	display: flex;
 	flex-direction: column;
-	justify-content: center;
 	align-items: center;
-	gap: 4em;
+	justify-content: flex-start;
 	height: 400px;
 	width: 300px;
 	border-radius: 8px;
@@ -665,6 +665,9 @@ td:not(:first-child) {
 	-webkit-box-shadow: 1px 8px 20px -8px rgba(255,255,255,0.61);
 	-moz-box-shadow: 1px 8px 20px -8px rgba(255,255,255,0.61);
 	transition: all 0.5s ease;
+	overflow: hidden;
+	cursor: pointer;
+	padding: 2em 0;
 }
 
 .ranking-card:hover {
@@ -684,10 +687,69 @@ td:not(:first-child) {
 
 .ranking-card__title {
 	font-size: 1.8em;
+	letter-spacing: 1.2px;
+	transition: all 0.5s ease;
+}
+
+.ranking-card__overlay {
+	position: absolute;
+	top: 0;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	gap: 2em;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	text-align: center;
+	z-index: 100;
+	background-color: white;
+	opacity: 1;
+	transition: all 0.5s ease;
+}
+
+.table {
+	width: 100%;
+	opacity: 0;
+	transition: all 0.5s ease;
+	overflow: auto;
+}
+
+.ranking-card .main-info {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	transform: translateY(0);
 }
 
 .ranking-card .icon {
 	font-size: 5em;
+	transition: all 0.5s ease;
+}
+
+.ranking-card.active {
+	height: 600px;
+	width: 500px;
+	gap: 1em;
+	overflow: auto;
+}
+
+.ranking-card.active .ranking-card__overlay {
+	transform: translateY(-20px);
+	opacity: 0;
+}
+
+.ranking-card.active .ranking-card__title {
+	font-size: 1.5em;
+}
+
+.ranking-card.active .icon {
+	font-size: 3em;
+}
+
+.ranking-card.active .table {
+	width: 100%;
+	opacity: 1;
 }
 
 @keyframes run-forward {
@@ -805,6 +867,5 @@ td:not(:first-child) {
 	/* the star */
 	transform: translate(0px, -1px);
 	transform-origin: 64.37px 213.1px;
-	animation:
-	rotate-star calc(var(--duration)/ 2) infinite  cubic-bezier(0.667, -0.50, 0.333, 1.50);
+	animation: rotate-star calc(var(--duration)/ 2) infinite  cubic-bezier(0.667, -0.50, 0.333, 1.50);
 }
