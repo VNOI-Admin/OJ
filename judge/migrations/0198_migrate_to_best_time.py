@@ -5,7 +5,7 @@ from django.db import migrations
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("judge", "0197_org_slugs_begin_with_letter"),
+        ('judge', '0197_org_slugs_begin_with_letter'),
     ]
 
     operations = [
@@ -24,5 +24,5 @@ class Migration(migrations.Migration):
                 ) tc ON sub.id = tc.submission_id
             SET sub.time = tc.sum_time
         """,
-        )
+        ),
     ]
