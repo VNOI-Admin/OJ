@@ -365,7 +365,7 @@ class JudgeHandler(ZlibPacketHandler):
             json_log.error(self._make_json_log(packet, action='grading-end', info='unknown submission'))
             return
 
-        time = 0
+        time = 0.0
         memory = 0
         points = 0.0
         total = 0
@@ -374,7 +374,8 @@ class JudgeHandler(ZlibPacketHandler):
         batches = {}  # batch number: (points, total)
 
         for case in SubmissionTestCase.objects.filter(submission=submission):
-            time += case.time
+            time = max(time, case.time)
+            memory = max(memory, case.memory)
             if not case.batch:
                 points += case.points
                 total += case.total
@@ -384,7 +385,6 @@ class JudgeHandler(ZlibPacketHandler):
                     batches[case.batch][1] = max(batches[case.batch][1], case.total)
                 else:
                     batches[case.batch] = [case.points, case.total]
-            memory = max(memory, case.memory)
             i = status_codes.index(case.status)
             if i > status:
                 status = i
