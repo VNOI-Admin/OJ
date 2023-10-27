@@ -375,6 +375,7 @@ class JudgeHandler(ZlibPacketHandler):
 
         for case in SubmissionTestCase.objects.filter(submission=submission):
             time = max(time, case.time)
+            memory = max(memory, case.memory)
             if not case.batch:
                 points += case.points
                 total += case.total
@@ -384,7 +385,6 @@ class JudgeHandler(ZlibPacketHandler):
                     batches[case.batch][1] = max(batches[case.batch][1], case.total)
                 else:
                     batches[case.batch] = [case.points, case.total]
-            memory = max(memory, case.memory)
             i = status_codes.index(case.status)
             if i > status:
                 status = i
