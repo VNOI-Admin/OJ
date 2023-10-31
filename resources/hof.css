@@ -880,16 +880,97 @@ td:not(:first-child) {
 	grid-template-columns: 3fr 1fr;
 }
 
+.team-info {
+	display: grid;
+	grid-template-columns: repeat(3, 1fr);
+	column-gap: 0.8em;
+	row-gap: 1em;
+	transition: all 0.5s ease;
+	position: absolute;
+}
+
+.team-info.hidden {
+	visibility: hidden;
+	opacity: 0;
+}
+
+@keyframes fade-up {
+	0% {
+		opacity: 0;
+		transform: translateY(10%);
+	}
+
+	100% {
+		opacity: 1;
+		transform: translateY(0%);
+	}
+}
+
+.team-info.fade-up {
+	animation: fade-up 1s cubic-bezier(.24,.62,.65,1.21);
+}
+
+.team-info__card {
+	border-radius: 8px;
+	padding: 1em;
+	width: 250px;
+	border: 1px solid rgba(255, 255, 255, 0.6);
+	text-align: center;
+}
+
+.team-info__card.leader {
+	position: relative;
+}
+
+.team-info__card.leader::before {
+	content: '';
+	position: absolute;
+	top: -10px;
+	left: -10px;
+	height: 50px;
+	width: 50px;
+	z-index: 999;
+	background-image: url("data:image/svg+xml,%3C%3Fxml version='1.0' encoding='utf-8'%3F%3E%3C!-- License: PD. Made by Gabriele Malaspina: https://www.figma.com/@gabriele --%3E%3Csvg width='50' height='50' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M10 4C10 7.31371 7.31371 10 4 10C7.31371 10 10 12.6863 10 16C10 12.6863 12.6863 10 16 10C12.6863 10 10 7.31371 10 4Z' stroke='%23FFC413' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3Cpath d='M17.5 15C17.5 16.3807 16.3807 17.5 15 17.5C16.3807 17.5 17.5 18.6193 17.5 20C17.5 18.6193 18.6193 17.5 20 17.5C18.6193 17.5 17.5 16.3807 17.5 15Z' stroke='%23FFC413' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+}
+
+.team-info__card img {
+	border-radius: inherit;
+	margin-bottom: 1.2em;
+}
+
+.team-info__card .team-info__title {
+	margin-top: 0.6em;
+}
+
 .main-content {
 	background-color: #181818;
 	padding: 4em;
 	height: 600px;
 	overflow: auto;
 	border-radius: 4px;
+	position: relative;
 }
 
 .tabs-container {
 	place-self: center;
+	display: flex;
+	flex-direction: column;
+	gap: 2em;
+}
+
+.tab {
+	padding: 1em;
+	width: 100%;
+	background-color: rgba(255, 255, 255, 0.7);
+	border-radius: 6px;
+	font-size: 1.4em;
+	color: #000;
+	cursor: pointer;
+	transition: all 0.25s ease-in-out;
+}
+
+.tab.active {
+	background-color: rgba(255, 255, 255, 1);
 }
 
 @keyframes rotate-star {

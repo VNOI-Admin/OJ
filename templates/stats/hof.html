@@ -229,6 +229,24 @@
     //     console.log('callback - particles.js config loaded');
     // });
 </script>
+
+<script>
+    $(document).ready(() => {
+        const teams = $('.team-info');
+        let currentTeam = 0;
+        $('.tab').each((index, el) => {
+            el.addEventListener('click', () => {
+                $('.tab').removeClass('active');
+                $(el).addClass('active');
+                teams[currentTeam].classList.add('hidden');
+                teams[currentTeam].classList.remove('fade-up');
+                teams[index].classList.remove('hidden');
+                teams[index].classList.add('fade-up');
+                currentTeam = index;
+            })
+        })
+    })
+</script>
 {% endblock %}
 
 {% block navbar %}
@@ -325,7 +343,7 @@
                                 {% if loop.index > 3 %}
                                     <tr>
                                         <td>{{ loop.index }}</td>
-                                        <td class="{{ user.css_class }}">{{ user.username }}</td>
+                                        <td>{{ user.username }}</td>
                                         <td>{{ user.points | floatformat }}</td>
                                     </tr>
                                 {% endif %}
@@ -366,7 +384,7 @@
                                 {% if loop.index > 3 %}
                                     <tr>
                                         <td>{{ loop.index }}</td>
-                                        <td class="{{ user.css_class }}">{{ user.username }}</td>
+                                        <td>{{ user.username }}</td>
                                         <td>{{ user.rating | floatformat }}</td>
                                     </tr>
                                 {% endif %}
@@ -407,7 +425,7 @@
                                 {% if loop.index > 3 %}
                                     <tr>
                                         <td>{{ loop.index }}</td>
-                                        <td class="{{ user.css_class }}">{{ user.username }}</td>
+                                        <td>{{ user.username }}</td>
                                         <td>{{ user.contribution_points | floatformat }}</td>
                                     </tr>
                                 {% endif %}
@@ -514,25 +532,93 @@
                 <div class="team-info-container">
                     <div class="main-content">
                         <div class="team-info">
-                            <div class="team-info__card">
-                                <img src="https://placeholder.co/300" />
+                            <div class="team-info__card leader">
+                                <img src="https://placeholder.co/250" />
                                 <h4 class="team-info__name">Mr. Nguyen Van A</h4>
                                 <p class="team-info__title">Lorem ipsum dolor</p>
                             </div>
                             <div class="team-info__card">
-                                <img src="https://placeholder.co/300" />
+                                <img src="https://placeholder.co/250" />
                                 <h4 class="team-info__name">Mr. Nguyen Van A</h4>
                                 <p class="team-info__title">Lorem ipsum dolor</p>
                             </div>
                             <div class="team-info__card">
-                                <img src="https://placeholder.co/300" />
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                            <div class="team-info__card">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                            <div class="team-info__card">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                        </div>
+                        <div class="team-info hidden">
+                            <div class="team-info__card leader">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                            <div class="team-info__card">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                            <div class="team-info__card">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                            <div class="team-info__card">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                            <div class="team-info__card">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                        </div>
+                        <div class="team-info hidden">
+                            <div class="team-info__card leader">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                            <div class="team-info__card">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                            <div class="team-info__card">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                            <div class="team-info__card">
+                                <img src="https://placeholder.co/250" />
+                                <h4 class="team-info__name">Mr. Nguyen Van A</h4>
+                                <p class="team-info__title">Lorem ipsum dolor</p>
+                            </div>
+                            <div class="team-info__card">
+                                <img src="https://placeholder.co/250" />
                                 <h4 class="team-info__name">Mr. Nguyen Van A</h4>
                                 <p class="team-info__title">Lorem ipsum dolor</p>
                             </div>
                         </div>
                     </div>
                     <div class="tabs-container">
-                        This is tabs
+                        <div class="tab active">Managers</div>
+                        <div class="tab">Team Contest</div>
+                        <div class="tab">Team Community</div>
+                        <div class="tab">Team Wiki</div>
+                        <div class="tab">Technical Team</div>
                     </div>
                 </div>
             </div>
