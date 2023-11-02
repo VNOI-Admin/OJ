@@ -76,7 +76,7 @@ class Command(BaseCommand):
         prefix = options['prefix']
 
         reader = csv.DictReader(fin)
-        writer = csv.DictWriter(fout, fieldnames=['username', 'teamname', 'password', 'group'])
+        writer = csv.DictWriter(fout, fieldnames=['username', 'teamname', 'password', 'org', 'email'])
         writer.writeheader()
 
         done_team_ids = set()
