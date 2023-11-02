@@ -211,15 +211,12 @@ def group_test_cases(cases):
     result = []
     status = []
     buf = []
-    max_execution_time = 0.0
     last = None
     test_case_count = 0
     for case in cases:
         # Don't use test_case_count = len(cases) because cases is a queryset
         # `cases` is not a list.
         test_case_count += 1
-        if case.time:
-            max_execution_time = max(max_execution_time, case.time)
         if case.batch != last and buf:
             statuses = get_statuses(last, buf)
             result.append(make_batch(last, buf, statuses))
@@ -231,7 +228,7 @@ def group_test_cases(cases):
         statuses = get_statuses(last, buf)
         result.append(make_batch(last, buf, statuses))
         status.extend(statuses)
-    return result, status, max_execution_time, test_case_count
+    return result, status, test_case_count
 
 
 class SubmissionStatus(SubmissionDetailBase):
@@ -244,8 +241,7 @@ class SubmissionStatus(SubmissionDetailBase):
         context = super(SubmissionStatus, self).get_context_data(**kwargs)
         submission = self.object
 
-        context['batches'], statuses, context['max_execution_time'], test_case_count \
-            = group_test_cases(submission.test_cases.all())
+        context['batches'], statuses, test_case_count = group_test_cases(submission.test_cases.all())
 
         context['feedback_limit'] = min(3, test_case_count - 1)
         # In case the submission is in an on-going contest, we don't want to show any feedback.

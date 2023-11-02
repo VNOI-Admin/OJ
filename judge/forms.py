@@ -706,7 +706,9 @@ class ContestForm(ModelForm):
             'use_clarifications',
             'hide_problem_tags',
             'hide_problem_authors',
+            'show_short_display',
             'scoreboard_visibility',
+            'format_name',
             'description',
             'is_private',
             'private_contestants',
@@ -717,6 +719,7 @@ class ContestForm(ModelForm):
             'end_time': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
             'scoreboard_visibility': Select2Widget(),
+            'format_name': Select2Widget(),
             'private_contestants': HeavySelect2MultipleWidget(
                 data_view='profile_select2',
                 attrs={'style': 'width: 100%'},

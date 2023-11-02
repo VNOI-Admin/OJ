@@ -441,7 +441,6 @@ if 'newsletter' in settings.INSTALLED_APPS:
 if 'impersonate' in settings.INSTALLED_APPS:
     urlpatterns.append(path('impersonate/', include('impersonate.urls')))
 
-
 if settings.VNOJ_ENABLE_API:
     urlpatterns.append(
         path('api/v2/', include([
