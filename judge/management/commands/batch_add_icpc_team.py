@@ -1,8 +1,8 @@
 import csv
-import random
 import secrets
-import requests
+
 import json
+import requests
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -12,7 +12,12 @@ from judge.models import Language, Organization, Profile
 
 ALPHABET = 'abcdefghkqtxyz' + 'abcdefghkqtxyz'.upper() + '23456789'
 
-LOGO_MAPPING = { x['uniName']: x['logoURL'] for x in json.loads(requests.get('https://raw.githubusercontent.com/VNOI-Admin/uni-logo/master/data.json').text) }
+LOGO_MAPPING = {
+    x['uniName']:
+        x['logoURL']
+        for x in json.loads(requests.get('https://raw.githubusercontent.com/VNOI-Admin/uni-logo/master/data.json').text)
+}
+
 
 def generate_password():
     return ''.join(secrets.choice(ALPHABET) for _ in range(8))
@@ -28,12 +33,14 @@ def add_user(username, teamname, password, org, org_group, internalid):
     profile.language = Language.objects.get(key=settings.DEFAULT_USER_LANGUAGE)
     profile.site_theme = 'light'
     profile.notes = internalid  # save the internal id for later use.
-    profile.group = org_group
+    if org_group is not None:
+        profile.group = org_group
     profile.save()
     profile.organizations.set([org])
 
 
 ORG_ID_MAPPING = {}
+
 
 def get_org(name):
     id = ORG_ID_MAPPING.get(name, None)
@@ -48,7 +55,7 @@ def get_org(name):
         short_name='icpc' + str(id),
         is_open=False,
         is_unlisted=False,
-        )[0]
+    )[0]
     if not org.logo_override_image:
         org.logo_override_image = f'/martor/logo/{logo}'
         org.save()
@@ -73,6 +80,8 @@ class Command(BaseCommand):
         writer.writeheader()
 
         done_team_ids = set()
+        has_email = 'email' in reader.fieldnames
+        has_group = 'group' in reader.fieldnames
 
         for cnt, row in enumerate(reader, start=1):
             username = f'{prefix}{cnt}'
@@ -80,7 +89,9 @@ class Command(BaseCommand):
             org = get_org(row['instName'])
             password = generate_password()
             internalid = row['id']
-            org_group = row['group']
+            org_group = row['group'] if has_group else None
+            email = row['email'] if has_email else None
+
             if internalid in done_team_ids:
                 continue
             done_team_ids.add(internalid)
@@ -91,7 +102,8 @@ class Command(BaseCommand):
                 'username': username,
                 'teamname': teamname,
                 'password': password,
-                'group': org_group
+                'org': org,
+                'email': email if has_email else '',
             })
 
         fin.close()
