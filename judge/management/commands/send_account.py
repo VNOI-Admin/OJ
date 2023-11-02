@@ -17,7 +17,7 @@ def send_account(team_uni, team_name, username, password, receiver_emails):
         'teamusername': username,
         'teampassword': password,
     })
-    subject = f'{team_name} - Thông tin tài khoản thi ICPC Miền Trung 2023'
+    subject = f'{team_name} - Thông tin tài khoản thi ICPC vòng Quốc gia 2023'
     plain_message = strip_tags(html_message)
 
     mail.send_mail(subject, plain_message, settings.SERVER_EMAIL, receiver_emails, html_message=html_message)
@@ -54,4 +54,4 @@ class Command(BaseCommand):
 
             print('Processing', username, 'sending to', emails)
             send_account(p.organization.name, teamname, username, password, emails)
-            time.sleep(2)
+            time.sleep(1)
