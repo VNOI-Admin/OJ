@@ -7,13 +7,20 @@ from django.core.management.base import BaseCommand, CommandError
 from judge.models import Language, Problem, SubmissionSource, Submission
 from judge.models.profile import Profile
 
+SUBMISSION_STATUS_MAP = {
+    'accepted': 'admin_ac',
+    'time_limit_exceeded': 'admin_tle',
+}
+
 
 def get_submissions(submissions_path):
     submissions = []
-
-    for path, subdirs, files in os.walk(submissions_path):
-        for name in files:
-            relative_path = os.path.join(path, name)[len(submissions_path) + 1:]
+    whitelisted_subfolders = SUBMISSION_STATUS_MAP.keys()
+    for subfolder in os.listdir(submissions_path):
+        if subfolder not in whitelisted_subfolders:
+            continue
+        user_to_submit = SUBMISSION_STATUS_MAP[subfolder]
+        for name in os.listdir(os.path.join(submissions_path, subfolder)):
             prefix = ''
             if name.lower().endswith('.cpp'):
                 language = Language.objects.get(key='CPP17')
@@ -27,8 +34,12 @@ def get_submissions(submissions_path):
             else:
                 raise CommandError(f'Invalid file extension `{name}`')
 
-            submission = prefix + relative_path + '\n' + open(os.path.join(path, name), 'r').read()
-            submissions.append((submission, language))
+            submission_path = os.path.join(submissions_path, subfolder, name)
+            source = open(submission_path, 'r').read()
+
+            related_path = os.path.join(subfolder, name)
+            submission = prefix + related_path + '\n' + source
+            submissions.append((submission, language, user_to_submit))
 
     return submissions
 
@@ -47,11 +58,11 @@ def submit_submissions(problem_name, icpc_folder):
     problem = Problem.objects.get(code=problem_code)
 
     submissions = get_submissions(submissions_path)
-    for [code, lang] in submissions:
+    for [code, lang, user_to_submit] in submissions:
         submission = Submission()
         submission.problem = problem
         submission.language = lang
-        submission.user = Profile.objects.get(user__username='admin')
+        submission.user = Profile.objects.get(user__username=user_to_submit)
         submission.save()
         source = SubmissionSource(submission=submission, source=code)
         source.save()
@@ -72,6 +83,10 @@ class Command(BaseCommand):
             raise CommandError(f'Folder {icpc_folder} not found. Make sure to clone the repo to that folder')
 
         os.system(f'cd {icpc_folder} && git pull origin master')
+        # check if required users exist
+        for user in SUBMISSION_STATUS_MAP.values():
+            if Profile.objects.filter(user__username=user).count() == 0:
+                raise CommandError(f'User `{user}` not found. Please create the user first.')
 
         blacklist = ['xx-mien-nam', 'yy-mien-nam', '6-mien-trung']
         problems = [
