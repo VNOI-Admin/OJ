@@ -29,7 +29,10 @@ def get_submissions(submissions_path):
                 language = Language.objects.get(key='PYPY3')
                 prefix = '# '
             elif name.lower().endswith('.java'):
-                language = Language.objects.get(key='JAVA17')
+                language = Language.objects.get(key='JAVA')
+                prefix = '// '
+            elif name.lower().endswith('.kt'):
+                language = Language.objects.get(key='KOTLIN')
                 prefix = '// '
             else:
                 raise CommandError(f'Invalid file extension `{name}`')
