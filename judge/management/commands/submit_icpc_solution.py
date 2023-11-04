@@ -86,10 +86,12 @@ class Command(BaseCommand):
             raise CommandError(f'Folder {icpc_folder} not found. Make sure to clone the repo to that folder')
 
         os.system(f'cd {icpc_folder} && git pull origin master')
-        # check if required users exist
+        # check if required users exist & delete all submissions
         for user in SUBMISSION_STATUS_MAP.values():
             if Profile.objects.filter(user__username=user).count() == 0:
                 raise CommandError(f'User `{user}` not found. Please create the user first.')
+            user = Profile.objects.get(user__username=user)
+            Submission.objects.filter(user=user).delete()
 
         blacklist = ['xx-mien-nam', 'yy-mien-nam', '6-mien-trung']
         problems = [
