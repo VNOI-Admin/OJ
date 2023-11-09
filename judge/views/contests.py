@@ -839,7 +839,7 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
 ContestRankingProfile = namedtuple(
     'ContestRankingProfile',
     'id user css_class username points cumtime tiebreaker organization participation group '
-    'participation_rating problem_cells result_cell virtual display_name',
+    'participation_rating problem_cells result_cell virtual display_name display_badge',
 )
 
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
@@ -870,6 +870,7 @@ def make_contest_ranking_profile(contest, participation, contest_problems, first
         participation=participation,
         virtual=participation.virtual,
         display_name=user.display_name,
+        display_badge=user.display_badge,
         group=user.group,
     )
 
@@ -886,6 +887,7 @@ def base_contest_ranking_queryset(contest):
     return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
         .prefetch_related(Prefetch('user__organizations',
                                    queryset=Organization.objects.filter(is_unlisted=False))) \
+        .select_related('user__display_badge') \
         .annotate(submission_count=Count('submission')) \
         .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker', '-submission_count')
 
@@ -894,6 +896,7 @@ def base_contest_frozen_ranking_queryset(contest):
     return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
         .prefetch_related(Prefetch('user__organizations',
                                    queryset=Organization.objects.filter(is_unlisted=False))) \
+        .select_related('user__display_badge') \
         .annotate(submission_count=Count('submission')) \
         .order_by('is_disqualified', '-frozen_score', 'frozen_cumtime', 'frozen_tiebreaker', '-submission_count')
 
