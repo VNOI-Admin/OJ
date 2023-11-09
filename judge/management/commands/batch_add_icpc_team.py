@@ -9,6 +9,7 @@ from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
 from judge.models import Language, Organization, Profile
+from judge.models.profile import Badge
 
 ALPHABET = 'abcdefghkqtxyz' + 'abcdefghkqtxyz'.upper() + '23456789'
 
@@ -23,7 +24,7 @@ def generate_password():
     return ''.join(secrets.choice(ALPHABET) for _ in range(8))
 
 
-def add_user(username, teamname, password, org, org_group, internalid):
+def add_user(username, teamname, password, org, org_group, internalid, badge):
     usr = User(username=username, is_active=True)
     usr.set_password(password)
     usr.save()
@@ -35,6 +36,8 @@ def add_user(username, teamname, password, org, org_group, internalid):
     profile.notes = internalid  # save the internal id for later use.
     if org_group is not None:
         profile.group = org_group
+    if badge is not None:
+        profile.display_badge = badge
     profile.save()
     profile.organizations.set([org])
 
@@ -54,6 +57,15 @@ def get_org(name):
         org.logo_override_image = f'/martor/logo/{logo}'
         org.save()
     return org
+
+
+def get_badge(country):
+    badge = Badge.objects.get_or_create(
+        name=country,
+        mini=f'/martor/flag/{country}.png',
+        full_size=f'/martor/flag/{country}.png',
+    )[0]
+    return badge
 
 
 class Command(BaseCommand):
@@ -87,6 +99,7 @@ class Command(BaseCommand):
         done_team_ids = set()
         has_email = 'email' in reader.fieldnames
         has_group = 'group' in reader.fieldnames
+        has_country = 'country' in reader.fieldnames
         processed_count = 0
 
         for cnt, row in enumerate(reader, start=1):
@@ -97,12 +110,12 @@ class Command(BaseCommand):
             internalid = row['id']
             org_group = row['group'] if has_group else None
             email = row['email'] if has_email else None
-
+            badge = get_badge(row['country']) if has_country else None
             if internalid in done_team_ids:
                 continue
             done_team_ids.add(internalid)
 
-            add_user(username, teamname, password, org, org_group, internalid)
+            add_user(username, teamname, password, org, org_group, internalid, badge)
             processed_count += 1
 
             output_row = {
