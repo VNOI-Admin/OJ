@@ -164,7 +164,7 @@ urlpatterns = [
     path('tag/<str:tagproblem>', include([
         path('', tag.TagProblemDetail.as_view(), name='tagproblem_detail'),
         path('/assign', tag.TagProblemAssign.as_view(), name='tagproblem_assign'),
-        path('/', lambda _, problem: HttpResponsePermanentRedirect(reverse('tagproblem_detail', args=[tag]))),
+        path('/', lambda _, tagproblem: HttpResponsePermanentRedirect(reverse('tagproblem_detail', args=[tagproblem]))),
     ])),
 
     path('submissions/', paged_list_view(submission.AllSubmissions, 'all_submissions')),
