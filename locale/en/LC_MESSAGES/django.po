@@ -3269,9 +3269,14 @@ msgstr ""
 msgid "Batch start case #%d requires points."
 msgstr ""
 
-#: judge/utils/problem_data.py:297
+#: judge/utils/problem_data.py:287
 #, python-format
 msgid "Attempt to end batch outside of one in case #%d"
+msgstr ""
+
+#: judge/utils/problem_data.py:297
+#, python-format
+msgid "Total Points must be greater than 0"
 msgstr ""
 
 #: judge/utils/problem_data.py:315
