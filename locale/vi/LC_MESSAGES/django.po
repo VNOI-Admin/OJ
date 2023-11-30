@@ -3396,6 +3396,11 @@ msgstr "Bắt đầu nhóm, case #%d yêu cầu điểm."
 msgid "Attempt to end batch outside of one in case #%d."
 msgstr "Kết thúc nhóm nhưng không có bắt đầu ở case #%d"
 
+#: judge/utils/problem_data.py:297
+#, python-format
+msgid "Total points must be greater than 0."
+msgstr "Tổng điểm của các test phải lớn hơn 0."
+
 #: judge/utils/problem_data.py:301
 msgid "How did you corrupt the zip path?"
 msgstr ""
