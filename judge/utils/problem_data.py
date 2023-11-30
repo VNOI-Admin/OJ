@@ -262,8 +262,7 @@ class ProblemDataCompiler(object):
                     end_batch()
                 if case.points is None:
                     raise ProblemDataError(_('Batch start case #%d requires points.') % i)
-                if case.points is not None:
-                    total_point += case.points
+                total_point += case.points
                 batch = {
                     'points': case.points,
                     'batched': [],
@@ -295,7 +294,7 @@ class ProblemDataCompiler(object):
                 end_batch()
                 batch = None
         if total_point <= 0:
-            raise ProblemDataError(_('Total Points must be greater than 0'))
+            raise ProblemDataError(_('Total points must be greater than 0.'))
         if batch:
             end_batch()
 
