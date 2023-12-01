@@ -160,7 +160,7 @@ class CustomLoginView(LoginView):
 
     def get_context_data(self, **kwargs):
         context = super(CustomLoginView, self).get_context_data(**kwargs)
-        context['oauth'] = self.authentication_form
+        context['oauth'] = context['form']
         return context
 
     def form_valid(self, form):

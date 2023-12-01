@@ -431,6 +431,7 @@ class OrganizationForm(ModelForm):
                 ),
             })
 
+
 class SocialAuthMixin:
     def _has_social_auth(self, key):
         return (getattr(settings, 'SOCIAL_AUTH_%s_KEY' % key, None) and
@@ -447,7 +448,8 @@ class SocialAuthMixin:
     @property
     def has_github_auth(self):
         return self._has_social_auth('GITHUB_SECURE')
-    
+
+
 class CustomAuthenticationForm(AuthenticationForm, SocialAuthMixin):
     def __init__(self, *args, **kwargs):
         super(CustomAuthenticationForm, self).__init__(*args, **kwargs)
