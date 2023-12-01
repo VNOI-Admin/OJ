@@ -154,8 +154,8 @@
 {% endblock %}
 
 {% block body %}
-    {% if not oauth_only %}
-        <div id="center-float">
+<div id="center-float">
+            {% if not oauth_only %}
             <form id="edit-form" action="" method="post" class="form-area">
                 {% csrf_token %}
 
@@ -234,13 +234,15 @@
                 {% endif %}
 
                 <hr>
-                {% if tos_url %}
-                    <span class="tos-section">
-                        {{ (_('By registering, you agree to our [Terms & Conditions][0].') + '\n\n  [0]: ' + tos_url)|markdown('default', strip_paragraphs=True) }}
-                    </span>
-                {% endif %}
                 <button style="float:right;" type="submit">{{ _('Register!') }}</button>
             </form>
+            {% endif %}
+            {% include "registration/oauth.html" %}
+            {% if tos_url %}
+                <span class="tos-section">
+                    {{ (_('By registering, you agree to our [Terms & Conditions][0].') + '\n\n  [0]: ' + tos_url)|markdown('default', strip_paragraphs=True) }}
+                </span>
+            {% endif %}
         </div>
 
         <div class="map-wrap">
@@ -249,32 +251,4 @@
                 <div class="map-axis-y"></div>
             </div>
         </div>
-    {% endif %}
-    {% if social_auth.has_google_auth or social_auth.has_facebook_auth or social_auth.has_github_auth %}
-        <div>
-            {% if oauth_only %}
-                <h4>{{ _('Register with') }}</h4>
-            {% else %}
-                <h4>{{ _('Or register with') }}</h4>
-            {% endif %}
-
-            <div>
-                {% if social_auth.has_google_auth %}
-                    <a href="{{ url('social:begin', "google-oauth2") }}?next={{ next }}" class="social google-icon">
-                        <i class="fa fa-google-plus-square"></i>
-                    </a>
-                {% endif %}
-                {% if social_auth.has_facebook_auth %}
-                    <a href="{{ url('social:begin', "facebook") }}?next={{ next }}" class="social facebook-icon">
-                        <i class="fa fa-facebook-square"></i>
-                    </a>
-                {% endif %}
-                {% if social_auth.has_github_auth %}
-                    <a href="{{ url('social:begin', "github-secure") }}?next={{ next }}" class="social github-icon">
-                        <i class="fa fa-github-square"></i>
-                    </a>
-                {% endif %}
-            </div>
-        </div>
-    {% endif %}
 {% endblock %}

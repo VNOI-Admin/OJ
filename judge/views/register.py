@@ -9,12 +9,12 @@ from django.db import transaction
 from django.forms import ChoiceField, ModelChoiceField
 from django.shortcuts import render
 from django.utils.translation import gettext, gettext_lazy as _, ngettext
-from judge.forms import SocialAuthForm
 from registration.backends.default.views import (ActivationView as OldActivationView,
                                                  RegistrationView as OldRegistrationView)
 from registration.forms import RegistrationForm
 from sortedm2m.forms import SortedMultipleChoiceField
 
+from judge.forms import SocialAuthMixin
 from judge.models import Language, Organization, Profile, TIMEZONE
 from judge.utils.recaptcha import ReCaptchaField, ReCaptchaWidget
 from judge.utils.subscription import Subscription, newsletter_id
@@ -67,7 +67,7 @@ class CustomRegistrationForm(RegistrationForm):
 class RegistrationView(OldRegistrationView):
     title = _('Register')
     form_class = CustomRegistrationForm
-    social_auth = SocialAuthForm()
+    social_auth = SocialAuthMixin()
     template_name = 'registration/registration_form.html'
 
     def get_context_data(self, **kwargs):
@@ -77,8 +77,7 @@ class RegistrationView(OldRegistrationView):
         kwargs['password_validators'] = get_default_password_validators()
         kwargs['tos_url'] = settings.TERMS_OF_SERVICE_URL
         kwargs['oauth_only'] = settings.OAUTH_ONLY
-        print(kwargs['oauth_only'])
-        kwargs['social_auth'] = self.social_auth
+        kwargs['oauth'] = self.social_auth
         return super(RegistrationView, self).get_context_data(**kwargs)
 
     @transaction.atomic
