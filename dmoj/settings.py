@@ -717,6 +717,7 @@ SOCIAL_AUTH_GITHUB_SECURE_SCOPE = ['user:email']
 SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
 SOCIAL_AUTH_SLUGIFY_USERNAMES = True
 SOCIAL_AUTH_SLUGIFY_FUNCTION = 'judge.social_auth.slugify_username'
+SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['first_name', 'last_name']
 
 MOSS_API_KEY = None
 
