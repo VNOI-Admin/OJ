@@ -39,20 +39,14 @@ def add_user(username, teamname, password, org, org_group, internalid):
     profile.organizations.set([org])
 
 
-ORG_ID_MAPPING = {}
-
-
 def get_org(name):
-    id = ORG_ID_MAPPING.get(name, None)
-    # to avoid duplicate slug
-    if id is None:
-        ORG_ID_MAPPING[name] = id = len(ORG_ID_MAPPING) + 1
+    org_id = abs(hash(name) % 1000000007)
 
     logo = LOGO_MAPPING.get(name, 'unk.png')
     org = Organization.objects.get_or_create(
         name=name,
-        slug='icpc' + str(id),
-        short_name='icpc' + str(id),
+        slug='icpc' + str(org_id),
+        short_name='icpc' + str(org_id),
         is_open=False,
         is_unlisted=False,
     )[0]

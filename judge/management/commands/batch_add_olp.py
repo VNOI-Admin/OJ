@@ -8,6 +8,8 @@ from django.core.management.base import BaseCommand
 from judge.models import Language, Organization, Profile
 
 ALPHABET = 'abcdefghkqtxyz' + 'abcdefghkqtxyz'.upper() + '23456789'
+
+
 def generate_password():
     return ''.join(secrets.choice(ALPHABET) for _ in range(8))
 
@@ -20,18 +22,20 @@ def add_user(username, fullname, password, org):
     profile = Profile(user=usr)
     profile.username_display_override = fullname
     profile.language = Language.objects.get(key=settings.DEFAULT_USER_LANGUAGE)
+    profile.site_theme = 'light'
     profile.save()
     profile.organizations.set([org])
 
 
 def get_org(name):
+    org_id = abs(hash(name) % 1000000007)
+
     org = Organization.objects.get_or_create(
         name=name,
-        slug='olp',
-        short_name='olp',
+        slug='olp' + str(org_id),
+        short_name='olp' + str(org_id),
         is_open=False,
-        is_unlisted=False,
-        )[0]
+        is_unlisted=False)[0]
     return org
 
 
