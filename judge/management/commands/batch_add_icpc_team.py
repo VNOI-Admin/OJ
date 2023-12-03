@@ -1,9 +1,9 @@
 import csv
+import json
+import os
 import secrets
 
-import json
 import requests
-
 from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
@@ -66,6 +66,11 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         fin = open(options['input'], 'r', encoding='utf-8')
+        # if output file exists, ask for confirmation
+        if os.path.exists(options['output']):
+            if not input('Output file exists, overwrite? (y/n) ').lower().startswith('y'):
+                return
+
         fout = open(options['output'], 'w', encoding='utf-8', newline='')
         prefix = options['prefix']
 
