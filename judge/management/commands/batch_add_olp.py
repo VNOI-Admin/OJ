@@ -1,4 +1,5 @@
 import csv
+import os
 import secrets
 
 from django.conf import settings
@@ -49,6 +50,10 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         fin = open(options['input'], 'r', encoding='utf-8')
+        # if output file exists, ask for confirmation
+        if os.path.exists(options['output']):
+            if not input('Output file exists, overwrite? (y/n) ').lower().startswith('y'):
+                return
         fout = open(options['output'], 'w', encoding='utf-8', newline='')
         prefix = options['prefix']
 
