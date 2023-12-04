@@ -10,6 +10,7 @@ from judge.models.profile import Profile
 SUBMISSION_STATUS_MAP = {
     'accepted': 'admin_ac',
     'time_limit_exceeded': 'admin_tle',
+    'wrong_answer': 'admin_wa',
 }
 
 
