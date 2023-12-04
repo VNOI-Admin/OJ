@@ -199,6 +199,7 @@
                     {% endif %}
                     <th>{{ _('Problem') }}</th>
                     <th>Time limit</th>
+                    <th>Memory limit</th>
                     {% if not is_ICPC_format %}
                         <th>{{ _('Points') }}</th>
                     {% endif %}
@@ -210,7 +211,7 @@
                 <tbody>
                 {% for problem in contest_problems %}
                     <tr>
-                        <td style="width: 1em;">{{loop.index}}</td>
+                        <td style="width: 1em;">{{contest.get_label_for_problem(loop.index0)}}</td>
                         {% if request.user.is_authenticated %}
                             {% if problem.id in completed_problem_ids %}
                                 <td style="width: 1em;">
@@ -250,6 +251,7 @@
                             {% endif %}
                         </td>
                         <td> {{ problem.time_limit }} </td>
+                        <td> {{ problem.memory_limit|kbsimpleformat }} </td>
                         {% if not is_ICPC_format %}
                             <td>{{ problem.points|floatformat(-2) }}</td>
                         {% endif %}

@@ -54,6 +54,8 @@ VNOJ_ORG_PP_STEP = 0.95
 VNOJ_ORG_PP_ENTRIES = 100
 VNOJ_ORG_PP_SCALE = 1
 
+VNOJ_ENABLE_API = False
+
 VNOJ_OFFICIAL_CONTEST_MODE = False
 
 # Contribution points function
@@ -97,6 +99,9 @@ VNOJ_BLOG_MIN_PROBLEM_COUNT = 10
 VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
 VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem
+
+# List of subdomain that will be ignored in organization subdomain middleware
+VNOJ_IGNORED_ORGANIZATION_SUBDOMAINS = ['oj', 'www', 'localhost']
 
 # Some problems have a lot of testcases, and each testcase
 # has about 5~6 fields, so we need to raise this
@@ -164,9 +169,9 @@ DISCORD_WEBHOOK = {
 
 SITE_FULL_URL = None  # ie 'https://oj.vnoi.info', please remove the last / if needed
 
-ACE_URL = '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3'
-SELECT2_JS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js'
-SELECT2_CSS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'
+ACE_URL = '/static/vnoj/ace/1.4.14'
+SELECT2_JS_URL = '/static/vnoj/select2/4.0.3/js/select2.min.js'
+SELECT2_CSS_URL = '/static/vnoj/select2/4.0.3/css/select2.min.css'
 
 DMOJ_CAMO_URL = None
 DMOJ_CAMO_KEY = None
@@ -175,7 +180,7 @@ DMOJ_CAMO_EXCLUDE = ()
 
 DMOJ_PROBLEM_DATA_ROOT = None
 
-DMOJ_PROBLEM_MIN_TIME_LIMIT = 0  # seconds
+DMOJ_PROBLEM_MIN_TIME_LIMIT = 0.01  # seconds
 DMOJ_PROBLEM_MAX_TIME_LIMIT = 60  # seconds
 DMOJ_PROBLEM_MIN_MEMORY_LIMIT = 0  # kilobytes
 DMOJ_PROBLEM_MAX_MEMORY_LIMIT = 1048576  # kilobytes
@@ -272,8 +277,8 @@ DEFAULT_USER_LANGUAGE = 'CPP17'
 
 INLINE_JQUERY = True
 INLINE_FONTAWESOME = True
-JQUERY_JS = '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'
-FONTAWESOME_CSS = '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'
+JQUERY_JS = '/static/vnoj/jquery/3.4.1/jquery.min.js'
+FONTAWESOME_CSS = '/static/vnoj/font-awesome/4.3.0/css/font-awesome.min.css'
 DMOJ_CANONICAL = 'oj.vnoi.info'
 
 # Application definition
@@ -712,6 +717,7 @@ SOCIAL_AUTH_GITHUB_SECURE_SCOPE = ['user:email']
 SOCIAL_AUTH_FACEBOOK_SCOPE = ['email']
 SOCIAL_AUTH_SLUGIFY_USERNAMES = True
 SOCIAL_AUTH_SLUGIFY_FUNCTION = 'judge.social_auth.slugify_username'
+SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['first_name', 'last_name']
 
 MOSS_API_KEY = None
 

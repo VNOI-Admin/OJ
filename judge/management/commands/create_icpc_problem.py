@@ -149,6 +149,18 @@ def update_problem_testcases(problem, testcases, test_file_path, checker_path, p
     )
 
 
+def get_problem_full_name(problem_folder):
+    try:
+        statement_path = os.path.join(problem_folder, 'problem_statement', 'problem.en.tex')
+        with open(statement_path, 'r') as f:
+            for line in f:
+                if '\\problemname{' in line:
+                    return line[line.index('{') + 1:line.index('}')].strip()
+        return None
+    except Exception:
+        raise CommandError(f'Cannot find problem name in {statement_path}')
+
+
 def create_problem(problem_name, icpc_folder):
     problem_code = 'icpc_' + problem_name[0]
     problem_folder = os.path.join(icpc_folder, problem_name)
@@ -161,24 +173,26 @@ def create_problem(problem_name, icpc_folder):
         pdf_path = os.path.join(problem_folder, f'{problem_name}.pdf')
 
         print(f'Creating problem {problem_name}')
-        with open(pdf_path, 'rb') as f:
-            # file_url = pdf_statement_uploader(f)
-            problem = Problem(code=problem_code)
-            problem.name = problem_name
-            # problem.pdf_url = file_url
-            problem.time_limit = 1
-            problem.memory_limit = 512 * 1024
-            problem.partial = False
-            problem.points = 1
-            problem.group = ProblemGroup.objects.order_by('id').first()  # Uncategorized
-            problem.date = timezone.now()
-            problem.testcase_result_visibility_mode = 'S'
-            problem.save()
 
-            problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-            problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
-            problem.authors.set(Profile.objects.filter(user__username='admin'))
-            problem.save()
+        problem = Problem(code=problem_code)
+        problem.name = get_problem_full_name(problem_folder) or problem_name
+        problem.time_limit = 1
+        problem.memory_limit = 512 * 1024
+        problem.partial = False
+        problem.points = 1
+        problem.group = ProblemGroup.objects.order_by('id').first()  # Uncategorized
+        problem.date = timezone.now()
+        problem.testcase_result_visibility_mode = 'S'
+        problem.save()
+
+        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
+        problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
+        problem.authors.set(Profile.objects.filter(user__username='admin'))
+
+        with open(pdf_path, 'rb') as f:
+            problem.pdf_url = pdf_statement_uploader(f)
+
+        problem.save()
     else:
         print(f'Skipped create problem {problem_name}.')
         problem = Problem.objects.get(code=problem_code)

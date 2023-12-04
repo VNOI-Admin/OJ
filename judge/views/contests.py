@@ -27,8 +27,8 @@ from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import FormView, ListView, TemplateView
-from django.views.generic.detail import DetailView, SingleObjectMixin, View
+from django.views.generic import FormView, ListView, TemplateView, View
+from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import BaseListView
 from icalendar import Calendar as ICalendar, Event
@@ -838,8 +838,8 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
 
 ContestRankingProfile = namedtuple(
     'ContestRankingProfile',
-    'id user css_class username points cumtime tiebreaker organization participation '
-    'participation_rating problem_cells result_cell virtual display_name',
+    'id user css_class username points cumtime tiebreaker organization participation group '
+    'participation_rating problem_cells result_cell virtual display_name display_badge',
 )
 
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
@@ -870,6 +870,8 @@ def make_contest_ranking_profile(contest, participation, contest_problems, first
         participation=participation,
         virtual=participation.virtual,
         display_name=user.display_name,
+        display_badge=user.display_badge,
+        group=user.group,
     )
 
 
@@ -885,6 +887,7 @@ def base_contest_ranking_queryset(contest):
     return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
         .prefetch_related(Prefetch('user__organizations',
                                    queryset=Organization.objects.filter(is_unlisted=False))) \
+        .select_related('user__display_badge') \
         .annotate(submission_count=Count('submission')) \
         .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker', '-submission_count')
 
@@ -893,6 +896,7 @@ def base_contest_frozen_ranking_queryset(contest):
     return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
         .prefetch_related(Prefetch('user__organizations',
                                    queryset=Organization.objects.filter(is_unlisted=False))) \
+        .select_related('user__display_badge') \
         .annotate(submission_count=Count('submission')) \
         .order_by('is_disqualified', '-frozen_score', 'frozen_cumtime', 'frozen_tiebreaker', '-submission_count')
 
