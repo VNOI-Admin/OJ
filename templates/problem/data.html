@@ -426,18 +426,52 @@
             function fill_testcases() {
                 console.log("Filling testcase...");
                 var inFiles = [], outFiles = [];
-                var input_re = new RegExp(/^(?=.*?\.in|in).*?(?:(?:^|\W)(\d+)[^\d\s]+)?(\d+)[^\d\s]*$/);
-                var output_re = new RegExp(/^(?=.*?\.out|.*?\.ok|.*?\.ans|out|ok|ans).*?(?:(?:^|\W)(\d+)[^\d\s]+)?(\d+)[^\d\s]*$/);
+
+                // regex index 0 = Themis, 1 = Polygon, 2 = DMOJ
+
+                var in_re = [
+                    new RegExp(/^(.+\.inp|.+\.in|inp|in)$/),
+                    new RegExp(/^(.+\d+)$/),
+                    new RegExp(/^(?=.*?\.in|in).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
+                ];
+
+                var out_re = [
+                    new RegExp(/^(.+\.out|.+\.ok|.+\.ans|out|ok|ans)$/),
+                    new RegExp(/^(.+\d+\.a)$/),
+                    new RegExp(/^(?=.*?\.out|out).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
+                ];
+
+                var test_type = -1;
+
                 for (var i = 0; i < window.valid_files.length; i++) {
-                    if (input_re.test(window.valid_files[i].toLowerCase().replace('/', '.'))) {
-                        inFiles.push(window.valid_files[i]);
-                    }
-                    if (output_re.test(window.valid_files[i].toLowerCase().replace('/', '.'))) {
-                        outFiles.push(window.valid_files[i]);
+                    var tested_filename = window.valid_files[i].toLowerCase().replace('/', '.');
+
+                    for (var type = 0; type < 3; type++) {
+                        if (in_re[type].test(tested_filename)) {
+                            if (test_type != -1 && test_type != type) {
+                                alert("{{_('Files are not in the same format!')}}");
+                                return false;
+                            }
+
+                            test_type = type;
+                            inFiles.push(window.valid_files[i]);
+                            break;
+                        }
+
+                        if (out_re[type].test(tested_filename)) {
+                            if (test_type != -1 && test_type != type) {
+                                alert("{{_('Files are not in the same format!')}}");
+                                return false;
+                            }
+
+                            test_type = type;
+                            outFiles.push(window.valid_files[i]);
+                            break;
+                        }
                     }
                 }
                 if (inFiles.length == 0) {
-                    alert("{{_('No input/output files. Make sure your files are following themis/cms test format')}}");
+                    alert("{{_('No input/output files. Make sure your files are following themis/polygon/cms test format')}}");
                     return false;
                 }
                 if (inFiles.length != outFiles.length) {
