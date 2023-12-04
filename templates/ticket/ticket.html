@@ -158,9 +158,37 @@
                 $('#id_body').val(message);
             }
 
-            $('.auto-reply').click(function () {
-                add_autofill_reply($(this).text());
+            $('.autofill-options').select2({
+                theme: '{{ DMOJ_SELECT2_THEME }}',
+                multiple: false,
+                closeOnSelect: true,
+                placeholder: '{{ _('Select reply') }}',
             });
+
+            const selection = $('.autofill-options').data().select2.selection;
+            const results = $('.autofill-options').data().select2.results;
+
+            $('.autofill-options').on('select2:selecting', function(e) {
+                console.log(e);
+            });
+
+            window.get_options = function() {
+                const options = ["No coments", "Read the problem statement", "Yes", "No", "Question is unclear", "Read the global announcement"];
+                let reply_options = $('.autofill-options');
+                reply_options.empty();
+                options.forEach(function(option) {
+                    reply_options.append($('<option>', {
+                        value: option,
+                        text: option
+                    }));
+                });
+            }
+            window.get_options();
+
+            window.add_reply = function() {
+                const reply = $('.autofill-options').val();
+                add_autofill_reply(reply);
+            }
         });
     </script>
 
@@ -269,10 +297,9 @@
             </div>
             <div>
                 <h4 style="margin-top: 1.2em;">Autofill</h4>
-                <p class="auto-reply">Yes</p>
-                <p class="auto-reply">No</p>
-                <p class="auto-reply">Read statements again</p>
-                <p class="auto-reply">No comments</p>
+                <select class="autofill-options" style="width: 100%;">
+                </select>
+                <button onclick="add_reply()">Add</button>
             </div>
         </aside>
     </div>
