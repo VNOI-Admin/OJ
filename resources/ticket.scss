@@ -217,3 +217,12 @@ div.ticket-title {
 .new-message .button, #edit-notes .submit {
     margin: 10px 0 0 auto;
 }
+
+.auto-reply {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px $color_primary50 solid;
+    border-radius: 5px;
+    background: $color_primary10;
+    cursor: pointer;
+}
