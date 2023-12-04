@@ -155,17 +155,10 @@ def link_user(user):
     else:
         raise ValueError('Expected profile or user, got %s' % (type(user),))
 
-    if (isinstance(profile, Profile) or is_contest_ranking_profile) and profile.display_badge:
-        display_badge_img = f'<img src="{escape(profile.display_badge.mini)}"' \
-                            f' title="{escape(profile.display_badge.name)}"' \
-                            f' style="height: 1em; width: auto; margin-left: 0.25em;" />'
-    else:
-        display_badge_img = ''
-
     return mark_safe(f'<span data-user-tag="{ profile.group if is_contest_ranking_profile else None }" class="{profile.css_class}">'
                      f'<a href="{escape(reverse("user_page", args=[user.username]))}"'
                      f' style="display: inline-block;">'
-                     f'{escape(profile.display_name)}</a>{display_badge_img}</span>')
+                     f'{escape(profile.display_name)}</a></span>')
 
 
 @registry.function
