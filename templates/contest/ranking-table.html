@@ -1,6 +1,7 @@
 {% extends "user/base-users-table.html" %}
 
 {% block user_name_display scoped %}
+    <i class="fav-button fa fa-heart fa-heart-o" aria-hidden="true"></i>
     {% if user.virtual > 0 %}
     {{ link_user(user) }}<sup class="virtual-participation" title="{{ _("%(cnt)s virtual participation of this user", cnt=ordinal(user.virtual)) }}">[{{user.virtual}}]</sup>
     {% else %}
@@ -23,6 +24,9 @@
 {% endblock %}
 
 {% block personal_info_data scoped %}
+    {% if user.display_badge %}
+        <img src="{{user.display_badge.mini}}" style="margin-right: 0.25em;"/>
+    {% endif %}
     {% if user.organization %}
         <span class="organization"><a href="{{ user.organization.get_absolute_url() }}">
             <img class="uni-logo" src="{{user.organization.logo_override_image}}">
