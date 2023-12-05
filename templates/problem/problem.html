@@ -348,14 +348,9 @@
                             {% else %}
                             <td style="text-align: center">
                             {% endif %}
-
-                            {% if can_view_all_problems or problem.is_public %}
-                                <a href="{{ url('problem_detail', contest_problem.code) }}">
-                                    {{contest.get_label_for_problem(loop.index0)}}
-                                </a>
-                            {% else %}
+                            <a href="{{ url('problem_detail', contest_problem.code) }}">
                                 {{contest.get_label_for_problem(loop.index0)}}
-                            {% endif %}
+                            </a>
                             </td>
                         </tr>
                     {% endfor %}
