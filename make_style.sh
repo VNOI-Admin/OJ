@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 cd "$(dirname "$0")" || exit
 
 node scripts/check-package-installed.js postcss sass autoprefixer || exit

@@ -173,20 +173,19 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
                 fields += ('description',)
         return fields
 
+    @admin.display(description=_('authors'))
     def show_authors(self, obj):
         return ', '.join(map(attrgetter('user.username'), obj.authors.all()))
 
-    show_authors.short_description = _('Authors')
-
+    @admin.display(description='')
     def show_public(self, obj):
         return format_html('<a href="{1}">{0}</a>', gettext('View on site'), obj.get_absolute_url())
-
-    show_public.short_description = ''
 
     def _rescore(self, request, problem_id, publicy_changed=False):
         from judge.tasks import rescore_problem
         transaction.on_commit(rescore_problem.s(problem_id, publicy_changed).delay)
 
+    @admin.display(description=_('Mark problems as public and set publish date to now'))
     def make_public_and_update_publish_date(self, request, queryset):
         count = queryset.update(is_public=True, date=timezone.now())
         for problem_id in queryset.values_list('id', flat=True):
@@ -196,8 +195,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
                                             '%d problems successfully marked as public.',
                                             count) % count)
 
-    make_public_and_update_publish_date.short_description = _('Mark problems as public and set publish date to now')
-
+    @admin.display(description=_('Mark problems as private'))
     def make_private(self, request, queryset):
         count = queryset.update(is_public=False)
         for problem_id in queryset.values_list('id', flat=True):
@@ -205,8 +203,6 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         self.message_user(request, ngettext('%d problem successfully marked as private.',
                                             '%d problems successfully marked as private.',
                                             count) % count)
-
-    make_private.short_description = _('Mark problems as private')
 
     def get_queryset(self, request):
         return Problem.get_editable_problems(request.user).prefetch_related('authors__user').distinct()

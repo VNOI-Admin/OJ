@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
-from django.contrib.flatpages.admin import FlatPageAdmin as OldFlatPageAdmin, FlatpageForm as OldFlatpageForm
+from django.contrib.flatpages.admin import FlatPageAdmin as OldFlatPageAdmin
+from django.contrib.flatpages.forms import FlatpageForm as OldFlatpageForm
 from django.forms import ModelForm
 from django.urls import NoReverseMatch, reverse, reverse_lazy
 from django.utils.html import format_html
@@ -24,9 +25,9 @@ class NavigationBarAdmin(DraggableMPTTAdmin):
         super(NavigationBarAdmin, self).__init__(*args, **kwargs)
         self.__save_model_calls = 0
 
+    @admin.display(description=_('link path'))
     def linked_path(self, obj):
         return format_html('<a href="{0}" target="_blank">{0}</a>', obj.path)
-    linked_path.short_description = _('link path')
 
     def save_model(self, request, obj, form, change):
         self.__save_model_calls += 1
@@ -143,6 +144,7 @@ class LogEntryAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    @admin.display(description=_('object'), ordering='object_repr')
     def object_link(self, obj):
         if obj.is_deletion():
             link = obj.object_repr
@@ -154,8 +156,6 @@ class LogEntryAdmin(admin.ModelAdmin):
             except NoReverseMatch:
                 link = obj.object_repr
         return link
-    object_link.admin_order_field = 'object_repr'
-    object_link.short_description = _('object')
 
     def queryset(self, request):
         return super().queryset(request).prefetch_related('content_type')
