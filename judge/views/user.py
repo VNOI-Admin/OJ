@@ -158,6 +158,11 @@ class CustomLoginView(LoginView):
     authentication_form = CustomAuthenticationForm
     redirect_authenticated_user = True
 
+    def get_context_data(self, **kwargs):
+        context = super(CustomLoginView, self).get_context_data(**kwargs)
+        context['oauth'] = context['form']
+        return context
+
     def form_valid(self, form):
         password = form.cleaned_data['password']
         validator = PwnedPasswordsValidator()

@@ -1,31 +1,5 @@
 {% extends "base.html" %}
 
-{% block media %}
-    <style>
-        h4 {
-            padding-top: 1em;
-        }
-
-        .social {
-            display: inline;
-            font-size: 2.3em;
-            float: none;
-        }
-
-        .google-icon i {
-            color: #DD4B38;
-        }
-
-        .facebook-icon i {
-            color: #133783;
-        }
-
-        .github-icon i {
-            color: black;
-        }
-    </style>
-{% endblock %}
-
 {% block body %}
     <div class="auth-flow-form">
         <form action="" method="post" class="form-area">
@@ -61,25 +35,6 @@
         </form>
         <a href="{{ url('password_reset') }}">{{ _('Forgot your password?') }}</a>
 
-        {% if form.has_google_auth or form.has_facebook_auth or form.has_github_auth %}
-            <h4>{{ _('Or log in with...') }}</h4>
-            <div>
-                {% if form.has_google_auth %}
-                    <a href="{{ url('social:begin', "google-oauth2") }}?next={{ next }}" class="social google-icon">
-                        <i class="fa fa-google-plus-square"></i>
-                    </a>
-                {% endif %}
-                {% if form.has_facebook_auth %}
-                    <a href="{{ url('social:begin', "facebook") }}?next={{ next }}" class="social facebook-icon">
-                        <i class="fa fa-facebook-square"></i>
-                    </a>
-                {% endif %}
-                {% if form.has_github_auth %}
-                    <a href="{{ url('social:begin', "github-secure") }}?next={{ next }}" class="social github-icon">
-                        <i class="fa fa-github-square"></i>
-                    </a>
-                {% endif %}
-            </div>
-        {% endif %}
+        {% include "registration/oauth.html" %}
     </div>
 {% endblock %}

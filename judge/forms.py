@@ -432,19 +432,29 @@ class OrganizationForm(ModelForm):
             })
 
 
-class CustomAuthenticationForm(AuthenticationForm):
+class SocialAuthMixin:
+    def _has_social_auth(self, key):
+        return (getattr(settings, 'SOCIAL_AUTH_%s_KEY' % key, None) and
+                getattr(settings, 'SOCIAL_AUTH_%s_SECRET' % key, None))
+
+    @property
+    def has_google_auth(self):
+        return self._has_social_auth('GOOGLE_OAUTH2')
+
+    @property
+    def has_facebook_auth(self):
+        return self._has_social_auth('FACEBOOK')
+
+    @property
+    def has_github_auth(self):
+        return self._has_social_auth('GITHUB_SECURE')
+
+
+class CustomAuthenticationForm(AuthenticationForm, SocialAuthMixin):
     def __init__(self, *args, **kwargs):
         super(CustomAuthenticationForm, self).__init__(*args, **kwargs)
         self.fields['username'].widget.attrs.update({'placeholder': _('Username')})
         self.fields['password'].widget.attrs.update({'placeholder': _('Password')})
-
-        self.has_google_auth = self._has_social_auth('GOOGLE_OAUTH2')
-        self.has_facebook_auth = self._has_social_auth('FACEBOOK')
-        self.has_github_auth = self._has_social_auth('GITHUB_SECURE')
-
-    def _has_social_auth(self, key):
-        return (getattr(settings, 'SOCIAL_AUTH_%s_KEY' % key, None) and
-                getattr(settings, 'SOCIAL_AUTH_%s_SECRET' % key, None))
 
     def clean(self):
         username = self.cleaned_data.get('username')

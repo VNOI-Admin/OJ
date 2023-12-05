@@ -106,6 +106,28 @@
         .pass-req {
             padding: 0;
         }
+
+        h4 {
+            padding-top: 1em;
+        }
+
+        .social {
+            display: inline;
+            font-size: 2.3em;
+            float: none;
+        }
+
+        .google-icon i {
+            color: #DD4B38;
+        }
+
+        .facebook-icon i {
+            color: #133783;
+        }
+
+        .github-icon i {
+            color: black;
+        }
     </style>
 {% endblock %}
 
@@ -132,98 +154,101 @@
 {% endblock %}
 
 {% block body %}
-    <div id="center-float">
-        <form id="edit-form" action="" method="post" class="form-area">
-            {% csrf_token %}
+<div id="center-float">
+            {% if not oauth_only %}
+            <form id="edit-form" action="" method="post" class="form-area">
+                {% csrf_token %}
 
-            <div class="block-header">{{ _('Full name') }}<small>({{ _('can be blank') }})</small></div>
-            <span class="fullwidth{% if form.full_name.errors %}-error{% endif %}">{{ form.full_name }}</span>
-            {% if form.full_name.errors %}
-                <div class="form-field-error">{{ form.full_name.errors }}</div>
-            {% endif %}
+                <div class="block-header">{{ _('Full name') }}<small>({{ _('can be blank') }})</small></div>
+                <span class="fullwidth{% if form.full_name.errors %}-error{% endif %}">{{ form.full_name }}</span>
+                {% if form.full_name.errors %}
+                    <div class="form-field-error">{{ form.full_name.errors }}</div>
+                {% endif %}
 
 
-            <div class="block-header">{{ _('Username') }}</div>
-            <span class="fullwidth{% if form.username.errors %}-error{% endif %}">{{ form.username }}</span>
-            {% if form.username.errors %}
-                <div class="form-field-error">{{ form.username.errors }}</div>
-            {% endif %}
+                <div class="block-header">{{ _('Username') }}</div>
+                <span class="fullwidth{% if form.username.errors %}-error{% endif %}">{{ form.username }}</span>
+                {% if form.username.errors %}
+                    <div class="form-field-error">{{ form.username.errors }}</div>
+                {% endif %}
 
-            <div class="block-header">{{ _('Email') }}<small>({{ _('please choose a popular email provider, e.g. gmail') }})</small></div>
-            <span class="fullwidth{% if form.email.errors %}-error{% endif %}">{{ form.email }}</span>
-            {% if form.email.errors %}
-                <div class="form-field-error">{{ form.email.errors }}</div>
-            {% endif %}
+                <div class="block-header">{{ _('Email') }}<small>({{ _('please choose a popular email provider, e.g. gmail') }})</small></div>
+                <span class="fullwidth{% if form.email.errors %}-error{% endif %}">{{ form.email }}</span>
+                {% if form.email.errors %}
+                    <div class="form-field-error">{{ form.email.errors }}</div>
+                {% endif %}
 
-            <div class="block-header">{{ _('Password') -}}
-                <small>(<a href="#" class="pass-req-link">?</a>)</small>
-            </div>
-            <div style="display: none" class="pass-req alert alert-info">
-                <ul>
-                    {% for validator in password_validators %}
-                        <li>{{ validator.get_help_text() }}</li>
-                    {% endfor %}
-                </ul>
-            </div>
-            <span class="fullwidth{% if form.password1.errors %}-error{% endif %}">{{ form.password1 }}</span>
-            {% if form.password1.errors %}
-                <div class="form-field-error">{{ form.password1.errors }}</div>
-            {% endif %}
-            <div class="block-header">{{ _('Password') }}<sup style="font-size: 0.7em;padding-left: 0.2em;">2</sup>{# -#}
-                <small>{{ _('(again, for confirmation)') }}</small>
-            </div>
-            <span class="fullwidth{% if form.password2.errors %}-error{% endif %}">{{ form.password2 }}</span>
-            {% if form.password2.errors %}
-                <div class="form-field-error">{{ form.password2.errors }}</div>
-            {% endif %}
+                <div class="block-header">{{ _('Password') -}}
+                    <small>(<a href="#" class="pass-req-link">?</a>)</small>
+                </div>
+                <div style="display: none" class="pass-req alert alert-info">
+                    <ul>
+                        {% for validator in password_validators %}
+                            <li>{{ validator.get_help_text() }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <span class="fullwidth{% if form.password1.errors %}-error{% endif %}">{{ form.password1 }}</span>
+                {% if form.password1.errors %}
+                    <div class="form-field-error">{{ form.password1.errors }}</div>
+                {% endif %}
+                <div class="block-header">{{ _('Password') }}<sup style="font-size: 0.7em;padding-left: 0.2em;">2</sup>{# -#}
+                    <small>{{ _('(again, for confirmation)') }}</small>
+                </div>
+                <span class="fullwidth{% if form.password2.errors %}-error{% endif %}">{{ form.password2 }}</span>
+                {% if form.password2.errors %}
+                    <div class="form-field-error">{{ form.password2.errors }}</div>
+                {% endif %}
 
-            <div class="block-header">{{ _('Timezone') }}<small>{{ _('(select your closest major city)') }}</small></div>
-            <div class="fullwidth">
-                <div>{{ form.timezone }}
-                    <div style="float: right">
-                        {{ _('or') }}
-                        <a id="open-map" href="#" data-featherlight=".map-wrap">{{ _('pick from map') }}</a>
+                <div class="block-header">{{ _('Timezone') }}<small>{{ _('(select your closest major city)') }}</small></div>
+                <div class="fullwidth">
+                    <div>{{ form.timezone }}
+                        <div style="float: right">
+                            {{ _('or') }}
+                            <a id="open-map" href="#" data-featherlight=".map-wrap">{{ _('pick from map') }}</a>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="block-header">{{ _('Default language') }}</div>
-            <span class="fullwidth">{{ form.language }}</span>
+                <div class="block-header">{{ _('Default language') }}</div>
+                <span class="fullwidth">{{ form.language }}</span>
 
-            <div class="block-header">{{ _('Affiliated organizations') }}<small>({{ _('can be blank') }})</small></div>
-            {{ form.organizations }}
-            {% if form.organizations.errors %}
-                <div class="form-field-error">{{ form.organizations.errors }}</div>
-            {% endif %}
-
-            {% if form.newsletter %}
-                <div style="padding-top: 0.5em;">{{ form.newsletter }}
-                    <label for="id_newsletter" style="float: unset;"
-                           class="inline-header grayed">{{ _('Notify me about upcoming contests') }}</label>
-                </div>
-            {% endif %}
-
-            {% if form.captcha %}
-                <div style="margin-top: 0.5em">{{ form.captcha }}</div>
-                {% if form.captcha.errors %}
-                    <div class="form-field-error">{{ form.captcha.errors }}</div>
+                <div class="block-header">{{ _('Affiliated organizations') }}<small>({{ _('can be blank') }})</small></div>
+                {{ form.organizations }}
+                {% if form.organizations.errors %}
+                    <div class="form-field-error">{{ form.organizations.errors }}</div>
                 {% endif %}
-            {% endif %}
 
-            <hr>
+                {% if form.newsletter %}
+                    <div style="padding-top: 0.5em;">{{ form.newsletter }}
+                        <label for="id_newsletter" style="float: unset;"
+                            class="inline-header grayed">{{ _('Notify me about upcoming contests') }}</label>
+                    </div>
+                {% endif %}
+
+                {% if form.captcha %}
+                    <div style="margin-top: 0.5em">{{ form.captcha }}</div>
+                    {% if form.captcha.errors %}
+                        <div class="form-field-error">{{ form.captcha.errors }}</div>
+                    {% endif %}
+                {% endif %}
+
+                <hr>
+                <button style="float:right;" type="submit">{{ _('Register!') }}</button>
+            </form>
+            {% endif %}
+            {% include "registration/oauth.html" %}
             {% if tos_url %}
                 <span class="tos-section">
                     {{ (_('By registering, you agree to our [Terms & Conditions][0].') + '\n\n  [0]: ' + tos_url)|markdown('default', strip_paragraphs=True) }}
                 </span>
             {% endif %}
-            <button style="float:right;" type="submit">{{ _('Register!') }}</button>
-        </form>
-    </div>
-
-    <div class="map-wrap">
-        <div class="map-inset">
-            <div class="map-axis-x"></div>
-            <div class="map-axis-y"></div>
         </div>
-    </div>
+
+        <div class="map-wrap">
+            <div class="map-inset">
+                <div class="map-axis-x"></div>
+                <div class="map-axis-y"></div>
+            </div>
+        </div>
 {% endblock %}
