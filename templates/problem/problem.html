@@ -36,7 +36,7 @@
             min-width: 12.5em;
         }
 
-        #problem-types, #allowed-langs, #available-judges {
+        #problem-types, #allowed-langs, #available-judges, #contest-problems-list {
             padding-top: 1em;
         }
 
@@ -50,6 +50,15 @@
             height: 0;
             position: absolute;
             left: -999em;
+        }
+
+        .highlighted {
+            background: #f7ef81;
+        }
+
+        td a {
+            display: block;
+            width: 100%;
         }
     </style>
 {% endblock %}
@@ -322,6 +331,35 @@
             </div>
         </div>
     {% endif %}
+
+    {% set contest = contest_problem.contest %}
+    {% if contest_problems %}
+    <div id="contest-problems-list">
+        <div class="toggle open unselectable">
+            <i class="fa fa-chevron-right fa-fw"></i>{{ _('Problems') }}
+        </div>
+        <div class="toggled">
+            <table class="table striped">
+                <tbody>
+                    {% for contest_problem in contest_problems %}
+                        <tr>
+                            {% if problem.code == contest_problem.code %}
+                            <td class="highlighted" style="text-align: center">
+                            {% else %}
+                            <td style="text-align: center">
+                            {% endif %}
+                            <a href="{{ url('problem_detail', contest_problem.code) }}">
+                                {{contest.get_label_for_problem(loop.index0)}}
+                            </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
     {% if problem.is_editable_by(request.user) %}
         <div id="available-judges">
             <i class="fa fa-database fa-fw"></i><span
