@@ -203,6 +203,14 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
                 context['submissions_left'] = max(contest_problem.max_submissions -
                                                   get_contest_submission_count(self.object, user.profile,
                                                                                user.profile.current_contest.virtual), 0)
+            context['contest_problems'] = Problem.objects.filter(contests__contest=contest_problem.contest) \
+                .order_by('contests__order').defer('description') \
+                .annotate(has_public_editorial=Case(
+                    When(solution__is_public=True, solution__publish_on__lte=timezone.now(), then=True),
+                    default=False,
+                    output_field=BooleanField(),
+                )) \
+                .add_i18n_name(self.request.LANGUAGE_CODE)
 
         context['available_judges'] = Judge.objects.filter(online=True, problems=self.object)
         context['show_languages'] = self.object.allowed_languages.count() != Language.objects.count()
