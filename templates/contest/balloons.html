@@ -21,15 +21,78 @@
 
 {% block content_js_media %}
     {% include "contest/media-js.html" %}
+
+    <style>
+        .marked {
+            background-color: #31c742;
+        }
+    </style>
+
+    <script>
+        // mark rows with submission id in localStorage
+        function mark_stored_ids() {
+            let marked_ids = localStorage.getItem('marked_ids');
+            marked_ids = marked_ids !== '' ? marked_ids.split(',') : [];
+
+            let rows = document.querySelectorAll('tbody > tr');
+
+            for (let row_i = 0; row_i < rows.length; row_i++) {
+                let row = rows[row_i];
+                let sub_id = row.children[1].textContent.trim();
+
+                if (marked_ids.includes(sub_id)) {
+                    row.classList.add('marked');
+                }
+            }
+        }
+
+        function mark_row() {
+            let sub_id = $(this).children()[1].textContent.trim();
+
+            let marked_ids = localStorage.getItem('marked_ids') || '';
+            marked_ids = marked_ids !== '' ? marked_ids.split(',') : [];
+
+            let pos = marked_ids.indexOf(sub_id);
+
+            if (pos == -1) {
+                marked_ids.push(sub_id);
+                $(this).addClass('marked');
+            } else {
+                marked_ids.splice(pos, 1);
+                $(this).removeClass('marked');
+            }
+
+            localStorage.setItem('marked_ids', marked_ids.join(','));
+        }
+
+        function scroll_to_unmarked() {
+            const first_unmarked = document.querySelector('tbody > tr:not(.marked)');
+            const navbar_height = document.getElementById('navigation').offsetHeight;
+            if (first_unmarked) {
+                window.scroll(0, first_unmarked.offsetTop - navbar_height);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // disable scroll restoration
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+
+            mark_stored_ids();
+            scroll_to_unmarked();
+            $('tr').click(mark_row);
+            $('#scroll-to-unmarked').click(scroll_to_unmarked);
+        });
+    </script>
 {% endblock %}
 
 
 {% block body %}
     <div class="contest-clartifications">
-        <form action="balloons" method="get">
-            <input type="hidden" name="balloons_done" value="0">
-            <input type="submit" value="Reset filter">
-        </form>
+        <button class="button" id="scroll-to-unmarked">
+            Scroll to unmarked
+        </button>
         <table id="contest-clartifications" class="table">
             <thead>
                 <tr>
@@ -37,7 +100,6 @@
                     <th>{{ _('SubID.') }}</th>
                     <th>{{ _('TEAM') }}</th>
                     <th>{{ _('PROBLEM') }}</th>
-                    <th></th>
                 </tr>
             </thead>
             <tbody>
@@ -53,12 +115,6 @@
                     </td>
                     <td style="text-align: left; padding-left: 2em;">
                         {{ submission.problem.code }}
-                    </td>
-                    <td>
-                        <form action="balloons" method="get">
-                            <input type="hidden" name="balloons_done" value="{{ loop.index0 + balloons_done + 1 }}">
-                            <input type="submit" value="Filter from here">
-                        </form>
                     </td>
                 </tr>
             {% endfor %}
