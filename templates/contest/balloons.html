@@ -32,7 +32,7 @@
         // mark rows with submission id in localStorage
         function mark_stored_ids() {
             let marked_ids = localStorage.getItem('marked_ids');
-            marked_ids = marked_ids !== '' ? marked_ids.split(',') : [];
+            marked_ids = marked_ids ? marked_ids.split(',') : [];
 
             let rows = document.querySelectorAll('tbody > tr');
 
@@ -50,7 +50,7 @@
             let sub_id = $(this).children()[1].textContent.trim();
 
             let marked_ids = localStorage.getItem('marked_ids') || '';
-            marked_ids = marked_ids !== '' ? marked_ids.split(',') : [];
+            marked_ids = marked_ids ? marked_ids.split(',') : [];
 
             let pos = marked_ids.indexOf(sub_id);
 
