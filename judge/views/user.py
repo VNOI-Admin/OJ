@@ -177,6 +177,12 @@ class CustomPasswordChangeView(PasswordChangeView):
         self.request.session['password_pwned'] = False
         return super().form_valid(form)
 
+    def dispatch(self, request, *args, **kwargs):
+        if request.official_contest_mode:
+            return generic_message(request, _('Permission denied'),
+                                   _('You cannot change your password.'))
+        return super().dispatch(request, *args, **kwargs)
+
 
 EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
 
