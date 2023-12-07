@@ -54,7 +54,7 @@ class ProfileForm(ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['about', 'display_badge', 'organizations', 'timezone', 'language', 'ace_theme',
+        fields = ['about', 'display_badge', 'timezone', 'language', 'ace_theme',
                   'site_theme', 'user_script']
         widgets = {
             'display_badge': Select2Widget(attrs={'style': 'width:200px'}),
@@ -68,6 +68,7 @@ class ProfileForm(ModelForm):
         # because the user can put the solution in that profile
         if settings.VNOJ_OFFICIAL_CONTEST_MODE:
             fields.remove('about')
+            fields.remove('display_badge')
 
         has_math_config = bool(settings.MATHOID_URL)
         if has_math_config:
@@ -82,32 +83,15 @@ class ProfileForm(ModelForm):
                                   % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT)
         return self.cleaned_data['about']
 
-    def clean(self):
-        organizations = self.cleaned_data.get('organizations') or []
-        max_orgs = settings.DMOJ_USER_MAX_ORGANIZATION_COUNT
-
-        if sum(org.is_open for org in organizations) > max_orgs:
-            raise ValidationError(ngettext_lazy('You may not be part of more than {count} public organization.',
-                                                'You may not be part of more than {count} public organizations.',
-                                                max_orgs).format(count=max_orgs))
-
-        return self.cleaned_data
-
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
+        kwargs.pop('user', None)
         super(ProfileForm, self).__init__(*args, **kwargs)
 
-        self.fields['display_badge'].required = False
-        self.fields['display_badge'].queryset = self.instance.badges.all()
-        if not self.fields['display_badge'].queryset:
-            self.fields.pop('display_badge')
-
-        if not user.has_perm('judge.edit_all_organization'):
-            self.fields['organizations'].queryset = Organization.objects.filter(
-                Q(is_open=True, is_unlisted=False) | Q(id__in=user.profile.organizations.all()),
-            )
-        if not self.fields['organizations'].queryset:
-            self.fields.pop('organizations')
+        if 'display_badge' in self.fields:
+            self.fields['display_badge'].required = False
+            self.fields['display_badge'].queryset = self.instance.badges.all()
+            if not self.fields['display_badge'].queryset:
+                self.fields.pop('display_badge')
 
 
 class UserForm(ModelForm):
