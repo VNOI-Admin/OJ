@@ -1191,7 +1191,7 @@ class ContestBalloons(ContestMixin, TitleMixin, DetailView):
 
     def dispatch(self, request, *args, **kwargs):
         self.object = self.get_object()
-        if self.can_edit:
+        if request.user.has_perm('judge.contest_rating'):
             return super().dispatch(request, *args, **kwargs)
         else:
             return HttpResponseForbidden()
