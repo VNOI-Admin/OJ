@@ -3596,7 +3596,7 @@ msgstr "Không thể tham gia"
 msgid ""
 "You have been declared persona non grata for this contest. You are "
 "permanently barred from joining this contest."
-msgstr "Bạn đã được coi là cá nhận không tham gia kỳ thi này."
+msgstr "Bạn đã được coi là cá nhân không tham gia kỳ thi này."
 
 #: judge/views/contests.py:471
 msgid "Virtual joining not allowed"
