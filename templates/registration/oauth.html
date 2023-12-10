@@ -1,0 +1,46 @@
+{% block media %}
+    <style>
+        h4 {
+            padding-top: 1em;
+        }
+
+        .social {
+            display: inline;
+            font-size: 2.3em;
+            float: none;
+        }
+
+        .google-icon i {
+            color: #DD4B38;
+        }
+
+        .facebook-icon i {
+            color: #133783;
+        }
+
+        .github-icon i {
+            color: black;
+        }
+    </style>
+{% endblock %}
+
+{% if oauth.has_google_auth or oauth.has_facebook_auth or oauth.has_github_auth %}
+    <h4>{{ _('Or log in with...') }}</h4>
+    <div>
+        {% if oauth.has_google_auth %}
+            <a href="{{ url('social:begin', "google-oauth2") }}?next={{ next }}" class="social google-icon">
+                <i class="fa fa-google-plus-square"></i>
+            </a>
+        {% endif %}
+        {% if oauth.has_facebook_auth %}
+            <a href="{{ url('social:begin', "facebook") }}?next={{ next }}" class="social facebook-icon">
+                <i class="fa fa-facebook-square"></i>
+            </a>
+        {% endif %}
+        {% if oauth.has_github_auth %}
+            <a href="{{ url('social:begin', "github-secure") }}?next={{ next }}" class="social github-icon">
+                <i class="fa fa-github-square"></i>
+            </a>
+        {% endif %}
+    </div>
+{% endif %}
