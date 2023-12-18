@@ -143,7 +143,7 @@ class Profile(models.Model):
     contribution_points = models.IntegerField(default=0)
     problem_count = models.IntegerField(default=0)
     ace_theme = models.CharField(max_length=30, verbose_name=_('Ace theme'), choices=ACE_THEMES, default='auto')
-    site_theme = models.CharField(max_length=10, verbose_name=_('site theme'), choices=SITE_THEMES, default='auto')
+    site_theme = models.CharField(max_length=10, verbose_name=_('site theme'), choices=SITE_THEMES, default='light')
     last_access = models.DateTimeField(verbose_name=_('last access time'), default=now)
     ip = models.GenericIPAddressField(verbose_name=_('last IP'), blank=True, null=True)
     badges = models.ManyToManyField(Badge, verbose_name=_('badges'), blank=True, related_name='users')
