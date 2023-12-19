@@ -233,7 +233,6 @@ class GetSubmissionsData(LoginRequiredMixin, PublicOrganizationMixin, SingleObje
     def handle(self, request, org, profile):
         star_time = request.GET.get('start_time', None)
         end_time = request.GET.get('end_time', None)
-        print(star_time, end_time)
         if star_time == '' or end_time == '':
             return generic_message(request, _('Get submissions data'), _('Please input start time and end time.'))
         submissions = Submission.objects.filter(judged_date__gte=star_time,
