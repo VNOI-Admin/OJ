@@ -282,6 +282,8 @@ urlpatterns = [
         path('/users/', organization.OrganizationUsers.as_view(), name='organization_users'),
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
         path('/leave', organization.LeaveOrganization.as_view(), name='leave_organization'),
+        path('/get-submissions-data', organization.GetSubmissionsData.as_view(),
+             name='get_submissions_data'),
         path('/edit', organization.EditOrganization.as_view(), name='edit_organization'),
         path('/kick', organization.KickUserWidgetView.as_view(), name='organization_user_kick'),
         path('/problems/', organization.ProblemListOrganization.as_view(), name='problem_list_organization'),

@@ -127,6 +127,20 @@
                             <a href="{{ url('admin:judge_organization_change', organization.id) }}">{{ _('Admin organization') }}</a>
                         </div>
                     {% endif %}
+                    {% if can_edit %}
+                        <div>
+                            <h4>Download submission data</h4>
+                            <form method="get" action="{{ url('get_submissions_data', organization.slug) }}">
+                                {% csrf_token %}
+                                <div style="margin-bottom: 0.4em;">
+                                    <input type="date" name="start_time" />
+                                    -
+                                    <input type="date" name="end_time" />
+                                </div>
+                                <button class="button">Download</button>
+                            </form>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 

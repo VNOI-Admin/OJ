@@ -1,3 +1,4 @@
+import csv
 from functools import cached_property
 
 from django import forms
@@ -10,7 +11,7 @@ from django.db.models import Count, FilteredRelation, Q
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
@@ -20,9 +21,10 @@ from django.views.generic import CreateView, DetailView, FormView, ListView, Upd
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
-from judge.forms import OrganizationForm
+from judge.forms import OrganizationForm, OrganizationGetSubmissionsDataForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
     Problem, Profile
+from judge.models.submission import Submission
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.ranker import ranker
@@ -32,8 +34,9 @@ from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
 from judge.views.submission import SubmissionsListBase
 
+
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
-           'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
+           'JoinOrganization', 'LeaveOrganization', 'GetSubmissionsData', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
            'KickUserWidgetView']
 
@@ -215,6 +218,39 @@ class LeaveOrganization(OrganizationMembershipChange):
         if org.is_admin(profile):
             return generic_message(request, _('Leaving organization'), _('You cannot leave an organization you own.'))
         profile.organizations.remove(org)
+
+
+class GetSubmissionsData(LoginRequiredMixin, PublicOrganizationMixin, SingleObjectMixin, View, Form):
+    form = OrganizationGetSubmissionsDataForm
+
+    def get(self, request, *args, **kwargs):
+        org = self.get_object()
+        profile = request.profile
+        if not org.is_admin(profile):
+            raise PermissionDenied()
+        return self.handle(request, org, profile)
+
+    def handle(self, request, org, profile):
+        star_time = request.GET.get('start_time', None)
+        end_time = request.GET.get('end_time', None)
+        print(star_time, end_time)
+        if star_time == '' or end_time == '':
+            return generic_message(request, _('Get submissions data'), _('Please input start time and end time.'))
+        submissions = Submission.objects.filter(judged_date__gte=star_time,
+                                                judged_date__lte=end_time,
+                                                problem__organizations=org).order_by('judged_date').only(
+                                                    'judged_date', 'problem', 'user', 'result')
+        respone = HttpResponse(content_type='text/csv')
+        respone['Content-Disposition'] = 'attachment; filename="submissions.csv"'
+        respone.write(u'\ufeff'.encode('utf8'))
+
+        writer = csv.writer(respone)
+        writer.writerow(['judged_date', 'problem_id', 'user', 'result'])
+        for submission in submissions:
+            writer.writerow([submission.judged_date.ctime(), submission.problem.code,
+                             submission.user.user.username, submission.result])
+
+        return respone
 
 
 class OrganizationRequestForm(Form):

@@ -432,6 +432,11 @@ class OrganizationForm(ModelForm):
             })
 
 
+class OrganizationGetSubmissionsDataForm(Form):
+    start_time = DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'})
+    end_time = DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'})
+
+
 class SocialAuthMixin:
     def _has_social_auth(self, key):
         return (getattr(settings, 'SOCIAL_AUTH_%s_KEY' % key, None) and
