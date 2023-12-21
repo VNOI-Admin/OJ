@@ -703,6 +703,7 @@ def update_or_create_problem(problem_meta, do_update):
     ProblemTestCase.objects.filter(dataset=problem).delete()
 
     order = 0
+    last_case = None
 
     for batch in problem_meta['batches'].values():
         if len(batch['cases']) == 0:
@@ -711,6 +712,7 @@ def update_or_create_problem(problem_meta, do_update):
         order += 1
         start_batch = ProblemTestCase(dataset=problem, order=order, type='S', points=batch['points'], is_pretest=False)
         start_batch.save()
+        last_case = start_batch
 
         for case_index in batch['cases']:
             order += 1
@@ -732,7 +734,7 @@ def update_or_create_problem(problem_meta, do_update):
     for case_index in problem_meta['normal_cases']:
         order += 1
         case_data = problem_meta['cases_data'][case_index]
-        case = ProblemTestCase(
+        last_case = case = ProblemTestCase(
             dataset=problem,
             order=order,
             type='C',
@@ -743,6 +745,10 @@ def update_or_create_problem(problem_meta, do_update):
         )
         case.save()
 
+    if not problem_meta['partial'] and last_case is not None:
+        last_case.points = 1
+        last_case.save()
+
     print('Generating init.yml')
     ProblemDataCompiler.generate(
         problem=problem,
@@ -750,6 +756,7 @@ def update_or_create_problem(problem_meta, do_update):
         cases=problem.cases.order_by('order'),
         files=zipfile.ZipFile(problem_data.zipfile.path).namelist(),
     )
+    assert problem_data.feedback == '', problem_data.feedback
 
 
 class Command(BaseCommand):
