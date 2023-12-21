@@ -221,11 +221,10 @@ def parse_assets(problem_meta, root, package):
     # Parse interactor
     interactor = root.find('.//interactor')
     if interactor is None:
-        print('Use standard grader')
+        print('Use standard grader.')
         problem_meta['grader'] = 'standard'
     else:
-        print('Found interactor')
-        print('Use interactive grader')
+        print('Found interactor. Use interactive grader.')
         problem_meta['grader'] = 'interactive'
         problem_meta['custom_grader'] = os.path.join(problem_meta['tmp_dir'].name, 'interactor.cpp')
 
@@ -240,8 +239,8 @@ def parse_assets(problem_meta, root, package):
         with open(problem_meta['custom_grader'], 'wb') as f:
             f.write(package.read(path))
 
-        print('NOTE: checker is ignored when using interactive grader')
-        print('If you use custom checker, please merge it with the interactor')
+        print('NOTE: checker is ignored when using interactive grader.')
+        print('If you use custom checker, please merge it with the interactor.')
         problem_meta['checker'] = 'standard'
         return
 
@@ -259,22 +258,22 @@ def parse_assets(problem_meta, root, package):
     else:
         if checker_name in ['std::hcmp.cpp', 'std::ncmp.cpp', 'std::wcmp.cpp']:
             problem_meta['checker'] = 'standard'
-            print('Use standard checker')
+            print('Use standard checker.')
         elif checker_name in ['std::rcmp4.cpp', 'std::rcmp6.cpp', 'std::rcmp9.cpp']:
             problem_meta['checker'] = 'floats'
             problem_meta['checker_args'] = {'precision': int(checker_name[9])}
-            print(f'Use floats checker with precision {problem_meta["checker_args"]["precision"]}')
+            print(f'Use floats checker with precision {problem_meta["checker_args"]["precision"]}.')
         elif checker_name == 'std::fcmp.cpp':
             problem_meta['checker'] = 'identical'
-            print('Use identical checker')
+            print('Use identical checker.')
         elif checker_name == 'std::lcmp.cpp':
             problem_meta['checker'] = 'linecount'
-            print('Use linecount checker')
+            print('Use linecount checker.')
         else:
             problem_meta['checker'] = 'bridged'
 
     if problem_meta['checker'] == 'bridged':
-        print('Use custom checker')
+        print('Use custom checker.')
 
         source = checker.find('source')
         if source is None:
@@ -420,7 +419,7 @@ def parse_tests(problem_meta, root, package):
     all_points = [batch['points'] for batch in problem_meta['batches'].values()] + \
                  [problem_meta['cases_data'][i]['points'] for i in problem_meta['normal_cases']]
     if any(not p.is_integer() for p in all_points):
-        print('Found fractional points. Normalize to integers')
+        print('Found fractional points. Normalize to integers.')
         all_points = [int(p * 1000) for p in all_points]
         gcd = math.gcd(*all_points)
         for batch in problem_meta['batches'].values():
@@ -432,10 +431,10 @@ def parse_tests(problem_meta, root, package):
     total_points = (sum(b['points'] for b in problem_meta['batches'].values()) +
                     sum(problem_meta['cases_data'][i]['points'] for i in problem_meta['normal_cases']))
     if total_points == 0:
-        print('Total points is zero. Set partial to False')
+        print('Total points is zero. Set partial to False.')
         problem_meta['partial'] = False
     else:
-        print('Total points is non-zero. Set partial to True')
+        print('Total points is non-zero. Set partial to True.')
         problem_meta['partial'] = True
 
     if problem_meta['partial']:
@@ -443,33 +442,32 @@ def parse_tests(problem_meta, root, package):
         zero_point_batches = [name for name, batch in problem_meta['batches'].items() if batch['points'] == 0]
         if len(zero_point_batches) > 0:
             print('Found zero-point batches:', ', '.join(zero_point_batches))
-            print('Would you like ignore them (y/n)? ', end='', flush=True)
+            print('Would you like to ignore them (y/n)? ', end='', flush=True)
             if input().lower() in ['y', 'yes']:
                 problem_meta['batches'] = {
                     name: batch for name, batch in problem_meta['batches'].items() if batch['points'] > 0
                 }
-                print(f'Ignored {len(zero_point_batches)} zero-point batches')
+                print(f'Ignored {len(zero_point_batches)} zero-point batches.')
 
         # Ignore zero-point cases
         zero_point_cases_count = len([
             idx for idx in problem_meta['normal_cases'] if problem_meta['cases_data'][idx]['points'] == 0
         ])
         if zero_point_cases_count > 0:
-            print(f'Found {zero_point_cases_count} zero-point cases')
-            print('Would you like ignore them (y/n)? ', end='', flush=True)
+            print(f'Found {zero_point_cases_count} zero-point tests.')
+            print('Would you like to ignore them (y/n)? ', end='', flush=True)
             if input().lower() in ['y', 'yes']:
                 problem_meta['normal_cases'] = [
                     idx for idx in problem_meta['normal_cases'] if problem_meta['cases_data'][idx]['points'] > 0
                 ]
-                print(f'Ignored {zero_point_cases_count} zero-point cases')
+                print(f'Ignored {zero_point_cases_count} zero-point tests.')
 
     # Sort tests by index
     problem_meta['normal_cases'].sort()
     for batch in problem_meta['batches'].values():
         batch['cases'].sort()
 
-    print(f'Found {len(testset.find("tests").getchildren())} tests!')
-    print(f'Parsed as {len(problem_meta["batches"])} batches and {len(problem_meta["normal_cases"])} normal tests!')
+    print(f'Parsed {len(problem_meta["batches"])} batches and {len(problem_meta["normal_cases"])} normal tests!')
 
     problem_meta['grader_args'] = {}
     judging = root.find('.//judging')
@@ -478,7 +476,7 @@ def parse_tests(problem_meta, root, package):
         io_output_file = judging.get('output-file', '')
 
         if io_input_file != '' and io_output_file != '':
-            print('Use File IO')
+            print('Use File IO.')
             print('Input file:', io_input_file)
             print('Output file:', io_output_file)
             problem_meta['grader_args']['io_method'] = 'file'
@@ -592,7 +590,6 @@ def parse_statements(problem_meta, root, package):
 
         problem_properties = json.loads(package.read(problem_properties_path).decode('utf-8'))
 
-        print(f'Converting statement in language {language} to Markdown')
         description = parse_problem_properties(problem_properties)
         translations.append({
             'language': language,
@@ -601,7 +598,6 @@ def parse_statements(problem_meta, root, package):
 
         tutorial = problem_properties['tutorial']
         if isinstance(tutorial, str) and tutorial != '':
-            print(f'Converting tutorial in language {language} to Markdown')
             tutorial = pandoc_tex_to_markdown(tutorial)
             tutorials.append({
                 'language': language,
@@ -652,9 +648,9 @@ def parse_statements(problem_meta, root, package):
 @transaction.atomic
 def update_or_create_problem(problem_meta, do_update):
     if do_update:
-        print('Updating problem in database')
+        print('Updating problem in database.')
     else:
-        print('Creating problem in database')
+        print('Creating problem in database.')
     problem, _ = Problem.objects.update_or_create(code=problem_meta['code'], defaults={
         'code': problem_meta['code'],
         'name': problem_meta['name'],
