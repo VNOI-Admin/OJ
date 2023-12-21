@@ -220,19 +220,18 @@ class LeaveOrganization(OrganizationMembershipChange):
         profile.organizations.remove(org)
 
 
-class GetSubmissionsData(LoginRequiredMixin, PublicOrganizationMixin, SingleObjectMixin, View, Form):
-    form = OrganizationGetSubmissionsDataForm
-
+class GetSubmissionsData(LoginRequiredMixin, PublicOrganizationMixin, SingleObjectMixin, View):
     def get(self, request, *args, **kwargs):
         org = self.get_object()
         profile = request.profile
         if not org.is_admin(profile):
             raise PermissionDenied()
-        return self.handle(request, org, profile)
+        return self.handle(request, org)
 
-    def handle(self, request, org, profile):
+    def handle(self, request, org):
         star_time = request.GET.get('start_time', None)
         end_time = request.GET.get('end_time', None)
+
         if star_time == '' or end_time == '':
             return generic_message(request, _('Get submissions data'), _('Please input start time and end time.'))
         submissions = Submission.objects.filter(judged_date__gte=star_time,
@@ -519,6 +518,7 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
         context['is_member'] = self.request.profile in self.object
+        context['form'] = OrganizationGetSubmissionsDataForm()
 
         context['post_comment_counts'] = {
             int(page[2:]): count for page, count in

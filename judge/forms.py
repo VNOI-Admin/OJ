@@ -433,8 +433,8 @@ class OrganizationForm(ModelForm):
 
 
 class OrganizationGetSubmissionsDataForm(Form):
-    start_time = DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'})
-    end_time = DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'})
+    start_time = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'required': True}), label='')
+    end_time = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'required': True}), label='')
 
 
 class SocialAuthMixin:
