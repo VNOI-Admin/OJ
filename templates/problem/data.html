@@ -427,16 +427,18 @@
                 console.log("Filling testcase...");
                 var inFiles = [], outFiles = [];
 
-                // regex index 0 = Themis, 1 = Polygon, 2 = DMOJ
+                var format = ["Themis", "CMS", "Polygon", "DMOJ"];
 
                 var in_re = [
                     new RegExp(/^(.+\.inp|.+\.in|inp|in)$/),
+                    new RegExp(/^input.(.+\d+)$/),
                     new RegExp(/^(.+\d+)$/),
                     new RegExp(/^(?=.*?\.in|in).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
                 ];
 
                 var out_re = [
                     new RegExp(/^(.+\.out|.+\.ok|.+\.ans|out|ok|ans)$/),
+                    new RegExp(/^output.(.+\d+)$/),
                     new RegExp(/^(.+\d+\.a)$/),
                     new RegExp(/^(?=.*?\.out|out).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
                 ];
@@ -444,7 +446,8 @@
                 var test_type = -1;
 
                 for (var i = 0; i < window.valid_files.length; i++) {
-                    var tested_filename = window.valid_files[i].toLowerCase().replace('/', '.');
+                    var lastSlashIdx = window.valid_files[i].lastIndexOf('/');
+                    var tested_filename = window.valid_files[i].slice(lastSlashIdx + 1).toLowerCase();
 
                     for (var type = 0; type < 3; type++) {
                         if (in_re[type].test(tested_filename)) {
@@ -455,6 +458,8 @@
 
                             test_type = type;
                             inFiles.push(window.valid_files[i]);
+                            console.log(`Found input file: ${window.valid_files[i]}`);
+                            console.log(`type: ${format[type]}`);
                             break;
                         }
 
@@ -466,6 +471,8 @@
 
                             test_type = type;
                             outFiles.push(window.valid_files[i]);
+                            console.log(`Found output file: ${window.valid_files[i]}`);
+                            console.log(`type: ${format[type]}`);
                             break;
                         }
                     }
