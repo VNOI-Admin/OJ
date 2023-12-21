@@ -429,25 +429,6 @@ def parse_tests(problem_meta, root, package):
             case_data = problem_meta['cases_data'][i]
             case_data['points'] = int(case_data['points'] * 1000) // gcd
 
-    # Ignore zero-point batches
-    zero_point_batches = [name for name, batch in problem_meta['batches'].items() if batch['points'] == 0]
-    if len(zero_point_batches) > 0:
-        print('Found zero-point batches:', ', '.join(zero_point_batches))
-        print('Would you like ignore them (y/n)? ', end='', flush=True)
-        if input().lower() in ['y', 'yes']:
-            problem_meta['batches'] = {
-                name: batch for name, batch in problem_meta['batches'].items() if batch['points'] > 0
-            }
-            print(f'Ignored {len(zero_point_batches)} zero-point batches')
-
-    # Sort tests by index
-    problem_meta['normal_cases'].sort()
-    for batch in problem_meta['batches'].values():
-        batch['cases'].sort()
-
-    print(f'Found {len(testset.find("tests").getchildren())} tests!')
-    print(f'Parsed as {len(problem_meta["batches"])} batches and {len(problem_meta["normal_cases"])} normal tests!')
-
     total_points = (sum(b['points'] for b in problem_meta['batches'].values()) +
                     sum(problem_meta['cases_data'][i]['points'] for i in problem_meta['normal_cases']))
     if total_points == 0:
@@ -456,6 +437,39 @@ def parse_tests(problem_meta, root, package):
     else:
         print('Total points is non-zero. Set partial to True')
         problem_meta['partial'] = True
+
+    if problem_meta['partial']:
+        # Ignore zero-point batches
+        zero_point_batches = [name for name, batch in problem_meta['batches'].items() if batch['points'] == 0]
+        if len(zero_point_batches) > 0:
+            print('Found zero-point batches:', ', '.join(zero_point_batches))
+            print('Would you like ignore them (y/n)? ', end='', flush=True)
+            if input().lower() in ['y', 'yes']:
+                problem_meta['batches'] = {
+                    name: batch for name, batch in problem_meta['batches'].items() if batch['points'] > 0
+                }
+                print(f'Ignored {len(zero_point_batches)} zero-point batches')
+
+        # Ignore zero-point cases
+        zero_point_cases_count = len([
+            idx for idx in problem_meta['normal_cases'] if problem_meta['cases_data'][idx]['points'] == 0
+        ])
+        if zero_point_cases_count > 0:
+            print(f'Found {zero_point_cases_count} zero-point cases')
+            print('Would you like ignore them (y/n)? ', end='', flush=True)
+            if input().lower() in ['y', 'yes']:
+                problem_meta['normal_cases'] = [
+                    idx for idx in problem_meta['normal_cases'] if problem_meta['cases_data'][idx]['points'] > 0
+                ]
+                print(f'Ignored {zero_point_cases_count} zero-point cases')
+
+    # Sort tests by index
+    problem_meta['normal_cases'].sort()
+    for batch in problem_meta['batches'].values():
+        batch['cases'].sort()
+
+    print(f'Found {len(testset.find("tests").getchildren())} tests!')
+    print(f'Parsed as {len(problem_meta["batches"])} batches and {len(problem_meta["normal_cases"])} normal tests!')
 
     problem_meta['grader_args'] = {}
     judging = root.find('.//judging')
