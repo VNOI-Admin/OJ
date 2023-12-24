@@ -353,10 +353,3 @@
 {% endblock %}
 
 {% block description_end %}{% endblock %}
-
-{% block bodyend %}
-    {{ super() }}
-    {% if not comment_lock %}
-        {% include "comments/math.html" %}
-    {% endif %}
-{% endblock %}

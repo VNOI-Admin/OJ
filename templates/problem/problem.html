@@ -395,10 +395,3 @@
         {% include "comments/list.html" %}
     {% endif %}
 {% endblock %}
-
-{% block bodyend %}
-    {{ super() }}
-    {% if not comment_lock %}
-        {% include "comments/math.html" %}
-    {% endif %}
-{% endblock %}
