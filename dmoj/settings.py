@@ -728,12 +728,6 @@ DESCRIPTION_MAX_LENGTH = 200
 
 GROUP_PERMISSION_FOR_ORG_ADMIN = 'Org Admin'
 
-try:
-    with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
-        exec(f.read(), globals())
-except IOError:
-    pass
-
 if DMOJ_PDF_PDFOID_URL:
     # If a cache is configured, it must already exist and be a directory
     assert DMOJ_PDF_PROBLEM_CACHE is None or os.path.isdir(DMOJ_PDF_PROBLEM_CACHE)
@@ -744,3 +738,9 @@ ACE_DEFAULT_LIGHT_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['light']
 ACE_DEFAULT_DARK_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['dark']
 # Only allow OAuth login
 OAUTH_ONLY = False
+
+try:
+    with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
+        exec(f.read(), globals())
+except IOError:
+    pass
