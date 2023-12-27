@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block media %}
+    {{ form.media.css }}
+    <style>
+        .centered-form {
+            padding-top: 15px;
+            max-width: 460px;
+            width: fit-content;
+        }
+
+        .form-area {
+            display: block;
+        }
+
+        .form-field {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 5px;
+        }
+
+        .form-field div:first-child {
+            margin-right: 20px;
+        }
+
+        #submit-bar {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            flex-direction: row-reverse;
+        }
+
+        .aux-download-action {
+            width: fit-content;
+            margin: auto;
+        }
+
+        @media (max-width: 460px) {
+            .main-download-action {
+                margin-top: 5px;
+                width: 100%;
+            }
+
+            .aux-download-action {
+                width: unset;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="centered-form">
+    <form method="post" class="form-area">
+        {% csrf_token %}
+        <div class="form-group">
+            <div class="form-field">
+                <div>{{ form.start_time.label }}</div>
+                <div>{{ form.start_time }}</div>
+            </div>
+            <div class="form-field">
+                <div>{{ form.end_time.label }}</div>
+                <div>{{ form.end_time }}</div>
+            </div>
+        </div>
+        <button>Get</button>
+        {% if form.has_error('start_time') %}
+            {{ form.errors['start_time'] }}
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

@@ -433,8 +433,14 @@ class OrganizationForm(ModelForm):
 
 
 class OrganizationGetSubmissionsDataForm(Form):
-    start_time = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'required': True}), label='')
-    end_time = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'required': True}), label='')
+    start_time = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'required': True}), label=_('From'))
+    end_time = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'required': True}), label=_('To'))
+
+    def get_data(self):
+        start_time = self.cleaned_data['start_time']
+        end_time = self.cleaned_data['end_time']
+
+        return start_time, end_time
 
 
 class SocialAuthMixin:

@@ -129,12 +129,7 @@
                     {% endif %}
                     {% if can_edit %}
                         <div>
-                            <h4>Download submission data</h4>
-                            <form method="get" action="{{ url('get_submissions_data', organization.slug) }}">
-                                {% csrf_token %}
-                                {{ form.start_time }} - {{ form.end_time }}
-                                <button class="button">Download</button>
-                            </form>
+                            <a href="{{ url('get_submissions_data', organization.slug) }}">{{ _('Download submissions data') }}</a>
                         </div>
                     {% endif %}
                 </div>

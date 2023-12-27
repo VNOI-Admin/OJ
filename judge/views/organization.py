@@ -220,21 +220,24 @@ class LeaveOrganization(OrganizationMembershipChange):
         profile.organizations.remove(org)
 
 
-class GetSubmissionsData(LoginRequiredMixin, PublicOrganizationMixin, SingleObjectMixin, View):
-    def get(self, request, *args, **kwargs):
-        org = self.get_object()
-        profile = request.profile
-        if not org.is_admin(profile):
+class GetSubmissionsData(LoginRequiredMixin, PublicOrganizationMixin, TitleMixin, SingleObjectMixin, FormView):
+    form_class = OrganizationGetSubmissionsDataForm
+    template_name = 'organization/get-submissions-data.html'
+    title = gettext_lazy('Get submissions data')
+    success_url = '.'
+
+    def form_valid(self, form):
+        if not self.organization.is_admin(self.request.profile):
             raise PermissionDenied()
-        return self.handle(request, org)
+        if form.cleaned_data['start_time'] > form.cleaned_data['end_time']:
+            form.add_error('start_time', _('Start time must be before end time.'))
+            return self.form_invalid(form)
+        return self.download(form)
 
-    def handle(self, request, org):
-        star_time = request.GET.get('start_time', None)
-        end_time = request.GET.get('end_time', None)
-
-        if star_time == '' or end_time == '':
-            return generic_message(request, _('Get submissions data'), _('Please input start time and end time.'))
-        submissions = Submission.objects.filter(judged_date__gte=star_time,
+    def download(self, form):
+        start_time, end_time = form.get_data()
+        org = self.organization
+        submissions = Submission.objects.filter(judged_date__gte=start_time,
                                                 judged_date__lte=end_time,
                                                 problem__organizations=org).order_by('judged_date').only(
                                                     'judged_date', 'problem', 'user', 'result')
