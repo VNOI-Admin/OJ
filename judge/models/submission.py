@@ -149,8 +149,6 @@ class Submission(models.Model):
     abort.alters_data = True
 
     def mark_plagiarized(self, calculate_user_points=True):
-        if self.is_plagiarized:
-            raise RuntimeError('Already marked as plagiarized')
         if not self.is_graded:
             raise RuntimeError('Cannot mark pending submission as plagiarized')
 
@@ -163,9 +161,6 @@ class Submission(models.Model):
     mark_plagiarized.alters_data = True
 
     def unmark_plagiarized(self, calculate_user_points=True):
-        if not self.is_plagiarized:
-            raise RuntimeError('Not marked as plagiarized')
-
         if self.result == 'AB':
             self.status = 'AB'
         elif self.result == 'CE':
