@@ -119,7 +119,7 @@ class SubmissionAdmin(VersionAdmin):
     readonly_fields = ('user', 'problem', 'date', 'judged_date')
     fields = ('user', 'problem', 'date', 'judged_date', 'locked_after', 'time', 'memory', 'points', 'language',
               'status', 'result', 'case_points', 'case_total', 'judged_on', 'error')
-    actions = ('judge', 'recalculate_score')
+    actions = ('judge', 'recalculate_score', 'mark_plagiarized', 'unmark_plagiarized')
     list_display = ('id', 'problem_code', 'problem_name', 'user_column', 'execution_time', 'pretty_memory',
                     'points', 'language_column', 'status', 'result', 'judge_column')
     list_filter = ('language', SubmissionStatusFilter, SubmissionResultFilter)
@@ -204,6 +204,56 @@ class SubmissionAdmin(VersionAdmin):
 
         self.message_user(request, ngettext('%d submission was successfully rescored.',
                                             '%d submissions were successfully rescored.',
+                                            len(submissions)) % len(submissions))
+
+    @admin.display(description=_('Mark the selected submissions as plagiarized'))
+    def mark_plagiarized(self, request, queryset):
+        if not request.user.has_perm('judge.mark_plagiarized_submission'):
+            self.message_user(request,
+                              gettext('You do not have the permission to mark submissions as plagiarized.'),
+                              level=messages.ERROR)
+            return
+        submissions = list(queryset.defer(None).select_related(None).select_related('problem')
+                           .only('points', 'case_points', 'case_total', 'problem__partial', 'problem__points'))
+        for submission in submissions:
+            submission.mark_plagiarized(calculate_user_points=False)
+
+        for profile in Profile.objects.filter(id__in=queryset.values_list('user_id', flat=True).distinct()):
+            profile.calculate_points()
+            cache.delete('user_complete:%d' % profile.id)
+            cache.delete('user_attempted:%d' % profile.id)
+
+        for participation in ContestParticipation.objects.filter(
+                id__in=queryset.values_list('contest__participation_id')).prefetch_related('contest'):
+            participation.recompute_results()
+
+        self.message_user(request, ngettext('%d submission was successfully marked.',
+                                            '%d submissions were successfully marked.',
+                                            len(submissions)) % len(submissions))
+
+    @admin.display(description=_('Mark the selected submissions as not plagiarized'))
+    def unmark_plagiarized(self, request, queryset):
+        if not request.user.has_perm('judge.mark_plagiarized_submission'):
+            self.message_user(request,
+                              gettext('You do not have the permission to mark submissions as not plagiarized.'),
+                              level=messages.ERROR)
+            return
+        submissions = list(queryset.defer(None).select_related(None).select_related('problem')
+                           .only('points', 'case_points', 'case_total', 'problem__partial', 'problem__points'))
+        for submission in submissions:
+            submission.unmark_plagiarized(calculate_user_points=False)
+
+        for profile in Profile.objects.filter(id__in=queryset.values_list('user_id', flat=True).distinct()):
+            profile.calculate_points()
+            cache.delete('user_complete:%d' % profile.id)
+            cache.delete('user_attempted:%d' % profile.id)
+
+        for participation in ContestParticipation.objects.filter(
+                id__in=queryset.values_list('contest__participation_id')).prefetch_related('contest'):
+            participation.recompute_results()
+
+        self.message_user(request, ngettext('%d submission was successfully marked.',
+                                            '%d submissions were successfully marked.',
                                             len(submissions)) % len(submissions))
 
     @admin.display(description=_('problem code'), ordering='problem__code')
