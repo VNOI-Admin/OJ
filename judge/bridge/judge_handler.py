@@ -398,21 +398,18 @@ class JudgeHandler(ZlibPacketHandler):
         submission.case_points = points
         submission.case_total = total
 
-        problem = submission.problem
-        sub_points = round(points / total * problem.points if total > 0 else 0, 3)
-        if not problem.partial and sub_points != problem.points:
-            sub_points = 0
-
         submission.status = 'D'
         submission.time = time
         submission.memory = memory
-        submission.points = sub_points
         submission.result = status_codes[status]
+        submission.update_points()
         submission.save()
+
+        problem = submission.problem
 
         json_log.info(self._make_json_log(
             packet, action='grading-end', time=time, memory=memory,
-            points=sub_points, total=problem.points, result=submission.result,
+            points=submission.points, total=problem.points, result=submission.result,
             case_points=points, case_total=total, user=submission.user_id,
             problem=problem.code, finish=True,
         ))

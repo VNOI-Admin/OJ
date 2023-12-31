@@ -189,10 +189,7 @@ class SubmissionAdmin(VersionAdmin):
         submissions = list(queryset.defer(None).select_related(None).select_related('problem')
                            .only('points', 'case_points', 'case_total', 'problem__partial', 'problem__points'))
         for submission in submissions:
-            submission.points = round(submission.case_points / submission.case_total
-                                      if submission.case_total else 0, 3) * submission.problem.points
-            if not submission.problem.partial and submission.points < submission.problem.points:
-                submission.points = 0
+            submission.update_points()
             submission.save()
             submission.update_contest()
 
