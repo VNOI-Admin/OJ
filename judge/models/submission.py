@@ -40,6 +40,7 @@ SUBMISSION_STATUS = (
     ('IE', _('Internal Error')),
     ('CE', _('Compile Error')),
     ('AB', _('Aborted')),
+    ('PL', _('Plagiarized')),
 )
 
 SUBMISSION_SEARCHABLE_STATUS = \
@@ -122,9 +123,13 @@ class Submission(models.Model):
     def long_status(self):
         return Submission.USER_DISPLAY_CODES.get(self.short_status, '')
 
+    @property
+    def is_plagiarized(self):
+        return self.status == 'PL'
+
     @cached_property
     def is_locked(self):
-        return self.locked_after is not None and self.locked_after < timezone.now()
+        return self.is_plagiarized or (self.locked_after is not None and self.locked_after < timezone.now())
 
     def judge(self, *args, rejudge=False, force_judge=False, rejudge_user=None, **kwargs):
         if force_judge or not self.is_locked:
@@ -142,6 +147,39 @@ class Submission(models.Model):
         abort_submission(self)
 
     abort.alters_data = True
+
+    def mark_plagiarized(self, calculate_user_points=True):
+        if self.is_plagiarized:
+            raise RuntimeError('Already marked as plagiarized')
+        if not self.is_graded:
+            raise RuntimeError('Cannot mark pending submission as plagiarized')
+
+        self.status = 'PL'
+        self.update_points()
+        self.save(update_fields=['status', 'points'])
+        if calculate_user_points:
+            self.user.calculate_points()
+
+    mark_plagiarized.alters_data = True
+
+    def unmark_plagiarized(self, calculate_user_points=True):
+        if not self.is_plagiarized:
+            raise RuntimeError('Not marked as plagiarized')
+
+        if self.result == 'AB':
+            self.status = 'AB'
+        elif self.result == 'CE':
+            self.status = 'CE'
+        elif self.result == 'IE':
+            self.status = 'IE'
+        else:
+            self.status = 'D'
+        self.update_points()
+        self.save(update_fields=['status', 'points'])
+        if calculate_user_points:
+            self.user.calculate_points()
+
+    unmark_plagiarized.alters_data = True
 
     def can_see_detail(self, user):
         if not user.is_authenticated:
@@ -172,6 +210,21 @@ class Submission(models.Model):
             return True
 
         return False
+
+    def update_points(self):
+        """
+        Recalculate submission points.
+        Caller need to call save() afterwards.
+        """
+        if self.is_plagiarized:
+            self.points = 0
+            return
+
+        self.points = round(self.case_points / self.case_total if self.case_total else 0, 3) * self.problem.points
+        if not self.problem.partial and self.points < self.problem.points:
+            self.points = 0
+
+    update_points.alters_data = True
 
     def update_contest(self):
         try:
@@ -234,6 +287,7 @@ class Submission(models.Model):
             ('view_all_submission', _('View all submission')),
             ('resubmit_other', _("Resubmit others' submission")),
             ('lock_submission', _('Change lock status of submission')),
+            ('mark_plagiarized_submission', _('Mark submission as plagiarized')),
         )
         verbose_name = _('submission')
         verbose_name_plural = _('submissions')

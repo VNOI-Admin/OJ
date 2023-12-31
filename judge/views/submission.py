@@ -333,6 +333,25 @@ def abort_submission(request, submission):
     return HttpResponseRedirect(reverse('submission_status', args=(submission.id,)))
 
 
+@require_POST
+def mark_plagiarized_submission(request, submission):
+    submission = get_object_or_404(Submission, id=int(submission))
+    print('aaaaaaaa')
+    if not request.user.has_perm('judge.mark_plagiarized_submission') or not submission.is_graded:
+        raise PermissionDenied()
+    submission.mark_plagiarized()
+    return HttpResponseRedirect(reverse('submission_status', args=(submission.id,)))
+
+
+@require_POST
+def unmark_plagiarized_submission(request, submission):
+    submission = get_object_or_404(Submission, id=int(submission))
+    if not request.user.has_perm('judge.mark_plagiarized_submission') or not submission.is_graded:
+        raise PermissionDenied()
+    submission.unmark_plagiarized()
+    return HttpResponseRedirect(reverse('submission_status', args=(submission.id,)))
+
+
 def filter_submissions_by_visible_problems(queryset, user):
     join_sql_subquery(
         queryset,

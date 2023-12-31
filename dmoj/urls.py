@@ -179,6 +179,8 @@ urlpatterns = [
     path('submission/<int:submission>', include([
         path('', submission.SubmissionStatus.as_view(), name='submission_status'),
         path('/abort', submission.abort_submission, name='submission_abort'),
+        path('/mark_plagiarized', submission.mark_plagiarized_submission, name='submission_mark_plagiarized'),
+        path('/unmark_plagiarized', submission.unmark_plagiarized_submission, name='submission_unmark_plagiarized'),
     ])),
 
     path('users/', include([

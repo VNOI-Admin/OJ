@@ -99,6 +99,33 @@
     {% if can_edit and not submission.language.file_only %}
         <div><a href="{{ url('problem_submission_diff', submission.problem.code) }}?username={{ submission.user.user.username }}&highlight={{ submission.id }}">{{ _('Diff this submission') }}</a></div>
     {% endif %}
+    {% if perms.judge.mark_plagiarized_submission and submission.is_graded %}
+        {% compress js %}
+            <script type="text/javascript">
+                window.confirm_and_mark_plagiarized = function (form) {
+                    if (confirm("{{ _('Are you sure you want to mark this submission as plagiarized?') }}")) {
+                        form.submit();
+                    }
+                };
+                window.confirm_and_unmark_plagiarized = function (form) {
+                    if (confirm("{{ _('Are you sure you want to mark this submission as not plagiarized?') }}")) {
+                        form.submit();
+                    }
+                };
+            </script>
+        {% endcompress %}
+        {% if submission.is_plagiarized %}
+            <form action="{{ url('submission_unmark_plagiarized', submission.id) }}" method="post">
+                {% csrf_token %}
+                <a href="#" onclick="confirm_and_unmark_plagiarized(parentNode)">{{ _('Mark as not plagiarized') }}</a>
+            </form>
+        {% else %}
+            <form action="{{ url('submission_mark_plagiarized', submission.id) }}" method="post">
+                {% csrf_token %}
+                <a href="#" onclick="confirm_and_mark_plagiarized(parentNode)">{{ _('Mark as plagiarized') }}</a>
+            </form>
+        {% endif %}
+    {% endif %}
 
     <br>
     <hr class="half-hr">
