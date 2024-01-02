@@ -12,6 +12,12 @@
             {{ (_('If you don\'t know how to suggest a problem, please read [guide][0].') + '\n\n  [0]: /about/suggest_guide/')|markdown('blog', strip_paragraphs=True) }}
         </div>
     {% endif %}
+    {% if perms.judge.import_polygon_package %}
+        <div class="alert alert-warning alert-dismissable">
+            <a class="close">x</a>
+            <a href="{{ url('problem_import_polygon') }}">{{ _('Import problem from Codeforces Polygon package') }}</a>
+        </div>
+    {% endif %}
     <form action="" method="post" class="form-area" enctype="multipart/form-data" style="display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
         <table class="django-as-table">{{ form.as_table() }}</table>
