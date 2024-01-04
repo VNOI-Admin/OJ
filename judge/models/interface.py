@@ -16,7 +16,7 @@ __all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost']
 
 
 class MiscConfig(models.Model):
-    key = models.CharField(max_length=30, verbose_name=_('key'), db_index=True)
+    key = models.CharField(max_length=30, verbose_name=_('key'), unique=True)
     value = models.TextField(verbose_name=_('value'), blank=True)
 
     def __str__(self):
