@@ -229,6 +229,7 @@
         <clipPath id="rating-clip"><circle cx="8" cy="8" r="7"/></clipPath>
     </defs>
 </svg>
+{% block navbar %}
 <nav id="navigation" class="unselectable">
     <div id="nav-container">
         <a id="navicon" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
@@ -324,6 +325,7 @@
     </div>
     <div id="nav-shadow"></div>
 </nav>
+{% endblock %}
 {% if request.in_contest %}
     {% set current_contest = request.participation.contest %}
     <div id="contest-info">
