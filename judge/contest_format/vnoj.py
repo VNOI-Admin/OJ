@@ -130,7 +130,7 @@ class VNOJContestFormat(DefaultContestFormat):
                 score += points
 
         return ParticipationInfo(
-            cumtime=(last if self.config['LSO'] else cumtime) + penalty,
+            cumtime=max((last if self.config['LSO'] else cumtime) + penalty, 0),
             score=round(score, self.contest.points_precision),
             tiebreaker=last,
             format_data=format_data,

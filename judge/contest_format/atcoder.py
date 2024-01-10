@@ -89,7 +89,7 @@ class AtCoderContestFormat(DefaultContestFormat):
                 format_data[str(prob)] = {'time': dt, 'points': score, 'penalty': prev}
                 points += score
 
-        participation.cumtime = cumtime + penalty
+        participation.cumtime = max(cumtime + penalty, 0)
         participation.score = round(points, self.contest.points_precision)
         participation.tiebreaker = 0
         participation.format_data = format_data

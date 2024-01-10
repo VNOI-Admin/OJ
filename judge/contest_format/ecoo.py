@@ -92,7 +92,7 @@ class ECOOContestFormat(DefaultContestFormat):
                 cumtime += data['time']
             score += data['points'] + data['bonus']
 
-        participation.cumtime = cumtime
+        participation.cumtime = max(cumtime, 0)
         participation.score = round(score, self.contest.points_precision)
         participation.tiebreaker = 0
         participation.format_data = format_data

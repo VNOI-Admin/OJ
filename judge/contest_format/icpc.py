@@ -133,11 +133,11 @@ class ICPCContestFormat(DefaultContestFormat):
                     'is_frozen': is_frozen_sub,
                 }
 
-        participation.cumtime = cumtime + penalty
+        participation.cumtime = max(cumtime + penalty, 0)
         participation.score = round(score, self.contest.points_precision)
         participation.tiebreaker = last  # field is sorted from least to greatest
 
-        participation.frozen_cumtime = frozen_cumtime + frozen_penalty
+        participation.frozen_cumtime = max(frozen_cumtime + frozen_penalty, 0)
         participation.frozen_score = round(frozen_score, self.contest.points_precision)
         participation.frozen_tiebreaker = frozen_last
 
