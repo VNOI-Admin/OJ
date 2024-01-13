@@ -29,7 +29,7 @@ from judge.utils.ranker import ranker
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
-from judge.views.problem import ProblemCreate, ProblemGroup, ProblemList
+from judge.views.problem import ProblemCreate, ProblemGroup, ProblemList, ProblemType
 from judge.views.submission import SubmissionsListBase
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
@@ -609,6 +609,10 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
             initial['group'] = ProblemGroup.objects.get(name='Uncategorized').pk
         except ProblemGroup.DoesNotExist:
             initial['group'] = ProblemGroup.objects.order_by('id').first().pk
+        try:
+            initial['types'] = ProblemType.objects.get(name='uncategorized').pk
+        except ProblemType.DoesNotExist:
+            initial['types'] = ProblemType.objects.order_by('id').first().pk
         return initial
 
     def get_form_kwargs(self):
