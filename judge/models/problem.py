@@ -623,6 +623,7 @@ class Problem(models.Model):
             ('change_public_visibility', _('Change is_public field')),
             ('change_manually_managed', _('Change is_manually_managed field')),
             ('see_organization_problem', _('See organization-private problems')),
+            ('import_polygon_package', _('Import Codeforces Polygon package')),
         )
         verbose_name = _('problem')
         verbose_name_plural = _('problems')
