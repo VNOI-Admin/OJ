@@ -13,7 +13,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db.models import Q
 from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, ModelForm, MultipleChoiceField, \
-    inlineformset_factory
+    formset_factory, inlineformset_factory
 from django.forms.widgets import DateTimeInput
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse, reverse_lazy
@@ -255,6 +255,26 @@ class ProblemEditForm(ModelForm):
                 'invalid': _('Only accept alphanumeric characters (a-z, 0-9) and underscore (_)'),
             },
         }
+
+
+class ProblemImportPolygonForm(Form):
+    code = CharField(max_length=32, validators=[RegexValidator('^[a-z0-9_]+$', _('Problem code must be ^[a-z0-9_]+$'))])
+    package = forms.FileField(
+        label=_('Package'),
+        widget=forms.FileInput(attrs={'accept': 'application/zip'}),
+    )
+    ignore_zero_point_batches = forms.BooleanField(required=False, label=_('Ignore zero-point batches'))
+    ignore_zero_point_cases = forms.BooleanField(required=False, label=_('Ignore zero-point cases'))
+    main_tutorial_language = forms.CharField(required=False)
+
+
+class ProblemImportPolygonStatementForm(Form):
+    polygon_language = forms.CharField()
+    site_language = forms.CharField()
+
+
+class ProblemImportPolygonStatementFormSet(formset_factory(ProblemImportPolygonStatementForm)):
+    pass
 
 
 class ProposeProblemSolutionFormSet(inlineformset_factory(Problem, Solution, form=ProposeProblemSolutionForm)):
