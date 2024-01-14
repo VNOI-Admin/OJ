@@ -605,14 +605,6 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
         initial = super(ProblemCreateOrganization, self).get_initial()
         initial = initial.copy()
         initial['code'] = ''.join(x for x in self.organization.slug.lower() if x.isalnum()) + '_'
-        try:
-            initial['group'] = ProblemGroup.objects.get(name='Uncategorized').pk
-        except ProblemGroup.DoesNotExist:
-            initial['group'] = ProblemGroup.objects.order_by('id').first().pk
-        try:
-            initial['types'] = ProblemType.objects.get(name='uncategorized').pk
-        except ProblemType.DoesNotExist:
-            initial['types'] = ProblemType.objects.order_by('id').first().pk
         return initial
 
     def get_form_kwargs(self):
