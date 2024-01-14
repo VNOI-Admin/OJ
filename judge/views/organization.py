@@ -29,7 +29,7 @@ from judge.utils.ranker import ranker
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
-from judge.views.problem import ProblemCreate, ProblemGroup, ProblemList, ProblemType
+from judge.views.problem import ProblemCreate, ProblemList
 from judge.views.submission import SubmissionsListBase
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
