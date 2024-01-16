@@ -43,7 +43,7 @@ class Command(BaseCommand):
 
         try:
             importer = PolygonImporter(
-                package_path=options['package'],
+                package=options['package'],
                 code=options['code'],
                 authors=problem_authors,
                 curators=problem_curators,
