@@ -145,6 +145,7 @@
                         },
                     });
                 }
+            });
 
             // Alert when leaving an org
             $('.sortedm2m input').click(function () {
@@ -152,9 +153,7 @@
                     return confirm('{{ _('Are you sure you want to leave this organization?') }}\n' +
                                '{{ _('You will have to rejoin to show up on the organization leaderboard.') }}'
                             );
-               }
-            });
-
+                }
             });
         });
     </script>
