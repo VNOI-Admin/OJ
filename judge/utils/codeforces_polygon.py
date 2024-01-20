@@ -273,6 +273,7 @@ class PolygonImporter:
             self.parse_assets()
             self.parse_tests()
             self.parse_statements()
+            self.parse_solutions()
             self.update_or_create_problem()
         except Exception:
             # Remove imported images
@@ -745,6 +746,38 @@ class PolygonImporter:
                     'description': description,
                 })
 
+    def parse_solutions(self):
+        solutions = self.root.find('.//solutions')
+        main_solution = solutions.find('solution[@tag="main"]')
+        assert main_solution is not None
+
+        if not self.interactive:
+            if not self.config.get('append_main_solution_to_tutorial', False):
+                return
+        else:
+            self.log('Main solution found. Would you like to append it to the tutorial (y/n)? ', end='', flush=True)
+            if input().lower() not in ['y', 'yes']:
+                return
+
+        source = main_solution.find('source')
+        source_code = self.package.read(source.get('path')).decode('utf-8').strip()
+        source_lang = source.get('type')
+        markdown_lang = ''
+        if source_lang.startswith('cpp'):
+            markdown_lang = 'cpp'
+        elif source_lang.startswith('python'):
+            markdown_lang = 'python'
+        elif source_lang.startswith('java'):
+            markdown_lang = 'java'
+
+        self.meta['tutorial'] = self.meta['tutorial'].rstrip() + f"""\n
+<blockquote class="spoiler">
+```{markdown_lang}
+{source_code}
+```
+</blockquote>
+"""
+
     @transaction.atomic
     def update_or_create_problem(self):
         self.log('Creating/Updating problem in database.')
@@ -775,12 +808,12 @@ class PolygonImporter:
             ).save()
 
         Solution.objects.filter(problem=problem).delete()
-        if self.meta['tutorial'] != '':
+        if self.meta['tutorial'].strip() != '':
             Solution(
                 problem=problem,
                 is_public=False,
                 publish_on=timezone.now(),
-                content=self.meta['tutorial'],
+                content=self.meta['tutorial'].strip(),
             ).save()
 
         with open(self.meta['zipfile'], 'rb') as f:

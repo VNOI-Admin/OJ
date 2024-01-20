@@ -886,6 +886,7 @@ class ProblemImportPolygon(PermissionRequiredMixin, TitleMixin, FormView):
             config = {
                 'ignore_zero_point_batches': form.cleaned_data['ignore_zero_point_batches'],
                 'ignore_zero_point_cases': form.cleaned_data['ignore_zero_point_cases'],
+                'append_main_solution_to_tutorial': form.cleaned_data['append_main_solution_to_tutorial'],
                 'main_tutorial_language': form.cleaned_data.get('main_tutorial_language', None),
                 'main_statement_language': None,
                 'polygon_to_site_language_map': {},
