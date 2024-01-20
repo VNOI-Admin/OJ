@@ -52,6 +52,7 @@ def verify_email(backend, details, *args, **kwargs):
     if not details['email']:
         raise InvalidEmail(backend)
 
+
 class SocialPostAuthForm(forms.Form):
     username = forms.RegexField(regex=r'^\w+$', max_length=30, label='Username',
                                 error_messages={'invalid': 'A username must contain letters, numbers, or underscores.'})
@@ -72,6 +73,7 @@ class SocialPostAuthForm(forms.Form):
         if password and password_confirm and password != password_confirm:
             self.add_error("password_confirm", "Passwords didn't match")
 
+
 @partial
 def get_username_password(backend, user, username=None, *args, **kwargs):
     if not user:
@@ -87,9 +89,11 @@ def get_username_password(backend, user, username=None, *args, **kwargs):
             'title': 'Set up your account', 'form': form,
         })
 
+
 def add_password(user, password, *args, **kwargs):
     user.set_password(password)
     user.save()
+
 
 @partial
 def make_profile(backend, user, response, is_new=False, *args, **kwargs):
