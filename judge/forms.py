@@ -265,6 +265,8 @@ class ProblemImportPolygonForm(Form):
     )
     ignore_zero_point_batches = forms.BooleanField(required=False, label=_('Ignore zero-point batches'))
     ignore_zero_point_cases = forms.BooleanField(required=False, label=_('Ignore zero-point cases'))
+    append_main_solution_to_tutorial = forms.BooleanField(required=False, initial=True,
+                                                          label=_('Append main solution to tutorial'))
     main_tutorial_language = forms.CharField(required=False)
 
 
