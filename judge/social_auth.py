@@ -6,7 +6,6 @@ from urllib.parse import quote
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth import password_validation
-from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
@@ -74,9 +73,8 @@ class SocialPostAuthForm(forms.Form):
             self.add_error("password_confirm", "Passwords didn't match")
 
 @partial
-def social_auth_extra_details(backend, user, username=None, *args, **kwargs):
+def get_username_password(backend, user, username=None, *args, **kwargs):
     if not user:
-        print(user)
         request = backend.strategy.request
         if request.POST:
             form = SocialPostAuthForm(request.POST)
@@ -88,6 +86,10 @@ def social_auth_extra_details(backend, user, username=None, *args, **kwargs):
         return render(request, 'registration/username_select.html', {
             'title': 'Set up your account', 'form': form,
         })
+
+def add_password(user, password, *args, **kwargs):
+    user.set_password(password)
+    user.save()
 
 @partial
 def make_profile(backend, user, response, is_new=False, *args, **kwargs):
