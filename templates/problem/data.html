@@ -86,24 +86,37 @@
             var $custom_checker_type = $('#id_problem-data-checker_type');
             var $tr_custom_checker_file = $custom_checker_file.parent().parent();
             var $tr_custom_checker_type = $custom_checker_type.parent().parent();
-            var init = true;
 
             (function checker_args_auto_fill() {
-                // auto fill for float checker
-                var $td = $checker.parent();
                 var $precision = $('<input>', {
                     type: 'number',
                     value: try_parse_json($args.val()).precision || 6,
                     title: '{{ _('precision (decimal digits)') }}',
                     style: 'width: 4em'
-                }).change(function () {
-                    if ($checker.val().startsWith('floats'))
-                        $args.val(JSON.stringify({precision: parseInt($(this).val())}));
-                }).appendTo($td);
+                }).appendTo($checker.parent());
 
-                // auto fill for custom checker
-                $custom_checker_file.change(function () {
-                    if ($checker.val() === 'bridged' && !init) {
+                $custom_checker_type.parent().append('<br>');
+                var $treat_checker_points_as_percentage = $('<input>', {
+                    type: 'checkbox',
+                    checked: try_parse_json($args.val()).treat_checker_points_as_percentage || false,
+                    id: 'treat-checker-points-as-percentage',
+                }).appendTo($custom_checker_type.parent());
+                var $treat_checker_points_as_percentage_label = $('<label>', {
+                    for: 'treat-checker-points-as-percentage',
+                    text: '{{ _('Treat checker points as percentage') }}',
+                }).appendTo($custom_checker_type.parent());
+
+                if ($args.val()) {
+                    var old_args = try_parse_json($args.val());
+                    if ("type" in old_args) {
+                        $custom_checker_type.val(old_args["type"]);
+                    }
+                }
+
+                function fill_args() {
+                    if ($checker.val().startsWith('floats')) {
+                        $args.val(JSON.stringify({precision: parseInt($precision.val())}));
+                    } else if ($checker.val() === 'bridged') {
                         $file_name = $custom_checker_file.val().split('\\').pop();
                         // Handle case that the current file is null but we have a file in database
                         $old_file = $custom_checker_file.parent().find('a')[0];
@@ -115,44 +128,43 @@
                             $file_ext = $file_name.split('.').pop()
                             if (!(['cpp', 'pas', 'java'].includes($file_ext))) {
                                 alert("{{ _('Expected checker\'s extension must be in [cpp, pas, java], found ') }}'" + $file_ext + "'");
-                            }
-                            else {
-                                $lang = $file_ext.toUpperCase();
-                                if ($lang == "CPP") $lang = "CPP17";
-                                if ($lang == "JAVA") $lang = "JAVA8";
-                                $args.val(JSON.stringify({files: $file_name, lang: $lang, type: $custom_checker_type.find(":selected").val()}));
-                                if ($lang == "PY")
-                                    $args.val('');
+                            } else {
+                                var custom_checker_type = $custom_checker_type.find(":selected").val();
+                                var lang = $file_ext.toUpperCase();
+                                if (lang == "CPP") lang = "CPP17";
+                                if (lang == "JAVA") lang = "JAVA8";
+                                var args = {
+                                    files: $file_name,
+                                    lang,
+                                    type: custom_checker_type,
+                                }
+                                if (custom_checker_type === 'testlib' && $treat_checker_points_as_percentage.is(':checked')) {
+                                    args['treat_checker_points_as_percentage'] = true;
+                                }
+                                $args.val(JSON.stringify(args));
                             }
                         }
+                    } else {
+                        $args.val('');
                     }
-                });
-
-                $custom_checker_type.change(function() {
-                    if (!$args.val() || init)
-                        return;
-                    var old_args = try_parse_json($args.val());
-                    if ("type" in old_args) {
-                        old_args["type"] = $custom_checker_type.find(":selected").val();
-                    }
-                    $args.val(JSON.stringify(old_args));
-                });
-
-                if (init && $args.val()) {
-                    var old_args = try_parse_json($args.val());
-                    if ("type" in old_args)
-                        $custom_checker_type.val(old_args["type"]);
                 }
 
+                $precision.change(fill_args);
+                $treat_checker_points_as_percentage.change(fill_args);
+                $custom_checker_file.change(fill_args);
+                $custom_checker_type.change(function() {
+                    var is_testlib_checker = $custom_checker_type.find(":selected").val() === 'testlib';
+                    $treat_checker_points_as_percentage.toggle(is_testlib_checker);
+                    $treat_checker_points_as_percentage_label.toggle(is_testlib_checker);
+                    fill_args();
+                });
                 $checker.change(function () {
                     $custom_checker_file.toggle($checker.val() === 'bridged').change();
                     $custom_checker_type.toggle($checker.val() === 'bridged').change();
                     $tr_custom_checker_file.toggle($checker.val() === 'bridged');
                     $tr_custom_checker_type.toggle($checker.val() === 'bridged');
                     $precision.toggle($checker.val().startsWith('floats')).change();
-                    if (!($checker.val() === 'bridged' || $checker.val().startsWith('floats')))
-                        $args.val('');
-                    init = false;
+                    fill_args();
                 }).change();
             })();
 
@@ -232,13 +244,12 @@
                 }
             }
 
-            $td = $checker.parent();
             var $sample = $("<a/>",{
                 text: "{{_('Instruction')}}",
                 style: "margin-left:3em;",
                 target: "_blank",
                 href: "/custom_checkers"
-            }).appendTo($td);
+            }).appendTo($checker.parent());
 
             var $file_test = $('#id_problem-data-zipfile');
             $("<br>").appendTo($file_test.parent());
