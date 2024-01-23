@@ -227,8 +227,8 @@ class PolygonImporter:
             self,
             package: Union[str, BinaryIO],
             code: str,
-            authors: List[Profile] = [],
-            curators: List[Profile] = [],
+            authors: List[Profile] = None,
+            curators: List[Profile] = None,
             do_update: bool = False,
             interactive: bool = True,
             config=None,
@@ -263,8 +263,23 @@ class PolygonImporter:
         # A dictionary to hold all problem information.
         self.meta = {}
         self.meta['code'] = code
-        self.meta['authors'] = authors
-        self.meta['curators'] = curators
+        self.meta['authors'] = authors or []
+        self.meta['curators'] = curators or []
+
+        self.validate()
+
+    def validate(self):
+        testset = self.root.find('.//testset[@name="tests"]')
+        if testset is None:
+            raise ImportPolygonError('testset tests not found')
+
+        if len(testset.find('tests').getchildren()) == 0:
+            raise ImportPolygonError('no testcases found')
+
+        input_path_pattern = testset.find('input-path-pattern').text
+        input_path = input_path_pattern % 1
+        if input_path not in self.package.namelist():
+            raise ImportPolygonError('not full package')
 
     def run(self):
         try:
