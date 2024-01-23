@@ -377,6 +377,10 @@ class PolygonImporter:
                 'type': 'testlib',
             }
 
+            judging = self.root.find('.//judging')
+            if judging is not None and judging.get('treat-points-from-checker-as-percent', '') == 'true':
+                self.meta['checker_args']['treat_checker_points_as_percentage'] = True
+
             self.meta['custom_checker'] = os.path.join(self.meta['tmp_dir'].name, 'checker.cpp')
             with open(self.meta['custom_checker'], 'wb') as f:
                 f.write(self.package.read(path))
