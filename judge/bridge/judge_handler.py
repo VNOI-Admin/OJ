@@ -57,7 +57,6 @@ class JudgeHandler(ZlibPacketHandler):
         }
         self._working = False
         self._no_response_job = None
-        self._problems = []
         self.executors = {}
         self.problems = {}
         self.latency = None
@@ -166,8 +165,7 @@ class JudgeHandler(ZlibPacketHandler):
             return
 
         self.timeout = 60
-        self._problems = packet['problems']
-        self.problems = dict(self._problems)
+        self.problems = dict(packet['problems'])
         self.executors = packet['executors']
         self.name = packet['id']
 
@@ -325,18 +323,17 @@ class JudgeHandler(ZlibPacketHandler):
         if not Submission.objects.filter(id=id).update(batch=True):
             logger.warning('Unknown submission: %s', id)
 
-    def on_supported_problems(self, packet):
+    def update_problems(self, problems, problem_ids):
         logger.info('%s: Updating problem list', self.name)
-        self._problems = packet['problems']
-        self.problems = dict(self._problems)
-        if not self.working:
-            self.judges.update_problems(self)
-
-        self.judge.problems.set(
-            Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True),
-        )
+        self.problems = problems
+        self.judge.problems.set(problem_ids)
         logger.info('%s: Updated %d problems', self.name, len(self.problems))
         json_log.info(self._make_json_log(action='update-problems', count=len(self.problems)))
+
+    def on_supported_problems(self, packet):
+        problems = dict(packet['problems'])
+        problem_ids = list(Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True))
+        self.judges.update_problems(problems, problem_ids)
 
     def on_grading_begin(self, packet):
         logger.info('%s: Grading has begun on: %s', self.name, packet['submission-id'])
