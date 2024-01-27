@@ -4,11 +4,10 @@
     {% include "comments/base-media-js.html" %}
     <script type="text/javascript">
         $(function() {
-           $("#btn-delete-all").click(function(){
-              return confirm('{{ _('Are you sure you want to delete all comments?') }}');
-           });
-       });
-
+            $("#btn-delete-all").click(function(){
+                return confirm('{{ _('Are you sure you want to delete all comments?') }}');
+            });
+        });
     </script>
 {% endblock %}
 
