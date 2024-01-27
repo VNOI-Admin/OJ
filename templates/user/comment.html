@@ -2,6 +2,13 @@
 
 {% block js_media %}
     {% include "comments/base-media-js.html" %}
+    <script type="text/javascript">
+        $(function() {
+            $("#btn-delete-all").click(function(){
+                return confirm('{{ _('Are you sure you want to delete all comments?') }}');
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block title_row %}
@@ -16,7 +23,7 @@
         {% if request.user.has_perm('judge.change_comment') %}
         <form action="{{url('user_comment', user.username)}}" method="post">
             {% csrf_token %}
-            <button type="submit">Delete all comments</button>
+            <button id="btn-delete-all" type="submit">Delete all comments</button>
         </form>
         {% endif %}
         <ul class="comments top-level-comments new-comments">
