@@ -625,6 +625,12 @@ class ContestCloneForm(Form):
 
 
 class ProposeContestProblemForm(ModelForm):
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super(ProposeContestProblemForm, self).__init__(*args, **kwargs)
+
+        self.fields['problem'].queryset = Problem.get_visible_problems(self.user)
+
     class Meta:
         model = ContestProblem
         verbose_name = _('Problem')
@@ -635,6 +641,10 @@ class ProposeContestProblemForm(ModelForm):
 
         widgets = {
             'problem': HeavySelect2Widget(data_view='problem_select2', attrs={'style': 'width: 100%'}),
+        }
+
+        error_messages = {
+            'problem': {'invalid_choice': _('No such problem.')},
         }
 
 
