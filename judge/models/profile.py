@@ -385,20 +385,19 @@ class Profile(models.Model):
     def update_banned_status(self, disqualified):
         if disqualified:
             if self.was_disqualified and not self.is_banned:
-                self.ban_user("cheating two times")
+                self.ban_user('cheating two times')
             else:
                 self.was_disqualified = True
                 self.save(update_fields=['was_disqualified'])
         else:
             print(self.ban_reason)
-            if self.ban_reason == "cheating two times":
+            if self.ban_reason == 'cheating two times':
                 self.unban_user()
             elif not self.is_banned:
                 self.was_disqualified = False
                 self.save(update_fields=['was_disqualified'])
 
     update_banned_status.alters_data = True
-        
 
     def get_absolute_url(self):
         return reverse('user_page', args=(self.user.username,))
