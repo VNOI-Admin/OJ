@@ -600,6 +600,7 @@ class ContestParticipation(models.Model):
             self.contest.banned_users.add(self.user)
         else:
             self.contest.banned_users.remove(self.user)
+        self.user.update_banned_status(self.is_disqualified)
     set_disqualified.alters_data = True
 
     @property

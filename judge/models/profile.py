@@ -194,6 +194,8 @@ class Profile(models.Model):
     data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
     username_display_override = models.CharField(max_length=100, blank=True, verbose_name=_('display name override'),
                                                  help_text=_('Name displayed in place of username.'))
+    was_disqualified = models.BooleanField(verbose_name=_('was disqualified'), default=False,
+                                           help_text=_('This user was disqualified from a contest.'))
 
     @cached_property
     def organization(self):
@@ -379,6 +381,24 @@ class Profile(models.Model):
         self.user.save(update_fields=['is_active'])
 
     unban_user.alters_data = True
+
+    def update_banned_status(self, disqualified):
+        if disqualified:
+            if self.was_disqualified and not self.is_banned:
+                self.ban_user("cheating two times")
+            else:
+                self.was_disqualified = True
+                self.save(update_fields=['was_disqualified'])
+        else:
+            print(self.ban_reason)
+            if self.ban_reason == "cheating two times":
+                self.unban_user()
+            elif not self.is_banned:
+                self.was_disqualified = False
+                self.save(update_fields=['was_disqualified'])
+
+    update_banned_status.alters_data = True
+        
 
     def get_absolute_url(self):
         return reverse('user_page', args=(self.user.username,))
