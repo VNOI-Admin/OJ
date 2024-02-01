@@ -100,6 +100,8 @@ VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
 VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem
 
+VNOJ_MAX_DISQUALIFIED_TIMES = 1  # Maximum number of times a user can be disqualified from a contest
+
 # List of subdomain that will be ignored in organization subdomain middleware
 VNOJ_IGNORED_ORGANIZATION_SUBDOMAINS = ['oj', 'www', 'localhost']
 
