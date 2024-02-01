@@ -390,12 +390,12 @@ class Profile(models.Model):
         else:
             self.count_disqualified_times -= 1
             self.save(update_fields=['count_disqualified_times'])
-        if self.ban_reason == "cheating too many times" and \
+        if self.ban_reason == 'cheating too many times' and \
                 self.count_disqualified_times <= settings.VNOJ_MAX_DISQUALIFIED_TIMES:
             self.unban_user()
         elif not self.is_banned:
             if self.count_disqualified_times > settings.VNOJ_MAX_DISQUALIFIED_TIMES:
-                self.ban_user("cheating too many times")
+                self.ban_user('cheating too many times')
     update_banned_status.alters_data = True
 
     def get_absolute_url(self):
