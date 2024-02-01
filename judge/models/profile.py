@@ -194,9 +194,11 @@ class Profile(models.Model):
     data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
     username_display_override = models.CharField(max_length=100, blank=True, verbose_name=_('display name override'),
                                                  help_text=_('Name displayed in place of username.'))
-    count_disqualified_times = models.IntegerField(verbose_name=_('count_disqualified_times'), default=0, help_text=_
-                                                   ('Count the number of times the user '
-                                                       'has been disqualified from public contest.'))
+    count_disqualified_times = models.PositiveSmallIntegerField(
+        verbose_name=_('count_disqualified_times'),
+        default=0,
+        help_text=_('Count the number of times the user has been disqualified from public contest.')
+    )
 
     @cached_property
     def organization(self):
@@ -394,6 +396,7 @@ class Profile(models.Model):
                 self.count_disqualified_times <= settings.VNOJ_MAX_DISQUALIFIED_TIMES:
             self.unban_user()
         elif not self.is_banned:
+            print(self.count_disqualified_times, settings.VNOJ_MAX_DISQUALIFIED_TIMES)
             if self.count_disqualified_times > settings.VNOJ_MAX_DISQUALIFIED_TIMES:
                 self.ban_user('cheating too many times')
     update_banned_status.alters_data = True
