@@ -12,6 +12,6 @@ class Migration(migrations.Migration):
     operations = [
         # add new column was_disqualifed to judge_profile table
         migrations.RunSQL(
-            'ALTER TABLE judge_profile ADD COLUMN was_disqualified BOOLEAN NOT NULL DEFAULT FALSE',
+            'ALTER TABLE judge_profile ADD COLUMN count_disqualified_times TINYINT NOT NULL DEFAULT 0',
         ),
     ]
