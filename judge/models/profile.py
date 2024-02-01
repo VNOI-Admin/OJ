@@ -197,7 +197,7 @@ class Profile(models.Model):
     count_disqualified_times = models.PositiveSmallIntegerField(
         verbose_name=_('count_disqualified_times'),
         default=0,
-        help_text=_('Count the number of times the user has been disqualified from public contest.')
+        help_text=_('Count the number of times the user has been disqualified from public contest.'),
     )
 
     @cached_property
