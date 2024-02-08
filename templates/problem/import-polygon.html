@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {{ form.media.js }}
+    <script type="text/javascript" src="{{ static('vnoj/jszip/jszip.min.js') }}"></script>
+    <script type="text/javascript">
+        $(function () {
+            window.site_languages = {{site_languages_json}};
+            window.default_polygon_to_site_language_map = {
+                'english': 'en',
+                'vietnamese': 'vi',
+            };
+
+            $('#statements-table').hide();
+            $('#id_main_tutorial_language').parent().parent().hide();
+
+            $("#id_package").change(function (event) {
+                let fileInput = event.target.files[0];
+                var reader = new FileReader();
+                reader.onload = function (ev) {
+                    JSZip.loadAsync(ev.target.result).then(async function (zip) {
+                        const text = await zip.file('problem.xml').async('text');
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(text, 'text/xml');
+                        window.xmlDoc = xmlDoc;
+
+                        const statement_languages = [];
+                        const tutorial_languages = [];
+                        for (const statement of xmlDoc.querySelectorAll('statement[type="application/x-tex"]')) {
+                            const language = statement.getAttribute('language');
+                            const problem_properties_path = statement.getAttribute('path').replace('problem.tex', 'problem-properties.json');
+                            const problem_properties = JSON.parse(await zip.file(problem_properties_path).async('text'));
+                            const tutorial = problem_properties['tutorial'];
+                            if (typeof tutorial === 'string' && tutorial != '') {
+                                tutorial_languages.push(language);
+                            }
+                            statement_languages.push(language);
+                        }
+
+                        $('#statements-table').toggle(statement_languages.length > 1);
+                        $('#id_main_tutorial_language').parent().parent().toggle(tutorial_languages.length > 1);
+
+                        if (statement_languages.length > 1) {
+                            const $total = $('#id_statements-TOTAL_FORMS');
+                            const $table = $('#statements-table');
+                            const $body = $table.find('tbody:first');
+                            $body.empty();
+                            for (let i = 0; i < statement_languages.length; ++i) {
+                                const $tr = $($table.find('.extra-row-body').html().replace(/__prefix__/g, i));
+                                $body.append($tr);
+
+                                const $polygon_language = $tr.find('#id_statements-' + i + '-polygon_language');
+                                $polygon_language.attr('type', 'hidden');
+                                $polygon_language.attr('value', statement_languages[i]);
+                                $polygon_language.parent().append($('<span>').text(statement_languages[i]));
+
+                                let $site_language = $tr.find('#id_statements-' + i + '-site_language');
+                                $site_language.replaceWith($site_language = $('<select>').attr({
+                                    id: $site_language.attr('id'),
+                                    name: $site_language.attr('name'),
+                                    style: 'width: 100%',
+                                }));
+                                for (const [code, name] of Object.entries(site_languages)) {
+                                    $site_language.append($('<option>').attr({
+                                        value: code,
+                                    }).text(name));
+                                }
+                                $site_language.select2({
+                                    theme: '{{ DMOJ_SELECT2_THEME }}',
+                                });
+
+                                if (statement_languages[i] in default_polygon_to_site_language_map) {
+                                    $site_language.val(default_polygon_to_site_language_map[statement_languages[i]]).trigger('change');
+                                }
+                            }
+                            $total.val(statement_languages.length);
+                        }
+
+                        if (tutorial_languages.length > 1) {
+                            $('#id_main_tutorial_language').replaceWith($('<select>').attr({
+                                id: 'id_main_tutorial_language',
+                                name: 'main_tutorial_language',
+                            }));
+                            for (const language of tutorial_languages) {
+                                $('#id_main_tutorial_language').append($('<option>').attr({
+                                    value: language,
+                                }).text(language));
+                            }
+                            $('#id_main_tutorial_language').select2({
+                                theme: '{{ DMOJ_SELECT2_THEME }}',
+                            });
+                        }
+                    }).catch(function(err) {
+                        console.log(err);
+                        alert("{{ _('Not valid Polygon package') }}");
+                        event.target.value = "";
+                    })
+                };
+                reader.readAsArrayBuffer(fileInput);
+            });
+        })
+    </script>
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+{% endblock %}
+
+{% macro form_as_row(form) -%}
+    <tr>
+        <td>{{ form.polygon_language.errors }}{{ form.polygon_language }}</td>
+        <td>{{ form.site_language.errors }}{{ form.site_language }}</td>
+    </tr>
+{%- endmacro %}
+
+{% block body %}
+    <form action="" method="post" class="form-area centered-form" enctype="multipart/form-data" style="display: flex; justify-content: center; flex-direction: column;">
+        {% if form.errors %}
+            <div id="form-errors">
+                {{ form.code.errors }}
+            </div>
+        {% endif %}
+        {% csrf_token %}
+        {{ formset.management_form }}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <table class="table" id="statements-table">
+            <thead>
+                <tr>
+                    <th>{{ _('Statement language') }}</th>
+                    <th>{{ _('Corresponding site language') }}</th>
+                </tr>
+            </thead>
+            <tbody id="form_set">
+                {% for form in formset %}
+                    {{ form_as_row(formset.empty_form) }}
+                {% endfor %}
+            </tbody>
+            <tbody class="extra-row-body" style="display: none">
+                {{ form_as_row(formset.empty_form) }}
+            </tbody>
+        </table>
+        <table>
+            <tr><td style="float: left;">
+            <td style="float: right;"><input type="submit" value="{{ _('Import') }}" class="button"></td></tr>
+        </table>
+    </form>
+{% endblock %}
