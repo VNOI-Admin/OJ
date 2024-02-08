@@ -11,6 +11,7 @@ from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.views.generic import RedirectView
+from judge.views.magazine import MagazinePage
 from martor.views import markdown_search_user
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
@@ -414,6 +415,8 @@ urlpatterns = [
         path('failure', tasks.demo_failure),
         path('progress', tasks.demo_progress),
     ])),
+
+    path('magazine/', MagazinePage.as_view(), name='magazine'),
 ]
 
 favicon_paths = ['apple-touch-icon-180x180.png', 'apple-touch-icon-114x114.png', 'android-chrome-72x72.png',
