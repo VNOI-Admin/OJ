@@ -56,10 +56,10 @@ def verify_email(backend, details, *args, **kwargs):
 class SocialPostAuthForm(forms.Form):
     username = forms.RegexField(regex=r'^\w+$', max_length=30, label='Username',
                                 error_messages={'invalid': 'A username must contain letters, numbers, or underscores.'})
-    password = forms.CharField(label="Password", strip=False, widget=forms.PasswordInput(),
+    password = forms.CharField(label='Password', strip=False, widget=forms.PasswordInput(),
                                help_text=password_validation.password_validators_help_text_html(),
                                validators=[password_validation.validate_password])
-    password_confirm = forms.CharField(label="Retype password", widget=forms.PasswordInput(), strip=False)
+    password_confirm = forms.CharField(label='Retype password', widget=forms.PasswordInput(), strip=False)
 
     def clean_username(self):
         if User.objects.filter(username=self.cleaned_data['username']).exists():
@@ -68,10 +68,10 @@ class SocialPostAuthForm(forms.Form):
 
     def clean(self):
         cleaned_data = super().clean()
-        password = cleaned_data.get("password")
-        password_confirm = cleaned_data.get("password_confirm")
+        password = cleaned_data.get('password')
+        password_confirm = cleaned_data.get('password_confirm')
         if password and password_confirm and password != password_confirm:
-            self.add_error("password_confirm", "Passwords didn't match")
+            self.add_error('password_confirm', "Passwords didn't match")
 
 
 @partial
