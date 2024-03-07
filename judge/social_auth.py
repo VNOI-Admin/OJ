@@ -90,9 +90,10 @@ def get_username_password(backend, user, username=None, *args, **kwargs):
         })
 
 
-def add_password(user, password, *args, **kwargs):
-    user.set_password(password)
-    user.save()
+def add_password(user, password=None, *args, **kwargs):
+    if password:
+        user.set_password(password)
+        user.save()
 
 
 @partial
