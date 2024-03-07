@@ -4,8 +4,8 @@ from operator import itemgetter
 from urllib.parse import quote
 
 from django import forms
-from django.contrib.auth.models import User
 from django.contrib.auth import password_validation
+from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
