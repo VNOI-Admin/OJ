@@ -27,6 +27,9 @@
 {% if oauth.has_google_auth or oauth.has_facebook_auth or oauth.has_github_auth %}
     <h4>{{ _('Or log in with...') }}</h4>
     <div>
+        {% if next is not defined %}
+            {% set next = '' %}
+        {% endif %}
         {% if oauth.has_google_auth %}
             <a href="{{ url('social:begin', "google-oauth2") }}?next={{ next }}" class="social google-icon">
                 <i class="fa fa-google-plus-square"></i>
