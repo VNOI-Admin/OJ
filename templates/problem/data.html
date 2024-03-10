@@ -3,7 +3,7 @@
 {% block js_media %}
     {{data_form.media.js}}
     {% include "leave-warning.html" %}
-    <script type="text/javascript" src="{{ static('libs/jquery-sortable.js') }}"></script>
+    <script type="text/javascript" src="{{ static('vnoj/jquery-ui/jquery-ui.min.js') }}"></script>
     <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
     <script type="text/javascript" src="{{ static('vnoj/jszip/jszip.min.js') }}"></script>
     <script type="text/javascript">
@@ -527,20 +527,16 @@
             };
 
             var oldIndex;
-            $table.sortable({
-                containerSelector: 'table',
-                itemPath: '> tbody:first',
-                itemSelector: 'tr',
+            $table.find('tbody:first').sortable({
                 handle: 'i.fa-ellipsis-v',
-                placeholder: '<tr class="placeholder">',
-                onDragStart: function ($item, container, _super) {
-                    oldIndex = $item.index();
-                    _super($item, container);
+                placeholder: 'placeholder',
+                start: function (event, ui) {
+                    ui.placeholder.empty();
+                    oldIndex = ui.item.index();
                 },
-                onDrop: function ($item, container, _super) {
-                    var newIndex = $item.index();
-                    reordering_row(oldIndex, newIndex, $item);
-                    _super($item, container);
+                stop: function (event, ui) {
+                    var newIndex = ui.item.index();
+                    reordering_row(oldIndex, newIndex, ui.item);
                 }
             });
 
@@ -588,6 +584,7 @@
 
 {% block media %}
     {{data_form.media.css}}
+    <link rel="stylesheet" href="{{ static('vnoj/jquery-ui/jquery-ui.min.css') }}">
     <style>
         #case-table .select2 {
             text-align: initial;
