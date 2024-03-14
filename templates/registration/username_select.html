@@ -1,9 +1,159 @@
 {% extends "base.html" %}
 
+<!-- Adapted from registration_form.html -->
+{% block media %}
+    <style>
+        .sortedm2m-container, .sortedm2m-container p.selector-filter {
+            width: 300px;
+        }
+
+        .sortedm2m-container p.selector-filter input {
+            width: 262px;
+        }
+
+        ul.sortedm2m {
+            width: 284px;
+            min-height: 100px;
+            max-height: 200px;
+        }
+
+        .sortedm2m-container, .sortedm2m-container p.selector-filter {
+            width: 300px;
+        }
+
+        .sortedm2m-container p.selector-filter input {
+            width: 262px;
+        }
+
+        ul.sortedm2m {
+            width: 284px;
+            min-height: 70px;
+            max-height: 200px;
+            height: 70px
+        }
+
+        .inline-header {
+            float: left;
+            font-size: 1.1em;
+            padding: 4px 8px;
+            padding-left: 0;
+        }
+
+        .block-header {
+            color: #555;
+            font-size: 1.1em;
+            font-weight: 600;
+            padding-bottom: 0.2em;
+            padding-left: 2px;
+            margin-top: 0.75em
+        }
+
+        .fullwidth {
+            display: block;
+            overflow: hidden;
+        }
+
+        .fullwidth input {
+            width: 100%;
+        }
+
+        .fullwidth-error input {
+            width: 100%;
+            border-color: red;
+        }
+
+        .form-field-error {
+            color: red;
+        }
+
+        small {
+            font-size: 0.7em;
+            padding-left: 0.6em;
+        }
+
+        #edit-form {
+            border: unset;
+            background: unset;
+        }
+
+        #content-body {
+            text-align: center;
+        }
+
+        #center-float {
+            display: inline-block;
+            text-align: initial;
+            max-width: 100%;
+            width: 450px;
+        }
+
+        ul.errorlist {
+            margin: 0px;
+            text-align: right;
+            list-style: none;
+        }
+
+        .full-textfield {
+            padding-top: 0.5em;
+        }
+
+        .tos-section {
+            display: inline-block;
+            padding-right: 1em;
+        }
+
+        .pass-req {
+            padding: 0;
+        }
+
+        h4 {
+            padding-top: 1em;
+        }
+    </style>
+{% endblock %}
+
+{% block js_media %}
+    {{ form.media.js }}
+    <script type="text/javascript">
+        $(function () {
+            $('.pass-req-link').click(function () {
+                $('.pass-req').toggle('fast');
+                return false;
+            });
+        });
+    </script>
+{% endblock %}
+
 {% block body %}
-    <form action="" method="post" class="form-area">
+<div id="center-float">
+    <form id="edit-form" action="" method="post" class="form-area">
         {% csrf_token %}
-        <table border="0" style="text-align:left">{{ form.as_table() }}</table>
-        <input type="submit" style="float:right;" value="{{ _('Continue >') }}">
+
+        <div class="block-header">{{ form.username.label }}</div>
+        <span class="fullwidth{% if form.username.errors %}-error{% endif %}">{{ form.username }}</span>
+        {% if form.username.errors %}
+            <div class="form-field-error">{{ form.username.errors }}</div>
+        {% endif %}
+
+        <div class="block-header">{{ form.password.label }}
+            <small>(<a href="#" class="pass-req-link">?</a>)</small>
+        </div>
+        <div style="display: none" class="pass-req alert alert-info">
+            {{ form.password.help_text |safe }}
+        </div>
+        <span class="fullwidth{% if form.password.errors %}-error{% endif %}">{{ form.password }}</span>
+        {% if form.password.errors %}
+            <div class="form-field-error">{{ form.password.errors }}</div>
+        {% endif %}
+
+        <div class="block-header">{{ form.password_confirm.label }}</div>
+        <span class="fullwidth{% if form.password_confirm.errors %}-error{% endif %}">{{ form.password_confirm }}</span>
+        {% if form.password_confirm.errors %}
+            <div class="form-field-error">{{ form.password_confirm.errors }}</div>
+        {% endif %}
+
+        <hr>
+        <button style="float:right;" type="submit">Register!</button>
     </form>
+</div>
 {% endblock %}

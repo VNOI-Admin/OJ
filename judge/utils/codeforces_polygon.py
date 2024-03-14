@@ -227,8 +227,8 @@ class PolygonImporter:
             self,
             package: Union[str, BinaryIO],
             code: str,
-            authors: List[Profile] = [],
-            curators: List[Profile] = [],
+            authors: List[Profile] = None,
+            curators: List[Profile] = None,
             do_update: bool = False,
             interactive: bool = True,
             config=None,
@@ -263,8 +263,23 @@ class PolygonImporter:
         # A dictionary to hold all problem information.
         self.meta = {}
         self.meta['code'] = code
-        self.meta['authors'] = authors
-        self.meta['curators'] = curators
+        self.meta['authors'] = authors or []
+        self.meta['curators'] = curators or []
+
+        self.validate()
+
+    def validate(self):
+        testset = self.root.find('.//testset[@name="tests"]')
+        if testset is None:
+            raise ImportPolygonError('testset tests not found')
+
+        if len(testset.find('tests').getchildren()) == 0:
+            raise ImportPolygonError('no testcases found')
+
+        input_path_pattern = testset.find('input-path-pattern').text
+        input_path = input_path_pattern % 1
+        if input_path not in self.package.namelist():
+            raise ImportPolygonError('not full package')
 
     def run(self):
         try:
@@ -273,6 +288,7 @@ class PolygonImporter:
             self.parse_assets()
             self.parse_tests()
             self.parse_statements()
+            self.parse_solutions()
             self.update_or_create_problem()
         except Exception:
             # Remove imported images
@@ -360,6 +376,10 @@ class PolygonImporter:
                 'lang': 'CPP17',
                 'type': 'testlib',
             }
+
+            judging = self.root.find('.//judging')
+            if judging is not None and judging.get('treat-points-from-checker-as-percent', '') == 'true':
+                self.meta['checker_args']['treat_checker_points_as_percentage'] = True
 
             self.meta['custom_checker'] = os.path.join(self.meta['tmp_dir'].name, 'checker.cpp')
             with open(self.meta['custom_checker'], 'wb') as f:
@@ -745,6 +765,38 @@ class PolygonImporter:
                     'description': description,
                 })
 
+    def parse_solutions(self):
+        solutions = self.root.find('.//solutions')
+        main_solution = solutions.find('solution[@tag="main"]')
+        assert main_solution is not None
+
+        if not self.interactive:
+            if not self.config.get('append_main_solution_to_tutorial', False):
+                return
+        else:
+            self.log('Main solution found. Would you like to append it to the tutorial (y/n)? ', end='', flush=True)
+            if input().lower() not in ['y', 'yes']:
+                return
+
+        source = main_solution.find('source')
+        source_code = self.package.read(source.get('path')).decode('utf-8').strip()
+        source_lang = source.get('type')
+        markdown_lang = ''
+        if source_lang.startswith('cpp'):
+            markdown_lang = 'cpp'
+        elif source_lang.startswith('python'):
+            markdown_lang = 'python'
+        elif source_lang.startswith('java'):
+            markdown_lang = 'java'
+
+        self.meta['tutorial'] = self.meta['tutorial'].rstrip() + f"""\n
+<blockquote class="spoiler">
+```{markdown_lang}
+{source_code}
+```
+</blockquote>
+"""
+
     @transaction.atomic
     def update_or_create_problem(self):
         self.log('Creating/Updating problem in database.')
@@ -775,12 +827,12 @@ class PolygonImporter:
             ).save()
 
         Solution.objects.filter(problem=problem).delete()
-        if self.meta['tutorial'] != '':
+        if self.meta['tutorial'].strip() != '':
             Solution(
                 problem=problem,
                 is_public=False,
                 publish_on=timezone.now(),
-                content=self.meta['tutorial'],
+                content=self.meta['tutorial'].strip(),
             ).save()
 
         with open(self.meta['zipfile'], 'rb') as f:
