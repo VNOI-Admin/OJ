@@ -153,6 +153,12 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
             )
         return form
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if form.changed_data and 'ban_reason' in form.changed_data and form.cleaned_data['ban_reason'] == '':
+            obj.ban_reason = None
+            obj.save()
+
 
 class UserAdmin(OldUserAdmin):
     def save_model(self, request, obj, form, change):
