@@ -1,0 +1,8 @@
+{{ form.media }}
+<link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+
+<form action="{{ url('problem_type_voting_ajax', problem.code) }}" method="post">
+    {% csrf_token %}
+    {{ form.as_p() }}
+    <input type="submit" style="float: right" value="{{ _('Vote') }}" class="button">
+</form>

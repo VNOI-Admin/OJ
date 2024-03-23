@@ -143,6 +143,10 @@ urlpatterns = [
         path('/tickets/', ticket.ProblemTicketListView.as_view(), name='problem_ticket_list'),
         path('/tickets/new', ticket.NewProblemTicketView.as_view(), name='new_problem_ticket'),
 
+        path('/types', include([
+            path('/ajax', problem.ProblemTypeVotingAjax.as_view(), name='problem_type_voting_ajax'),
+        ])),
+
         path('/manage/submission', include([
             path('', problem_manage.ManageProblemSubmissionView.as_view(), name='problem_manage_submissions'),
             path('/rejudge', problem_manage.RejudgeSubmissionsView.as_view(), name='problem_submissions_rejudge'),
