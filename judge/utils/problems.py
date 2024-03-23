@@ -40,6 +40,25 @@ def user_completed_ids(profile):
     return result
 
 
+def can_vote_problem_type(user, problem):
+    if not user.is_authenticated:
+        return False
+
+    if user.profile.current_contest is not None:
+        return False
+
+    if not problem.is_accessible_by(user):
+        return False
+
+    if not problem.allow_type_voting:
+        return False
+
+    if problem.id not in user_completed_ids(user.profile):
+        return False
+
+    return True
+
+
 def contest_attempted_ids(participation):
     key = 'contest_attempted:%s' % participation.id
     result = cache.get(key)

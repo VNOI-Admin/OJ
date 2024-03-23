@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import BooleanField, Case, F, Prefetch, Q, When
+from django.db.models import BooleanField, Case, Count, F, Prefetch, Q, When
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -28,17 +28,17 @@ from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemImportPolygonForm, \
-    ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
+    ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProblemTypeAcceptForm, ProblemTypeVotingForm, \
+    ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
+    ProblemTranslation, ProblemType, ProblemTypeVote, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
-from judge.utils.problems import hot_problems, user_attempted_ids, \
-    user_completed_ids
+from judge.utils.problems import can_vote_problem_type, hot_problems, user_attempted_ids, user_completed_ids
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
@@ -243,6 +243,7 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
                                           context['description'], 'problem')
         context['meta_description'] = self.object.summary or metadata[0]
         context['og_image'] = self.object.og_image or metadata[1]
+        context['can_vote_problem_type'] = can_vote_problem_type(self.request.user, self.object)
         return context
 
 
@@ -957,6 +958,7 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         problem = super(ProblemEdit, self).get_object(queryset)
         if not problem.is_editable_by(self.request.user):
             raise PermissionDenied()
+        self.manage_type_voting = problem.is_type_voting_manageable_by(self.request.user)
         return problem
 
     def get_solution_formset(self):
@@ -970,10 +972,23 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
                                         form_kwargs={'user': self.request.user})
         return LanguageLimitFormSet(instance=self.get_object(), form_kwargs={'user': self.request.user})
 
+    def get_problem_type_accept_form(self):
+        problem_types = ProblemType.objects.annotate(votes=Count('problemtypevote',
+                                                                 filter=Q(problemtypevote__problem=self.object)))
+        return ProblemTypeAcceptForm(prefix='type_accept_form',
+                                     data=self.request.POST if self.request.POST else None,
+                                     choices=[(obj.id, obj) for obj in problem_types])
+
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data['lang_limit_formset'] = self.get_language_limit_formset()
         data['solution_formset'] = self.get_solution_formset()
+
+        if self.manage_type_voting:
+            # Show the voting statistics & accept form
+            data['type_accept_form'] = self.get_problem_type_accept_form()
+            data['type_voter_count'] = (ProblemTypeVote.objects.filter(problem=self.object)
+                                                               .values('user').distinct().count())
         return data
 
     def get_form_kwargs(self):
@@ -983,6 +998,8 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         # 1 organization
         if self.object.organizations.count() == 1:
             kwargs['org_pk'] = self.object.organizations.values_list('pk', flat=True)[0]
+
+        kwargs['manage_type_voting'] = self.manage_type_voting
 
         kwargs['user'] = self.request.user
         return kwargs
@@ -998,17 +1015,29 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         form_lang_limit = self.get_language_limit_formset()
         form_edit = self.get_solution_formset()
         if form.is_valid() and form_edit.is_valid() and form_lang_limit.is_valid():
-            with revisions.create_revision(atomic=True):
-                problem = form.save()
-                self.save_statement(form, problem)
-                problem.save()
-                form_lang_limit.save()
-                form_edit.save()
+            # Handle problem type voting
+            additional_types = ProblemType.objects.none()
+            if self.manage_type_voting:
+                form_type_accept = self.get_problem_type_accept_form()
+                if form_type_accept.is_valid():
+                    additional_types = ProblemType.objects.filter(id__in=form_type_accept.cleaned_data['types'])
+                else:
+                    additional_types = None
 
-                revisions.set_comment(_('Edited from site'))
-                revisions.set_user(self.request.user)
+            if additional_types is not None:
+                with revisions.create_revision(atomic=True):
+                    problem = form.save()
+                    self.save_statement(form, problem)
+                    # Add additional problem types from the voting process
+                    problem.types.add(*additional_types)
+                    problem.save()
+                    form_lang_limit.save()
+                    form_edit.save()
 
-            return HttpResponseRedirect(reverse('problem_detail', args=[self.object.code]))
+                    revisions.set_comment(_('Edited from site'))
+                    revisions.set_user(self.request.user)
+
+                return HttpResponseRedirect(reverse('problem_detail', args=[self.object.code]))
 
         return self.render_to_response(self.get_context_data(object=self.object))
 
@@ -1018,3 +1047,50 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         except PermissionDenied:
             return generic_message(request, _("Can't edit problem"),
                                    _('You are not allowed to edit this problem.'), status=403)
+
+
+class ProblemTypeVotingAjax(ProblemMixin, SingleObjectFormView):
+    template_name = 'problem/type-voting-ajax.html'
+    form_class = ProblemTypeVotingForm
+
+    def get_object(self, queryset=None):
+        problem = super().get_object()
+        if not can_vote_problem_type(self.request.user, problem):
+            raise PermissionDenied()
+        return problem
+
+    def get_suggested_types(self):
+        return (ProblemTypeVote.objects.filter(user=self.request.profile, problem=self.object)
+                                       .values_list('problem_type', flat=True))
+
+    def get_initial(self):
+        initial = super().get_initial()
+        initial['types'] = self.get_suggested_types()
+        return initial
+
+    def form_valid(self, form):
+        with transaction.atomic():
+            # Remove old votes, add new ones
+            old_types = set(self.get_suggested_types())
+            new_types = []
+            types = form.cleaned_data['types']
+            for problem_type in types:
+                if problem_type in old_types:
+                    old_types.remove(problem_type)
+                else:
+                    new_types.append(problem_type)
+            ProblemTypeVote.objects.filter(user=self.request.profile, problem=self.object,
+                                           problem_type__in=old_types).delete()
+            ProblemTypeVote.objects.bulk_create(ProblemTypeVote(
+                user=self.request.profile,
+                problem=self.object,
+                problem_type=problem_type,
+            ) for problem_type in new_types)
+
+        return super().form_valid(form)
+
+    def form_invalid(self, form):
+        raise PermissionDenied()
+
+    def get_success_url(self):
+        return self.object.get_absolute_url()
