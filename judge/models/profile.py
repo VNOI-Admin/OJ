@@ -141,6 +141,7 @@ class Profile(models.Model):
     points = models.FloatField(default=0)
     performance_points = models.FloatField(default=0)
     contribution_points = models.IntegerField(default=0)
+    vnoj_points = models.IntegerField(default=0)
     problem_count = models.IntegerField(default=0)
     ace_theme = models.CharField(max_length=30, verbose_name=_('Ace theme'), choices=ACE_THEMES, default='auto')
     site_theme = models.CharField(max_length=10, verbose_name=_('site theme'), choices=SITE_THEMES, default='light')
