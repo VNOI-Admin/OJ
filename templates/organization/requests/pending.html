@@ -1,5 +1,27 @@
 {% extends "base.html" %}
 {% block body %}
+    <style>
+        div input #reason{
+            margin-right: 100px;
+        }
+
+        .check-btn input {
+            display: none;
+        }
+
+        .hidden-reason {
+            display: none;
+        }
+
+        .check-btn input:checked ~ .hidden-reason {
+            display: inline-block;
+            max-width: 50ch;
+            overflow: hidden;
+        }
+        .check-btn input:checked ~ .truncated-reason {
+            display: none;
+        }
+    </style>
     {% include "messages.html" %}
     {% include "organization/requests/tabs.html" %}
 
@@ -24,7 +46,13 @@
                             {{ form.instance.time|date(_("N j, Y, H:i")) }}
                         </a></td>
                         <td>{{ form.state }}</td>
-                        <td>{{ form.instance.reason|truncatechars(50) }}</td>
+                        <td>
+                            <div class="check-btn">
+                                <input id="reason" type="checkbox" >
+                                <label for="reason" class="truncated-reason" >{{ form.instance.reason|truncatechars(50) }}</label>
+                                <label for="reason" class="hidden-reason">{{ form.instance.reason }}</label>
+                            </div>
+                        </td>
                         {% if formset.can_delete %}
                             <td>{{ form.DELETE }}</td>
                         {% endif %}
