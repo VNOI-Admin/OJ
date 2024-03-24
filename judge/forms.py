@@ -188,6 +188,7 @@ class ProblemEditForm(ModelForm):
 
         if not manage_type_voting:
             self.fields.pop('allow_type_voting')
+            self.fields.pop('automated_type_voting')
 
         self.fields['testers'].help_text = \
             str(self.fields['testers'].help_text) + ' ' + \
@@ -230,7 +231,7 @@ class ProblemEditForm(ModelForm):
         model = Problem
         fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points', 'partial',
                   'statement_file', 'source', 'types', 'group', 'submission_source_visibility_mode',
-                  'testcase_visibility_mode', 'description', 'testers', 'allow_type_voting']
+                  'testcase_visibility_mode', 'description', 'testers', 'allow_type_voting', 'automated_type_voting']
         widgets = {
             'types': Select2MultipleWidget,
             'group': Select2Widget,

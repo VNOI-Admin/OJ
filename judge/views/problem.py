@@ -1087,6 +1087,26 @@ class ProblemTypeVotingAjax(ProblemMixin, SingleObjectFormView):
                 problem_type=problem_type,
             ) for problem_type in new_types)
 
+            if self.object.automated_type_voting:
+                voters = ProblemTypeVote.objects.filter(problem=self.object).values('user').distinct().count()
+                if voters >= settings.VNOJ_PROBLEM_TYPE_VOTING_VOTERS_THRESHOLD:
+                    # If the number of distinct voters exceeds VNOJ_PROBLEM_TYPE_VOTING_VOTERS_THRESHOLD:
+                    #   - Sort the votes of each type in descending order
+                    #   - Filter the types whose number of votes exceeds VNOJ_PROBLEM_TYPE_VOTING_VOTES_LOWERBOUND
+                    #   - Get the first VNOJ_PROBLEM_TYPE_VOTING_TYPES_UPPERBOUND records
+                    problem_types = (
+                        ProblemType.objects.annotate(votes=Count('problemtypevote',
+                                                                 filter=Q(problemtypevote__problem=self.object)))
+                                           .order_by('-votes')
+                                           .filter(votes__gte=settings.VNOJ_PROBLEM_TYPE_VOTING_VOTES_LOWERBOUND)
+                        [:settings.VNOJ_PROBLEM_TYPE_VOTING_TYPES_UPPERBOUND])
+                    self.object.types.add(*problem_types)
+
+                    # Disable public voting
+                    self.object.allow_type_voting = False
+
+                    self.object.save()
+
         return super().form_valid(form)
 
     def form_invalid(self, form):
