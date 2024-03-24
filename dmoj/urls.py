@@ -127,6 +127,7 @@ urlpatterns = [
         path('/clone', problem.ProblemClone.as_view(), name='problem_clone'),
         path('/submit', problem.ProblemSubmit.as_view(), name='problem_submit'),
         path('/resubmit/<int:submission>', problem.ProblemSubmit.as_view(), name='problem_submit'),
+        path('/update-polygon', problem.ProblemUpdatePolygon.as_view(), name='problem_update_polygon'),
 
         path('/rank/', paged_list_view(ranked_submission.RankedSubmissions, 'ranked_submissions')),
         path('/submissions/', paged_list_view(submission.ProblemSubmissions, 'chronological_submissions')),
