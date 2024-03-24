@@ -268,6 +268,14 @@ class ProblemImportPolygonForm(Form):
     append_main_solution_to_tutorial = forms.BooleanField(required=False, initial=True,
                                                           label=_('Append main solution to tutorial'))
     main_tutorial_language = forms.CharField(required=False)
+    do_update = forms.BooleanField(required=False, initial=False, disabled=True, widget=forms.HiddenInput())
+
+    def __init__(self, code=None, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if code is not None:
+            self.fields['code'].initial = code
+            self.fields['code'].disabled = True
+            self.fields['do_update'].initial = True
 
 
 class ProblemImportPolygonStatementForm(Form):

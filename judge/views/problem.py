@@ -883,6 +883,7 @@ class ProblemImportPolygon(PermissionRequiredMixin, TitleMixin, FormView):
         if form.is_valid() and formset.is_valid():
             package = form.cleaned_data['package'].file
             code = form.cleaned_data['code']
+            do_update = form.cleaned_data['do_update']
             config = {
                 'ignore_zero_point_batches': form.cleaned_data['ignore_zero_point_batches'],
                 'ignore_zero_point_cases': form.cleaned_data['ignore_zero_point_cases'],
@@ -907,7 +908,7 @@ class ProblemImportPolygon(PermissionRequiredMixin, TitleMixin, FormView):
                     code=code,
                     authors=[self.request.profile],
                     curators=[],
-                    do_update=False,
+                    do_update=do_update,
                     interactive=False,
                     config=config,
                 )
@@ -918,6 +919,25 @@ class ProblemImportPolygon(PermissionRequiredMixin, TitleMixin, FormView):
             return HttpResponseRedirect(reverse('problem_detail', args=[code]))
 
         return self.render_to_response(self.get_context_data())
+
+
+class ProblemUpdatePolygon(ProblemImportPolygon, ProblemMixin, SingleObjectMixin):
+    title = gettext_lazy('Update problem from Codeforces Polygon package')
+
+    def get_object(self, queryset=None):
+        problem = super().get_object(queryset)
+        if not problem.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return problem
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['code'] = self.object.code
+        return kwargs
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
