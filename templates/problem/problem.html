@@ -299,7 +299,7 @@
                     Problem types
                 {% endtrans %}
                 </div>
-                <div style="display: none" class="toggled">
+                <div {% if problem.id not in completed_problem_ids %}style="display: none"{% endif %} class="toggled">
                     {{ problem.types_list|join(", ") }}
                     {% if can_vote_problem_type %}
                         <a data-featherlight="{{ url('problem_type_voting_ajax', problem.code) }}">
