@@ -222,6 +222,9 @@ class Problem(models.Model):
 
     allow_type_voting = models.BooleanField(default=False, help_text=_('Allow public voting on problem types.'))
 
+    automated_type_voting = models.BooleanField(default=True, help_text=_('Automatically set problem types based on '
+                                                                          'a certain threshold of votes.'))
+
     allow_view_feedback = models.BooleanField(
         help_text=_('Allow user to view checker feedback.'),
         default=False,
