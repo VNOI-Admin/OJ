@@ -54,7 +54,7 @@ def verify_email(backend, details, *args, **kwargs):
 
 
 class SocialPostAuthForm(forms.Form):
-    username = forms.RegexField(regex=r'^\w+$', max_length=30, label='Username',
+    username = forms.RegexField(regex=re.compile(r'^\w+$', re.ASCII), max_length=30, label='Username',
                                 error_messages={'invalid': 'A username must contain letters, numbers, or underscores.'})
     password = forms.CharField(label='Password', strip=False, widget=forms.PasswordInput(),
                                help_text=password_validation.password_validators_help_text_html(),
