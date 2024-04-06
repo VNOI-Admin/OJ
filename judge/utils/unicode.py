@@ -1,3 +1,4 @@
+import unicodedata
 from typing import AnyStr, Optional, overload
 
 
@@ -35,3 +36,9 @@ def utf8text(maybe_bytes, errors='strict') -> Optional[str]:
     if isinstance(maybe_bytes, str):
         return maybe_bytes
     return maybe_bytes.decode('utf-8', errors)
+
+
+def remove_accents(input_str: str) -> str:
+    nfkd_form = unicodedata.normalize('NFKD', input_str)
+    only_ascii = nfkd_form.encode('ASCII', 'ignore').decode()
+    return only_ascii

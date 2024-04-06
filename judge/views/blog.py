@@ -25,6 +25,7 @@ from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.tickets import filter_visible_tickets
+from judge.utils.unicode import remove_accents
 from judge.utils.views import TitleMixin, generic_message
 
 
@@ -287,7 +288,7 @@ class BlogPostCreate(TitleMixin, CreateView):
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             post = form.save()
-            post.slug = self.request.user.username.lower()
+            post.slug = remove_accents(self.request.user.username.lower())
             post.publish_on = timezone.now()
             post.authors.add(self.request.user.profile)
             post.save()
