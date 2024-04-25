@@ -420,6 +420,11 @@ class EditOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, U
         with revisions.create_revision(atomic=True):
             revisions.set_comment(_('Edited from site'))
             revisions.set_user(self.request.user)
+            org = form.save()
+            all_admins = org.admins.all()
+            g = Group.objects.get(name=settings.GROUP_PERMISSION_FOR_ORG_ADMIN)
+            for admin in all_admins:
+                admin.user.groups.add(g)
             return super(EditOrganization, self).form_valid(form)
 
 
