@@ -446,23 +446,12 @@ if 'newsletter' in settings.INSTALLED_APPS:
 if 'impersonate' in settings.INSTALLED_APPS:
     urlpatterns.append(path('impersonate/', include('impersonate.urls')))
 
-if settings.VNOJ_ENABLE_API:
-    urlpatterns.append(
-        path('api/v2/', include([
-            path('contests', api.api_v2.APIContestList.as_view()),
-            path('contest/<str:contest>', api.api_v2.APIContestDetail.as_view()),
-            path('problems', api.api_v2.APIProblemList.as_view()),
-            path('problem/<str:problem>', api.api_v2.APIProblemDetail.as_view()),
-            path('users', api.api_v2.APIUserList.as_view()),
-            path('user/<str:user>', api.api_v2.APIUserDetail.as_view()),
-            path('submissions', api.api_v2.APISubmissionList.as_view()),
-            path('submission/<int:submission>', api.api_v2.APISubmissionDetail.as_view()),
-            path('organizations', api.api_v2.APIOrganizationList.as_view()),
-            path('participations', api.api_v2.APIContestParticipationList.as_view()),
-            path('languages', api.api_v2.APILanguageList.as_view()),
-            path('judges', api.api_v2.APIJudgeList.as_view()),
-        ])),
-    )
+
+urlpatterns.append(
+    path('api/v2/', include([
+        path('contest-codetour/<str:contest>', api.api_v2.APICodeTourContestDetail.as_view()),
+    ])),
+)
 
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_urls.py')) as f:

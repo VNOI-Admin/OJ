@@ -3,7 +3,7 @@ from operator import attrgetter
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied, ValidationError
 from django.db.models import Count, F, OuterRef, Prefetch, Q, Subquery
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponseBadRequest, JsonResponse
 from django.utils import timezone
 from django.utils.functional import cached_property
 from django.views.generic.detail import BaseDetailView
@@ -230,6 +230,110 @@ class APIContestList(APIListView):
         }
 
 
+class APICodeTourContestDetail(APIDetailView):
+    model = Contest
+    slug_field = 'key'
+    slug_url_kwarg = 'contest'
+
+    def get_object(self, queryset=None):
+        contest = super().get_object(queryset)
+        if not contest.is_accessible_by(self.request.user):
+            raise Http404()
+        return contest
+
+    def get_data(self, context):
+        return self.get_object_data(context['object'])
+
+    def get_object_data(self, contest: Contest):
+        if contest.format.name != 'VNOJ':
+            return {
+                'message': f'Format {contest.format.name} not supported',
+            }
+        in_contest = contest.is_in_contest(self.request.user)
+        can_see_rankings = contest.can_see_full_scoreboard(self.request.user)
+
+        problems = list(
+            contest.contest_problems
+            .select_related('problem')
+            .defer('problem__description')
+            .order_by('order'),
+        )
+
+        new_ratings_subquery = Rating.objects.filter(participation=OuterRef('pk'))
+        old_ratings_subquery = (
+            Rating.objects
+            .filter(user=OuterRef('user__pk'), contest__end_time__lt=OuterRef('contest__end_time'))
+            .order_by('-contest__end_time')
+        )
+
+
+        order_by = ('is_disqualified', '-score', 'cumtime', 'tiebreaker')
+        if contest.is_frozen:
+            order_by = ('is_disqualified', '-frozen_score', 'frozen_cumtime', 'frozen_tiebreaker')
+
+        participations = (
+            contest.users
+            .filter(virtual=ContestParticipation.LIVE)
+            .annotate(
+                username=F('user__user__username'),
+                old_rating=Subquery(old_ratings_subquery.values('rating')[:1]),
+                new_rating=Subquery(new_ratings_subquery.values('rating')[:1]),
+            )
+            .order_by(*order_by)
+        )
+
+        # Setting contest attribute to reduce db queries in .start and .end_time
+        for participation in participations:
+            participation.contest = contest
+
+        prefix_key = 'frozen_' if contest.is_frozen else ''
+
+        def get_problem_breakdown(participation, problems):
+            raw_breakdowns = contest.format.get_problem_breakdown(participation, problems)
+            results = []
+            for problem, breakdown in zip(problems, raw_breakdowns):
+                result = {}
+                if breakdown is None:
+                    results.append(None)
+                    continue
+                result['ProblemCode'] = problem.problem.code
+                result['JudgedSubmissions'] = breakdown[prefix_key + 'penalty'] + 1
+
+                if breakdown['points'] == problem.points:
+                    result['SolvedTime'] = breakdown[prefix_key + 'time']
+                else:
+                    result['SolvedTime'] = None
+                result['FirstSolved'] = False
+                result['PendingSubmissions'] = breakdown['pending']
+                result['LastSubmited'] = breakdown[prefix_key + 'time']
+                result['Penalty'] = breakdown[prefix_key + 'penalty'] * 5
+                result['Score'] = breakdown[prefix_key + 'points']
+                # result['raw'] = breakdown
+                results.append(result)
+            return results
+
+        def get_user_scoreboard_detail(participation, rank):
+            breakdown = get_problem_breakdown(participation, problems)
+            penalty = sum([problem['Penalty'] for problem in breakdown if problem is not None])
+            solved = sum([1 for problem in breakdown if problem is not None and problem['SolvedTime'] is not None])
+            return {
+                'Username': participation.username,
+                'Official': participation.virtual == ContestParticipation.LIVE,
+                'JoinedAt': participation.start.isoformat(),
+                'Problems': breakdown,
+                'Score': participation.score,
+                'Penalty': penalty,
+                'Solved': solved,
+                'Rank': rank,
+            }
+
+        return {
+            'ScoreboardDetail': [
+                get_user_scoreboard_detail(participation, rank) for rank, participation in enumerate(participations, start=1)
+            ] if can_see_rankings else [],
+        }
+
+
 class APIContestDetail(APIDetailView):
     model = Contest
     slug_field = 'key'
@@ -325,7 +429,6 @@ class APIContestDetail(APIDetailView):
                 } for participation in participations
             ] if can_see_rankings else [],
         }
-
 
 class APIContestParticipationList(APIListView):
     model = ContestParticipation
