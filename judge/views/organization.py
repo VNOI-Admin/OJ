@@ -4,7 +4,6 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib.auth.models import Group
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Count, FilteredRelation, Q
 from django.db.models.expressions import F, Value
@@ -420,6 +419,11 @@ class EditOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, U
             revisions.set_user(self.request.user)
             add_admin_to_group(form)
             return super(EditOrganization, self).form_valid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request  # Pass the request object to the form
+        return kwargs
 
 
 class KickUserWidgetView(LoginRequiredMixin, AdminOrganizationMixin, SingleObjectMixin, View):

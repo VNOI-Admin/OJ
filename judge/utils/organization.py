@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.contrib.auth.models import Group
 
+
 def add_admin_to_group(form):
     org = form.save()
     all_admins = org.admins.all()
