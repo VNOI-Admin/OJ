@@ -18,6 +18,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
+from judge.utils.organization import add_admin_to_group
 from reversion import revisions
 
 from judge.forms import OrganizationForm
@@ -380,10 +381,7 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             # short_name is show in ranking
             org.short_name = org.slug[:20]
             org.save()
-            all_admins = org.admins.all()
-            g = Group.objects.get(name=settings.GROUP_PERMISSION_FOR_ORG_ADMIN)
-            for admin in all_admins:
-                admin.user.groups.add(g)
+            add_admin_to_group(form)
 
             return HttpResponseRedirect(self.get_success_url())
 
@@ -420,11 +418,7 @@ class EditOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, U
         with revisions.create_revision(atomic=True):
             revisions.set_comment(_('Edited from site'))
             revisions.set_user(self.request.user)
-            org = form.save()
-            all_admins = org.admins.all()
-            g = Group.objects.get(name=settings.GROUP_PERMISSION_FOR_ORG_ADMIN)
-            for admin in all_admins:
-                admin.user.groups.add(g)
+            add_admin_to_group(form)
             return super(EditOrganization, self).form_valid(form)
 
 
