@@ -17,7 +17,6 @@ from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
-from judge.utils.organization import add_admin_to_group
 from reversion import revisions
 
 from judge.forms import OrganizationForm
@@ -25,6 +24,7 @@ from judge.models import BlogPost, Comment, Contest, Language, Organization, Org
     Problem, Profile
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
+from judge.utils.organization import add_admin_to_group
 from judge.utils.ranker import ranker
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
