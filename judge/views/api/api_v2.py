@@ -288,6 +288,8 @@ class APICodeTourContestDetail(APIDetailView):
 
         prefix_key = 'frozen_' if contest.is_frozen else ''
 
+        first_solves, _ = contest.format.get_first_solves_and_total_ac(problems, participations, frozen=contest.is_frozen)
+
         def get_problem_breakdown(participation, problems):
             raw_breakdowns = contest.format.get_problem_breakdown(participation, problems)
             results = []
@@ -303,7 +305,7 @@ class APICodeTourContestDetail(APIDetailView):
                     result['SolvedTime'] = breakdown[prefix_key + 'time']
                 else:
                     result['SolvedTime'] = None
-                result['FirstSolved'] = False
+                result['FirstSolved'] = participation.id == first_solves[str(problem.id)]
                 result['PendingSubmissions'] = breakdown['pending']
                 result['LastSubmited'] = breakdown[prefix_key + 'time']
                 result['Penalty'] = breakdown[prefix_key + 'penalty']
