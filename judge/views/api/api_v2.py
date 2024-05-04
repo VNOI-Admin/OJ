@@ -306,7 +306,7 @@ class APICodeTourContestDetail(APIDetailView):
                 else:
                     result['SolvedTime'] = None
                 result['FirstSolved'] = participation.id == first_solves[str(problem.id)]
-                result['PendingSubmissions'] = breakdown['pending']
+                result['PendingSubmissions'] = breakdown.get('pending', 0)
                 result['LastSubmited'] = breakdown[prefix_key + 'time']
                 result['Penalty'] = breakdown[prefix_key + 'penalty']
                 result['Score'] = breakdown[prefix_key + 'points']
