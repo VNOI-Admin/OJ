@@ -332,7 +332,7 @@ class APICodeTourContestDetail(APIDetailView):
 
         return {
             'ScoreboardDetail': [
-                get_user_scoreboard_detail(participation, rank) for rank, participation in enumerate(participations, start=1) if participation.username == 'icpc23_hsgs_4'
+                get_user_scoreboard_detail(participation, rank) for rank, participation in enumerate(participations, start=1)
             ] if can_see_rankings else [],
         }
 
