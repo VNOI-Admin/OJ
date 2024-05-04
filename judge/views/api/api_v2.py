@@ -334,6 +334,8 @@ class APICodeTourContestDetail(APIDetailView):
             'ScoreboardDetail': [
                 get_user_scoreboard_detail(participation, rank) for rank, participation in enumerate(participations, start=1)
             ] if can_see_rankings else [],
+            # todo
+            'IsFinalized': False,
         }
 
 
