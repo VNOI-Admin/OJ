@@ -306,7 +306,7 @@ class APICodeTourContestDetail(APIDetailView):
                 result['FirstSolved'] = False
                 result['PendingSubmissions'] = breakdown['pending']
                 result['LastSubmited'] = breakdown[prefix_key + 'time']
-                result['Penalty'] = breakdown[prefix_key + 'penalty'] * 5
+                result['Penalty'] = breakdown[prefix_key + 'penalty']
                 result['Score'] = breakdown[prefix_key + 'points']
                 # result['raw'] = breakdown
                 results.append(result)
@@ -316,12 +316,13 @@ class APICodeTourContestDetail(APIDetailView):
             breakdown = get_problem_breakdown(participation, problems)
             penalty = sum([problem['Penalty'] for problem in breakdown if problem is not None])
             solved = sum([1 for problem in breakdown if problem is not None and problem['SolvedTime'] is not None])
+            score = sum([problem['Score'] for problem in breakdown if problem is not None])
             return {
                 'Username': participation.username,
                 'Official': participation.virtual == ContestParticipation.LIVE,
                 'JoinedAt': participation.start.isoformat(),
                 'Problems': breakdown,
-                'Score': participation.score,
+                'Score': score,
                 'Penalty': penalty,
                 'Solved': solved,
                 'Rank': rank,
