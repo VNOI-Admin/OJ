@@ -299,7 +299,7 @@ class APICodeTourContestDetail(APIDetailView):
                 result['ProblemCode'] = problem.problem.code
                 result['JudgedSubmissions'] = breakdown[prefix_key + 'penalty'] + 1
 
-                if breakdown['points'] == problem.points:
+                if breakdown[prefix_key + 'points'] == problem.points:
                     result['SolvedTime'] = breakdown[prefix_key + 'time']
                 else:
                     result['SolvedTime'] = None
@@ -330,7 +330,7 @@ class APICodeTourContestDetail(APIDetailView):
 
         return {
             'ScoreboardDetail': [
-                get_user_scoreboard_detail(participation, rank) for rank, participation in enumerate(participations, start=1)
+                get_user_scoreboard_detail(participation, rank) for rank, participation in enumerate(participations, start=1) if participation.username == 'icpc23_hsgs_4'
             ] if can_see_rankings else [],
         }
 
