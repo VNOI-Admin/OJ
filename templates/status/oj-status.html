@@ -59,7 +59,7 @@
             }
 
             $(function () {
-                var date_format = '{{ _('HH:mm:ss MMMM D, YYYY') }}';
+                var date_format = {{ _('HH:mm:ss MMMM D, YYYY')|htmltojs }};
 
                 function cb(start_date, end_date) {
                     $('#daterange span').html(start_date.format(date_format) + ' - ' + end_date.format(date_format));
@@ -70,22 +70,22 @@
                     timePicker24Hour: true,
                     timePickerSeconds: true,
                     locale: {
-                        customRangeLabel: '{{ _('Custom Range') }}',
-                        applyLabel: '{{ _('Apply') }}',
-                        cancelLabel: '{{ _('Cancel') }}',
-                        fromLabel: '{{ _('From') }}',
-                        toLabel: '{{ _('To') }}'
+                        customRangeLabel: {{ _('Custom Range')|htmltojs }},
+                        applyLabel: {{ _('Apply')|htmltojs }},
+                        cancelLabel: {{ _('Cancel')|htmltojs }},
+                        fromLabel: {{ _('From')|htmltojs }},
+                        toLabel: {{ _('To')|htmltojs }}
                     },
                     ranges: {
-                        '{{ _('Last Minute') }}': [moment().subtract(1, 'minutes'), moment()],
-                        '{{ _('Last Hour') }}': [moment().subtract(1, 'hours'), moment()],
-                        '{{ _('Today') }}': [moment().startOf('day'), moment().endOf('day')],
-                        '{{ _('Yesterday') }}': [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
-                        '{{ _('Last 7 Days') }}': [moment().subtract(6, 'days').startOf('day'), moment().endOf('day')],
-                        '{{ _('Last 14 Days') }}': [moment().subtract(13, 'days').startOf('day'), moment().endOf('day')],
-                        '{{ _('Last 30 Days') }}': [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
-                        '{{ _('Last 60 Days') }}': [moment().subtract(59, 'days').startOf('day'), moment().endOf('day')],
-                        '{{ _('Last 90 Days') }}': [moment().subtract(89, 'days').startOf('day'), moment().endOf('day')]
+                        {{ _('Last Minute')|htmltojs }}: [moment().subtract(1, 'minutes'), moment()],
+                        {{ _('Last Hour')|htmltojs }}: [moment().subtract(1, 'hours'), moment()],
+                        {{ _('Today')|htmltojs }}: [moment().startOf('day'), moment().endOf('day')],
+                        {{ _('Yesterday')|htmltojs }}: [moment().subtract(1, 'days').startOf('day'), moment().subtract(1, 'days').endOf('day')],
+                        {{ _('Last 7 Days')|htmltojs }}: [moment().subtract(6, 'days').startOf('day'), moment().endOf('day')],
+                        {{ _('Last 14 Days')|htmltojs }}: [moment().subtract(13, 'days').startOf('day'), moment().endOf('day')],
+                        {{ _('Last 30 Days')|htmltojs }}: [moment().subtract(29, 'days').startOf('day'), moment().endOf('day')],
+                        {{ _('Last 60 Days')|htmltojs }}: [moment().subtract(59, 'days').startOf('day'), moment().endOf('day')],
+                        {{ _('Last 90 Days')|htmltojs }}: [moment().subtract(89, 'days').startOf('day'), moment().endOf('day')]
                     }
                 }, cb);
 

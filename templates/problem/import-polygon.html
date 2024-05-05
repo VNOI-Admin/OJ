@@ -92,7 +92,7 @@
                         }
                     }).catch(function(err) {
                         console.log(err);
-                        alert("{{ _('Not valid Polygon package') }}");
+                        alert({{ _('Not valid Polygon package')|htmltojs }});
                         event.target.value = "";
                     })
                 };

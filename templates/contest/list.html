@@ -15,10 +15,10 @@
 
             {% if not request.official_contest_mode %}
                 $('.join-warning').click(function () {
-                    return confirm('{{ _('Are you sure you want to join?') }}\n' +
-                        '{{ _('Joining a contest for the first time starts your timer, after which it becomes unstoppable.') }}'
+                    return confirm({{ _('Are you sure you want to join?')|htmltojs }} + '\n' +
+                        {{ _('Joining a contest for the first time starts your timer, after which it becomes unstoppable.')|htmltojs }}
                         {% if request.in_contest %}
-                            + '\n{{ _('Joining this contest will leave %(contest)s.', contest=request.participation.contest.name) }}'
+                            + '\n' + {{ _('Joining this contest will leave %(contest)s.', contest=request.participation.contest.name)|htmltojs }}
                         {% endif %}
                     );
                 });
@@ -26,13 +26,13 @@
 
             {% if request.in_contest %}
                 $('.spectate-warning').click(function () {
-                    return confirm('{{ _('Are you sure you want to spectate?') }}\n' +
-                        '{{ _('Spectating this contest will leave %(contest)s.', contest=request.participation.contest.name) }}');
+                    return confirm({{ _('Are you sure you want to spectate?')|htmltojs }} + '\n' +
+                        {{ _('Spectating this contest will leave %(contest)s.', contest=request.participation.contest.name)|htmltojs }});
                 });
             {% endif %}
 
             $('.register-warning').click(function () {
-                return confirm('{{ _('Are you sure you want to register?') }}');
+                return confirm({{ _('Are you sure you want to register?')|htmltojs }});
             });
 
             {% if hide_private_contests is not none %}

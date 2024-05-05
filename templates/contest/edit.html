@@ -27,7 +27,7 @@
             });
 
             var noResults = function () {
-                return '{{ _('Press Enter to select multiple users...') }}';
+                return {{ _('Press Enter to select multiple users...')|htmltojs }};
             };
 
             $(document).one('click', '#id_private_contestants + .select2', function (e) {

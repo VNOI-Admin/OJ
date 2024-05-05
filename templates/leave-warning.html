@@ -3,7 +3,7 @@
     $(function() {
         $('form').dirty({
             preventLeaving: true,
-            leavingMessage: '{{ _('Changes you made may not be saved.') }}',
+            leavingMessage: {{ _('Changes you made may not be saved.')|htmltojs }},
         });
     });
 </script>
