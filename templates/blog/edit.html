@@ -16,7 +16,7 @@
 
         $(function () {
             $('#delete-button').click(function () {
-                return confirm('{{ _('Are you sure you want to delete this blog post?') }}');
+                return confirm({{ _('Are you sure you want to delete this blog post?')|htmltojs }});
             });
         });
     </script>

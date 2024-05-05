@@ -6,13 +6,13 @@
         django.jQuery(function ($) {
             $('.rerate-link').appendTo('div#bottombar').show();
             $('.rejudge-link').click(function () {
-                return confirm('{{ _('Are you sure you want to rejudge ALL the submissions?') }}');
+                return confirm({{ _('Are you sure you want to rejudge ALL the submissions?')|htmltojs }});
             });
             $('.rescore-link').click(function () {
-                return confirm('{{ _('Are you sure you want to rescore ALL the submissions?') }}');
+                return confirm({{ _('Are you sure you want to rescore ALL the submissions?')|htmltojs }});
             });
             $('.resend-link').click(function () {
-                return confirm('{{ _('Are you sure you want to resend this announcement?') }}');
+                return confirm({{ _('Are you sure you want to resend this announcement?')|htmltojs }});
             });
         });
     </script>

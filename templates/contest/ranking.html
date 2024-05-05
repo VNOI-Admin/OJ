@@ -174,7 +174,7 @@
                     theme: '{{ DMOJ_SELECT2_THEME }}',
                     multiple: true,
                     closeOnSelect: false,
-                    placeholder: '{{ _('Search organizations') }}',
+                    placeholder: {{ _('Search organizations')|htmltojs }},
                 });
 
                 var selection = $('#org-check-list').data().select2.selection;
@@ -368,12 +368,12 @@
             window.enableAdminOperations = function () {
                 $('a.disqualify-participation').click(function (e) {
                     e.preventDefault();
-                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to disqualify this participation?') }}"))
+                    if (e.ctrlKey || e.metaKey || confirm({{ _('Are you sure you want to disqualify this participation?')|htmltojs }}))
                         $(this).closest('form').submit();
                 })
                 $('a.un-disqualify-participation').click(function (e) {
                     e.preventDefault();
-                    if (e.ctrlKey || e.metaKey || confirm("{{ _('Are you sure you want to un-disqualify this participation?') }}"))
+                    if (e.ctrlKey || e.metaKey || confirm({{ _('Are you sure you want to un-disqualify this participation?')|htmltojs }}))
                         $(this).closest('form').submit();
                 })
             };
@@ -411,8 +411,8 @@
                             header.push(clean_text($col.text()));
                         } else if ($col.hasClass('username')) {
                             // Username and Full name
-                            header.push(clean_text('{{ _('Username') }}'));
-                            header.push(clean_text('{{ _('Full Name') }}'));
+                            header.push(clean_text({{ _('Username')|htmltojs }}));
+                            header.push(clean_text({{ _('Full Name')|htmltojs }}));
                         } else {
                             // Point
                             var name = $col.find('.problem-code').text();
