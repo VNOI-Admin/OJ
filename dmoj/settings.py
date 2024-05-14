@@ -411,6 +411,7 @@ INSTALLED_APPS += (
 
 MIDDLEWARE = (
     'judge.middleware.ShortCircuitMiddleware',
+    'judge.middleware.ForceDefaultLanguageMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
