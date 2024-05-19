@@ -1,21 +1,6 @@
 {% extends "tabs-base.html" %}
 
 {% block post_tab_spacer %}
-    {% if tab == 'calendar' %}
-        <div style="font-size: 1.6em; margin-top: 0.3em">
-            {% if prev_month %}
-                <a href="{{ url('contest_calendar', prev_month.year, prev_month.month) }}">&laquo; {{ _('Prev') }}</a>
-            {% endif %}
-            {% if not (curr_month.year == now.year and curr_month.month == now.month) %}
-                <a href="{{ url('contest_calendar', now.year, now.month) }}"> {{ _('Today') }}</a>
-            {% endif %}
-            {% if next_month %}
-                <a href="{{ url('contest_calendar', next_month.year, next_month.month) }}">{{ _('Next') }} &raquo;</a>
-            {% endif %}
-            {% if prev_month or next_month %}|{% endif %}
-            <a href="{{ url('contest_ical') }}">{{ _("Export") }}</a>
-        </div>
-    {% endif %}
 {% endblock %}
 
 {% block tabs %}
@@ -29,7 +14,6 @@
         {{ make_tab('new', 'fa-plus', url('contest_new'), _('Add new contest')) }}
     {% endif %}
     {{ make_tab('list', 'fa-list', url('contest_list'), _('List')) }}
-    {{ make_tab('calendar', 'fa-calendar', url('contest_calendar', now.year, now.month), _('Calendar')) }}
     {% if request.user.is_staff and (perms.judge.edit_all_contest or perms.judge.edit_own_contest) %}
         {{ make_tab('admin', 'fa-edit', url('admin:judge_contest_changelist'), _('Admin')) }}
     {% endif %}
