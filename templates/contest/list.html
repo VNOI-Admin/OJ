@@ -281,7 +281,6 @@
                 <thead>
                 <tr>
                     <th>{{ _('Contest') }}</th>
-                    <th style="width:20%"></th>
                 </tr>
                 </thead>
                 <tbody>
@@ -299,11 +298,6 @@
                                 {% endif %}
                             </div>
                         </td>
-                        {% if contest.require_registration %}
-                            {{ contest_register(contest, request) }}
-                        {% else %}
-                            <td></td>
-                        {% endif %}
                     </tr>
                 {% endfor %}
                 </tbody>

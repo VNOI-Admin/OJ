@@ -141,60 +141,6 @@
                     </div>
                 </div>
             {% endif %}
-
-            {% if top_pp_users %}
-                {% include "blog/top-pp.html" %}
-            {% endif %}
-            {% if top_contrib %}
-                {% include "blog/top-contrib.html" %}
-            {% endif %}
-            <div class="blog-sidebox sidebox">
-                <h3 style="display: flex; justify-content: space-between; white-space: nowrap;">
-                    <span style="margin-right: 10px;">
-                        {{ _('Comment stream') }}
-                    </span>
-                    {% if misc_config.discord_invite_link and misc_config.discord_invite_shieldio %}
-                        <span style="margin: 0.1em 0.3em -6px;">
-                            <a href="{{ misc_config.discord_invite_link }}">
-                                <img style="max-width: none;" src="{{ misc_config.discord_invite_shieldio }}" alt="Discord">
-                            </a>
-                        </span>
-                    {% endif %}
-                </h3>
-                <div class="sidebox-content">
-                    <ul>
-                        {% for comment in comments %}
-                            <li>
-                                <span style="padding-left:0.25em" class="poster">
-                                    {{ link_user(comment.author) }}
-                                </span> &rarr;
-                                <a href="{{ comment.link }}#comment-{{ comment.id }}">{{ comment.page_title }}</a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                    <span class="rssatom">
-                        <a href="{{ url('comment_rss') }}"><span><i class="fa fa-rss"></i></span> RSS</a>
-                        /
-                        <a href="{{ url('comment_atom') }}">Atom</a>
-                    </span>
-                </div>
-            </div>
-            <div class="blog-sidebox sidebox">
-                <h3>{{ _('New problems') }} <i class="fa fa-puzzle-piece"></i>
-                </h3>
-                <div class="sidebox-content">
-                    <ul class="problem-list">
-                        {% for problem in new_problems %}
-                            <li><a href="{{ url('problem_detail', problem.code) }}">{{ problem.name }}</a></li>
-                        {% endfor %}
-                    </ul>
-                    <span class="rssatom">
-                        <a href="{{ url('problem_rss') }}"><span><i class="fa fa-rss"></i></span> RSS</a>
-                        /
-                        <a href="{{ url('problem_atom') }}">Atom</a>
-                    </span>
-                </div>
-            </div>
         </div>
     </div>
     {% block after_posts %}{% endblock %}
