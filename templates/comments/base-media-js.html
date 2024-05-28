@@ -213,12 +213,11 @@
             $comment.find('.bad-comment-body').hide();
         };
 
-        var code_regex = [/#include\s*<.+>/, /using\s+namespace/, /int\s+main/, /print\s*\(.+\)/];
-        $(document).on('click', 'form.comment-submit-form .button[type=submit]', async function (e) {
-            var form = $(this).parents('form');
-            var text = form.find('#id_body').val();
-            if (code_regex.some(regex => regex.test(text))) {
-                if (!confirm(`{{ _('Looks like you\'re trying to post a source code!\n\nThe comment section are not for posting source code.\nIf you want to submit your solution, please use the "Submit solution" button.\n\nAre you sure you want to post this?') }}`)) {
+        var code_regex = [/input\(/, /#include/, /void\s+main/, /fn\s+main/, /func\s+main/];
+        $(document).on('click', 'form.comment-warn-code .button[type=submit]', function (e) {
+            var text = $(this).parents('form').find('#id_body').val();
+            if (code_regex.some(function (regex) {return regex.test(text);})) {
+                if (!confirm({{ _('Looks like you\'re trying to post some source code!\n\nThe comment section is not for posting source code.\nIf you want to submit your solution, please use the "Submit solution" button.\n\nAre you sure you want to post this?')|htmltojs }})) {
                     e.preventDefault();
                 }
             }

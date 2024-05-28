@@ -392,6 +392,8 @@
             {% endif %}
         </div>
     {% else %}
-        {% include "comments/list.html" %}
+        {% with comment_warn_code=true %}
+            {% include "comments/list.html" %}
+        {% endwith %}
     {% endif %}
 {% endblock %}
