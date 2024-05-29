@@ -378,6 +378,9 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         _filter = Q(is_public=True) & Q(is_organization_private=False)
         if self.profile is not None:
             _filter = Problem.q_add_author_curator_tester(_filter, self.profile)
+
+            if self.profile.user.has_perm('judge.see_private_problem'):
+                _filter = Q()
         return _filter
 
     def get_normal_queryset(self):
