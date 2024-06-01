@@ -53,6 +53,10 @@ class Command(BaseCommand):
                 header = '/*\n' + '\n'.join(comments) + '\n*/\n\n'
                 source_code = header + package.read(source_path).decode('utf-8')
                 language = Language.objects.get(key='JAVA')
+            elif source_lang.startswith('pas'):
+                header = '{\n' + '\n'.join(comments) + '\n}\n\n'
+                source_code = header + package.read(source_path).decode('utf-8')
+                language = Language.objects.get(key='PAS')
             elif source_lang.startswith('python'):
                 header = '"""\n' + '\n'.join(comments) + '\n"""\n\n'
                 source_code = header + package.read(source_path).decode('utf-8')
