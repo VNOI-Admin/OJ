@@ -59,9 +59,9 @@
             <div class="sidebox-content" style="border: unset;">
                 <div id="blog-search">
                     <form action="/" method="get" role="search" style="display: flex; gap: 10px; align-items: center; height: 2.3em" id="blog-search-form">
-                        <label style="font-weight: bold; font-size: 1.4rem">Search blogs:</label>
-                        <input autocomplete="off" type="text" name="q" placeholder="Search with Google" title="Enter seach here" style="flex: 1 0; display: inline-block; height: 100%">
-                        <button type="submit" style="height: 100%">Search</button>
+                        <label style="font-weight: bold; font-size: 1.4em">{{ _("Search blog") }}</label>
+                        <input autocomplete="off" type="text" name="q" placeholder="{{ _('Search with Google') }}"  style="flex: 1 0; display: inline-block; height: 100%">
+                        <button type="submit" style="height: 100%">{{ _("Search") }}</button>
                     </form>
                     <div class="gcse-searchresults-only"></div>
                 </div>
