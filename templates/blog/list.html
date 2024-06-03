@@ -38,6 +38,9 @@
             });
         });
     </script>
+
+    <script async src="https://cse.google.com/cse.js?cx=f63f32044490c4247">
+    </script>
 {% endblock %}
 
 {% block body %}
@@ -46,7 +49,7 @@
         <ul>
             <li id="blog-tab" class="tab active"><a href="#">
                 <i class="tab-icon fa fa-info-circle"></i> {{ _('Blog') }}
-            </a></li>
+            </a></li>tạp chí
             <li id="event-tab" class="tab"><a href="#"><i class="tab-icon fa fa-rss"></i> {{ _('Events') }}</a></li>
         </ul>
     </div>
@@ -54,6 +57,14 @@
         <div class="blog-content sidebox">
             {% include "blog/blog-list-tabs.html" %}
             <div class="sidebox-content" style="border: unset;">
+                <div id="blog-search">
+                    <form action="/" method="get" role="search" style="display: flex; gap: 10px; align-items: center; height: 2.3em" id="blog-search-form">
+                        <label style="font-weight: bold; font-size: 1.4rem">Search blogs:</label>
+                        <input autocomplete="off" type="text" name="q" placeholder="Search with Google" title="Enter seach here" style="flex: 1 0; display: inline-block; height: 100%">
+                        <button type="submit" style="height: 100%">Search</button>
+                    </form>
+                    <div class="gcse-searchresults-only"></div>
+                </div>
                 {% for post in posts %}
                     {% include "blog/blog-post.html" %}
                 {% endfor %}
