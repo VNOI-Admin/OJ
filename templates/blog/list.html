@@ -57,6 +57,7 @@
         <div class="blog-content sidebox">
             {% include "blog/blog-list-tabs.html" %}
             <div class="sidebox-content" style="border: unset;">
+                {% if show_all_blogs %}
                 <div id="blog-search">
                     <form action="/" method="get" role="search" style="display: flex; gap: 10px; align-items: center; height: 2.3em" id="blog-search-form">
                         <label style="font-weight: bold; font-size: 1.4em">{{ _("Search blog") }}</label>
@@ -65,6 +66,7 @@
                     </form>
                     <div class="gcse-searchresults-only"></div>
                 </div>
+                {% endif %}
                 {% for post in posts %}
                     {% include "blog/blog-post.html" %}
                 {% endfor %}
