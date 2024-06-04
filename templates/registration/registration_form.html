@@ -240,7 +240,7 @@
             {% include "registration/oauth.html" %}
             {% if tos_url %}
                 <span class="tos-section">
-                    {{ (_('By registering, you agree to our [Terms & Conditions][0].') + '\n\n  [0]: ' + tos_url)|markdown('default', strip_paragraphs=True) }}
+                    {{ (_('By registering, you agree to our [Terms & Conditions][0].') + '\n\n  [0]: ' + tos_url)|markdown('flatpage', strip_paragraphs=True) }}
                 </span>
             {% endif %}
         </div>
