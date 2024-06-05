@@ -28,7 +28,7 @@ comment_validator = RegexValidator(r'^\w+:[a-z0-9A-Z_]+$',
 class Comment(MPTTModel):
     author = models.ForeignKey(Profile, verbose_name=_('commenter'), on_delete=CASCADE)
     time = models.DateTimeField(verbose_name=_('posted time'), auto_now_add=True)
-    page = models.CharField(max_length=30, verbose_name=_('associated page'), db_index=True,
+    page = models.CharField(max_length=32, verbose_name=_('associated page'), db_index=True,
                             validators=[comment_validator])
     score = models.IntegerField(verbose_name=_('votes'), default=0)
     body = models.TextField(verbose_name=_('body of comment'), max_length=8192)
