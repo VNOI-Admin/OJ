@@ -15,5 +15,5 @@ class Migration(migrations.Migration):
             model_name='comment',
             name='page',
             field=models.CharField(db_index=True, max_length=32, validators=[django.core.validators.RegexValidator('^\\w+:[a-z0-9A-Z_]+$', 'Page code must be ^\\w+:[a-z0-9A-Z_]+$')], verbose_name='associated page'),
-        )
+        ),
     ]
