@@ -521,6 +521,7 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
 
             context['new_contests'] = new_contests[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
 
+        context['page_prefix'] = reverse('blog_post_list')
         return context
 
 

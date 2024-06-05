@@ -17,14 +17,22 @@
                 {%- if page == 1 and first_page_href != None -%}
                     {{ first_page_href }}
                 {%- else -%}
-                    {{ page_prefix or '' }}{{ page }}{{ page_suffix or '' }}
+                    {%- if organization -%}
+                        {{ page_prefix or '' }}{{ page }}{{ page_suffix or '' }}?org={{ organization.slug }}
+                    {%- else -%}
+                        {{ page_prefix or '' }}{{ page }}{{ page_suffix or '' }}
+                    {%- endif -%}
                 {%- endif -%}
             ">{{ page }}</a></li>
         {% endif %}
     {% endfor %}
 
     {% if page_obj.has_next() %}
-        <li><a href="{{ page_prefix or '' }}{{ page_obj.next_page_number() }}{{ page_suffix or '' }}">»</a></li>
+        {% if organization %}
+            <li><a href="{{ page_prefix or '' }}{{ page_obj.next_page_number() }}{{ page_suffix or '' }}?org={{ organization.slug }}">»</a></li>
+        {% else %}
+            <li><a href="{{ page_prefix or '' }}{{ page_obj.next_page_number() }}{{ page_suffix or '' }}">»</a></li>
+        {% endif %}
     {% else %}
         <li class="disabled-page"><span>»</span></li>
     {% endif %}

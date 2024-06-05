@@ -18,7 +18,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.dblock import LockModel
 from judge.forms import BlogPostForm
-from judge.models import (BlogPost, BlogVote, Comment, Contest, Language,
+from judge.models import (BlogPost, BlogVote, Comment, Contest, Language, Organization,
                           Problem, Profile, Submission, Ticket)
 from judge.tasks import on_new_blogpost
 from judge.utils.cachedict import CacheDict
@@ -142,11 +142,15 @@ class PostList(PostListBase):
     template_name = 'blog/list.html'
     show_all_blogs = False
     tab = 'home'
+    org_filter = None
 
     def get_queryset(self):
         queryset = super(PostList, self).get_queryset()
 
-        queryset = queryset.filter(organization=None)
+        if 'org' in self.request.GET:
+            self.org_filter = Organization.objects.filter(slug=self.request.GET['org']).first()
+
+        queryset = queryset.filter(organization=self.org_filter)
 
         if 'show_all_blogs' in self.request.GET:
             self.show_all_blogs = self.request.session['show_all_blogs'] = self.request.GET['show_all_blogs'] == 'true'
@@ -210,6 +214,7 @@ class PostList(PostListBase):
 
         context['tab'] = self.tab
         context['left_align_tabs'] = True
+        context['org_filter'] = self.org_filter
 
         return context
 
