@@ -39,8 +39,9 @@
         });
     </script>
 
-    <script async src="https://cse.google.com/cse.js?cx=f63f32044490c4247">
-    </script>
+    {% if gcse_url %}
+    <script async src="{{ gcse_url }}"></script>
+    {% endif %}
 {% endblock %}
 
 {% block body %}
@@ -57,8 +58,8 @@
         <div class="blog-content sidebox">
             {% include "blog/blog-list-tabs.html" %}
             <div class="sidebox-content" style="border: unset;">
-                {% if show_all_blogs %}
-                <div id="blog-search">
+                {% if show_all_blogs and gcse_url %}
+                <div id="blog-search" style="margin-bottom: 5px">
                     <form action="/" method="get" role="search" style="display: flex; gap: 10px; align-items: center; height: 2.3em" id="blog-search-form">
                         <label style="font-weight: bold; font-size: 1.4em">{{ _("Search blog") }}</label>
                         <input autocomplete="off" type="text" name="q" placeholder="{{ _('Search with Google') }}"  style="flex: 1 0; display: inline-block; height: 100%">
