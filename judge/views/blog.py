@@ -214,7 +214,6 @@ class PostList(PostListBase):
 
         context['tab'] = self.tab
         context['left_align_tabs'] = True
-        context['org_filter'] = self.org_filter
 
         return context
 

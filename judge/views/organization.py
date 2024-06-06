@@ -480,6 +480,7 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationHome, self).get_context_data(**kwargs)
+        context['page_prefix'] = reverse('organization_home', args=[self.object.slug]) + '/'
         context['first_page_href'] = reverse('organization_home', args=[self.object.slug])
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
@@ -521,7 +522,6 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
 
             context['new_contests'] = new_contests[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
 
-        context['page_prefix'] = reverse('blog_post_list')
         return context
 
 
