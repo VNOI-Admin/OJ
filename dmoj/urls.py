@@ -282,6 +282,7 @@ urlpatterns = [
          lambda _, pk, suffix: HttpResponsePermanentRedirect('/organization/%s' % suffix)),
     path('organization/<slug:slug>', include([
         path('', organization.OrganizationHome.as_view(), name='organization_home'),
+        path('/<int:page>', organization.OrganizationHome.as_view(), name='organization_home'),
         path('/users/', organization.OrganizationUsers.as_view(), name='organization_users'),
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
         path('/leave', organization.LeaveOrganization.as_view(), name='leave_organization'),
