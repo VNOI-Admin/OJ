@@ -20,6 +20,28 @@
                 draw_pie_chart(window.stats.language_count, $('#language-count'));
                 draw_bar_chart(window.stats.language_ac_rate, $('#language-ac-rate'));
             });
+
+            function download_table_as_csv() {
+                var csv = ['#id,username']
+                window.stats.participations.sort()
+                for (var i = 0; i < window.stats.participations.length; i++) {
+                    csv.push(
+                        (i + 1) + ',' +
+                        window.stats.participations[i]
+                    );
+                }
+
+                var csv_string = csv.join('\n');
+                var filename = 'users_{{ contest.key }}_' + moment().format('YYYY-MM-DD-HH-mm-ss') + '.csv';
+                var link = document.createElement('a');
+                link.style.display = 'none';
+                link.setAttribute('target', '_blank');
+                link.setAttribute('href', 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv_string));
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         </script>
     {% endcompress %}
     {% include "contest/media-js.html" %}
@@ -34,6 +56,12 @@
 {% endblock %}
 
 {% block body %}
+    <div>
+        <h3>
+            {{ _('Participation count: ') }} <a href="#" onclick="download_table_as_csv()">{{ participation_count }}</a>
+        </h3>
+    </div>
+
     <h3>{{ _('Problem Status Distribution') }}</h3>
     <div id="problem-status-count" class="chart">
         <canvas></canvas>

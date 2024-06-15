@@ -811,6 +811,12 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
             for category in _get_result_data(defaultdict(int, status_counts[i]))['categories']:
                 result_data[category['code']][i] = category['count']
 
+        participations = ContestParticipation.objects.filter(
+            contest=self.object,
+            virtual=0,
+            real_start__gt=datetime(1970, 1, 1, tzinfo=timezone.utc)
+        ).values_list('user__user__username', flat=True)
+
         stats = {
             'problem_status_count': get_stacked_bar_chart(
                 labels, result_data, settings.DMOJ_STATS_SUBMISSION_RESULT_COLORS,
@@ -827,9 +833,11 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
                 queryset.values('language__name').annotate(ac_rate=ac_rate)
                         .filter(ac_rate__gt=0).values_list('language__name', 'ac_rate'),
             ),
+            'participations': [p for p in participations],
         }
 
         context['stats'] = mark_safe(json.dumps(stats))
+        context['participation_count'] = len(participations)
 
         return context
 

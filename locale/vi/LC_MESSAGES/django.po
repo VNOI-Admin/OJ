@@ -7592,3 +7592,6 @@ msgstr "Số bài"
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr "Chọn tất cả"
+
+msgid "Participation count: "
+msgstr "Số lượng tham gia: "
