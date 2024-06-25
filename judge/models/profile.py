@@ -147,6 +147,8 @@ class Profile(models.Model):
     site_theme = models.CharField(max_length=10, verbose_name=_('site theme'), choices=SITE_THEMES, default='light')
     last_access = models.DateTimeField(verbose_name=_('last access time'), default=now)
     ip = models.GenericIPAddressField(verbose_name=_('last IP'), blank=True, null=True)
+    ip_auth = models.GenericIPAddressField(verbose_name=_('IP-based authentication'),
+                                           unique=True, blank=True, null=True)
     badges = models.ManyToManyField(Badge, verbose_name=_('badges'), blank=True, related_name='users')
     display_badge = models.ForeignKey(Badge, verbose_name=_('display badge'), null=True, on_delete=models.SET_NULL)
     organizations = SortedManyToManyField(Organization, verbose_name=_('organization'), blank=True,
