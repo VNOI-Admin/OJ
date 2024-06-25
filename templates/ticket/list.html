@@ -128,9 +128,9 @@
             };
 
             $('#filter-user').select2($.extend(true, {}, user_select2,
-                {ajax: {url: '{{ url('ticket_user_select2_ajax') }}'}}));
+                {ajax: {url: '{{ url('ticket_user_select2_ajax') }}', delay: 300}}));
             $('#filter-assignee').select2($.extend(true, {}, user_select2,
-                {ajax: {url: '{{ url('ticket_assignee_select2_ajax') }}'}}));
+                {ajax: {url: '{{ url('ticket_assignee_select2_ajax') }}', delay: 300}}));
         });
     </script>
 

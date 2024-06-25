@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0203_add_field_vnoj_points'),
+        ('judge', '0204_increase_comment_page_max_length'),
     ]
 
     operations = [
