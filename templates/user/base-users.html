@@ -14,7 +14,8 @@
                 theme: '{{ DMOJ_SELECT2_THEME }}',
                 placeholder: '{{ _('Search by handle...') }}',
                 ajax: {
-                    url: '{{ url('user_search_select2_ajax') }}'
+                    url: '{{ url('user_search_select2_ajax') }}',
+                    delay: 300
                 },
                 minimumInputLength: 1,
                 templateResult: function (data, container) {
