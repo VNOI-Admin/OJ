@@ -78,7 +78,7 @@ class BlogPostAdmin(VersionAdmin):
         (_('Summary'), {'classes': ('collapse',), 'fields': ('summary',)}),
     )
     prepopulated_fields = {'slug': ('title',)}
-    list_display = ('id', 'title', 'visible', 'global_post', 'sticky', 'publish_on')
+    list_display = ('id', 'title', 'show_authors', 'visible', 'global_post', 'sticky', 'publish_on')
     list_display_links = ('id', 'title')
     ordering = ('-publish_on',)
     form = BlogPostForm
@@ -88,6 +88,10 @@ class BlogPostAdmin(VersionAdmin):
         if obj is None:
             return request.user.has_perm('judge.change_blogpost')
         return obj.is_editable_by(request.user)
+
+    @admin.display(description=_('authors'))
+    def show_authors(self, obj):
+        return ', '.join(map(str, obj.authors.all()))
 
 
 class SolutionForm(ModelForm):
