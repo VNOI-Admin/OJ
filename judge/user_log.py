@@ -14,10 +14,6 @@ class LogUserAccessMiddleware(object):
                 not getattr(request, 'no_profile_update', False)):
             updates = {'last_access': now()}
 
-            # if using cloudflare, update the ip address
-            if request.META.get('HTTP_CF_CONNECTING_IP'):
-                request.META['REMOTE_ADDR'] = request.META.get('HTTP_CF_CONNECTING_IP')
-
             # Decided on using REMOTE_ADDR as nginx will translate it to the external IP that hits it.
             if request.META.get('REMOTE_ADDR'):
                 updates['ip'] = request.META.get('REMOTE_ADDR')
