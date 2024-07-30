@@ -31,7 +31,6 @@
         <table class="table striped">
             <thead>
             <tr>
-                <th>{{ _('ID') }}</th>
                 <th>{{ _('Name') }}</th>
                 <th>{{ _('Runtime Info') }}</th>
             </tr>
@@ -41,7 +40,6 @@
                 {# All online languages have runtime_versions, even if we're not going to display them #}
                 {% if language.runtime_versions %}
                     <tr>
-                        <td>{{ language.short_display_name }}</td>
                         <td class="language">{{ language.name }}</td>
                         <td class="info">
                             <code>{{ runtime_versions(language.runtime_versions()) }}</code>
