@@ -9,18 +9,21 @@ from judge.models import Language, Profile
 
 ALPHABET = 'abcdefghkqtxyz' + 'abcdefghkqtxyz'.upper() + '23456789'
 
+DEFAULT_LANGUAGE = Language.objects.get(key=settings.DEFAULT_USER_LANGUAGE)
+
 
 def generate_password():
     return ''.join(secrets.choice(ALPHABET) for _ in range(8))
 
 
-def add_user(username, fullname, password):
+def add_user(username, fullname, password, username_override):
     usr = User(username=username, first_name=fullname, is_active=True)
     usr.set_password(password)
     usr.save()
 
     profile = Profile(user=usr)
-    profile.language = Language.objects.get(key=settings.DEFAULT_USER_LANGUAGE)
+    profile.username_display_override = username_override
+    profile.language = DEFAULT_LANGUAGE
     profile.save()
 
 
@@ -39,12 +42,15 @@ class Command(BaseCommand):
         writer = csv.DictWriter(fout, fieldnames=['username', 'fullname', 'password'])
         writer.writeheader()
 
+        has_username_override = 'username_override' in (reader.fieldnames or [])
+
         for row in reader:
             username = row['username']
             fullname = row['fullname']
             password = generate_password()
+            username_override = row['username_override'] if has_username_override else username
 
-            add_user(username, fullname, password)
+            add_user(username, fullname, password, username_override)
 
             writer.writerow({
                 'username': username,
