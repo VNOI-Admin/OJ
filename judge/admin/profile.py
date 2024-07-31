@@ -59,9 +59,9 @@ class WebAuthnInline(admin.TabularInline):
 
 
 class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
-    fields = ('user', 'display_rank', 'badges', 'display_badge', 'about', 'organizations', 'timezone', 'language',
-              'ace_theme', 'math_engine', 'last_access', 'ip', 'mute', 'is_unlisted', 'allow_tagging', 'notes',
-              'username_display_override', 'ban_reason', 'is_totp_enabled', 'user_script', 'current_contest')
+    fields = ('user', 'display_rank', 'badges', 'display_badge', 'about', 'organizations', 'vnoj_points', 'timezone',
+              'language', 'ace_theme', 'math_engine', 'last_access', 'ip', 'mute', 'is_unlisted', 'allow_tagging',
+              'notes', 'username_display_override', 'ban_reason', 'is_totp_enabled', 'user_script', 'current_contest')
     readonly_fields = ('user',)
     list_display = ('admin_user_admin', 'email', 'is_totp_enabled', 'timezone_full',
                     'date_joined', 'last_access', 'ip', 'show_public')
@@ -152,6 +152,12 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
                 mode='javascript', theme=request.profile.resolved_ace_theme,
             )
         return form
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if form.changed_data and 'ban_reason' in form.changed_data and form.cleaned_data['ban_reason'] == '':
+            obj.ban_reason = None
+            obj.save()
 
 
 class UserAdmin(OldUserAdmin):

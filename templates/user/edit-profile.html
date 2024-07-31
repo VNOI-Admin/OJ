@@ -42,7 +42,8 @@
         #edit-form {
             border: unset;
             background: unset;
-            max-width: 700px;
+            display: block;
+            padding-bottom: 30px;
         }
 
         .settings {
@@ -143,6 +144,15 @@
                             $('#remove-api-token-button').remove();
                         },
                     });
+                }
+            });
+
+            // Alert when leaving an org
+            $('.sortedm2m input').click(function () {
+                if (!$(this).is(':checked')) {
+                    return confirm('{{ _('Are you sure you want to leave this organization?') }}\n' +
+                               '{{ _('You will have to rejoin to show up on the organization leaderboard.') }}'
+                            );
                 }
             });
         });

@@ -4,6 +4,7 @@ from operator import itemgetter
 from urllib.parse import quote
 
 from django import forms
+from django.contrib.auth import password_validation
 from django.contrib.auth.models import User
 from django.http import HttpResponseRedirect
 from django.shortcuts import render
@@ -52,29 +53,47 @@ def verify_email(backend, details, *args, **kwargs):
         raise InvalidEmail(backend)
 
 
-class UsernameForm(forms.Form):
-    username = forms.RegexField(regex=r'^\w+$', max_length=30, label='Username',
+class SocialPostAuthForm(forms.Form):
+    username = forms.RegexField(regex=re.compile(r'^\w+$', re.ASCII), max_length=30, label='Username',
                                 error_messages={'invalid': 'A username must contain letters, numbers, or underscores.'})
+    password = forms.CharField(label='Password', strip=False, widget=forms.PasswordInput(),
+                               help_text=password_validation.password_validators_help_text_html(),
+                               validators=[password_validation.validate_password])
+    password_confirm = forms.CharField(label='Retype password', widget=forms.PasswordInput(), strip=False)
 
     def clean_username(self):
         if User.objects.filter(username=self.cleaned_data['username']).exists():
             raise forms.ValidationError('Sorry, the username is taken.')
         return self.cleaned_data['username']
 
+    def clean(self):
+        cleaned_data = super().clean()
+        password = cleaned_data.get('password')
+        password_confirm = cleaned_data.get('password_confirm')
+        if password and password_confirm and password != password_confirm:
+            self.add_error('password_confirm', "Passwords didn't match")
+
 
 @partial
-def choose_username(backend, user, username=None, *args, **kwargs):
+def get_username_password(backend, user, username=None, *args, **kwargs):
     if not user:
         request = backend.strategy.request
         if request.POST:
-            form = UsernameForm(request.POST)
+            form = SocialPostAuthForm(request.POST)
             if form.is_valid():
-                return {'username': form.cleaned_data['username']}
+                return {'username': form.cleaned_data['username'],
+                        'password': form.cleaned_data['password']}
         else:
-            form = UsernameForm(initial={'username': username})
+            form = SocialPostAuthForm(initial={'username': username})
         return render(request, 'registration/username_select.html', {
-            'title': 'Choose a username', 'form': form,
+            'title': 'Set up your account', 'form': form,
         })
+
+
+def add_password(user, password=None, *args, **kwargs):
+    if password:
+        user.set_password(password)
+        user.save()
 
 
 @partial

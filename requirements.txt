@@ -2,7 +2,6 @@ Django>=3.2,<4
 django-cleanup
 django_compressor>=3
 django-mptt>=0.13
-django-pagedown<2
 django-registration-redux>=2.10
 django-reversion>=3.0.5,<4
 django-social-share
@@ -11,7 +10,7 @@ django-impersonate
 django-redis
 mysqlclient
 dmoj-wpadmin @ git+https://github.com/DMOJ/dmoj-wpadmin.git
-lxml
+lxml[html_clean]
 Pygments<2.12
 mistune<2
 social-auth-core==4.3.0

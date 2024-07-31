@@ -141,6 +141,7 @@ class Profile(models.Model):
     points = models.FloatField(default=0)
     performance_points = models.FloatField(default=0)
     contribution_points = models.IntegerField(default=0)
+    vnoj_points = models.IntegerField(default=0)
     problem_count = models.IntegerField(default=0)
     ace_theme = models.CharField(max_length=30, verbose_name=_('Ace theme'), choices=ACE_THEMES, default='auto')
     site_theme = models.CharField(max_length=10, verbose_name=_('site theme'), choices=SITE_THEMES, default='light')
@@ -221,7 +222,7 @@ class Profile(models.Model):
 
     @cached_property
     def is_banned(self):
-        return self.ban_reason and not self.user.is_active
+        return not self.user.is_active and self.ban_reason is not None
 
     def can_be_banned_by(self, staff):
         return self.user != staff and not self.user.is_superuser and staff.has_perm('judge.ban_user')
@@ -370,7 +371,7 @@ class Profile(models.Model):
     ban_user.alters_data = True
 
     def unban_user(self):
-        self.ban_reason = ''
+        self.ban_reason = None
         self.display_rank = Profile._meta.get_field('display_rank').get_default()
         self.is_unlisted = False
         self.save(update_fields=['ban_reason', 'display_rank', 'is_unlisted'])

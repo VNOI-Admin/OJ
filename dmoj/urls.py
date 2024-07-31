@@ -18,6 +18,7 @@ from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
     preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
     two_factor, user, widgets
+from judge.views.magazine import MagazinePage
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
 from judge.views.register import ActivationView, RegistrationView
@@ -113,6 +114,7 @@ urlpatterns = [
         path('/suggest_list/', problem.SuggestList.as_view(), name='problem_suggest_list'),
         path('/suggest', problem.ProblemSuggest.as_view(), name='problem_suggest'),
         path('/create', problem.ProblemCreate.as_view(), name='problem_create'),
+        path('/import-polygon', problem.ProblemImportPolygon.as_view(), name='problem_import_polygon'),
     ])),
 
     path('problem/<str:problem>', include([
@@ -125,6 +127,7 @@ urlpatterns = [
         path('/clone', problem.ProblemClone.as_view(), name='problem_clone'),
         path('/submit', problem.ProblemSubmit.as_view(), name='problem_submit'),
         path('/resubmit/<int:submission>', problem.ProblemSubmit.as_view(), name='problem_submit'),
+        path('/update-polygon', problem.ProblemUpdatePolygon.as_view(), name='problem_update_polygon'),
 
         path('/rank/', paged_list_view(ranked_submission.RankedSubmissions, 'ranked_submissions')),
         path('/submissions/', paged_list_view(submission.ProblemSubmissions, 'chronological_submissions')),
@@ -279,6 +282,7 @@ urlpatterns = [
          lambda _, pk, suffix: HttpResponsePermanentRedirect('/organization/%s' % suffix)),
     path('organization/<slug:slug>', include([
         path('', organization.OrganizationHome.as_view(), name='organization_home'),
+        path('/<int:page>', organization.OrganizationHome.as_view(), name='organization_home'),
         path('/users/', organization.OrganizationUsers.as_view(), name='organization_users'),
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
         path('/leave', organization.LeaveOrganization.as_view(), name='leave_organization'),
@@ -416,6 +420,8 @@ urlpatterns = [
         path('failure', tasks.demo_failure),
         path('progress', tasks.demo_progress),
     ])),
+
+    path('magazine/', MagazinePage.as_view(), name='magazine'),
 ]
 
 favicon_paths = ['apple-touch-icon-180x180.png', 'apple-touch-icon-114x114.png', 'android-chrome-72x72.png',

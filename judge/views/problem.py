@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 import re
@@ -20,18 +21,19 @@ from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import CreateView, ListView, UpdateView, View
+from django.views.generic import CreateView, FormView, ListView, UpdateView, View
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemSubmitForm, \
-    ProposeProblemSolutionFormSet
+from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemImportPolygonForm, \
+    ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
+from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
@@ -820,6 +822,14 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
         initial['description'] = misc_config(self.request)['misc_config']['description_example']
         initial['memory_limit'] = 262144  # 256 MB
         initial['partial'] = True
+        try:
+            initial['group'] = ProblemGroup.objects.get(name='Uncategorized').pk
+        except ProblemGroup.DoesNotExist:
+            initial['group'] = ProblemGroup.objects.order_by('id').first().pk
+        try:
+            initial['types'] = ProblemType.objects.get(name='uncategorized').pk
+        except ProblemType.DoesNotExist:
+            initial['types'] = ProblemType.objects.order_by('id').first().pk
         return initial
 
 
@@ -846,6 +856,88 @@ class ProblemSuggest(ProblemCreate):
 
         on_new_problem.delay(problem.code, is_suggested=True)
         return HttpResponseRedirect(self.get_success_url())
+
+
+class ProblemImportPolygon(PermissionRequiredMixin, TitleMixin, FormView):
+    title = gettext_lazy('Import problem from Codeforces Polygon package')
+    template_name = 'problem/import-polygon.html'
+    model = Problem
+    form_class = ProblemImportPolygonForm
+    permission_required = 'judge.import_polygon_package'
+
+    def get_formset(self):
+        return ProblemImportPolygonStatementFormSet(
+            data=self.request.POST if self.request.POST else None,
+            prefix='statements',
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['formset'] = self.get_formset()
+        context['site_languages_json'] = mark_safe(json.dumps({code: str(name) for code, name in settings.LANGUAGES}))
+        return context
+
+    def post(self, request, *args, **kwargs):
+        form = self.get_form()
+        formset = self.get_formset()
+        if form.is_valid() and formset.is_valid():
+            package = form.cleaned_data['package'].file
+            code = form.cleaned_data['code']
+            do_update = form.cleaned_data['do_update']
+            config = {
+                'ignore_zero_point_batches': form.cleaned_data['ignore_zero_point_batches'],
+                'ignore_zero_point_cases': form.cleaned_data['ignore_zero_point_cases'],
+                'append_main_solution_to_tutorial': form.cleaned_data['append_main_solution_to_tutorial'],
+                'main_tutorial_language': form.cleaned_data.get('main_tutorial_language', None),
+                'main_statement_language': None,
+                'polygon_to_site_language_map': {},
+            }
+            if len(formset) > 1:
+                for statement in formset:
+                    polygon_language = statement.cleaned_data['polygon_language']
+                    site_language = statement.cleaned_data['site_language']
+
+                    if site_language == settings.LANGUAGE_CODE:
+                        config['main_statement_language'] = polygon_language
+                    else:
+                        config['polygon_to_site_language_map'][polygon_language] = site_language
+
+            try:
+                importer = PolygonImporter(
+                    package=package,
+                    code=code,
+                    authors=[self.request.profile],
+                    curators=[],
+                    do_update=do_update,
+                    interactive=False,
+                    config=config,
+                )
+                importer.run()
+            except ImportPolygonError as e:
+                return generic_message(request, _('Failed to import problem'), str(e), status=400)
+
+            return HttpResponseRedirect(reverse('problem_detail', args=[code]))
+
+        return self.render_to_response(self.get_context_data())
+
+
+class ProblemUpdatePolygon(ProblemImportPolygon, ProblemMixin, SingleObjectMixin):
+    title = gettext_lazy('Update problem from Codeforces Polygon package')
+
+    def get_object(self, queryset=None):
+        problem = super().get_object(queryset)
+        if not problem.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return problem
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['code'] = self.object.code
+        return kwargs
+
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):

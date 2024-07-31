@@ -35,6 +35,7 @@
 
                 event_dispatcher.on('sub_{{ submission.id_secret }}', function (message) {
                         switch (message.type) {
+                            case 'aborted':
                             case 'internal-error':
                             case 'grading-end':
                             case 'compile-error':

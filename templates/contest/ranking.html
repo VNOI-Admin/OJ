@@ -104,7 +104,8 @@
                 theme: '{{ DMOJ_SELECT2_THEME }}',
                 placeholder: placeholder,
                 ajax: {
-                    url: '{{ url('contest_user_search_select2_ajax', contest.key) }}'
+                    url: '{{ url('contest_user_search_select2_ajax', contest.key) }}',
+                    delay: 300
                 },
                 minimumInputLength: 1,
                 templateResult: function (data) {

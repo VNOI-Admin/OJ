@@ -100,6 +100,10 @@ VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
 VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem
 
+VNOJ_SHOULD_BAN_FOR_CHEATING_IN_CONTESTS = False
+VNOJ_CONTEST_CHEATING_BAN_MESSAGE = 'Banned for multiple cheating offenses during contests'
+VNOJ_MAX_DISQUALIFICATIONS_BEFORE_BANNING = 3
+
 # List of subdomain that will be ignored in organization subdomain middleware
 VNOJ_IGNORED_ORGANIZATION_SUBDOMAINS = ['oj', 'www', 'localhost']
 
@@ -396,7 +400,6 @@ INSTALLED_APPS += (
     'social_django',
     'compressor',
     'django_ace',
-    'pagedown',
     'sortedm2m',
     'statici18n',
     'impersonate',
@@ -705,8 +708,9 @@ SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_user',
     'social_core.pipeline.user.get_username',
     'social_core.pipeline.social_auth.associate_by_email',
-    'judge.social_auth.choose_username',
+    'judge.social_auth.get_username_password',
     'social_core.pipeline.user.create_user',
+    'judge.social_auth.add_password',
     'judge.social_auth.make_profile',
     'social_core.pipeline.social_auth.associate_user',
     'social_core.pipeline.social_auth.load_extra_data',
@@ -729,12 +733,6 @@ DESCRIPTION_MAX_LENGTH = 200
 
 GROUP_PERMISSION_FOR_ORG_ADMIN = 'Org Admin'
 
-try:
-    with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
-        exec(f.read(), globals())
-except IOError:
-    pass
-
 if DMOJ_PDF_PDFOID_URL:
     # If a cache is configured, it must already exist and be a directory
     assert DMOJ_PDF_PROBLEM_CACHE is None or os.path.isdir(DMOJ_PDF_PROBLEM_CACHE)
@@ -745,3 +743,9 @@ ACE_DEFAULT_LIGHT_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['light']
 ACE_DEFAULT_DARK_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['dark']
 # Only allow OAuth login
 OAUTH_ONLY = False
+
+try:
+    with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
+        exec(f.read(), globals())
+except IOError:
+    pass

@@ -295,7 +295,11 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         ] + super(ContestAdmin, self).get_urls()
 
     def rejudge_view(self, request, contest_id, problem_id):
-        queryset = ContestSubmission.objects.filter(problem_id=problem_id).select_related('submission')
+        contest = get_object_or_404(Contest, id=contest_id)
+        if not request.user.is_staff or not self.has_change_permission(request, contest):
+            raise PermissionDenied()
+        queryset = ContestSubmission.objects.filter(participation__contest_id=contest_id,
+                                                    problem_id=problem_id).select_related('submission')
         for model in queryset:
             model.submission.judge(rejudge=True, rejudge_user=request.user)
 
@@ -305,7 +309,11 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
 
     def rescore_view(self, request, contest_id, problem_id):
-        queryset = ContestSubmission.objects.filter(problem_id=problem_id).select_related('submission')
+        contest = get_object_or_404(Contest, id=contest_id)
+        if not request.user.is_staff or not self.has_change_permission(request, contest):
+            raise PermissionDenied()
+        queryset = ContestSubmission.objects.filter(participation__contest_id=contest_id,
+                                                    problem_id=problem_id).select_related('submission')
         for model in queryset:
             model.submission.update_contest()
 
@@ -315,6 +323,9 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
 
     def resend_view(self, request, contest_id, announcement_id):
+        contest = get_object_or_404(Contest, id=contest_id)
+        if not request.user.is_staff or not self.has_change_permission(request, contest):
+            raise PermissionDenied()
         announcement = get_object_or_404(ContestAnnouncement, id=announcement_id)
         announcement.send()
         return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
