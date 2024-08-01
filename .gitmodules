@@ -2,3 +2,6 @@
 	path = resources/libs
 	url = https://github.com/DMOJ/site-assets.git
 	branch = master
+[submodule "resources/vnoj"]
+	path = resources/vnoj
+	url = https://github.com/VNOI-Admin/vnoj-static.git
