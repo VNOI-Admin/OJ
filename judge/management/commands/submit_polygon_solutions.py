@@ -48,7 +48,7 @@ class Command(BaseCommand):
             if source_lang.startswith('cpp'):
                 header = '/*\n' + '\n'.join(comments) + '\n*/\n\n'
                 source_code = header + package.read(source_path).decode('utf-8')
-                language = Language.objects.get(key='CPP17')
+                language = Language.objects.get(key='CPP20')
             elif source_lang.startswith('java'):
                 header = '/*\n' + '\n'.join(comments) + '\n*/\n\n'
                 source_code = header + package.read(source_path).decode('utf-8')
@@ -62,12 +62,24 @@ class Command(BaseCommand):
                 source_code = header + package.read(source_path).decode('utf-8')
                 if source_lang == 'python.pypy2':
                     language = Language.objects.get(key='PYPY')
-                elif source_lang == 'python.pypy3':
+                elif source_lang.startswith('python.pypy3'):
                     language = Language.objects.get(key='PYPY3')
                 elif source_lang == 'python.2':
                     language = Language.objects.get(key='PY2')
                 else:
                     language = Language.objects.get(key='PY3')
+            elif source_lang.startswith('kotlin'):
+                header = '/*\n' + '\n'.join(comments) + '\n*/\n\n'
+                source_code = header + package.read(source_path).decode('utf-8')
+                language = Language.objects.get(key='KOTLIN')
+            elif source_lang == 'go':
+                header = '/*\n' + '\n'.join(comments) + '\n*/\n\n'
+                source_code = header + package.read(source_path).decode('utf-8')
+                language = Language.objects.get(key='GO')
+            elif source_lang == 'rust':
+                header = '/*\n' + '\n'.join(comments) + '\n*/\n\n'
+                source_code = header + package.read(source_path).decode('utf-8')
+                language = Language.objects.get(key='RUST')
             else:
                 print('Unsupported language', source_lang)
                 continue
