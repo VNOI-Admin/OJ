@@ -8,8 +8,10 @@ from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import path, reverse, reverse_lazy
 from django.utils import timezone
+from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.utils.translation import gettext_lazy as _, ngettext
+from django.views.decorators.http import require_POST
 from reversion.admin import VersionAdmin
 
 from django_ace import AceWidget
@@ -73,14 +75,14 @@ class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
     def rejudge_column(self, obj):
         if obj.id is None:
             return ''
-        return format_html('<a class="button rejudge-link" href="{0}">{1}</a>',
+        return format_html('<a class="button rejudge-link action-link" href="{0}">{1}</a>',
                            reverse('admin:judge_contest_rejudge', args=(obj.contest.id, obj.id)), _('Rejudge'))
 
     @admin.display(description='')
     def rescore_column(self, obj):
         if obj.id is None:
             return ''
-        return format_html('<a class="button rescore-link" href="{}">Rescore</a>',
+        return format_html('<a class="button rescore-link action-link" href="{}">Rescore</a>',
                            reverse('admin:judge_contest_rescore', args=(obj.contest.id, obj.id)))
 
 
@@ -100,7 +102,7 @@ class ContestAnnouncementInline(admin.StackedInline):
     def resend(self, obj):
         if obj.id is None:
             return 'Not available'
-        return format_html('<a class="button resend-link" href="{}">Resend</a>',
+        return format_html('<a class="button resend-link action-link" href="{}">Resend</a>',
                            reverse('admin:judge_contest_resend', args=(obj.contest.id, obj.id)))
 
 
@@ -294,6 +296,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
             path('<int:contest_id>/resend/<int:announcement_id>/', self.resend_view, name='judge_contest_resend'),
         ] + super(ContestAdmin, self).get_urls()
 
+    @method_decorator(require_POST)
     def rejudge_view(self, request, contest_id, problem_id):
         contest = get_object_or_404(Contest, id=contest_id)
         if not request.user.is_staff or not self.has_change_permission(request, contest):
@@ -308,6 +311,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
                                             len(queryset)) % len(queryset))
         return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
 
+    @method_decorator(require_POST)
     def rescore_view(self, request, contest_id, problem_id):
         contest = get_object_or_404(Contest, id=contest_id)
         if not request.user.is_staff or not self.has_change_permission(request, contest):
@@ -322,6 +326,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
                                             len(queryset)) % len(queryset))
         return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
 
+    @method_decorator(require_POST)
     def resend_view(self, request, contest_id, announcement_id):
         contest = get_object_or_404(Contest, id=contest_id)
         if not request.user.is_staff or not self.has_change_permission(request, contest):
@@ -330,6 +335,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
         announcement.send()
         return HttpResponseRedirect(reverse('admin:judge_contest_change', args=(contest_id,)))
 
+    @method_decorator(require_POST)
     def rate_all_view(self, request):
         if not request.user.has_perm('judge.contest_rating'):
             raise PermissionDenied()
@@ -341,6 +347,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
                 rate_contest(contest)
         return HttpResponseRedirect(reverse('admin:judge_contest_changelist'))
 
+    @method_decorator(require_POST)
     def rate_view(self, request, id):
         if not request.user.has_perm('judge.contest_rating'):
             raise PermissionDenied()
