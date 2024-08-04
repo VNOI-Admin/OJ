@@ -4,7 +4,6 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.contrib.auth.models import Group
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Count, FilteredRelation, Q
 from django.db.models.expressions import F, Value
@@ -25,6 +24,7 @@ from judge.models import BlogPost, Comment, Contest, Language, Organization, Org
     Problem, Profile
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
+from judge.utils.organization import add_admin_to_group
 from judge.utils.ranker import ranker
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
@@ -380,10 +380,7 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             # short_name is show in ranking
             org.short_name = org.slug[:20]
             org.save()
-            all_admins = org.admins.all()
-            g = Group.objects.get(name=settings.GROUP_PERMISSION_FOR_ORG_ADMIN)
-            for admin in all_admins:
-                admin.user.groups.add(g)
+            add_admin_to_group(form)
 
             return HttpResponseRedirect(self.get_success_url())
 
@@ -420,7 +417,13 @@ class EditOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, U
         with revisions.create_revision(atomic=True):
             revisions.set_comment(_('Edited from site'))
             revisions.set_user(self.request.user)
+            add_admin_to_group(form)
             return super(EditOrganization, self).form_valid(form)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request  # Pass the request object to the form
+        return kwargs
 
 
 class KickUserWidgetView(LoginRequiredMixin, AdminOrganizationMixin, SingleObjectMixin, View):
