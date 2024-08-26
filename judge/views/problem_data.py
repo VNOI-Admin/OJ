@@ -65,6 +65,7 @@ def validate_filename(value):
             params={'value': value},
         )
 
+
 class ProblemDataForm(ModelForm):
     io_method = ChoiceField(choices=IO_METHODS, label=gettext_lazy('IO Method'), initial='standard', required=False,
                             widget=Select2Widget(attrs={'style': 'width: 200px'}))
@@ -76,7 +77,7 @@ class ProblemDataForm(ModelForm):
         if hasattr(self, 'zip_valid') and not self.zip_valid:
             raise ValidationError(_('Your zip file is invalid!'))
         return self.cleaned_data['zipfile']
-    
+
     def clean_io_input_file(self):
         data = self.cleaned_data['io_input_file']
         if data:
