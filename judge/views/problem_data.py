@@ -1,6 +1,7 @@
 import json
 import mimetypes
 import os
+import re
 from itertools import chain
 from zipfile import BadZipfile, ZipFile
 
@@ -55,6 +56,15 @@ def grader_args_cleaner(self):
     return data
 
 
+def validate_filename(value):
+    # Regular expression to match a valid Linux file name with an extension
+    regex = r'^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$'
+    if not re.match(regex, value):
+        raise ValidationError(
+            '%(value)s is not a valid file name with an extension.',
+            params={'value': value},
+        )
+
 class ProblemDataForm(ModelForm):
     io_method = ChoiceField(choices=IO_METHODS, label=gettext_lazy('IO Method'), initial='standard', required=False,
                             widget=Select2Widget(attrs={'style': 'width: 200px'}))
@@ -66,6 +76,18 @@ class ProblemDataForm(ModelForm):
         if hasattr(self, 'zip_valid') and not self.zip_valid:
             raise ValidationError(_('Your zip file is invalid!'))
         return self.cleaned_data['zipfile']
+    
+    def clean_io_input_file(self):
+        data = self.cleaned_data['io_input_file']
+        if data:
+            validate_filename(data)
+        return data
+
+    def clean_io_output_file(self):
+        data = self.cleaned_data['io_output_file']
+        if data:
+            validate_filename(data)
+        return data
 
     clean_checker_args = checker_args_cleaner
     clean_grader_args = grader_args_cleaner
