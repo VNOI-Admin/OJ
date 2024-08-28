@@ -127,6 +127,11 @@
                             <a href="{{ url('admin:judge_organization_change', organization.id) }}">{{ _('Admin organization') }}</a>
                         </div>
                     {% endif %}
+                    {% if can_edit %}
+                        <div>
+                            <a href="{{ url('get_submissions_data', organization.slug) }}">{{ _('Download submissions data') }}</a>
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
