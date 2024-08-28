@@ -1,7 +1,6 @@
 import json
 import mimetypes
 import os
-import re
 from itertools import chain
 from zipfile import BadZipfile, ZipFile
 
@@ -18,6 +17,7 @@ from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import DetailView
+from django.core.validators import RegexValidator
 
 from judge.highlight_code import highlight_code
 from judge.models import Problem, ProblemData, ProblemTestCase, Submission, problem_data_storage
@@ -56,14 +56,11 @@ def grader_args_cleaner(self):
     return data
 
 
-def validate_filename(value):
-    # Regular expression to match a valid Linux file name with an extension
-    regex = r'^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$'
-    if not re.match(regex, value):
-        raise ValidationError(
-            '%(value)s is not a valid file name with an extension.',
-            params={'value': value},
-        )
+validate_filename = RegexValidator(
+    regex=r'^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$',
+    message='%(value)s is not a valid file name with an extension.',
+    code='invalid_filename'
+)
 
 
 class ProblemDataForm(ModelForm):
