@@ -16,8 +16,8 @@ from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import DetailView
 from django.core.validators import RegexValidator
+from django.views.generic import DetailView
 
 from judge.highlight_code import highlight_code
 from judge.models import Problem, ProblemData, ProblemTestCase, Submission, problem_data_storage
@@ -59,7 +59,7 @@ def grader_args_cleaner(self):
 validate_filename = RegexValidator(
     regex=r'^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$',
     message='%(value)s is not a valid file name with an extension.',
-    code='invalid_filename'
+    code='invalid_filename',
 )
 
 
