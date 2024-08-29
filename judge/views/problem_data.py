@@ -66,26 +66,16 @@ validate_filename = RegexValidator(
 class ProblemDataForm(ModelForm):
     io_method = ChoiceField(choices=IO_METHODS, label=gettext_lazy('IO Method'), initial='standard', required=False,
                             widget=Select2Widget(attrs={'style': 'width: 200px'}))
-    io_input_file = CharField(max_length=100, label=gettext_lazy('Input from file'), required=False)
-    io_output_file = CharField(max_length=100, label=gettext_lazy('Output to file'), required=False)
+    io_input_file = CharField(max_length=100, label=gettext_lazy(
+        'Input from file'), required=False, validators=[validate_filename])
+    io_output_file = CharField(max_length=100, label=gettext_lazy(
+        'Output to file'), required=False, validators=[validate_filename])
     checker_type = ChoiceField(choices=CUSTOM_CHECKERS, widget=Select2Widget(attrs={'style': 'width: 200px'}))
 
     def clean_zipfile(self):
         if hasattr(self, 'zip_valid') and not self.zip_valid:
             raise ValidationError(_('Your zip file is invalid!'))
         return self.cleaned_data['zipfile']
-
-    def clean_io_input_file(self):
-        data = self.cleaned_data['io_input_file']
-        if data:
-            validate_filename(data)
-        return data
-
-    def clean_io_output_file(self):
-        data = self.cleaned_data['io_output_file']
-        if data:
-            validate_filename(data)
-        return data
 
     clean_checker_args = checker_args_cleaner
     clean_grader_args = grader_args_cleaner
