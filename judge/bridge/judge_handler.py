@@ -366,6 +366,7 @@ class JudgeHandler(ZlibPacketHandler):
             return
 
         time = 0.0
+        total_time = 0.0
         memory = 0
         points = 0.0
         total = 0
@@ -375,6 +376,7 @@ class JudgeHandler(ZlibPacketHandler):
 
         for case in SubmissionTestCase.objects.filter(submission=submission):
             time = max(time, case.time)
+            total_time += case.time
             memory = max(memory, case.memory)
             if not case.batch:
                 points += case.points
@@ -424,6 +426,7 @@ class JudgeHandler(ZlibPacketHandler):
         problem._updating_stats_only = True
         problem.update_stats()
         submission.update_contest()
+        submission.update_credit(total_time)
 
         finished_submission(submission)
 
