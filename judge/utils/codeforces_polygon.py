@@ -512,8 +512,11 @@ class PolygonImporter:
                      [self.meta['cases_data'][i]['points'] for i in self.meta['normal_cases']]
         if any(not p.is_integer() for p in all_points):
             self.log('Found fractional points. Normalize to integers.')
-            all_points = [int(p * 1000) for p in all_points]
-            gcd = math.gcd(*all_points)
+            all_points = set([int(p * 1000) for p in all_points])
+            # math.gcd() for array only available in Python 3.9
+            gcd = 0
+            for p in all_points:
+                gcd = math.gcd(gcd, p)
             for batch in self.meta['batches'].values():
                 batch['points'] = int(batch['points'] * 1000) // gcd
             for i in self.meta['normal_cases']:
