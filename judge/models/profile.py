@@ -27,7 +27,7 @@ from judge.ratings import rating_class
 from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
 
-__all__ = ['Organization', 'Profile', 'OrganizationRequest', 'WebAuthnCredential']
+__all__ = ['Organization', 'OrganizationMonthlyUsage', 'Profile', 'OrganizationRequest', 'WebAuthnCredential']
 
 
 class EncryptedNullCharField(EncryptedCharField):
@@ -120,6 +120,18 @@ class Organization(models.Model):
         )
         verbose_name = _('organization')
         verbose_name_plural = _('organizations')
+
+
+class OrganizationMonthlyUsage(models.Model):
+    organization = models.ForeignKey(Organization, verbose_name=_('organization'), related_name='monthly_usages',
+                                     on_delete=models.CASCADE)
+    time = models.DateField(verbose_name=_('time'))
+    consumed_credit = models.FloatField(verbose_name=_('consumed credit'), default=0)
+
+    class Meta:
+        verbose_name = _('organization monthly usage')
+        verbose_name_plural = _('organization monthly usages')
+        unique_together = ('organization', 'time')
 
 
 class Badge(models.Model):
