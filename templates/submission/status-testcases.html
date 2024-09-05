@@ -179,7 +179,7 @@
                 {% else %}
                     <b>{{ _('Final score:') }}</b>
                 {% endif %}
-                {{ submission.points|floatformat(-3) }}/{{ submission.case_total|floatformat(0) }}
+                {{ submission.case_points|floatformat(-3) }}/{{ submission.case_total|floatformat(0) }}
                 {% if request.in_contest and submission.contest_or_none %}
                     {% with contest=submission.contest_or_none %}
                         {% set points=contest.points|roundfloat(3) %}
