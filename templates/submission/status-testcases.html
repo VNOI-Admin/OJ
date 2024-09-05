@@ -8,7 +8,7 @@
 {% macro make_batch_status(batch, cnt) %}
     <b>{{ _('Batch #%(id)d', id=cnt) }}</b>
     {% if not batch.not_graded %}
-        ({{ _('%(points)s/%(total)s points', points=batch.points|floatformat(0), total=batch.total|floatformat(0)) }})
+        ({{ _('%(points)s/%(total)s points', points=batch.points|floatformat(-3), total=batch.total|floatformat(-3)) }})
     {% else %}
         <span class="fa fa-spinner fa-pulse"></span>
     {% endif %}
@@ -179,7 +179,7 @@
                 {% else %}
                     <b>{{ _('Final score:') }}</b>
                 {% endif %}
-                {{ submission.case_points|floatformat(-3) }}/{{ submission.case_total|floatformat(0) }}
+                {{ submission.points|floatformat(-3) }}/{{ submission.case_total|floatformat(0) }}
                 {% if request.in_contest and submission.contest_or_none %}
                     {% with contest=submission.contest_or_none %}
                         {% set points=contest.points|roundfloat(3) %}
