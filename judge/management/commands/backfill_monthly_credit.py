@@ -1,5 +1,4 @@
 import datetime
-import dateutil
 
 import dateutil.relativedelta
 from django.core.management.base import BaseCommand
