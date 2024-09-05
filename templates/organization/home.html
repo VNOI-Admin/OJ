@@ -104,6 +104,9 @@
                         {% endif %}
                     {% endif %}
                     <br>
+                    <div>
+                        <a href="{{ url('organization_monthly_usage', organization.slug) }}">{{ _('Organization usage') }}</a>
+                    </div>
                     {% if can_edit %}
                         {% if not organization.is_open %}
                             <div>
