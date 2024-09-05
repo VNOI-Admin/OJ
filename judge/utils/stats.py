@@ -49,3 +49,20 @@ def get_stacked_bar_chart(labels, datasets, colors):
             for name, data in datasets.items()
         ],
     }
+
+
+def get_lines_chart(labels, datasets):
+    return {
+        'labels': labels,
+        'datasets': [
+            {
+                'label': name,
+                'type': 'line',
+                'fill': False,
+                'backgroundColor': 'green',
+                'borderColor': 'green',
+                'data': data,
+            }
+            for name, data in datasets.items()
+        ],
+    }

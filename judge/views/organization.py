@@ -23,9 +23,11 @@ from reversion import revisions
 from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
     Problem, Profile
+from judge.models.profile import OrganizationMonthlyUsage
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.ranker import ranker
+from judge.utils.stats import get_lines_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
@@ -563,6 +565,28 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
             _filter |= Q(testers=self.profile)
 
         return _filter & Q(organizations=self.organization)
+
+
+class MonthlyCreditUsageOrganization(TitleMixin, PrivateOrganizationMixin, ListView):
+    model = OrganizationMonthlyUsage
+    template_name = 'organization/usage.html'
+    context_object_name = 'usages'
+
+    def get_queryset(self):
+        return OrganizationMonthlyUsage.objects.filter(organization=self.organization)\
+            .order_by('time').values('time', 'consumed_credit')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = self.organization.name
+
+        usages = context['usages']
+        days = [usage['time'].isoformat() for usage in usages]
+        chart = get_lines_chart(days, {
+            _('Credit usage (hour)'): [round(usage['consumed_credit'] / 60 / 60, 2) for usage in usages],
+        })
+        context['chart'] = chart
+        return context
 
 
 class ContestListOrganization(PrivateOrganizationMixin, ContestList):

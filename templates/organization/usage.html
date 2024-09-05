@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block media %}
+    <style>
+        .post {
+            margin: 0 0.5em;
+        }
+
+        .post:first-child {
+            margin-top: 0.6em;
+        }
+
+        .comment-count {
+            font-size: 12px;
+        }
+
+        .comment-icon {
+            padding: 0.1em 0.2em 0 0.5em;
+        }
+
+        .comment-count-link {
+            color: #555;
+        }
+
+        table.bottom td.left {
+            text-align: left;
+            border-right: none !important;
+            border-top: none !important;
+        }
+
+        table.bottom td.right {
+            text-align: right;
+            border-top: none !important;
+        }
+    </style>
+{% endblock %}
+
+{% block js_media %}
+    {% include "blog/media-js.html" %}
+    {% include "stats/media-js.html" %}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            draw_line_chart({{ chart|tojson }}, $('#org-by-day'), true);
+        });
+    </script>
+{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'home' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+    {% block before_posts %}{% endblock %}
+
+    <table id="stats-table" class="table">
+        <tr>
+            <th colspan="2">{{ _('Organization Monthly Credit usage') }}</th>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div id="org-by-day" style="height: 500px">
+                    <canvas></canvas>
+                </div>
+            </td>
+        </tr>
+    </table>
+{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
+{% endblock %}
