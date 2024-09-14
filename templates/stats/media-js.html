@@ -310,6 +310,10 @@
                                 };
                             }, this);
 
+                            if (opts.hide_total) {
+                                return labels;
+                            }
+
                             const total_suffix = opts.total_suffix || '';
 
                             labels.push({
