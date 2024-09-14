@@ -1,4 +1,3 @@
-import math
 from functools import cached_property
 
 from django import forms
@@ -588,7 +587,7 @@ class MonthlyCreditUsageOrganization(TitleMixin, PublicOrganizationMixin, ListVi
         })
         cost_chart = get_lines_chart(days, {
             _('Cost (thousand vnd)'): [
-                max(0, math.ceil(usage['consumed_credit'] / 60 / 60) - 3) * 50 for usage in usages
+                round(max(0, usage['consumed_credit'] / 60 / 60 - 3) * 50, 3) for usage in usages
             ],
         })
 
