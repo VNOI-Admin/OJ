@@ -40,8 +40,8 @@
     {% include "stats/media-js.html" %}
     <script type="text/javascript">
         $(document).ready(function() {
-            draw_line_chart({{ credit_chart|tojson }}, $('#org-credit'));
-            draw_line_chart({{ cost_chart|tojson }}, $('#org-cost'), {total_suffix: 'k vnd'});
+            draw_line_chart({{ credit_chart|tojson }}, $('#org-credit'), {total_decimals: 2});
+            draw_line_chart({{ cost_chart|tojson }}, $('#org-cost'), {total_suffix: 'k vnd', total_decimals: 0});
         });
     </script>
 {% endblock %}
