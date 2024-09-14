@@ -40,7 +40,8 @@
     {% include "stats/media-js.html" %}
     <script type="text/javascript">
         $(document).ready(function() {
-            draw_line_chart({{ chart|tojson }}, $('#org-by-day'), true);
+            draw_line_chart({{ credit_chart|tojson }}, $('#org-credit'));
+            draw_line_chart({{ cost_chart|tojson }}, $('#org-cost'), {total_suffix: 'k vnd'});
         });
     </script>
 {% endblock %}
@@ -55,12 +56,24 @@
     {% block before_posts %}{% endblock %}
 
     <table id="stats-table" class="table">
+
+        <tr>
+            <th colspan="2">{{ _('Organization Monthly cost') }}</th>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div id="org-cost" style="height: 500px">
+                    <canvas></canvas>
+                </div>
+            </td>
+        </tr>
+
         <tr>
             <th colspan="2">{{ _('Organization Monthly Credit usage') }}</th>
         </tr>
         <tr>
             <td colspan="2">
-                <div id="org-by-day" style="height: 500px">
+                <div id="org-credit" style="height: 500px">
                     <canvas></canvas>
                 </div>
             </td>

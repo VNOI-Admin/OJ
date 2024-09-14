@@ -1,3 +1,4 @@
+import math
 from functools import cached_property
 
 from django import forms
@@ -567,7 +568,7 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         return _filter & Q(organizations=self.organization)
 
 
-class MonthlyCreditUsageOrganization(TitleMixin, PrivateOrganizationMixin, ListView):
+class MonthlyCreditUsageOrganization(TitleMixin, PublicOrganizationMixin, ListView):
     model = OrganizationMonthlyUsage
     template_name = 'organization/usage.html'
     context_object_name = 'usages'
@@ -585,7 +586,14 @@ class MonthlyCreditUsageOrganization(TitleMixin, PrivateOrganizationMixin, ListV
         chart = get_lines_chart(days, {
             _('Credit usage (hour)'): [round(usage['consumed_credit'] / 60 / 60, 2) for usage in usages],
         })
-        context['chart'] = chart
+        cost_chart = get_lines_chart(days, {
+            _('Cost (thousand vnd)'): [
+                max(0, math.ceil(usage['consumed_credit'] / 60 / 60) - 3) * 50 for usage in usages
+            ],
+        })
+
+        context['credit_chart'] = chart
+        context['cost_chart'] = cost_chart
         return context
 
 
