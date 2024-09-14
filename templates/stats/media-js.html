@@ -313,7 +313,7 @@
                             const total_suffix = opts.total_suffix || '';
 
                             labels.push({
-                                text: 'Total: ' + (Number.isInteger(total) ? total : total.toFixed(2)) + total_suffix,
+                                text: 'Total: ' + (opts.total_decimals != undefined ? total.toFixed(opts.total_decimals) : total) + total_suffix,
                                 fillStyle: 'transparent',
                                 strokeStyle: 'transparent',
                                 datasetIndex: -1,
