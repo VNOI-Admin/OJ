@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    <script type="text/javascript">
+        $(function () {
+            $('#id_reason').keydown(function (e) {
+                if (e.ctrlKey && (e.keyCode === 13 || e.keyCode === 10)) {
+                    $(this).closest('form').submit();
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block content %}
+  <h1>{{ title }}</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <p>Hello</p>
+    <button type="submit">{{ _('Request!') }}</button>
+  </form>
+{% endblock %}

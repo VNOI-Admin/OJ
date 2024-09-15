@@ -17,7 +17,7 @@ from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed,
 from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
     preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
-    two_factor, user, widgets
+    two_factor, user, widgets, badge
 from judge.views.magazine import MagazinePage
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
@@ -192,6 +192,10 @@ urlpatterns = [
     ])),
 
     path('user', user.UserAboutPage.as_view(), name='user_page'),
+    path('user', include([
+        path('', user.UserAboutPage.as_view(), name='user_page'),
+        path('/request', badge.RequestAddBadge.as_view(), name='request_badge'),
+    ])),
     path('edit/profile/', user.edit_profile, name='user_edit_profile'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),

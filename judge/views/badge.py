@@ -2,17 +2,14 @@ from django import forms
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponseRedirect
 from django.urls import reverse
-from django.views.generic.detail import (
-    SingleObjectMixin,
-    SingleObjectTemplateResponseMixin,
-)
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from django.core.exceptions import PermissionDenied
 from django.utils.html import format_html
 from django.contrib import messages
+from django.views.generic import DetailView, FormView, View
 
 from judge.models import BadgeRequest, Badge
-from judge.utils.views import TitleMixin, generic_message
+from judge.utils.views import TitleMixin
 
 
 class BadgeRequestForm(forms.ModelForm):
@@ -40,17 +37,11 @@ class BadgeRequestForm(forms.ModelForm):
         return cleaned_data
 
 
-class RequestAddBadge(LoginRequiredMixin, SingleObjectMixin, forms.FormView):
-    template_name = "badge/requests/request.html"
+class RequestAddBadge(LoginRequiredMixin, FormView):
+    template_name = "badge/request.html"
     form_class = BadgeRequestForm
 
     def dispatch(self, request, *args, **kwargs):
-        if BadgeRequest.objects.filter(user=self.request.user, state="P").exists():
-            return generic_message(
-                self.request,
-                _("Can't request a new badge"),
-                _("You already have a pending badge request."),
-            )
         return super(RequestAddBadge, self).dispatch(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -71,9 +62,9 @@ class RequestAddBadge(LoginRequiredMixin, SingleObjectMixin, forms.FormView):
         )
 
 
-class BadgeRequestDetail(LoginRequiredMixin, TitleMixin, forms.DetailView):
+class BadgeRequestDetail(LoginRequiredMixin, TitleMixin, DetailView):
     model = BadgeRequest
-    template_name = "badge/requests/detail.html"
+    template_name = "badge/detail.html"
     title = gettext_lazy("Badge request detail")
     pk_url_kwarg = "rpk"
 
@@ -90,9 +81,7 @@ BadgeRequestFormSet = forms.modelformset_factory(
 )
 
 
-class BadgeRequestBaseView(
-    LoginRequiredMixin, SingleObjectTemplateResponseMixin, SingleObjectMixin, forms.View
-):
+class BadgeRequestBaseView(LoginRequiredMixin, View):
     model = Badge
     tab = None
 
@@ -127,7 +116,7 @@ class BadgeRequestBaseView(
 
 
 class BadgeRequestView(BadgeRequestBaseView):
-    template_name = "badge/requests/pending.html"
+    template_name = "badge/pending.html"
     tab = "pending"
 
     def get_context_data(self, **kwargs):
@@ -174,7 +163,7 @@ class BadgeRequestView(BadgeRequestBaseView):
 class BadgeRequestLog(BadgeRequestBaseView):
     states = ("A", "R")
     tab = "log"
-    template_name = "badge/requests/log.html"
+    template_name = "badge/log.html"
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
