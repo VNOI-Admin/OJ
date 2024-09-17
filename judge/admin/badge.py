@@ -3,7 +3,7 @@ from django.utils.translation import gettext_lazy as _
 
 
 class BadgeRequestAdmin(admin.ModelAdmin):
-    list_display = ("username", "badge", "state", "time")
+    list_display = ("username", "badge", "new_badge_name", "state", "time")
     readonly_fields = ("user", "cert", "desc")
 
     @admin.display(description=_("username"), ordering="user__user__username")

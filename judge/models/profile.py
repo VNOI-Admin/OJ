@@ -734,6 +734,11 @@ class BadgeRequest(models.Model):
         related_name="badge_requests",
         on_delete=models.CASCADE,
     )
+    new_badge_name = models.CharField(
+        max_length=128,
+        verbose_name=_("new badge name"),
+        blank=True,
+    )
     time = models.DateTimeField(verbose_name=_("request time"), auto_now_add=True)
     state = models.CharField(
         max_length=1,

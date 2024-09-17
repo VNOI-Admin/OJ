@@ -39,15 +39,13 @@
         <p><label for="{{ form.badge.id_for_new_badge_name }}"><b>{{ _('Your new badge name:') }}</b></label></p>
         <p>{{ form.new_badge_name }}</p>
     </div>
-    {% if form.errors %}
-        <p style="color: red;">{{form.errors.__all__[0]}}</p>
-    {% endif %}
     <p><label for="{{ form.desc.id_for_desc }}"><b>{{ _('Description:') }}</b></label></p>
     <p>{{ form.desc }}</p>
     <p><label for="{{ form.cert.id_for_cert }}"><b>{{ _('Your certification (only one file in pdf format):') }}</b></label></p>
     <p>{{ form.cert }}</p>
     {% if form.errors %}
-        <p style="color: red;">{{form.errors.cert[0]}}</p>
+        <p style="color: red">{{ _('Please correct the errors below.') }}</p>
+        {{ form.errors}}
     {% endif %}
     <button type="submit">{{ _('Request!') }}</button>
   </form>

@@ -25,11 +25,9 @@ def validate_pdf(value):
 
 
 class BadgeRequestForm(forms.ModelForm):
-    new_badge_name = forms.CharField(required=False, label="New Badge Name")
-
     class Meta:
         model = BadgeRequest
-        fields = ["badge", "desc", "cert"]
+        fields = ["badge", "desc", "cert", "new_badge_name"]
 
     def __init__(self, *args, **kwargs):
         super(BadgeRequestForm, self).__init__(*args, **kwargs)
