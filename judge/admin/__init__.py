@@ -46,6 +46,7 @@ from judge.models import (
     Ticket,
     BadgeRequest,
 )
+from judge.admin.badge import BadgeRequestAdmin
 
 admin.site.register(BlogPost, BlogPostAdmin)
 admin.site.register(Comment, CommentAdmin)
@@ -73,6 +74,6 @@ admin.site.register(Ticket, TicketAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(TagGroup, TagGroupAdmin)
 admin.site.register(TagProblem, TagProblemAdmin)
-admin.site.register(BadgeRequest)
+admin.site.register(BadgeRequest, BadgeRequestAdmin)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)

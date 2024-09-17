@@ -1,6 +1,13 @@
+import os
 from django import forms
+from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponseRedirect
+from django.http import (
+    FileResponse,
+    Http404,
+    HttpResponseForbidden,
+    HttpResponseRedirect,
+)
 from django.urls import reverse
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from django.core.exceptions import PermissionDenied
@@ -193,3 +200,18 @@ class BadgeRequestLog(BadgeRequestBaseView):
         context = super(BadgeRequestLog, self).get_context_data(**kwargs)
         context["requests"] = self.get_requests().filter(state__in=self.states)
         return context
+
+
+def open_certificate(request, filename):
+    # Check if the user is authenticated and an admin
+    if not request.user.is_authenticated or not request.user.is_staff:
+        return HttpResponseForbidden("You do not have permission to view this file.")
+
+    # Path to the PDF file
+    file_path = os.path.join(settings.MEDIA_ROOT, "certificates", filename)
+
+    # Check if the file exists
+    if os.path.exists(file_path):
+        return FileResponse(open(file_path, "rb"), content_type="application/pdf")
+    else:
+        raise Http404("File does not exist")

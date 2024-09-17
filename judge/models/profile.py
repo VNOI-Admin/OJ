@@ -716,6 +716,11 @@ class OrganizationRequest(models.Model):
         verbose_name_plural = _("organization join requests")
 
 
+def validate_pdf(file):
+    if not file.name.endswith(".pdf"):
+        raise ValidationError("Only PDF files are allowed.")
+
+
 class BadgeRequest(models.Model):
     user = models.ForeignKey(
         Profile,
@@ -743,6 +748,7 @@ class BadgeRequest(models.Model):
     cert = models.FileField(
         verbose_name=_("certificate"),
         upload_to="certificates/",
+        validators=[validate_pdf],
     )
 
     class Meta:

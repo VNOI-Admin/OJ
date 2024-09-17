@@ -107,6 +107,7 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('accounts/', include(register_patterns)),
     path('', include('social_django.urls')),
+    path('certificates/<str:filename>', badge.open_certificate, name='open_certificate'),
 
     path('problems', include([
         path('/', problem.ProblemList.as_view(), name='problem_list'),
