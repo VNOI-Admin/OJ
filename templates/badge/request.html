@@ -8,15 +8,47 @@
                     $(this).closest('form').submit();
                 }
             });
+
+            // Function to check the selected value of the badge dropdown
+            function checkBadgeValue() {
+                var badgeValue = $('#id_badge').val();
+                if (badgeValue === "") {
+                    $('#new-badge-name').show();
+                } else {
+                    $('#new-badge-name').hide();
+                }
+            }
+
+            // Initial check on page load
+            checkBadgeValue();
+
+            // Check on change event
+            $('#id_badge').change(function () {
+                checkBadgeValue();
+            });
         });
     </script>
 {% endblock %}
 
-{% block content %}
-  <h1>{{ title }}</h1>
-  <form method="post" enctype="multipart/form-data">
+{% block body %}
+  <form action="" method="post" class="form-area">
     {% csrf_token %}
-    <p>Hello</p>
+    <p><label for="{{ form.badge.id_for_badge }}"><b>{{ _('Badge name:') }}</b></label></p>
+    <p>{{ form.badge }}</p>
+    <div id="new-badge-name">
+        <p><label for="{{ form.badge.id_for_new_badge_name }}"><b>{{ _('Your new badge name:') }}</b></label></p>
+        <p>{{ form.new_badge_name }}</p>
+    </div>
+    {% if form.errors %}
+        <p style="color: red;">{{form.errors.__all__[0]}}</p>
+    {% endif %}
+    <p><label for="{{ form.desc.id_for_desc }}"><b>{{ _('Description:') }}</b></label></p>
+    <p>{{ form.desc }}</p>
+    <p><label for="{{ form.cert.id_for_cert }}"><b>{{ _('Your certification (only one file in pdf format):') }}</b></label></p>
+    <p>{{ form.cert }}</p>
+    {% if form.errors %}
+        <p style="color: red;">{{form.errors.cert[0]}}</p>
+    {% endif %}
     <button type="submit">{{ _('Request!') }}</button>
   </form>
 {% endblock %}

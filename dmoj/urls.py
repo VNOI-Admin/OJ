@@ -195,6 +195,8 @@ urlpatterns = [
     path('user', include([
         path('', user.UserAboutPage.as_view(), name='user_page'),
         path('/request', badge.RequestAddBadge.as_view(), name='request_badge'),
+        path('/request/<int:rpk>', badge.BadgeRequestDetail.as_view(),
+             name='request_badge_detail'),
     ])),
     path('edit/profile/', user.edit_profile, name='user_edit_profile'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),

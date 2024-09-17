@@ -4,6 +4,7 @@ import json
 import secrets
 import struct
 
+from django.forms import ValidationError
 import pyotp
 import webauthn
 from django.conf import settings
@@ -739,7 +740,10 @@ class BadgeRequest(models.Model):
         ),
     )
     desc = models.TextField(verbose_name=_("description"))
-    cert = models.FileField(verbose_name=_("certificate"), upload_to="certificates/")
+    cert = models.FileField(
+        verbose_name=_("certificate"),
+        upload_to="certificates/",
+    )
 
     class Meta:
         verbose_name = _("badge request")

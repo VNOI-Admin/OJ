@@ -12,6 +12,11 @@ from judge.models import BadgeRequest, Badge
 from judge.utils.views import TitleMixin
 
 
+def validate_pdf(value):
+    if not value.name.endswith(".pdf"):
+        raise forms.ValidationError(_("Only PDF files are allowed."))
+
+
 class BadgeRequestForm(forms.ModelForm):
     new_badge_name = forms.CharField(required=False, label="New Badge Name")
 
@@ -28,11 +33,20 @@ class BadgeRequestForm(forms.ModelForm):
         cleaned_data = super().clean()
         badge = cleaned_data.get("badge")
         new_badge_name = cleaned_data.get("new_badge_name")
+        cert = cleaned_data.get("cert")
 
         if not badge and not new_badge_name:
             raise forms.ValidationError(
                 "You must select an existing badge or enter a new badge name."
             )
+
+        if badge:
+            cleaned_data["badge"] = badge
+
+        if cert:
+            validate_pdf(cert)
+        else:
+            raise forms.ValidationError("The certificate field is required.")
 
         return cleaned_data
 
@@ -57,9 +71,14 @@ class RequestAddBadge(LoginRequiredMixin, FormView):
         badge_request.cert = form.cleaned_data["cert"]
         badge_request.state = "P"
         badge_request.save()
+        print("Form is valid. Redirecting...")
         return HttpResponseRedirect(
-            reverse("badge_request_detail", args=(badge_request.id,))
+            reverse("request_badge_detail", args=(badge_request.id,))
         )
+
+    def form_invalid(self, form):
+        print("Form is invalid. Errors:", form.errors)
+        return super().form_invalid(form)
 
 
 class BadgeRequestDetail(LoginRequiredMixin, TitleMixin, DetailView):
