@@ -15,7 +15,7 @@ from django.utils.html import format_html
 from django.contrib import messages
 from django.views.generic import DetailView, FormView, View
 
-from judge.models import BadgeRequest, Badge
+from judge.models import BadgeRequest, Badge, Profile
 from judge.utils.views import TitleMixin
 
 
@@ -33,25 +33,18 @@ class BadgeRequestForm(forms.ModelForm):
         super(BadgeRequestForm, self).__init__(*args, **kwargs)
         self.fields["badge"].queryset = Badge.objects.all()
         self.fields["badge"].required = False
+        self.fields["cert"].widget.attrs.update({"accept": "application/pdf"})
+        self.fields["cert"].validators.append(validate_pdf)
 
     def clean(self):
         cleaned_data = super().clean()
         badge = cleaned_data.get("badge")
         new_badge_name = cleaned_data.get("new_badge_name")
-        cert = cleaned_data.get("cert")
 
         if not badge and not new_badge_name:
             raise forms.ValidationError(
                 "You must select an existing badge or enter a new badge name."
             )
-
-        if badge:
-            cleaned_data["badge"] = badge
-
-        if cert:
-            validate_pdf(cert)
-        else:
-            raise forms.ValidationError("The certificate field is required.")
 
         return cleaned_data
 
@@ -70,19 +63,18 @@ class RequestAddBadge(LoginRequiredMixin, FormView):
 
     def form_valid(self, form):
         badge_request = BadgeRequest()
-        badge_request.user = self.request.user
+        badge_request.user = Profile.objects.get(user=self.request.user)
         badge_request.badge = form.cleaned_data["badge"]
         badge_request.desc = form.cleaned_data["desc"]
         badge_request.cert = form.cleaned_data["cert"]
+        badge_request.new_badge_name = form.cleaned_data["new_badge_name"]
         badge_request.state = "P"
         badge_request.save()
-        print("Form is valid. Redirecting...")
         return HttpResponseRedirect(
             reverse("request_badge_detail", args=(badge_request.id,))
         )
 
     def form_invalid(self, form):
-        print("Form is invalid. Errors:", form.errors)
         return super().form_invalid(form)
 
 

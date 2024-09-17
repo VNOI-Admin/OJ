@@ -21,6 +21,7 @@ from django.utils.translation import gettext_lazy as _
 from fernet_fields import EncryptedCharField
 from pyotp.utils import strings_equal
 from sortedm2m.fields import SortedManyToManyField
+from django.core.validators import FileExtensionValidator
 
 from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, SITE_THEMES, TIMEZONE
 from judge.models.runtime import Language
@@ -733,6 +734,7 @@ class BadgeRequest(models.Model):
         verbose_name=_("badge"),
         related_name="badge_requests",
         on_delete=models.CASCADE,
+        null=True,
     )
     new_badge_name = models.CharField(
         max_length=128,
@@ -751,11 +753,21 @@ class BadgeRequest(models.Model):
     )
     desc = models.TextField(verbose_name=_("description"))
     cert = models.FileField(
-        verbose_name=_("certificate"),
-        upload_to="certificates/",
-        validators=[validate_pdf],
+        verbose_name=_("Certificate"),
+        upload_to="certificates",
+        validators=[
+            FileExtensionValidator(allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS)
+        ],
     )
 
     class Meta:
         verbose_name = _("badge request")
         verbose_name_plural = _("badge requests")
+
+    def __str__(self):
+        badge_name = (
+            self.badge.name
+            if self.badge and self.badge.name
+            else self.new_badge_name if self.new_badge_name else "No Badge"
+        )
+        return f"{self.user.user.username} - {badge_name} - {self.get_state_display()}"
