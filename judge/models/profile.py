@@ -4,14 +4,14 @@ import json
 import secrets
 import struct
 
-from django.forms import ValidationError
 import pyotp
 import webauthn
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.validators import RegexValidator
+from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models
 from django.db.models import F, Max, Sum
+from django.forms import ValidationError
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -21,7 +21,6 @@ from django.utils.translation import gettext_lazy as _
 from fernet_fields import EncryptedCharField
 from pyotp.utils import strings_equal
 from sortedm2m.fields import SortedManyToManyField
-from django.core.validators import FileExtensionValidator
 
 from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, SITE_THEMES, TIMEZONE
 from judge.models.runtime import Language
@@ -30,11 +29,11 @@ from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
 
 __all__ = [
-    "Organization",
-    "OrganizationMonthlyUsage",
-    "Profile",
-    "OrganizationRequest",
-    "WebAuthnCredential",
+    'Organization',
+    'OrganizationMonthlyUsage',
+    'Profile',
+    'OrganizationRequest',
+    'WebAuthnCredential',
 ]
 
 
@@ -46,67 +45,68 @@ class EncryptedNullCharField(EncryptedCharField):
 
 
 class Organization(models.Model):
-    name = models.CharField(max_length=128, verbose_name=_("organization title"))
+    name = models.CharField(
+        max_length=128, verbose_name=_('organization title'))
     slug = models.SlugField(
         max_length=128,
-        verbose_name=_("organization slug"),
-        help_text=_("Organization name shown in URLs."),
+        verbose_name=_('organization slug'),
+        help_text=_('Organization name shown in URLs.'),
         validators=[
             RegexValidator(
-                r"^[a-zA-Z]", _("Organization slugs must begin with a letter.")
-            )
+                r'^[a-zA-Z]', _('Organization slugs must begin with a letter.'),
+            ),
         ],
         unique=True,
     )
     short_name = models.CharField(
         max_length=20,
-        verbose_name=_("short name"),
-        help_text=_("Displayed beside user name during contests."),
+        verbose_name=_('short name'),
+        help_text=_('Displayed beside user name during contests.'),
     )
-    about = models.TextField(verbose_name=_("organization description"))
+    about = models.TextField(verbose_name=_('organization description'))
     admins = models.ManyToManyField(
-        "Profile",
-        verbose_name=_("administrators"),
-        related_name="admin_of",
-        help_text=_("Those who can edit this organization."),
+        'Profile',
+        verbose_name=_('administrators'),
+        related_name='admin_of',
+        help_text=_('Those who can edit this organization.'),
     )
     creation_date = models.DateTimeField(
-        verbose_name=_("creation date"), auto_now_add=True
+        verbose_name=_('creation date'), auto_now_add=True,
     )
     is_open = models.BooleanField(
-        verbose_name=_("is open organization?"),
-        help_text=_("Allow joining organization."),
+        verbose_name=_('is open organization?'),
+        help_text=_('Allow joining organization.'),
         default=False,
     )
     is_unlisted = models.BooleanField(
-        verbose_name=_("is unlisted organization?"),
-        help_text=_("Organization will not be listed"),
+        verbose_name=_('is unlisted organization?'),
+        help_text=_('Organization will not be listed'),
         default=True,
     )
     slots = models.IntegerField(
-        verbose_name=_("maximum size"),
+        verbose_name=_('maximum size'),
         null=True,
         blank=True,
         help_text=_(
-            "Maximum amount of users in this organization, "
-            "only applicable to private organizations."
+            'Maximum amount of users in this organization, '
+            'only applicable to private organizations.',
         ),
     )
     access_code = models.CharField(
         max_length=7,
-        help_text=_("Student access code."),
-        verbose_name=_("access code"),
+        help_text=_('Student access code.'),
+        verbose_name=_('access code'),
         null=True,
         blank=True,
     )
     logo_override_image = models.CharField(
-        verbose_name=_("logo override image"),
-        default="",
+        verbose_name=_('logo override image'),
+        default='',
         max_length=150,
         blank=True,
         help_text=_(
-            "This image will replace the default site logo for users "
-            "viewing the organization."
+            'This image will replace the default site logo for users '
+            'viewing the organization.',
         ),
     )
     performance_points = models.FloatField(default=0)
@@ -119,8 +119,8 @@ class Organization(models.Model):
     def calculate_points(self, table=_pp_table):
         data = (
             self.members.get_queryset()
-            .order_by("-performance_points")
-            .values_list("performance_points", flat=True)
+            .order_by('-performance_points')
+            .values_list('performance_points', flat=True)
             .filter(performance_points__gt=0)
         )
         pp = settings.VNOJ_ORG_PP_SCALE * sum(
@@ -128,7 +128,7 @@ class Organization(models.Model):
         )
         if not float_compare_equal(self.performance_points, pp):
             self.performance_points = pp
-            self.save(update_fields=["performance_points"])
+            self.save(update_fields=['performance_points'])
         return pp
 
     def on_user_changes(self):
@@ -136,7 +136,7 @@ class Organization(models.Model):
         member_count = self.members.count()
         if self.member_count != member_count:
             self.member_count = member_count
-            self.save(update_fields=["member_count"])
+            self.save(update_fields=['member_count'])
 
     @cached_property
     def admins_list(self):
@@ -154,50 +154,52 @@ class Organization(models.Model):
             return self.members.filter(id=item.id).exists()
         else:
             raise TypeError(
-                "Organization membership test must be Profile or primary key."
+                'Organization membership test must be Profile or primary key.',
             )
 
     def __str__(self):
         return self.name
 
     def get_absolute_url(self):
-        return reverse("organization_home", args=[self.slug])
+        return reverse('organization_home', args=[self.slug])
 
     def get_users_url(self):
-        return reverse("organization_users", args=[self.slug])
+        return reverse('organization_users', args=[self.slug])
 
     class Meta:
-        ordering = ["name"]
+        ordering = ['name']
         permissions = (
-            ("organization_admin", _("Administer organizations")),
-            ("edit_all_organization", _("Edit all organizations")),
-            ("change_open_organization", _("Change is_open field")),
-            ("spam_organization", _("Create organization without limit")),
+            ('organization_admin', _('Administer organizations')),
+            ('edit_all_organization', _('Edit all organizations')),
+            ('change_open_organization', _('Change is_open field')),
+            ('spam_organization', _('Create organization without limit')),
         )
-        verbose_name = _("organization")
-        verbose_name_plural = _("organizations")
+        verbose_name = _('organization')
+        verbose_name_plural = _('organizations')
 
 
 class OrganizationMonthlyUsage(models.Model):
     organization = models.ForeignKey(
         Organization,
-        verbose_name=_("organization"),
-        related_name="monthly_usages",
+        verbose_name=_('organization'),
+        related_name='monthly_usages',
         on_delete=models.CASCADE,
     )
-    time = models.DateField(verbose_name=_("time"))
-    consumed_credit = models.FloatField(verbose_name=_("consumed credit"), default=0)
+    time = models.DateField(verbose_name=_('time'))
+    consumed_credit = models.FloatField(
+        verbose_name=_('consumed credit'), default=0)
 
     class Meta:
-        verbose_name = _("organization monthly usage")
-        verbose_name_plural = _("organization monthly usages")
-        unique_together = ("organization", "time")
+        verbose_name = _('organization monthly usage')
+        verbose_name_plural = _('organization monthly usages')
+        unique_together = ('organization', 'time')
 
 
 class Badge(models.Model):
-    name = models.CharField(max_length=128, verbose_name=_("badge name"))
-    mini = models.URLField(verbose_name=_("mini badge URL"), blank=True)
-    full_size = models.URLField(verbose_name=_("full size badge URL"), blank=True)
+    name = models.CharField(max_length=128, verbose_name=_('badge name'))
+    mini = models.URLField(verbose_name=_('mini badge URL'), blank=True)
+    full_size = models.URLField(verbose_name=_(
+        'full size badge URL'), blank=True)
 
     def __str__(self):
         return self.name
@@ -205,18 +207,19 @@ class Badge(models.Model):
 
 class Profile(models.Model):
     user = models.OneToOneField(
-        User, verbose_name=_("user associated"), on_delete=models.CASCADE
+        User, verbose_name=_('user associated'), on_delete=models.CASCADE,
     )
-    about = models.TextField(verbose_name=_("self-description"), null=True, blank=True)
+    about = models.TextField(verbose_name=_(
+        'self-description'), null=True, blank=True)
     timezone = models.CharField(
         max_length=50,
-        verbose_name=_("time zone"),
+        verbose_name=_('time zone'),
         choices=TIMEZONE,
         default=settings.DEFAULT_USER_TIME_ZONE,
     )
     language = models.ForeignKey(
-        "Language",
-        verbose_name=_("preferred language"),
+        'Language',
+        verbose_name=_('preferred language'),
         on_delete=models.SET_DEFAULT,
         default=Language.get_default_language_pk,
     )
@@ -226,143 +229,148 @@ class Profile(models.Model):
     vnoj_points = models.IntegerField(default=0)
     problem_count = models.IntegerField(default=0)
     ace_theme = models.CharField(
-        max_length=30, verbose_name=_("Ace theme"), choices=ACE_THEMES, default="auto"
+        max_length=30, verbose_name=_('Ace theme'), choices=ACE_THEMES, default='auto',
     )
     site_theme = models.CharField(
         max_length=10,
-        verbose_name=_("site theme"),
+        verbose_name=_('site theme'),
         choices=SITE_THEMES,
-        default="light",
+        default='light',
     )
-    last_access = models.DateTimeField(verbose_name=_("last access time"), default=now)
-    ip = models.GenericIPAddressField(verbose_name=_("last IP"), blank=True, null=True)
+    last_access = models.DateTimeField(
+        verbose_name=_('last access time'), default=now)
+    ip = models.GenericIPAddressField(
+        verbose_name=_('last IP'), blank=True, null=True)
     ip_auth = models.GenericIPAddressField(
-        verbose_name=_("IP-based authentication"), unique=True, blank=True, null=True
+        verbose_name=_('IP-based authentication'), unique=True, blank=True, null=True,
     )
     badges = models.ManyToManyField(
-        Badge, verbose_name=_("badges"), blank=True, related_name="users"
+        Badge, verbose_name=_('badges'), blank=True, related_name='users',
     )
     display_badge = models.ForeignKey(
-        Badge, verbose_name=_("display badge"), null=True, on_delete=models.SET_NULL
+        Badge, verbose_name=_('display badge'), null=True, on_delete=models.SET_NULL,
     )
     organizations = SortedManyToManyField(
         Organization,
-        verbose_name=_("organization"),
+        verbose_name=_('organization'),
         blank=True,
-        related_name="members",
-        related_query_name="member",
+        related_name='members',
+        related_query_name='member',
     )
     display_rank = models.CharField(
         max_length=10,
-        default="user",
-        verbose_name=_("display rank"),
+        default='user',
+        verbose_name=_('display rank'),
         choices=settings.VNOJ_DISPLAY_RANKS,
     )
     mute = models.BooleanField(
-        verbose_name=_("comment mute"),
-        help_text=_("Some users are at their best when silent."),
+        verbose_name=_('comment mute'),
+        help_text=_('Some users are at their best when silent.'),
         default=False,
     )
     is_unlisted = models.BooleanField(
-        verbose_name=_("unlisted user"),
-        help_text=_("User will not be ranked."),
+        verbose_name=_('unlisted user'),
+        help_text=_('User will not be ranked.'),
         default=False,
     )
     ban_reason = models.TextField(
-        null=True, blank=True, help_text=_("Show to banned user in login page.")
+        null=True, blank=True, help_text=_('Show to banned user in login page.'),
     )
     allow_tagging = models.BooleanField(
-        verbose_name=_("Allow tagging"),
-        help_text=_("User will be allowed to tag problems."),
+        verbose_name=_('Allow tagging'),
+        help_text=_('User will be allowed to tag problems.'),
         default=True,
     )
     rating = models.IntegerField(null=True, default=None)
     user_script = models.TextField(
-        verbose_name=_("user script"),
-        default="",
+        verbose_name=_('user script'),
+        default='',
         blank=True,
         max_length=65536,
-        help_text=_("User-defined JavaScript for site customization."),
+        help_text=_('User-defined JavaScript for site customization.'),
     )
     current_contest = models.OneToOneField(
-        "ContestParticipation",
-        verbose_name=_("current contest"),
+        'ContestParticipation',
+        verbose_name=_('current contest'),
         null=True,
         blank=True,
-        related_name="+",
+        related_name='+',
         on_delete=models.SET_NULL,
     )
     math_engine = models.CharField(
-        verbose_name=_("math engine"),
+        verbose_name=_('math engine'),
         choices=MATH_ENGINES_CHOICES,
         max_length=4,
         default=settings.MATHOID_DEFAULT_TYPE,
-        help_text=_("The rendering engine used to render math."),
+        help_text=_('The rendering engine used to render math.'),
     )
     is_totp_enabled = models.BooleanField(
-        verbose_name=_("TOTP 2FA enabled"),
+        verbose_name=_('TOTP 2FA enabled'),
         default=False,
-        help_text=_("Check to enable TOTP-based two-factor authentication."),
+        help_text=_('Check to enable TOTP-based two-factor authentication.'),
     )
     is_webauthn_enabled = models.BooleanField(
-        verbose_name=_("WebAuthn 2FA enabled"),
+        verbose_name=_('WebAuthn 2FA enabled'),
         default=False,
-        help_text=_("Check to enable WebAuthn-based two-factor authentication."),
+        help_text=_(
+            'Check to enable WebAuthn-based two-factor authentication.'),
     )
     totp_key = EncryptedNullCharField(
         max_length=32,
         null=True,
         blank=True,
-        verbose_name=_("TOTP key"),
-        help_text=_("32-character Base32-encoded key for TOTP."),
+        verbose_name=_('TOTP key'),
+        help_text=_('32-character Base32-encoded key for TOTP.'),
         validators=[
-            RegexValidator("^$|^[A-Z2-7]{32}$", _("TOTP key must be empty or Base32."))
+            RegexValidator('^$|^[A-Z2-7]{32}$',
+                           _('TOTP key must be empty or Base32.')),
         ],
     )
     scratch_codes = EncryptedNullCharField(
         max_length=255,
         null=True,
         blank=True,
-        verbose_name=_("scratch codes"),
+        verbose_name=_('scratch codes'),
         help_text=_(
-            "JSON array of 16-character Base32-encoded codes " "for scratch codes."
+            'JSON array of 16-character Base32-encoded codes " "for scratch codes.',
         ),
         validators=[
             RegexValidator(
-                r'^(\[\])?$|^\[("[A-Z0-9]{16}", *)*"[A-Z0-9]{16}"\]$',
+                r"^(\[\])?$|^\[('[A-Z0-9]{16}', *)*'[A-Z0-9]{16}'\]$",
                 _(
-                    "Scratch codes must be empty or a JSON array of "
-                    "16-character Base32 codes."
+                    'Scratch codes must be empty or a JSON array of '
+                    '16-character Base32 codes.',
                 ),
-            )
+            ),
         ],
     )
     last_totp_timecode = models.IntegerField(
-        verbose_name=_("last TOTP timecode"), default=0
+        verbose_name=_('last TOTP timecode'), default=0,
     )
     api_token = models.CharField(
         max_length=64,
         null=True,
-        verbose_name=_("API token"),
-        help_text=_("64-character hex-encoded API access token."),
+        verbose_name=_('API token'),
+        help_text=_('64-character hex-encoded API access token.'),
         validators=[
-            RegexValidator("^[a-f0-9]{64}$", _("API token must be None or hexadecimal"))
+            RegexValidator(
+                '^[a-f0-9]{64}$', _('API token must be None or hexadecimal')),
         ],
     )
     notes = models.TextField(
-        verbose_name=_("internal notes"),
+        verbose_name=_('internal notes'),
         null=True,
         blank=True,
-        help_text=_("Notes for administrators regarding this user."),
+        help_text=_('Notes for administrators regarding this user.'),
     )
     data_last_downloaded = models.DateTimeField(
-        verbose_name=_("last data download time"), null=True, blank=True
+        verbose_name=_('last data download time'), null=True, blank=True,
     )
     username_display_override = models.CharField(
         max_length=100,
         blank=True,
-        verbose_name=_("display name override"),
-        help_text=_("Name displayed in place of username."),
+        verbose_name=_('display name override'),
+        help_text=_('Name displayed in place of username.'),
     )
 
     @cached_property
@@ -394,31 +402,26 @@ class Profile(models.Model):
         return not self.user.is_active and self.ban_reason is not None
 
     def can_be_banned_by(self, staff):
-        return (
-            self.user != staff
-            and not self.user.is_superuser
-            and staff.has_perm("judge.ban_user")
-        )
+        return (self.user != staff and not self.user.is_superuser and staff.has_perm('judge.ban_user'))
 
     @cached_property
     def can_tag_problems(self):
         if self.allow_tagging:
-            if self.user.has_perm("judge.add_tagproblem"):
+            if self.user.has_perm('judge.add_tagproblem'):
                 return True
             if (
-                self.rating is not None
-                and self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING
+                self.rating is not None and self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING
             ):
                 return True
         return False
 
     @cached_property
     def resolved_ace_theme(self):
-        if self.ace_theme != "auto":
+        if self.ace_theme != 'auto':
             return self.ace_theme
-        if not self.user.has_perm("judge.test_site"):
-            return settings.DMOJ_THEME_DEFAULT_ACE_THEME.get("light")
-        if self.site_theme != "auto":
+        if not self.user.has_perm('judge.test_site'):
+            return settings.DMOJ_THEME_DEFAULT_ACE_THEME.get('light')
+        if self.site_theme != 'auto':
             return settings.DMOJ_THEME_DEFAULT_ACE_THEME.get(self.site_theme)
         # This must be resolved client-side using prefers-color-scheme.
         return None
@@ -426,10 +429,12 @@ class Profile(models.Model):
     @cached_property
     def registered_contest_ids(self):
         return set(
-            self.contest_history.filter(virtual=0).values_list("contest_id", flat=True)
+            self.contest_history.filter(
+                virtual=0).values_list('contest_id', flat=True),
         )
 
-    _pp_table = [pow(settings.DMOJ_PP_STEP, i) for i in range(settings.DMOJ_PP_ENTRIES)]
+    _pp_table = [pow(settings.DMOJ_PP_STEP, i)
+                 for i in range(settings.DMOJ_PP_ENTRIES)]
 
     def calculate_points(self, table=_pp_table):
         from judge.models import Problem
@@ -437,11 +442,11 @@ class Profile(models.Model):
         public_problems = Problem.get_public_problems()
         data = (
             public_problems.filter(
-                submission__user=self, submission__points__isnull=False
+                submission__user=self, submission__points__isnull=False,
             )
-            .annotate(max_points=Max("submission__points"))
-            .order_by("-max_points")
-            .values_list("max_points", flat=True)
+            .annotate(max_points=Max('submission__points'))
+            .order_by('-max_points')
+            .values_list('max_points', flat=True)
             .filter(max_points__gt=0)
         )
         bonus_function = settings.DMOJ_PP_BONUS_FUNCTION
@@ -449,23 +454,24 @@ class Profile(models.Model):
         problems = (
             public_problems.filter(
                 submission__user=self,
-                submission__result="AC",
-                submission__case_points__gte=F("submission__case_total"),
+                submission__result='AC',
+                submission__case_points__gte=F('submission__case_total'),
             )
-            .values("id")
+            .values('id')
             .distinct()
             .count()
         )
         pp = sum(x * y for x, y in zip(table, data)) + bonus_function(problems)
         if (
-            not float_compare_equal(self.points, points)
-            or problems != self.problem_count
-            or not float_compare_equal(self.performance_points, pp)
+            not float_compare_equal(self.points, points) or
+            problems != self.problem_count or not
+            float_compare_equal(self.performance_points, pp)
         ):
             self.points = points
             self.problem_count = problems
             self.performance_points = pp
-            self.save(update_fields=["points", "problem_count", "performance_points"])
+            self.save(update_fields=[
+                      'points', 'problem_count', 'performance_points'])
             for org in self.organizations.get_queryset():
                 org.calculate_points()
         return points
@@ -481,28 +487,28 @@ class Profile(models.Model):
         # Please note that `0 or X` will return None if X is None
         total_comment_scores = (
             Comment.objects.filter(author=self.id, hidden=False).aggregate(
-                sum=Sum("score")
-            )["sum"]
-            or 0
+                sum=Sum('score'),
+            )['sum'] or 0
         )
         total_blog_scores = (
             BlogPost.objects.filter(
-                authors=self.id, visible=True, organization=None
-            ).aggregate(sum=Sum("score"))["sum"]
-            or 0
+                authors=self.id, visible=True, organization=None,
+            ).aggregate(sum=Sum('score'))['sum'] or 0
         )
         count_good_tickets = Ticket.objects.filter(
-            user=self.id, is_contributive=True
+            user=self.id, is_contributive=True,
         ).count()
-        count_suggested_problem = self.suggested_problems.filter(is_public=True).count()
+        count_suggested_problem = self.suggested_problems.filter(
+            is_public=True).count()
         new_pp = (
-            (total_comment_scores + total_blog_scores) * settings.VNOJ_CP_COMMENT
-            + count_good_tickets * settings.VNOJ_CP_TICKET
-            + count_suggested_problem * settings.VNOJ_CP_PROBLEM
+            (total_comment_scores + total_blog_scores) *
+            settings.VNOJ_CP_COMMENT +
+            count_good_tickets * settings.VNOJ_CP_TICKET +
+            count_suggested_problem * settings.VNOJ_CP_PROBLEM
         )
         if new_pp != old_pp:
             self.contribution_points = new_pp
-            self.save(update_fields=["contribution_points"])
+            self.save(update_fields=['contribution_points'])
         return new_pp
 
     calculate_contribution_points.alters_data = True
@@ -511,7 +517,7 @@ class Profile(models.Model):
         # this is just for testing the contribution
         # we should not use this function to update contribution points
         self.contribution_points += delta
-        self.save(update_fields=["contribution_points"])
+        self.save(update_fields=['contribution_points'])
         return self.contribution_points
 
     update_contribution_points.alters_data = True
@@ -519,25 +525,26 @@ class Profile(models.Model):
     def generate_api_token(self):
         secret = secrets.token_bytes(32)
         self.api_token = hmac.new(
-            force_bytes(settings.SECRET_KEY), msg=secret, digestmod="sha256"
+            force_bytes(settings.SECRET_KEY), msg=secret, digestmod='sha256',
         ).hexdigest()
-        self.save(update_fields=["api_token"])
-        token = base64.urlsafe_b64encode(struct.pack(">I32s", self.user.id, secret))
-        return token.decode("utf-8")
+        self.save(update_fields=['api_token'])
+        token = base64.urlsafe_b64encode(
+            struct.pack('>I32s', self.user.id, secret))
+        return token.decode('utf-8')
 
     generate_api_token.alters_data = True
 
     def generate_scratch_codes(self):
         def generate_scratch_code():
-            return "".join(
-                secrets.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZ234567") for _ in range(16)
+            return ''.join(
+                secrets.choice('ABCDEFGHIJKLMNOPQRSTUVWXYZ234567') for _ in range(16)
             )
 
         codes = [
             generate_scratch_code() for _ in range(settings.DMOJ_SCRATCH_CODES_COUNT)
         ]
         self.scratch_codes = json.dumps(codes)
-        self.save(update_fields=["scratch_codes"])
+        self.save(update_fields=['scratch_codes'])
         return codes
 
     generate_scratch_codes.alters_data = True
@@ -565,11 +572,11 @@ class Profile(models.Model):
             now_timecode - settings.DMOJ_TOTP_TOLERANCE_HALF_MINUTES,
         )
         for timecode in range(
-            min_timecode, now_timecode + settings.DMOJ_TOTP_TOLERANCE_HALF_MINUTES + 1
+            min_timecode, now_timecode + settings.DMOJ_TOTP_TOLERANCE_HALF_MINUTES + 1,
         ):
             if strings_equal(code, totp.generate_otp(timecode)):
                 self.last_totp_timecode = timecode
-                self.save(update_fields=["last_totp_timecode"])
+                self.save(update_fields=['last_totp_timecode'])
                 return True
         return False
 
@@ -577,39 +584,40 @@ class Profile(models.Model):
 
     def ban_user(self, reason):
         self.ban_reason = reason
-        self.display_rank = "banned"
+        self.display_rank = 'banned'
         self.is_unlisted = True
-        self.save(update_fields=["ban_reason", "display_rank", "is_unlisted"])
+        self.save(update_fields=['ban_reason', 'display_rank', 'is_unlisted'])
 
         self.user.is_active = False
-        self.user.save(update_fields=["is_active"])
+        self.user.save(update_fields=['is_active'])
 
     ban_user.alters_data = True
 
     def unban_user(self):
         self.ban_reason = None
-        self.display_rank = Profile._meta.get_field("display_rank").get_default()
+        self.display_rank = Profile._meta.get_field(
+            'display_rank').get_default()
         self.is_unlisted = False
-        self.save(update_fields=["ban_reason", "display_rank", "is_unlisted"])
+        self.save(update_fields=['ban_reason', 'display_rank', 'is_unlisted'])
 
         self.user.is_active = True
-        self.user.save(update_fields=["is_active"])
+        self.user.save(update_fields=['is_active'])
 
     unban_user.alters_data = True
 
     def get_absolute_url(self):
-        return reverse("user_page", args=(self.user.username,))
+        return reverse('user_page', args=(self.user.username,))
 
     def __str__(self):
         return self.user.username
 
     @classmethod
     def get_user_css_class(
-        cls, display_rank, rating, rating_colors=settings.DMOJ_RATING_COLORS
+        cls, display_rank, rating, rating_colors=settings.DMOJ_RATING_COLORS,
     ):
         if rating_colors:
-            return "rating %s %s" % (
-                rating_class(rating) if rating is not None else "rate-none",
+            return 'rating %s %s' % (
+                rating_class(rating) if rating is not None else 'rate-none',
                 display_rank,
             )
         return display_rank
@@ -622,47 +630,47 @@ class Profile(models.Model):
     def webauthn_id(self):
         return hmac.new(
             force_bytes(settings.SECRET_KEY),
-            msg=b"webauthn:%d" % (self.id,),
-            digestmod="sha256",
+            msg=b'webauthn:%d' % (self.id,),
+            digestmod='sha256',
         ).digest()
 
     class Meta:
         permissions = (
-            ("test_site", _("Shows in-progress development stuff")),
-            ("totp", _("Edit TOTP settings")),
-            ("can_upload_image", _("Can upload image directly to server via martor")),
-            ("high_problem_timelimit", _("Can set high problem timelimit")),
-            ("long_contest_duration", _("Can set long contest duration")),
+            ('test_site', _('Shows in-progress development stuff')),
+            ('totp', _('Edit TOTP settings')),
+            ('can_upload_image', _('Can upload image directly to server via martor')),
+            ('high_problem_timelimit', _('Can set high problem timelimit')),
+            ('long_contest_duration', _('Can set long contest duration')),
             (
-                "create_mass_testcases",
-                _("Can create unlimitted number of testcases for a problem"),
+                'create_mass_testcases',
+                _('Can create unlimitted number of testcases for a problem'),
             ),
-            ("ban_user", _("Ban users")),
+            ('ban_user', _('Ban users')),
         )
-        verbose_name = _("user profile")
-        verbose_name_plural = _("user profiles")
+        verbose_name = _('user profile')
+        verbose_name_plural = _('user profiles')
 
         indexes = [
-            models.Index(fields=("is_unlisted", "-performance_points")),
-            models.Index(fields=("is_unlisted", "-contribution_points")),
-            models.Index(fields=("is_unlisted", "-rating")),
-            models.Index(fields=("is_unlisted", "-problem_count")),
+            models.Index(fields=('is_unlisted', '-performance_points')),
+            models.Index(fields=('is_unlisted', '-contribution_points')),
+            models.Index(fields=('is_unlisted', '-rating')),
+            models.Index(fields=('is_unlisted', '-problem_count')),
         ]
 
 
 class WebAuthnCredential(models.Model):
     user = models.ForeignKey(
         Profile,
-        verbose_name=_("user"),
-        related_name="webauthn_credentials",
+        verbose_name=_('user'),
+        related_name='webauthn_credentials',
         on_delete=models.CASCADE,
     )
-    name = models.CharField(verbose_name=_("device name"), max_length=100)
+    name = models.CharField(verbose_name=_('device name'), max_length=100)
     cred_id = models.CharField(
-        verbose_name=_("credential ID"), max_length=255, unique=True
+        verbose_name=_('credential ID'), max_length=255, unique=True,
     )
-    public_key = models.TextField(verbose_name=_("public key"))
-    counter = models.BigIntegerField(verbose_name=_("sign counter"))
+    public_key = models.TextField(verbose_name=_('public key'))
+    counter = models.BigIntegerField(verbose_name=_('sign counter'))
 
     @cached_property
     def webauthn_user(self):
@@ -680,94 +688,97 @@ class WebAuthnCredential(models.Model):
         )
 
     def __str__(self):
-        return _("WebAuthn credential: %(name)s") % {"name": self.name}
+        return _('WebAuthn credential: %(name)s') % {'name': self.name}
 
     class Meta:
-        verbose_name = _("WebAuthn credential")
-        verbose_name_plural = _("WebAuthn credentials")
+        verbose_name = _('WebAuthn credential')
+        verbose_name_plural = _('WebAuthn credentials')
 
 
 class OrganizationRequest(models.Model):
     user = models.ForeignKey(
         Profile,
-        verbose_name=_("user"),
-        related_name="requests",
+        verbose_name=_('user'),
+        related_name='requests',
         on_delete=models.CASCADE,
     )
     organization = models.ForeignKey(
         Organization,
-        verbose_name=_("organization"),
-        related_name="requests",
+        verbose_name=_('organization'),
+        related_name='requests',
         on_delete=models.CASCADE,
     )
-    time = models.DateTimeField(verbose_name=_("request time"), auto_now_add=True)
+    time = models.DateTimeField(verbose_name=_(
+        'request time'), auto_now_add=True)
     state = models.CharField(
         max_length=1,
-        verbose_name=_("state"),
+        verbose_name=_('state'),
         choices=(
-            ("P", _("Pending")),
-            ("A", _("Approved")),
-            ("R", _("Rejected")),
+            ('P', _('Pending')),
+            ('A', _('Approved')),
+            ('R', _('Rejected')),
         ),
     )
-    reason = models.TextField(verbose_name=_("reason"))
+    reason = models.TextField(verbose_name=_('reason'))
 
     class Meta:
-        verbose_name = _("organization join request")
-        verbose_name_plural = _("organization join requests")
+        verbose_name = _('organization join request')
+        verbose_name_plural = _('organization join requests')
 
 
 def validate_pdf(file):
-    if not file.name.endswith(".pdf"):
-        raise ValidationError("Only PDF files are allowed.")
+    if not file.name.endswith('.pdf'):
+        raise ValidationError('Only PDF files are allowed.')
 
 
 class BadgeRequest(models.Model):
     user = models.ForeignKey(
         Profile,
-        verbose_name=_("user"),
-        related_name="badge_requests",
+        verbose_name=_('user'),
+        related_name='badge_requests',
         on_delete=models.CASCADE,
     )
     badge = models.ForeignKey(
         Badge,
-        verbose_name=_("badge"),
-        related_name="badge_requests",
+        verbose_name=_('badge'),
+        related_name='badge_requests',
         on_delete=models.CASCADE,
         null=True,
     )
     new_badge_name = models.CharField(
         max_length=128,
-        verbose_name=_("new badge name"),
+        verbose_name=_('new badge name'),
         blank=True,
     )
-    time = models.DateTimeField(verbose_name=_("request time"), auto_now_add=True)
+    time = models.DateTimeField(verbose_name=_(
+        'request time'), auto_now_add=True)
     state = models.CharField(
         max_length=1,
-        verbose_name=_("state"),
+        verbose_name=_('state'),
         choices=(
-            ("P", _("Pending")),
-            ("A", _("Approved")),
-            ("R", _("Rejected")),
+            ('P', _('Pending')),
+            ('A', _('Approved')),
+            ('R', _('Rejected')),
         ),
     )
-    desc = models.TextField(verbose_name=_("description"))
+    desc = models.TextField(verbose_name=_('description'))
     cert = models.FileField(
-        verbose_name=_("Certificate"),
-        upload_to="certificates",
+        verbose_name=_('Certificate'),
+        upload_to='certificates',
         validators=[
-            FileExtensionValidator(allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS)
+            FileExtensionValidator(
+                allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS),
         ],
     )
 
     class Meta:
-        verbose_name = _("badge request")
-        verbose_name_plural = _("badge requests")
+        verbose_name = _('badge request')
+        verbose_name_plural = _('badge requests')
 
     def __str__(self):
         badge_name = (
             self.badge.name
             if self.badge and self.badge.name
-            else self.new_badge_name if self.new_badge_name else "No Badge"
+            else self.new_badge_name if self.new_badge_name else 'No Badge'
         )
-        return f"{self.user.user.username} - {badge_name} - {self.get_state_display()}"
+        return f'{self.user.user.username} - {badge_name} - {self.get_state_display()}'

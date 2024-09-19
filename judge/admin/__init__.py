@@ -3,6 +3,7 @@ from django.contrib.admin.models import LogEntry
 from django.contrib.auth.models import User
 from django.contrib.flatpages.models import FlatPage
 
+from judge.admin.badge import BadgeRequestAdmin
 from judge.admin.comments import CommentAdmin
 from judge.admin.contest import ContestAdmin, ContestParticipationAdmin, ContestTagAdmin
 from judge.admin.interface import (
@@ -21,32 +22,11 @@ from judge.admin.tag import TagAdmin, TagGroupAdmin, TagProblemAdmin
 from judge.admin.taxon import ProblemGroupAdmin, ProblemTypeAdmin
 from judge.admin.ticket import TicketAdmin
 from judge.models import (
-    Badge,
-    BlogPost,
-    Comment,
-    CommentLock,
-    Contest,
-    ContestParticipation,
-    ContestTag,
-    Judge,
-    Language,
-    License,
-    MiscConfig,
-    NavigationBar,
-    Organization,
-    OrganizationRequest,
-    Problem,
-    ProblemGroup,
-    ProblemType,
-    Profile,
-    Submission,
-    Tag,
-    TagGroup,
-    TagProblem,
-    Ticket,
-    BadgeRequest,
+    Badge, BadgeRequest, BlogPost, Comment, CommentLock, Contest,
+    ContestParticipation, ContestTag, Judge, Language, License, MiscConfig,
+    NavigationBar, Organization, OrganizationRequest, Problem, ProblemGroup,
+    ProblemType, Profile, Submission, Tag, TagGroup, TagProblem, Ticket,
 )
-from judge.admin.badge import BadgeRequestAdmin
 
 admin.site.register(BlogPost, BlogPostAdmin)
 admin.site.register(Comment, CommentAdmin)
