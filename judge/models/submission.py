@@ -200,12 +200,13 @@ class Submission(models.Model):
             organizations = problem.organizations.all()
 
         if len(organizations) == 0:
+            contest_object = None
             try:
                 contest_object = self.contest_object
             except AttributeError:
                 pass
 
-            if contest_object.is_organization_private:
+            if contest_object is not None and contest_object.is_organization_private:
                 organizations = contest_object.organizations.all()
 
         for organization in organizations:
