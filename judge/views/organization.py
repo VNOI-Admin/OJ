@@ -581,15 +581,38 @@ class MonthlyCreditUsageOrganization(TitleMixin, PublicOrganizationMixin, ListVi
         context['title'] = self.organization.name
 
         usages = context['usages']
-        days = [usage['time'].isoformat() for usage in usages]
+        days = [usage['time'].isoformat() for usage in usages] + [_('Current month')]
+        used_credits = [usage['consumed_credit'] for usage in usages] + [self.organization.current_consumed_credit]
+        sec_per_hour = 60 * 60
         chart = get_lines_chart(days, {
-            _('Credit usage (hour)'): [round(usage['consumed_credit'] / 60 / 60, 2) for usage in usages],
-        })
-        cost_chart = get_lines_chart(days, {
-            _('Cost (thousand vnd)'): [
-                round(max(0, usage['consumed_credit'] / 60 / 60 - 3) * 50, 3) for usage in usages
+            _('Credit usage (hour)'): [
+                round(credit / sec_per_hour, 2) for credit in used_credits
             ],
         })
+
+        cost_chart = get_lines_chart(days, {
+            _('Cost (thousand vnd)'): [
+                round(
+                    max(0, credit - settings.VNOJ_MONTHLY_FREE_CREDIT) / sec_per_hour * settings.VNOJ_PRICE_PER_HOUR, 3,
+                ) for credit in used_credits
+            ],
+        })
+
+        monthly_credit = int(self.organization.monthly_credit)
+
+        context['monthly_credit'] = {
+            'hour': monthly_credit // sec_per_hour,
+            'minute': (monthly_credit % sec_per_hour) // 60,
+            'second': monthly_credit % 60,
+        }
+
+        available_credit = int(self.organization.available_credit)
+
+        context['available_credit'] = {
+            'hour': available_credit // sec_per_hour,
+            'minute': (available_credit % sec_per_hour) // 60,
+            'second': available_credit % 60,
+        }
 
         context['credit_chart'] = chart
         context['cost_chart'] = cost_chart

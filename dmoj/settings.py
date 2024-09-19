@@ -107,6 +107,13 @@ VNOJ_MAX_DISQUALIFICATIONS_BEFORE_BANNING = 3
 # List of subdomain that will be ignored in organization subdomain middleware
 VNOJ_IGNORED_ORGANIZATION_SUBDOMAINS = ['oj', 'www', 'localhost']
 
+# Enable organization credit system, if true, org will not be able to submit submissions
+# if they run out of credit
+VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION = False
+# 3 hours free per month
+VNOJ_MONTHLY_FREE_CREDIT = 3 * 60 * 60
+VNOJ_PRICE_PER_HOUR = 50
+
 # Some problems have a lot of testcases, and each testcase
 # has about 5~6 fields, so we need to raise this
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 3000
