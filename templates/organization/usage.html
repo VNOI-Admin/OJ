@@ -55,6 +55,17 @@
 {% block body %}
     {% block before_posts %}{% endblock %}
 
+    <div>
+        <br>
+        {{_('Available free credits (reset each month): ')}}
+        <strong>{{ monthly_credit.hour }} {{_('hours')}}, {{ monthly_credit.minute }} {{_('minutes')}}, {{ monthly_credit.second }} {{_('seconds')}}</strong>
+        <br>
+        {{_('Available paid credits: ')}}
+        <strong>{{ available_credit.hour }} {{_('hours')}}, {{ available_credit.minute }} {{_('minutes')}}, {{ available_credit.second }} {{_('seconds')}}</strong>
+        <br>
+        <br>
+    </div>
+
     <table id="stats-table" class="table">
 
         <tr>
