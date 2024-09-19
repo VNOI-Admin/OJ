@@ -652,6 +652,34 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
             return generic_message(self.request, _('Too many submissions'),
                                    _('You have exceeded the submission limit for this problem.'))
 
+        if settings.VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION:
+            # check if the problem belongs to any organization
+            organizations = []
+            if self.object.is_organization_private:
+                organizations = self.object.organizations.all()
+
+            if len(organizations) == 0:
+                # check if the contest belongs to any organization
+                if self.contest_problem is not None:
+                    contest_object = self.request.profile.current_contest.contest
+
+                    if contest_object.is_organization_private:
+                        organizations = contest_object.organizations.all()
+
+            # check if org have credit to execute this submission
+            for org in organizations:
+                if not org.has_credit_left():
+                    org_name = org.name
+                    return generic_message(
+                        self.request,
+                        _('No credit'),
+                        _(
+                            'The organization %s has no credit left to execute this submission. '
+                            'Ask the organization to buy more credit.',
+                        )
+                        % org_name,
+                    )
+
         with transaction.atomic():
             self.new_submission = form.save(commit=False)
 
