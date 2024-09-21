@@ -40,7 +40,8 @@
     {% include "stats/media-js.html" %}
     <script type="text/javascript">
         $(document).ready(function() {
-            draw_line_chart({{ chart|tojson }}, $('#org-by-day'), true);
+            draw_line_chart({{ credit_chart|tojson }}, $('#org-credit'), {total_decimals: 2, hide_total: true});
+            draw_line_chart({{ cost_chart|tojson }}, $('#org-cost'), {total_suffix: 'k vnd', total_decimals: 0, hide_total: true});
         });
     </script>
 {% endblock %}
@@ -54,13 +55,36 @@
 {% block body %}
     {% block before_posts %}{% endblock %}
 
+    <div>
+        <br>
+        {{_('Available free credits (reset each month): ')}}
+        <strong>{{ monthly_credit.hour }} {{_('hours')}}, {{ monthly_credit.minute }} {{_('minutes')}}, {{ monthly_credit.second }} {{_('seconds')}}</strong>
+        <br>
+        {{_('Available paid credits: ')}}
+        <strong>{{ available_credit.hour }} {{_('hours')}}, {{ available_credit.minute }} {{_('minutes')}}, {{ available_credit.second }} {{_('seconds')}}</strong>
+        <br>
+        <br>
+    </div>
+
     <table id="stats-table" class="table">
+
+        <tr>
+            <th colspan="2">{{ _('Organization Monthly cost') }}</th>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div id="org-cost" style="height: 500px">
+                    <canvas></canvas>
+                </div>
+            </td>
+        </tr>
+
         <tr>
             <th colspan="2">{{ _('Organization Monthly Credit usage') }}</th>
         </tr>
         <tr>
             <td colspan="2">
-                <div id="org-by-day" style="height: 500px">
+                <div id="org-credit" style="height: 500px">
                     <canvas></canvas>
                 </div>
             </td>
