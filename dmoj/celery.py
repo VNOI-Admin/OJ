@@ -2,6 +2,7 @@ import logging
 import socket
 
 from celery import Celery
+from celery.schedules import crontab
 from celery.signals import task_failure
 
 app = Celery('dmoj')
@@ -20,6 +21,16 @@ app.autodiscover_tasks()
 # Logger to enable reporting of errors.
 logger = logging.getLogger('judge.celery')
 
+# Load periodic tasks
+app.conf.beat_schedule = {
+    'daily-queue-time-stats': {
+        'task': 'judge.tasks.webhook.queue_time_stats',
+        'schedule': crontab(minute=0, hour=0),
+        'options': {
+            'expires': 60*60*24,
+        }
+    }
+}
 
 @task_failure.connect()
 def celery_failure_log(sender, task_id, exception, traceback, *args, **kwargs):
