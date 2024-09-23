@@ -53,6 +53,7 @@ class JudgeHandler(ZlibPacketHandler):
             'submission-acknowledged': self.on_submission_acknowledged,
             'ping-response': self.on_ping_response,
             'supported-problems': self.on_supported_problems,
+            'executors': self.on_executors,
             'handshake': self.on_handshake,
         }
         self._working = False
@@ -119,7 +120,9 @@ class JudgeHandler(ZlibPacketHandler):
         judge = self.judge = Judge.objects.get(name=self.name)
         judge.start_time = timezone.now()
         judge.online = True
-        judge.runtimes.set(Language.objects.filter(key__in=list(self.executors.keys())).values_list('id', flat=True))
+
+        self.update_runtimes()
+
         if self.ignore_problems_packet:
             self.problems = self.judges.problems
             judge.problems.set(self.judges.problem_ids)
@@ -129,15 +132,6 @@ class JudgeHandler(ZlibPacketHandler):
         # Cache is_disabled for faster access
         self.is_disabled = judge.is_disabled
 
-        # Delete now in case we somehow crashed and left some over from the last connection
-        RuntimeVersion.objects.filter(judge=judge).delete()
-        versions = []
-        for lang in judge.runtimes.all():
-            versions += [
-                RuntimeVersion(language=lang, name=name, version='.'.join(map(str, version)), priority=idx, judge=judge)
-                for idx, (name, version) in enumerate(self.executors[lang.key])
-            ]
-        RuntimeVersion.objects.bulk_create(versions)
         judge.last_ip = self.client_address[0]
         judge.save()
         self.judge_address = '[%s]:%s' % (self.client_address[0], self.client_address[1])
@@ -342,6 +336,28 @@ class JudgeHandler(ZlibPacketHandler):
         problems = set(p[0] for p in packet['problems'])
         problem_ids = list(Problem.objects.filter(code__in=list(problems)).values_list('id', flat=True))
         self.judges.update_problems(self, problems, problem_ids)
+
+    def update_runtimes(self):
+        self.judge.runtimes.set(
+            Language.objects.filter(key__in=list(self.executors.keys())).values_list('id', flat=True),
+        )
+
+        RuntimeVersion.objects.filter(judge=self.judge).delete()
+        versions = []
+        for lang in self.judge.runtimes.all():
+            versions += [
+                RuntimeVersion(language=lang, name=name, version='.'.join(map(str, version)),
+                               priority=idx, judge=self.judge)
+                for idx, (name, version) in enumerate(self.executors[lang.key])
+            ]
+        RuntimeVersion.objects.bulk_create(versions)
+
+    def on_executors(self, packet):
+        logger.info('%s: Updating runtimes', self.name)
+        self.executors = packet['executors']
+        self.update_runtimes()
+        logger.info('%s: Updated runtimes', self.name)
+        json_log.info(self._make_json_log(action='update-executors', executors=list(self.executors.keys())))
 
     def on_grading_begin(self, packet):
         logger.info('%s: Grading has begun on: %s', self.name, packet['submission-id'])
