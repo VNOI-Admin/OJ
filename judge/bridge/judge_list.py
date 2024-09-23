@@ -3,7 +3,10 @@ from collections import namedtuple
 from random import random
 from threading import RLock
 
+from django.conf import settings
+
 from judge.judge_priority import REJUDGE_PRIORITY
+from judge.tasks import on_long_queue
 
 try:
     from llist import dllist
@@ -175,3 +178,5 @@ class JudgeList(object):
                     self.priority[priority],
                 )
                 logger.info('Queued submission: %d', id)
+                if self.queue.size == settings.VNOJ_LONG_QUEUE_ALERT_THRESHOLD + self.priorities:
+                    on_long_queue.delay()

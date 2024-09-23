@@ -9,7 +9,7 @@ from judge.jinja2.gravatar import gravatar
 from judge.models import BlogPost, Comment, Contest, Problem, Tag, TagProblem, Ticket, TicketMessage
 
 __all__ = ('on_new_ticket', 'on_new_comment', 'on_new_problem', 'on_new_tag_problem', 'on_new_tag', 'on_new_contest',
-           'on_new_blogpost', 'on_new_ticket_message')
+           'on_new_blogpost', 'on_new_ticket_message', 'on_long_queue')
 
 
 def get_webhook_url(event_name):
@@ -18,13 +18,14 @@ def get_webhook_url(event_name):
     return webhook
 
 
-def send_webhook(webhook, title, description, author, color='03b2f8'):
+def send_webhook(webhook, title, description, author, color='03b2f8', **kwargs):
     webhook = DiscordWebhook(url=webhook)
 
     embed = DiscordEmbed(
         title=title,
         description=description,
         color=color,
+        **kwargs,
     )
 
     if author is not None:
@@ -198,3 +199,12 @@ def on_new_blogpost(blog_id):
     description = f'Title: {blog.title}\n'
     description += f'Description: {blog.content[:200]}'
     send_webhook(webhook, f'New blog post {url}', description, blog.authors.first())
+
+
+@shared_task
+def on_long_queue():
+    webhook = get_webhook_url('on_long_queue')
+    if webhook is None or settings.SITE_FULL_URL is None:
+        return
+
+    send_webhook(webhook, 'Long queue alert', None, None, url=f'{settings.SITE_FULL_URL}/submissions/?status=QU')
