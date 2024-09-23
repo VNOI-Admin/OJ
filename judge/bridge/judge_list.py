@@ -25,6 +25,8 @@ class JudgeList(object):
         self.node_map = {}
         self.submission_map = {}
         self.lock = RLock()
+        self.problems = set()
+        self.problem_ids = []
 
     def _handle_free_judge(self, judge):
         with self.lock:
@@ -68,9 +70,20 @@ class JudgeList(object):
                 if judge.name == judge_id:
                     judge.disconnect(force=force)
 
-    def update_problems(self, judge):
+    def update_problems_all(self, problems, problem_ids):
         with self.lock:
-            self._handle_free_judge(judge)
+            self.problems = problems
+            self.problem_ids = problem_ids
+            for judge in self.judges:
+                judge.update_problems(problems, problem_ids)
+                if not judge.working:
+                    self._handle_free_judge(judge)
+
+    def update_problems(self, judge, problems, problem_ids):
+        with self.lock:
+            judge.update_problems(problems, problem_ids)
+            if not judge.working:
+                self._handle_free_judge(judge)
 
     def update_disable_judge(self, judge_id, is_disabled):
         with self.lock:

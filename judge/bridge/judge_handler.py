@@ -36,7 +36,7 @@ def _ensure_connection():
 class JudgeHandler(ZlibPacketHandler):
     proxies = proxy_list(settings.BRIDGED_JUDGE_PROXIES or [])
 
-    def __init__(self, request, client_address, server, judges):
+    def __init__(self, request, client_address, server, judges, ignore_problems_packet=True):
         super().__init__(request, client_address, server)
 
         self.judges = judges
@@ -57,7 +57,6 @@ class JudgeHandler(ZlibPacketHandler):
         }
         self._working = False
         self._no_response_job = None
-        self._problems = []
         self.executors = {}
         self.problems = {}
         self.latency = None
@@ -75,6 +74,7 @@ class JudgeHandler(ZlibPacketHandler):
         self.update_counter = {}
         self.judge = None
         self.judge_address = None
+        self.ignore_problems_packet = ignore_problems_packet
 
         self._submission_cache_id = None
         self._submission_cache = {}
@@ -119,8 +119,12 @@ class JudgeHandler(ZlibPacketHandler):
         judge = self.judge = Judge.objects.get(name=self.name)
         judge.start_time = timezone.now()
         judge.online = True
-        judge.problems.set(Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True))
         judge.runtimes.set(Language.objects.filter(key__in=list(self.executors.keys())).values_list('id', flat=True))
+        if self.ignore_problems_packet:
+            self.problems = self.judges.problems
+            judge.problems.set(self.judges.problem_ids)
+        else:
+            judge.problems.set(Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True))
 
         # Cache is_disabled for faster access
         self.is_disabled = judge.is_disabled
@@ -166,8 +170,7 @@ class JudgeHandler(ZlibPacketHandler):
             return
 
         self.timeout = 60
-        self._problems = packet['problems']
-        self.problems = dict(self._problems)
+        self.problems = set(p[0] for p in packet['problems'])
         self.executors = packet['executors']
         self.name = packet['id']
 
@@ -325,18 +328,20 @@ class JudgeHandler(ZlibPacketHandler):
         if not Submission.objects.filter(id=id).update(batch=True):
             logger.warning('Unknown submission: %s', id)
 
-    def on_supported_problems(self, packet):
+    def update_problems(self, problems, problem_ids):
         logger.info('%s: Updating problem list', self.name)
-        self._problems = packet['problems']
-        self.problems = dict(self._problems)
-        if not self.working:
-            self.judges.update_problems(self)
+        self.problems = problems
+        self.judge.problems.set(problem_ids)
+        logger.info('%s: Updated %d problems', self.name, len(problem_ids))
+        json_log.info(self._make_json_log(action='update-problems', count=len(problem_ids)))
 
-        self.judge.problems.set(
-            Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True),
-        )
-        logger.info('%s: Updated %d problems', self.name, len(self.problems))
-        json_log.info(self._make_json_log(action='update-problems', count=len(self.problems)))
+    def on_supported_problems(self, packet):
+        if self.ignore_problems_packet:
+            return
+
+        problems = set(p[0] for p in packet['problems'])
+        problem_ids = list(Problem.objects.filter(code__in=list(problems)).values_list('id', flat=True))
+        self.judges.update_problems(self, problems, problem_ids)
 
     def on_grading_begin(self, packet):
         logger.info('%s: Grading has begun on: %s', self.name, packet['submission-id'])
