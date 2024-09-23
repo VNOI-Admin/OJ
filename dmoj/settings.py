@@ -660,6 +660,9 @@ DATABASES = {
 
 ENABLE_FTS = False
 
+# Balancer configuration
+BALANCER_JUDGE_ADDRESS = [('localhost', 8888)]
+
 # Bridged configuration
 BRIDGED_JUDGE_ADDRESS = [('localhost', 9999)]
 BRIDGED_JUDGE_PROXIES = None
