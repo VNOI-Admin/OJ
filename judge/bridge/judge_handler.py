@@ -124,7 +124,7 @@ class JudgeHandler(ZlibPacketHandler):
             self.problems = self.judges.problems
             judge.problems.set(self.judges.problem_ids)
         else:
-            judge.problems.set(Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True))
+            judge.problems.set(Problem.objects.filter(code__in=list(self.problems)).values_list('id', flat=True))
 
         # Cache is_disabled for faster access
         self.is_disabled = judge.is_disabled
