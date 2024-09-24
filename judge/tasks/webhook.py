@@ -1,5 +1,5 @@
 import bisect
-from datetime import timedelta
+from datetime import datetime, timedelta
 from io import BytesIO
 
 import pytz
@@ -9,7 +9,6 @@ from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 from django.db.models import F, FloatField
 from django.db.models.functions import Cast
-from django.utils import timezone
 
 
 from judge.jinja2.gravatar import gravatar
@@ -223,7 +222,8 @@ def queue_time_stats():
     if webhook_url is None:
         return
 
-    end_time = timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    end_time = (datetime.now(pytz.timezone(settings.CELERY_TIMEZONE))
+                .replace(hour=0, minute=0, second=0, microsecond=0))
     start_time = end_time - timedelta(days=1)
 
     queue_time = (Submission.objects.filter(date__gte=start_time, date__lte=end_time)
