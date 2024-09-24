@@ -27,10 +27,11 @@ app.conf.beat_schedule = {
         'task': 'judge.tasks.webhook.queue_time_stats',
         'schedule': crontab(minute=0, hour=0),
         'options': {
-            'expires': 60*60*24,
-        }
-    }
+            'expires': 60 * 60 * 24,
+        },
+    },
 }
+
 
 @task_failure.connect()
 def celery_failure_log(sender, task_id, exception, traceback, *args, **kwargs):
