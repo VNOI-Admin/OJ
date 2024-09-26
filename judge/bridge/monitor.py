@@ -5,6 +5,8 @@ import threading
 import time
 from pathlib import Path
 
+from django import db
+
 from judge.models import Problem
 
 try:
@@ -23,6 +25,10 @@ except ImportError:
 
 
 logger = logging.getLogger('judge.monitor')
+
+
+def _ensure_connection():
+    db.connection.close_if_unusable_or_obsolete()
 
 
 def find_glob_root(g: str) -> Path:
@@ -81,6 +87,7 @@ class Monitor:
                     problems.append(problem)
         problems = set(problems)
 
+        _ensure_connection()
         problem_ids = list(Problem.objects.filter(code__in=list(problems)).values_list('id', flat=True))
         self.judges.update_problems_all(problems, problem_ids)
 
