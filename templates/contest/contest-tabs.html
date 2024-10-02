@@ -2,9 +2,6 @@
 
 {% block tabs %}
     {{ make_tab('detail', 'fa-info-circle', url('contest_view', contest.key), _('Info')) }}
-    {% if contest.can_see_full_submission_list(request.user) %}
-        {{ make_tab('stats', 'fa-pie-chart', url('contest_stats', contest.key), _('Statistics')) }}
-    {% endif %}
 
     {% if contest.start_time <= now or perms.judge.see_private_contest %}
         {% if contest.can_see_own_scoreboard(request.user) %}
