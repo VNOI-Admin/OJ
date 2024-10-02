@@ -246,7 +246,7 @@ urlpatterns = [
         path('/register', contests.ContestRegister.as_view(), name='contest_register'),
         path('/join', contests.ContestJoin.as_view(), name='contest_join'),
         path('/leave', contests.ContestLeave.as_view(), name='contest_leave'),
-        path('/stats', contests.ContestStats.as_view(), name='contest_stats'),
+        # path('/stats', contests.ContestStats.as_view(), name='contest_stats'),
         path('/data/prepare/', contests.ContestPrepareData.as_view(), name='contest_prepare_data'),
         path('/data/download/', contests.ContestDownloadData.as_view(), name='contest_download_data'),
 
