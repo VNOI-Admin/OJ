@@ -39,7 +39,7 @@ from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
-    Organization, Problem, ProblemClarification, Profile, Submission
+    Language, Organization, Problem, ProblemClarification, Profile, Submission
 from judge.tasks import on_new_contest, prepare_contest_data, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
@@ -811,6 +811,11 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
             for category in _get_result_data(defaultdict(int, status_counts[i]))['categories']:
                 result_data[category['code']][i] = category['count']
 
+        language_id_to_name = {id: name for id, name in Language.objects.values_list('id', 'name')}
+
+        def id_to_name(data):
+            return (language_id_to_name[data[0]], data[1])
+
         stats = {
             'problem_status_count': get_stacked_bar_chart(
                 labels, result_data, settings.DMOJ_STATS_SUBMISSION_RESULT_COLORS,
@@ -820,12 +825,12 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
                         .order_by('contest__problem__order').values_list('problem__name', 'ac_rate'),
             ),
             'language_count': get_pie_chart(
-                queryset.values('language__name').annotate(count=Count('language__name'))
-                        .filter(count__gt=0).order_by('-count').values_list('language__name', 'count'),
+                list(map(id_to_name, queryset.values('language_id').annotate(count=Count('language_id'))
+                         .filter(count__gt=0).order_by('-count').values_list('language_id', 'count'))),
             ),
             'language_ac_rate': get_bar_chart(
-                queryset.values('language__name').annotate(ac_rate=ac_rate)
-                        .filter(ac_rate__gt=0).values_list('language__name', 'ac_rate'),
+                list(map(id_to_name, queryset.values('language_id').annotate(ac_rate=ac_rate)
+                         .filter(ac_rate__gt=0).values_list('language_id', 'ac_rate'))),
             ),
         }
 
