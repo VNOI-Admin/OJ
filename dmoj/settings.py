@@ -117,6 +117,11 @@ VNOJ_PRICE_PER_HOUR = 50
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
+# Transfer host
+VNOJ_PROBLEM_IMPORT_HOST = 'https://oj.vnoi.info'
+VNOJ_PROBLEM_IMPORT_SECRET = ''
+VNOJ_PROBLEM_IMPORT_TIMEOUT = 5     # in seconds
+
 CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'
 
 # Some problems have a lot of testcases, and each testcase
@@ -326,6 +331,7 @@ else:
                         'judge.ProblemGroup',
                         'judge.ProblemType',
                         'judge.License',
+                        'judge.ProblemExportKey',
                     ],
                 },
                 {

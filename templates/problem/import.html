@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block media %}
+    {{ form.media.css }}
+{% endblock %}
+
+{% block js_media %}
+    {{ form.media.js }}
+{% endblock %}
+
+{% block body %}
+    <form method="post">
+        {% if form.errors %}
+            <div class="form-errors">
+                {{ form.non_field_errors() }}
+            </div>
+        {% endif %}
+        {% csrf_token %}
+        {{ form.as_p() }}
+        <p><input type="submit" value="Import"></p>
+    </form>
+{% endblock %}
