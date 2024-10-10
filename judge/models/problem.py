@@ -1,5 +1,9 @@
+import base64
 import errno
+import hmac
 import json
+import secrets
+import struct
 from operator import attrgetter
 
 from django.conf import settings
@@ -12,6 +16,7 @@ from django.db.models import CASCADE, Exists, F, FilteredRelation, OuterRef, Q, 
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.encoding import force_bytes
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
@@ -22,8 +27,8 @@ from judge.models.runtime import Language
 from judge.user_translations import gettext as user_gettext
 from judge.utils.url import get_absolute_pdf_url
 
-__all__ = ['ProblemGroup', 'ProblemType', 'Problem', 'ProblemTranslation', 'ProblemClarification', 'License',
-           'Solution', 'SubmissionSourceAccess', 'TranslatedProblemQuerySet']
+__all__ = ['ProblemGroup', 'ProblemType', 'Problem', 'ProblemTranslation', 'ProblemClarification', 'ProblemExportKey',
+           'License', 'Solution', 'SubmissionSourceAccess', 'TranslatedProblemQuerySet']
 
 
 def disallowed_characters_validator(text):
@@ -697,3 +702,21 @@ class Solution(models.Model):
         )
         verbose_name = _('solution')
         verbose_name_plural = _('solutions')
+
+
+class ProblemExportKey(models.Model):
+    name = models.CharField(max_length=100, verbose_name=_('name'))
+    token = models.CharField(max_length=64, verbose_name=_('token'))
+    remaining_uses = models.IntegerField(verbose_name=_('remaining uses'))
+    description = models.TextField(blank=True, verbose_name=_('description'))
+
+    def __str__(self):
+        return self.name
+
+    def generate_secret(self):
+        secret = secrets.token_bytes(32)
+        self.token = hmac.new(force_bytes(settings.SECRET_KEY), msg=secret, digestmod='sha256').hexdigest()
+        self.save(update_fields=['token'])
+        return base64.urlsafe_b64encode(struct.pack('>I32s', self.id, secret)).decode('utf-8')
+
+    generate_secret.alters_data = True
