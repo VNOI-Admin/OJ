@@ -1,15 +1,15 @@
 import base64
 import hmac
-import requests
 import struct
 
+import requests
 from django.conf import settings
 from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.validators import RegexValidator
 from django.db.models import Q
-from django.forms import Form, CharField, PasswordInput, URLField
-from django.http import Http404, JsonResponse, HttpResponseRedirect
+from django.forms import CharField, Form
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -22,7 +22,7 @@ from django.views.generic.list import BaseListView
 from requests.exceptions import HTTPError
 from reversion import revisions
 
-from judge.models import Problem, ProblemExportKey, ProblemGroup, ProblemType, Language
+from judge.models import Language, Problem, ProblemExportKey, ProblemGroup, ProblemType
 from judge.utils.views import TitleMixin
 from judge.widgets import HeavySelect2Widget
 
