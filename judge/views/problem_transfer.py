@@ -29,6 +29,8 @@ from judge.widgets import HeavySelect2Widget
 
 class ProblemExportMixin:
     def setup(self, request, *args, **kwargs):
+        if not settings.VNOJ_PROBLEM_ENABLE_EXPORT:
+            raise Http404()
         super().setup(request, *args, **kwargs)
         try:
             id, secret = struct.unpack('>I32s', base64.urlsafe_b64decode(kwargs['secret']))
@@ -115,18 +117,19 @@ def get_problem_export_url(host=settings.VNOJ_PROBLEM_IMPORT_HOST, secret=settin
 class ProblemImportForm(Form):
     problem = CharField(max_length=32,
                         validators=[RegexValidator('^[a-z0-9_]+$', _('Problem code must be ^[a-z0-9_]+$'))])
-    code = CharField(max_length=32, validators=[RegexValidator('^[a-z0-9_]+$', _('Problem code must be ^[a-z0-9_]+$'))])
+    new_code = CharField(max_length=32, validators=[RegexValidator('^[a-z0-9_]+$',
+                                                                   _('Problem code must be ^[a-z0-9_]+$'))])
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['problem'].widget = HeavySelect2Widget(data_url=get_problem_export_select_url(),
                                                            attrs={'style': 'width: 100%'})
 
-    def clean_code(self):
-        code = self.cleaned_data['code']
-        if Problem.objects.filter(code=code).exists():
+    def clean_new_code(self):
+        new_code = self.cleaned_data['new_code']
+        if Problem.objects.filter(code=new_code).exists():
             raise ValidationError(_('Problem with code already exists.'))
-        return code
+        return new_code
 
     def clean(self):
         key_info = requests.get(get_problem_export_url(), timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT).json()
@@ -142,12 +145,14 @@ class ProblemImportView(TitleMixin, FormView):
     form_class = ProblemImportForm
 
     def form_valid(self, form):
-        problem_info = requests.post(get_problem_export_url(), data={'code': form.cleaned_data['problem']}, timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT).json()
+        problem_info = requests.post(get_problem_export_url(),
+                                     data={'code': form.cleaned_data['problem']},
+                                     timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT).json()
 
         if not problem_info:
             raise Http404('Request timed out')
         problem = Problem()
-        problem.code = form.cleaned_data['code']
+        problem.code = form.cleaned_data['new_code']
         problem.name = problem_info['name']
         problem.description = problem_info['description']
         problem.time_limit = problem_info['time_limit']
@@ -157,6 +162,7 @@ class ProblemImportView(TitleMixin, FormView):
         problem.short_circuit = problem_info['short_circuit']
         problem.group = ProblemGroup.objects.order_by('id').first()     # Uncategorized
         problem.date = timezone.now()
+        problem.is_manually_managed = True
         with revisions.create_revision(atomic=True):
             problem.save()
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
@@ -168,6 +174,8 @@ class ProblemImportView(TitleMixin, FormView):
         return HttpResponseRedirect(reverse('problem_edit', args=(problem.code,)))
 
     def dispatch(self, request, *args, **kwargs):
+        if not settings.VNOJ_PROBLEM_ENABLE_IMPORT:
+            raise Http404()
         if not request.user.is_superuser:
             raise PermissionDenied()
         return super().dispatch(request, *args, **kwargs)
