@@ -118,6 +118,8 @@ VNOJ_PRICE_PER_HOUR = 50
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
 # Transfer host
+VNOJ_PROBLEM_ENABLE_IMPORT = False
+VNOJ_PROBLEM_ENABLE_EXPORT = False
 VNOJ_PROBLEM_IMPORT_HOST = 'https://oj.vnoi.info'
 VNOJ_PROBLEM_IMPORT_SECRET = ''
 VNOJ_PROBLEM_IMPORT_TIMEOUT = 5     # in seconds
@@ -502,6 +504,7 @@ TEMPLATES = [
                 'judge.template_context.site_theme',
                 'judge.template_context.misc_config',
                 'judge.template_context.math_setting',
+                'judge.template_context.site_setting',
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
             ],

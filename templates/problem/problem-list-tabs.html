@@ -12,6 +12,9 @@
         {{ make_tab('suggest', 'fa-list', url('problem_suggest_list'), _('Suggest')) }}
     {% endif %}
     {% if request.user.is_superuser %}
+        {% if VNOJ_PROBLEM_ENABLE_IMPORT %}
+            {{ make_tab('import', 'fa-cloud-download', url('problem_import'), _('Import')) }}
+        {% endif %}
         {{ make_tab('admin', 'fa-edit', url('admin:judge_problem_changelist'), _('Admin')) }}
     {% endif %}
 {% endblock %}
