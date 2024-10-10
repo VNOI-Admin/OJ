@@ -236,10 +236,6 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         return super(ProblemAdmin, self).construct_change_message(request, form, *args, **kwargs)
 
 
-class ProblemExportKeyForm(ModelForm):
-    pass
-
-
 class ProblemExportKeyAdmin(VersionAdmin):
     fieldsets = (
         (None, {'fields': ('name', 'remaining_uses')}),
