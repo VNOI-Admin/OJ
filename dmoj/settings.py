@@ -28,6 +28,7 @@ SECRET_KEY = '5*9f5q57mqmlz2#f$x1h76&jxy#yortjl1v+l*6hd18$d*yx#0'
 DEBUG = True
 
 ALLOWED_HOSTS = []
+CORS_ALLOWED_ORIGINS = []
 
 CSRF_FAILURE_VIEW = 'judge.views.widgets.csrf_failure'
 
@@ -429,9 +430,11 @@ INSTALLED_APPS += (
     'martor',
     'adminsortable2',
     'django_cleanup.apps.CleanupConfig',
+    'corsheaders',
 )
 
 MIDDLEWARE = (
+    'corsheaders.middleware.CorsMiddleware',
     'judge.middleware.ShortCircuitMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
