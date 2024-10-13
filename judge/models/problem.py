@@ -190,6 +190,7 @@ class Problem(models.Model):
     is_public = models.BooleanField(verbose_name=_('publicly visible'), db_index=True, default=False)
     is_manually_managed = models.BooleanField(verbose_name=_('manually managed'), db_index=True, default=False,
                                               help_text=_('Whether judges should be allowed to manage data or not.'))
+    judge_code = models.CharField(max_length=100, verbose_name=_('judge code'))
     date = models.DateTimeField(verbose_name=_('date of publishing'), null=True, blank=True, db_index=True,
                                 help_text=_(
                                     "Doesn't have the magic ability to auto-publish due to backward compatibility."))
@@ -573,6 +574,8 @@ class Problem(models.Model):
         return {'method': 'standard'}
 
     def save(self, *args, **kwargs):
+        if not self.judge_code:
+            self.judge_code = self.code
         is_clone = kwargs.pop('is_clone', False)
         # if short_circuit = true the judge will stop judging
         # as soon as the submission failed a test case

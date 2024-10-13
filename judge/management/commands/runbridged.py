@@ -1,14 +1,17 @@
+import yaml
 from django.core.management.base import BaseCommand
 
 from judge.bridge.daemon import judge_daemon
 
 
 class Command(BaseCommand):
-    def add_arguments(self, parser):
-        parser.add_argument('--monitor', action='store_true', default=False,
-                            help='if specified, run a monitor to automatically update problems')
-        parser.add_argument('--problem-storage-globs', nargs='*', default=[],
-                            help='globs to monitor for problem updates')
+    def add_arguments(self, parser) -> None:
+        parser.add_argument('-c', '--config', type=str, help='file to load bridged configurations from')
 
     def handle(self, *args, **options):
-        judge_daemon(options['monitor'], options['problem_storage_globs'])
+        if options['config']:
+            with open(options['config'], 'r') as f:
+                config = yaml.safe_load(f)
+        else:
+            config = {}
+        judge_daemon(config)
