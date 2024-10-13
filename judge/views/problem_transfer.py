@@ -1,15 +1,19 @@
 import base64
 import hmac
+import logging
 import struct
+from contextlib import closing
+from urllib.request import urlopen
 
 import requests
+from celery import shared_task
 from django.conf import settings
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.validators import RegexValidator
 from django.db.models import Q
 from django.forms import CharField, Form
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, JsonResponse
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -23,8 +27,12 @@ from requests.exceptions import HTTPError
 from reversion import revisions
 
 from judge.models import Language, Problem, ProblemExportKey, ProblemGroup, ProblemType
+from judge.utils.celery import redirect_to_task_status
 from judge.utils.views import TitleMixin
 from judge.widgets import HeavySelect2Widget
+
+
+logger = logging.getLogger('judge.problem.transfer')
 
 
 class ProblemExportMixin:
@@ -139,41 +147,58 @@ class ProblemImportForm(Form):
             self.add_error('secret', _('No remaining uses'))
 
 
+@shared_task(bind=True)
+def import_problem(self, user_id, problem, new_code):
+    old_code = problem
+    problem_info = requests.post(get_problem_export_url(),
+                                 data={'code': old_code},
+                                 timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT).json()
+
+    if not problem_info:
+        raise Http404()
+    problem = Problem()
+    problem.code = new_code
+    # Use the exported code
+    problem.judge_code = settings.VNOJ_PROBLEM_IMPORT_JUDGE_PREFIX + problem_info['code']
+    problem.name = problem_info['name']
+    problem.description = problem_info['description']
+    problem.time_limit = problem_info['time_limit']
+    problem.memory_limit = problem_info['memory_limit']
+    problem.points = problem_info['points']
+    problem.partial = problem_info['partial']
+    problem.short_circuit = problem_info['short_circuit']
+    problem.group = ProblemGroup.objects.order_by('id').first()  # Uncategorized
+    problem.date = timezone.now()
+    problem.is_manually_managed = True
+    with revisions.create_revision(atomic=True):
+        problem.save()
+        problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
+        problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
+        user = User.objects.get(id=user_id)
+        problem.curators.add(user.profile)
+        revisions.set_user(user)
+        revisions.set_comment(_('Imported from %s%s') % (
+            settings.VNOJ_PROBLEM_IMPORT_HOST, reverse('problem_detail', args=(old_code,))))
+    url = settings.BRIDGED_MONITOR_UPDATE_URL
+    logger.info('Pinging for problem update: %s', url)
+    try:
+        with closing(urlopen(url, data=b'')) as f:
+            f.read()
+    except Exception:
+        logger.exception('Failed to ping for problem update: %s', url)
+
+
 class ProblemImportView(TitleMixin, FormView):
     title = _('Import Problem')
     template_name = 'problem/import.html'
     form_class = ProblemImportForm
 
     def form_valid(self, form):
-        problem_info = requests.post(get_problem_export_url(),
-                                     data={'code': form.cleaned_data['problem']},
-                                     timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT).json()
-
-        if not problem_info:
-            raise Http404('Request timed out')
-        problem = Problem()
-        problem.code = form.cleaned_data['new_code']
-        # Use the exported code
-        problem.judge_code = settings.VNOJ_PROBLEM_IMPORT_JUDGE_PREFIX + problem_info['code']
-        problem.name = problem_info['name']
-        problem.description = problem_info['description']
-        problem.time_limit = problem_info['time_limit']
-        problem.memory_limit = problem_info['memory_limit']
-        problem.points = problem_info['points']
-        problem.partial = problem_info['partial']
-        problem.short_circuit = problem_info['short_circuit']
-        problem.group = ProblemGroup.objects.order_by('id').first()     # Uncategorized
-        problem.date = timezone.now()
-        problem.is_manually_managed = True
-        with revisions.create_revision(atomic=True):
-            problem.save()
-            problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-            problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
-            problem.curators.add(self.request.profile)
-            revisions.set_user(self.request.user)
-            revisions.set_comment(_('Imported from %s%s') % (
-                settings.VNOJ_PROBLEM_IMPORT_HOST, reverse('problem_detail', args=(form.cleaned_data['problem'],))))
-        return HttpResponseRedirect(reverse('problem_edit', args=(problem.code,)))
+        status = import_problem.delay(user_id=self.request.user.id, **form.cleaned_data)
+        return redirect_to_task_status(
+            status, message=_('Importing %s...') % (form.cleaned_data['new_code'],),
+            redirect=reverse('problem_edit', args=(form.cleaned_data['new_code'],)),
+        )
 
     def dispatch(self, request, *args, **kwargs):
         if not settings.VNOJ_PROBLEM_ENABLE_IMPORT:

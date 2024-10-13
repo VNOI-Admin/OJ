@@ -74,13 +74,15 @@ class SendProblemsHandler(FileSystemEventHandler):
         EVENT_TYPE_CREATED,
     )
 
-    def __init__(self, signal):
+    def __init__(self, signal, propagation_signal):
         self.signal = signal
+        self.propagation_signal = propagation_signal
 
     def on_any_event(self, event):
         if event.event_type not in self.ALLOWED_EVENT_TYPES:
             return
         self.signal.set()
+        self.propagation_signal.set()
 
 
 class Monitor:
@@ -110,7 +112,7 @@ class Monitor:
             api_server = HTTPServer(api_listen, Handler)
             self.api_server_thread = threading.Thread(target=api_server.serve_forever)
 
-        self._handler = SendProblemsHandler(self.updater_signal)
+        self._handler = SendProblemsHandler(self.updater_signal, self.propagation_signal)
         self._observer = Observer()
 
         for _, dir_glob in self.problem_globs:
