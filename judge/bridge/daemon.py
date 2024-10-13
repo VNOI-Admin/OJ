@@ -27,9 +27,7 @@ def judge_daemon(config):
     monitor = None
     if 'run_monitor' in config:
         from judge.bridge.monitor import Monitor
-        problem_storage_globs = [(entry['storage_namespaces'], entry['problem_storage_globs'])
-                                 for entry in config['run_monitor']]
-        monitor = Monitor(judges, problem_storage_globs)
+        monitor = Monitor(judges, **config)
 
     judge_server = Server(
         settings.BRIDGED_JUDGE_ADDRESS,

@@ -153,7 +153,8 @@ class ProblemImportView(TitleMixin, FormView):
             raise Http404('Request timed out')
         problem = Problem()
         problem.code = form.cleaned_data['new_code']
-        problem.judge_code = settings.VNOJ_PROBLEM_IMPORT_JUDGE_PREFIX + problem.code
+        # Use the exported code
+        problem.judge_code = settings.VNOJ_PROBLEM_IMPORT_JUDGE_PREFIX + problem_info['code']
         problem.name = problem_info['name']
         problem.description = problem_info['description']
         problem.time_limit = problem_info['time_limit']

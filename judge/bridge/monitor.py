@@ -1,14 +1,15 @@
-from contextlib import closing
 import glob
 import logging
 import os
 import threading
 import time
+from contextlib import closing
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from pathlib import Path
 from urllib.request import urlopen
 
 from django import db
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from django.db.models import Q
 
 from judge.models import Problem
 
@@ -83,12 +84,13 @@ class SendProblemsHandler(FileSystemEventHandler):
 
 
 class Monitor:
-    def __init__(self, judges, problem_globs, api_listen=None, update_pings=None):
+    def __init__(self, judges, **config):
         if not has_watchdog_installed:
             raise ImportError('watchdog is not installed')
 
         self.judges = judges
-        self.problem_globs = problem_globs
+        self.problem_globs = [(entry['storage_namespaces'], entry['problem_storage_globs'])
+                              for entry in config['run_monitor']]
 
         self.updater_exit = False
         self.updater_signal = threading.Event()
@@ -96,9 +98,12 @@ class Monitor:
         self.updater = threading.Thread(target=self.updater_thread)
         self.propagator = threading.Thread(target=self.propagate_update_signal)
 
-        self.update_pings = update_pings or []
+        self.update_pings = config.get('update_pings') or []
 
+        api_listen = config.get('api_listen')
         if api_listen:
+            api_listen = (api_listen['host'], api_listen['port'])
+
             class Handler(JudgeControlRequestHandler):
                 signal = self.updater_signal
 
@@ -108,7 +113,7 @@ class Monitor:
         self._handler = SendProblemsHandler(self.updater_signal)
         self._observer = Observer()
 
-        for _, dir_glob in problem_globs:
+        for _, dir_glob in self.problem_globs:
             root = find_glob_root(dir_glob)
             self._observer.schedule(self._handler, root, recursive=True)
             logger.info('Scheduled for monitoring: %s', root)
@@ -127,7 +132,8 @@ class Monitor:
         problems = set(problems)
 
         _ensure_connection()
-        problem_ids = list(Problem.objects.filter(judge_code__in=list(problems)).values_list('id', flat=True))
+        problem_ids = list(Problem.objects.filter(Q(code__in=list(problems)) | Q(judge_code__in=list(problems)))
+                           .values_list('id', flat=True))
         self.judges.update_problems_all(problems, problem_ids)
 
     def propagate_update_signal(self):
