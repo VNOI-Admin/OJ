@@ -30,16 +30,18 @@
             <div>Remaining uses: {{ remaining_uses }}</div>
         {% endif %}
     </div>
-    <div>
-        <form method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
-            {% if form.non_field_errors() %}
-                <div class="form-errors">
-                    {{ form.non_field_errors() }}
-                </div>
-            {% endif %}
-            {% csrf_token %}
-            <table class="django-as-table">{{ form.as_table() }}</table>
-            <p><input type="submit" value="Import"></p>
-        </form>
-    </div>
+    {% if status and remaining_uses > 0 %}
+        <div>
+            <form method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+                {% if form.non_field_errors() %}
+                    <div class="form-errors">
+                        {{ form.non_field_errors() }}
+                    </div>
+                {% endif %}
+                {% csrf_token %}
+                <table class="django-as-table">{{ form.as_table() }}</table>
+                <p><input type="submit" value="Import"></p>
+            </form>
+        </div>
+    {% endif %}
 {% endblock %}
