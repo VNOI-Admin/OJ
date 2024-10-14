@@ -17,7 +17,7 @@
 {% endblock %}
 
 {% block body %}
-    <div class="alert alert-info">
+    <div class="alert {{ 'alert-info' if status and remaining_uses > 0 else 'alert-warning' }}">
         <div>
             Host: <a href="{{ host_url }}">{{ host_url }}</a>
             {% if status %}
