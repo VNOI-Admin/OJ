@@ -682,7 +682,7 @@ BRIDGED_JUDGE_ADDRESS = [('localhost', 9999)]
 BRIDGED_JUDGE_PROXIES = None
 BRIDGED_DJANGO_ADDRESS = [('localhost', 9998)]
 BRIDGED_DJANGO_CONNECT = None
-BRIDGED_MONITOR_UPDATE_URL = 'http://localhost:9990/update/problems'
+BRIDGED_MONITOR_UPDATE_URL = None
 
 # Event Server configuration
 EVENT_DAEMON_USE = False
