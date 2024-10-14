@@ -153,6 +153,7 @@ class Monitor:
                         f.read()
                 except Exception:
                     logger.exception('Failed to ping for problem update: %s', url)
+            time.sleep(3)
 
     def updater_thread(self) -> None:
         while True:
