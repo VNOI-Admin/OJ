@@ -2,7 +2,6 @@ import errno
 import os
 from typing import Optional
 
-from corsheaders.signals import check_request_enabled
 from django.conf import settings
 from django.contrib.flatpages.models import FlatPage
 from django.core.cache import cache
@@ -204,10 +203,3 @@ def registration_user_registered(sender, user, request, **kwargs):
         with transaction.atomic():
             user.save()
             profile.save()
-
-
-def cors_allow_problem_export_api(sender, request, **kwargs):
-    return request.path.startswith('/problem-export/')
-
-
-check_request_enabled.connect(cors_allow_problem_export_api)
