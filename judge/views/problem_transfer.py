@@ -59,7 +59,8 @@ class ProblemExportSelect2View(ProblemExportMixin, BaseListView):
     def get_queryset(self):
         if self.transfer_key.remaining_uses <= 0:
             return Problem.objects.none()
-        return Problem.get_public_problems().filter(Q(code__icontains=self.term) | Q(name__icontains=self.term))
+        return Problem.get_public_problems().filter(Q(judge_code='') &
+                                                    (Q(code__icontains=self.term) | Q(name__icontains=self.term)))
 
     def get(self, request, *args, **kwargs):
         self.request = request
@@ -70,7 +71,7 @@ class ProblemExportSelect2View(ProblemExportMixin, BaseListView):
         return JsonResponse({
             'results': [
                 {
-                    'text': obj.name,
+                    'text': f'{obj.name} ({obj.code})',
                     'id': obj.code,
                 } for obj in context['object_list']],
             'more': context['page_obj'].has_next(),
