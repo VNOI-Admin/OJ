@@ -152,8 +152,8 @@ class ProblemImportForm(Form):
 def import_problem(self, user_id, problem, new_code):
     old_code = problem
     response = requests.post(get_problem_export_url(),
-                                 data={'code': old_code},
-                                 timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT)
+                             data={'code': old_code},
+                             timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT)
 
     if not response.ok:
         raise Http404()
