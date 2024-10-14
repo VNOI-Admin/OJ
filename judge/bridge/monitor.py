@@ -109,8 +109,9 @@ class Monitor:
             class Handler(JudgeControlRequestHandler):
                 signal = self.updater_signal
 
-            api_server = HTTPServer(api_listen, Handler)
-            self.api_server_thread = threading.Thread(target=api_server.serve_forever)
+            self.api_server = HTTPServer(api_listen, Handler)
+        else:
+            self.api_server = None
 
         self._handler = SendProblemsHandler(self.updater_signal, self.propagation_signal)
         self._observer = Observer()
@@ -148,7 +149,7 @@ class Monitor:
             for url in self.update_pings:
                 logger.info('Pinging for problem update: %s', url)
                 try:
-                    with closing(urlopen(url, data='')) as f:
+                    with closing(urlopen(url, data=b'')) as f:
                         f.read()
                 except Exception:
                     logger.exception('Failed to ping for problem update: %s', url)
@@ -157,7 +158,6 @@ class Monitor:
         while True:
             self.updater_signal.wait()
             self.updater_signal.clear()
-            self.propagation_signal.set()
             if self.updater_exit:
                 return
 
@@ -172,8 +172,9 @@ class Monitor:
         self.propagator.start()
         self.updater_signal.set()
         try:
-            if hasattr(self, 'api_server_thread'):
-                self.api_server_thread.start()
+            if self.api_server:
+                thread = threading.Thread(target=self.api_server.serve_forever)
+                thread.start()
             self._observer.start()
         except OSError:
             logger.exception('Failed to start problem monitor.')
@@ -181,5 +182,8 @@ class Monitor:
     def stop(self):
         self._observer.stop()
         self._observer.join(1)
+        if self.api_server:
+            self.api_server.shutdown()
         self.updater_exit = True
         self.updater_signal.set()
+        self.propagation_signal.set()
