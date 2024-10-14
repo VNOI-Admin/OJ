@@ -17,6 +17,19 @@
 {% endblock %}
 
 {% block body %}
+    <div class="alert alert-info">
+        <div>
+            Host: <a href="{{ host_url }}">{{ host_url }}</a>
+            {% if status %}
+                <i style="color: #44AD41" class="fa fa-check-circle"></i>
+            {% else %}
+                <i style="color: #DE2121" class="fa fa-minus-circle"></i>
+            {% endif %}
+        </div>
+        {% if status %}
+            <div>Remaining uses: {{ remaining_uses }}</div>
+        {% endif %}
+    </div>
     <div>
         <form method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
             {% if form.non_field_errors() %}
