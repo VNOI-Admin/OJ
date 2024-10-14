@@ -140,22 +140,23 @@ class ProblemImportForm(Form):
         return new_code
 
     def clean(self):
-        key_info = requests.get(get_problem_export_url(), timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT).json()
-        if not key_info:
-            self.add_error(None, _('Request timed out'))
-        elif key_info['remaining_uses'] <= 0:
+        response = requests.get(get_problem_export_url(), timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT)
+        if not response.ok:
+            self.add_error(None, _('Bad request'))
+        elif response.json().get('remaining_uses') <= 0:
             self.add_error('secret', _('No remaining uses'))
 
 
 @shared_task(bind=True)
 def import_problem(self, user_id, problem, new_code):
     old_code = problem
-    problem_info = requests.post(get_problem_export_url(),
+    response = requests.post(get_problem_export_url(),
                                  data={'code': old_code},
-                                 timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT).json()
+                                 timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT)
 
-    if not problem_info:
+    if not response.ok:
         raise Http404()
+    problem_info = response.json()
     problem = Problem()
     problem.code = new_code
     # Use the exported code
@@ -199,6 +200,15 @@ class ProblemImportView(TitleMixin, FormView):
             status, message=_('Importing %s...') % (form.cleaned_data['new_code'],),
             redirect=reverse('problem_edit', args=(form.cleaned_data['new_code'],)),
         )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['host_url'] = settings.VNOJ_PROBLEM_IMPORT_HOST
+        response = requests.get(get_problem_export_url(), timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT)
+        context['status'] = response.ok
+        if response.ok:
+            context['remaining_uses'] = response.json().get('remaining_uses')
+        return context
 
     def dispatch(self, request, *args, **kwargs):
         if not settings.VNOJ_PROBLEM_ENABLE_IMPORT:
