@@ -23,7 +23,7 @@ from django.views import View
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import FormView
 from django.views.generic.list import BaseListView
-from requests.exceptions import HTTPError
+from requests.exceptions import HTTPError, RequestException
 from reversion import revisions
 
 from judge.models import Language, Problem, ProblemExportKey, ProblemGroup, ProblemType
@@ -204,10 +204,13 @@ class ProblemImportView(TitleMixin, FormView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['host_url'] = settings.VNOJ_PROBLEM_IMPORT_HOST
-        response = requests.get(get_problem_export_url(), timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT)
-        context['status'] = response.ok
-        if response.ok:
-            context['remaining_uses'] = response.json().get('remaining_uses')
+        try:
+            response = requests.get(get_problem_export_url(), timeout=settings.VNOJ_PROBLEM_IMPORT_TIMEOUT)
+            context['status'] = response.ok
+            if response.ok:
+                context['remaining_uses'] = response.json().get('remaining_uses')
+        except RequestException:
+            context['status'] = False
         return context
 
     def dispatch(self, request, *args, **kwargs):
