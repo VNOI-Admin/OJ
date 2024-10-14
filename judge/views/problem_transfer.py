@@ -182,12 +182,13 @@ def import_problem(self, user_id, problem, new_code):
         revisions.set_comment(_('Imported from %s%s') % (
             settings.VNOJ_PROBLEM_IMPORT_HOST, reverse('problem_detail', args=(old_code,))))
     url = settings.BRIDGED_MONITOR_UPDATE_URL
-    logger.info('Pinging for problem update: %s', url)
-    try:
-        with closing(urlopen(url, data=b'')) as f:
-            f.read()
-    except Exception:
-        logger.exception('Failed to ping for problem update: %s', url)
+    if url:
+        logger.info('Pinging for problem update: %s', url)
+        try:
+            with closing(urlopen(url, data=b'')) as f:
+                f.read()
+        except Exception:
+            logger.exception('Failed to ping for problem update: %s', url)
 
 
 class ProblemImportView(TitleMixin, FormView):
