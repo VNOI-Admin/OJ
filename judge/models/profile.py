@@ -114,7 +114,7 @@ class Organization(models.Model):
         return reverse('organization_users', args=[self.slug])
 
     def has_credit_left(self):
-        return self.current_consumed_credit < self.available_credit + self.monthly_credit
+        return self.available_credit + self.monthly_credit > 0
 
     def consume_credit(self, consumed):
         # reduce credit in monthly credit first
