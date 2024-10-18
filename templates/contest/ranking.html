@@ -626,7 +626,7 @@
                         } else if ($col.hasClass('user-name')) {
                             // Username and Full name
                             row_data.push(clean_text($col.find('.rating').first().text()));
-                            row_data.push(clean_text($col.find('.personal-info').first().text()));
+                            row_data.push(clean_text($($col.find('.personal-info')[1]).text()));
                         } else {
                             // Point or rank
                             row_data.push(clean_text($col.ignore('.solving-time').text()));
