@@ -75,7 +75,7 @@ class Command(BaseCommand):
         prefix = options['prefix']
 
         reader = csv.DictReader(fin)
-        writer = csv.DictWriter(fout, fieldnames=['username', 'teamname', 'password', 'org', 'email'])
+        writer = csv.DictWriter(fout, fieldnames=['id', 'username', 'teamname', 'password', 'org', 'email'])
         writer.writeheader()
 
         done_team_ids = set()
@@ -98,6 +98,7 @@ class Command(BaseCommand):
             add_user(username, teamname, password, org, org_group, internalid)
 
             writer.writerow({
+                'id': internalid,
                 'username': username,
                 'teamname': teamname,
                 'password': password,
