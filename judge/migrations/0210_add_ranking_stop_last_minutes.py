@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0199_change_min_time_limit'),
+        ('judge', '0209_judge_add_tiers'),
     ]
 
     operations = [
@@ -14,5 +14,5 @@ class Migration(migrations.Migration):
             model_name='contest',
             name='ranking_stop_last_minutes',
             field=models.IntegerField(default=0, help_text='If set, the public scoreboard will be stopped for the last X minutes.', verbose_name='ranking stop last minutes'),
-        )
+        ),
     ]
