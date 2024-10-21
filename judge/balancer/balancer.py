@@ -64,7 +64,7 @@ class JudgeBalancer:
                 self.judge_to_bridge[judge.name] = bridge_id
                 self.bridge_to_judge[bridge_id] = judge
 
-                packet['storage-namespace'] = self.config['bridges'][bridge_id].get('storage_namespace')
+                packet.setdefault('storage-namespace', self.config['bridges'][bridge_id].get('storage_namespace'))
                 judge.submit(packet)
 
     def free_judge(self, judge):
