@@ -94,6 +94,7 @@ def update_problem_testcases(problem, testcases, test_file_path, checker_path, p
     with open(test_file_path, 'rb') as f, open(checker_path, 'rb') as checker_raw:
         checker_source = checker_raw.read().replace(b'#include "testlib_for_kattis.h"', b'#include "testlib.h"')
         checker_source = checker_source.replace(b'#include "testlib_kattis.h"', b'#include "testlib.h"')
+        checker_source = checker_source.replace(b'#include "./testlib_kattis.h"', b'#include "testlib.h"')
         checker = io.BytesIO(checker_source)
 
         try:
@@ -170,8 +171,6 @@ def create_problem(problem_name, icpc_folder):
         raise CommandError(f'Test data folder `{test_path}` not found.')
 
     if Problem.objects.filter(code=problem_code).count() == 0:
-        pdf_path = os.path.join(problem_folder, f'{problem_name}.pdf')
-
         print(f'Creating problem {problem_name}')
 
         problem = Problem(code=problem_code)
@@ -189,13 +188,15 @@ def create_problem(problem_name, icpc_folder):
         problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
         problem.authors.set(Profile.objects.filter(user__username='admin'))
 
-        with open(pdf_path, 'rb') as f:
-            problem.pdf_url = pdf_statement_uploader(f)
-
         problem.save()
     else:
         print(f'Skipped create problem {problem_name}.')
         problem = Problem.objects.get(code=problem_code)
+
+    # pdf_path = os.path.join(problem_folder, f'{problem_name}.pdf')
+    # with open(pdf_path, 'rb') as f:
+    #     problem.pdf_url = pdf_statement_uploader(f)
+    #     problem.save()
 
     testcases, n_sample, n_secret = get_testcases(test_path)
 
@@ -259,7 +260,7 @@ class Command(BaseCommand):
 
         os.system(f'cd {icpc_folder} && git pull')
 
-        blacklist = ['xx-mien-nam', 'yy-mien-nam', '6-mien-trung']
+        blacklist = ['xx-mien-nam', 'yy-mien-nam', '6-mien-trung', 'inversland']
         problems = [
             name for name in os.listdir(icpc_folder)
             if os.path.isdir(os.path.join(icpc_folder, name)) and
