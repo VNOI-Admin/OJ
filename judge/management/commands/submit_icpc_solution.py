@@ -70,7 +70,8 @@ def submit_submissions(problem_name, icpc_folder):
         submission.save()
         source = SubmissionSource(submission=submission, source=code)
         source.save()
-        submission.judge(force_judge=True)
+        # set batch_rejudge=True to set the lowest priority
+        submission.judge(force_judge=True, batch_rejudge=True)
         print(f'Submitted {submission.id}')
 
 
