@@ -24,7 +24,7 @@ def get_submissions(submissions_path):
         for name in os.listdir(os.path.join(submissions_path, subfolder)):
             prefix = ''
             if name.lower().endswith('.cpp'):
-                language = Language.objects.get(key='CPP17')
+                language = Language.objects.get(key='CPP20')
                 prefix = '// '
             elif name.lower().endswith('.py'):
                 language = Language.objects.get(key='PYPY3')
@@ -36,7 +36,8 @@ def get_submissions(submissions_path):
                 language = Language.objects.get(key='KOTLIN')
                 prefix = '// '
             else:
-                raise CommandError(f'Invalid file extension `{name}`')
+                print(f'Invalid file extension `{name}`')
+                continue
 
             submission_path = os.path.join(submissions_path, subfolder, name)
             source = open(submission_path, 'r').read()
@@ -72,7 +73,7 @@ def submit_submissions(problem_name, icpc_folder):
         source.save()
         # set batch_rejudge=True to set the lowest priority
         submission.judge(force_judge=True, batch_rejudge=True)
-        print(f'Submitted {submission.id}')
+        print(f'[{problem_code}] Submitted {submission.id} by {user_to_submit}')
 
 
 class Command(BaseCommand):
