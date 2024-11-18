@@ -567,18 +567,14 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         return _filter & Q(organizations=self.organization)
 
 
-class MonthlyCreditUsageOrganization(TitleMixin, PublicOrganizationMixin, ListView):
-    model = OrganizationMonthlyUsage
+class MonthlyCreditUsageOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, ListView):
     template_name = 'organization/usage.html'
-    context_object_name = 'usages'
-
-    def get_queryset(self):
-        return OrganizationMonthlyUsage.objects.filter(organization=self.organization)\
-            .order_by('time').values('time', 'consumed_credit')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = self.organization.name
+        context['usages'] = OrganizationMonthlyUsage.objects.filter(organization=self.organization)\
+            .order_by('time').values('time', 'consumed_credit')
 
         usages = context['usages']
         days = [usage['time'].isoformat() for usage in usages] + [_('Current month')]
