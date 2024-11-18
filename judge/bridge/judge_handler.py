@@ -237,7 +237,7 @@ class JudgeHandler(ZlibPacketHandler):
         data = self.get_related_submission_data(id)
         self._working = id
         self._no_response_job = threading.Timer(20, self._kill_if_no_response)
-        self.send({
+        request = {
             'name': 'submission-request',
             'submission-id': id,
             'problem-id': problem,
@@ -254,7 +254,14 @@ class JudgeHandler(ZlibPacketHandler):
                 'file-only': data.file_only,
                 'file-size-limit': data.file_size_limit,
             },
-        })
+        }
+        if '/' in problem:
+            storage_namespace, problem = problem.split('/')
+            request.update({
+                'storage-namespace': storage_namespace,
+                'problem-id': problem,
+            })
+        self.send(request)
 
     def _kill_if_no_response(self):
         logger.error('Judge failed to acknowledge submission: %s: %s', self.name, self._working)

@@ -94,7 +94,7 @@ def judge_submission(submission, rejudge=False, batch_rejudge=False, judge_id=No
         response = judge_request({
             'name': 'submission-request',
             'submission-id': submission.id,
-            'problem-id': submission.problem.code,
+            'problem-id': submission.problem.judge_code or submission.problem.code,
             'language': submission.language.key,
             'source': submission.source.source,
             'judge-id': judge_id,
