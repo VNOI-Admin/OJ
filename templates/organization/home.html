@@ -104,10 +104,10 @@
                         {% endif %}
                     {% endif %}
                     <br>
-                    <div>
-                        <a href="{{ url('organization_monthly_usage', organization.slug) }}">{{ _('Organization cost') }}</a>
-                    </div>
                     {% if can_edit %}
+                        <div>
+                            <a href="{{ url('organization_monthly_usage', organization.slug) }}">{{ _('Organization cost') }}</a>
+                        </div>
                         {% if not organization.is_open %}
                             <div>
                                 <a href="{{ url('organization_requests_pending', organization.slug) }}">
