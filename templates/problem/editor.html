@@ -2,6 +2,9 @@
 
 {% block js_media %}
     {{ form.media.js }}
+    {% if type_accept_form %}
+        {{ type_accept_form.media.js }}
+    {% endif %}
     {% include "leave-warning.html" %}
 
     <script src="{{ static('vnoj/jquery.formset.js') }}"></script>
@@ -18,6 +21,26 @@
                 $('#lang_limit_table').toggleClass('hidden');
             });
             $('#lang_limit_title').click();
+            {% endif %}
+
+            {% if type_accept_form %}
+                $('#type-stats-title').click(function() {
+                    $('#type-stats-title i').toggleClass('fa-caret-down fa-caret-up');
+                    $('#type-stats-table').toggleClass('hidden');
+                });
+                $('#type-stats-title').click();
+
+                // Sort the types by vote
+                $('.type-stats-entry').sort(function(a, b) {
+                    return $(b).find('td:eq(1)').text() - $(a).find('td:eq(1)').text();
+                }).prependTo($('#type-stats-table tbody'));
+
+                $('.checkbox-td').click(function(event) {
+                    var input = $(this).find('input:checkbox').get(0);
+                    if (event.target != input) {
+                        input.click();
+                    }
+                });
             {% endif %}
 
             var noResults = function () {
@@ -59,6 +82,9 @@
 
 {% block media %}
     {{ form.media.css }}
+    {% if type_accept_form %}
+        {{ type_accept_form.media.css }}
+    {% endif %}
     <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
     <style>
         .hidden {
@@ -107,6 +133,34 @@
         {{ lang_limit_formset.management_form }}
         <table class="django-as-table">{{ form.as_table() }}</table>
         <hr>
+
+        {% if type_accept_form %}
+            <h3 id="type-stats-title" style="text-align: center">{{ _('Problem type vote statistics') }} <i class="fa fa-caret-up"></i></h3>
+            <span class="helptext" style="text-align: center">{{ _('Selected types will be combined into the field above') }}</span>
+            <table class="table" id="type-stats-table">
+                <thead>
+                    <tr>
+                        <th>{{ _('Problem type') }}</th>
+                        <th>{{ _('Votes') }}</th>
+                        <th>{{ _('Select') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for field in type_accept_form.types %}
+                        <tr class="type-stats-entry">
+                            <td>{{ field.choice_label.full_name }}</td>
+                            <td>{{ field.choice_label.votes }}</td>
+                            <td class="checkbox-td">{{ field.tag() }}</td>
+                        </tr>
+                    {% endfor %}
+                    <tr class="type-stats-aggregate">
+                        <td>=</td>
+                        <td>{{ type_voter_count }}</td>
+                    </tr>
+                </tbody>
+            </table>
+            <hr>
+        {% endif %}
 
         <center>
             <h3 id="lang_limit_title">{{ _('Language-specific resource limit') }} <i class="fa fa-caret-up"></i></h3>

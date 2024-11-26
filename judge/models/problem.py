@@ -22,8 +22,8 @@ from judge.models.runtime import Language
 from judge.user_translations import gettext as user_gettext
 from judge.utils.url import get_absolute_pdf_url
 
-__all__ = ['ProblemGroup', 'ProblemType', 'Problem', 'ProblemTranslation', 'ProblemClarification', 'License',
-           'Solution', 'SubmissionSourceAccess', 'TranslatedProblemQuerySet']
+__all__ = ['ProblemGroup', 'ProblemType', 'ProblemTypeVote', 'Problem', 'ProblemTranslation', 'ProblemClarification',
+           'License', 'Solution', 'SubmissionSourceAccess', 'TranslatedProblemQuerySet']
 
 
 def disallowed_characters_validator(text):
@@ -220,6 +220,11 @@ class Problem(models.Model):
 
     suggester = models.ForeignKey(Profile, blank=True, null=True, related_name='suggested_problems', on_delete=SET_NULL)
 
+    allow_type_voting = models.BooleanField(default=False, help_text=_('Allow public voting on problem types.'))
+
+    automated_type_voting = models.BooleanField(default=True, help_text=_('Automatically set problem types based on '
+                                                                          'a certain threshold of votes.'))
+
     allow_view_feedback = models.BooleanField(
         help_text=_('Allow user to view checker feedback.'),
         default=False,
@@ -340,6 +345,10 @@ class Problem(models.Model):
 
         # Don't need to check for ProblemTestcaseAccess.AUTHOR_ONLY
         return False
+
+    def is_type_voting_manageable_by(self, user):
+        # Type voting can be enabled on all public problems
+        return self.is_public and not self.is_organization_private
 
     @classmethod
     def get_visible_problems(cls, user):
@@ -627,6 +636,15 @@ class Problem(models.Model):
         )
         verbose_name = _('problem')
         verbose_name_plural = _('problems')
+
+
+class ProblemTypeVote(models.Model):
+    user = models.ForeignKey(Profile, on_delete=models.CASCADE)
+    problem = models.ForeignKey(Problem, on_delete=models.CASCADE)
+    problem_type = models.ForeignKey(ProblemType, on_delete=CASCADE)
+
+    class Meta:
+        unique_together = ('user', 'problem', 'problem_type')
 
 
 class ProblemTranslation(models.Model):
