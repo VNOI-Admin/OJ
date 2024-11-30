@@ -756,6 +756,7 @@ class ContestForm(ModelForm):
             'scoreboard_visibility',
             'format_name',
             'description',
+            'access_code',
             'is_private',
             'private_contestants',
         ]
