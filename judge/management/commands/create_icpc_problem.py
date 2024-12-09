@@ -106,7 +106,7 @@ def update_problem_testcases(problem, testcases, test_file_path, checker_path, p
                 problem_data.custom_checker.save('checker.cpp', File(checker))
                 problem_data.checker_args = json.dumps({
                     "files": "checker.cpp",
-                    "lang": "CPP17",
+                    "lang": "CPP20",
                     "type": "testlib"
                 })
             elif problem_type == INTERACTIVE:
@@ -114,10 +114,10 @@ def update_problem_testcases(problem, testcases, test_file_path, checker_path, p
                 problem_data.grader = 'interactive'
                 problem_data.custom_grader.save('checker.cpp', File(checker))
 
-            if float_checker != 0:
-                problem_data.checker = 'floatsabs'
+            if float_checker is not None:
+                problem_data.checker = float_checker[0]
                 problem_data.checker_args = json.dumps({
-                    "precision": float_checker,
+                    "precision": float_checker[1],
                 })
         except Exception:
             problem_data = ProblemData(
@@ -130,7 +130,7 @@ def update_problem_testcases(problem, testcases, test_file_path, checker_path, p
                 problem_data.custom_checker.save('checker.cpp', File(checker))
                 problem_data.checker_args = json.dumps({
                     "files": "checker.cpp",
-                    "lang": "CPP17",
+                    "lang": "CPP20",
                     "type": "testlib"
                 })
             elif problem_type == INTERACTIVE:
@@ -192,6 +192,7 @@ def create_problem(problem_name, icpc_folder):
     else:
         print(f'Skipped create problem {problem_name}.')
         problem = Problem.objects.get(code=problem_code)
+        problem.name = get_problem_full_name(problem_folder) or problem_name
 
     # pdf_path = os.path.join(problem_folder, f'{problem_name}.pdf')
     # with open(pdf_path, 'rb') as f:
@@ -218,12 +219,23 @@ def create_problem(problem_name, icpc_folder):
         # small hack to make the `open with` work without any modification
         checker_path = os.path.join(problem_folder, 'problem.yaml')
 
-    float_checker = 0
+    float_checker = None
     if problem_setting.get('validator_flags', None):
         flags = problem_setting['validator_flags'].split(' ')
-        if len(flags) != 2 and flags[0] != 'float_tolerance':
+        if len(flags) != 2:
             raise CommandError(f'Unsupported validator flags: {flags}')
-        float_checker = int(flags[1].split('-')[-1])
+        if flags[0] == 'float_tolerance':
+            flags[0] = 'floats'
+        elif flags[0] == 'float_relative_tolerance':
+            flags[0] = 'floatsrel'
+        elif flags[0] == 'float_absolute_tolerance':
+            flags[0] = 'floatsabs'
+        else:
+            raise CommandError(f'Unsupported validator flags: {flags}')
+        if not flags[1].startswith('1e-'):
+            raise CommandError(f'Unsupported validator flags: {flags}')
+
+        float_checker = (flags[0], int(flags[1][3:]))
 
     if float_checker and problem_type != NORMAL:
         raise CommandError('Float checker only support normal problem type')
@@ -260,7 +272,7 @@ class Command(BaseCommand):
 
         os.system(f'cd {icpc_folder} && git pull')
 
-        blacklist = ['xx-mien-nam', 'yy-mien-nam', '6-mien-trung', 'inversland']
+        blacklist = ['xx-mien-nam', 'yy-mien-nam', '6-mien-trung']
         problems = [
             name for name in os.listdir(icpc_folder)
             if os.path.isdir(os.path.join(icpc_folder, name)) and
@@ -277,8 +289,8 @@ class Command(BaseCommand):
                     msg = ' [custom checker]'
                 elif problem_type == INTERACTIVE:
                     msg = ' [interactive]'
-                if float_checker > 0:
-                    msg = f' [float checker, precisions: {float_checker}]'
+                if float_checker is not None:
+                    msg = f' [float checker {float_checker[0]}, precisions: {float_checker[1]}]'
 
                 messages[problem] = f'{n_sample} samples, {n_secret} secrets{msg}.'
                 print('Succeed.')
