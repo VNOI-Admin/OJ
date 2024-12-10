@@ -46,7 +46,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('input', help='csv file containing username and teamname')
         parser.add_argument('output', help='where to store output csv file')
-        parser.add_argument('prefix', help='prefix for username')
+        parser.add_argument('prefix', help='prefix for username', type=str, nargs='?', default='')
 
     def handle(self, *args, **options):
         fin = open(options['input'], 'r', encoding='utf-8')
