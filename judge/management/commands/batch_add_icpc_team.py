@@ -83,7 +83,7 @@ class Command(BaseCommand):
         has_group = 'group' in reader.fieldnames
 
         for cnt, row in enumerate(reader, start=1):
-            username = f'{prefix}{cnt}'
+            username = f'{prefix}{cnt}'.lower()
             teamname = row['name']
             org = get_org(row['instName'])
             password = generate_password()
