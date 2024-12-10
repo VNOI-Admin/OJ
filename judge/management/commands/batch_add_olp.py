@@ -65,7 +65,7 @@ class Command(BaseCommand):
         for row in reader:
             username = row['username']
 
-            username = f'{prefix}{username}'
+            username = f'{prefix}{username}'.lower()
             fullname = row['name']
             org = get_org(row['org'])
             password = generate_password()
