@@ -239,7 +239,7 @@ class Problem(models.Model):
 
     @property
     def absolute_pdf_url(self):
-        return get_absolute_pdf_url(self.pdf_url) if self.pdf_url else None
+        return self.pdf_url if self.pdf_url else None
 
     @cached_property
     def types_list(self):
