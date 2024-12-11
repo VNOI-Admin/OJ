@@ -67,7 +67,7 @@ def general_info(request):
         'perms': PermWrapper(request.user),
         'HAS_WEBAUTHN': bool(settings.WEBAUTHN_RP_ID),
     }
-    if request.user.is_superuser:
+    if request.user.is_staff:
         context['ticket_count'] = Ticket.objects.filter(is_open=True).count()
     return context
 
