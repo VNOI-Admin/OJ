@@ -259,7 +259,7 @@
                 {% if request.resolver_match.view_name == "problem_detail" and problem %}
                     "{{ url('new_problem_ticket', problem.code) }}"
                 {% else %}
-                    "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
+                    "/tickets/new?issue_url={{ request.build_absolute_uri()|replace('https', 'http') |urlencode }}"
                 {% endif %}
             style="margin-right: 5px;">
                 <span title="{{ _('Report issue') }}">
