@@ -80,6 +80,9 @@
                             $('.personal-info').show();
                             $('#show-personal-info-checkbox').prop('checked', true);
                         }
+                        {% if is_ICPC_format %}
+                            window.addMedalIndicator();
+                        {% endif %}
                         {% if tab == 'ranking' %}
                             window.applyRankingFilter();
                         {% endif %}
@@ -389,6 +392,41 @@
             }
             window.getTagNamesAndSetTopTag();
 
+            window.addMedalIndicator = function () {
+                let orgs_with_medal = new Set();
+                let medal_given = 0;
+                $('#ranking-table > tbody > tr[id]').each(function (index) {
+                    let is_medalist = false;
+                    let org_anchor = $(this).find("div > div > .personal-info > .organization > a")[0];
+                    if (!org_anchor) {
+                        is_medalist = true;
+                    } else {
+                        let org = $(org_anchor).attr('href');
+                        if (!orgs_with_medal.has(org)) {
+                            orgs_with_medal.add(org);
+                            is_medalist = true;
+                        }
+                    }
+
+                    if (is_medalist) {
+                        medal_given += 1;
+                        if (medal_given <= 4) {
+                            $(this).children(":first").addClass('gold-medal');
+                        } else if (medal_given <= 8) {
+                            $(this).children(":first").addClass('silver-medal');
+                        } else if (medal_given <= 12) {
+                            $(this).children(":first").addClass('bronze-medal');
+                        }
+
+                        if (medal_given == 12) return false;
+                    }
+                });
+            }
+
+            {% if is_ICPC_format %}
+                window.addMedalIndicator();
+            {% endif %}
+
             function extractCurrentAbsRank(row_text) {
                 let paren_surround_text = row_text.match(/\(([^)]+)\)/);
                 let current_abs_rank
@@ -465,7 +503,9 @@
                 }
             };
 
-            window.applyRankingFilter();
+            {% if tab == 'ranking' %}
+                window.applyRankingFilter();
+            {% endif %}
 
             window.restoreChecklistOptions = function () {
                 let selected_orgs = JSON.parse(localStorage.getItem(`filter-selected-orgs-${contest_key}`));
