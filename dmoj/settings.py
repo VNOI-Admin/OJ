@@ -680,6 +680,7 @@ EVENT_DAEMON_KEY = None
 EVENT_DAEMON_AMQP_EXCHANGE = 'dmoj-events'
 EVENT_DAEMON_SUBMISSION_KEY = '6Sdmkx^%pk@GsifDfXcwX*Y7LRF%RGT8vmFpSxFBT$fwS7trc8raWfN#CSfQuKApx&$B#Gh2L7p%W!Ww'
 EVENT_DAEMON_CONTEST_KEY = '&w7hB-.9WnY2Jj^Qm+|?o6a<!}_2Wiw+?(_Yccqq{uR;:kWQP+3R<r(ICc|4^dDeEuJE{*D;Gg@K(4K>'
+EVENT_DAEMON_TICKET_KEY = '@R3DjH&egtm0HNhok6ERIMK!zlTzq2hrSGG2Se8SujCoO(2NX!DkbzcgQtm90FHDvpFM3gJ&D7acS$ta'
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/

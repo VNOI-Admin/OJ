@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import hmac
 import json
 import secrets
@@ -26,6 +27,7 @@ from judge.models.runtime import Language
 from judge.ratings import rating_class
 from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
+from judge.utils.unicode import utf8bytes
 
 __all__ = ['Organization', 'OrganizationMonthlyUsage', 'Profile', 'OrganizationRequest', 'WebAuthnCredential']
 
@@ -231,6 +233,15 @@ class Profile(models.Model):
                                                  help_text=_('Name displayed in place of username.'))
     # For ICPC only
     group = models.TextField(verbose_name=_('uni group'), null=True, blank=True)
+
+    @classmethod
+    def get_ticket_secret(cls, profile_id):
+        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_TICKET_KEY), b'%d' % profile_id, hashlib.sha512)
+                    .hexdigest()[:16] + '%08x' % profile_id)
+
+    @cached_property
+    def ticket_secret(self):
+        return self.get_ticket_secret(self.id)
 
     @cached_property
     def organization(self):
