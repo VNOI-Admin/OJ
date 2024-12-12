@@ -102,6 +102,14 @@
                 '{{ EVENT_DAEMON_POLL_LOCATION }}',
                 {{ EVENT_LAST_MSG }}
             );
+            {% if request.user.is_authenticated %}
+                $(function () {
+                    event_dispatcher.auto_reconnect = true;
+                    event_dispatcher.on('tickets_{{ request.profile.ticket_secret }}', function (data) {
+                        alert({{ _('You have a new reply on ticket ')|htmltojs }} + data.title + '\n\n' + data.body);
+                    });
+                })
+            {% endif %}
         </script>
     {% endif %}
     {% if request.in_contest %}

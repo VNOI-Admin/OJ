@@ -184,6 +184,11 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
             event.post('ticket-%d' % self.object.id, {
                 'type': 'ticket-message', 'message': message.id,
             })
+            if self.request.profile != self.object.user:
+                event.post(f'tickets_{self.object.user.ticket_secret}', {
+                    'title': self.object.title,
+                    'body': message.body,
+                })
         on_new_ticket_message.delay(message.pk, message.ticket.pk, message.body)
         return HttpResponseRedirect('%s#message-%d' % (reverse('ticket', args=[self.object.id]), message.id))
 
