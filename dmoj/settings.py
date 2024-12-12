@@ -434,6 +434,7 @@ INSTALLED_APPS += (
 )
 
 MIDDLEWARE = (
+    'judge.middleware.ForceHTTPMiddleware',
     'judge.middleware.ShortCircuitMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
