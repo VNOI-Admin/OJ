@@ -68,6 +68,8 @@ def general_info(request):
     }
     if request.user.is_staff:
         context['ticket_count'] = Ticket.objects.filter(is_open=True).count()
+    else:
+        context['ticket_count'] = Ticket.objects.filter(user=request.user).count()
     return context
 
 
