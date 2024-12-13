@@ -1059,13 +1059,16 @@ class ContestPublicRanking(ContestRanking):
         # ignore the `can_see_full_scoreboard` check
         return self.get_full_ranking_list()
 
+    def get_object(self, queryset=None):
+        return DetailView.get_object(self, queryset)
+
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
 
         ranking_stop_last_minutes = self.object.ranking_stop_last_minutes
         time_left_seconds = (self.object.end_time - self.object._now).total_seconds()
 
-        if time_left_seconds < ranking_stop_last_minutes * 60:
+        if ranking_stop_last_minutes > 0 and time_left_seconds < ranking_stop_last_minutes * 60:
             return generic_message(request, _('Access past the allowed time'),
                                    _(f'You are not allowed to view the ranking in the last {ranking_stop_last_minutes} minutes.'))
 
