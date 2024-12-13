@@ -1187,6 +1187,21 @@ class ContestBalloons(ContestMixin, TitleMixin, DetailView):
         context = super(ContestBalloons, self).get_context_data(**kwargs)
         context['balloons_done'] = max(0, int(self.request.GET.get('balloons_done', 0)) - 1)
         context['accept_submissions'] = self.get_accepted_submissions()[context['balloons_done']:]
+        context['color_map'] = {
+            'icpc_g': 'đỏ',
+            'icpc_c': 'xanh dương',
+            'icpc_f': 'xanh ngọc ',
+            'icpc_b': 'xanh lá nhạt',
+            'icpc_d': 'tím',
+            'icpc_l': 'hồng đậm',
+            'icpc_k': 'vàng',
+            'icpc_j': 'hồng nhạt',
+            'icpc_m': 'đen',
+            'icpc_i': 'xanh lá đậm',
+            'icpc_h': 'cam',
+            'icpc_a': 'xanh dương nhạt',
+            'icpc_e': 'xanh dương nhạt',
+        }
         return context
 
     def dispatch(self, request, *args, **kwargs):

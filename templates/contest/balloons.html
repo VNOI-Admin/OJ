@@ -84,6 +84,11 @@
             $('tr').click(mark_row);
             $('#scroll-to-unmarked').click(scroll_to_unmarked);
         });
+
+        // reload each 30 secs
+        setInterval(function() {
+            location.reload();
+        }, 30000);
     </script>
 {% endblock %}
 
@@ -100,6 +105,7 @@
                     <th>{{ _('SubID.') }}</th>
                     <th>{{ _('TEAM') }}</th>
                     <th>{{ _('PROBLEM') }}</th>
+                    <th>{{ _('COLOR') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -115,6 +121,13 @@
                     </td>
                     <td style="text-align: left; padding-left: 2em;">
                         {{ submission.problem.code }}
+                    </td>
+                    <td style="text-align: left; padding-left: 2em;">
+                        {% if submission.problem.code in color_map %}
+                            {{ color_map[submission.problem.code] }}
+                        {% else %}
+                            Unknown
+                        {% endif %}
                     </td>
                 </tr>
             {% endfor %}
