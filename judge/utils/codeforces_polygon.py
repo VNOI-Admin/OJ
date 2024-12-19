@@ -808,7 +808,7 @@ class PolygonImporter:
             'description': self.meta['description'],
             'partial': self.meta['partial'],
             'group': ProblemGroup.objects.order_by('id').first(),  # Uncategorized
-            'points': 0.0,
+            'points': 0.01,
         })
         problem.save()
         problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
