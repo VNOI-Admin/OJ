@@ -21,6 +21,7 @@ from judge.views import TitledTemplateView, api, blog, comment, contests, langua
 from judge.views.magazine import MagazinePage
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
+from judge.views.problem_transfer import ProblemExportSelect2View, ProblemExportView, ProblemImportView
 from judge.views.register import ActivationView, RegistrationView
 from judge.views.select2 import AssigneeSelect2View, CommentSelect2View, ContestSelect2View, \
     ContestUserSearchSelect2View, OrganizationSelect2View, OrganizationUserSelect2View, ProblemSelect2View, \
@@ -421,6 +422,12 @@ urlpatterns = [
     ])),
 
     path('magazine/', MagazinePage.as_view(), name='magazine'),
+
+    re_path('^problem-export/(?P<secret>[a-zA-Z0-9_-]{48})', include([
+        path('', ProblemExportView.as_view(), name='problem_export'),
+        path('/select', ProblemExportSelect2View.as_view(), name='problem_export_select2_ajax'),
+    ])),
+    path('problem-import', ProblemImportView.as_view(), name='problem_import'),
 ]
 
 favicon_paths = ['apple-touch-icon-180x180.png', 'apple-touch-icon-114x114.png', 'android-chrome-72x72.png',
