@@ -31,9 +31,17 @@
     white-space: nowrap;
     font-weight: 400;
     line-height: 1.4;
-    background: rgb(51, 122, 183) none repeat scroll 0 (0% / auto) padding-box border-box;
-    background: -webkit-linear-gradient(top, #337ab7 0, #265a88 100%) repeat-x;
-    background: linear-gradient(to bottom, #337ab7 0, #265a88 100%) repeat-x;
+    // background: rgb(51, 122, 183) none repeat scroll 0 (0% / auto) padding-box border-box;
+    // background: -webkit-linear-gradient(top, #337ab7 0, #265a88 100%) repeat-x;
+    // background: linear-gradient(to bottom, #337ab7 0, #265a88 100%) repeat-x;
+    // background: $tomchienxu;
+    
+    // Tunaa: Gradient
+    background-image: linear-gradient(to right, rgba(111,76,222,1), rgba(0,11,88,1));
+    background-size: 200% auto;
+    background-position: 100% 0;
+    transition: background-position 0.5s;
+
     border-radius: $widget_border_radius;
     padding: 6px 12px;
     display: block;
@@ -44,12 +52,16 @@
     font-size: $base_font_size;
 
     &:hover {
-        background: #265a88;
+        // Tunaa: Gradient
+        // background: #265a88;
+        background-position: 0 0;
     }
 
     &:active {
         border-color: #245580;
-        background: #265a88;
+        // Tunaa: Gradient
+        // background: #265a88;
+        background-position: 0 0;
     }
 
     &.full {
@@ -286,7 +298,7 @@ ul.pagination {
                     line-height: 1.42857;
                     text-decoration: none;
                     color: $color_primary0;
-                    background-color: $color_primary75;
+                    background-color: $tomchienxu;
                     border: 1px solid $color_primary50;
                     margin-left: -1px;
                 }
@@ -412,7 +424,7 @@ a.close {
 
 .sidebox h3 {
     margin: 0 -5px;
-    background: $color_primary75;
+    background: $tomchienxu;
     border-radius: $widget_border_radius $widget_border_radius 0 0;
     color: $color_primary0;
     padding-top: 5px;

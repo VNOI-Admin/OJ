@@ -37,6 +37,31 @@
     content: "🧑‍🏫";
 }
 
+.daor a, .daor {
+    color: #ff0066 !important;
+    font-weight: bold !important;
+}
+
+.eagle a::before {
+    content: "🦅🦅🦅";
+}
+
+.acwy a::before {
+    content: "😈";
+}
+
+.vegan a::before {
+    content: "🧑‍🦼‍➡️";
+}
+
+.birthday a::before {
+    content: "🍰🎂";
+}
+
+.kien a::before {
+    content: "💩";
+}
+
 .deleted-user, .deleted-user a {
     color: #999;
     font-weight: normal;

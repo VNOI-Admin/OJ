@@ -11,7 +11,21 @@
     {% endif %}
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1">
     <!-- Favicons-->
-    <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="57x57" href="/icon.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/icon.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/icon.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/icon.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/icon.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/icon.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/icon.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/icon.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/icon.png">
+    <link rel="icon" type="image/png" href="/icon.png" sizes="32x32">
+    <link rel="icon" type="image/png" href="/icon.png" sizes="192x192">
+    <link rel="icon" type="image/png" href="/icon.png" sizes="96x96">
+    <link rel="icon" type="image/png" href="/icon.png" sizes="16x16">
+
+    <!-- <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
     <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
     <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
     <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
@@ -23,12 +37,13 @@
     <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
     <link rel="icon" type="image/png" href="/android-chrome-192x192.png" sizes="192x192">
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
-    <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
-    <link rel="manifest" href="/manifest.json">
-    <meta name="msapplication-TileColor" content="#231F20">
+    <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16"> -->
+
+    <!-- <link rel="manifest" href="/manifest.json"> -->
+    <meta name="msapplication-TileColor" content="#000B58">
     <meta name="msapplication-TileImage" content="/mstile-144x144.png">
     {# Chrome 39 for Android colour #}
-    <meta name="theme-color" content="#231F20">
+    <meta name="theme-color" content="#000B58">
     {% if og_image %}
         <meta property="og:image" content="{{ request.build_absolute_uri(og_image) }}">
     {% else %}
@@ -176,6 +191,7 @@
     {% else %}
         <script>window.user = {};</script>
     {% endif %}
+
 
     {% if misc_config.analytics %}
         {{ misc_config.analytics|safe }}
@@ -357,11 +373,10 @@
 
     {% block bodyend %}{% endblock %}
 
-    <footer>
-        <span id="footer-content">
-            <br>
-            {{_('proudly powered by %(dmoj)s', dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'))}} |
-            {{_('follow us on %(github)s and %(facebook)s', github=safe('<a style="color: #808080" href="https://github.com/VNOI-Admin/OJ"><b>Github</b></a>'), facebook=safe('<a style="color: #808080" href="https://www.facebook.com/vnoi.wiki"><b>Facebook</b></a>'))}}
+    <footer style="padding: 5px 0; align-content: center;">
+        <span id="footer-content" class="p-3">
+            {{_('Proudly powered by %(dmoj)s and %(vnoj)s', dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'), vnoj=safe('<a style="color: #808080" href="https://oj.vnoi.info"><b>VNOJ</b></a>'))}} |
+            {{_('Hosted and Maintained by %(Tunaa)s with 💖', Tunaa=safe('<a style="color: #137ed9" href="https://www.facebook.com/mygfwouldbesomewhere/"><b>Nguyễn "cheeseytunaa" Đức Tuân</b></a>'))}}
             {% if misc_config.footer %}
                 {{ misc_config.footer|safe }} |
             {% endif %}

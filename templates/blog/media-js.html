@@ -2,6 +2,11 @@
 {% compress js %}
     <script type="text/javascript">
         $(document).ready(function () {
+            function add_delta_vote(id, delta) {
+                let score = $('#post-' + id + ' #post-score').first();
+                score.text(parseInt(score.text()) + delta);
+            }
+
             function ajax_vote(url, id, delta, on_success) {
                 return $.ajax({
                     url: url,
@@ -10,8 +15,8 @@
                         id: id
                     },
                     success: function (data, textStatus, jqXHR) {
-                        var score = $('#post-' + id + ' #post-score').first();
-                        score.text(parseInt(score.text()) + delta);
+                        add_delta_vote(id, delta);
+
                         if (typeof on_success !== 'undefined')
                             on_success();
                     },
@@ -32,20 +37,38 @@
             window.blog_upvote = function (id) {
                 ajax_vote('{{ url('blog_upvote') }}', id, 1, function () {
                     var $votes = get_$votes(id);
-                    if ($votes.downvote.hasClass('voted'))
+                    if ($votes.downvote.hasClass('voted')) {
                         $votes.downvote.removeClass('voted');
-                    else
-                        $votes.upvote.addClass('voted');
+                        add_delta_vote(id, 1);
+                    }
+
+                    if ($votes.upvote.hasClass('voted')) {
+                        $votes.upvote.removeClass('voted');
+                        add_delta_vote(id, -2);
+
+                        return;
+                    }
+
+                    $votes.upvote.addClass('voted');
                 });
             };
 
             window.blog_downvote = function (id) {
                 ajax_vote('{{ url('blog_downvote') }}', id, -1, function () {
                     var $votes = get_$votes(id);
-                    if ($votes.upvote.hasClass('voted'))
+                    if ($votes.upvote.hasClass('voted')) {
                         $votes.upvote.removeClass('voted');
-                    else
-                        $votes.downvote.addClass('voted');
+                        add_delta_vote(id, -1);
+                    }
+
+                    if ($votes.downvote.hasClass('voted')) {
+                        $votes.downvote.removeClass('voted');
+                        add_delta_vote(id, 2);
+
+                        return;
+                    }
+
+                    $votes.downvote.addClass('voted');
                 });
             };
 
