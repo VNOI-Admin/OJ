@@ -6665,3 +6665,296 @@ INFO 2024-12-20 09:14:47,253 judge_handler Yuri: 1 test case(s) completed on: 49
 INFO 2024-12-20 09:14:47,700 judge_handler Yuri: 1 test case(s) completed on: 494
 INFO 2024-12-20 09:14:47,730 judge_handler Yuri: Grading has ended on: 494
 INFO 2024-12-20 09:14:47,730 judge_list Judge available after grading 494: Yuri
+INFO 2024-12-20 12:14:15,915 judge_handler Judge connected from: ('127.0.0.1', 50658)
+INFO 2024-12-20 12:14:15,933 judge_handler Judge authenticated: ('127.0.0.1', 50658) (Hukochi)
+INFO 2024-12-20 12:14:15,934 judge_list Minimum tier changed from None to 1
+INFO 2024-12-20 12:30:51,883 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:30:51,890 judge_handler Hukochi: Updated 4 problems
+INFO 2024-12-20 12:30:54,882 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:30:54,890 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:32:30,771 judge_list Free judges: 1
+INFO 2024-12-20 12:32:30,772 judge_list Dispatched submission 24 to: Hukochi
+INFO 2024-12-20 12:32:30,792 judge_handler Submission acknowledged: 24
+ERROR 2024-12-20 12:32:33,235 judge_handler Judge Hukochi failed while handling submission 24
+Traceback (most recent call last):
+  File "/home/Tunaa/site/judge/bridge/judge_handler.py", line 491, in on_internal_error
+    raise ValueError('\n\n' + packet['message'])
+ValueError: 
+
+Traceback (most recent call last):
+  File "/judge/dmoj/graders/bridged.py", line 33, in __init__
+    self.interactor_binary = self._generate_interactor_binary()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/graders/bridged.py", line 137, in _generate_interactor_binary
+    return compile_with_auxiliary_files(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/utils/helper_files.py", line 90, in compile_with_auxiliary_files
+    executor = executor('_aux_file', None, aux_sources=sources, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/executors/compiled_executor.py", line 57, in __call__
+    obj.compile()
+  File "/judge/dmoj/executors/compiled_executor.py", line 220, in compile
+    self.warning = self.get_compile_output(process)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/executors/compiled_executor.py", line 202, in get_compile_output
+    self.handle_compile_error(output)
+  File "/judge/dmoj/executors/compiled_executor.py", line 213, in handle_compile_error
+    raise CompileError(output)
+dmoj.error.CompileError: baron24_tictactoe_interactor.cpp: In function ‘void read(int*)’:
+baron24_tictactoe_interactor.cpp:5:36: error: SO C++ forbids comparison between pointer and integer [-fpermissive]
+    5 |     if (scanf("%d", i) != 1 || !( <= i && i <= 3)) {
+      |                                  ~~^~~~
+baron24_tictactoe_interactor.cpp:5:46: error: SO C++ forbids comparison between pointer and integer [-fpermissive]
+    5 |     if (scanf("%d", i) != 1 || !(1 <= i && i <= 3)) {
+      |                                            ~~^~~~
+baron24_tictactoe_interactor.cpp: In function ‘int main(int, char**)’:
+baron24_tictactoe_interactor.cpp:20:23: error: invalid conversion from ‘int’ to ‘const char*’ [-fpermissive]
+   20 |         puts((i == 1) ? firstX : firstY);
+      |              ~~~~~~~~~^~~~~~~~~~~~~~~~~
+      |                       
+      |                       int
+In file included from /usr/include/c++/14/cstdio:42
+                 from /usr/include/c++/14/ext/string_conversions.h:45
+                 from /usr/include/c++/14/bits/basic_string.h:4154
+                 from /usr/include/c++/14/string:54
+                 from /usr/include/c++/14/bitset:52
+                 from /usr/include/x86_64-linux-gnu/c++/14/bits/stdc++.h:52:
+/usr/include/stdio.h:714:30: note:   initializing argument 1 of ‘int puts(const char*)’
+  714 | extern int puts (const char *__s);
+      |                  ~~~~~~~~~~~~^~~
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/judge/dmoj/judge.py", line 421, in _worker_process_main
+    ipc_msg = next(case_gen)
+              ^^^^^^^^^^^^^^
+  File "/judge/dmoj/judge.py", line 460, in _grade_cases
+    self.grader = problem.grader_class(
+                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/graders/bridged.py", line 36, in __init__
+    raise InternalError('interactor failed compiling') from compilation_error
+dmoj.error.InternalError: interactor failed compiling
+
+INFO 2024-12-20 12:32:33,314 judge_list Judge available after grading 24: Hukochi
+INFO 2024-12-20 12:33:00,310 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:33:00,313 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:33:02,798 judge_list Free judges: 1
+INFO 2024-12-20 12:33:02,798 judge_list Dispatched submission 24 to: Hukochi
+INFO 2024-12-20 12:33:02,815 judge_handler Submission acknowledged: 24
+INFO 2024-12-20 12:33:03,318 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:33:03,323 judge_handler Hukochi: Updated 5 problems
+ERROR 2024-12-20 12:33:03,801 judge_handler Judge Hukochi failed while handling submission 24
+Traceback (most recent call last):
+  File "/home/Tunaa/site/judge/bridge/judge_handler.py", line 491, in on_internal_error
+    raise ValueError('\n\n' + packet['message'])
+ValueError: 
+
+Traceback (most recent call last):
+  File "/judge/dmoj/graders/bridged.py", line 33, in __init__
+    self.interactor_binary = self._generate_interactor_binary()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/graders/bridged.py", line 137, in _generate_interactor_binary
+    return compile_with_auxiliary_files(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/utils/helper_files.py", line 90, in compile_with_auxiliary_files
+    executor = executor('_aux_file', None, aux_sources=sources, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/executors/compiled_executor.py", line 57, in __call__
+    obj.compile()
+  File "/judge/dmoj/executors/compiled_executor.py", line 220, in compile
+    self.warning = self.get_compile_output(process)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/executors/compiled_executor.py", line 202, in get_compile_output
+    self.handle_compile_error(output)
+  File "/judge/dmoj/executors/compiled_executor.py", line 213, in handle_compile_error
+    raise CompileError(output)
+dmoj.error.CompileError: baron24_tictactoe_interactor.cpp: In function ‘int main(int, char**)’:
+baron24_tictactoe_interactor.cpp:20:23: error: invalid conversion from ‘int’ to ‘const char*’ [-fpermissive]
+   20 |         puts((i == 1) ? firstX : firstY);
+      |              ~~~~~~~~~^~~~~~~~~~~~~~~~~
+      |                       
+      |                       int
+In file included from /usr/include/c++/14/cstdio:42
+                 from /usr/include/c++/14/ext/string_conversions.h:45
+                 from /usr/include/c++/14/bits/basic_string.h:4154
+                 from /usr/include/c++/14/string:54
+                 from /usr/include/c++/14/bitset:52
+                 from /usr/include/x86_64-linux-gnu/c++/14/bits/stdc++.h:52:
+/usr/include/stdio.h:714:30: note:   initializing argument 1 of ‘int puts(const char*)’
+  714 | extern int puts (const char *__s);
+      |                  ~~~~~~~~~~~~^~~
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/judge/dmoj/judge.py", line 421, in _worker_process_main
+    ipc_msg = next(case_gen)
+              ^^^^^^^^^^^^^^
+  File "/judge/dmoj/judge.py", line 460, in _grade_cases
+    self.grader = problem.grader_class(
+                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/graders/bridged.py", line 36, in __init__
+    raise InternalError('interactor failed compiling') from compilation_error
+dmoj.error.InternalError: interactor failed compiling
+
+INFO 2024-12-20 12:33:03,822 judge_list Judge available after grading 24: Hukochi
+INFO 2024-12-20 12:33:37,591 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:33:37,594 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:33:40,475 judge_list Free judges: 1
+INFO 2024-12-20 12:33:40,475 judge_list Dispatched submission 24 to: Hukochi
+INFO 2024-12-20 12:33:40,494 judge_handler Submission acknowledged: 24
+INFO 2024-12-20 12:33:40,594 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:33:40,601 judge_handler Hukochi: Updated 5 problems
+ERROR 2024-12-20 12:33:41,619 judge_handler Judge Hukochi failed while handling submission 24
+Traceback (most recent call last):
+  File "/home/Tunaa/site/judge/bridge/judge_handler.py", line 491, in on_internal_error
+    raise ValueError('\n\n' + packet['message'])
+ValueError: 
+
+Traceback (most recent call last):
+  File "/judge/dmoj/graders/bridged.py", line 33, in __init__
+    self.interactor_binary = self._generate_interactor_binary()
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/graders/bridged.py", line 137, in _generate_interactor_binary
+    return compile_with_auxiliary_files(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/utils/helper_files.py", line 90, in compile_with_auxiliary_files
+    executor = executor('_aux_file', None, aux_sources=sources, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/executors/compiled_executor.py", line 57, in __call__
+    obj.compile()
+  File "/judge/dmoj/executors/compiled_executor.py", line 220, in compile
+    self.warning = self.get_compile_output(process)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/executors/compiled_executor.py", line 202, in get_compile_output
+    self.handle_compile_error(output)
+  File "/judge/dmoj/executors/compiled_executor.py", line 213, in handle_compile_error
+    raise CompileError(output)
+dmoj.error.CompileError: baron24_tictactoe_interactor.cpp: In function ‘int main(int, char**)’:
+baron24_tictactoe_interactor.cpp:20:23: error: cannot convert ‘std::string’ {aka ‘std::__cxx11::basic_string<char>’} to ‘const char*’
+   20 |         puts(to_string((i == 1) ? firstX : firstY));
+      |              ~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                       
+      |                       std::string {aka std::__cxx11::basic_string<char>}
+In file included from /usr/include/c++/14/cstdio:42
+                 from /usr/include/c++/14/ext/string_conversions.h:45
+                 from /usr/include/c++/14/bits/basic_string.h:4154
+                 from /usr/include/c++/14/string:54
+                 from /usr/include/c++/14/bitset:52
+                 from /usr/include/x86_64-linux-gnu/c++/14/bits/stdc++.h:52:
+/usr/include/stdio.h:714:30: note:   initializing argument 1 of ‘int puts(const char*)’
+  714 | extern int puts (const char *__s);
+      |                  ~~~~~~~~~~~~^~~
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/judge/dmoj/judge.py", line 421, in _worker_process_main
+    ipc_msg = next(case_gen)
+              ^^^^^^^^^^^^^^
+  File "/judge/dmoj/judge.py", line 460, in _grade_cases
+    self.grader = problem.grader_class(
+                  ^^^^^^^^^^^^^^^^^^^^^
+  File "/judge/dmoj/graders/bridged.py", line 36, in __init__
+    raise InternalError('interactor failed compiling') from compilation_error
+dmoj.error.InternalError: interactor failed compiling
+
+INFO 2024-12-20 12:33:41,642 judge_list Judge available after grading 24: Hukochi
+INFO 2024-12-20 12:35:27,257 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:35:27,259 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:35:30,267 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:35:30,273 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:35:30,696 judge_list Free judges: 1
+INFO 2024-12-20 12:35:30,697 judge_list Dispatched submission 24 to: Hukochi
+INFO 2024-12-20 12:35:30,707 judge_handler Submission acknowledged: 24
+INFO 2024-12-20 12:35:32,182 judge_handler Hukochi: Submission generated compiler messages: 24
+INFO 2024-12-20 12:35:32,188 judge_handler Hukochi: Grading has begun on: 24
+INFO 2024-12-20 12:35:32,400 judge_handler Hukochi: 1 test case(s) completed on: 24
+INFO 2024-12-20 12:35:32,544 judge_handler Hukochi: 1 test case(s) completed on: 24
+INFO 2024-12-20 12:35:32,567 judge_handler Hukochi: Grading has ended on: 24
+INFO 2024-12-20 12:35:32,567 judge_list Judge available after grading 24: Hukochi
+INFO 2024-12-20 12:35:53,488 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:35:53,491 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:35:55,961 judge_list Free judges: 1
+INFO 2024-12-20 12:35:55,961 judge_list Dispatched submission 24 to: Hukochi
+INFO 2024-12-20 12:35:55,984 judge_handler Submission acknowledged: 24
+INFO 2024-12-20 12:35:56,602 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:35:56,608 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:35:57,137 judge_handler Hukochi: Submission generated compiler messages: 24
+INFO 2024-12-20 12:35:57,149 judge_handler Hukochi: Grading has begun on: 24
+INFO 2024-12-20 12:35:57,369 judge_handler Hukochi: 1 test case(s) completed on: 24
+INFO 2024-12-20 12:35:57,444 judge_handler Hukochi: 1 test case(s) completed on: 24
+INFO 2024-12-20 12:35:57,465 judge_handler Hukochi: Grading has ended on: 24
+INFO 2024-12-20 12:35:57,466 judge_list Judge available after grading 24: Hukochi
+INFO 2024-12-20 12:36:40,205 judge_list Free judges: 1
+INFO 2024-12-20 12:36:40,206 judge_list Dispatched submission 25 to: Hukochi
+INFO 2024-12-20 12:36:40,217 judge_handler Submission acknowledged: 25
+INFO 2024-12-20 12:36:40,654 judge_handler Hukochi: Submission generated compiler messages: 25
+INFO 2024-12-20 12:36:40,668 judge_handler Hukochi: Grading has begun on: 25
+INFO 2024-12-20 12:36:40,900 judge_handler Hukochi: 1 test case(s) completed on: 25
+INFO 2024-12-20 12:36:40,925 judge_handler Hukochi: 1 test case(s) completed on: 25
+INFO 2024-12-20 12:36:40,941 judge_handler Hukochi: Grading has ended on: 25
+INFO 2024-12-20 12:36:40,941 judge_list Judge available after grading 25: Hukochi
+INFO 2024-12-20 12:36:46,853 judge_list Free judges: 1
+INFO 2024-12-20 12:36:46,854 judge_list Dispatched submission 25 to: Hukochi
+INFO 2024-12-20 12:36:46,863 judge_handler Submission acknowledged: 25
+INFO 2024-12-20 12:36:47,219 judge_handler Hukochi: Submission generated compiler messages: 25
+INFO 2024-12-20 12:36:47,227 judge_handler Hukochi: Grading has begun on: 25
+INFO 2024-12-20 12:36:47,429 judge_handler Hukochi: 1 test case(s) completed on: 25
+INFO 2024-12-20 12:36:47,495 judge_handler Hukochi: 1 test case(s) completed on: 25
+INFO 2024-12-20 12:36:47,513 judge_handler Hukochi: Grading has ended on: 25
+INFO 2024-12-20 12:36:47,513 judge_list Judge available after grading 25: Hukochi
+INFO 2024-12-20 12:36:51,684 judge_list Free judges: 1
+INFO 2024-12-20 12:36:51,685 judge_list Dispatched submission 26 to: Hukochi
+INFO 2024-12-20 12:36:51,697 judge_handler Submission acknowledged: 26
+INFO 2024-12-20 12:36:51,909 judge_handler Hukochi: Submission generated compiler messages: 26
+INFO 2024-12-20 12:36:51,916 judge_handler Hukochi: Grading has begun on: 26
+INFO 2024-12-20 12:36:52,206 judge_handler Hukochi: 1 test case(s) completed on: 26
+INFO 2024-12-20 12:36:52,261 judge_handler Hukochi: 1 test case(s) completed on: 26
+INFO 2024-12-20 12:36:52,281 judge_handler Hukochi: Grading has ended on: 26
+INFO 2024-12-20 12:36:52,281 judge_list Judge available after grading 26: Hukochi
+INFO 2024-12-20 12:37:25,869 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:37:25,874 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:37:28,323 judge_list Free judges: 1
+INFO 2024-12-20 12:37:28,323 judge_list Dispatched submission 26 to: Hukochi
+INFO 2024-12-20 12:37:28,339 judge_handler Submission acknowledged: 26
+INFO 2024-12-20 12:37:28,734 judge_handler Hukochi: Submission generated compiler messages: 26
+INFO 2024-12-20 12:37:28,740 judge_handler Hukochi: Grading has begun on: 26
+INFO 2024-12-20 12:37:28,872 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:37:28,875 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:37:28,948 judge_handler Hukochi: 1 test case(s) completed on: 26
+INFO 2024-12-20 12:37:28,967 judge_handler Hukochi: 1 test case(s) completed on: 26
+INFO 2024-12-20 12:37:28,987 judge_handler Hukochi: Grading has ended on: 26
+INFO 2024-12-20 12:37:28,988 judge_list Judge available after grading 26: Hukochi
+INFO 2024-12-20 12:38:08,823 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:38:08,826 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:38:11,830 judge_handler Hukochi: Updating problem list
+INFO 2024-12-20 12:38:11,832 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-20 12:38:45,501 judge_list Free judges: 1
+INFO 2024-12-20 12:38:45,501 judge_list Dispatched submission 27 to: Hukochi
+INFO 2024-12-20 12:38:45,511 judge_handler Submission acknowledged: 27
+INFO 2024-12-20 12:38:46,709 judge_handler Hukochi: Submission generated compiler messages: 27
+INFO 2024-12-20 12:38:46,719 judge_handler Hukochi: Grading has begun on: 27
+INFO 2024-12-20 12:38:46,923 judge_handler Hukochi: 1 test case(s) completed on: 27
+INFO 2024-12-20 12:38:47,056 judge_handler Hukochi: 1 test case(s) completed on: 27
+INFO 2024-12-20 12:38:47,080 judge_handler Hukochi: Grading has ended on: 27
+INFO 2024-12-20 12:38:47,080 judge_list Judge available after grading 27: Hukochi
+INFO 2024-12-24 16:23:46,491 judge_handler Judge connected from: ('127.0.0.1', 55496)
+INFO 2024-12-24 16:23:46,502 judge_handler Judge authenticated: ('127.0.0.1', 55496) (Hukochi)
+INFO 2024-12-24 16:23:46,503 judge_list Minimum tier changed from None to 1
+INFO 2024-12-24 16:26:36,399 judge_handler Hukochi: Updating problem list
+INFO 2024-12-24 16:26:36,404 judge_handler Hukochi: Updated 5 problems
+INFO 2024-12-24 16:26:39,439 judge_handler Hukochi: Updating problem list
+INFO 2024-12-24 16:26:39,463 judge_handler Hukochi: Updated 4 problems
+INFO 2024-12-24 16:49:12,016 judge_handler Hukochi: Updating problem list
+INFO 2024-12-24 16:49:12,021 judge_handler Hukochi: Updated 4 problems
+INFO 2024-12-24 16:49:18,787 judge_handler Hukochi: Updating problem list
+INFO 2024-12-24 16:49:18,790 judge_handler Hukochi: Updated 4 problems
+INFO 2024-12-24 16:49:21,792 judge_handler Hukochi: Updating problem list
+INFO 2024-12-24 16:49:21,794 judge_handler Hukochi: Updated 4 problems
+INFO 2024-12-24 16:49:34,402 judge_handler Hukochi: Updating problem list
+INFO 2024-12-24 16:49:34,405 judge_handler Hukochi: Updated 4 problems
