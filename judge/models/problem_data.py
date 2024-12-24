@@ -35,6 +35,7 @@ GRADERS = (
     ('interactive', _('Interactive')),
     ('signature', _('Function Signature Grading (IOI-style)')),
     ('output_only', _('Output Only')),
+    ('custom_judge', _('Custom Grader')),
 )
 
 IO_METHODS = (
@@ -81,7 +82,7 @@ class ProblemData(models.Model):
                                      null=True,
                                      blank=True,
                                      upload_to=problem_directory_file,
-                                     validators=[FileExtensionValidator(allowed_extensions=['cpp'])])
+                                     validators=[FileExtensionValidator(allowed_extensions=['cpp', 'py'])])
 
     custom_header = models.FileField(verbose_name=_('custom header file'), storage=problem_data_storage,
                                      null=True,

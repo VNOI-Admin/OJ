@@ -132,6 +132,7 @@
                                 var custom_checker_type = $custom_checker_type.find(":selected").val();
                                 var lang = $file_ext.toUpperCase();
                                 if (lang == "CPP") lang = "CPP17";
+                                if (lang == "PY") lang = "PY3";
                                 if (lang == "JAVA") lang = "JAVA8";
                                 var args = {
                                     files: $file_name,
