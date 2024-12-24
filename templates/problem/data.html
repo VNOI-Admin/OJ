@@ -126,7 +126,7 @@
                         if (!($file_name == '')) {
                             $file_name = $file_name.split('/').pop()
                             $file_ext = $file_name.split('.').pop()
-                            if (!(['cpp', 'pas', 'java'].includes($file_ext))) {
+                            if (!(['cpp', 'pas', 'java', 'py'].includes($file_ext))) {
                                 alert({{ _('Expected checker\'s extension must be in [cpp, pas, java], found ')|htmltojs }} + "'" + $file_ext + "'");
                             } else {
                                 var custom_checker_type = $custom_checker_type.find(":selected").val();

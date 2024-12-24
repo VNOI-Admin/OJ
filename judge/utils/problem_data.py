@@ -143,7 +143,7 @@ class ProblemDataCompiler(object):
                 except Exception as e:
                     raise ProblemDataError(e)
 
-                if checker_ext not in ['cpp', 'pas', 'java']:
+                if checker_ext not in ['cpp', 'pas', 'java', 'py']:
                     raise ProblemDataError(_('Only C++, Pascal, or Java checkers are supported.'))
 
             if case.checker_args:
