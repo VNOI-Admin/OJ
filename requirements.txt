@@ -42,6 +42,5 @@ markdown2 @ git+https://github.com/VNOI-Admin/python-markdown2.git
 discord-webhook
 django-admin-sortable2
 icalendar
-Markdown
 # This is a celery dependency whose latest major version is breaking everything.
 importlib-metadata<5
