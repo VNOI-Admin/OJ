@@ -228,7 +228,7 @@ class MiscConfigMiddleware:
         request.misc_config = MiscConfigDict(language=request.LANGUAGE_CODE, domain=domain)
         
         if not request.user.is_authenticated:
-            request.misc_config.home_page_top = getattr(settings, "HOME_PAGE_TOP_CONTENT", "")
+            request.misc_config.home_page_top = getattr(settings, "TOMCHIENXU_HOME_PAGE_TOP_CONTENT", "")
         
         return self.get_response(request)
 

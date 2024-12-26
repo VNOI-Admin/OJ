@@ -33,8 +33,8 @@ SEND_ACTIVATION_EMAIL = getattr(settings, 'SEND_ACTIVATION_EMAIL', True)
 REGISTRATION_COMPLETE_TEMPLATE = 'registration/registration_complete.html' if SEND_ACTIVATION_EMAIL \
                                  else 'registration/activation_complete.html'
 
-REGISTRATION_GATE_OPEN = getattr(settings, 'REGISTRATION_GATE_OPEN', True)
-REGISTRATION_VIEW = RegistrationView.as_view() if REGISTRATION_GATE_OPEN else RedirectView.as_view(url="/accounts/register/closed")
+TOMCHIENXU_REGISTRATION_GATE_OPEN = getattr(settings, 'TOMCHIENXU_REGISTRATION_GATE_OPEN', True)
+TOMCHIENXU_REGISTRATION_VIEW = RegistrationView.as_view() if TOMCHIENXU_REGISTRATION_GATE_OPEN else RedirectView.as_view(url="/accounts/register/closed")
 
 register_patterns = [
     path('activate/complete/',
@@ -44,7 +44,7 @@ register_patterns = [
     # Let's use <str:activation_key>, because a bad activation key should still get to the view;
     # that way, it can return a sensible "invalid key" message instead of a confusing 404.
     path('activate/<str:activation_key>/', ActivationView.as_view(), name='registration_activate'),
-    path('register/', REGISTRATION_VIEW, name='registration_register'),
+    path('register/', TOMCHIENXU_REGISTRATION_VIEW, name='registration_register'),
     path('register/complete/',
          TitledTemplateView.as_view(template_name=REGISTRATION_COMPLETE_TEMPLATE,
                                     title=_('Registration Completed')),
