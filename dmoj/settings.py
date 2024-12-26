@@ -639,7 +639,6 @@ MARTOR_ENABLE_CONFIGS = {
     'mention': 'true',
     'jquery': 'false',
     'living': 'false',
-    'spellcheck': 'false',
     'hljs': 'false',
 }
 MARTOR_MARKDOWNIFY_URL = '/widgets/preview/default'
