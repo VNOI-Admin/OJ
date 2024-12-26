@@ -89,7 +89,7 @@
     {% if TOMCHIENXU_CUSTOM_THEME == "WINTER" %}
         <style>
             #page-container {
-                background-image: url(/static/tomchienxu-themes/winter/winter.png);
+                background-image: url(/static/tomchienxu-themes/winter/winter-tomchienxu.png);
                 background-size: 100%;
             }
         </style>
@@ -102,6 +102,7 @@
             snowStorm.followMouse = false;
             snowStorm.snowStick = false;
             snowStorm.useMeltEffect = true;
+            snowStorm.className = "unselectable";
         </script>
     {% endif %}
 
