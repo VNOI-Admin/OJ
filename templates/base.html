@@ -85,6 +85,16 @@
         </style>
     {% endif %}
     {% block media %}{% endblock %}
+
+    {% if TOMCHIENXU_CUSTOM_THEME == "WINTER" %}
+        <style>
+            #page-container {
+                background-image: url(/static/tomchienxu-themes/winter.png);
+                background-size: 100%;
+            }
+        </style>
+    {% endif %}
+
     {% if not INLINE_JQUERY %}
         <script src="{{ JQUERY_JS }}"></script>
     {% endif %}
