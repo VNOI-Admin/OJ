@@ -1,4 +1,4 @@
-@import "vars";
+@use "vars" as *;
 
 td.user-name, td.personal-info, td.organization-name {
     padding-left: 1em;

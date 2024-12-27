@@ -1,5 +1,5 @@
 @use 'sass:color';
-@import "vars-common";
+@forward "vars-common";
 
 $is_light_theme: true;
 
