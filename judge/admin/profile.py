@@ -6,10 +6,9 @@ from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy as _, ngettext
 from reversion.admin import VersionAdmin
 
-from django_ace import AceWidget
 from judge.models import Profile, WebAuthnCredential
 from judge.utils.views import NoBatchDeleteMixin
-from judge.widgets import AdminMartorWidget, AdminSelect2MultipleWidget, AdminSelect2Widget
+from judge.widgets import AdminAceWidget, AdminMartorWidget, AdminSelect2MultipleWidget, AdminSelect2Widget
 
 
 class ProfileForm(ModelForm):
@@ -149,7 +148,7 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
         form = super(ProfileAdmin, self).get_form(request, obj, **kwargs)
         if 'user_script' in form.base_fields:
             # form.base_fields['user_script'] does not exist when the user has only view permission on the model.
-            form.base_fields['user_script'].widget = AceWidget(
+            form.base_fields['user_script'].widget = AdminAceWidget(
                 mode='javascript', theme=request.profile.resolved_ace_theme,
             )
         return form
