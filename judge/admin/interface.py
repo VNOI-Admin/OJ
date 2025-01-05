@@ -63,10 +63,10 @@ class BlogPostForm(ModelForm):
 
     class Meta:
         widgets = {
-            'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
+            'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'content': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'summary': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
-            'organization': AdminHeavySelect2Widget(data_view='organization_select2', attr={'style': 'width: 100%'}),
+            'organization': AdminHeavySelect2Widget(data_view='organization_select2'),
         }
 
 
@@ -101,8 +101,8 @@ class SolutionForm(ModelForm):
 
     class Meta:
         widgets = {
-            'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
-            'problem': AdminHeavySelect2Widget(data_view='problem_select2', attrs={'style': 'width: 250px'}),
+            'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
+            'problem': AdminHeavySelect2Widget(data_view='problem_select2'),
             'content': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('solution_preview')}),
         }
 

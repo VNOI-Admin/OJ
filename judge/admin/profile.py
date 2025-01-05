@@ -29,7 +29,7 @@ class ProfileForm(ModelForm):
             'language': AdminSelect2Widget,
             'ace_theme': AdminSelect2Widget,
             'current_contest': AdminSelect2Widget,
-            'badges': AdminSelect2MultipleWidget(attrs={'style': 'width: 100%'}),
+            'badges': AdminSelect2MultipleWidget(),
             'display_badge': AdminSelect2Widget,
             'about': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('profile_preview')}),
         }
