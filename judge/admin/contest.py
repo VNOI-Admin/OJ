@@ -127,16 +127,13 @@ class ContestForm(ModelForm):
             'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'curators': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'testers': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
-            'private_contestants': AdminHeavySelect2MultipleWidget(data_view='profile_select2',
-                                                                   attrs={'style': 'width: 100%'}),
+            'private_contestants': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'organizations': AdminHeavySelect2MultipleWidget(data_view='organization_select2'),
             'tags': AdminSelect2MultipleWidget,
-            'banned_users': AdminHeavySelect2MultipleWidget(data_view='profile_select2',
-                                                            attrs={'style': 'width: 100%'}),
-            'view_contest_scoreboard': AdminHeavySelect2MultipleWidget(data_view='profile_select2',
-                                                                       attrs={'style': 'width: 100%'}),
+            'banned_users': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
+            'view_contest_scoreboard': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
-            'banned_judges': AdminSelect2MultipleWidget(attrs={'style': 'width: 100%'}),
+            'banned_judges': AdminSelect2MultipleWidget(),
         }
 
 
