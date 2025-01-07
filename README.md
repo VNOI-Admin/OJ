@@ -68,6 +68,20 @@ To start submitting your new feature(s), you may need to do some steps
 > `git checkout -b feature/<your-feature-name>`
 
 Then we will commit like normally we would do
+> `git add .`
+
+> `git commit -am "<something>"`
 
 After that, run:
 > `git push origin feature/<your-feature-name>`
+
+Now lets wait for the pull request to be accepted to the develop and release branch.
+
+### Concerning
+Regularly update the local develop folder to prevent conflicting.
+
+**DO NOT** push directly to develop or release folder.
+
+use `git fetch origin` to make sure every branch is up-to-date.
+
+### WRITTEN BY MHP0920
