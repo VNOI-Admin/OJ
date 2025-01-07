@@ -36,3 +36,38 @@ If you find any bug, please feel free to contact us via Discord [![Discord Chat]
 Pull requests are welcome as well. Before you submit your PR, please check your code with [flake8](https://flake8.pycqa.org/en/latest/) and format it if needed. There's also `prettier` if you need to format JS code (in `websocket/`).
 
 Translation contributions are also welcome.
+
+## SETUP TGBOJ GITFLOW (LOCAL)
+### Getting started
+For the first time contributing to TGB-Online-Judge, you may need to perform some of these steps before you can start coding
+
+Now we create a folder, maybe named "TGBOJ"
+
+> `mkdir TGBOJ`
+
+Now setup the git things
+
+> `git init`
+
+The above command line will create a blank `.git` folder.
+
+> `git remote add origin https://github.com/TGB-Dev/tgboj-v2.git`
+
+Now we remote to our repository, preparing for the pull & push stuffs.
+
+We then now get the latest develop version from our repo
+
+> `git pull origin develop`
+
+Done! we are now able to code here, and to prevent conflicting, we may need to regularly run the `git pull` command.
+
+
+### Submit a new feature
+To start submitting your new feature(s), you may need to do some steps
+
+> `git checkout -b feature/<your-feature-name>`
+
+Then we will commit like normally we would do
+
+After that, run:
+> `git push origin feature/<your-feature-name>`
