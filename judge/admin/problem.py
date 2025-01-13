@@ -234,3 +234,18 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         if form.cleaned_data.get('change_message'):
             return form.cleaned_data['change_message']
         return super(ProblemAdmin, self).construct_change_message(request, form, *args, **kwargs)
+
+
+class ProblemExportKeyAdmin(VersionAdmin):
+    fieldsets = (
+        (None, {'fields': ('name', 'remaining_uses')}),
+        (_('Description'), {'fields': ('description',)}),
+    )
+    list_display = ['name', 'remaining_uses']
+    search_fields = ('name', 'description')
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        if not change:
+            secret = obj.generate_secret()
+            self.message_user(request, gettext('Generated secret: %s') % secret)

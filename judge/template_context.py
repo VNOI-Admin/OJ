@@ -106,3 +106,7 @@ def math_setting(request):
     if engine == 'auto':
         engine = 'mml' if bool(settings.MATHOID_URL) and caniuse.mathml == SUPPORT else 'jax'
     return {'MATH_ENGINE': engine, 'REQUIRE_JAX': engine == 'jax', 'caniuse': caniuse}
+
+
+def site_setting(request):
+    return {'VNOJ_PROBLEM_ENABLE_IMPORT': settings.VNOJ_PROBLEM_ENABLE_IMPORT}

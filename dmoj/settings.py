@@ -28,6 +28,8 @@ SECRET_KEY = '5*9f5q57mqmlz2#f$x1h76&jxy#yortjl1v+l*6hd18$d*yx#0'
 DEBUG = True
 
 ALLOWED_HOSTS = []
+CORS_ALLOWED_ORIGINS = []
+CORS_URLS_REGEX = r'^/problem-export/'
 
 CSRF_FAILURE_VIEW = 'judge.views.widgets.csrf_failure'
 
@@ -116,6 +118,14 @@ VNOJ_PRICE_PER_HOUR = 50
 
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
+
+# Transfer host
+VNOJ_PROBLEM_ENABLE_IMPORT = False
+VNOJ_PROBLEM_ENABLE_EXPORT = False
+VNOJ_PROBLEM_IMPORT_HOST = 'https://oj.vnoi.info'
+VNOJ_PROBLEM_IMPORT_SECRET = ''
+VNOJ_PROBLEM_IMPORT_JUDGE_PREFIX = 'vnoj/'
+VNOJ_PROBLEM_IMPORT_TIMEOUT = 5     # in seconds
 
 CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'
 
@@ -326,6 +336,7 @@ else:
                         'judge.ProblemGroup',
                         'judge.ProblemType',
                         'judge.License',
+                        'judge.ProblemExportKey',
                     ],
                 },
                 {
@@ -421,9 +432,11 @@ INSTALLED_APPS += (
     'martor',
     'adminsortable2',
     'django_cleanup.apps.CleanupConfig',
+    'corsheaders',
 )
 
 MIDDLEWARE = (
+    'corsheaders.middleware.CorsMiddleware',
     'judge.middleware.ShortCircuitMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -496,6 +509,7 @@ TEMPLATES = [
                 'judge.template_context.site_theme',
                 'judge.template_context.misc_config',
                 'judge.template_context.math_setting',
+                'judge.template_context.site_setting',
                 'social_django.context_processors.backends',
                 'social_django.context_processors.login_redirect',
             ],
@@ -668,6 +682,7 @@ BRIDGED_JUDGE_ADDRESS = [('localhost', 9999)]
 BRIDGED_JUDGE_PROXIES = None
 BRIDGED_DJANGO_ADDRESS = [('localhost', 9998)]
 BRIDGED_DJANGO_CONNECT = None
+BRIDGED_MONITOR_UPDATE_URL = None
 
 # Event Server configuration
 EVENT_DAEMON_USE = False

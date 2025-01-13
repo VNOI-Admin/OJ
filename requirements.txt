@@ -1,6 +1,7 @@
 Django>=3.2,<4
 django-cleanup
 django_compressor>=3
+django-cors-headers
 django-mptt>=0.13
 django-registration-redux>=2.10
 django-reversion>=3.0.5,<4

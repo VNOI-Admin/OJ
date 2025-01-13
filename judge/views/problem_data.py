@@ -124,7 +124,7 @@ class ProblemCaseFormSet(formset_factory(ProblemCaseForm, formset=BaseModelFormS
 class ProblemManagerMixin(LoginRequiredMixin, ProblemMixin, DetailView):
     def get_object(self, queryset=None):
         problem = super(ProblemManagerMixin, self).get_object(queryset)
-        if problem.is_manually_managed:
+        if problem.is_manually_managed or problem.judge_code:
             raise Http404()
         if self.request.user.is_superuser or problem.is_editable_by(self.request.user):
             return problem

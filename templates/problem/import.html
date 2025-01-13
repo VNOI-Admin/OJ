@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block media %}
+    {{ form.media.css }}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+{% endblock %}
+
+{% block js_media %}
+    {{ form.media.js }}
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'import' %}
+    {% include "problem/problem-list-tabs.html" %}
+{% endblock %}
+
+{% block body %}
+    <div class="alert {{ 'alert-info' if status and remaining_uses > 0 else 'alert-warning' }}">
+        <div>
+            Host: <a href="{{ host_url }}">{{ host_url }}</a>
+            {% if status %}
+                <i style="color: #44AD41" class="fa fa-check-circle"></i>
+            {% else %}
+                <i style="color: #DE2121" class="fa fa-minus-circle"></i>
+            {% endif %}
+        </div>
+        {% if status %}
+            <div>Remaining uses: {{ remaining_uses }}</div>
+        {% endif %}
+    </div>
+    {% if status and remaining_uses > 0 %}
+        <div>
+            <form method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+                {% if form.non_field_errors() %}
+                    <div class="form-errors">
+                        {{ form.non_field_errors() }}
+                    </div>
+                {% endif %}
+                {% csrf_token %}
+                <table class="django-as-table">{{ form.as_table() }}</table>
+                <p><input type="submit" value="Import"></p>
+            </form>
+        </div>
+    {% endif %}
+{% endblock %}
