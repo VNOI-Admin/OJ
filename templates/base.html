@@ -96,12 +96,14 @@
         <script src="/static/tomchienxu-themes/winter/snowstorm.js"></script>
 
         <script>
-            snowStorm.snowColor = '#99ccff';
-            snowStorm.flakesMaxActive = 128;
+            snowStorm.snowColor = "#99ccff";
+            snowStorm.flakesMaxActive = 70;
             snowStorm.useTwinkleEffect = true;
             snowStorm.followMouse = false;
             snowStorm.snowStick = false;
             snowStorm.useMeltEffect = true;
+            snowStorm.vMaxX = 3;
+            snowStorm.vMaxY = 3;
             snowStorm.className = "unselectable";
         </script>
     {% endif %}
@@ -397,7 +399,7 @@
     <footer style="padding: 5px 0; align-content: center;">
         <span id="footer-content" class="p-3">
             {{_('Proudly powered by %(dmoj)s and %(vnoj)s', dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'), vnoj=safe('<a style="color: #808080" href="https://oj.vnoi.info"><b>VNOJ</b></a>'))}} |
-            {{_('Hosted and Maintained by %(Tunaa)s with 💖', Tunaa=safe('<a style="color: #137ed9" href="https://www.facebook.com/mygfwouldbesomewhere/"><b>Nguyễn "cheeseytunaa" Đức Tuân</b></a>'))}}
+            {{_('Hosted and Maintained by %(Tunaa)s with 💖', Tunaa=safe('<a style="color: #137ed9" href="https://www.facebook.com/mygfwouldbesomewhere/"><b>Nguyễn "dookkii_" Đức Tuân</b></a>'))}}
             {% if misc_config.footer %}
                 {{ misc_config.footer|safe }} |
             {% endif %}
