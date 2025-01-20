@@ -143,13 +143,15 @@ class ProblemDataCompiler(object):
                 except Exception as e:
                     raise ProblemDataError(e)
 
+                # TomChienXu: Re-enable Python Interactive Judge
                 # Python checker doesn't need to use bridged
                 # so we return the name directly
                 if checker_ext == 'py':
                     return custom_checker_path[1]
 
+                # TomChienXu: Re-enable Python Interactive Judge
                 if checker_ext not in ['cpp', 'pas', 'java', 'py']:
-                    raise ProblemDataError(_('Only C++, Pascal, or Java checkers are supported.'))
+                    raise ProblemDataError(_('Only C++, Pascal, Java or Python checkers are supported.'))
 
             if case.checker_args:
                 return {
@@ -194,14 +196,23 @@ class ProblemDataCompiler(object):
 
             if case.grader == 'interactive':
                 file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
-                if file_ext != 'cpp':
-                    raise ProblemDataError(_('Only accept `.cpp` interactor'))
 
-                init['interactive'] = {
-                    'files': file_name,
-                    'type': 'testlib',  # Assume that we only use testlib interactor
-                    'lang': 'CPP17',
-                }
+                if file_ext not in ['cpp', 'py']:
+                    raise ProblemDataError(_('Only accept `.cpp` and `.py` interactor'))
+
+                # TomChienXu: Re-enable Python Interactive Judge
+                if file_ext == 'py':
+                    init['custom_judge'] = file_name
+                elif file_ext == 'cpp':
+                    init['interactive'] = {
+                        'files': file_name,
+                        'type': 'testlib',  # Assume that we only use testlib interactor
+                        'lang': 'CPP17'
+                    }
+                else:
+                    # Should never be reached!
+                    raise ProblemDataError(_('How did we get here?'))
+
                 return
 
             if case.grader == 'signature':
@@ -223,6 +234,7 @@ class ProblemDataCompiler(object):
                     init['signature_grader']['allow_main'] = True
                 return
 
+            # TomChienXu: Re-enable Python Custom Judge
             if case.grader == 'custom_judge':
                 file_name, file_ext = get_file_name_and_ext(case.custom_grader.name)
                 if file_ext != 'py':
