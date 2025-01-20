@@ -58,6 +58,16 @@
     content: "🍰🎂";
 }
 
+.silvervoi a::before {
+    content: "🎇🎉✨";
+}
+
+.silvervoi a::after {
+    content: "[Nhì VOI]";
+    vertical-align: super;
+    font-size: 12px;
+}
+
 .kien a::before {
     content: "💩";
 }
