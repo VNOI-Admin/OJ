@@ -117,7 +117,7 @@ VNOJ_PRICE_PER_HOUR = 50
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
-CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'
+CELERY_TIMEZONE = 'UTC'
 
 # Some problems have a lot of testcases, and each testcase
 # has about 5~6 fields, so we need to raise this
