@@ -107,6 +107,18 @@ VNOJ_MAX_DISQUALIFICATIONS_BEFORE_BANNING = 3
 # List of subdomain that will be ignored in organization subdomain middleware
 VNOJ_IGNORED_ORGANIZATION_SUBDOMAINS = ['oj', 'www', 'localhost']
 
+# Enable organization credit system, if true, org will not be able to submit submissions
+# if they run out of credit
+VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION = False
+# 3 hours free per month
+VNOJ_MONTHLY_FREE_CREDIT = 3 * 60 * 60
+VNOJ_PRICE_PER_HOUR = 50
+
+
+VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
+
+CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'
+
 # Some problems have a lot of testcases, and each testcase
 # has about 5~6 fields, so we need to raise this
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 3000
@@ -169,13 +181,15 @@ DISCORD_WEBHOOK = {
     'on_new_tag': None,
     'on_new_blogpost': None,
     'on_error': None,
+    'on_long_queue': None,
+    'queue_time_stats': None,
 }
 
 SITE_FULL_URL = None  # ie 'https://oj.vnoi.info', please remove the last / if needed
 
-ACE_URL = '//cdnjs.cloudflare.com/ajax/libs/ace/1.1.3'
-SELECT2_JS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js'
-SELECT2_CSS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'
+ACE_URL = '/static/vnoj/ace/1.4.14'
+SELECT2_JS_URL = '/static/vnoj/select2/4.0.3/js/select2.min.js'
+SELECT2_CSS_URL = '/static/vnoj/select2/4.0.3/css/select2.min.css'
 
 DMOJ_CAMO_URL = None
 DMOJ_CAMO_KEY = None
@@ -281,8 +295,8 @@ DEFAULT_USER_LANGUAGE = 'CPP17'
 
 INLINE_JQUERY = True
 INLINE_FONTAWESOME = True
-JQUERY_JS = '//ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js'
-FONTAWESOME_CSS = '//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.min.css'
+JQUERY_JS = '/static/vnoj/jquery/3.4.1/jquery.min.js'
+FONTAWESOME_CSS = '/static/vnoj/font-awesome/4.3.0/css/font-awesome.min.css'
 DMOJ_CANONICAL = 'oj.vnoi.info'
 
 # Application definition
@@ -646,6 +660,9 @@ DATABASES = {
 
 ENABLE_FTS = False
 
+# Balancer configuration
+BALANCER_JUDGE_ADDRESS = [('localhost', 8888)]
+
 # Bridged configuration
 BRIDGED_JUDGE_ADDRESS = [('localhost', 9999)]
 BRIDGED_JUDGE_PROXIES = None
@@ -698,6 +715,7 @@ AUTHENTICATION_BACKENDS = (
     'social_core.backends.facebook.FacebookOAuth2',
     'judge.social_auth.GitHubSecureEmailOAuth2',
     'django.contrib.auth.backends.ModelBackend',
+    'judge.ip_auth.IPBasedAuthBackend',
 )
 
 SOCIAL_AUTH_PIPELINE = (
@@ -723,11 +741,15 @@ SOCIAL_AUTH_SLUGIFY_USERNAMES = True
 SOCIAL_AUTH_SLUGIFY_FUNCTION = 'judge.social_auth.slugify_username'
 SOCIAL_AUTH_PROTECTED_USER_FIELDS = ['first_name', 'last_name']
 
+IP_BASED_AUTHENTICATION_HEADER = 'REMOTE_ADDR'
+
 MOSS_API_KEY = None
 
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 
 WEBAUTHN_RP_ID = None
+
+GOOGLE_SEARCH_ENGINE_URL = None
 
 DESCRIPTION_MAX_LENGTH = 200
 

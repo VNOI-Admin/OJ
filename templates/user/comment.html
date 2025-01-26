@@ -5,7 +5,7 @@
     <script type="text/javascript">
         $(function() {
             $("#btn-delete-all").click(function(){
-                return confirm('{{ _('Are you sure you want to delete all comments?') }}');
+                return confirm({{ _('Are you sure you want to delete all comments?')|htmltojs }});
             });
         });
     </script>
@@ -39,7 +39,7 @@
                                     <a href="javascript:comment_upvote({{ comment.id }})"
                                     class="upvote-link fa fa-chevron-up fa-fw{% if comment.vote_score == 1 %} voted{% endif %}"></a>
                                 {% else %}
-                                    <a href="javascript:alert('{{ _('Please log in to vote')|escapejs }}')" title="{{ _('Please log in to vote') }}"
+                                    <a href="javascript:alert({{ _('Please log in to vote')|htmltojs }})" title="{{ _('Please log in to vote') }}"
                                     class="upvote-link fa fa-chevron-up fa-fw"></a>
                                 {% endif %}
                                 <br>
@@ -48,7 +48,7 @@
                                     <a href="javascript:comment_downvote({{ comment.id }})"
                                     class="downvote-link fa fa-chevron-down fa-fw{% if comment.vote_score == -1 %} voted{% endif %}"></a>
                                 {% else %}
-                                    <a href="javascript:alert('{{ _('Please log in to vote')|escapejs }}')" title="{{ _('Please log in to vote') }}"
+                                    <a href="javascript:alert({{ _('Please log in to vote')|htmltojs }})" title="{{ _('Please log in to vote') }}"
                                     class="downvote-link fa fa-chevron-down fa-fw"></a>
                                 {% endif %}
                             </div>

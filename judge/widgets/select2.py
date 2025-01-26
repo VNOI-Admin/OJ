@@ -201,6 +201,7 @@ class HeavySelect2Mixin(Select2Mixin):
 
         attrs['data-field_id'] = self.widget_id
         attrs.setdefault('data-ajax--url', self.get_url())
+        attrs.setdefault('data-ajax--delay', 300)
         attrs.setdefault('data-ajax--cache', 'true')
         attrs.setdefault('data-ajax--type', 'GET')
         attrs.setdefault('data-minimum-input-length', 2)

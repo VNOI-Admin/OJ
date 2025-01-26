@@ -36,7 +36,7 @@ def _ensure_connection():
 class JudgeHandler(ZlibPacketHandler):
     proxies = proxy_list(settings.BRIDGED_JUDGE_PROXIES or [])
 
-    def __init__(self, request, client_address, server, judges):
+    def __init__(self, request, client_address, server, judges, ignore_problems_packet=True):
         super().__init__(request, client_address, server)
 
         self.judges = judges
@@ -53,11 +53,11 @@ class JudgeHandler(ZlibPacketHandler):
             'submission-acknowledged': self.on_submission_acknowledged,
             'ping-response': self.on_ping_response,
             'supported-problems': self.on_supported_problems,
+            'executors': self.on_executors,
             'handshake': self.on_handshake,
         }
         self._working = False
         self._no_response_job = None
-        self._problems = []
         self.executors = {}
         self.problems = {}
         self.latency = None
@@ -65,6 +65,7 @@ class JudgeHandler(ZlibPacketHandler):
         self.load = 1e100
         self.name = None
         self.is_disabled = False
+        self.tier = None
         self.batch_id = None
         self.in_batch = False
         self._stop_ping = threading.Event()
@@ -75,6 +76,7 @@ class JudgeHandler(ZlibPacketHandler):
         self.update_counter = {}
         self.judge = None
         self.judge_address = None
+        self.ignore_problems_packet = ignore_problems_packet
 
         self._submission_cache_id = None
         self._submission_cache = {}
@@ -113,27 +115,27 @@ class JudgeHandler(ZlibPacketHandler):
             json_log.warning(self._make_json_log(action='auth', judge=id, info='judge authenticated but is blocked'))
             return False
 
+        # Cache judge tier for use by JudgeList
+        self.tier = judge.tier
+
         return True
 
     def _connected(self):
         judge = self.judge = Judge.objects.get(name=self.name)
         judge.start_time = timezone.now()
         judge.online = True
-        judge.problems.set(Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True))
-        judge.runtimes.set(Language.objects.filter(key__in=list(self.executors.keys())).values_list('id', flat=True))
+
+        self.update_runtimes()
+
+        if self.ignore_problems_packet:
+            self.problems = self.judges.problems
+            judge.problems.set(self.judges.problem_ids)
+        else:
+            judge.problems.set(Problem.objects.filter(code__in=list(self.problems)).values_list('id', flat=True))
 
         # Cache is_disabled for faster access
         self.is_disabled = judge.is_disabled
 
-        # Delete now in case we somehow crashed and left some over from the last connection
-        RuntimeVersion.objects.filter(judge=judge).delete()
-        versions = []
-        for lang in judge.runtimes.all():
-            versions += [
-                RuntimeVersion(language=lang, name=name, version='.'.join(map(str, version)), priority=idx, judge=judge)
-                for idx, (name, version) in enumerate(self.executors[lang.key])
-            ]
-        RuntimeVersion.objects.bulk_create(versions)
         judge.last_ip = self.client_address[0]
         judge.save()
         self.judge_address = '[%s]:%s' % (self.client_address[0], self.client_address[1])
@@ -166,8 +168,7 @@ class JudgeHandler(ZlibPacketHandler):
             return
 
         self.timeout = 60
-        self._problems = packet['problems']
-        self.problems = dict(self._problems)
+        self.problems = set(p[0] for p in packet['problems'])
         self.executors = packet['executors']
         self.name = packet['id']
 
@@ -325,18 +326,42 @@ class JudgeHandler(ZlibPacketHandler):
         if not Submission.objects.filter(id=id).update(batch=True):
             logger.warning('Unknown submission: %s', id)
 
-    def on_supported_problems(self, packet):
+    def update_problems(self, problems, problem_ids):
         logger.info('%s: Updating problem list', self.name)
-        self._problems = packet['problems']
-        self.problems = dict(self._problems)
-        if not self.working:
-            self.judges.update_problems(self)
+        self.problems = problems
+        self.judge.problems.set(problem_ids)
+        logger.info('%s: Updated %d problems', self.name, len(problem_ids))
+        json_log.info(self._make_json_log(action='update-problems', count=len(problem_ids)))
 
-        self.judge.problems.set(
-            Problem.objects.filter(code__in=list(self.problems.keys())).values_list('id', flat=True),
+    def on_supported_problems(self, packet):
+        if self.ignore_problems_packet:
+            return
+
+        problems = set(p[0] for p in packet['problems'])
+        problem_ids = list(Problem.objects.filter(code__in=list(problems)).values_list('id', flat=True))
+        self.judges.update_problems(self, problems, problem_ids)
+
+    def update_runtimes(self):
+        self.judge.runtimes.set(
+            Language.objects.filter(key__in=list(self.executors.keys())).values_list('id', flat=True),
         )
-        logger.info('%s: Updated %d problems', self.name, len(self.problems))
-        json_log.info(self._make_json_log(action='update-problems', count=len(self.problems)))
+
+        RuntimeVersion.objects.filter(judge=self.judge).delete()
+        versions = []
+        for lang in self.judge.runtimes.all():
+            versions += [
+                RuntimeVersion(language=lang, name=name, version='.'.join(map(str, version)),
+                               priority=idx, judge=self.judge)
+                for idx, (name, version) in enumerate(self.executors[lang.key])
+            ]
+        RuntimeVersion.objects.bulk_create(versions)
+
+    def on_executors(self, packet):
+        logger.info('%s: Updating runtimes', self.name)
+        self.executors = packet['executors']
+        self.update_runtimes()
+        logger.info('%s: Updated runtimes', self.name)
+        json_log.info(self._make_json_log(action='update-executors', executors=list(self.executors.keys())))
 
     def on_grading_begin(self, packet):
         logger.info('%s: Grading has begun on: %s', self.name, packet['submission-id'])
@@ -366,6 +391,7 @@ class JudgeHandler(ZlibPacketHandler):
             return
 
         time = 0.0
+        total_time = 0.0
         memory = 0
         points = 0.0
         total = 0
@@ -375,6 +401,7 @@ class JudgeHandler(ZlibPacketHandler):
 
         for case in SubmissionTestCase.objects.filter(submission=submission):
             time = max(time, case.time)
+            total_time += case.time
             memory = max(memory, case.memory)
             if not case.batch:
                 points += case.points
@@ -424,6 +451,7 @@ class JudgeHandler(ZlibPacketHandler):
         problem._updating_stats_only = True
         problem.update_stats()
         submission.update_contest()
+        submission.update_credit(total_time)
 
         finished_submission(submission)
 

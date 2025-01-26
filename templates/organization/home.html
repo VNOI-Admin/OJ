@@ -40,11 +40,11 @@
     <script type="text/javascript">
         $(function () {
             $('.leave-organization').click(function () {
-                return confirm('{{ _('Are you sure you want to leave this organization?') }}\n' +
+                return confirm({{ _('Are you sure you want to leave this organization?')|htmltojs }} + '\n' +
                     {% if organization.is_open %}
-                        '{{ _('You will have to rejoin to show up on the organization leaderboard.') }}'
+                        {{ _('You will have to rejoin to show up on the organization leaderboard.')|htmltojs }}
                     {% else %}
-                        '{{ _('You will have to request membership in order to join again.') }}'
+                        {{ _('You will have to request membership in order to join again.')|htmltojs }}
                     {% endif %}
                 );
             });
@@ -105,6 +105,9 @@
                     {% endif %}
                     <br>
                     {% if can_edit %}
+                        <div>
+                            <a href="{{ url('organization_monthly_usage', organization.slug) }}">{{ _('Organization cost') }}</a>
+                        </div>
                         {% if not organization.is_open %}
                             <div>
                                 <a href="{{ url('organization_requests_pending', organization.slug) }}">

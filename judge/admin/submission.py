@@ -9,8 +9,10 @@ from django.db.models import Q
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import path, reverse
+from django.utils.decorators import method_decorator
 from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy as _, ngettext, pgettext
+from django.views.decorators.http import require_POST
 from reversion.admin import VersionAdmin
 
 from django_ace import AceWidget
@@ -244,7 +246,7 @@ class SubmissionAdmin(VersionAdmin):
         if obj.is_locked:
             return format_html('<input type="button" disabled value="{0}"/>', _('Locked'))
         else:
-            return format_html('<input type="button" value="{0}" onclick="location.href=\'{1}\'"/>', _('Rejudge'),
+            return format_html('<a class="button action-link" href="{1}">{0}</a>', _('Rejudge'),
                                reverse('admin:judge_submission_rejudge', args=(obj.id,)))
 
     def get_urls(self):
@@ -252,6 +254,7 @@ class SubmissionAdmin(VersionAdmin):
             path('<int:id>/judge/', self.judge_view, name='judge_submission_rejudge'),
         ] + super(SubmissionAdmin, self).get_urls()
 
+    @method_decorator(require_POST)
     def judge_view(self, request, id):
         if not request.user.has_perm('judge.rejudge_submission') or not request.user.has_perm('judge.edit_own_problem'):
             raise PermissionDenied()

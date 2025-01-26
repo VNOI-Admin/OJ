@@ -1,4 +1,6 @@
-from django.utils.html import format_html
+import html
+
+from django.utils.html import escapejs, format_html
 from django.utils.safestring import mark_safe
 
 from . import registry
@@ -12,3 +14,8 @@ def bold(text):
 @registry.function
 def safe(text):
     return mark_safe(text)
+
+
+@registry.filter
+def htmltojs(text):
+    return format_html("'{0}'", escapejs(html.unescape(text)))

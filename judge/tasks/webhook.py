@@ -1,15 +1,21 @@
+import bisect
+from datetime import datetime, timedelta
+from io import BytesIO
+
 import pytz
 from celery import shared_task
 from discord_webhook import DiscordEmbed, DiscordWebhook
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.db.models import F, FloatField
+from django.db.models.functions import Cast
 
 
 from judge.jinja2.gravatar import gravatar
-from judge.models import BlogPost, Comment, Contest, Problem, Tag, TagProblem, Ticket, TicketMessage
+from judge.models import BlogPost, Comment, Contest, Problem, Submission, Tag, TagProblem, Ticket, TicketMessage
 
 __all__ = ('on_new_ticket', 'on_new_comment', 'on_new_problem', 'on_new_tag_problem', 'on_new_tag', 'on_new_contest',
-           'on_new_blogpost', 'on_new_ticket_message')
+           'on_new_blogpost', 'on_new_ticket_message', 'on_long_queue')
 
 
 def get_webhook_url(event_name):
@@ -18,13 +24,14 @@ def get_webhook_url(event_name):
     return webhook
 
 
-def send_webhook(webhook, title, description, author, color='03b2f8'):
+def send_webhook(webhook, title, description, author, color='03b2f8', **kwargs):
     webhook = DiscordWebhook(url=webhook)
 
     embed = DiscordEmbed(
         title=title,
         description=description,
         color=color,
+        **kwargs,
     )
 
     if author is not None:
@@ -198,3 +205,76 @@ def on_new_blogpost(blog_id):
     description = f'Title: {blog.title}\n'
     description += f'Description: {blog.content[:200]}'
     send_webhook(webhook, f'New blog post {url}', description, blog.authors.first())
+
+
+@shared_task
+def on_long_queue():
+    webhook = get_webhook_url('on_long_queue')
+    if webhook is None or settings.SITE_FULL_URL is None:
+        return
+
+    send_webhook(webhook, 'Long queue alert', None, None, url=f'{settings.SITE_FULL_URL}/submissions/?status=QU')
+
+
+@shared_task
+def queue_time_stats():
+    webhook_url = get_webhook_url('queue_time_stats')
+    if webhook_url is None:
+        return
+
+    end_time = (datetime.now(pytz.timezone(settings.CELERY_TIMEZONE))
+                .replace(hour=0, minute=0, second=0, microsecond=0))
+    start_time = end_time - timedelta(days=1)
+
+    queue_time = (Submission.objects.filter(date__gte=start_time, date__lte=end_time)
+                                    .filter(judged_date__isnull=False, rejudged_date__isnull=True)
+                                    .annotate(queue_time=Cast(F('judged_date') - F('date'), FloatField()) / 1000000.0)
+                                    .order_by('queue_time').values_list('queue_time', flat=True))
+
+    queue_time_ranges = [0, 1, 2, 5, 10, 30, 60, 120, 300, 600]
+    queue_time_labels = [
+        '',
+        '0s - 1s',
+        '1s - 2s',
+        '2s - 5s',
+        '5s - 10s',
+        '10s - 30s',
+        '30s - 1min',
+        '1min - 2min',
+        '2min - 5min',
+        '5min - 10min',
+        '> 10min',
+    ]
+
+    def binning(x):
+        return bisect.bisect_left(queue_time_ranges, x, lo=0, hi=len(queue_time_ranges))
+
+    queue_time_count = [0] * len(queue_time_labels)
+    for group in map(binning, list(queue_time)):
+        queue_time_count[group] += 1
+
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+
+    fig, ax = plt.subplots()
+    y_pos = range(len(queue_time_labels) - 1)
+    bar = ax.barh(y_pos, queue_time_count[1:])
+    ax.bar_label(bar, labels=[x if x > 0 else '' for x in queue_time_count[1:]], padding=2)
+    ax.margins(x=0.2)
+    ax.set_yticks(y_pos, labels=queue_time_labels[1:])
+    ax.invert_yaxis()
+    ax.set_xlabel('Number of submissions')
+    fig.tight_layout()
+
+    with BytesIO() as f:
+        plt.savefig(f, format='png')
+        f.seek(0)
+        chart_bytes = f.read()
+
+    embed = DiscordEmbed(title=f'Queue time, {start_time:%Y-%m-%d}', color='03b2f8')
+    embed.set_image('attachment://chart.png')
+    webhook = DiscordWebhook(url=webhook_url)
+    webhook.add_file(chart_bytes, 'chart.png')
+    webhook.add_embed(embed)
+    webhook.execute()

@@ -91,7 +91,7 @@
                 var $precision = $('<input>', {
                     type: 'number',
                     value: try_parse_json($args.val()).precision || 6,
-                    title: '{{ _('precision (decimal digits)') }}',
+                    title: {{ _('precision (decimal digits)')|htmltojs }},
                     style: 'width: 4em'
                 }).appendTo($checker.parent());
 
@@ -103,7 +103,7 @@
                 }).appendTo($custom_checker_type.parent());
                 var $treat_checker_points_as_percentage_label = $('<label>', {
                     for: 'treat-checker-points-as-percentage',
-                    text: '{{ _('Treat checker points as percentage') }}',
+                    text: {{ _('Treat checker points as percentage')|htmltojs }},
                 }).appendTo($custom_checker_type.parent());
 
                 if ($args.val()) {
@@ -127,7 +127,7 @@
                             $file_name = $file_name.split('/').pop()
                             $file_ext = $file_name.split('.').pop()
                             if (!(['cpp', 'pas', 'java'].includes($file_ext))) {
-                                alert("{{ _('Expected checker\'s extension must be in [cpp, pas, java], found ') }}'" + $file_ext + "'");
+                                alert({{ _('Expected checker\'s extension must be in [cpp, pas, java], found ')|htmltojs }} + "'" + $file_ext + "'");
                             } else {
                                 var custom_checker_type = $custom_checker_type.find(":selected").val();
                                 var lang = $file_ext.toUpperCase();
@@ -255,7 +255,7 @@
             $("<br>").appendTo($file_test.parent());
             $("<input/>", {
                 type: "submit",
-                value: "{{ _('Please press this button if you have just updated the zip data') }}",
+                value: {{ _('Please press this button if you have just updated the zip data')|htmltojs }},
                 class: "button",
                 style: "display: inherit",
                 id: "submit-button",
@@ -277,7 +277,7 @@
                 $order.after($('<span>', {'class': 'order'}).text($order.val()))
                     .after($('<i>', {'class': 'fa fa-fw fa-lg fa-ellipsis-v'}));
 
-                var $opts = $tr.find('input').slice(2, 6);
+                var $opts = $tr.find('input').slice(2, 4);
                 var $files = $tr.find('select').slice(1, 3);
                 var $checker = $files.end().last();
                 $tr.find('select[id$=type]').change(function () {
@@ -571,7 +571,7 @@
                     }).catch(function(err) {
                         console.log(err);
                         console.error("Failed to open as ZIP file");
-                        alert("{{ _('Test file must be a ZIP file') }}");
+                        alert({{ _('Test file must be a ZIP file')|htmltojs }});
                         event.target.value = "";
                     })
                 };

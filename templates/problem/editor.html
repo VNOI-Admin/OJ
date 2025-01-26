@@ -21,7 +21,7 @@
             {% endif %}
 
             var noResults = function () {
-                return '{{ _('Press Enter to select multiple users...') }}';
+                return {{ _('Press Enter to select multiple users...')|htmltojs }};
             };
 
             $(document).one('click', '#id_testers + .select2', function (e) {

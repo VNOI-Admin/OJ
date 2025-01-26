@@ -66,10 +66,10 @@
                     var $status = $row.find('td').first().find('i');
                     if (ticket.open) {
                         $status.removeClass('fa-check-circle-o').addClass('fa-exclamation-circle');
-                        notify('ticket', '{{ _('Reopened: ') }}' + ticket.title);
+                        notify('ticket', {{ _('Reopened: ')|htmltojs }} + ticket.title);
                     } else {
                         $status.removeClass('fa-exclamation-circle').addClass('fa-check-circle-o');
-                        notify('ticket', '{{ _('Closed: ') }}' + ticket.title);
+                        notify('ticket', {{ _('Closed: ')|htmltojs }} + ticket.title);
                     }
                 }
             }
@@ -128,9 +128,9 @@
             };
 
             $('#filter-user').select2($.extend(true, {}, user_select2,
-                {ajax: {url: '{{ url('ticket_user_select2_ajax') }}'}}));
+                {ajax: {url: '{{ url('ticket_user_select2_ajax') }}', delay: 300}}));
             $('#filter-assignee').select2($.extend(true, {}, user_select2,
-                {ajax: {url: '{{ url('ticket_assignee_select2_ajax') }}'}}));
+                {ajax: {url: '{{ url('ticket_assignee_select2_ajax') }}', delay: 300}}));
         });
     </script>
 

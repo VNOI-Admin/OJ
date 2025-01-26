@@ -22,10 +22,12 @@ from reversion import revisions
 from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
     Problem, Profile
+from judge.models.profile import OrganizationMonthlyUsage
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group
 from judge.utils.ranker import ranker
+from judge.utils.stats import get_lines_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
@@ -483,6 +485,7 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationHome, self).get_context_data(**kwargs)
+        context['page_prefix'] = reverse('organization_home', args=[self.object.slug]) + '/'
         context['first_page_href'] = reverse('organization_home', args=[self.object.slug])
         context['title'] = self.object.name
         context['can_edit'] = self.can_edit_organization()
@@ -565,6 +568,54 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
             _filter |= Q(testers=self.profile)
 
         return _filter & Q(organizations=self.organization)
+
+
+class MonthlyCreditUsageOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, ListView):
+    template_name = 'organization/usage.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = self.organization.name
+        context['usages'] = OrganizationMonthlyUsage.objects.filter(organization=self.organization)\
+            .order_by('time').values('time', 'consumed_credit')
+
+        usages = context['usages']
+        days = [usage['time'].isoformat() for usage in usages] + [_('Current month')]
+        used_credits = [usage['consumed_credit'] for usage in usages] + [self.organization.current_consumed_credit]
+        sec_per_hour = 60 * 60
+        chart = get_lines_chart(days, {
+            _('Credit usage (hour)'): [
+                round(credit / sec_per_hour, 2) for credit in used_credits
+            ],
+        })
+
+        cost_chart = get_lines_chart(days, {
+            _('Cost (thousand vnd)'): [
+                round(
+                    max(0, credit - settings.VNOJ_MONTHLY_FREE_CREDIT) / sec_per_hour * settings.VNOJ_PRICE_PER_HOUR, 3,
+                ) for credit in used_credits
+            ],
+        })
+
+        monthly_credit = int(self.organization.monthly_credit)
+
+        context['monthly_credit'] = {
+            'hour': monthly_credit // sec_per_hour,
+            'minute': (monthly_credit % sec_per_hour) // 60,
+            'second': monthly_credit % 60,
+        }
+
+        available_credit = int(self.organization.available_credit)
+
+        context['available_credit'] = {
+            'hour': available_credit // sec_per_hour,
+            'minute': (available_credit % sec_per_hour) // 60,
+            'second': available_credit % 60,
+        }
+
+        context['credit_chart'] = chart
+        context['cost_chart'] = cost_chart
+        return context
 
 
 class ContestListOrganization(PrivateOrganizationMixin, ContestList):

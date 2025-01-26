@@ -269,4 +269,67 @@
         });
         return chart;
     }
+
+    function draw_line_chart(data, $chart, opts = {}) {
+        var ctx = $chart.find('canvas')[0].getContext('2d');
+        var chart = new Chart(ctx, {
+            type: 'line',
+            data: data,
+            options: {
+                maintainAspectRatio: false,
+                legend: {
+                    labels: {
+                        generateLabels: function(chart) {
+                            var data = chart.data;
+                            if (!Array.isArray(data.datasets)) {
+                                return [];
+                            }
+
+                            var total = 0;
+                            data.datasets.forEach(function(dataset, i) {
+                                if (chart.isDatasetVisible(i)) {
+                                    total += dataset.data.reduce(function(a, b) {
+                                        return a + b;
+                                    }, 0);
+                                }
+                            });
+
+                            var labels = data.datasets.map(function(dataset, i) {
+                                return {
+                                    text: dataset.label,
+                                    fillStyle: (!Array.isArray(dataset.backgroundColor) ? dataset.backgroundColor : dataset.backgroundColor[0]),
+                                    hidden: !chart.isDatasetVisible(i),
+                                    lineCap: dataset.borderCapStyle,
+                                    lineDash: dataset.borderDash,
+                                    lineDashOffset: dataset.borderDashOffset,
+                                    lineJoin: dataset.borderJoinStyle,
+                                    lineWidth: dataset.borderWidth,
+                                    strokeStyle: dataset.borderColor,
+                                    pointStyle: dataset.pointStyle,
+                                    datasetIndex: i,
+                                };
+                            }, this);
+
+                            if (opts.hide_total) {
+                                return labels;
+                            }
+
+                            const total_suffix = opts.total_suffix || '';
+
+                            labels.push({
+                                text: 'Total: ' + (opts.total_decimals != undefined ? total.toFixed(opts.total_decimals) : total) + total_suffix,
+                                fillStyle: 'transparent',
+                                strokeStyle: 'transparent',
+                                datasetIndex: -1,
+                            });
+
+                            return labels;
+                        },
+                    },
+                },
+            },
+
+        });
+        return chart;
+    }
 </script>

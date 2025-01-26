@@ -27,7 +27,7 @@ from judge.ratings import rating_class
 from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
 
-__all__ = ['Organization', 'Profile', 'OrganizationRequest', 'WebAuthnCredential']
+__all__ = ['Organization', 'OrganizationMonthlyUsage', 'Profile', 'OrganizationRequest', 'WebAuthnCredential']
 
 
 class EncryptedNullCharField(EncryptedCharField):
@@ -65,6 +65,9 @@ class Organization(models.Model):
                                                        'viewing the organization.'))
     performance_points = models.FloatField(default=0)
     member_count = models.IntegerField(default=0)
+    current_consumed_credit = models.FloatField(default=0, help_text='Total used credit this month')
+    available_credit = models.FloatField(default=0, help_text='Available credits')
+    monthly_credit = models.FloatField(default=0, help_text='Total monthly free credit left')
 
     _pp_table = [pow(settings.VNOJ_ORG_PP_STEP, i) for i in range(settings.VNOJ_ORG_PP_ENTRIES)]
 
@@ -110,6 +113,23 @@ class Organization(models.Model):
     def get_users_url(self):
         return reverse('organization_users', args=[self.slug])
 
+    def has_credit_left(self):
+        return self.available_credit + self.monthly_credit > 0
+
+    def consume_credit(self, consumed):
+        # reduce credit in monthly credit first
+        # then reduce the left to available credit
+        if self.monthly_credit >= consumed:
+            self.monthly_credit -= consumed
+        else:
+            consumed -= self.monthly_credit
+            self.monthly_credit = 0
+            # if available credit can be negative if we don't enable the monthly credit limitation
+            self.available_credit -= consumed
+
+        self.current_consumed_credit += consumed
+        self.save(update_fields=['monthly_credit', 'available_credit', 'current_consumed_credit'])
+
     class Meta:
         ordering = ['name']
         permissions = (
@@ -120,6 +140,18 @@ class Organization(models.Model):
         )
         verbose_name = _('organization')
         verbose_name_plural = _('organizations')
+
+
+class OrganizationMonthlyUsage(models.Model):
+    organization = models.ForeignKey(Organization, verbose_name=_('organization'), related_name='monthly_usages',
+                                     on_delete=models.CASCADE)
+    time = models.DateField(verbose_name=_('time'))
+    consumed_credit = models.FloatField(verbose_name=_('consumed credit'), default=0)
+
+    class Meta:
+        verbose_name = _('organization monthly usage')
+        verbose_name_plural = _('organization monthly usages')
+        unique_together = ('organization', 'time')
 
 
 class Badge(models.Model):
@@ -147,6 +179,8 @@ class Profile(models.Model):
     site_theme = models.CharField(max_length=10, verbose_name=_('site theme'), choices=SITE_THEMES, default='light')
     last_access = models.DateTimeField(verbose_name=_('last access time'), default=now)
     ip = models.GenericIPAddressField(verbose_name=_('last IP'), blank=True, null=True)
+    ip_auth = models.GenericIPAddressField(verbose_name=_('IP-based authentication'),
+                                           unique=True, blank=True, null=True)
     badges = models.ManyToManyField(Badge, verbose_name=_('badges'), blank=True, related_name='users')
     display_badge = models.ForeignKey(Badge, verbose_name=_('display badge'), null=True, on_delete=models.SET_NULL)
     organizations = SortedManyToManyField(Organization, verbose_name=_('organization'), blank=True,

@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block media %}
+    <style>
+        .post {
+            margin: 0 0.5em;
+        }
+
+        .post:first-child {
+            margin-top: 0.6em;
+        }
+
+        .comment-count {
+            font-size: 12px;
+        }
+
+        .comment-icon {
+            padding: 0.1em 0.2em 0 0.5em;
+        }
+
+        .comment-count-link {
+            color: #555;
+        }
+
+        table.bottom td.left {
+            text-align: left;
+            border-right: none !important;
+            border-top: none !important;
+        }
+
+        table.bottom td.right {
+            text-align: right;
+            border-top: none !important;
+        }
+    </style>
+{% endblock %}
+
+{% block js_media %}
+    {% include "blog/media-js.html" %}
+    {% include "stats/media-js.html" %}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            draw_line_chart({{ credit_chart|tojson }}, $('#org-credit'), {total_decimals: 2, hide_total: true});
+            draw_line_chart({{ cost_chart|tojson }}, $('#org-cost'), {total_suffix: 'k vnd', total_decimals: 0, hide_total: true});
+        });
+    </script>
+{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'home' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+    {% block before_posts %}{% endblock %}
+
+    <div>
+        <br>
+        {{_('Available free credits (reset each month): ')}}
+        <strong>{{ monthly_credit.hour }} {{_('hours')}}, {{ monthly_credit.minute }} {{_('minutes')}}, {{ monthly_credit.second }} {{_('seconds')}}</strong>
+        <br>
+        {{_('Available paid credits: ')}}
+        <strong>{{ available_credit.hour }} {{_('hours')}}, {{ available_credit.minute }} {{_('minutes')}}, {{ available_credit.second }} {{_('seconds')}}</strong>
+        <br>
+        <br>
+    </div>
+
+    <table id="stats-table" class="table">
+
+        <tr>
+            <th colspan="2">{{ _('Organization Monthly cost') }}</th>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div id="org-cost" style="height: 500px">
+                    <canvas></canvas>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            <th colspan="2">{{ _('Organization Monthly Credit usage') }}</th>
+        </tr>
+        <tr>
+            <td colspan="2">
+                <div id="org-credit" style="height: 500px">
+                    <canvas></canvas>
+                </div>
+            </td>
+        </tr>
+    </table>
+{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
+{% endblock %}
