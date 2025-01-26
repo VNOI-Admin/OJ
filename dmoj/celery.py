@@ -30,6 +30,13 @@ app.conf.beat_schedule = {
             'expires': 60 * 60 * 24,
         },
     },
+    'organization-monthly-reset': {
+        'task': 'judge.tasks.organization.organization_monthly_reset',
+        'schedule': crontab(minute=0, hour=0, day_of_month=1),
+        'options': {
+            'expires': 60 * 60 * 24,
+        },
+    },
 }
 
 
