@@ -457,6 +457,13 @@ class OrganizationForm(ModelForm):
                 ),
             })
 
+    def __init__(self, *args, **kwargs):
+        request = kwargs.pop('request', None)  # Pop 'request' from kwargs
+        super().__init__(*args, **kwargs)
+
+        if request and not request.user.is_superuser:
+            self.fields.pop('admins')
+
 
 class SocialAuthMixin:
     def _has_social_auth(self, key):
