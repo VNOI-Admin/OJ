@@ -117,7 +117,7 @@ VNOJ_PRICE_PER_HOUR = 50
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
-CELERY_TIMEZONE = 'Asia/Ho_Chi_Minh'
+CELERY_TIMEZONE = 'UTC'
 
 # Some problems have a lot of testcases, and each testcase
 # has about 5~6 fields, so we need to raise this
@@ -595,6 +595,12 @@ MARKDOWN_DEFAULT_STYLE = {
     'nofollow': True,
     'use_camo': True,
     'math': True,
+    'bleach': {
+        'tags': BLEACH_USER_SAFE_TAGS,
+        'attributes': BLEACH_USER_SAFE_ATTRS,
+        'styles': True,
+        'mathml': True,
+    },
 }
 
 MARKDOWN_USER_LARGE_STYLE = {
@@ -602,6 +608,12 @@ MARKDOWN_USER_LARGE_STYLE = {
     'nofollow': True,
     'use_camo': True,
     'math': True,
+    'bleach': {
+        'tags': BLEACH_USER_SAFE_TAGS,
+        'attributes': BLEACH_USER_SAFE_ATTRS,
+        'styles': True,
+        'mathml': True,
+    },
 }
 
 MARKDOWN_STYLES = {
@@ -748,6 +760,8 @@ MOSS_API_KEY = None
 CELERY_WORKER_HIJACK_ROOT_LOGGER = False
 
 WEBAUTHN_RP_ID = None
+
+GOOGLE_SEARCH_ENGINE_URL = None
 
 DESCRIPTION_MAX_LENGTH = 200
 
