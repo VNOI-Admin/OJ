@@ -169,6 +169,7 @@ class PostList(PostListBase):
         context['all_blogs_link'] = f"{reverse('home')}?show_all_blogs=true"
 
         context['show_all_blogs'] = self.show_all_blogs
+        context['gcse_url'] = settings.GOOGLE_SEARCH_ENGINE_URL
 
         context['page_prefix'] = reverse('blog_post_list')
         context['comments'] = Comment.most_recent(self.request.user, 10)
