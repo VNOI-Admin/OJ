@@ -3,6 +3,6 @@
 {% elif logo_override_image is defined and logo_override_image %}
     <img src="{{ logo_override_image|camo }}" alt="{{ SITE_NAME }}" height="40" style="border: none; padding-top: 4px">
 {% else %}
-    <img src="{{ static('icons/logo.svg') }}" alt="{{ SITE_NAME }}" width="130" height="40"
-         onerror="this.src=&quot;{{ static('icons/logo.png') }}&quot;; this.onerror=null" style="border: none; padding-top: 4px">
+    <img src="{{ static('icons/tgb-logo.jpg') }}" alt="{{ SITE_NAME }}" width="130" height="40"
+         onerror="this.src=&quot;{{ static('icons/tgb-logo.jpg') }}&quot;; this.onerror=null" style="border: none; padding-top: 4px">
 {% endif %}

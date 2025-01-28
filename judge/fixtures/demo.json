@@ -55,9 +55,9 @@
             ],
             "creation_date": "2017-12-02T08:50:25.199Z",
             "is_open": true,
-            "slug": "vnoj",
-            "name": "VNOJ: Viet Nam Online Judge",
-            "short_name": "VNOJ",
+            "slug": "tgboj",
+            "name": "TGBOJ: TGB Online Judge",
+            "short_name": "TGBOJ",
             "slots": null
         },
         "model": "judge.organization",

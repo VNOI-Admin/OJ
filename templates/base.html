@@ -25,14 +25,14 @@
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
     <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
     <link rel="manifest" href="/manifest.json">
-    <meta name="msapplication-TileColor" content="#231F20">
+    <meta name="msapplication-TileColor" content="#219ebc">
     <meta name="msapplication-TileImage" content="/mstile-144x144.png">
     {# Chrome 39 for Android colour #}
-    <meta name="theme-color" content="#231F20">
+    <meta name="theme-color" content="#219ebc">
     {% if og_image %}
         <meta property="og:image" content="{{ request.build_absolute_uri(og_image) }}">
     {% else %}
-        <meta property="og:image" content="{{ request.build_absolute_uri("/logo.png") }}">
+        <meta property="og:image" content="{{ request.build_absolute_uri("/tgb-logo.jpg") }}">
     {% endif %}
     {% block og_title %}{% endblock %}
     <meta property="og:site_name" content="{{ SITE_LONG_NAME }}">

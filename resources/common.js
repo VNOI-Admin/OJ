@@ -238,7 +238,7 @@ $(function () {
 });
 
 window.notification_template = {
-    icon: '/logo.png'
+    icon: '/tgb-logo.jpg'
 };
 window.notification_timeout = 5000;
 
