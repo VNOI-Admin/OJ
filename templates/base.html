@@ -251,6 +251,13 @@
         </ul>
 
         <span id="user-links">
+            {% if request.user.is_superuser %}
+                <a href="{{ url('misc_config') }}" style="margin-right: 5px;">
+                    <span title="{{ _('Site settings') }}">
+                        <i class="fa fa-gear" style="color: rgb(200,200,200) ; font-size: 1.15em"></i>
+                    </span>
+                </a>
+            {% endif %}
             <a href=
                 {% if request.resolver_match.view_name == "problem_detail" and problem %}
                     "{{ url('new_problem_ticket', problem.code) }}"
