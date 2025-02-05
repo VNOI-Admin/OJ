@@ -14,7 +14,7 @@ from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db.models import Q
 from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, ModelForm, MultipleChoiceField, \
     formset_factory, inlineformset_factory
-from django.forms.widgets import DateTimeInput
+from django.forms.widgets import CheckboxSelectMultiple, DateTimeInput
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse, reverse_lazy
 from django.utils.text import format_lazy
@@ -22,7 +22,7 @@ from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from django_ace import AceWidget
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, LanguageLimit, \
-    Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
+    Organization, Problem, ProblemType, Profile, Solution, Submission, Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -173,6 +173,7 @@ class ProblemEditForm(ModelForm):
     def __init__(self, *args, **kwargs):
         self.org_pk = org_pk = kwargs.pop('org_pk', None)
         self.user = kwargs.pop('user', None)
+        manage_type_voting = kwargs.pop('manage_type_voting', False)
         super(ProblemEditForm, self).__init__(*args, **kwargs)
 
         # Only allow to public/private problem in organization
@@ -184,6 +185,10 @@ class ProblemEditForm(ModelForm):
             self.fields['testers'].widget.data_view = None
             self.fields['testers'].widget.data_url = reverse('organization_profile_select2',
                                                              args=(org_pk, ))
+
+        if not manage_type_voting:
+            self.fields.pop('allow_type_voting')
+            self.fields.pop('automated_type_voting')
 
         self.fields['testers'].help_text = \
             str(self.fields['testers'].help_text) + ' ' + \
@@ -226,7 +231,7 @@ class ProblemEditForm(ModelForm):
         model = Problem
         fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points', 'partial',
                   'statement_file', 'source', 'types', 'group', 'submission_source_visibility_mode',
-                  'testcase_visibility_mode', 'description', 'testers']
+                  'testcase_visibility_mode', 'description', 'testers', 'allow_type_voting', 'automated_type_voting']
         widgets = {
             'types': Select2MultipleWidget,
             'group': Select2Widget,
@@ -618,6 +623,28 @@ class ProblemCloneForm(Form):
         if Problem.objects.filter(code=code).exists():
             raise ValidationError(_('Problem with code already exists.'))
         return code
+
+
+class ProblemTypeVotingForm(Form):
+    types = forms.ModelMultipleChoiceField(
+        label=_('Problem types'),
+        queryset=ProblemType.objects.all(),
+        widget=Select2MultipleWidget(attrs={'style': 'width: 400px'}),
+        required=False,
+    )
+
+
+class ProblemTypeAcceptForm(Form):
+    types = forms.MultipleChoiceField(
+        label=_('Problem types'),
+        choices=ProblemType.objects.none(),
+        widget=CheckboxSelectMultiple(),
+        required=False,
+    )
+
+    def __init__(self, choices, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['types'].choices = choices
 
 
 class ContestAnnouncementForm(forms.ModelForm):
