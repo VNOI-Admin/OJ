@@ -32,7 +32,7 @@
     {% if og_image %}
         <meta property="og:image" content="{{ request.build_absolute_uri(og_image) }}">
     {% else %}
-        <meta property="og:image" content="{{ request.build_absolute_uri("/tgb-logo.jpg") }}">
+        <meta property="og:image" content="{{ request.build_absolute_uri("/tgb-logo.png") }}">
     {% endif %}
     {% block og_title %}{% endblock %}
     <meta property="og:site_name" content="{{ SITE_LONG_NAME }}">

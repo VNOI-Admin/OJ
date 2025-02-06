@@ -5,7 +5,7 @@
     top: 0;
     right: 0;
     position: absolute;
-    color: #5c5954;
+    color: #FFF;
     padding-right: 10px;
     display: inline-flex;
     min-height: 100%;
@@ -63,7 +63,7 @@
     left: 0;
     width: 100%;
     height: 56px;
-    background: #219ebc;
+    background: #434E6A;
 }
 
 #nav-shadow {
@@ -72,7 +72,7 @@
 }
 
 #nav-container {
-    background: #219ebc;
+    background: #434E6A;
 
     // opacity: 0.77
     // filter: alpha(opacity=77)
@@ -145,7 +145,7 @@ nav {
                 left: 5px;
                 display: none;
                 color: #fff;
-                background: #219ebc;
+                background: #231f20;
                 margin: 0 !important;
                 box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
 
@@ -236,7 +236,7 @@ nav {
         margin: 0;
         position: fixed;
         top: 36px;
-        background: #219ebc;
+        background: #231f20;
         bottom: 0;
         width: 8em;
         left: 0;
