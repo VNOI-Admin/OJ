@@ -195,7 +195,7 @@ textarea:focus {
 
         &.active {
             a, span {
-                border-top-color: $highlight_blue !important;
+                border-top-color: #F0AA60 !important;
             }
 
             .tab-icon {
@@ -412,7 +412,7 @@ a.close {
 
 .sidebox h3 {
     margin: 0 -5px;
-    background: $color_primary75;
+    background: #434E6A;
     border-radius: $widget_border_radius $widget_border_radius 0 0;
     color: $color_primary0;
     padding-top: 5px;
