@@ -7,7 +7,6 @@
 *.mo
 *~
 *.swp
-vnojsite/
 dmoj/local_settings.py
 dmoj-site.pid
 dmoj-site.sock
