@@ -186,7 +186,7 @@
         </div>
     {% endif %}
 
-    {% if perms.judge.edit_all_problem %}
+    {% if perms.judge.edit_type_group_all_problem %}
         <div><a href="{{ url('problem_edit_type_group', problem.code) }}">{{ _('Edit type group') }}</a></div>
     {% endif %}
 
