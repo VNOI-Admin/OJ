@@ -257,6 +257,16 @@ class ProblemEditForm(ModelForm):
         }
 
 
+class ProblemEditTypeGroupForm(ModelForm):
+    class Meta:
+        model = Problem
+        fields = ['types', 'group']
+        widgets = {
+            'types': Select2MultipleWidget,
+            'group': Select2Widget,
+        }
+
+
 class ProblemImportPolygonForm(Form):
     code = CharField(max_length=32, validators=[RegexValidator('^[a-z0-9_]+$', _('Problem code must be ^[a-z0-9_]+$'))])
     package = forms.FileField(
