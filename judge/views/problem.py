@@ -1048,11 +1048,11 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
                                    _('You are not allowed to edit this problem.'), status=403)
 
 
-class ProblemEditTypeGroup(ProblemMixin, TitleMixin, UpdateView, PermissionRequiredMixin):
+class ProblemEditTypeGroup(PermissionRequiredMixin, ProblemMixin, TitleMixin, UpdateView):
     template_name = 'problem/type-group-editor.html'
     model = Problem
     form_class = ProblemEditTypeGroupForm
-    permission_required = 'judge.edit_all_problem'
+    permission_required = 'judge.edit_type_group_all_problem'
 
     def get_title(self):
         return _('Editing problem {0}').format(self.object.name)
