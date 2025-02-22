@@ -191,6 +191,10 @@
         </div>
     {% endif %}
 
+    {% if perms.judge.edit_type_group_all_problem %}
+        <div><a href="{{ url('problem_edit_type_group', problem.code) }}">{{ _('Edit type group') }}</a></div>
+    {% endif %}
+
     {% if problem.is_subs_manageable_by(request.user) %}
         <div>
             <a href="{{ url('problem_manage_submissions', problem.code) }}">{{ _('Manage submissions') }}</a>

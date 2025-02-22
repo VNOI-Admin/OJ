@@ -27,8 +27,8 @@ from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemImportPolygonForm, \
-    ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
+from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
+    ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
@@ -1046,3 +1046,28 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         except PermissionDenied:
             return generic_message(request, _("Can't edit problem"),
                                    _('You are not allowed to edit this problem.'), status=403)
+
+
+class ProblemEditTypeGroup(PermissionRequiredMixin, ProblemMixin, TitleMixin, UpdateView):
+    template_name = 'problem/type-group-editor.html'
+    model = Problem
+    form_class = ProblemEditTypeGroupForm
+    permission_required = 'judge.edit_type_group_all_problem'
+
+    def get_title(self):
+        return _('Editing problem {0}').format(self.object.name)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        form = self.get_form()
+        if form.is_valid():
+            with revisions.create_revision(atomic=True):
+                problem = form.save()
+                problem.save()
+
+                revisions.set_comment(_('Edited types/group from site'))
+                revisions.set_user(self.request.user)
+
+            return HttpResponseRedirect(reverse('problem_detail', args=[self.object.code]))
+
+        return self.render_to_response(self.get_context_data(object=self.object))
