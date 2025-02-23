@@ -728,6 +728,8 @@ AUTHENTICATION_BACKENDS = (
     'judge.ip_auth.IPBasedAuthBackend',
 )
 
+REGISTRATION_OPEN = True
+
 SOCIAL_AUTH_PIPELINE = (
     'social_core.pipeline.social_auth.social_details',
     'social_core.pipeline.social_auth.social_uid',
