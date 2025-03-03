@@ -377,13 +377,13 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
 
-            self.object = org = form.save()
+            self.object = org = form.save(commit=False)
             # slug is show in url
             # short_name is show in ranking
             org.short_name = org.slug[:20]
-            org.save()
+            org.free_credit = org.monthly_free_credit_limit
             add_admin_to_group(form)
-
+            # don't need to org.save, the form.save() in `add_admin_to_group` will do it
             return HttpResponseRedirect(self.get_success_url())
 
     def dispatch(self, request, *args, **kwargs):
@@ -597,20 +597,20 @@ class MonthlyCreditUsageOrganization(LoginRequiredMixin, TitleMixin, AdminOrgani
             ],
         })
 
-        monthly_credit = int(self.organization.monthly_credit)
+        free_credit = int(self.organization.free_credit)
 
-        context['monthly_credit'] = {
-            'hour': monthly_credit // sec_per_hour,
-            'minute': (monthly_credit % sec_per_hour) // 60,
-            'second': monthly_credit % 60,
+        context['free_credit'] = {
+            'hour': free_credit // sec_per_hour,
+            'minute': (free_credit % sec_per_hour) // 60,
+            'second': free_credit % 60,
         }
 
-        available_credit = int(self.organization.available_credit)
+        paid_credit = int(self.organization.paid_credit)
 
-        context['available_credit'] = {
-            'hour': available_credit // sec_per_hour,
-            'minute': (available_credit % sec_per_hour) // 60,
-            'second': available_credit % 60,
+        context['paid_credit'] = {
+            'hour': paid_credit // sec_per_hour,
+            'minute': (paid_credit % sec_per_hour) // 60,
+            'second': paid_credit % 60,
         }
 
         context['credit_chart'] = chart
