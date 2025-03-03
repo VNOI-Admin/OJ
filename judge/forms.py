@@ -455,9 +455,22 @@ class TagProblemAssignForm(Form):
 
 
 class OrganizationForm(ModelForm):
+    paid_credit = forms.FloatField(
+        label=_('Available credit (hours)'),
+        help_text=_('The amount of credit available to organization members in hours'),
+        required=False,
+    )
+
+    def clean_paid_credit(self):
+        credit = self.cleaned_data.get('paid_credit')
+        if credit is not None:
+            # Convert hours to seconds
+            return credit * 3600
+        return None
+
     class Meta:
         model = Organization
-        fields = ['name', 'slug', 'is_open', 'about', 'logo_override_image', 'admins']
+        fields = ['name', 'short_name', 'paid_credit', 'is_open', 'about', 'logo_override_image', 'admins']
         widgets = {'about': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('organization_preview')})}
         if HeavySelect2MultipleWidget is not None:
             widgets.update({
@@ -469,10 +482,15 @@ class OrganizationForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         request = kwargs.pop('request', None)  # Pop 'request' from kwargs
+        instance = kwargs.get('instance', None)
+        initial = kwargs.get('initial', {})
+        if instance and instance.paid_credit is not None:
+            initial['paid_credit'] = round(instance.paid_credit / 3600, 5)
         super().__init__(*args, **kwargs)
 
-        if request and not request.user.is_superuser:
+        if request and not request.user.has_perm('judge.organization_admin'):
             self.fields.pop('admins')
+            self.fields.pop('paid_credit')
 
 
 class SocialAuthMixin:
