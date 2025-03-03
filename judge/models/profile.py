@@ -66,8 +66,16 @@ class Organization(models.Model):
     performance_points = models.FloatField(default=0)
     member_count = models.IntegerField(default=0)
     current_consumed_credit = models.FloatField(default=0, help_text='Total used credit this month')
-    paid_credit = models.FloatField(default=0, help_text='Paid credits', db_column='available_credit')
-    free_credit = models.FloatField(default=0, help_text='Free credits (reset monthly)', db_column='monthly_credit')
+    paid_credit = models.FloatField(default=0, help_text=_('Remaining purchased credits'), db_column='available_credit')
+    free_credit = models.FloatField(
+        default=0,
+        help_text=_('Remaining free credits for the current month'),
+        db_column='monthly_credit',
+    )
+    monthly_free_credit_limit = models.FloatField(
+        default=settings.VNOJ_MONTHLY_FREE_CREDIT,
+        help_text=_('Amount of free credits allocated each month'),
+    )
 
     _pp_table = [pow(settings.VNOJ_ORG_PP_STEP, i) for i in range(settings.VNOJ_ORG_PP_ENTRIES)]
 

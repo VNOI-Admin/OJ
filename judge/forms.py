@@ -470,7 +470,7 @@ class OrganizationForm(ModelForm):
 
     class Meta:
         model = Organization
-        fields = ['name', 'short_name', 'paid_credit', 'is_open', 'about', 'logo_override_image', 'admins']
+        fields = ['name', 'short_name', 'paid_credit', 'monthly_free_credit_limit', 'is_open', 'about', 'logo_override_image', 'admins']
         widgets = {'about': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('organization_preview')})}
         if HeavySelect2MultipleWidget is not None:
             widgets.update({
@@ -491,6 +491,7 @@ class OrganizationForm(ModelForm):
         if request and not request.user.has_perm('judge.organization_admin'):
             self.fields.pop('admins')
             self.fields.pop('paid_credit')
+            self.fields.pop('monthly_free_credit_limit')
 
 
 class SocialAuthMixin:

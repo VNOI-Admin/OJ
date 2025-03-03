@@ -23,9 +23,8 @@ def organization_monthly_reset():
             consumed_credit=org.current_consumed_credit,
         )
         usage.save()
+        org.free_credit = org.monthly_free_credit_limit
+        org.current_consumed_credit = 0
+        org.save()
 
-    organizations.update(
-        free_credit=settings.VNOJ_MONTHLY_FREE_CREDIT,
-        current_consumed_credit=0,
-    )
     print('Reset monthly credit for all organizations')
