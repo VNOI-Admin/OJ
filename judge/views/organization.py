@@ -597,20 +597,20 @@ class MonthlyCreditUsageOrganization(LoginRequiredMixin, TitleMixin, AdminOrgani
             ],
         })
 
-        monthly_credit = int(self.organization.monthly_credit)
+        free_credit = int(self.organization.free_credit)
 
-        context['monthly_credit'] = {
-            'hour': monthly_credit // sec_per_hour,
-            'minute': (monthly_credit % sec_per_hour) // 60,
-            'second': monthly_credit % 60,
+        context['free_credit'] = {
+            'hour': free_credit // sec_per_hour,
+            'minute': (free_credit % sec_per_hour) // 60,
+            'second': free_credit % 60,
         }
 
-        available_credit = int(self.organization.available_credit)
+        paid_credit = int(self.organization.paid_credit)
 
-        context['available_credit'] = {
-            'hour': available_credit // sec_per_hour,
-            'minute': (available_credit % sec_per_hour) // 60,
-            'second': available_credit % 60,
+        context['paid_credit'] = {
+            'hour': paid_credit // sec_per_hour,
+            'minute': (paid_credit % sec_per_hour) // 60,
+            'second': paid_credit % 60,
         }
 
         context['credit_chart'] = chart
