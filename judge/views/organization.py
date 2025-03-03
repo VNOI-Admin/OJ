@@ -377,13 +377,13 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
 
-            self.object = org = form.save()
+            self.object = org = form.save(commit=False)
             # slug is show in url
             # short_name is show in ranking
             org.short_name = org.slug[:20]
-            org.save()
+            org.free_credit = org.monthly_free_credit_limit
             add_admin_to_group(form)
-
+            # don't need to org.save, the form.save() in `add_admin_to_group` will do it
             return HttpResponseRedirect(self.get_success_url())
 
     def dispatch(self, request, *args, **kwargs):

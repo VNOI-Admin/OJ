@@ -6,10 +6,15 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0210_clarify_rate_all_desc'),
+        ('judge', '0211_edit_type_group_all_problem'),
     ]
 
     operations = [
+        migrations.AddField(
+            model_name='organization',
+            name='monthly_free_credit_limit',
+            field=models.FloatField(default=10800, help_text='Amount of free credits allocated each month'),
+        ),
         # Thuc: https://b0uh.github.io/django-model-change-field-name-with-no-db-impact.html
         migrations.SeparateDatabaseAndState(
             database_operations=[],
@@ -22,7 +27,7 @@ class Migration(migrations.Migration):
                 migrations.AlterField(
                     model_name='organization',
                     name='free_credit',
-                    field=models.FloatField(db_column='monthly_credit', default=0, help_text='Free credits (reset monthly)'),
+                    field=models.FloatField(db_column='monthly_credit', default=0, help_text='Remaining free credits for the current month'),
                 ),
                 migrations.RenameField(
                     model_name='organization',
@@ -32,7 +37,7 @@ class Migration(migrations.Migration):
                 migrations.AlterField(
                     model_name='organization',
                     name='paid_credit',
-                    field=models.FloatField(db_column='available_credit', default=0, help_text='Paid credits'),
+                    field=models.FloatField(db_column='available_credit', default=0, help_text='Remaining purchased credits'),
                 ),
             ],
         ),

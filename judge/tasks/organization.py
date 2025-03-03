@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 import pytz
 from celery import shared_task
-from django.conf import settings
 
 from judge.models import Organization, OrganizationMonthlyUsage
 
