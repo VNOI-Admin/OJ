@@ -8,7 +8,7 @@ import pyotp
 import webauthn
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.validators import RegexValidator
+from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db import models
 from django.db.models import F, Max, Sum
 from django.urls import reverse
@@ -510,3 +510,56 @@ class OrganizationRequest(models.Model):
     class Meta:
         verbose_name = _('organization join request')
         verbose_name_plural = _('organization join requests')
+
+
+class BadgeRequest(models.Model):
+    user = models.ForeignKey(
+        Profile,
+        verbose_name=_('user'),
+        related_name='badge_requests',
+        on_delete=models.CASCADE,
+    )
+    badge = models.ForeignKey(
+        Badge,
+        verbose_name=_('badge'),
+        related_name='badge_requests',
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    new_badge_name = models.CharField(
+        max_length=128,
+        verbose_name=_('new badge name'),
+        blank=True,
+    )
+    time = models.DateTimeField(verbose_name=_(
+        'request time'), auto_now_add=True)
+    state = models.CharField(
+        max_length=1,
+        verbose_name=_('state'),
+        choices=(
+            ('P', _('Pending')),
+            ('A', _('Approved')),
+            ('R', _('Rejected')),
+        ),
+    )
+    desc = models.TextField(verbose_name=_('description'))
+    cert = models.FileField(
+        verbose_name=_('Certificate'),
+        upload_to='certificates',
+        validators=[
+            FileExtensionValidator(
+                allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS),
+        ],
+    )
+
+    class Meta:
+        verbose_name = _('badge request')
+        verbose_name_plural = _('badge requests')
+
+    def __str__(self):
+        badge_name = (
+            self.badge.name
+            if self.badge and self.badge.name
+            else self.new_badge_name if self.new_badge_name else 'No Badge'
+        )
+        return f'{self.user.user.username} - {badge_name} - {self.get_state_display()}'
