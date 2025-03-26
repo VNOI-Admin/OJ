@@ -29,12 +29,12 @@ pyotp
 qrcode[pil]
 jsonfield @ git+https://github.com/DMOJ/jsonfield.git
 pymoss
-packaging<22
+packaging>=22
 celery
 ansi2html @ git+https://github.com/DMOJ/ansi2html.git
 sqlparse
 lupa
-martor @ git+https://github.com/DMOJ/martor.git
+martor @ git+https://github.com/DMOJ/martor.git@3107145f2dfccf775a36ef54878648fb00df6c7d
 netaddr
 webauthn<1
 bleach[css]
