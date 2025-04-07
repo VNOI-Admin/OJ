@@ -1,4 +1,4 @@
-from adminsortable2.admin import SortableInlineAdminMixin
+from adminsortable2.admin import SortableAdminBase, SortableInlineAdminMixin
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
@@ -141,7 +141,7 @@ class ContestForm(ModelForm):
         }
 
 
-class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
+class ContestAdmin(NoBatchDeleteMixin, SortableAdminBase, VersionAdmin):
     fieldsets = (
         (None, {'fields': ('key', 'name', 'authors', 'curators', 'testers')}),
         (_('Settings'), {'fields': ('is_visible', 'use_clarifications', 'push_announcements', 'disallow_virtual',
@@ -356,7 +356,7 @@ class ContestAdmin(NoBatchDeleteMixin, VersionAdmin):
             raise Http404()
         with transaction.atomic():
             contest.rate()
-        return HttpResponseRedirect(request.META.get('HTTP_REFERER', reverse('admin:judge_contest_changelist')))
+        return HttpResponseRedirect(request.headers.get('referer', reverse('admin:judge_contest_changelist')))
 
     def get_form(self, request, obj=None, **kwargs):
         form = super(ContestAdmin, self).get_form(request, obj, **kwargs)

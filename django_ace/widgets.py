@@ -1,5 +1,5 @@
 """
-Django-ace originally from https://github.com/bradleyayers/django-ace.
+Django-ace originally from https://github.com/django-ace/django-ace.
 """
 
 from urllib.parse import urljoin
@@ -53,7 +53,8 @@ class AceWidget(forms.Textarea):
         html = '<div%s><div></div></div>%s' % (flatatt(ace_attrs), textarea)
 
         # add toolbar
-        html = ('<div class="django-ace-editor"><div style="width: 100%%" class="django-ace-toolbar">'
+        html = ('<div style="width: 100%%" class="django-ace-editor">'
+                '<div style="width: 100%%" class="django-ace-toolbar">'
                 '<a href="./" class="django-ace-max_min"></a></div>%s</div>') % html
 
         return mark_safe(html)
