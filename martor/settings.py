@@ -12,6 +12,14 @@ MARTOR_ENABLE_CONFIGS = getattr(
     },
 )
 
+# Imgur API Keys
+MARTOR_IMGUR_CLIENT_ID = getattr(
+    settings, 'MARTOR_IMGUR_CLIENT_ID', '',
+)
+MARTOR_IMGUR_API_KEY = getattr(
+    settings, 'MARTOR_IMGUR_API_KEY', '',
+)
+
 # Markdownify
 MARTOR_MARKDOWNIFY_URL = getattr(
     settings, 'MARTOR_MARKDOWNIFY_URL', '/martor/markdownify/',
