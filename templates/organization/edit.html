@@ -1,6 +1,9 @@
 {% extends "base.html" %}
 
-{% block js_media %}{{ form.media.js }}{% endblock %}
+{% block js_media %}
+    {{ form.media.js }}
+    <script src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
+{% endblock %}
 
 {% block media %}
     {{ form.media.css }}
