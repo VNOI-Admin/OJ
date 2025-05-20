@@ -1,6 +1,5 @@
 import csv
 import secrets
-import string
 
 from django.conf import settings
 from django.contrib.auth.models import User
@@ -8,7 +7,7 @@ from django.core.management.base import BaseCommand
 
 from judge.models import Language, Profile
 
-ALPHABET = string.ascii_letters + string.digits
+ALPHABET = 'abcdefghkqtxyz' + 'abcdefghkqtxyz'.upper() + '23456789'
 
 
 def generate_password():
