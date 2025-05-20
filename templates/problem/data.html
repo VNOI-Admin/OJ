@@ -566,7 +566,10 @@
                 var reader = new FileReader();
                 reader.onload = function(ev) {
                     JSZip.loadAsync(ev.target.result).then(function(zip) {
-                        window.valid_files = Object.keys(zip.files).sort();
+                        let all_files = Object.keys(zip.files).sort();
+                        // ignore macos stupid files
+                        window.valid_files = all_files.filter(file => !file.startsWith('__MACOSX/') && !file.startsWith('._') && !file.startsWith('.DS_Store'));
+
                         fill_testcases();
                     }).catch(function(err) {
                         console.log(err);
