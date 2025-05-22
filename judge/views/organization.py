@@ -189,8 +189,8 @@ def org_user_ranking_redirect(request, slug):
         is_unlisted=False, performance_points__exact=user.performance_points, id__lt=user.id,
     ).count()
     page = rank // OrganizationUsers.paginate_by
-    return HttpResponseRedirect('%s%s#!%s' % (reverse('organization_users', args=(org.slug,)), '?page=%d' % (page + 1) if page else '',
-                                              username))
+    return HttpResponseRedirect('%s%s#!%s' % (reverse('organization_users', args=(org.slug,)),
+                                              '?page=%d' % (page + 1) if page else '', username))
 
 
 class OrganizationMembershipChange(LoginRequiredMixin, PublicOrganizationMixin, SingleObjectMixin, View):
