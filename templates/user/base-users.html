@@ -14,7 +14,7 @@
                 theme: '{{ DMOJ_SELECT2_THEME }}',
                 placeholder: {{ _('Search by handle...')|htmltojs }},
                 ajax: {
-                    url: '{{ url('user_search_select2_ajax') }}',
+                    url: '{% block user_search_select2_ajax %}{{ url('user_search_select2_ajax') }}{% endblock %}',
                     delay: 300
                 },
                 minimumInputLength: 1,
@@ -54,12 +54,10 @@
     {% if page_obj and page_obj.has_other_pages() %}
         <div class="top-pagination-bar">
             {% include "list-pages.html" %}
-            {% if not organization %}
-                <form id="search-form" name="form" action="{{ url('user_ranking_redirect') }}" method="get">
-                    <input id="search-handle" type="text" name="search"
-                           placeholder="{{ _('Search by handle...') }}">
-                </form>
-            {% endif %}
+            <form id="search-form" name="form" action="{{ url('user_ranking_redirect') }}" method="get">
+                <input id="search-handle" type="text" name="search"
+                       placeholder="{{ _('Search by handle...') }}">
+            </form>
         </div>
     {% endif %}
 

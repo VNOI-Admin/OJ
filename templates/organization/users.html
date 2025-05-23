@@ -24,6 +24,8 @@
     {% endif %}
 {% endblock %}
 
+{% block user_search_select2_ajax %}{{ url('org_user_search_select2_ajax', organization.slug) }}{% endblock %}
+
 {% block users_js_media %}
     <script type="text/javascript">
         $(function () {
@@ -33,6 +35,8 @@
                 }
                 return false;
             })
+
+            document.getElementById('search-form').action = "{{ url('org_user_ranking_redirect', organization.slug) }}"
         });
     </script>
 {% endblock %}
