@@ -287,7 +287,7 @@ urlpatterns = [
         path('/<int:page>', organization.OrganizationHome.as_view(), name='organization_home'),
         path('/users/', include([
             path('', organization.OrganizationUsers.as_view(), name='organization_users'),
-            path('find', organization.org_user_ranking_redirect, name='org_user_ranking_redirect')
+            path('find', organization.org_user_ranking_redirect, name='org_user_ranking_redirect'),
         ])),
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
         path('/leave', organization.LeaveOrganization.as_view(), name='leave_organization'),
