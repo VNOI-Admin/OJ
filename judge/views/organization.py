@@ -179,10 +179,10 @@ class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizati
 
 def org_user_ranking_redirect(request, slug):
     try:
-        id = request.GET['id']
+        username = request.GET['handle']
     except KeyError:
         raise Http404()
-    user = get_object_or_404(Profile, id=id)
+    user = get_object_or_404(Profile, user__username=username)
     org = get_object_or_404(Organization, slug=slug)
     rank = org.members.filter(is_unlisted=False, performance_points__gt=user.performance_points).count()
     rank += org.members.filter(
@@ -190,7 +190,7 @@ def org_user_ranking_redirect(request, slug):
     ).count()
     page = rank // OrganizationUsers.paginate_by
     return HttpResponseRedirect('%s%s#!%s' % (reverse('organization_users', args=(org.slug,)),
-                                              '?page=%d' % (page + 1) if page else '', user.username))
+                                              '?page=%d' % (page + 1) if page else '', username))
 
 
 class OrganizationMembershipChange(LoginRequiredMixin, PublicOrganizationMixin, SingleObjectMixin, View):

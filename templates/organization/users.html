@@ -24,7 +24,9 @@
     {% endif %}
 {% endblock %}
 
-{% block js_media %}
+{% block user_search_select2_ajax %}{{ url('org_user_search_select2_ajax', organization.slug) }}{% endblock %}
+
+{% block users_js_media %}
     <script>
         $(function () {
             $('form.kick-form').find('a.button').click(function () {
@@ -33,45 +35,6 @@
                 }
                 return false;
             })
-
-            $('#search-handle').replaceWith($('<select>').attr({
-                id: 'search-handle',
-                name: 'id',
-                onchange: 'form.submit()'
-            }));
-            var in_user_redirect = false;
-            $('#search-handle').select2({
-                theme: '{{ DMOJ_SELECT2_THEME }}',
-                placeholder: {{ _('Search by handle...')|htmltojs }},
-                ajax: {
-                    url: '{{ url('organization_profile_select2', organization.pk) }}',
-                    delay: 300
-                },
-                minimumInputLength: 1,
-                templateResult: function (data, container) {
-                    return $('<span>')
-                        .append($('<img>', {
-                            'class': 'user-search-image', src: data.gravatar_url,
-                            width: 24, height: 24
-                        }))
-                        .append($('<span>', {'class': data.display_rank + ' user-search-name'}).text(data.text));
-                }
-            }).on('select2:selecting', function () {
-                return !in_user_redirect;
-            });
-
-            var $last = null;
-            $(window).on('hashchange', function () {
-                var hash = window.location.hash;
-                if (hash.startsWith('#!')) {
-                    var $user = $('#user-' + hash.substring(2)).addClass('highlight');
-                    if ($user) {
-                        $(document).scrollTop($user.position().top - 50);
-                        if ($last !== null) $last.removeClass('highlight');
-                        $last = $user;
-                    }
-                }
-            }).trigger('hashchange');
 
             document.getElementById('search-form').action = "{{ url('org_user_ranking_redirect', organization.slug) }}"
         });
