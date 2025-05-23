@@ -27,7 +27,7 @@
 {% block user_search_select2_ajax %}{{ url('org_user_search_select2_ajax', organization.slug) }}{% endblock %}
 
 {% block users_js_media %}
-    <script>
+    <script type="text/javascript">
         $(function () {
             $('form.kick-form').find('a.button').click(function () {
                 if (confirm({{ _('Are you sure you want to kick this user?')|htmltojs }})) {
