@@ -16,7 +16,7 @@ class TagForm(ModelForm):
 
     class Meta:
         widgets = {
-            'group': AdminHeavySelect2Widget(data_view='taggroup_select2', attrs={'style': 'width: 100%'}),
+            'group': AdminHeavySelect2Widget(data_view='taggroup_select2'),
         }
 
 
@@ -32,8 +32,8 @@ class TagProblemForm(ModelForm):
 class TagDataInlineForm(ModelForm):
     class Meta:
         widgets = {
-            'assigner': AdminHeavySelect2Widget(data_view='profile_select2', attrs={'style': 'width: 100%;'}),
-            'tag': AdminHeavySelect2Widget(data_view='tag_select2', attrs={'style': 'width: 100%;'}),
+            'assigner': AdminHeavySelect2Widget(data_view='profile_select2'),
+            'tag': AdminHeavySelect2Widget(data_view='tag_select2'),
         }
 
 
