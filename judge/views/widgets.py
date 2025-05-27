@@ -9,9 +9,9 @@ from django.core.files.storage import default_storage
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, \
     HttpResponseRedirect
 from django.views.decorators.http import require_POST
-from martor.api import imgur_uploader
 
 from judge.models import Submission
+from martor.api import imgur_uploader
 
 __all__ = ['rejudge_submission']
 
@@ -77,7 +77,7 @@ def submission_uploader(submission_file, problem_code, user_id):
 
 @login_required
 def martor_image_uploader(request):
-    if request.method != 'POST' or not request.is_ajax() or 'markdown-image-upload' not in request.FILES:
+    if request.method != 'POST' or 'markdown-image-upload' not in request.FILES:
         return HttpResponseBadRequest('Invalid request')
 
     image = request.FILES['markdown-image-upload']

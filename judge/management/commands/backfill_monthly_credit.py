@@ -50,7 +50,7 @@ class Command(BaseCommand):
         usage.save()
 
     def handle(self, *args, **options):
-        start = datetime.datetime(2023, 6, 1, tzinfo=timezone.utc)
+        start = datetime.datetime(2023, 6, 1, tzinfo=datetime.timezone.utc)
         while True:
             print('Processing', start, 'at time', timezone.now())
             next_month = start + dateutil.relativedelta.relativedelta(months=+1)

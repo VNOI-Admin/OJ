@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 120
-application-import-names = dmoj,judge,django_ace
+application-import-names = dmoj,judge,django_ace,martor
 import-order-style = pycharm
 enable-extensions = G
 ignore =

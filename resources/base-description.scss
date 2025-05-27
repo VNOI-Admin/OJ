@@ -1,4 +1,4 @@
-@import "vars";
+@use "vars" as *;
 
 @mixin content-description {
     line-height: 1.5em;
@@ -67,12 +67,11 @@
 
     blockquote.spoiler {
         position: relative;
-        background: #eff0f1;
+        background: $color_primary5;
         border-radius: 5px;
-        color: #242729;
         cursor: pointer;
         min-height: 48px;
-        border: solid 1px #c8ccd0;
+        border: solid 1px $color_primary25;
     }
 
     blockquote.spoiler > * {
@@ -88,7 +87,7 @@
         left: 0;
         width: 4px;
         border-radius: 8px;
-        background: #c8ccd0;
+        background: $color_primary25;
     }
 
     blockquote.spoiler::after {
@@ -96,7 +95,7 @@
         background-repeat: no-repeat;
         background-position: center right;
         font-size: 13px;
-        color: #6a737c;
+        color: $color_primary33;
         padding-right: 22px;
         position: absolute;
         top: 1em;

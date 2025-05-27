@@ -1,8 +1,7 @@
+import datetime
 import itertools
 import json
 import os
-from datetime import datetime
-from datetime import timedelta
 from operator import attrgetter, itemgetter
 
 import pytz
@@ -183,7 +182,7 @@ class CustomPasswordChangeView(PasswordChangeView):
         return super().form_valid(form)
 
 
-EPOCH = datetime(1970, 1, 1, tzinfo=timezone.utc)
+EPOCH = datetime.datetime(1970, 1, 1, tzinfo=datetime.timezone.utc)
 
 
 class UserAboutPage(UserPage):
@@ -208,11 +207,11 @@ class UserAboutPage(UserPage):
         user_timezone = settings.DEFAULT_USER_TIME_ZONE
         if self.request is not None and self.request.profile is not None:
             user_timezone = user_timezone or self.request.profile.timezone
-        timezone_offset = pytz.timezone(user_timezone).utcoffset(datetime.utcnow()).seconds
+        timezone_offset = pytz.timezone(user_timezone).utcoffset(datetime.datetime.utcnow()).seconds
 
         submissions = (
             self.object.submission_set
-            .annotate(date_only=Cast(F('date') + timedelta(seconds=timezone_offset), DateField()))
+            .annotate(date_only=Cast(F('date') + datetime.timedelta(seconds=timezone_offset), DateField()))
             .values('date_only').annotate(cnt=Count('id'))
         )
 
