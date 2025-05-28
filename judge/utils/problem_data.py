@@ -143,6 +143,9 @@ class ProblemDataCompiler(object):
                 except Exception as e:
                     raise ProblemDataError(e)
 
+                if checker_ext == 'py':
+                    return custom_checker_path[1]
+
                 if checker_ext not in ['cpp', 'pas', 'java']:
                     raise ProblemDataError(_('Only C++, Pascal, or Java checkers are supported.'))
 

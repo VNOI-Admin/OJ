@@ -126,8 +126,8 @@
                         if (!($file_name == '')) {
                             $file_name = $file_name.split('/').pop()
                             $file_ext = $file_name.split('.').pop()
-                            if (!(['cpp', 'pas', 'java'].includes($file_ext))) {
-                                alert({{ _('Expected checker\'s extension must be in [cpp, pas, java], found ')|htmltojs }} + "'" + $file_ext + "'");
+                            if (!(['cpp', 'pas', 'java', 'py'].includes($file_ext))) {
+                                alert({{ _('Expected checker\'s extension must be in [cpp, pas, java, py], found ')|htmltojs }} + "'" + $file_ext + "'");
                             } else {
                                 var custom_checker_type = $custom_checker_type.find(":selected").val();
                                 var lang = $file_ext.toUpperCase();
@@ -438,13 +438,14 @@
                 console.log("Filling testcase...");
                 var inFiles = [], outFiles = [];
 
-                var format = ["Themis", "CMS", "Polygon", "DMOJ"];
+                var format = ["Themis", "CMS", "Polygon", "DMOJ", "misc"];
 
                 var in_re = [
                     new RegExp(/^(.+\.inp|.+\.in|inp|in)$/),
                     new RegExp(/^input.(.+\d+)$/),
                     new RegExp(/^(.+\d+)$/),
                     new RegExp(/^(?=.*?\.in|in).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
+                    new RegExp(/^input(.+).txt$/),
                 ];
 
                 var out_re = [
@@ -452,6 +453,7 @@
                     new RegExp(/^output.(.+\d+)$/),
                     new RegExp(/^(.+\d+\.a)$/),
                     new RegExp(/^(?=.*?\.out|out).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
+                    new RegExp(/^output(.+).txt$/),
                 ];
 
                 var test_type = -1;
@@ -460,7 +462,7 @@
                     var lastSlashIdx = window.valid_files[i].lastIndexOf('/');
                     var tested_filename = window.valid_files[i].slice(lastSlashIdx + 1).toLowerCase();
 
-                    for (var type = 0; type < 3; type++) {
+                    for (var type = 0; type < format.length; type++) {
                         if (in_re[type].test(tested_filename)) {
                             if (test_type != -1 && test_type != type) {
                                 alert("{{_('Files are not in the same format!')}}");
