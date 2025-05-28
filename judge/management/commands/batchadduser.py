@@ -21,6 +21,7 @@ def add_user(username, fullname, password):
 
     profile = Profile(user=usr)
     profile.language = Language.objects.get(key=settings.DEFAULT_USER_LANGUAGE)
+    profile.username_display_override = fullname
     profile.save()
 
 
