@@ -412,6 +412,14 @@ class ProblemSubmitForm(ModelForm):
                     self.files['submission_file'].file = archive.open('project.json')
                 except (zipfile.BadZipFile, KeyError):
                     pass
+            if lang_obj.key == 'OUTPUT':
+                try:
+                    archive = zipfile.ZipFile(content.file)
+                    files = archive.namelist()
+                    if not any(file.endswith('.ipynb') for file in files):
+                        raise forms.ValidationError(_('Your submission must include a ipynb file.'))
+                except (zipfile.BadZipFile, KeyError):
+                    pass
 
     def __init__(self, *args, judge_choices=(), **kwargs):
         super(ProblemSubmitForm, self).__init__(*args, **kwargs)
