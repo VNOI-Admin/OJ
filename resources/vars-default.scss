@@ -1,5 +1,5 @@
 @use 'sass:color';
-@import "vars-common";
+@forward "vars-common";
 
 $is_light_theme: true;
 
@@ -24,6 +24,8 @@ $color_pageBg: color.adjust($color_primary5, $lightness: 10%);
 // custom one-off colours
 $color_contest_ranking_disqualified: #ffa8a8;
 
+$color_martor_resize_dragger: #e8e8e8;
+
 $color_rating_none: #999;
 $color_rating_newbie: #808080;
 $color_rating_pupil: #008000;
@@ -40,6 +42,19 @@ $color_user_submission_activity1: #9be9a8;
 $color_user_submission_activity2: #40c463;
 $color_user_submission_activity3: #2f9c4c;
 $color_user_submission_activity4: #216e39;
+
+$color_info25: #def;
+$color_info50: #bdf;
+$color_info100: #368;
+$color_success25: #ded;
+$color_success50: #adb;
+$color_success100: #173;
+$color_warning25: #ffd;
+$color_warning50: #feb;
+$color_warning100: #863;
+$color_danger25: #edd;
+$color_danger50: #dbb;
+$color_danger100: #944;
 
 $color_problem_submit_select2: #757575;
 
