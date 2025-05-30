@@ -445,7 +445,7 @@
                     new RegExp(/^input.(.+\d+)$/),
                     new RegExp(/^(.+\d+)$/),
                     new RegExp(/^(?=.*?\.in|in).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
-                    new RegExp(/^input(.+)\..+$/),
+                    new RegExp(/^input(.?)\..+$/),
                 ];
 
                 var out_re = [
@@ -453,7 +453,7 @@
                     new RegExp(/^output.(.+\d+)$/),
                     new RegExp(/^(.+\d+\.a)$/),
                     new RegExp(/^(?=.*?\.out|out).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
-                    new RegExp(/^output(.+)\..+$/),
+                    new RegExp(/^output(.?)\..+$/),
                 ];
 
                 var test_type = -1;
