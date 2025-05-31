@@ -22,8 +22,9 @@ from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
 from judge.views.register import ActivationView, RegistrationView
 from judge.views.select2 import AssigneeSelect2View, CommentSelect2View, ContestSelect2View, \
-    ContestUserSearchSelect2View, OrganizationSelect2View, OrganizationUserSelect2View, ProblemSelect2View, \
-    TagGroupSelect2View, TagSelect2View, TicketUserSelect2View, UserSearchSelect2View, UserSelect2View
+    ContestUserSearchSelect2View, OrganizationSelect2View, OrganizationUserSearchSelect2View, \
+    OrganizationUserSelect2View, ProblemSelect2View, TagGroupSelect2View, TagSelect2View, TicketUserSelect2View, \
+    UserSearchSelect2View, UserSelect2View
 from judge.views.widgets import martor_image_uploader
 from martor.views import markdown_search_user
 
@@ -284,7 +285,10 @@ urlpatterns = [
     path('organization/<slug:slug>', include([
         path('', organization.OrganizationHome.as_view(), name='organization_home'),
         path('/<int:page>', organization.OrganizationHome.as_view(), name='organization_home'),
-        path('/users/', organization.OrganizationUsers.as_view(), name='organization_users'),
+        path('/users/', include([
+            path('', organization.OrganizationUsers.as_view(), name='organization_users'),
+            path('find', organization.org_user_ranking_redirect, name='org_user_ranking_redirect'),
+        ])),
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
         path('/leave', organization.LeaveOrganization.as_view(), name='leave_organization'),
         path('/edit', organization.EditOrganization.as_view(), name='edit_organization'),
@@ -348,6 +352,8 @@ urlpatterns = [
             path('user_search', UserSearchSelect2View.as_view(), name='user_search_select2_ajax'),
             path('contest_users/<str:contest>', ContestUserSearchSelect2View.as_view(),
                  name='contest_user_search_select2_ajax'),
+            path('org_users/<slug:slug>', OrganizationUserSearchSelect2View.as_view(),
+                 name='org_user_search_select2_ajax'),
             path('ticket_user', TicketUserSelect2View.as_view(), name='ticket_user_select2_ajax'),
             path('ticket_assignee', AssigneeSelect2View.as_view(), name='ticket_assignee_select2_ajax'),
         ])),
