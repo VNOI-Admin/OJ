@@ -82,7 +82,7 @@
     {{ description|markdown(problem.markdown_style, 'tex')|reference|absolutify(url)|str|safe }}
 </div>
 <script type="text/javascript" src="{{ urljoin(url, static('mathjax_config.js')) }}"></script>
-<script type="text/javascript" src="{{ urljoin(url, static('vnoj/mathjax/tex-chtml.min.js')) }}"></script>
+<script type="text/javascript" src="{{ urljoin(url, static('vnoj/mathjax/3.2.0/es5/tex-chtml.min.js')) }}"></script>
 <script type="text/javascript">
     MathJax.typesetPromise().then(function () {
         document.body.classList.add('math-loaded');
