@@ -180,6 +180,12 @@ class ContestUserSearchSelect2View(UserSearchSelect2View):
                                       user__username__icontains=self.term).distinct()
 
 
+class OrganizationUserSearchSelect2View(UserSearchSelect2View):
+    def get_queryset(self):
+        org = get_object_or_404(Organization, slug=self.kwargs['slug'])
+        return org.members.filter(user__username__icontains=self.term)
+
+
 class TicketUserSelect2View(UserSearchSelect2View):
     def get_queryset(self):
         return Profile.objects.filter(tickets__isnull=False,
