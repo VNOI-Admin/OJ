@@ -31,6 +31,7 @@ from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm,
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
+from judge.models.problem import EditorialProposal
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
@@ -135,6 +136,30 @@ class ProblemSolution(SolvedProblemMixin, ProblemMixin, TitleMixin, CommentedDet
         code = self.kwargs.get(self.slug_url_kwarg, None)
         return generic_message(self.request, _('No such editorial'),
                                _('Could not find an editorial with the code "%s".') % code, status=404)
+
+
+class EditorialProposalDetail(SolvedProblemMixin, TitleMixin, CommentedDetailView):
+    model = EditorialProposal
+    template_name = 'problem/editorial.html'
+
+    def get_title(self):
+        return _('Editorial proposal for {0}').format(self.object.name)
+
+    def get_content_title(self):
+        return mark_safe(escape(_('Editorial proposal for {0}')).format(
+            format_html('<a href="{1}">{0}</a>', self.object.name, reverse('problem_detail', args=[self.object.code])),
+        ))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        solution = self.get_object()
+
+        if not solution.is_accessible_by(self.request.user) or self.request.in_contest:
+            raise Http404()
+        context['solution'] = solution
+        context['has_solved_problem'] = self.object.id in self.get_completed_problems()
+        return context
 
 
 class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMixin, View):

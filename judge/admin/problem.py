@@ -232,3 +232,22 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         if form.cleaned_data.get('change_message'):
             return form.cleaned_data['change_message']
         return super(ProblemAdmin, self).construct_change_message(request, form, *args, **kwargs)
+
+
+class EditorialProposalForm(ModelForm):
+    class Meta:
+        widgets = {
+            'problem': AdminHeavySelect2Widget(data_view='problem_select2'),
+            'author': AdminHeavySelect2Widget(data_view='profile_select2'),
+            'content': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('solution_preview')}),
+        }
+
+
+class EditorialProposalAdmin(VersionAdmin):
+    fields = ('problem', 'author', 'content')
+    list_display = ('problem', 'author', 'show_public')
+    form = EditorialProposalForm
+
+    @admin.display(description='')
+    def show_public(self, obj):
+        return format_html('<a href="{1}">{0}</a>', gettext('View on site'), obj.get_absolute_url())
