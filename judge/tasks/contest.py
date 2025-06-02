@@ -75,7 +75,7 @@ def run_moss(self, contest_key):
                         result.url = moss_call.process()
                         result.submission_count = len(users)
                     except Exception as e:
-                        logger.error(f"Error running MOSS for {contest.key} - {problem.code}: {e}")
+                        logger.error('Error running MOSS for %s - %s: %s', contest.key, problem.code, str(e))
 
                 moss_results.append(result)
                 p.did(1)
