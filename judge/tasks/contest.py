@@ -1,5 +1,6 @@
 import fnmatch
 import json
+import logging
 import os
 import re
 import zipfile
@@ -16,6 +17,7 @@ from judge.utils.celery import Progress
 
 __all__ = ('rescore_contest', 'run_moss', 'prepare_contest_data')
 rewildcard = re.compile(r'\*+')
+logger = logging.getLogger('judge.celery')
 
 
 @shared_task(bind=True)
@@ -58,19 +60,22 @@ def run_moss(self, contest_key):
                 ).order_by('-points').values_list('user__user__username', 'source__source')
 
                 if subs.exists():
-                    moss_call = MOSS(moss_api_key, language=moss_lang, matching_file_limit=100,
-                                     comment='%s - %s' % (contest.key, problem.code))
+                    try:
+                        moss_call = MOSS(moss_api_key, language=moss_lang, matching_file_limit=100,
+                                         comment='%s - %s' % (contest.key, problem.code))
 
-                    users = set()
+                        users = set()
 
-                    for username, source in subs:
-                        if username in users:
-                            continue
-                        users.add(username)
-                        moss_call.add_file_from_memory(username, source.encode('utf-8'))
+                        for username, source in subs:
+                            if username in users:
+                                continue
+                            users.add(username)
+                            moss_call.add_file_from_memory(username, source.encode('utf-8'))
 
-                    result.url = moss_call.process()
-                    result.submission_count = len(users)
+                        result.url = moss_call.process()
+                        result.submission_count = len(users)
+                    except Exception as e:
+                        logger.error('Error running MOSS for %s - %s: %s', contest.key, problem.code, type(e))
 
                 moss_results.append(result)
                 p.did(1)
