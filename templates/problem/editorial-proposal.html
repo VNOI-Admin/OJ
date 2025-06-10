@@ -1,0 +1,32 @@
+{% extends "common-content.html" %}
+
+{% block header %}
+    <div style="float:right">
+        {% if problem.is_editable_by(request.user) %}
+            [<a href="{{ url('admin:judge_problem_change', problem.id) }}">{{ _('Edit') }}</a>]
+        {% endif %}
+    </div>
+{% endblock %}
+
+{% block body %}
+    <div class="content-description">
+        {% if not has_solved_problem %}
+            <div class="alert alert-danger">
+                {{ _('Remember to use this editorial **only** when stuck, and **not to copy-paste code from it**. Please be respectful to the problem author and editorialist.')|markdown('default', strip_paragraphs=True) }}<br>
+                <b>{{ _('Submitting an official solution before solving the problem yourself is a bannable offence.') }}</b>
+            </div>
+        {% endif %}
+        <p>
+            {{ _('Author:') }}
+            {{ link_user(solution.author) }}
+        </p>
+        {{ solution.content|markdown('solution', MATH_ENGINE)|reference|str|safe }}
+    </div>
+    <hr>
+{% endblock %}
+
+{% block bodyend %}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
+{% endblock %}
