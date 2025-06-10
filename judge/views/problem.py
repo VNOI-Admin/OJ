@@ -21,7 +21,7 @@ from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import CreateView, FormView, ListView, UpdateView, View
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
@@ -36,6 +36,7 @@ from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
 from judge.utils.diggpaginator import DiggPaginator
+from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
 from judge.utils.problems import hot_problems, user_attempted_ids, \
@@ -138,19 +139,20 @@ class ProblemSolution(SolvedProblemMixin, ProblemMixin, TitleMixin, CommentedDet
                                _('Could not find an editorial with the code "%s".') % code, status=404)
 
 
-class EditorialProposalDetail(SolvedProblemMixin, TitleMixin, CommentedDetailView):
+class EditorialProposalDetail(SolvedProblemMixin, TitleMixin, DetailView):
     model = EditorialProposal
-    template_name = 'problem/editorial.html'
+    template_name = 'problem/editorial-proposal.html'
 
     def get_title(self):
-        return _('Editorial proposal for {0}').format(self.object.name)
+        return _('Editorial proposal for %s') % self.problem.name
 
     def get_content_title(self):
         return mark_safe(escape(_('Editorial proposal for {0}')).format(
-            format_html('<a href="{1}">{0}</a>', self.object.name, reverse('problem_detail', args=[self.object.code])),
+            format_html('<a href="{1}">{0}</a>', self.problem.name, reverse('problem_detail', args=[self.problem.code])),
         ))
 
     def get_context_data(self, **kwargs):
+        self.problem = self.object.problem
         context = super().get_context_data(**kwargs)
 
         solution = self.get_object()
@@ -158,8 +160,26 @@ class EditorialProposalDetail(SolvedProblemMixin, TitleMixin, CommentedDetailVie
         if not solution.is_accessible_by(self.request.user) or self.request.in_contest:
             raise Http404()
         context['solution'] = solution
+        context['problem'] = self.problem
         context['has_solved_problem'] = self.object.id in self.get_completed_problems()
         return context
+
+
+class EditorialProposalList(SolvedProblemMixin, TitleMixin, ListView):
+    model = EditorialProposal
+    title = gettext_lazy('Editorial proposals')
+    context_object_name = 'proposals'
+    template_name = 'problem/editorial-proposal-list.html'
+    paginate_by = 50
+
+    def get_queryset(self):
+        queryset = EditorialProposal.objects.filter(problem__is_public=True, problem__is_organization_private=False)
+        if not self.request.user.has_perm('judge.accept_editorial_proposal'):
+            queryset = queryset.filter(author=self.request.user)
+        if 'code' in self.request.GET:
+            code = self.request.GET.get('code', '').strip()
+            queryset = queryset.filter(problem__code=code)
+        return queryset
 
 
 class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMixin, View):

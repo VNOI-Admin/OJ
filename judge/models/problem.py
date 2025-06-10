@@ -701,7 +701,7 @@ class Solution(models.Model):
 
 
 class EditorialProposal(models.Model):
-    problem = models.OneToOneField(Problem, on_delete=CASCADE, verbose_name=_('associated problem'),
+    problem = models.ForeignKey(Problem, on_delete=CASCADE, verbose_name=_('associated problem'),
                                    blank=True, related_name='editorial_proposals')
     author = models.ForeignKey(Profile, on_delete=CASCADE, verbose_name=_('author'), blank=True)
     content = models.TextField(verbose_name=_('editorial content'), validators=[disallowed_characters_validator])
@@ -711,21 +711,19 @@ class EditorialProposal(models.Model):
         if problem is None:
             return reverse('home')
         else:
-            return reverse('editorial_proposal', args=(problem.code, self.pk))
+            return reverse('editorial_proposal', args=(self.pk,))
 
     def __str__(self):
         return _('Editorial proposal for %s') % self.problem.name
 
     def is_accessible_by(self, user):
-        if self.problem.is_editable_by(user):
-            return True
-        if user.has_perm('judge.see_editorial_proposal'):
-            return True
-        return False
+        return (self.problem.is_public
+                and not self.problem.is_organization_private
+                and user.has_perm('judge.accept_editorial_proposal'))
 
     class Meta:
         permissions = (
-            ('see_editorial_proposal', _('See editorial proposals')),
+            ('accept_editorial_proposal', _('Accept editorial proposals')),
         )
         unique_together = ('problem', 'author')
         verbose_name = _('editorial proposal')

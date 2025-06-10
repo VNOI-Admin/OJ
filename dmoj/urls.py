@@ -118,13 +118,14 @@ urlpatterns = [
         path('/import-polygon', problem.ProblemImportPolygon.as_view(), name='problem_import_polygon'),
     ])),
 
+    path('/editorial_proposal/<int:pk>', problem.EditorialProposalDetail.as_view(), name='editorial_proposal'),
+    path('editorial_proposal_list', problem.EditorialProposalList.as_view(), name='editorial_proposal_list'),
+
     path('problem/<str:problem>', include([
         path('', problem.ProblemDetail.as_view(), name='problem_detail'),
         path('/edit', problem.ProblemEdit.as_view(), name='problem_edit'),
         path('/edit-type-group', problem.ProblemEditTypeGroup.as_view(), name='problem_edit_type_group'),
         path('/editorial', problem.ProblemSolution.as_view(), name='problem_editorial'),
-        path('/editorial_proposal/<int:pk>', problem.EditorialProposalDetail.as_view(),
-             name='editorial_proposal'),
         path('/raw', xframe_options_sameorigin(problem.ProblemRaw.as_view()), name='problem_raw'),
         path('/pdf', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/pdf/<slug:language>', problem.ProblemPdfView.as_view(), name='problem_pdf'),
