@@ -2,7 +2,6 @@ from datetime import datetime, timedelta
 
 import pytz
 from celery import shared_task
-from django.conf import settings
 
 from judge.models import Organization, OrganizationMonthlyUsage
 
@@ -23,9 +22,8 @@ def organization_monthly_reset():
             consumed_credit=org.current_consumed_credit,
         )
         usage.save()
+        org.free_credit = org.monthly_free_credit_limit
+        org.current_consumed_credit = 0
+        org.save()
 
-    organizations.update(
-        monthly_credit=settings.VNOJ_MONTHLY_FREE_CREDIT,
-        current_consumed_credit=0,
-    )
     print('Reset monthly credit for all organizations')

@@ -158,7 +158,7 @@ class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizati
     context_object_name = 'users'
 
     def get_queryset(self):
-        return self.object.members.filter(is_unlisted=False).order_by(self.order) \
+        return self.object.members.filter(is_unlisted=False).order_by(self.order, 'id') \
             .select_related('user', 'display_badge').defer('about', 'user_script', 'notes')
 
     def get_context_data(self, **kwargs):
@@ -175,6 +175,22 @@ class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizati
         context.update(self.get_sort_context())
         context.update(self.get_sort_paginate_context())
         return context
+
+
+def org_user_ranking_redirect(request, slug):
+    try:
+        username = request.GET['handle']
+    except KeyError:
+        raise Http404()
+    user = get_object_or_404(Profile, user__username=username)
+    org = get_object_or_404(Organization, slug=slug)
+    rank = org.members.filter(is_unlisted=False, performance_points__gt=user.performance_points).count()
+    rank += org.members.filter(
+        is_unlisted=False, performance_points__exact=user.performance_points, id__lt=user.id,
+    ).count()
+    page = rank // OrganizationUsers.paginate_by
+    return HttpResponseRedirect('%s%s#!%s' % (reverse('organization_users', args=(org.slug,)),
+                                              '?page=%d' % (page + 1) if page else '', username))
 
 
 class OrganizationMembershipChange(LoginRequiredMixin, PublicOrganizationMixin, SingleObjectMixin, View):
@@ -377,13 +393,13 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
 
-            self.object = org = form.save()
+            self.object = org = form.save(commit=False)
             # slug is show in url
             # short_name is show in ranking
             org.short_name = org.slug[:20]
-            org.save()
+            org.free_credit = org.monthly_free_credit_limit
             add_admin_to_group(form)
-
+            # don't need to org.save, the form.save() in `add_admin_to_group` will do it
             return HttpResponseRedirect(self.get_success_url())
 
     def dispatch(self, request, *args, **kwargs):
@@ -597,20 +613,20 @@ class MonthlyCreditUsageOrganization(LoginRequiredMixin, TitleMixin, AdminOrgani
             ],
         })
 
-        monthly_credit = int(self.organization.monthly_credit)
+        free_credit = int(self.organization.free_credit)
 
-        context['monthly_credit'] = {
-            'hour': monthly_credit // sec_per_hour,
-            'minute': (monthly_credit % sec_per_hour) // 60,
-            'second': monthly_credit % 60,
+        context['free_credit'] = {
+            'hour': free_credit // sec_per_hour,
+            'minute': (free_credit % sec_per_hour) // 60,
+            'second': free_credit % 60,
         }
 
-        available_credit = int(self.organization.available_credit)
+        paid_credit = int(self.organization.paid_credit)
 
-        context['available_credit'] = {
-            'hour': available_credit // sec_per_hour,
-            'minute': (available_credit % sec_per_hour) // 60,
-            'second': available_credit % 60,
+        context['paid_credit'] = {
+            'hour': paid_credit // sec_per_hour,
+            'minute': (paid_credit % sec_per_hour) // 60,
+            'second': paid_credit % 60,
         }
 
         context['credit_chart'] = chart

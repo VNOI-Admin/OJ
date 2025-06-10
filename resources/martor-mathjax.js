@@ -19,8 +19,7 @@ jQuery(function ($) {
                         window.MathJax.startup = {typeset: false};
                         $.ajax({
                             type: 'GET',
-                            // url: '/static/vnoj/mathjax/tex-chtml.min.js',
-                            url: 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
+                            url: '/static/vnoj/mathjax/3.2.0/es5/tex-chtml.min.js',
                             dataType: 'script',
                             cache: true,
                             success: update_math

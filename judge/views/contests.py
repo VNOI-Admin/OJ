@@ -318,8 +318,8 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
                 pretests_enabled=F('is_pretested').bitand(F('contest__run_pretests_only')),
             )
             .aggregate(
-                has_partials=Sum('partials_enabled'),
-                has_pretests=Sum('pretests_enabled'),
+                has_partials=Sum('partials_enabled', output_field=BooleanField()),
+                has_pretests=Sum('pretests_enabled', output_field=BooleanField()),
                 has_submission_cap=Sum('max_submissions'),
                 problem_count=Count('id'),
             ),

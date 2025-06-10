@@ -244,7 +244,7 @@
         </style>
     </noscript>
 </head>
-<body>
+<body{% if perms.judge.test_site %} data-theme="{{ SITE_THEME_NAME }}"{% endif %}>
 <svg width="0" height="0" style="display: block">
     <defs>
         <clipPath id="rating-clip"><circle cx="8" cy="8" r="7"/></clipPath>
@@ -337,8 +337,10 @@
             {% else %}
                 <span class="anon">
                     <a href="{{ url('auth_login') }}?next={{ LOGIN_RETURN_PATH|urlencode }}"><b>{{ _('Log in') }}</b></a>
-                    &nbsp;{{ _('or') }}&nbsp;
-                    <a href="{{ url('registration_register') }}"><b>{{ _('Sign up') }}</b></a>
+                    {% if REGISTRATION_OPEN %}
+                        &nbsp;{{ _('or') }}&nbsp;
+                        <a href="{{ url('registration_register') }}"><b>{{ _('Sign up') }}</b></a>
+                    {% endif %}
                 </span>
             {% endif %}
         </span>
