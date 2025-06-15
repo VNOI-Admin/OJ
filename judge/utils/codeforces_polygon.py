@@ -373,7 +373,7 @@ class PolygonImporter:
 
             self.meta['checker_args'] = {
                 'files': 'checker.cpp',
-                'lang': 'CPP17',
+                'lang': 'CPP20',
                 'type': 'testlib',
             }
 

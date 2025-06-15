@@ -195,7 +195,7 @@ class ProblemDataCompiler(object):
                 init['interactive'] = {
                     'files': file_name,
                     'type': 'testlib',  # Assume that we only use testlib interactor
-                    'lang': 'CPP17',
+                    'lang': 'CPP20',
                 }
                 return
 
