@@ -22,6 +22,7 @@ from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, LanguageLimit, \
     Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
+from judge.models.problem import EditorialProposal
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -134,6 +135,15 @@ class ProposeProblemSolutionForm(ModelForm):
             'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
             'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('solution_preview')}),
             'publish_on': DateInput(attrs={'type': 'date'}),
+        }
+
+
+class EditorialProposalForm(ModelForm):
+    class Meta:
+        model = EditorialProposal
+        fields = ('content',)
+        widgets = {
+            'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('solution_preview')}),
         }
 
 
