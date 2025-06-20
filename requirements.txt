@@ -32,7 +32,7 @@ jsonfield @ git+https://github.com/DMOJ/jsonfield.git
 pymoss
 packaging>=22
 celery
-ansi2html @ git+https://github.com/DMOJ/ansi2html.git
+ansi2html @ git+https://github.com/VNOI-Admin/ansi2html.git
 sqlparse
 lupa
 netaddr
