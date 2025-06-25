@@ -127,6 +127,9 @@ class Contest(models.Model):
                                    default=False)
     rate_exclude = models.ManyToManyField(Profile, verbose_name=_('exclude from ratings'), blank=True,
                                           related_name='rate_exclude+')
+    rate_disqualified = models.BooleanField(verbose_name=_('rate disqualified'),
+                                            help_text=_('Rate users even if they are disqualified.'),
+                                            default=True)
     is_private = models.BooleanField(verbose_name=_('private to specific users'), default=False)
     private_contestants = models.ManyToManyField(Profile, blank=True, verbose_name=_('private contestants'),
                                                  help_text=_('If private, only these users may see the contest.'),
