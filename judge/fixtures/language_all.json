@@ -984,5 +984,39 @@
         "extension": "zig",
 		"include_in_problem": true
     }
+},
+{
+    "model": "judge.language",
+    "pk": 76,
+    "fields": {
+        "key": "CPPTHEMIS",
+        "name": "C++THEMIS",
+        "short_name": "C++(THEMIS)",
+        "common_name": "C++",
+        "ace": "c_cpp",
+        "pygments": "cpp",
+        "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    return 0;\r\n}",
+        "info": "",
+        "description": "",
+        "extension": "cpp",
+		"include_in_problem": true
+    }
+},
+{
+    "model": "judge.language",
+    "pk": 77,
+    "fields": {
+        "key": "PASTHEMIS",
+        "name": "Pascal (Themis)",
+        "short_name": "PASTHEMIS",
+        "common_name": "Pascal",
+        "ace": "pascal",
+        "pygments": "pascal",
+        "template": "",
+        "info": "",
+        "description": "",
+        "extension": "pas",
+		"include_in_problem": true
+    }
 }
 ]
