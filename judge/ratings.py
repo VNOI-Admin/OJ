@@ -154,6 +154,8 @@ def rate_contest(contest):
         .filter(virtual=0).values('id', 'user_id', 'score', 'cumtime', 'tiebreaker', 'last_mean', 'times')
     if not contest.rate_all:
         users = users.filter(submissions__gt=0)
+    if not contest.rate_disqualified:
+        users = users.filter(is_disqualified=False)
     if contest.rating_floor is not None:
         users = users.exclude(last_rating__lt=contest.rating_floor)
     if contest.rating_ceiling is not None:
