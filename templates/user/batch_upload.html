@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {{ form.media.js }}
+    <style>
+        .batch-upload-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .csv-example {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            font-family: monospace;
+        }
+
+         .preview-section {
+             background: #f8f9fa;
+             border: 1px solid #dee2e6;
+             border-radius: 5px;
+             padding: 20px;
+             margin: 20px 0;
+             display: none;
+         }
+
+         .preview-section.show {
+             display: block;
+         }
+     </style>
+
+    <script>
+        $(document).ready(function() {
+            const $fileInput = $('#{{ form.csv_file.id_for_label }}');
+            const $fileInfo = $('#file-info');
+            const $fileDetails = $('#file-details');
+            const $previewSection = $('#preview-section');
+            const $previewTable = $('#preview-tbody');
+            const $userCount = $('#user-count');
+
+            $fileInput.on('change', function(event) {
+                const file = event.target.files[0];
+
+                if (!file) {
+                    hidePreview();
+                    return;
+                }
+
+                // Show file info
+                $fileDetails.text(`${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+                $fileInfo.show();
+
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        parseAndShowUsers(e.target.result);
+                    } catch (error) {
+                        alert('{{ _("Error reading file:") }} ' + error.message);
+                        hidePreview();
+                    }
+                };
+                reader.readAsText(file);
+            });
+
+            function parseAndShowUsers(csvContent) {
+                const lines = csvContent.trim().split('\n');
+
+                $previewTable.empty();
+
+                if (lines.length < 2) {
+                    alert('{{ _("CSV file must contain at least a header row and one data row.") }}');
+                    hidePreview();
+                    return;
+                }
+
+                const header = lines[0].split(',').map(col => col.trim().toLowerCase());
+
+                if (!header.includes('username') || !header.includes('fullname')) {
+                    alert('{{ _("CSV file must contain username and fullname columns.") }}');
+                    hidePreview();
+                    return;
+                }
+
+                const usernameIndex = header.indexOf('username');
+                const fullnameIndex = header.indexOf('fullname');
+
+                // Parse data rows
+
+                for (let i = 1; i < lines.length; i++) {
+                    const columns = lines[i].split(',').map(col => col.trim());
+
+                    const username = columns[usernameIndex];
+                    const fullname = columns[fullnameIndex];
+
+                    const $row = $('<tr>').html(`
+                        <td>${escapeHtml(username)}</td>
+                        <td>${escapeHtml(fullname)}</td>
+                    `);
+                    $previewTable.append($row);
+                }
+
+                $userCount.text(lines.length);
+
+                $previewSection.addClass('show');
+            }
+
+            function hidePreview() {
+                $previewSection.removeClass('show');
+                $fileInfo.hide();
+            }
+
+            function escapeHtml(text) {
+                return $('<div>').text(text).html();
+            }
+        });
+
+        function downloadUsers() {
+            const rows = [];
+            rows.push(['username', 'fullname', 'password']); // Header
+
+            $('#created-users-table tbody tr').each(function() {
+                const username = $(this).find('td:eq(0)').text();
+                const fullname = $(this).find('td:eq(1)').text();
+                const password = $(this).find('td:eq(2) code').text();
+                rows.push([username, fullname, password]);
+            });
+
+            const csvContent = rows.map(row =>
+                row.map(field => '"' + field.replace(/"/g, '""') + '"').join(',')
+            ).join('\n');
+
+            const file_name = 'created_users_' + new Date().toISOString().slice(0,10) + '.csv';
+            const link = document.createElement('a');
+            link.style.display = 'none';
+            link.setAttribute('target', '_blank');
+            link.setAttribute('href', 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csvContent));
+            link.setAttribute('download', file_name);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+{% endblock %}
+
+
+{% block body %}
+<div class="batch-upload-container">
+    {% if not processed %}
+        <div class="instructions">
+            <h4>{{ _("CSV File Example:") }}</h4>
+            <div class="csv-example">
+username,fullname<br>
+john_doe,John Doe<br>
+jane_smith,Jane Smith<br>
+bob_wilson,Bob Wilson
+            </div>
+        </div>
+
+        <div class="upload-form">
+            <form method="post" enctype="multipart/form-data" id="upload-form">
+                {% csrf_token %}
+                {{ form }}
+
+                <div id="file-info" class="file-info" style="display: none;">
+                    <strong>{{ _("File Info:") }}</strong> <span id="file-details"></span>
+                </div>
+
+                <div id="preview-section" class="preview-section">
+                    <h3>{{ _("Users to be Created") }}</h3>
+                    <p>{{ _("Total users:") }} <strong id="user-count">0</strong></p>
+
+                    <table class="table" id="preview-table">
+                        <thead>
+                            <tr>
+                                <th>{{ _("Username") }}</th>
+                                <th>{{ _("Full Name") }}</th>
+                            </tr>
+                        </thead>
+                        <tbody id="preview-tbody">
+                        </tbody>
+                    </table>
+                </div>
+
+                <button type="submit" class="button">{{ _("Upload and Create Users") }}</button>
+            </form>
+        </div>
+    {% endif %}
+    {% if processed %}
+        <div class="results-section">
+            <h3>{{ _("Upload Results") }}</h3>
+            {% if results %}
+                <div class="success-results">
+                    <table class="table" id="created-users-table">
+                        <thead>
+                            <tr>
+                                <th>{{ _("Username") }}</th>
+                                <th>{{ _("Full Name") }}</th>
+                                <th>{{ _("Generated Password") }}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in results %}
+                                <tr>
+                                    <td>{{ user.username }}</td>
+                                    <td>{{ user.fullname }}</td>
+                                    <td><code>{{ user.password }}</code></td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+            <div style="margin-top: 20px;">
+                <a href="#" onclick="downloadUsers()" class="button">{{ _("Download as CSV") }}</a>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

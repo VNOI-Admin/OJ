@@ -1,27 +1,8 @@
 import csv
-import secrets
 
-from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from judge.models import Language, Profile
-
-ALPHABET = 'abcdefghkqtxyz' + 'abcdefghkqtxyz'.upper() + '23456789'
-
-
-def generate_password():
-    return ''.join(secrets.choice(ALPHABET) for _ in range(8))
-
-
-def add_user(username, fullname, password):
-    usr = User(username=username, first_name=fullname, is_active=True)
-    usr.set_password(password)
-    usr.save()
-
-    profile = Profile(user=usr)
-    profile.language = Language.objects.get(key=settings.DEFAULT_USER_LANGUAGE)
-    profile.save()
+from judge.utils.user import add_user
 
 
 class Command(BaseCommand):
@@ -42,9 +23,8 @@ class Command(BaseCommand):
         for row in reader:
             username = row['username']
             fullname = row['fullname']
-            password = generate_password()
 
-            add_user(username, fullname, password)
+            password = add_user(username, fullname, overwrite_existing=False)
 
             writer.writerow({
                 'username': username,
