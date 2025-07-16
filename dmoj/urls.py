@@ -191,6 +191,7 @@ urlpatterns = [
         path('<int:page>', lambda request, page:
              HttpResponsePermanentRedirect('%s?page=%s' % (reverse('user_list'), page))),
         path('find', user.user_ranking_redirect, name='user_ranking_redirect'),
+        path('batch-upload/', user.BatchUserUploadView.as_view(), name='batch_user_upload'),
     ])),
 
     path('user', user.UserAboutPage.as_view(), name='user_page'),
