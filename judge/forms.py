@@ -1,3 +1,4 @@
+import csv
 import json
 import os
 import zipfile
@@ -830,3 +831,38 @@ class CompareSubmissionsForm(Form):
     user = forms.ChoiceField(
         widget=HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
     )
+
+
+class BatchUserUploadForm(Form):
+    csv_file = forms.FileField(
+        label=_('CSV File'),
+        validators=[FileExtensionValidator(allowed_extensions=['csv'])],
+        help_text=_('Upload a CSV file with columns: username, fullname. Maximum file size is 5MB.'),
+        widget=forms.FileInput(attrs={'accept': '.csv'}),
+    )
+
+    def clean_csv_file(self):
+        csv_file = self.cleaned_data['csv_file']
+
+        if csv_file.size > 5 * 1024 * 1024:
+            raise forms.ValidationError(_('File size is too big! Maximum file size is 5MB.'))
+
+        try:
+            csv_file.seek(0)
+            content = csv_file.read().decode('utf-8')
+            csv_file.seek(0)
+
+            reader = csv.DictReader(content.splitlines())
+            fieldnames = reader.fieldnames
+
+            if not fieldnames or 'username' not in fieldnames or 'fullname' not in fieldnames:
+                raise forms.ValidationError(
+                    _('CSV file must contain "username" and "fullname" columns.'),
+                )
+
+        except UnicodeDecodeError:
+            raise forms.ValidationError(_('File must be a valid CSV file with UTF-8 encoding.'))
+        except Exception as e:
+            raise forms.ValidationError(_('Invalid CSV file: %(error)s') % {'error': str(e)})
+
+        return csv_file
