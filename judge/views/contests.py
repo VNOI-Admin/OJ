@@ -256,14 +256,15 @@ class ContestMixin(object):
     def dispatch(self, request, *args, **kwargs):
         try:
             return super(ContestMixin, self).dispatch(request, *args, **kwargs)
-        except Http404:
+        except Http404 as e404:
+            text = e404.args[0] if len(e404.args) > 0 else None
             key = kwargs.get(self.slug_url_kwarg, None)
             if key:
                 return generic_message(request, _('No such contest'),
-                                       _('Could not find a contest with the key "%s".') % key)
+                                       text or _('Could not find a contest with the key "%s".') % key)
             else:
                 return generic_message(request, _('No such contest'),
-                                       _('Could not find such contest.'))
+                                       text or _('Could not find such contest.'))
         except PrivateContestError as e:
             return render(request, 'contest/private.html', {
                 'error': e, 'title': _('Access to contest "%s" denied') % e.name,
@@ -848,11 +849,13 @@ ContestRankingProfile = namedtuple(
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
 
 
-def make_contest_ranking_profile(contest, participation, contest_problems, first_solves, frozen=False):
+def make_contest_ranking_profile(contest, participation, contest_problems,
+                                 side_contest_problems, first_solves, frozen=False):
     def display_user_problem(contest_problem):
         # When the contest format is changed, `format_data` might be invalid.
         # This will cause `display_user_problem` to error, so we display '???' instead.
         try:
+            contest_problem.id = side_contest_problems[participation.contest.key][contest_problem.order]
             return contest.format.display_user_problem(participation, contest_problem, first_solves, frozen)
         except (KeyError, TypeError, ValueError):
             return mark_safe('<td>???</td>')
@@ -876,37 +879,57 @@ def make_contest_ranking_profile(contest, participation, contest_problems, first
     )
 
 
-def base_contest_ranking_list(contest, problems, queryset, frozen=False):
+def base_contest_ranking_list(contest, problems, queryset, contest_problems_id_map, frozen=False):
     queryset = queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')
-    first_solves, total_ac = contest.format.get_first_solves_and_total_ac(problems, queryset, frozen)
-    users = [make_contest_ranking_profile(contest, participation, problems, first_solves, frozen) for participation
-             in queryset]
+    first_solves, total_ac = contest.format.get_first_solves_and_total_ac(
+        problems, queryset, frozen, contest_problems_id_map)
+
+    users = [make_contest_ranking_profile(contest, participation, problems,
+             contest_problems_id_map, first_solves, frozen)
+             for participation in queryset]
     return users, total_ac
 
 
-def base_contest_ranking_queryset(contest):
-    return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
+def base_contest_ranking_queryset(*contests):
+    return ContestParticipation.objects.filter(contest__in=contests, virtual__gt=ContestParticipation.SPECTATE) \
+        .select_related('contest', 'user') \
         .prefetch_related(Prefetch('user__organizations',
                                    queryset=Organization.objects.filter(is_unlisted=False))) \
         .annotate(submission_count=Count('submission')) \
         .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker', '-submission_count')
 
 
-def base_contest_frozen_ranking_queryset(contest):
-    return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
+def base_contest_frozen_ranking_queryset(*contests):
+    return ContestParticipation.objects.filter(contest__in=contests, virtual__gt=ContestParticipation.SPECTATE) \
+        .select_related('contest', 'user') \
         .prefetch_related(Prefetch('user__organizations',
                                    queryset=Organization.objects.filter(is_unlisted=False))) \
         .annotate(submission_count=Count('submission')) \
         .order_by('is_disqualified', '-frozen_score', 'frozen_cumtime', 'frozen_tiebreaker', '-submission_count')
 
 
-def contest_ranking_list(contest, problems, frozen=False):
-    return base_contest_ranking_list(contest, problems, base_contest_ranking_queryset(contest), frozen=frozen)
+def contest_ranking_list(contest, problems, contest_problems_id_map, frozen=False):
+    return base_contest_ranking_list(
+        contest, problems,
+        base_contest_ranking_queryset(contest),
+        contest_problems_id_map=contest_problems_id_map,
+        frozen=frozen,
+    )
 
 
-def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list, ranker=ranker):
+def get_contest_ranking_list(request, *contests, participation=None, ranking_list=contest_ranking_list, ranker=ranker):
+    contest = contests[0]
     problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
-    users, total_ac = ranking_list(contest, problems)
+    contest_problems_id_map = {contest.key: {}}
+
+    for problem in problems:
+        contest_problems_id_map[contest.key][problem.order] = problem.id
+    for contest in contests[1:]:
+        contest_problems_id_map[contest.key] = {}
+        for (id, order) in list(contest.contest_problems.order_by('order').values_list('id', 'order')):
+            contest_problems_id_map[contest.key][order] = id
+
+    users, total_ac = ranking_list(contest, problems, contest_problems_id_map=contest_problems_id_map)
     users = ranker(users, key=attrgetter('points', 'cumtime', 'tiebreaker'))
 
     return users, problems, total_ac
@@ -1042,6 +1065,61 @@ class ContestRanking(ContestRankingBase):
         context['is_frozen'] = self.is_frozen
         context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
         return context
+
+
+class MergedContestRanking(ContestRanking):
+    target_contests = None
+
+    @property
+    def cache_key(self):
+        target_contest_query_string = self.request.GET.get('target_contests', '')
+        if len(target_contest_query_string) > 100:
+            raise Http404('Too many contests to merge')
+        return f'contest_merged_ranking_cache_{self.object.key}_{self.show_virtual}_{self.is_frozen}_'\
+               f'{target_contest_query_string}_{self.request.LANGUAGE_CODE}'
+
+    def get_target_contests(self):
+        if self.target_contests is None:
+            target_contests = self.request.GET.get('target_contests', '').split(',')
+            if len(target_contests) > 2:
+                raise Http404('Too many contests to merge')
+            self.target_contests = Contest.objects.filter(key__in=target_contests)
+
+            if len(self.target_contests) == 0:
+                raise Http404('Must specify at least one contest to merge')
+
+            self.target_contests = [self.object] + list(self.target_contests)
+            is_frozen = self.object.is_frozen
+            for contest in self.target_contests:
+                if not contest.can_see_full_scoreboard(self.request.user):
+                    raise Http404('You are not allowed to see the scoreboard of this contest')
+                if contest.is_frozen != is_frozen:
+                    raise Http404('Contests must have the same frozen status')
+
+        return self.target_contests
+
+    def get_ranking_queryset(self):
+        target_contests = self.get_target_contests()
+        if self.is_frozen:
+            queryset = base_contest_frozen_ranking_queryset(*target_contests)
+        else:
+            queryset = base_contest_ranking_queryset(*target_contests)
+        if not self.show_virtual:
+            queryset = queryset.filter(virtual=ContestParticipation.LIVE)
+        return queryset
+
+    def get_full_ranking_list(self):
+        if 'show_virtual' in self.request.GET:
+            self.show_virtual = self.request.session['show_virtual'] \
+                              = self.request.GET.get('show_virtual').lower() == 'true'
+        else:
+            self.show_virtual = self.request.session.get('show_virtual', False)
+
+        queryset = self.get_ranking_queryset()
+        return get_contest_ranking_list(
+            self.request, *self.get_target_contests(),
+            ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=self.is_frozen),
+        )
 
 
 class ContestPublicRanking(ContestRanking):

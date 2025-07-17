@@ -163,18 +163,23 @@ class VNOJContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def get_first_solves_and_total_ac(self, problems, participations, frozen=False):
+    def get_first_solves_and_total_ac(self, problems, participations, frozen=False, contest_problems_id_map=None):
         first_solves = {}
         total_ac = {}
 
         for problem in problems:
             problem_id = str(problem.id)
             min_time = None
-            first_solves[problem_id] = None
+            first_solves[problem.order] = None
             total_ac[problem_id] = 0
 
             for participation in participations:
-                format_data = (participation.format_data or {}).get(problem_id)
+                if contest_problems_id_map and participation.contest.key in contest_problems_id_map:
+                    participation_problem_id = str(contest_problems_id_map[participation.contest.key][problem.order])
+                else:
+                    participation_problem_id = problem_id
+
+                format_data = (participation.format_data or {}).get(participation_problem_id)
                 if format_data:
                     has_pending = bool(format_data.get('pending', 0))
                     prefix = 'frozen_' if frozen and has_pending else ''
@@ -187,7 +192,7 @@ class VNOJContestFormat(DefaultContestFormat):
                         # Only acknowledge first solves for live participations
                         if participation.virtual == 0 and (min_time is None or min_time > time):
                             min_time = time
-                            first_solves[problem_id] = participation.id
+                            first_solves[problem.order] = participation.id
 
         return first_solves, total_ac
 
@@ -195,7 +200,7 @@ class VNOJContestFormat(DefaultContestFormat):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
 
         if format_data:
-            first_solved = first_solves.get(str(contest_problem.id), None) == participation.id
+            first_solved = first_solves.get(contest_problem.order, None) == participation.id
             url = reverse('contest_user_submissions',
                           args=[self.contest.key, participation.user.user.username, contest_problem.problem.code])
 
