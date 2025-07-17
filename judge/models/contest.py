@@ -435,6 +435,11 @@ class Contest(models.Model):
                 raise self.PrivateContest()
             return
 
+        if user.username.startswith('final25_'):
+            if self.key != 'vnoicup25_final':
+                raise self.Inaccessible()
+            return
+
         # If the user can view or edit all contests
         if user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest'):
             return
@@ -506,7 +511,9 @@ class Contest(models.Model):
             return cls.get_public_contests()
 
         queryset = cls.objects.defer('description')
-        if not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):
+        if user.username.startswith('final25_'):
+            queryset = queryset.filter(key='vnoicup25_final')
+        elif not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):
             q = Q(is_visible=True)
             q &= (
                 Q(view_contest_scoreboard=user.profile) |
