@@ -48,7 +48,7 @@ class BaseContestFormat(metaclass=ABCMeta):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_first_solves_and_total_ac(self, problems, participations, frozen=False):
+    def get_first_solves_and_total_ac(self, problems, participations, frozen=False, contest_problems_id_map=None):
         """
         Returns two dictionaries mapping ContestProblem to the first ContestParticipation that solves it
         and the total number of accepted submissions.

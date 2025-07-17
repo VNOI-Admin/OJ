@@ -144,7 +144,7 @@ class ICPCContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def get_first_solves_and_total_ac(self, problems, participations, frozen=False):
+    def get_first_solves_and_total_ac(self, problems, participations, frozen=False, contest_problems_id_map=None):
         first_solves = {}
         total_ac = {}
 
@@ -152,11 +152,15 @@ class ICPCContestFormat(DefaultContestFormat):
         for problem in problems:
             problem_id = str(problem.id)
             min_time = None
-            first_solves[problem_id] = None
+            first_solves[problem.order] = None
             total_ac[problem_id] = 0
 
             for participation in participations:
-                format_data = (participation.format_data or {}).get(problem_id)
+                if contest_problems_id_map and participation.contest.key in contest_problems_id_map:
+                    participation_problem_id = str(contest_problems_id_map[participation.contest.key][problem.order])
+                else:
+                    participation_problem_id = problem_id
+                format_data = (participation.format_data or {}).get(participation_problem_id)
                 if format_data:
                     points = format_data[prefix + 'points']
                     time = format_data['time']
@@ -167,7 +171,7 @@ class ICPCContestFormat(DefaultContestFormat):
                         # Only acknowledge first solves for live participations
                         if participation.virtual == 0 and (min_time is None or min_time > time):
                             min_time = time
-                            first_solves[problem_id] = participation.id
+                            first_solves[problem.order] = participation.id
 
         return first_solves, total_ac
 
@@ -190,7 +194,7 @@ class ICPCContestFormat(DefaultContestFormat):
             # The cell will have `pending` css class if there is a new score-changing submission after the frozen time
             state = (('pending ' if frozen and format_data['is_frozen'] else '') +
                      ('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
-                     ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
+                     ('first-solve ' if first_solves.get(contest_problem.order, None) == participation.id else '') +
                      self.best_solution_state(format_data[prefix + 'points'], contest_problem.points))
             url = reverse('contest_user_submissions',
                           args=[self.contest.key, participation.user.user.username, contest_problem.problem.code])

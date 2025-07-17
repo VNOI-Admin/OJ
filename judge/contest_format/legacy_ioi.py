@@ -74,7 +74,7 @@ class LegacyIOIContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def get_first_solves_and_total_ac(self, problems, participations, frozen=False):
+    def get_first_solves_and_total_ac(self, problems, participations, frozen=False, contest_problems_id_map=None):
         first_solves = {}
         total_ac = {}
 
