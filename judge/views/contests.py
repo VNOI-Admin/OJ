@@ -1073,12 +1073,16 @@ class MergedContestRanking(ContestRanking):
     @property
     def cache_key(self):
         target_contest_query_string = self.request.GET.get('target_contests', '')
+        if len(target_contest_query_string) > 100:
+            raise Http404('Too many contests to merge')
         return f'contest_merged_ranking_cache_{self.object.key}_{self.show_virtual}_{self.is_frozen}_'\
                f'{target_contest_query_string}_{self.request.LANGUAGE_CODE}'
 
     def get_target_contests(self):
         if self.target_contests is None:
             target_contests = self.request.GET.get('target_contests', '').split(',')
+            if len(target_contests) > 2:
+                raise Http404('Too many contests to merge')
             self.target_contests = Contest.objects.filter(key__in=target_contests)
 
             if len(self.target_contests) == 0:
