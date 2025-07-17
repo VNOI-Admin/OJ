@@ -1070,6 +1070,12 @@ class ContestRanking(ContestRankingBase):
 class MergedContestRanking(ContestRanking):
     target_contests = None
 
+    @property
+    def cache_key(self):
+        target_contest_query_string = self.request.GET.get('target_contests', '')
+        return f'contest_merged_ranking_cache_{self.object.key}_{self.show_virtual}_{self.is_frozen}_'\
+               f'{target_contest_query_string}_{self.request.LANGUAGE_CODE}'
+
     def get_target_contests(self):
         if self.target_contests is None:
             target_contests = self.request.GET.get('target_contests', '').split(',')
