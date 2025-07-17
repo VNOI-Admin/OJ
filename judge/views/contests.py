@@ -849,7 +849,8 @@ ContestRankingProfile = namedtuple(
 BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
 
 
-def make_contest_ranking_profile(contest, participation, contest_problems, side_contest_problems, first_solves, frozen=False):
+def make_contest_ranking_profile(contest, participation, contest_problems,
+                                 side_contest_problems, first_solves, frozen=False):
     def display_user_problem(contest_problem):
         # When the contest format is changed, `format_data` might be invalid.
         # This will cause `display_user_problem` to error, so we display '???' instead.
@@ -880,15 +881,18 @@ def make_contest_ranking_profile(contest, participation, contest_problems, side_
 
 def base_contest_ranking_list(contest, problems, queryset, contest_problems_id_map, frozen=False):
     queryset = queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')
-    first_solves, total_ac = contest.format.get_first_solves_and_total_ac(problems, queryset, frozen, contest_problems_id_map)
-    users = [make_contest_ranking_profile(contest, participation, problems, contest_problems_id_map, first_solves, frozen) for participation
-             in queryset]
+    first_solves, total_ac = contest.format.get_first_solves_and_total_ac(
+        problems, queryset, frozen, contest_problems_id_map)
+
+    users = [make_contest_ranking_profile(contest, participation, problems,
+             contest_problems_id_map, first_solves, frozen)
+             for participation in queryset]
     return users, total_ac
 
 
 def base_contest_ranking_queryset(*contests):
     return ContestParticipation.objects.filter(contest__in=contests, virtual__gt=ContestParticipation.SPECTATE) \
-        .select_related("contest", "user") \
+        .select_related('contest', 'user') \
         .prefetch_related(Prefetch('user__organizations',
                                    queryset=Organization.objects.filter(is_unlisted=False))) \
         .annotate(submission_count=Count('submission')) \
@@ -897,7 +901,7 @@ def base_contest_ranking_queryset(*contests):
 
 def base_contest_frozen_ranking_queryset(*contests):
     return ContestParticipation.objects.filter(contest__in=contests, virtual__gt=ContestParticipation.SPECTATE) \
-        .select_related("contest", "user") \
+        .select_related('contest', 'user') \
         .prefetch_related(Prefetch('user__organizations',
                                    queryset=Organization.objects.filter(is_unlisted=False))) \
         .annotate(submission_count=Count('submission')) \
@@ -905,7 +909,12 @@ def base_contest_frozen_ranking_queryset(*contests):
 
 
 def contest_ranking_list(contest, problems, contest_problems_id_map, frozen=False):
-    return base_contest_ranking_list(contest, problems, base_contest_ranking_queryset(contest), contest_problems_id_map=contest_problems_id_map, frozen=frozen)
+    return base_contest_ranking_list(
+        contest, problems,
+        base_contest_ranking_queryset(contest),
+        contest_problems_id_map=contest_problems_id_map,
+        frozen=frozen,
+    )
 
 
 def get_contest_ranking_list(request, *contests, participation=None, ranking_list=contest_ranking_list, ranker=ranker):
@@ -924,6 +933,7 @@ def get_contest_ranking_list(request, *contests, participation=None, ranking_lis
     users = ranker(users, key=attrgetter('points', 'cumtime', 'tiebreaker'))
 
     return users, problems, total_ac
+
 
 class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/ranking.html'
@@ -1062,19 +1072,19 @@ class MergedContestRanking(ContestRanking):
 
     def get_target_contests(self):
         if self.target_contests is None:
-            target_contests = self.request.GET.get('target_contests','').split(',')
+            target_contests = self.request.GET.get('target_contests', '').split(',')
             self.target_contests = Contest.objects.filter(key__in=target_contests)
 
             if len(self.target_contests) == 0:
-                raise Http404("Must specify at least one contest to merge")
+                raise Http404('Must specify at least one contest to merge')
 
             self.target_contests = [self.object] + list(self.target_contests)
             is_frozen = self.object.is_frozen
             for contest in self.target_contests:
                 if not contest.can_see_full_scoreboard(self.request.user):
-                    raise Http404("You are not allowed to see the scoreboard of this contest")
+                    raise Http404('You are not allowed to see the scoreboard of this contest')
                 if contest.is_frozen != is_frozen:
-                    raise Http404("Contests must have the same frozen status")
+                    raise Http404('Contests must have the same frozen status')
 
         return self.target_contests
 
@@ -1087,7 +1097,6 @@ class MergedContestRanking(ContestRanking):
         if not self.show_virtual:
             queryset = queryset.filter(virtual=ContestParticipation.LIVE)
         return queryset
-
 
     def get_full_ranking_list(self):
         if 'show_virtual' in self.request.GET:
