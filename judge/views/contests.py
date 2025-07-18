@@ -1094,7 +1094,7 @@ class MergedContestRanking(ContestRanking):
                 if not contest.can_see_full_scoreboard(self.request.user):
                     raise Http404('You are not allowed to see the scoreboard of this contest')
                 if contest.is_frozen != is_frozen:
-                    raise Http404('Contests must have the same frozen status')
+                    raise Http404('Contests are frozen')
 
         return self.target_contests
 
@@ -1120,6 +1120,11 @@ class MergedContestRanking(ContestRanking):
             self.request, *self.get_target_contests(),
             ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=self.is_frozen),
         )
+
+    def dispatch(self, request, *args, **kwargs):
+        if self.request.user.is_authenticated and self.request.user.username.startswith('final25_'):
+            return HttpResponseForbidden()
+        return super().dispatch(request, *args, **kwargs)
 
 
 class ContestPublicRanking(ContestRanking):
