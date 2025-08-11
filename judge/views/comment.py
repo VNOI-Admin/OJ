@@ -54,8 +54,8 @@ def vote_comment(request, delta):
     if not comment:
         return HttpResponseNotFound(_('Comment not found.'), content_type='text/plain')
 
-    if comment.author == request.profile:
-        return HttpResponseBadRequest(_('You cannot vote on your own comments.'), content_type='text/plain')
+    # if comment.author == request.profile:
+    #     return HttpResponseBadRequest(_('You cannot vote on your own comments.'), content_type='text/plain')
 
     vote = CommentVote()
     vote.comment_id = comment_id

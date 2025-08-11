@@ -1,0 +1,111 @@
+{% extends "user/user-base.html" %}
+{% block js_media %}
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                // Does this cookie string begin with the name we want?
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    $(function() {
+        $('#load_button').on('click', function(e) {
+            e.preventDefault();
+            var files = $('#csv_file').prop('files');
+            if (files.length == 1) {
+                $('#load_button').addClass('disabled');
+
+                var file = files[0];
+                if (file.type != 'text/csv') {
+                    alert("{{_('Upload CSV only')}}");
+                    return;
+                }
+                var form_data = new FormData();
+                form_data.append('csv_file', file, file.name);
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', "{{url('import_users_post_file')}}", true);
+                xhr.setRequestHeader('X-CSRFToken', csrftoken);
+                xhr.onload = function () {
+                    if (xhr.status === 200) {
+                        var json = JSON.parse(xhr.responseText);
+                        $('#load_button').removeClass('disabled');
+
+                        if (json.done) {
+                            window.import_users = json.data
+                            $('#table_csv').html(json.html);
+                            $('#confirm_button').removeClass('disabled');
+                        }
+                        else {
+                            window.import_users = []
+                            $('#table_csv').html(json.msg);
+                            $('#confirm_button').addClass('disabled');   
+                        }
+                    } else {
+                        alert('Fail to read file.');
+                    }
+                };
+
+                xhr.send(form_data);
+            }
+        })
+
+        $('#confirm_button').on('click', function() {
+            $(this).addClass('disabled');
+            var data = {
+                'users': window.import_users
+            };
+
+            if (!data.users || data.users.length == 0) {
+                alert('No valid users');
+                return;
+            }
+
+            $('#table_csv').html('');
+            $('#log').html('Working...');
+            $.post({
+                url: "{{url('import_users_submit')}}",
+                data: JSON.stringify(data),
+                contentType:"application/json; charset=utf-8",
+                dataType:"text",
+                fail: function() {alert('Fail to import')},
+                success: function(data) {
+                    data = JSON.parse(data);
+                    var msg = data.msg.split('\n');
+                    $('#log').html('')
+                    for (var i of msg) {
+                        $('#log').append(`<p>${i}</p>`);
+                    }
+                }
+            })
+        })
+    });
+</script>
+{% endblock %}
+
+{% block body %}
+{% csrf_token %}
+<center>
+    <label for="csv_file">{{_('User File')}}:</label>
+    <input type="file" accept=".csv" id="csv_file">
+    <a href="{{url('import_users_sample')}}">{{_('Sample')}}</a>
+    <div style="display: inline-flex">
+        <button id="load_button" style="margin-left: 1em">{{_('Load')}}</button>
+        <button id="confirm_button" style="margin-left: 1em" class="disabled">{{_('Import')}}</button>
+    </div>
+</center>
+<br>
+<table id="table_csv" class="table"></table>
+<p style="margin-left: 2em" id="log"></p>
+{% endblock %}

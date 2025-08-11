@@ -362,8 +362,8 @@
     <footer>
         <span id="footer-content">
             <br>
-            {{_('proudly powered by %(dmoj)s', dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'))}} |
-            {{_('follow us on %(github)s and %(facebook)s', github=safe('<a style="color: #808080" href="https://github.com/VNOI-Admin/OJ"><b>Github</b></a>'), facebook=safe('<a style="color: #808080" href="https://www.facebook.com/vnoi.wiki"><b>Facebook</b></a>'))}}
+            {{_('proudly powered by %(dmoj)s, %(vnoj)s', dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'),vnoj=safe('<a style="color: #808080" href="https://oj.vnoi.info"><b>VNOJ</b></a>'))}} |
+            {{_('TCOJ')}}
             {% if misc_config.footer %}
                 {{ misc_config.footer|safe }} |
             {% endif %}

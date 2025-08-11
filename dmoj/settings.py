@@ -32,8 +32,8 @@ ALLOWED_HOSTS = []
 CSRF_FAILURE_VIEW = 'judge.views.widgets.csrf_failure'
 
 SITE_ID = 1
-SITE_NAME = 'DMOJ'
-SITE_LONG_NAME = 'DMOJ: Modern Online Judge'
+SITE_NAME = 'TCOJ'
+SITE_LONG_NAME = 'TCOJ - Together Cpp Online Judge'
 SITE_ADMIN_EMAIL = ''
 
 DMOJ_REQUIRE_STAFF_2FA = True
@@ -117,7 +117,7 @@ VNOJ_PRICE_PER_HOUR = 50
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
-CELERY_TIMEZONE = 'UTC'
+timezone = 'UTC'
 
 # Some problems have a lot of testcases, and each testcase
 # has about 5~6 fields, so we need to raise this
@@ -185,7 +185,7 @@ DISCORD_WEBHOOK = {
     'queue_time_stats': None,
 }
 
-SITE_FULL_URL = None  # ie 'https://oj.vnoi.info', please remove the last / if needed
+SITE_FULL_URL = None  # ie 'https://oj.tcpp.edu.vn', please remove the last / if needed
 
 ACE_URL = '/static/vnoj/ace/1.4.14'
 SELECT2_JS_URL = '/static/vnoj/select2/4.0.3/js/select2.min.js'
@@ -291,13 +291,13 @@ NOFOLLOW_EXCLUDED = set()
 TIMEZONE_MAP = 'https://static.dmoj.ca/assets/earth.jpg'
 
 TERMS_OF_SERVICE_URL = None
-DEFAULT_USER_LANGUAGE = 'CPP20'
+DEFAULT_USER_LANGUAGE = 'CPP14'
 
 INLINE_JQUERY = True
 INLINE_FONTAWESOME = True
 JQUERY_JS = '/static/vnoj/jquery/3.4.1/jquery.min.js'
 FONTAWESOME_CSS = '/static/vnoj/font-awesome/4.3.0/css/font-awesome.min.css'
-DMOJ_CANONICAL = 'oj.vnoi.info'
+DMOJ_CANONICAL = 'oj.tcpp.edu.vn'
 
 # Application definition
 

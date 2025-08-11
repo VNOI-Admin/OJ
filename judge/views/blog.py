@@ -59,8 +59,8 @@ def vote_blog(request, delta):
     except BlogPost.DoesNotExist:
         return HttpResponseNotFound(_('Blog post not found.'), content_type='text/plain')
 
-    if blog.authors.filter(id=request.profile.id).exists():
-        return HttpResponseBadRequest(_('You cannot vote your own blog'), content_type='text/plain')
+    # if blog.authors.filter(id=request.profile.id).exists():
+    #     return HttpResponseBadRequest(_('You cannot vote your own blog'), content_type='text/plain')
 
     vote = BlogVote()
     vote.blog_id = blog_id
