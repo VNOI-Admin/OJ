@@ -12,8 +12,8 @@
   },
   "devDependencies": {
     "@types/ws": "8.5.5",
-    "autoprefixer": "^10.4.15",
-    "postcss": "^8.4.29",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.6",
     "postcss-cli": "10.1.0",
     "prettier": "3.0.3",
     "sass": "^1.90.0"
