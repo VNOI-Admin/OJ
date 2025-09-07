@@ -11,7 +11,7 @@ Check out its features [here](https://github.com/DMOJ/online-judge#features).
 ## Installation
 
 Refer to the install documentation [here](https://vnoi-admin.github.io/vnoj-docs/#/site/installation). Almost all installation steps remain the same as the docs, but there are several minor differences, including cloning this repo instead of DMOJ's repo.
-
+> *You find Quickstart for developer? Check [here](contributing.md)*
 ### Additional installation steps
 
 - You **have to** define `DMOJ_PROBLEM_DATA_ROOT` in `local_settings.py`, which should be the path to the directory that contains your problems' tests.
