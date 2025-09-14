@@ -6190,6 +6190,10 @@ msgstr ""
 msgid "Or log in with..."
 msgstr ""
 
+#: templates/registration/oauth.html:29
+msgid "Sign up with Gmail"
+msgstr ""
+
 #: templates/registration/logout.html:3
 msgid "See you later!"
 msgstr ""
@@ -7271,3 +7275,4 @@ msgstr ""
 #: templates/widgets/select_all.html:8
 msgid "Check all"
 msgstr ""
+
