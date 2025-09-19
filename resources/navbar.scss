@@ -1,25 +1,6 @@
 // Navbar should look the same in every theme, so vars-common should be enough.
 @import "vars-common";
 
-// from vars.scss
-$path_to_root: '..';    // relative path from style.css to STATIC_ROOT
-
-@font-face {
-    font-family: 'FS PF BeauSans Pro';
-    src: url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Bbook.otf') format('opentype'),
-         url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Bbook.ttf') format('truetype');
-    font-weight: 500;
-    font-style: normal;
-}
-
-@font-face {
-    font-family: 'FS PF BeauSans Pro';
-    src: url('/static/FS PFBeauSansPro/FS PFBeauSansPro-SemiBold.otf') format('opentype'),
-         url('/static/FS PFBeauSansPro/FS PFBeauSansPro-SemiBold.ttf') format('truetype');
-    font-weight: 600;
-    font-style: normal;
-}
-
 
 #user-links {
     top: 0;
@@ -74,6 +55,29 @@ $path_to_root: '..';    // relative path from style.css to STATIC_ROOT
                 left: 0;
             }
         }
+    }
+    
+    #user-signup {
+        border-radius: 30px;
+        height: 40px;
+        padding: 6px 32px 6px 32px;
+        color: #FFFFFF;
+        background-color: #EE0033;
+        font-family: 'FS Magistral';
+        font-weight: 500;
+        font-size: 20px;
+        margin-right: 8px;
+    }
+
+    #user-login {
+        border: solid 1px #EA0029;
+        border-radius: 30px;
+        height: 40px;
+        padding: 6px 32px 6px 32px;
+        color: #EA0029;
+        font-family: 'FS Magistral';
+        font-weight: 500;
+        font-size: 20px;
     }
 }
 

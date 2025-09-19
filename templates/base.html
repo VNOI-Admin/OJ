@@ -266,7 +266,7 @@
                 {% else %}
                     "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
                 {% endif %}
-            style="margin-right: 5px;">
+            style="margin-right: 8px;">
                 <span title="{{ _('Report issue') }}">
                     <i class="fa fa-exclamation-triangle" style="color: red;"></i>
                 </span>
@@ -300,9 +300,8 @@
                 </ul>
             {% else %}
                 <span class="anon">
-                    <a href="{{ url('auth_login') }}?next={{ LOGIN_RETURN_PATH|urlencode }}"><b>{{ _('Log in') }}</b></a>
-                    &nbsp;{{ _('or') }}&nbsp;
-                    <a href="{{ url('registration_register') }}"><b>{{ _('Sign up') }}</b></a>
+                    <a id="user-signup" href="{{ url('registration_register') }}"><b>{{ _('ĐĂNG KÝ') }}</b></a>
+                    <a id="user-login" href="{{ url('auth_login') }}?next={{ LOGIN_RETURN_PATH|urlencode }}"><b>{{ _('ĐĂNG NHẬP') }}</b></a>
                 </span>
             {% endif %}
         </span>
@@ -361,9 +360,7 @@
 
     <footer>
         <span id="footer-content">
-            <br>
-            {{_('proudly powered by %(dmoj)s', dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'))}} |
-            {{_('follow us on %(github)s and %(facebook)s', github=safe('<a style="color: #808080" href="https://github.com/VNOI-Admin/OJ"><b>Github</b></a>'), facebook=safe('<a style="color: #808080" href="https://www.facebook.com/vnoi.wiki"><b>Facebook</b></a>'))}}
+            <img src="{{ static('icons/viettel.svg') }}" alt="{{ SITE_NAME }}" width="130" height="40" style="border: none; padding-top: 4px">
             {% if misc_config.footer %}
                 {{ misc_config.footer|safe }} |
             {% endif %}

@@ -174,9 +174,9 @@ hr {
 
 footer {
     text-align: center;
-    height: 40px;
-    border-top: 1px solid $color_primary25;
-    background: $color_primary10;
+    height: 300px;
+    border-top: 4px solid #EE0033;
+    background: #ffffff;
 }
 
 html {
@@ -279,10 +279,10 @@ noscript #noscript {
     min-height: 100%;
     position: relative;
     margin: 0 auto;
-    border-right: 1px solid $color_primary25;
-    border-left: 1px solid $color_primary25;
+    // border-right: 1px solid $color_primary25;
+    // border-left: 1px solid $color_primary25;
     background: $color_pageBg;
-    max-width: 100em;
+    // max-width: 100em;
 }
 
 // border-bottom: 1px solid rgb(204, 204, 204)

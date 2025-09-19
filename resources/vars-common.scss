@@ -7,3 +7,28 @@ $widget_border_radius: 4px;
 $table_header_rounding: 6px;
 
 $monospace-fonts: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
+
+
+@font-face {
+    font-family: 'FS PF BeauSans Pro';
+    src: url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Bbook.otf') format('opentype'),
+         url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Bbook.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'FS PF BeauSans Pro';
+    src: url('/static/FS PFBeauSansPro/FS PFBeauSansPro-SemiBold.otf') format('opentype'),
+         url('/static/FS PFBeauSansPro/FS PFBeauSansPro-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'FS Magistral';
+    src: url('/static/FS Magistral/FS Magistral-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
