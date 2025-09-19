@@ -11,6 +11,7 @@
     {% if perms.judge.edit_all_problem or perms.judge.edit_public_problem or perms.judge.edit_own_problem %}
         {{ make_tab('suggest', 'fa-list', url('problem_suggest_list'), _('Suggest')) }}
     {% endif %}
+    {{ make_tab('editorials', 'fa-list', url('editorial_proposal_list'), _('Editorial proposals')) }}
     {% if request.user.is_superuser %}
         {{ make_tab('admin', 'fa-edit', url('admin:judge_problem_changelist'), _('Admin')) }}
     {% endif %}

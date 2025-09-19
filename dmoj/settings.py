@@ -323,6 +323,7 @@ else:
                     'model': 'judge.Problem',
                     'icon': 'fa-question-circle',
                     'children': [
+                        'judge.EditorialProposal',
                         'judge.ProblemGroup',
                         'judge.ProblemType',
                         'judge.License',
