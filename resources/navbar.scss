@@ -1,19 +1,39 @@
 // Navbar should look the same in every theme, so vars-common should be enough.
 @import "vars-common";
 
+// from vars.scss
+$path_to_root: '..';    // relative path from style.css to STATIC_ROOT
+
+@font-face {
+    font-family: 'FS PF BeauSans Pro';
+    src: url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Bbook.otf') format('opentype'),
+         url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Bbook.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'FS PF BeauSans Pro';
+    src: url('/static/FS PFBeauSansPro/FS PFBeauSansPro-SemiBold.otf') format('opentype'),
+         url('/static/FS PFBeauSansPro/FS PFBeauSansPro-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+}
+
+
 #user-links {
     top: 0;
-    right: 0;
+    right: 200px;
     position: absolute;
     color: #5c5954;
-    padding-right: 10px;
+    padding-right: 0;
     display: inline-flex;
     min-height: 100%;
     align-items: center;
     white-space: nowrap;
 
     a {
-        color: #FFF;
+        color: #333333;
     }
 
     li {
@@ -23,6 +43,7 @@
     & > ul {
         display: block;
         margin: 0;
+        padding: 0%;
 
         & > li {
             & > a {
@@ -44,7 +65,7 @@
 
                     & > span {
                         vertical-align: middle;
-                        color: #eee;
+                        color: #333333;
                     }
                 }
             }
@@ -72,7 +93,7 @@
 }
 
 #nav-container {
-    background: #231f20;
+    background: #ffffff;
 
     // opacity: 0.77
     // filter: alpha(opacity=77)
@@ -87,14 +108,14 @@ nav {
     z-index: 500;
 
     ul {
-        margin: 0 0 0 -5px;
-        padding: 0 0 0 1%;
+        margin: 0 0 0 0;
+        padding: 0 200px; /* Updated padding */
         display: block;
 
         li {
             display: inline-block;
             color: #FFF;
-            text-transform: uppercase;
+            text-transform: none;
             position: relative;
             font-family: 'Source Sans Pro', sans-serif;
             &.home-nav-element a {
@@ -111,26 +132,35 @@ nav {
             a, button {
                 text-decoration: none;
                 vertical-align: middle;
-                color: #FFF;
+                color: #333333;
                 padding: 14px 7px;
                 height: 20px;
                 display: inline-table;
 
+                /* Updated styles for nav items */
+                font-family: 'FS PF BeauSans Pro', sans-serif;
+                font-weight: 600;
+                font-size: 16px;
+                line-height: 24px;
+
                 &:link {
-                    color: #FFF;
+                    color: #333333;
                 }
 
                 &:hover {
-                    color: #FFF;
-                    background: rgba(255, 255, 255, 0.25);
+                    color: #333333;
+                    background: #f2f2f2;
                     margin: 0;
                 }
 
                 &.active {
-                    color: #FFF;
+                    color: #333333;
 
                     border: 5px solid transparent;
-                    border-bottom: 5px solid $highlight_blue;
+                    text-decoration: underline;
+                    text-decoration-thickness: 1px;
+                    text-underline-offset: 4px;
+                    // border-bottom: 5px solid $highlight_blue;
                     padding: 9px 2px;
                 }
 
@@ -145,14 +175,18 @@ nav {
                 left: 5px;
                 display: none;
                 color: #fff;
-                background: #231f20;
+                background: #ffffff;
                 margin: 0 !important;
                 box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
+                border-radius: 8px;
 
                 li {
                     a.active {
                         border: none;
-                        border-left: 5px solid $highlight_blue;
+                        text-decoration: underline;
+                        text-decoration-thickness: 1px;
+                        text-underline-offset: 4px;
+                        // border-left: 5px solid $highlight_blue;
                     }
                 }
 
@@ -160,12 +194,14 @@ nav {
                     display: block;
 
                     a, button {
-                        padding: 8px 20px 8px 8px !important;
-                        font-size: 0.8em;
+                        padding: 15px 20px 15px 20px !important;
+                        font-size: 16px;
+                        font-weight: 500;
                         line-height: 18px;
                         display: block;
-                        border-left: 4px solid $highlight_blue;
+                        // border-left: 4px solid $highlight_blue;
                         white-space: nowrap;
+                        color: #333333 !important;
                     }
                 }
             }
@@ -232,7 +268,7 @@ nav {
 
     #nav-list {
         display: none;
-        padding: 0;
+        padding: 0; /* Reverted padding */
         margin: 0;
         position: fixed;
         top: 36px;
@@ -293,6 +329,11 @@ nav {
 
             ul {
                 left: 0 !important;
+                
+                ul {
+                    left: 100% !important;
+                    top: 0 !important;
+                }
             }
         }
     }
