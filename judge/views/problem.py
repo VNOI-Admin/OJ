@@ -174,12 +174,25 @@ class EditorialProposalList(SolvedProblemMixin, TitleMixin, ListView):
 
     def get_queryset(self):
         queryset = EditorialProposal.objects.filter(problem__is_public=True, problem__is_organization_private=False)
-        if not self.request.user.has_perm('judge.accept_editorial_proposal'):
+        if not self.request.user.has_perm('judge.approve_editorial_proposal'):
             queryset = queryset.filter(author=self.request.user)
         if 'code' in self.request.GET:
             code = self.request.GET.get('code', '').strip()
             queryset = queryset.filter(problem__code=code)
         return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        proposals = context['proposals']
+        seen = set()
+        problems = []
+        for proposal in proposals:
+            prob = proposal.problem
+            if prob.code not in seen:
+                problems.append(prob)
+                seen.add(prob.code)
+        context['problems'] = problems
+        return context
 
 
 class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMixin, View):
@@ -1116,3 +1129,4 @@ class ProblemEditTypeGroup(PermissionRequiredMixin, ProblemMixin, TitleMixin, Up
             return HttpResponseRedirect(reverse('problem_detail', args=[self.object.code]))
 
         return self.render_to_response(self.get_context_data(object=self.object))
+

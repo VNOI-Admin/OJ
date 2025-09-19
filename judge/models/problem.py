@@ -719,11 +719,11 @@ class EditorialProposal(models.Model):
     def is_accessible_by(self, user):
         return (self.problem.is_public
                 and not self.problem.is_organization_private
-                and user.has_perm('judge.accept_editorial_proposal'))
+                and user.has_perm('judge.approve_editorial_proposal'))
 
     class Meta:
         permissions = (
-            ('accept_editorial_proposal', _('Accept editorial proposals')),
+            ('approve_editorial_proposal', _('Approve editorial proposals')),
         )
         unique_together = ('problem', 'author')
         verbose_name = _('editorial proposal')

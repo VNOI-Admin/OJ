@@ -1,6 +1,5 @@
 {% extends "common-content.html" %}
 
-
 {% block title_ruler %}{% endblock %}
 
 {% block title_row %}
@@ -15,6 +14,11 @@
 
     <div id="common-content">
         {% block before_table %}{% endblock %}
+        <div id="content-right" class="problems">
+            <div class="info-float">
+                {% include "problem/search-form.html" %}
+            </div>
+        </div>
         <div id="content-left" class="problems h-scrollable-table">
             <table id="problem-table" class="table striped">
                 <thead>
@@ -38,7 +42,7 @@
                     {% with problem=proposal.problem %}
                         <tr>
                             <td class="problem-code">
-                                <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code}}</a>
+                                <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code }}</a>
                             </td>
                             <td class="problem-name">
                                 <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
@@ -56,7 +60,4 @@
             </table>
         </div>
     </div>
-   {% if page_obj.has_other_pages() %}
-       <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
-   {% endif %}
 {% endblock %}
