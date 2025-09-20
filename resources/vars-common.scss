@@ -8,6 +8,13 @@ $table_header_rounding: 6px;
 
 $monospace-fonts: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "Lucida Sans Typewriter", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Liberation Mono", "Nimbus Mono L", Monaco, "Courier New", Courier, monospace;
 
+@font-face {
+    font-family: 'FS PF BeauSans Pro';
+    src: url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Regular.otf') format('opentype'),
+         url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
 
 @font-face {
     font-family: 'FS PF BeauSans Pro';

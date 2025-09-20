@@ -359,8 +359,71 @@
     {% block bodyend %}{% endblock %}
 
     <footer>
-        <span id="footer-content">
-            <img src="{{ static('icons/viettel.svg') }}" alt="{{ SITE_NAME }}" width="130" height="40" style="border: none; padding-top: 4px">
+        <span class="footer-top" style="padding: 40px 0 0;">
+            <div class="text-div-row-1">
+                <h5 class="text-uppercase">
+                    <img src="{{ static('icons/viettel.svg') }}" alt="{{ SITE_NAME }}" width="130" height="40" style="border: none; padding-top: 4px">
+                </h5>
+                <h5 class="text-uppercase" style="font-family: 'FS Magistral'; font-weight: 500; font-size: 16px; color: #000000"> Tập đoàn Công nghiệp - Viễn thông quân đội </h5>
+            </div>
+            <div class="row" id="component-div-2">
+                <div class="col-md-8 col-sm-12">
+                    <div class="row" id="all-footer">
+                        <div class="col-12 col-md-10" id="component-div-2-1">
+                            <div class="row footer-revert-element">
+                                <div class="col-12 col-md-6 ab-format-style-custom-1">
+                                    <div class="info-content">
+                                        <div class="row">
+                                            <div class="col-md-8" id="footer-contact-email">
+                                                <span class="footer-color-email">Tuyendung@viettel.com.vn</span>
+                                            </div>
+                                            <div class="col-md-10" id="footer-address-viettel">Lô D26 Khu đô thị mới Cầu Giấy, Phường Yên Hòa, Quận Cầu Giấy, Hà Nội, Việt Nam</div>
+                                        </div>
+                                    </div>
+                                    <div class="text-copyright">
+                                        © VIETTEL 2022 | CHÍNH SÁCH BẢO MẬT | ĐIỀU KHOẢN SỬ DỤNG
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6" id="component-div-2-2">
+                                    <div class="row">
+                                        <div class="col-12 col-md-6" id="footer-link-option-page">
+                                            <a href="/page/about-us" class="footer-title text-uppercase ve-chung-toi-vt" id="ve-chung-toi">
+                                                VỀ CHÚNG TÔI
+                                            </a>
+                                            <a href="/recruitment-information/search" class="footer-title text-uppercase tuyen-dung-vt" id="tuyen-dung">
+                                                TUYỂN DỤNG
+                                            </a>
+                                            <a href="/page/page-benefit" class="footer-title text-uppercase dai-ngo-vt" id="dai-ngo">
+                                                ĐÃI NGỘ
+                                            </a>
+                                        </div>
+                                        <div class="col-12 col-md-6" id="aboutUs">
+                                            <ul class="footer-links list-unstyled" id="footer-text-follow-us">
+                                                <li><a href="https://viettel.com.vn/" style="font-size: 14px; padding-left: 0px" class="follow-us-text">Theo dõi chúng tôi</a></li>
+                                                <li class="link-option">
+                                                    <div class="component-icon">
+                                                        <a href="https://www.facebook.com/ViettelCareers" class="icon-links icon-option"><i class="fa fa-facebook fa-lg"></i></a>
+                                                        &nbsp;<a href="https://www.youtube.com/@viettelcareers2728" class="icon-links icon-option"><i class="fa fa-youtube-play fa-lg"></i></a>
+                                                    </div>
+                                                    <div class="component-icon">
+                                                        &nbsp;<a href="https://www.linkedin.com/company/viettel-group" class="icon-links icon-option"><i class="fa fa-linkedin-square fa-lg"></i></a>
+                                                        &nbsp;<a href="https://www.instagram.com/viettelcareers" class="icon-links icon-option"><i class="fa fa-instagram fa-lg"></i></a>
+                                                    </div>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+						    </div>
+                        </div>
+                        <div class="col-12 col-md-2">
+                            <div class="footer-title text-uppercase">
+                                <img src="{{ static('icons/notification.png') }}" class="footer-image-notification">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
             {% if misc_config.footer %}
                 {{ misc_config.footer|safe }} |
             {% endif %}
