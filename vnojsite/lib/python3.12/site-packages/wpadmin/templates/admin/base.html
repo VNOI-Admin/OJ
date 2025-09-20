@@ -1,0 +1,121 @@
+{% load wpadmin_tags wpadmin_menu_tags %}{% load static %}<!DOCTYPE html>
+<html lang="{{ LANGUAGE_CODE|default:"en-us" }}"{% if LANGUAGE_BIDI %} dir="rtl"{% endif %}>
+<head>
+{# WP Admin start #}
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+{# WP Admin end #}
+<title>{% block title %}{% endblock %}</title>
+<link rel="stylesheet" type="text/css" href="{% block stylesheet %}{% static "admin/css/base.css" %}{% endblock %}" />
+{% block extrastyle %}{% endblock %}
+{% if LANGUAGE_BIDI %}<link rel="stylesheet" type="text/css" href="{% block stylesheet_rtl %}{% static "admin/css/rtl.css" %}{% endblock %}" />{% endif %}
+{# WP Admin start #}
+{% if INLINE_FONTAWESOME %}
+<link rel="stylesheet" type="text/css" href="{% static "libs/fontawesome/font-awesome.css" %}" />
+{% elif FONTAWESOME_CSS %}
+<link rel="stylesheet" type="text/css" href="{{ FONTAWESOME_CSS }}" />
+{% else %}
+<link rel="stylesheet" type="text/css" href="{% static "wpadmin/css/font-awesome.min.css" %}" />
+{% endif %}
+{% with WPADMIN_DEV=0 %}{% if WPADMIN_DEV %}
+<link rel="stylesheet/less" type="text/css" href="{% static "wpadmin/less/wpadmin.less" %}" />
+<link rel="stylesheet/less" type="text/css" href="{% static "wpadmin/less/themes/default/theme.less" %}" />
+<script type="text/javascript">less = {env: "development"};</script>
+<script type="text/javascript" src="{% static "wpadmin/js/lib/less.min.js" %}"></script>
+{% else %}
+<link rel="stylesheet" type="text/css" href="{% static "wpadmin/css/wpadmin.css" %}" />
+<link rel="stylesheet" type="text/css" href="{% static "wpadmin/css/themes/default.css" %}" />
+{% endif %}{% endwith %}
+{# WP Admin end #}
+<script type="text/javascript">window.__admin_media_prefix__ = "{% filter escapejs %}{% static "admin/" %}{% endfilter %}";</script>
+<script type="text/javascript">window.__admin_utc_offset__ = "{% filter escapejs %}{% now "Z" %}{% endfilter %}";</script>
+{% block extrahead %}{% endblock %}
+{% wpadmin_render_custom_style %}
+{% block wpadmin_extrastyle %}{% endblock %}
+{% block wpadmin_extrahead %}{% endblock %}
+{# WP Admin start #}
+<script type="text/javascript">
+	// needed for setting cookie path
+	window.__admin_url = '{% url 'admin:index' %}';
+	// cookie name
+	window.__wpadmin_cookie_name = 'djangoWpAdminSettings';
+
+	// we need jQuery in default namespace (not django.jQuery) because we use some external jQuery plugins
+	if (typeof jQuery == 'undefined') {
+		// we can get jQuery object from django object but there are some admin templates where jQuery is not loaded
+		if (typeof django == 'undefined' || typeof django.jQuery == 'undefined') {
+			// so lets load our jQuery synchronously
+			document.write(decodeURI("%3Cscript src='{% static "wpadmin/js/lib/jquery.min.js" %}' type='text/javascript'%3E%3C/script%3E"));
+		} else {
+			// lest copy jQuery from django object to default namespace
+			window.jQuery = django.jQuery;
+		}
+	}
+</script>
+<script type="text/javascript" src="{% static "wpadmin/js/lib/jquery.cookie.min.js" %}"></script>
+<script type="text/javascript" src="{% static "wpadmin/js/menus.js" %}"></script>
+<script type="text/javascript" src="{% static "wpadmin/js/content.js" %}"></script>
+<link rel="stylesheet" type="text/css" href="{% static "wpadmin/css/wpadmin.site.css" %}" />
+{# WP Admin end #}
+{% block blockbots %}<meta name="robots" content="NONE,NOARCHIVE" />{% endblock %}
+</head>
+{% load i18n %}
+
+{% wpadmin_are_breadcrumbs_enabled %}{% wpadmin_is_left_menu_enabled %}
+<body class="{% if is_popup %}popup {% endif %}{% if not wpadmin_are_breadcrumbs_enabled %}wp-no-breadcrumbs {% endif %}{% if wpadmin_is_left_menu_enabled %}wp-with-left-menu {% endif %}{% block bodyclass %}{% endblock %} wp-pinned">
+
+<!-- Wrapper -->
+<div id="wrapper">
+	{% if not is_popup %}
+		{% block adminmenu %}
+			{% wpadmin_render_left_menu %}
+		{% endblock%}
+	{% endif %}
+
+	<!-- Container -->
+	<div id="container">
+
+		{% if not is_popup %}
+			{% block adminbar %}
+				{% wpadmin_render_top_menu %}
+			{% endblock %}
+			{% block breadcrumbs %}
+				<div class="breadcrumbs">
+					<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+					{% if title %} &rsaquo; {{ title }}{% endif %}
+				</div>
+			{% endblock %}
+		{% endif %}
+
+		{% block messages %}
+			{% if messages %}
+				<ul class="messagelist">
+					{% for message in messages %}
+						<li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message|capfirst }}</li>
+					{% endfor %}
+				</ul>
+			{% endif %}
+		{% endblock messages %}
+
+		<!-- Content -->
+		<div id="content" class="{% block coltype %}colM{% endblock %}">
+			{% block pretitle %}{% endblock %}
+			{% block content_title %}{% if title %}<h1>{{ title }}</h1>{% endif %}{% endblock %}
+			{% block content %}
+			{% block object-tools %}{% endblock %}
+			{{ content }}
+			{% endblock %}
+			{% block sidebar %}{% endblock %}
+			<br class="clear" />
+		</div>
+		<!-- END Content -->
+
+		{% block footer %}<div id="footer"></div>{% endblock %}
+	</div>
+	<!-- END Container -->
+
+</div>
+<!-- END Wrapper -->
+
+</body>
+</html>

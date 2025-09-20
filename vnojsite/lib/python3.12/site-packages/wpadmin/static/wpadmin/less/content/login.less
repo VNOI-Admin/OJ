@@ -1,0 +1,77 @@
+body.login {
+
+  #wrapper {
+    overflow: hidden;
+  }
+
+  #container {
+    background: none;
+    border: none;
+    padding-bottom: 100px;
+
+    #content {
+      margin: 0;
+      padding: 0;
+
+      form {
+        margin: 0;
+
+        .form-row {
+          padding: 0 12px 8px;
+          float: none;
+          width: auto;
+          overflow: hidden;
+
+          .errorlist {
+            li:last-of-type {
+              margin-bottom: 0;
+            }
+          }
+
+          label.required {
+            font-weight: bold;
+          }
+
+          #id_username,
+          #id_password {
+            width: 100%;
+            max-width: none;
+          }
+        }
+      }
+
+      .password-reset-link {
+        text-align: left;
+        padding: 5px 12px;
+      }
+    }
+  }
+
+  &.wp-with-left-menu {
+    #container {
+      margin-left: auto;
+      width: 28em;
+      position: relative;
+      left: (@left-menu-width / 2);
+    }
+
+    &.wp-folded {
+      #container {
+        left: (@folded-menu-width / 2);
+      }
+    }
+
+  }
+}
+
+@media screen and (max-width: 500px) {
+  body.login {
+    #container {
+      width: 23em;
+
+      .submit-row {
+        padding-left: 7em;
+      }
+    }
+  }
+}

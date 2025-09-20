@@ -1,0 +1,263 @@
+body.change-form {
+  #content-main {
+    margin-top: 10px;
+  }
+}
+
+#content {
+  .object-tools {
+    font-size: inherit;
+    margin: -45px 0 0;
+    font-weight: 400;
+    font-family: inherit;
+
+    li {
+      background: none;
+      height: auto;
+      padding: 0;
+      font-size: inherit;
+
+      a {
+        height: auto;
+        padding: 6px 12px;
+        .border-radius(0);
+      }
+    }
+  }
+
+  .module {
+    .box-shadow(0 1px 1px rgba(0, 0, 0, 0.04));
+    border-width: 1px;
+    border-style: solid;
+    margin-bottom: 20px;
+
+    ul.radiolist {
+      margin-left: 10em;
+    }
+
+    &.wide {
+      ul.radiolist {
+        margin-left: 16em;
+      }
+    }
+  }
+
+  .module h2,
+  .module caption,
+  .inline-group h2 {
+    font-size: 14px;
+    line-height: 1.4;
+    font-weight: 600;
+    margin: 0;
+    padding: 8px 12px;
+    border-width: 0 0 1px 0;
+    border-style: solid;
+  }
+
+  .module.collapsed h2 {
+    border-bottom-width: 0;
+  }
+
+  label {
+    font-size: 13px;
+    width: 10em;
+  }
+
+  .form-row {
+    border-width: 0 0 1px 0;
+    border-style: dashed;
+    padding: 0 12px 8px;
+
+    &:last-of-type {
+      border-bottom: none;
+    }
+
+    & > div {
+      margin-top: 8px;
+    }
+  }
+
+  .inline-group {
+    border-width: 1px;
+    border-style: solid;
+    margin: 0 0 20px;
+    .box-shadow(0 1px 1px rgba(0, 0, 0, 0.04));
+
+    h3 {
+      color: inherit;
+      padding: 4px 12px;
+      background: none;
+      font-size: 12px;
+    }
+
+    fieldset {
+      margin: 0;
+      border: 0;
+      .box-shadow(none);
+
+      .form-row:last-of-type {
+        border-style: solid;
+        border-width: 0 0 1px 0;
+      }
+    }
+
+    table {
+      border: 0;
+
+      tbody tr {
+        &.row1,
+        &.row2 {
+          background: none;
+        }
+      }
+    }
+
+    div.add-row,
+    .tabular tr.add-row td {
+      background: none;
+    }
+
+    .tabular tr.add-row td {
+      border-width: 1px 0 0;
+      border-style: solid;
+    }
+
+    ul.tools a.add,
+    div.add-row a,
+    .tabular tr.add-row td a {
+      background: none;
+      padding: 0;
+      font-size: 13px;
+
+      &:before {
+        content: "\f067";
+        font-family: FontAwesome;
+        font-size: 14px;
+        margin-right: 0.2em;
+        position: relative;
+        top: 1px;
+      }
+    }
+
+    .tabular {
+      overflow-y: hidden;
+
+      tr.has_original {
+        td {
+          padding-top: 2.2em;
+
+          &.original {
+            padding: 2px 0 0;
+
+            p {
+              height: 1.5em;
+              font-size: 12px;
+              padding-left: 10px;
+            }
+          }
+        }
+      }
+    }
+
+  }
+
+  .help,
+  p.help,
+  .timezonewarning {
+    font-size: 11px !important;
+    line-height: 15px !important;
+    margin-left: 0;
+    padding-left: 20px !important;
+    padding-top: 2px !important;
+    position: relative;
+    clear: both;
+
+    &:before {
+      display: inline-block;
+      font-family: FontAwesome;
+      font-style: normal;
+      font-weight: normal;
+      line-height: 1;
+      content: "\f05a";
+      font-size: 14px;
+      opacity: 0.3;
+      position: absolute;
+      top: 3px;
+      left: 3px;
+    }
+  }
+
+  .timezonewarning {
+    &:before {
+      content: "\f06a";
+    }
+  }
+
+  img.help-tooltip {
+    cursor: help;
+    padding: 0 !important;
+
+    &:before {
+      content: "";
+    }
+  }
+
+  .description {
+    padding: 5px 12px;
+    border-style: dashed;
+    border-width: 0 0 1px 0;
+  }
+
+  .add-another {
+    text-align: center;
+
+    img {
+      display: none;
+    }
+
+    &:after {
+      content: "\f067";
+      font-family: FontAwesome;
+      font-size: 14px;
+      position: relative;
+      top: 2px;
+    }
+  }
+
+  .related-lookup {
+    text-align: center;
+
+    img {
+      display: none;
+    }
+
+    &:after {
+      content: "\f002";
+      font-family: FontAwesome;
+      font-size: 14px;
+      position: relative;
+      top: 2px;
+    }
+  }
+
+  // case for history page with empty history:
+  .module > p:first-child {
+    margin-top: 0.8em;
+  }
+}
+
+@media screen and (max-width: 600px) {
+  body.change-form {
+    #content {
+      #content-main {
+        .object-tools {
+          margin: -10px 0 15px;
+        }
+
+        & > form {
+          clear: both;
+        }
+      }
+    }
+  }
+}

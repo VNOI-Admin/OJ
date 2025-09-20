@@ -21,7 +21,7 @@ from reversion import revisions
 
 from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
-    Problem, Profile
+    OrganizationSlugHistory, Problem, Profile
 from judge.models.profile import OrganizationMonthlyUsage
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -37,7 +37,7 @@ from judge.views.submission import SubmissionsListBase
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
-           'KickUserWidgetView']
+           'KickUserWidgetView', 'organization_slug_redirect']
 
 
 class OrganizationMixin(object):
@@ -52,7 +52,18 @@ class OrganizationMixin(object):
 
     @cached_property
     def organization(self):
-        return get_object_or_404(Organization, slug=self.kwargs['slug'])
+        slug = self.kwargs['slug']
+        try:
+            return get_object_or_404(Organization, slug=slug)
+        except Http404:
+            # Check if this is an old slug that should redirect
+            try:
+                slug_history = OrganizationSlugHistory.objects.get(old_slug=slug)
+                # Store the redirect URL for later use in dispatch
+                self._redirect_to_new_slug = slug_history.organization.slug
+                return slug_history.organization
+            except OrganizationSlugHistory.DoesNotExist:
+                raise Http404(_('Could not find an organization with the key "%s".') % slug)
 
     def dispatch(self, request, *args, **kwargs):
         if 'slug' not in kwargs:
@@ -60,6 +71,13 @@ class OrganizationMixin(object):
 
         try:
             self.object = self.organization
+            
+            # Check if we need to redirect to new slug
+            if hasattr(self, '_redirect_to_new_slug'):
+                # Build the new URL with the correct slug
+                new_path = request.path.replace(f'/organization/{kwargs["slug"]}', 
+                                              f'/organization/{self._redirect_to_new_slug}')
+                return HttpResponseRedirect(new_path)
 
             # block the user from viewing other orgs in the subdomain
             if self.is_in_organization_subdomain() and self.organization.pk != self.request.organization.pk:
@@ -744,3 +762,24 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
         self.object.is_organization_private = True
         self.object.organizations.add(self.organization)
         self.object.save()
+
+
+def organization_slug_redirect(request, slug):
+    """
+    Handle redirects for old organization slugs to new ones.
+    If the slug doesn't exist as a current organization, check if it's an old slug.
+    """
+    try:
+        # Try to get organization with current slug first
+        organization = Organization.objects.get(slug=slug)
+        # If found, redirect to organization_home (this handles the normal case)
+        return HttpResponseRedirect(reverse('organization_home', args=[slug]))
+    except Organization.DoesNotExist:
+        # Check if this is an old slug
+        try:
+            slug_history = OrganizationSlugHistory.objects.get(old_slug=slug)
+            # Redirect to the current slug
+            return HttpResponseRedirect(reverse('organization_home', args=[slug_history.organization.slug]))
+        except OrganizationSlugHistory.DoesNotExist:
+            # Neither current nor old slug found, return 404
+            raise Http404(_('Could not find an organization with the key "%s".') % slug)

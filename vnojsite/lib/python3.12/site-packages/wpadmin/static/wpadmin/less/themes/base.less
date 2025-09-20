@@ -1,0 +1,452 @@
+body,
+body.login {
+  background-color: @content-bg;
+}
+
+// menus ///////////////////////////////////////////////////////////////////////
+
+#adminmenuback,
+#adminmenuwrap,
+#adminmenu,
+#adminbarwrap,
+#adminbar {
+  background-color: @menus-bg;
+}
+
+#adminmenu {
+  .wp-menu-top.wp-menu-open > a:after,
+  .wp-menu-top.wp-menu-open .wp-menu-image a:after {
+    border-right-color: @content-bg;
+  }
+}
+
+.wp-menu {
+  a {
+    color: @menus-link-color;
+
+    &:hover {
+      color: @menus-link-hover-color;
+    }
+  }
+
+  .wp-menu-image a {
+    color: @menus-icon-color;
+
+    &:hover {
+      color: @menus-icon-hover-color;
+    }
+  }
+
+  .wp-menu-top {
+    &.wp-menu-not-open:hover {
+      & > a {
+        color: @menus-link-hover-color;
+        background-color: @menus-top-elem-hover-bg;
+      }
+
+      .wp-menu-image a {
+        color: @menus-icon-hover-color;
+        background-color: @menus-top-elem-hover-bg;
+      }
+
+      &.wp-has-submenu:after {
+        border-right-color: @submenus-bg;
+      }
+    }
+
+    &.wp-menu-open {
+      & > a,
+      .wp-menu-image a {
+        color: @menus-top-elem-current-color;
+        background: @menus-top-elem-current-bg;
+      }
+
+      .wp-submenu {
+        .wp-submenu-head {
+          background: @menus-top-elem-current-bg;
+        }
+      }
+    }
+  }
+
+  .wp-submenu {
+    .wp-submenu-wrap {
+      background-color: @submenus-bg;
+    }
+
+    .wp-submenu-head {
+      color: @submenus-head-color;
+    }
+
+    a {
+      color: @submenus-link-color;
+
+      &:hover {
+        color: @submenus-link-hover-color;
+      }
+
+      &.wp-current {
+        color: @submenus-current-link-color;
+      }
+    }
+  }
+
+  .wp-menu-tools {
+    & > a {
+      color: @menus-bg;
+    }
+
+    &:hover > a {
+      color: @menus-link-hover-color;
+    }
+  }
+
+  .wp-user-tools {
+    img.wp-small-gravatar {
+      background: @menus-icon-color;
+    }
+
+    &:hover {
+      img.wp-small-gravatar {
+        background: @menus-icon-hover-color;
+      }
+    }
+  }
+}
+
+#adminbar {
+  .wp-menu-top {
+    &.wp-menu-not-open:hover {
+      & > a {
+        background-color: @submenus-bg;
+        color: @submenus-link-hover-color;
+      }
+
+      .wp-menu-image a {
+        background-color: @submenus-bg;
+        color: @submenus-link-hover-color;
+      }
+
+      &.wp-has-submenu:after {
+        display: none;
+      }
+    }
+  }
+}
+
+// content /////////////////////////////////////////////////////////////////////
+
+#container {
+  ul.messagelist {
+    li {
+      background: @messages-bg;
+      color: @messages-color;
+    }
+  }
+}
+
+#content {
+  a {
+    color: @content-link-color;
+
+    &:hover,
+    &:active,
+    &:focus {
+      color: @content-link-hover-color;
+    }
+  }
+
+  .actionlink {
+    background: @actions-links-bg;
+
+    &:hover {
+      background: @submenus-bg;
+      color: @submenus-link-hover-color;
+    }
+  }
+
+  textarea,
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="file"],
+  select {
+    border-color: @input-border;
+    background-color: @input-bg;
+    color: @input-color;
+
+    &:focus {
+      border-color: @input-focus-border;
+    }
+  }
+
+  input[type="file"] {
+    background-color: transparent;
+  }
+
+  form .form-row p {
+    color: @input-color;
+  }
+
+  .button,
+  input[type="submit"],
+  input[type="button"],
+  button[type="submit"],
+  .submit-row input {
+    background-color: @button-bg;
+    border-color: @button-border;
+    color: @button-color;
+
+    &:hover,
+    &:focus {
+      background-color: @button-hover-bg;
+      border-color: @button-hover-border;
+      color: @button-hover-color;
+    }
+  }
+
+  .button.default,
+  input.default[type="submit"],
+  input.default[type="button"],
+  button.default[type="submit"],
+  .submit-row input.default {
+    background-color: @default-button-bg;
+    border-color: @default-button-border;
+    color: @default-button-color;
+
+    &:hover,
+    &:focus {
+      background-color: @default-button-hover-bg;
+      border-color: @default-button-hover-border;
+      color: @default-button-hover-color;
+    }
+  }
+
+  .errornote {
+    background-color: @messages-bg;
+  }
+
+  .errorlist {
+    li {
+      background-color: @messages-bg;
+    }
+  }
+
+  h1 {
+    color: #222;
+  }
+
+  table {
+    background: @table-bg;
+    border-color: @table-border;
+
+    thead th,
+    thead td,
+    tfoot th,
+    tfoot td {
+      color: @table-header-color;
+      border-color: @table-header-border;
+    }
+
+    thead,
+    tfoot {
+      th {
+        &.sortable .text a {
+          color: @table-header-color;
+        }
+      }
+    }
+
+    tbody {
+      tr {
+        &.row1 {
+          background: @table-row1-bg;
+        }
+        &.row2 {
+          background: @table-row2-bg;
+        }
+      }
+    }
+  }
+
+  #changelist {
+    .actions-and-paginator {
+      .paginator {
+        span.this-page,
+        a {
+          background: @actions-links-bg !important;
+        }
+
+        a:hover {
+          background: @submenus-bg !important;
+          color: @submenus-current-link-color !important;
+        }
+      }
+    }
+
+    #changelist-filter {
+      ul {
+        background: @actions-links-bg;
+
+        li.selected a {
+          color: @content-link-color !important;
+        }
+
+        &:hover {
+          background-color: @submenus-bg;
+
+          li {
+            a {
+              color: @submenus-link-color !important;
+
+              &:hover {
+                color: @submenus-link-hover-color !important;
+              }
+            }
+
+            &.selected {
+              a {
+                color: @submenus-current-link-color !important;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  .module {
+    background: @box-bg;
+    border-color: @box-border;
+  }
+
+  .module h2,
+  .module caption,
+  .inline-group h2 {
+    background: @box-bg;
+    color: @box-header-color;
+    border-color: @box-header-border;
+  }
+
+  .form-row {
+    border-color: @box-header-border;
+  }
+
+  #bottombar {
+    background: @menus-bg;
+
+    input,
+    button,
+    a {
+      background: @menus-top-elem-current-bg;
+      color: @menus-top-elem-current-color;
+    }
+  }
+
+  .object-tools,
+  .list-tools {
+    li {
+      a {
+        background: @actions-links-bg;
+
+        &:hover {
+          background: @submenus-bg;
+          color: @submenus-link-hover-color;
+        }
+      }
+    }
+  }
+
+  .inline-group {
+    background-color: @box-bg;
+    border-color: @box-border;
+
+    h3 {
+      border-color: @box-header-border;
+    }
+
+    fieldset .form-row:last-of-type {
+      border-color: @box-header-border;
+    }
+
+    table {
+      thead,
+      tfoot {
+        td,
+        th {
+          border-color: @box-header-border;
+        }
+      }
+    }
+
+    div.add-row,
+    .tabular tr.add-row td {
+      border-color: @box-header-border;
+    }
+  }
+
+  .selector {
+    .selector-filter {
+      border-color: @input-border;
+    }
+
+    select:focus {
+      border-color: @input-border;
+    }
+  }
+
+  .help,
+  p.help,
+  .timezonewarning {
+    color: @help-color !important;
+  }
+
+  .description {
+    border-color: @box-header-border;
+  }
+}
+
+.calendarbox,
+.clockbox {
+  border-color: @menus-bg;
+
+  caption,
+  h2 {
+    background: @menus-bg;
+  }
+
+  .calendar-cancel {
+    background: @menus-top-elem-current-bg;
+    a {
+      color: @menus-top-elem-current-color;
+    }
+  }
+}
+
+.clockbox .timelist li {
+  border-color: @box-border;
+}
+
+.calendarbox {
+  .calendar {
+    th,
+    td {
+      border-color: @box-border;
+    }
+  }
+
+  .calendar-shortcuts {
+    border-color: @box-border;
+  }
+}
+
+body.dashboard #content .module table tr {
+  th,
+  td {
+    border-color: @box-header-border;
+  }
+}

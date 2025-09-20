@@ -1,0 +1,3 @@
+[console_scripts]
+discord_webhook=discord_webhook.__main__:main
+

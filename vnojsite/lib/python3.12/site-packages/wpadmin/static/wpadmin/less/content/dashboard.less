@@ -1,0 +1,78 @@
+body.dashboard #content {
+  width: auto;
+  margin-right: 20px !important;
+
+  #content-main {
+    margin-right: 20px;
+    max-width: 500px;
+    clear: left;
+
+    table {
+      tr {
+        th,
+        td {
+          border-width: 0 0 1px 0;
+          border-style: dashed;
+        }
+
+        &:last-child {
+          th,
+          td {
+            border-bottom: none;
+          }
+        }
+      }
+    }
+  }
+
+  #content-related {
+    float: left;
+    width: 284px;
+    margin-right: 0;
+
+    .actionlist {
+
+      .deletelink {
+        background: none;
+        padding-left: 0;
+
+        &:before {
+          content: "\f00d";
+          font-family: FontAwesome;
+          font-size: 14px;
+          margin-right: 0.2em;
+          position: relative;
+          top: 1px;
+        }
+      }
+    }
+  }
+
+  .addlink {
+    padding-left: 0;
+    background: none;
+
+    &:before {
+      content: "\f067";
+      font-family: FontAwesome;
+      font-size: 14px;
+      margin-right: 0.2em;
+      position: relative;
+      top: 1px;
+    }
+  }
+
+  .changelink {
+    padding-left: 0;
+    background: none;
+
+    &:before {
+      content: "\f044";
+      font-family: FontAwesome;
+      font-size: 14px;
+      margin-right: 0.2em;
+      position: relative;
+      top: 1px;
+    }
+  }
+}

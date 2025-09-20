@@ -7,14 +7,14 @@ from django.contrib.flatpages.models import FlatPage
 from django.core.cache import cache
 from django.core.cache.utils import make_template_fragment_key
 from django.db import transaction
-from django.db.models.signals import m2m_changed, post_delete, post_save
+from django.db.models.signals import m2m_changed, post_delete, post_save, pre_save
 from django.dispatch import receiver
 from registration.models import RegistrationProfile
 from registration.signals import user_registered
 
 from judge.caching import finished_submission
 from judge.models import BlogPost, Comment, Contest, ContestAnnouncement, ContestProblem, ContestSubmission, \
-    EFFECTIVE_MATH_ENGINES, Judge, Language, License, MiscConfig, Organization, Problem, Profile, Submission, \
+    EFFECTIVE_MATH_ENGINES, Judge, Language, License, MiscConfig, Organization, OrganizationSlugHistory, Problem, Profile, Submission, \
     WebAuthnCredential
 from judge.tasks import on_new_comment
 from judge.views.register import RegistrationView
@@ -146,6 +146,21 @@ def contest_submission_delete(sender, instance, **kwargs):
 def organization_update(sender, instance, **kwargs):
     cache.delete_many([make_template_fragment_key('organization_html', (instance.id, engine))
                        for engine in EFFECTIVE_MATH_ENGINES])
+
+
+@receiver(pre_save, sender=Organization)
+def organization_slug_history(sender, instance, **kwargs):
+    if instance.pk:  # Only for existing organizations (updates)
+        try:
+            old_instance = Organization.objects.get(pk=instance.pk)
+            # If slug has changed, save the old slug to history
+            if old_instance.slug != instance.slug:
+                OrganizationSlugHistory.objects.create(
+                    organization=instance,
+                    old_slug=old_instance.slug
+                )
+        except Organization.DoesNotExist:
+            pass  # This shouldn't happen, but just in case
 
 
 @receiver(m2m_changed, sender=Organization.admins.through)

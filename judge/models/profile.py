@@ -510,3 +510,19 @@ class OrganizationRequest(models.Model):
     class Meta:
         verbose_name = _('organization join request')
         verbose_name_plural = _('organization join requests')
+
+
+class OrganizationSlugHistory(models.Model):
+    organization = models.ForeignKey(Organization, verbose_name=_('organization'), related_name='slug_history',
+                                     on_delete=models.CASCADE)
+    old_slug = models.SlugField(max_length=128, verbose_name=_('old slug'), unique=True,
+                                help_text=_('Previous organization slug that should redirect to current one.'))
+    changed_date = models.DateTimeField(verbose_name=_('changed date'), auto_now_add=True)
+
+    class Meta:
+        verbose_name = _('organization slug history')
+        verbose_name_plural = _('organization slug histories')
+        ordering = ['-changed_date']
+
+    def __str__(self):
+        return f"{self.old_slug} -> {self.organization.slug}"

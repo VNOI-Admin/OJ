@@ -1,0 +1,64 @@
+.translate(@x, @y:0) {
+  -webkit-transform: translate(@x, @y);
+  -moz-transform: translate(@x, @y);
+  -ms-transform: translate(@x, @y);
+  -o-transform: translate(@x, @y);
+  transform: translate(@x, @y);
+}
+
+.matrix(@a, @b, @c, @d, @e, @f) {
+  -webkit-transform: matrix(@a, @b, @c, @d, @e, @f);
+  -moz-transform: matrix(@a, @b, @c, @d, @e, @f);
+  -ms-transform: matrix(@a, @b, @c, @d, @e, @f);
+  -o-transform: matrix(@a, @b, @c, @d, @e, @f);
+  transform: matrix(@a, @b, @c, @d, @e, @f);
+}
+
+.box-shadow(@shadow) {
+  -webkit-box-shadow: @shadow;
+  -moz-box-shadow: @shadow;
+  box-shadow: @shadow;
+}
+
+.border-radius(@radius) {
+  -webkit-border-radius: @radius;
+  -moz-border-radius: @radius;
+  border-radius: @radius;
+}
+
+.vertical-gradient(@start-color, @end-color, @start:bottom) {
+  background-image: -moz-linear-gradient(@start, @start-color, @end-color);
+  background-image: -webkit-linear-gradient(@start, @start-color, @end-color);
+  background-image: -o-linear-gradient(@start, @start-color, @end-color);
+  background-image: -ms-linear-gradient(@start, @start-color, @end-color);
+  background-image: linear-gradient(@start, @start-color, @end-color);
+}
+
+.box-sizing(@boxsize: border-box) {
+  -webkit-box-sizing: @boxsize;
+  -moz-box-sizing: @boxsize;
+  -ms-box-sizing: @boxsize;
+  box-sizing: @boxsize;
+}
+
+.transition(@transition: all 0.3s ease) {
+  -webkit-transition: @transition;
+  -moz-transition: @transition;
+  -ms-transition: @transition;
+  -o-transition: @transition;
+  transition: @transition;
+}
+
+.clearfix {
+  *zoom: 1;
+
+  &:before,
+  &:after {
+    display: table;
+    content: "";
+  }
+
+  &:after {
+    clear: both;
+  }
+}

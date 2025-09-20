@@ -1,0 +1,77 @@
+@import "../mixins.less";
+@import "forms.less";
+@import "buttons.less";
+@import "widgets.less";
+@import "messages.less";
+@import "bottombar.less";
+@import "changelist.less";
+@import "changeform.less";
+@import "dashboard.less";
+@import "login.less";
+
+body.wp-no-breadcrumbs {
+  .breadcrumbs { display: none !important; }
+}
+
+a,
+button,
+input[type="submit"] {
+  outline: none;
+}
+
+#content {
+  margin: 0 20px;
+  padding: 10px 0 50px;
+
+  li,
+  dt,
+  dd {
+    font-size: 13px;
+    line-height: 15px;
+  }
+
+  h1 {
+    font-size: 23px;
+    line-height: 29px;
+    padding: 9px 10px 4px 0;
+    margin: 0 0 3px 0;
+    font-weight: 400;
+  }
+
+  table {
+    td,
+    th {
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 20px;
+      padding: 8px 10px;
+    }
+
+    thead th,
+    thead td,
+    tfoot th,
+    tfoot td {
+      background: none;
+      border-style: solid;
+      font-size: 14px;
+      font-weight: 400;
+    }
+
+    thead th,
+    thead td {
+      border-width: 0 0 1px 0;
+    }
+
+    tfoot th,
+    tfoot td {
+      border-width: 1px 0 0 0;
+    }
+
+    tbody {
+      th,
+      td {
+        border: none;
+      }
+    }
+  }
+}
