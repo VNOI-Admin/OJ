@@ -1,17 +1,27 @@
 @import "vars-common";
 
+#page-container {
+    background-color: #F2F2F2;
+}
+#content {
+    align-content: center;  // hack
+}
+#content-body {
+    padding-bottom: 0;  // hack
+}
+
 .login-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 80vh;
+    // min-height: 80vh;
     padding: 2rem;
 }
 
 .login-card {
     display: flex;
     width: 100%;
-    max-width: 900px;
+    max-width: 1350px;
     background-color: #fff;
     border-radius: $widget_border_radius;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
@@ -35,11 +45,8 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    align-items: center; /* Add this to center children horizontally */
     text-align: center;
-
-    .auth-flow-form {
-        width: 100%;
-    }
 
     .login-logo {
         margin-bottom: 1.5rem;
@@ -69,7 +76,8 @@
 
     .form-group {
         position: relative;
-        margin-bottom: 1rem;
+        width: 375px !important; /* Force explicit width */
+        margin: 0 auto 1rem auto !important; /* Force center the form group */
 
         i {
             position: absolute;
@@ -80,7 +88,7 @@
         }
 
         input {
-            width: 100%;
+            width: 100% !important; /* Force 100% of the explicitly set width of .form-group */
             padding: 0.75rem 0.75rem 0.75rem 40px;
             border: 1px solid #B5B4B4;
             border-radius: 100px;
@@ -94,9 +102,10 @@
         width: 100%;
         padding: 0.75rem;
         border: none;
-        border-radius: $widget_border_radius;
+        border-radius: 12px; /* Updated radius */
         background-color: #EE0033;
-        color: white;
+        background-image: none !important; /* Clear background image */
+        color: #FFFFFF; /* Explicitly set color */
         font-family: 'FS Magistral';
         font-weight: 500;
         font-size: 20px;
@@ -112,12 +121,13 @@
     hr {
         border: 0;
         border-top: 1px solid #eee;
-        margin: 1.5rem 0;
+        margin: 8px 0;
     }
 
     .forgot-password {
         font-family: 'Sarabun', sans-serif;
         font-size: 16px;
+        font-weight: 300; /* Updated font-weight */
         display: block;
         text-align: center;
         margin-top: 1rem;
@@ -128,11 +138,12 @@
         display: inline-block;
         margin-top: 1rem;
         padding: 8px 16px;
-        border: 1px solid #ccc;
+        border: 1px solid #EA0029; /* Updated border color */
         border-radius: 12px;
+        background-color: #FFFFFF; /* Set background color to white */
         font-family: 'FS Magistral';
         font-size: 20px;
-        color: #333;
+        color: #EA0029; /* Updated font color */
         text-decoration: none;
 
         &:hover {
