@@ -35,9 +35,30 @@
     display: flex;
     flex-direction: column;
     justify-content: center;
+    text-align: center;
 
     .auth-flow-form {
         width: 100%;
+    }
+
+    .login-logo {
+        margin-bottom: 1.5rem;
+    }
+
+    .login-title {
+        font-family: 'FS Magistral';
+        font-weight: 500;
+        font-size: 36px;
+        letter-spacing: 0;
+        margin: 0;
+    }
+
+    .login-subtitle {
+        font-family: 'Sarabun';
+        font-weight: 300;
+        font-size: 16px;
+        margin-top: 0.5rem;
+        margin-bottom: 2rem;
     }
 
     .form-area {
@@ -46,41 +67,76 @@
         background: none;
     }
 
-    #form-errors {
+    .form-group {
+        position: relative;
         margin-bottom: 1rem;
-    }
 
-    table {
-        width: 100%;
-        td {
-            input {
-                width: 100%;
-                padding: 0.5rem;
-                border: 1px solid #ccc;
-                border-radius: $widget_border_radius;
-            }
+        i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #B5B4B4;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem 0.75rem 0.75rem 40px;
+            border: 1px solid #B5B4B4;
+            border-radius: 100px;
+            font-family: 'Sarabun', sans-serif;
+            font-weight: 400;
+            font-size: 16px;
         }
     }
 
-    button {
+    .login-button {
         width: 100%;
         padding: 0.75rem;
         border: none;
         border-radius: $widget_border_radius;
-        background-color: $highlight_blue;
+        background-color: #EE0033;
         color: white;
-        font-weight: bold;
+        font-family: 'FS Magistral';
+        font-weight: 500;
+        font-size: 20px;
         cursor: pointer;
         margin-top: 1rem;
+        margin-bottom: 1rem;
 
         &:hover {
-            background-color: darken($highlight_blue, 10%);
+            background-color: darken(#EE0033, 10%);
         }
     }
 
-    a {
+    hr {
+        border: 0;
+        border-top: 1px solid #eee;
+        margin: 1.5rem 0;
+    }
+
+    .forgot-password {
+        font-family: 'Sarabun', sans-serif;
+        font-size: 16px;
         display: block;
         text-align: center;
         margin-top: 1rem;
+        color: #333;
+    }
+
+    .register-button {
+        display: inline-block;
+        margin-top: 1rem;
+        padding: 8px 16px;
+        border: 1px solid #ccc;
+        border-radius: 12px;
+        font-family: 'FS Magistral';
+        font-size: 20px;
+        color: #333;
+        text-decoration: none;
+
+        &:hover {
+            background-color: #f2f2f2;
+        }
     }
 }

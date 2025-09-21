@@ -278,8 +278,8 @@
                 </span>
             {% else %}
                 <span class="anon">
-                    <a id="user-signup" href="{{ url('registration_register') }}"><b>{{ _('ĐĂNG KÝ') }}</b></a>
-                    <a id="user-login" href="{{ url('auth_login') }}?next={{ LOGIN_RETURN_PATH|urlencode }}"><b>{{ _('ĐĂNG NHẬP') }}</b></a>
+                    <a id="user-signup" href="{{ url('registration_register') }}">{{ _('ĐĂNG KÝ') }}</a>
+                    <a id="user-login" href="{{ url('auth_login') }}?next={{ LOGIN_RETURN_PATH|urlencode }}">{{ _('ĐĂNG NHẬP') }}</a>
                 </span>
             {% endif %}
             </span>

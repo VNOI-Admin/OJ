@@ -46,3 +46,10 @@ $monospace-fonts: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "
     font-style: normal;
 }
 
+@font-face {
+    font-family: 'Sarabun';
+    src: url('/static/fonts/Sarabun/Sarabun-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
