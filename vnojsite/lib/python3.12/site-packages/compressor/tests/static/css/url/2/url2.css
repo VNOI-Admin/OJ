@@ -1,5 +1,0 @@
-p { background: url('../../../img/add.png'); }
-p { background: url(../../../img/add.png); }
-p { background: url( ../../../img/add.png ); }
-p { background: url( '../../../img/add.png' ); }
-p { filter: progid:DXImageTransform.Microsoft.AlphaImageLoader(src='../../../img/add.png'); }

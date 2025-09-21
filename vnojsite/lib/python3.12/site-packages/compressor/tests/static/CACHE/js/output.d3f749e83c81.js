@@ -1,1 +1,0 @@
-alert("test using multiple inheritance and block.super");;alert("this alert should be included");;alert("this alert shouldn't be alone!");;

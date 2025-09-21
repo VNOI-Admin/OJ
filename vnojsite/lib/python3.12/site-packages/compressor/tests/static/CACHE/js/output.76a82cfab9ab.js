@@ -1,1 +1,0 @@
-alert("OK!");;obj={};;var test_value="—";;

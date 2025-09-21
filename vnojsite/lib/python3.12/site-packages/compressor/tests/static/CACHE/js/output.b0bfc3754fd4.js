@@ -1,1 +1,0 @@
-STATIC_URL='/custom/static/url/';;

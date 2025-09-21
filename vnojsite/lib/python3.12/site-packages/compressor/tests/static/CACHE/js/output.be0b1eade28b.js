@@ -1,1 +1,0 @@
-alert('amazing');;obj={};;

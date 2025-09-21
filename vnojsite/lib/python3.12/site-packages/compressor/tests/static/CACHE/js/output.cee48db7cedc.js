@@ -1,1 +1,0 @@
-alert("test using template extension passed in variable parent=base1.html");;

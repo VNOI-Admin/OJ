@@ -1,2 +1,0 @@
-[console_scripts]
-ansi2html = ansi2html.__main__:main

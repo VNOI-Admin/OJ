@@ -1,1 +1,0 @@
-var tmpl="{% if x == 3 %}x IS 3{% endif %}";

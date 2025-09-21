@@ -1,1 +1,0 @@
-alert("test using block.super");;alert("this alert shouldn't be alone!");;

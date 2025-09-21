@@ -1,1 +1,0 @@
-alert("OK 3!");;alert("this alert shouldn't be alone!");;
