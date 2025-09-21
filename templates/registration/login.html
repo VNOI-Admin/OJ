@@ -1,40 +1,58 @@
 {% extends "base.html" %}
 
-{% block body %}
-    <div class="auth-flow-form">
-        <form action="" method="post" class="form-area">
-            {% csrf_token %}
-            {% if form.errors %}
-                <div id="form-errors" style="max-width: fit-content;">
-                    <p class="error">{{ _('Invalid username or password.') }}</p>
-                    {% for error in form.non_field_errors() %}
-                        <p class="error">{{error}}</p>
-                    {% endfor %}
-                    {% if form.errors and misc_config.discord_invite_link and misc_config.discord_invite_shieldio %}
-                    {{ _('If you have problems with your account, feel free to shoot us a message at: ') }}<a href="{{ misc_config.discord_invite_link }}"><img src="{{ misc_config.discord_invite_shieldio }}"></a>
-                    {% endif %}
-                </div>
-            {% endif %}
-            <table border="0" style="text-align:left">
-                <tr>
-                    <th><i class="fa fa-user fa-fw"></i>
-                    </th>
-                    <td>{{ form.username }}
-                    </td>
-                </tr>
-                <tr>
-                    <th><i class="fa fa-key fa-fw"></i>
-                    </th>
-                    <td>{{ form.password }}
-                    </td>
-                </tr>
-            </table>
-            <hr>
-            <button style="float:right;" type="submit">{{ _('Login!') }}</button>
-            <input type="hidden" name="next" value="{{ next }}">
-        </form>
-        <a href="{{ url('password_reset') }}">{{ _('Forgot your password?') }}</a>
+{% block media %}
+    {% compress css %}
+        <link rel="stylesheet" href="{{ static('login.css') }}">
+    {% endcompress %}
+{% endblock %}
 
-        {% include "registration/oauth.html" %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-banner">
+            <img src="{{ static('login/banner.png') }}" alt="Login Banner">
+        </div>
+        <div class="login-form">
+            <div class="auth-flow-form">
+                <form action="" method="post" class="form-area">
+                    {% csrf_token %}
+                    {% if form.errors %}
+                        <div id="form-errors" style="max-width: fit-content;">
+                            <p class="error">{{ _('Invalid username or password.') }}</p>
+                            {% for error in form.non_field_errors() %}
+                                <p class="error">{{error}}</p>
+                            {% endfor %}
+                            {% if form.errors and misc_config.discord_invite_link and misc_config.discord_invite_shieldio %}
+                            {{ _('If you have problems with your account, feel free to shoot us a message at: ') }}<a href="{{ misc_config.discord_invite_link }}"><img src="{{ misc_config.discord_invite_shieldio }}"></a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                    <table border="0" style="text-align:left">
+                        <tr>
+                            <th><i class="fa fa-user fa-fw"></i>
+                            </th>
+                            <td>{{ form.username }}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th><i class="fa fa-key fa-fw"></i>
+                            </th>
+                            <td>{{ form.password }}
+                            </td>
+                        </tr>
+                    </table>
+                    <hr>
+                    <button style="float:right;" type="submit">{{ _('Login!') }}</button>
+                    <input type="hidden" name="next" value="{{ next }}">
+                </form>
+                <a href="{{ url('password_reset') }}">{{ _('Forgot your password?') }}</a>
+
+                {% include "registration/oauth.html" %}
+            </div>
+        </div>
     </div>
+</div>
 {% endblock %}

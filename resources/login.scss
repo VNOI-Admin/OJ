@@ -1,0 +1,86 @@
+@import "vars-common";
+
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 80vh;
+    padding: 2rem;
+}
+
+.login-card {
+    display: flex;
+    width: 100%;
+    max-width: 900px;
+    background-color: #fff;
+    border-radius: $widget_border_radius;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+}
+
+.login-banner {
+    flex: 1;
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+}
+
+.login-form {
+    flex: 1;
+    padding: 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .auth-flow-form {
+        width: 100%;
+    }
+
+    .form-area {
+        border: none;
+        padding: 0;
+        background: none;
+    }
+
+    #form-errors {
+        margin-bottom: 1rem;
+    }
+
+    table {
+        width: 100%;
+        td {
+            input {
+                width: 100%;
+                padding: 0.5rem;
+                border: 1px solid #ccc;
+                border-radius: $widget_border_radius;
+            }
+        }
+    }
+
+    button {
+        width: 100%;
+        padding: 0.75rem;
+        border: none;
+        border-radius: $widget_border_radius;
+        background-color: $highlight_blue;
+        color: white;
+        font-weight: bold;
+        cursor: pointer;
+        margin-top: 1rem;
+
+        &:hover {
+            background-color: darken($highlight_blue, 10%);
+        }
+    }
+
+    a {
+        display: block;
+        text-align: center;
+        margin-top: 1rem;
+    }
+}
