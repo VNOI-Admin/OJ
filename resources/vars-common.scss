@@ -10,32 +10,39 @@ $monospace-fonts: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "
 
 @font-face {
     font-family: 'FS PF BeauSans Pro';
-    src: url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Regular.otf') format('opentype'),
-         url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Regular.ttf') format('truetype');
+    src: url('/static/fonts/FS PFBeauSansPro/FS PFBeauSansPro-Regular.otf') format('opentype'),
+         url('/static/fonts/FS PFBeauSansPro/FS PFBeauSansPro-Regular.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'FS PF BeauSans Pro';
-    src: url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Bbook.otf') format('opentype'),
-         url('/static/FS PFBeauSansPro/FS PFBeauSansPro-Bbook.ttf') format('truetype');
+    src: url('/static/fonts/FS PFBeauSansPro/FS PFBeauSansPro-Bbook.otf') format('opentype'),
+         url('/static/fonts/FS PFBeauSansPro/FS PFBeauSansPro-Bbook.ttf') format('truetype');
     font-weight: 500;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'FS PF BeauSans Pro';
-    src: url('/static/FS PFBeauSansPro/FS PFBeauSansPro-SemiBold.otf') format('opentype'),
-         url('/static/FS PFBeauSansPro/FS PFBeauSansPro-SemiBold.ttf') format('truetype');
+    src: url('/static/fonts/FS PFBeauSansPro/FS PFBeauSansPro-SemiBold.otf') format('opentype'),
+         url('/static/fonts/FS PFBeauSansPro/FS PFBeauSansPro-SemiBold.ttf') format('truetype');
     font-weight: 600;
     font-style: normal;
 }
 
 @font-face {
     font-family: 'FS Magistral';
-    src: url('/static/FS Magistral/FS Magistral-Medium.ttf') format('truetype');
+    src: url('/static/fonts/FS Magistral/FS Magistral-Medium.ttf') format('truetype');
     font-weight: 500;
+    font-style: normal;
+}
+
+@font-face {
+    font-family: 'Sarabun';
+    src: url('/static/fonts/Sarabun/Sarabun-Light.ttf') format('truetype');
+    font-weight: 300;
     font-style: normal;
 }
 
