@@ -10,7 +10,7 @@ from django.urls import include, path, re_path, reverse
 from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_sameorigin
-from django.views.generic import RedirectView
+from django.views.generic import RedirectView, TemplateView
 from martor.views import markdown_search_user
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
@@ -101,7 +101,7 @@ def paged_list_view(view, name):
 
 
 urlpatterns = [
-    path('', contests.ContestList.as_view(), name='home'),
+    path('', TemplateView.as_view(template_name='landing.html'), name='home'),
     path('500/', exception),
     path('admin/', admin.site.urls),
     path('i18n/', include('django.conf.urls.i18n')),
