@@ -122,6 +122,10 @@ nav {
             text-transform: none;
             position: relative;
             font-family: 'Source Sans Pro', sans-serif;
+            &.home-nav-element {
+                display: flex;
+                align-items: center;
+            }
             &.home-nav-element a {
                 padding: 0;
                 height: 44px;
@@ -338,6 +342,15 @@ nav {
                     height: inherit;
                     margin: (-13px) -7px;
                     padding: inherit;
+                }
+                .nav-expand-left {
+                    display: none;
+                }
+                .nav-expand-right {
+                    display: inline-block;
+                }
+                .nav-expand-down {
+                    display: none;
                 }
             }
 
