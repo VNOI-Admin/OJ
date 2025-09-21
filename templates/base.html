@@ -215,96 +215,76 @@
     <div id="nav-container">
         <a id="navicon" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
         <ul id="nav-list">
-            {% if request.organization is not defined %}
-                <li class="home-nav-element"><a href="{{ url('home') }}">{% include "site-logo-fragment.html" %}</a></li>
-                <li class="home-nav-element"><span class="nav-divider"></span></li>
-                <li class="home-menu-item"><a href="{{ url('home') }}" class="nav-home">{{ _('Home') }}</a></li>
-                {% for node in mptt_tree(nav_bar) recursive %}
-                    <li>
-                        <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %}">
-                            {{ _(node.label) }}
-                            {% if not node.is_leaf_node() %}
-                                {% if loop.depth == 1 %}
-                                    <i class="fa fa-lg fa-angle-down" style="color: #BDBDBD;"></i>
-                                {% else %}
-                                    <i class="fa fa-lg fa-angle-right" style="color: #BDBDBD;"></i>
-                                {% endif %}
-                                <div class="nav-expand">&gt;</div>
-                            {% endif %}
-                        </a>
-                        {% with children=node.get_children() %}
-                            {% if children %}<ul>{{ loop(children) }}</ul>{% endif %}
-                        {% endwith %}
-                    </li>
-                {% endfor %}
-            {% else %}
-                {% macro make_navbar_item(key, url, text) %}
-                    <li>
-                        <a href="{{ url }}" class="nav-{{ key }}"><span>
-                            {{ text }}
-                        </a>
-                    </li>
-                {% endmacro %}
-                {% set org = request.organization %}
-                <li class="home-nav-element"><a href="{{ url('organization_home', org.slug) }}">{% include "site-logo-fragment.html" %}</a></li>
-                <li class="home-nav-element"><span class="nav-divider"></span></li>
-                {{ make_navbar_item('problem-list', url('problem_list_organization', org.slug), _('PRoblems')) }}
-                {{ make_navbar_item('submission-list', url('submission_list_organization', org.slug), _('Submissions')) }}
-                {{ make_navbar_item('contest-list',  url('contest_list_organization', org.slug), _('Contests')) }}
-                {{ make_navbar_item('users',org.get_users_url(), _('Users')) }}
-            {% endif %}
-        </ul>
-
-        <span id="user-links">
-            {% if ticket_count %}
-                <a href="{{url('ticket_list')}}" style="margin-right: 5px; color: red; "> {{ticket_count}} tickets</a>
-            {% endif %}
-
-            <a href=
-                {% if request.resolver_match.view_name == "problem_detail" and problem %}
-                    "{{ url('new_problem_ticket', problem.code) }}"
-                {% else %}
-                    "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
+            <li class="home-nav-element"><a href="{{ url('home') }}">{% include "site-logo-fragment.html" %}</a></li>
+            <li class="home-nav-element"><span class="nav-divider"></span></li>
+            <li class="home-menu-item"><a href="{{ url('home') }}" class="nav-home">{{ _('Home') }}</a></li>
+            {% for node in mptt_tree(nav_bar) recursive %}
+                <li>
+                    <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %}">
+                        {{ _(node.label) }}
+                        {% if not node.is_leaf_node() %}
+                            <i class="nav-expand-down fa fa-lg fa-angle-down" style="color: #BDBDBD;"></i>
+                            <i class="nav-expand-left fa fa-lg fa-angle-left" style="color: #BDBDBD;"></i>
+                            <i class="nav-expand-right fa fa-lg fa-angle-right" style="color: #BDBDBD;"></i>
+                        {% endif %}
+                    </a>
+                    {% with children=node.get_children() %}
+                        {% if children %}<ul>{{ loop(children) }}</ul>{% endif %}
+                    {% endwith %}
+                </li>
+            {% endfor %}
+            <li class="nav-separator ticket-links">
+                {% if ticket_count %}
+                    <a href="{{url('ticket_list')}}" style="margin-right: 5px; color: red; "> {{ticket_count}} tickets</a>
                 {% endif %}
-            style="margin-right: 8px;">
-                <span title="{{ _('Report issue') }}">
-                    <i class="fa fa-exclamation-triangle" style="color: red;"></i>
-                </span>
-            </a>
+
+                <a href=
+                    {% if request.resolver_match.view_name == "problem_detail" and problem %}
+                        "{{ url('new_problem_ticket', problem.code) }}"
+                    {% else %}
+                        "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
+                    {% endif %}
+                style="margin-right: 8px;">
+                    <span title="{{ _('Report issue') }}">
+                        <i class="fa fa-exclamation-triangle" style="color: red;"></i>
+                    </span>
+                </a>
+            </li>
+            <li>
             {% if request.user.is_authenticated %}
-                <ul>
-                    <li>
-                        <a href="{{ url('user_page') }}">
-                            <span>
-                                <img src="{{ gravatar(request.user, 32) }}" height="24" width="24">{# -#}
-                                <span>{{ _('Hello, %(username)s.', username=bold(request.user.first_name or request.profile.display_name)) }}</span>
-                            </span>
-                        </a>
-                        <ul style="width: 150px">
-                            {% if request.user.is_staff or request.user.is_superuser %}
-                                <li><a href="{{ url('admin:index') }}">{{ _('Admin') }}</a></li>
-                            {% endif %}
-                            <li><a href="{{ url('user_edit_profile') }}">{{ _('Edit profile') }}</a></li>
-                            {% if request.user.is_impersonate %}
-                                <li><a href="{{ url('impersonate-stop') }}">{{ _('Stop impersonating') }}</a></li>
-                            {% else %}
-                                <li>
-                                    <form action="{{ url('auth_logout') }}" method="POST">
-                                        {% csrf_token %}
-                                        <button type="submit">{{ _('Log out') }}</button>
-                                    </form>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                </ul>
+                <span class="authenticated">
+                    <a href="{{ url('user_page') }}">
+                        <span>
+                            <img src="{{ gravatar(request.user, 32) }}" height="24" width="24">{# -#}
+                            <span>{{ _('Hello, %(username)s.', username=bold(request.user.first_name or request.profile.display_name)) }}</span>
+                        </span>
+                    </a>
+                    <ul style="width: 150px">
+                        {% if request.user.is_staff or request.user.is_superuser %}
+                            <li><a href="{{ url('admin:index') }}">{{ _('Admin') }}</a></li>
+                        {% endif %}
+                        <li><a href="{{ url('user_edit_profile') }}">{{ _('Edit profile') }}</a></li>
+                        {% if request.user.is_impersonate %}
+                            <li><a href="{{ url('impersonate-stop') }}">{{ _('Stop impersonating') }}</a></li>
+                        {% else %}
+                            <li>
+                                <form action="{{ url('auth_logout') }}" method="POST">
+                                    {% csrf_token %}
+                                    <button type="submit">{{ _('Log out') }}</button>
+                                </form>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </span>
             {% else %}
                 <span class="anon">
                     <a id="user-signup" href="{{ url('registration_register') }}"><b>{{ _('ĐĂNG KÝ') }}</b></a>
                     <a id="user-login" href="{{ url('auth_login') }}?next={{ LOGIN_RETURN_PATH|urlencode }}"><b>{{ _('ĐĂNG NHẬP') }}</b></a>
                 </span>
             {% endif %}
-        </span>
+            </span>
+            </li>
+        </ul>
     </div>
 </nav>
 {% if request.in_contest %}

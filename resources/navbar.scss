@@ -4,10 +4,10 @@
 
 #user-links {
     top: 0;
-    right: 200px;
-    position: absolute;
+    // right: 200px;
+    // position: absolute;
     color: #5c5954;
-    padding-right: 0;
+    // padding-right: 0;
     display: inline-flex;
     min-height: 100%;
     align-items: center;
@@ -58,26 +58,26 @@
     }
     
     #user-signup {
-        border-radius: 30px;
-        height: 40px;
+        border-radius: 20px;
+        // height: 35px;
         padding: 6px 32px 6px 32px;
         color: #FFFFFF;
         background-color: #EE0033;
         font-family: 'FS Magistral';
         font-weight: 500;
-        font-size: 20px;
+        font-size: 16px;
         margin-right: 8px;
     }
 
     #user-login {
         border: solid 1px #EA0029;
-        border-radius: 30px;
-        height: 40px;
+        border-radius: 20px;
+        // height: 35px;
         padding: 6px 32px 6px 32px;
         color: #EA0029;
         font-family: 'FS Magistral';
         font-weight: 500;
-        font-size: 20px;
+        font-size: 16px;
     }
 }
 
@@ -113,7 +113,7 @@ nav {
 
     ul {
         margin: 0 0 0 0;
-        padding: 0 200px; /* Updated padding */
+        padding: 0 10%; /* Updated padding */
         display: block;
 
         li {
@@ -137,8 +137,8 @@ nav {
                 text-decoration: none;
                 vertical-align: middle;
                 color: #333333;
-                padding: 14px 7px;
-                height: 20px;
+                padding: 22px 16px 22px 16px;
+                height: 24px;
                 display: inline-table;
 
                 /* Updated styles for nav items */
@@ -160,16 +160,22 @@ nav {
                 &.active {
                     color: #333333;
 
-                    border: 5px solid transparent;
+                    // border: 5px solid transparent;
                     text-decoration: underline;
                     text-decoration-thickness: 1px;
-                    text-underline-offset: 4px;
+                    text-underline-offset: 5px;
                     // border-bottom: 5px solid $highlight_blue;
-                    padding: 9px 2px;
+                    // padding: 9px 2px;
                 }
 
-                .nav-expand {
+                .nav-expand-left {
                     display: none;
+                }
+                .nav-expand-right {
+                    display: none;
+                }
+                .nav-expand-down {
+                    display: inline-block;
                 }
             }
 
@@ -189,7 +195,7 @@ nav {
                         border: none;
                         text-decoration: underline;
                         text-decoration-thickness: 1px;
-                        text-underline-offset: 4px;
+                        text-underline-offset: 5px;
                         // border-left: 5px solid $highlight_blue;
                     }
                 }
@@ -206,6 +212,16 @@ nav {
                         // border-left: 4px solid $highlight_blue;
                         white-space: nowrap;
                         color: #333333 !important;
+
+                        .nav-expand-left {
+                            display: none;
+                        }
+                        .nav-expand-right {
+                            display: inline-block;
+                        }
+                        .nav-expand-down {
+                            display: none;
+                        }
                     }
                 }
             }
@@ -247,6 +263,31 @@ nav {
     display: none;
 }
 
+#nav-list {
+    // Applies to all sizes
+    .authenticated {
+        & > a > span {
+            & > img {
+                vertical-align: middle;
+                border-radius: $widget_border_radius;
+                margin-right: 6px;
+            }
+            & > span {
+                vertical-align: middle;
+                color: #333333;
+            }
+        }
+        &:hover > ul, &:active > ul, &:focus > ul {
+            display: block !important;
+        }
+    }
+}
+
+.ticket-links {
+    display: flex !important;
+    flex-direction: row;
+}
+
 @media (max-width: 760px) {
     #navigation {
         height: 36px;
@@ -257,7 +298,7 @@ nav {
         display: block;
         line-height: 26px;
         font-size: 2em;
-        color: #FFF;
+        color: #000000;
         padding: 0 0.25em;
         margin: 4px 0.25em;
         white-space: nowrap;
@@ -276,9 +317,9 @@ nav {
         margin: 0;
         position: fixed;
         top: 36px;
-        background: #231f20;
+        background: #ffffff;
         bottom: 0;
-        width: 8em;
+        max-width: 12em;
         left: 0;
 
         &.show-list {
@@ -301,7 +342,7 @@ nav {
             }
 
             ul {
-                left: 8em;
+                left: 100%; // distance between the left edge to the drop right
                 top: 0px;
 
                 &.show-list {
@@ -322,6 +363,11 @@ nav {
 
 @media not all and (max-width: 760px) {
     #nav-list {
+        display: flex;
+        flex-direction: row;
+        .nav-separator {
+            margin-left: auto;
+        }
         li {
             &.home-menu-item {
                 display: none;
