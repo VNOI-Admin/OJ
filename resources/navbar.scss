@@ -56,29 +56,6 @@
             }
         }
     }
-    
-    #user-signup {
-        border-radius: 20px;
-        // height: 35px;
-        padding: 6px 32px 6px 32px;
-        color: #FFFFFF;
-        background-color: #EE0033;
-        font-family: 'FS Magistral';
-        font-weight: 500;
-        font-size: 16px;
-        margin-right: 8px;
-    }
-
-    #user-login {
-        border: solid 1px #EA0029;
-        border-radius: 20px;
-        // height: 35px;
-        padding: 6px 32px 6px 32px;
-        color: #EA0029;
-        font-family: 'FS Magistral';
-        font-weight: 500;
-        font-size: 16px;
-    }
 }
 
 #nav-background {
@@ -141,7 +118,7 @@ nav {
                 text-decoration: none;
                 vertical-align: middle;
                 color: #333333;
-                padding: 22px 16px 22px 16px;
+                padding: 16px 16px 16px 16px;
                 height: 24px;
                 display: inline-table;
 
@@ -290,6 +267,30 @@ nav {
 .ticket-links {
     display: flex !important;
     flex-direction: row;
+}
+
+#user-signup {
+    border-radius: 20px;
+    // height: 35px;
+    padding: 6px 32px 6px 32px;
+    color: #FFFFFF;
+    background-color: #EE0033;
+    font-family: 'FS Magistral';
+    font-weight: 500;
+    font-size: 14px;
+    margin: 8px;
+}
+
+#user-login {
+    border: solid 1px #EA0029;
+    border-radius: 20px;
+    // height: 35px;
+    padding: 6px 32px 6px 32px;
+    color: #EA0029;
+    font-family: 'FS Magistral';
+    font-weight: 500;
+    font-size: 14px;
+    margin: 8px;
 }
 
 @media (max-width: 760px) {
