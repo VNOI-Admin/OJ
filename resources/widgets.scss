@@ -29,6 +29,7 @@
     cursor: pointer;
     vertical-align: middle;
     white-space: nowrap;
+    font-family: 'FS Magistral';
     font-weight: 400;
     line-height: 1.4;
     background: #EE0033;
@@ -164,8 +165,7 @@ textarea:focus {
     // Cover up the bottom border of active tabs with this color
     background: $color_pageBg;
     cursor: default;
-    border: 1px solid $color_primary25;
-    border-bottom-color: $color_pageBg;
+    border-bottom: 2px solid #EA0029;
     border-image: none;
 }
 
@@ -184,20 +184,6 @@ textarea:focus {
 
             &.fa-plus {
                 color: green !important;
-            }
-        }
-
-        a, span {
-            border-top-width: 3px !important;
-        }
-
-        &.active {
-            a, span {
-                border-top-color: $highlight_blue !important;
-            }
-
-            .tab-icon {
-                color: $color_primary100;
             }
         }
     }

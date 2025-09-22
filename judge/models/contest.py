@@ -194,6 +194,8 @@ class Contest(models.Model):
                                                        'Leave it blank to disable.'),
                                            blank=True, default='', max_length=255)
 
+    title_row = models.TextField(blank=True, verbose_name=_('title row'))
+
     @cached_property
     def format_class(self):
         return contest_format.formats[self.format_name]

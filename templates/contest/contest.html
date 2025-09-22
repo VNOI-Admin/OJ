@@ -3,6 +3,9 @@
 {% block title_ruler %}{% endblock %}
 
 {% block title_row %}
+{% if contest.title_row %}
+    {{ render_django(contest.title_row, contest=contest, tab='overview') }}
+{% else %}
     {% set tab = 'detail' %}
     {% include "contest/contest-tabs.html" %}
     {% if contest.is_organization_private %}
@@ -16,6 +19,7 @@
             {% endfor %}
         </span>
     {% endif %}
+{% endif %}
 {% endblock %}
 
 {% block content_js_media %}

@@ -3,7 +3,7 @@
 {% block title_ruler %}{% endblock %}
 
 {% block title_row %}
-    {% include "contest/contest-tabs.html" %}
+    {{ render_django(contest.title_row, contest=contest, tab='ranking') }}
 {% endblock %}
 
 {% block users_media %}

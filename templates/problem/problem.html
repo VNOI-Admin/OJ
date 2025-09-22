@@ -76,7 +76,7 @@
 
 {% block title_row %}
 {% if problem.title_row %}
-    {{ render_django(problem.title_row, problem=problem) }}
+    {{ render_django(problem.title_row, problem=problem, tab='detail') }}
 {% else %}
     <div class="problem-title">
         {% if request.user.is_authenticated %}
