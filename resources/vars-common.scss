@@ -40,6 +40,13 @@ $monospace-fonts: Consolas, "Andale Mono WT", "Andale Mono", "Lucida Console", "
 }
 
 @font-face {
+    font-family: 'FS Magistral';
+    src: url('/static/fonts/FS Magistral/FS Magistral-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+}
+
+@font-face {
     font-family: 'Sarabun';
     src: url('/static/fonts/Sarabun/Sarabun-Light.ttf') format('truetype');
     font-weight: 300;
