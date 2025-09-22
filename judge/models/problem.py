@@ -225,6 +225,8 @@ class Problem(models.Model):
         default=False,
     )
 
+    title_row = models.TextField(verbose_name=_('title row'), blank=True)
+
     __original_points = None
 
     def __init__(self, *args, **kwargs):
