@@ -101,7 +101,7 @@ def paged_list_view(view, name):
 
 
 urlpatterns = [
-    path('', TemplateView.as_view(template_name='landing.html'), name='home'),
+    path('', TemplateView.as_view(template_name='landing.html', extra_context={'title': 'Home'}), name='home'),
     path('500/', exception),
     path('admin/', admin.site.urls),
     path('i18n/', include('django.conf.urls.i18n')),
