@@ -138,6 +138,7 @@ class ContestForm(ModelForm):
                                                                        attrs={'style': 'width: 100%'}),
             'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
             'banned_judges': AdminSelect2MultipleWidget(attrs={'style': 'width: 100%'}),
+            'title_row': AdminSelect2Widget,
         }
 
 

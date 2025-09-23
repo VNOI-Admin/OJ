@@ -4,7 +4,7 @@
 
 {% block title_row %}
 {% if contest.title_row %}
-    {{ render_django(contest.title_row, contest=contest, tab='overview') }}
+    {{ render_django(contest.title_row.value, contest=contest, tab='overview') }}
 {% else %}
     {% set tab = 'detail' %}
     {% include "contest/contest-tabs.html" %}

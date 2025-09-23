@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
-from django.db.models import CASCADE, Q
+from django.db.models import CASCADE, Q, SET_NULL
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -16,6 +16,7 @@ from lupa import LuaRuntime
 from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MOSS_LANG_PYTHON
 
 from judge import contest_format, event_poster as event
+from judge.models.interface import MiscConfig
 from judge.models.problem import Problem
 from judge.models.profile import Organization, Profile
 from judge.models.submission import Submission
@@ -194,7 +195,8 @@ class Contest(models.Model):
                                                        'Leave it blank to disable.'),
                                            blank=True, default='', max_length=255)
 
-    title_row = models.TextField(blank=True, verbose_name=_('title row'))
+    title_row = models.ForeignKey(MiscConfig, verbose_name=_('title row'), blank=True, null=True, on_delete=SET_NULL)
+
 
     @cached_property
     def format_class(self):

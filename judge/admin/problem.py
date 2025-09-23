@@ -43,6 +43,7 @@ class ProblemForm(ModelForm):
             'types': AdminSelect2MultipleWidget,
             'group': AdminSelect2Widget,
             'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
+            'title_row': AdminSelect2Widget,
         }
 
 

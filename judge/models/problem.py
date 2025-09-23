@@ -16,6 +16,7 @@ from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
 from judge.fulltext import SearchQuerySet
+from judge.models.interface import MiscConfig
 from judge.models.problem_data import problem_data_storage
 from judge.models.profile import Organization, Profile
 from judge.models.runtime import Language
@@ -225,7 +226,7 @@ class Problem(models.Model):
         default=False,
     )
 
-    title_row = models.TextField(verbose_name=_('title row'), blank=True)
+    title_row = models.ForeignKey(MiscConfig, verbose_name=_('title row'), blank=True, null=True, on_delete=SET_NULL)
 
     __original_points = None
 
