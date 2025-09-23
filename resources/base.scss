@@ -104,9 +104,12 @@ footer {
     bottom: 0;
 }
 
+.bootstrap-styles {
+    @import 'bootstrap/scss/bootstrap';
+}
+
 .footer-top {
     $grid-gutter-width: 16px;
-    @import 'bootstrap/scss/bootstrap';
 
     padding: 40px 0;
 	/* box-shadow: inset 0 4px 0 0 #008675;
@@ -722,8 +725,6 @@ hr {
     min-height: 25em;
     display: block;
 
-    flex: 1;
-
     .title {
         color: $color_primary75;
     }
@@ -839,9 +840,7 @@ noscript #noscript {
     // border-right: 1px solid $color_primary25;
     // border-left: 1px solid $color_primary25;
     background: $color_pageBg;
-    // max-width: 100em;
-    display: flex;
-    flex-direction: column;
+    max-width: 100em;
 }
 
 // border-bottom: 1px solid rgb(204, 204, 204)
