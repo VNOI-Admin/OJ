@@ -25,7 +25,7 @@
 {% endblock %}
 
 {% if oauth.has_google_auth or oauth.has_facebook_auth or oauth.has_github_auth %}
-    {% if '/register' in request.path %}
+    {% if request.path == url('registration_register') %}
         <h4>{{ _('Sign up with Gmail') }}</h4>
     {% else %}
         <h4>{{ _('Or log in with...') }}</h4>
