@@ -14,7 +14,23 @@
     <div>
         <img src="{{ static('landing/banner.png') }}">
         <img src="{{ static('landing/intro.png') }}">
-        <img src="{{ static('landing/prize.png') }}">
+        <div class="prize-container">
+            <div class="container">
+                <h1 class="prize-title">Cơ cấu giải thưởng</h1>
+                <div class="row justify-content-center align-items-center">
+                    <div class="col-md-6 d-flex justify-content-center">
+                        <div class="prize-svg-wrapper prize-svg-wrapper-1 mb-4 mb-md-0">
+                            <img src="{{ static('landing/prize-section-1.svg') }}" class="prize-svg">
+                        </div>
+                    </div>
+                    <div class="col-md-6 d-flex justify-content-center">
+                        <div class="prize-svg-wrapper prize-svg-wrapper-2">
+                            <img src="{{ static('landing/prize-section-2.svg') }}" class="prize-svg">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <h1 style="text-align:center; font-family:FS Magistral; font-size:64px;">Các bài thi</h1>
         <div class="row row-cols-1 row-cols-md-3 g-4">
             <div class="col">
