@@ -15,46 +15,46 @@
         <img src="{{ static('landing/banner.png') }}">
         <img src="{{ static('landing/intro.png') }}">
         <img src="{{ static('landing/prize.png') }}">
-        <img src="{{ static('landing/progress.png') }}">
         <h1 style="text-align:center; font-family:FS Magistral; font-size:64px;">Các bài thi</h1>
         <div class="row row-cols-1 row-cols-md-3 g-4">
             <div class="col">
                 <div class="card h-100">
-                    <img src="/martor/637a0c3c-fda0-417e-bdab-e739d781672f.png" class="card-img-top" alt="...">
+                    <img src="/martor/637a0c3c-fda0-417e-bdab-e739d781672f.png" class="card-img-top" alt="">
                     <div class="card-body">
                         <h5 class="card-title">Tiết kiệm năng lượng</h5>
-                        <p class="card-text"><small class="text-muted">Digital product management</small></p>
-                        <div class="d-grid gap-2">
-                            <a href="#" class="btn btn-primary">Xem chi tiết <i class="fa fa-arrow-right"></i></a>
-                        </div>
+                        <p class="card-text"><small class="text-muted">Đề thi yêu cầu thí sinh xây dựng hệ thống ra quyết định tối ưu vận hành mạng viễn thông phức tạp bằng phương pháp học tăng cường (Deep Reinforcement Learning - RL)</small></p>
+                    </div>
+                    <div class="card-footer d-grid">
+                        <a href="#" class="btn btn-primary">Xem chi tiết <i class="fa fa-arrow-right"></i></a>
                     </div>
                 </div>
             </div>
             <div class="col">
                 <div class="card h-100">
-                    <img src="/martor/b16929ca-cd09-4268-90e9-08e9d057b7af.png" class="card-img-top" alt="...">
+                    <img src="/martor/b16929ca-cd09-4268-90e9-08e9d057b7af.png" class="card-img-top" alt="">
                     <div class="card-body">
                         <h5 class="card-title">Văn bản kĩ thuật</h5>
-                        <p class="card-text"><small class="text-muted">Digital product management</small></p>
-                        <div class="d-grid gap-2">
-                            <a href="#" class="btn btn-primary">Xem chi tiết <i class="fa fa-arrow-right"></i></a>
-                        </div>
+                        <p class="card-text"><small class="text-muted">Đề thi yêu cầu xử lý bảng PDF phức tạp, trích xuất thành dữ liệu số và truy vấn để trả lời trắc nghiệm nhiều đáp án đúng bằng phương pháp Xử lý ngôn ngữ tự nhiên (Natural Language Processing - NLP)</small></p>
+                    </div>
+                    <div class="card-footer d-grid">
+                        <a href="#" class="btn btn-primary">Xem chi tiết <i class="fa fa-arrow-right"></i></a>
                     </div>
                 </div>
             </div>
             <div class="col">
                 <div class="card h-100">
-                    <img src="/martor/676e8dbe-6ecd-406c-8847-eb54521adb93.png" class="card-img-top" alt="...">
+                    <img src="/martor/676e8dbe-6ecd-406c-8847-eb54521adb93.png" class="card-img-top" alt="">
                     <div class="card-body">
                         <h5 class="card-title">Định vị 3D</h5>
-                        <p class="card-text"><small class="text-muted">Digital product management</small></p>
-                        <div class="d-grid gap-2">
-                            <a href="#" class="btn btn-primary">Xem chi tiết <i class="fa fa-arrow-right"></i></a>
-                        </div>
+                        <p class="card-text"><small class="text-muted">Đề thi yêu cầu phát hiện bưu kiện trên cùng và xác định tọa độ 3D cùng hướng gắp chính xác để robot xử lý bằng phương pháp Thị giác máy tính (Computer Vision - CV)</small></p>
+                    </div>
+                    <div class="card-footer d-grid">
+                        <a href="#" class="btn btn-primary">Xem chi tiết <i class="fa fa-arrow-right"></i></a>
                     </div>
                 </div>
             </div>
         </div>
+        <img src="{{ static('landing/progress.png') }}">
         <h1 style="text-align:center; font-family:FS Magistral; font-size:64px;">Quy chế thi</h1>
         <style>
             #rules {
@@ -63,6 +63,15 @@
                     font-weight: 600;
                     font-size: 24px;
                     color: #EE0033 !important;
+                }
+                .accordion-body {
+                    font-family: 'FS PF BeauSans Pro';
+                    font-weight: 400;
+                    font-size: 20px;
+                    color: #44494D;
+                }
+                .accordion-item + .accordion-item {
+                    margin-top: 1rem; /* Adjust this value as needed for your desired gap */
                 }
             }
         </style>
