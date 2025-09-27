@@ -416,8 +416,8 @@ class ProblemSubmitForm(ModelForm):
                 try:
                     archive = zipfile.ZipFile(content.file)
                     files = archive.namelist()
-                    if not any(file.endswith('.ipynb') for file in files):
-                        raise forms.ValidationError(_('Your submission must include a ipynb file.'))
+                    if not any(file.endswith('.py') for file in files):
+                        raise forms.ValidationError(_('Your submission must include a py file.'))
                 except (zipfile.BadZipFile, KeyError):
                     pass
 
