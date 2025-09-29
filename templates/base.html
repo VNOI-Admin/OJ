@@ -221,7 +221,7 @@
             {% for node in mptt_tree(nav_bar) recursive %}
                 <li>
                     <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %}">
-                        {{ _(node.label) }}
+                        {{ node.label }}
                         {% if not node.is_leaf_node() %}
                             <i class="nav-expand-down fa fa-lg fa-angle-down" style="color: #BDBDBD;"></i>
                             <i class="nav-expand-left fa fa-lg fa-angle-left" style="color: #BDBDBD;"></i>
