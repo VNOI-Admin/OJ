@@ -420,13 +420,13 @@ class JudgeHandler(ZlibPacketHandler):
             points += batches[i][0]
             total += batches[i][1]
 
-        points = round(points, 1)
-        total = round(total, 1)
+        #points = round(points, 1)
+        #total = round(total, 1)
         submission.case_points = points
         submission.case_total = total
 
         problem = submission.problem
-        sub_points = round(points / total * problem.points if total > 0 else 0, 3)
+        sub_points = round(points / total * problem.points if total > 0 else 0, 6)
         if not problem.partial and sub_points != problem.points:
             sub_points = 0
 
