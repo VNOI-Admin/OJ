@@ -80,7 +80,7 @@
 
 {% block title_row %}
 {% if problem.title_row %}
-    {{ render_django(problem.title_row.value, request=request, problem=problem, tab='detail') }}
+    {{ render_jinja(problem.title_row.value, request=request, problem=problem, tab='detail') }}
 {% else %}
     <div class="problem-title">
         {% if request.user.is_authenticated %}
