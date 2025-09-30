@@ -66,7 +66,7 @@
         <li class="tab{% if tab == 'overview' %} active{% endif %}">
             <a href="{{ url('contest_view', key_public) }}">Tổng quan</a>
         </li>
-        {% if has_joined_public %}
+        {% if request.user.is_superuser or has_joined_public %}
         <li class="tab{% if tab == 'detail' %} active{% endif %}">
             <a href="{{ url('problem_detail', key_public) }}">Đề bài</a>
         </li>
