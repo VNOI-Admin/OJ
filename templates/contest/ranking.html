@@ -3,7 +3,7 @@
 {% block title_ruler %}{% endblock %}
 
 {% block title_row %}
-    {{ render_jinja(contest.title_row.value, request=request, contest=contest, tab='ranking') }}
+    {{ render_jinja(contest.title_row.value, request=request, csrf_token=csrf_token, contest=contest, tab='ranking') }}
 {% endblock %}
 
 {% block users_media %}

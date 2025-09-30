@@ -43,6 +43,6 @@ def render_django(template, **context):
 @registry.function
 def render_jinja(template, **context):
     try:
-        return compile_jinja_template(template).render(context)
+        return compile_jinja_template(template).render(Context(context))
     except Exception:
         return 'Error rendering: %r' % template
