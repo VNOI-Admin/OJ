@@ -1,7 +1,9 @@
+import csv
 import datetime
 import itertools
 import json
 import os
+import tempfile
 from operator import attrgetter, itemgetter
 
 import pytz
@@ -32,13 +34,14 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from reversion import revisions
 
-from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
-    newsletter_id
+from judge.forms import BulkUserCreateForm, CustomAuthenticationForm, ProfileForm, UserBanForm, \
+    UserDownloadDataForm, UserForm, newsletter_id
 from judge.models import BlogPost, Organization, Profile, Submission
 from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
+from judge.tasks.user import bulk_create_users
 from judge.utils.celery import task_status_by_id, task_status_url_by_id
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.problems import contest_completed_ids, user_completed_ids
@@ -52,7 +55,7 @@ from judge.views.blog import PostListBase
 from .contests import ContestRanking
 
 __all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserCommentPage', 'UserDownloadData', 'UserPrepareData',
-           'users', 'edit_profile']
+           'users', 'edit_profile', 'BulkUserCreate', 'BulkUserResult']
 
 
 def remap_keys(iterable, mapping):
@@ -719,3 +722,85 @@ class CustomPasswordResetView(PasswordResetView):
         }
 
         return super().post(request, *args, **kwargs)
+
+
+class BulkUserCreate(LoginRequiredMixin, TitleMixin, FormView):
+    template_name = 'user/bulk-create.html'
+    form_class = BulkUserCreateForm
+
+    def get_title(self):
+        return _('Bulk Create Users')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied(_('Only superusers can bulk create users'))
+        return super().dispatch(request, *args, **kwargs)
+
+    @cached_property
+    def data_cache_key(self):
+        return f'bulk_user_create_{self.request.user.id}'
+
+    @cached_property
+    def in_progress_url(self):
+        status_id = cache.get(self.data_cache_key)
+        status = task_status_by_id(status_id).status if status_id else None
+        return (
+            self.build_task_url(status_id)
+            if status in ('PENDING', 'PROGRESS', 'STARTED')
+            else None
+        )
+
+    def build_task_url(self, status_id):
+        return task_status_url_by_id(
+            status_id, message=_('Creating user accounts...'), redirect=reverse('bulk_user_result', args=[status_id]),
+        )
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['in_progress_url'] = self.in_progress_url
+
+        # Check for validation errors from previous task
+        errors = cache.get(f'bulk_user_errors_{cache.get(self.data_cache_key)}')
+        if errors:
+            context['validation_errors'] = errors
+            cache.delete(f'bulk_user_errors_{cache.get(self.data_cache_key)}')
+
+        status_id = cache.get(self.data_cache_key)
+        context['is_finished'] = self.is_finished()
+        context['task_id'] = status_id
+        return context
+
+    def is_finished(self):
+        status_id = cache.get(self.data_cache_key)
+        status = task_status_by_id(status_id).status if status_id else None
+        return status == 'SUCCESS'
+
+    def form_valid(self, form):
+        rows = form.cleaned_data['rows_json']  # validated list of dicts
+        status = bulk_create_users.delay(rows, self.request.user.id)
+        cache.set(self.data_cache_key, status.id, 3600)  # 1 hour
+        return HttpResponseRedirect(self.build_task_url(status.id))
+
+
+class BulkUserResult(LoginRequiredMixin, TitleMixin, TemplateView):
+    template_name = 'user/bulk-result.html'
+
+    def get_title(self):
+        return _('Bulk Create Users')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied(_('Only superusers can view bulk user results'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        file_path = os.path.join(
+            settings.DMOJ_USER_DATA_CACHE or tempfile.gettempdir(),
+            f'bulk_users_{self.kwargs["task_id"]}.csv',
+        )
+        if not os.path.exists(file_path):
+            raise Http404(_('Result not found or expired'))
+        with open(file_path, newline='') as f:
+            context['users'] = list(csv.DictReader(f))
+        return context
