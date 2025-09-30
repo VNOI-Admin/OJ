@@ -45,3 +45,4 @@ icalendar
 # This is a celery dependency whose latest major version is breaking everything.
 importlib-metadata<5
 django-storages[s3]
+openpyxl
