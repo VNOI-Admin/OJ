@@ -46,3 +46,4 @@ icalendar
 importlib-metadata<5
 django-storages[s3]
 django-oauth-toolkit
+openpyxl
