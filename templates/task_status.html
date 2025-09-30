@@ -24,6 +24,10 @@
                 switch (status.code) {
                     case 'SUCCESS':
                         $progress.filter('.progress-complete').show();
+                        if (status.download_link) {
+                            var downloadHtml = '<br><br><a href="' + status.download_link + '" class="btn btn-primary">Download Results (' + (status.created_count || 0) + ' users created)</a>';
+                            $('.progress-complete .progress-bar').html($('.progress-complete .progress-bar').html() + downloadHtml);
+                        }
                         break;
                     case 'FAILURE':
                         if (status.error) $fail_text.text(status.error);
