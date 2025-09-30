@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    <script type="text/javascript" src="{{ static('vnoj/xlsx/xlsx.full.min.js') }}"></script>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            // Header row uses the column keys (username, password, ...), so files can be fed to send_account.
+            function buildRows() {
+                var rows = [Array.prototype.map.call(
+                    document.querySelectorAll('#bulk-result-table thead th'), function (th) { return th.dataset.key; })];
+                document.querySelectorAll('#bulk-result-table tbody tr').forEach(function (tr) {
+                    rows.push(Array.prototype.map.call(tr.cells, function (td) { return td.textContent; }));
+                });
+                return rows;
+            }
+            function buildCsv() {
+                return buildRows().map(function (r) {
+                    return r.map(function (v) {
+                        v = v == null ? '' : String(v);
+                        return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+                    }).join(',');
+                }).join('\r\n');
+            }
+            document.getElementById('bulk-download-csv').addEventListener('click', function () {
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([buildCsv()], {type: 'text/csv'}));
+                a.download = 'bulk_users.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            });
+            document.getElementById('bulk-download-xlsx').addEventListener('click', function () {
+                var wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(buildRows()), 'Users');
+                XLSX.writeFile(wb, 'bulk_users.xlsx');
+            });
+            document.getElementById('bulk-copy').addEventListener('click', function () {
+                var btn = this, original = btn.textContent;
+                navigator.clipboard.writeText(buildCsv()).then(function () {
+                    btn.textContent = '{{ _('Copied!') }}';
+                    setTimeout(function () { btn.textContent = original; }, 1500);
+                });
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div class="alert alert-success">{{ _('Users created:') }} {{ users|length }}</div>
+
+    <p>
+        <button type="button" class="button" id="bulk-download-csv">{{ _('Download CSV') }}</button>
+        <button type="button" class="button" id="bulk-download-xlsx">{{ _('Download Excel') }}</button>
+        <button type="button" class="button" id="bulk-copy">{{ _('Copy to clipboard') }}</button>
+        <a class="button" href="{{ url('bulk_user_create') }}">{{ _('Create more') }}</a>
+    </p>
+
+    <table id="bulk-result-table" class="table striped">
+        <thead>
+            <tr>
+                {% for column in columns %}
+                    <th data-key="{{ column }}">{{ column_labels.get(column, column) }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+                <tr>
+                    {% for column in columns %}
+                        <td>{{ u[column] }}</td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
