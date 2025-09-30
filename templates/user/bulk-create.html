@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block media %}
+    <style>
+        .bulk-wrap { padding-top: 15px; }
+        .bulk-instructions {
+            background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460;
+            padding: 12px 15px; border-radius: 4px; margin-bottom: 15px;
+        }
+        .bulk-instructions ul { margin-bottom: 0; }
+        .validation-errors {
+            background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24;
+            padding: 10px; border-radius: 4px; margin-bottom: 15px;
+        }
+        .bulk-toolbar { margin-bottom: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .bulk-toolbar .button { margin: 0; }
+        #bulk-grid-wrap { overflow-x: auto; border: 1px solid #ccc; border-radius: 4px; }
+        #bulk-grid { border-collapse: collapse; width: 100%; }
+        #bulk-grid th, #bulk-grid td { border: 1px solid #ddd; padding: 0; }
+        #bulk-grid th { background: #f5f5f5; padding: 4px; white-space: nowrap; }
+        #bulk-grid th select { width: 100%; box-sizing: border-box; }
+        #bulk-grid th select.required { border-color: #007bff; font-weight: bold; }
+        #bulk-grid .col-del { display: block; text-align: right; cursor: pointer; color: #c00; font-weight: bold; line-height: 1; }
+        #bulk-grid td { min-width: 120px; }
+        #bulk-grid td[contenteditable] { padding: 4px 6px; outline: none; }
+        #bulk-grid td[contenteditable]:focus { background: #eef6ff; }
+        #bulk-grid td.row-actions { min-width: 24px; text-align: center; cursor: pointer; color: #c00; }
+        #bulk-grid td.row-num, #bulk-grid th.row-num-head {
+            width: 28px; min-width: 28px; text-align: center; background: #f5f5f5; color: #888; user-select: none;
+        }
+        .bulk-submit-row { margin-top: 12px; }
+    </style>
+{% endblock %}
+
+{% block js_media %}
+    <script type="text/javascript">
+        window.BULK_FIELDS = [
+            {key: 'username', label: '{{ _('Username') }}', required: true},
+            {key: 'fullname', label: '{{ _('Full name') }}', required: false},
+            {key: 'organization', label: '{{ _('Organization') }}', required: false},
+            {key: 'internal_id', label: '{{ _('Internal ID') }}', required: false},
+            {key: 'username_display', label: '{{ _('Display name') }}', required: false}
+        ];
+        window.BULK_I18N = {
+            ignore: '{{ _('— ignore —') }}',
+            need_required: '{{ _('Please map a Username column and fill it in.') }}',
+            parse_failed: '{{ _('Could not read the file.') }}'
+        };
+    </script>
+    <script type="text/javascript" src="{{ static('vnoj/xlsx/xlsx.full.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('bulk-user-grid.js') }}"></script>
+{% endblock %}
+
+{% block body %}
+    <div class="bulk-wrap">
+        {% if in_progress_url %}
+            <div class="alert alert-warning">{{ _('Creating users...') }}</div>
+            <a class="button" href="{{ in_progress_url }}">{{ _('Track progress') }}</a>
+        {% else %}
+            <div class="bulk-instructions">
+                <p>{{ _('Fill in the grid below, or upload / paste a spreadsheet, then map each column to a field.') }}</p>
+                <ul>
+                    <li>{{ _('Required: Username. Full name defaults to the username if left blank.') }}</li>
+                    <li>{{ _('Username: letters, numbers and underscores only (max 20 characters).') }}</li>
+                    <li>{{ _('Optional: Full name, Organization, Internal ID, Display name.') }}</li>
+                    <li>{{ _('You can paste (Ctrl+V) rows copied from Excel or Google Sheets directly into the grid.') }}</li>
+                </ul>
+                <p>{{ _('After creation you can download an Excel file with the generated passwords.') }}</p>
+            </div>
+
+            {% if validation_errors %}
+                <div class="validation-errors">
+                    <ul>
+                        {% for error in validation_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <div class="bulk-toolbar">
+                <input type="file" id="bulk-file" accept=".xlsx,.xls,.csv" style="display:none">
+                <button type="button" class="button" id="bulk-upload">{{ _('Upload spreadsheet') }}</button>
+                <button type="button" class="button" id="bulk-add-row">{{ _('Add row') }}</button>
+                <button type="button" class="button" id="bulk-add-col">{{ _('Add column') }}</button>
+                <button type="button" class="button" id="bulk-clear">{{ _('Clear') }}</button>
+            </div>
+
+            <div id="bulk-grid-wrap">
+                <table id="bulk-grid"></table>
+            </div>
+
+            <form id="bulk-create-form" action="" method="post" class="bulk-submit-row">
+                {% csrf_token %}
+                <input type="hidden" name="rows_json" id="id_rows_json">
+                {% if form.rows_json.errors %}
+                    <div class="validation-errors">{{ form.rows_json.errors }}</div>
+                {% endif %}
+                <button type="submit" class="button">{{ _('Create users') }}</button>
+            </form>
+        {% endif %}
+
+        {% if is_finished %}
+            <div class="alert alert-warning">{{ _('Your data is ready!') }}</div>
+            <a class="button" href="{{ url('bulk_user_result', task_id) }}">{{ _('View results') }}</a>
+        {% endif %}
+    </div>
+{% endblock %}

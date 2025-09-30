@@ -25,6 +25,7 @@ from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticip
     LanguageLimit, Organization, OrganizationProblemTag, Problem, Profile, Solution, Submission, Tag, \
     WebAuthnCredential
 from judge.utils.subscription import newsletter_id
+from judge.utils.users import validate_user_rows
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
 
@@ -906,3 +907,21 @@ class CompareSubmissionsForm(Form):
     user = forms.ChoiceField(
         widget=HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
     )
+
+
+class BulkUserCreateForm(Form):
+    # Rows are built client-side by the editable grid and submitted as a JSON string:
+    # a list of dicts keyed by field name (username, fullname, organization, ...).
+    rows_json = forms.CharField(widget=forms.HiddenInput)
+
+    def clean_rows_json(self):
+        try:
+            rows = json.loads(self.cleaned_data['rows_json'])
+        except (ValueError, TypeError):
+            raise ValidationError(_('Invalid data submitted.'))
+        if not isinstance(rows, list):
+            raise ValidationError(_('Invalid data submitted.'))
+        error = validate_user_rows(rows)
+        if error:
+            raise ValidationError(error)
+        return rows

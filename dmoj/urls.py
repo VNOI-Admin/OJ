@@ -205,6 +205,8 @@ urlpatterns = [
     path('set-theme/', user.set_theme, name='set_theme'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
+    path('bulk/create/', user.BulkUserCreate.as_view(), name='bulk_user_create'),
+    path('bulk/result/<str:task_id>/', user.BulkUserResult.as_view(), name='bulk_user_result'),
     path('user/<str:user>', include([
         path('', user.UserAboutPage.as_view(), name='user_page'),
         path('/ban', user.UserBan.as_view(), name='user_ban'),
