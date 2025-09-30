@@ -10,7 +10,7 @@ from django.urls import include, path, re_path, reverse
 from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_sameorigin
-from django.views.generic import RedirectView, TemplateView
+from django.views.generic import RedirectView, TemplateView, View
 from martor.views import markdown_search_user
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
@@ -248,7 +248,7 @@ urlpatterns = [
         path('/official_ranking/', contests.ContestOfficialRanking.as_view(), name='contest_official_ranking'),
         path('/register', contests.ContestRegister.as_view(), name='contest_register'),
         path('/join', contests.ContestJoin.as_view(), name='contest_join'),
-        path('/leave', contests.ContestLeave.as_view(), name='contest_leave'),
+        path('/leave', View.as_view(), name='contest_leave'),
         path('/stats', contests.ContestStats.as_view(), name='contest_stats'),
         path('/data/prepare/', contests.ContestPrepareData.as_view(), name='contest_prepare_data'),
         path('/data/download/', contests.ContestDownloadData.as_view(), name='contest_download_data'),
