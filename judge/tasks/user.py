@@ -1,19 +1,23 @@
+import csv
 import fnmatch
 import json
 import os
 import re
+import tempfile
 import zipfile
 
 from celery import shared_task
 from django.conf import settings
+from django.core.cache import cache
 from django.utils.translation import gettext as _
 
 from judge.models import Comment, Problem, Submission
 from judge.utils.celery import Progress
 from judge.utils.raw_sql import use_straight_join
 from judge.utils.unicode import utf8bytes
+from judge.utils.users import add_user, fetch_org_logo_mapping, generate_password, get_badge, get_org, validate_user_rows
 
-__all__ = ('prepare_user_data',)
+__all__ = ('prepare_user_data', 'bulk_create_users')
 rewildcard = re.compile(r'\*+')
 
 
@@ -119,3 +123,64 @@ def prepare_user_data(self, profile_id, options):
                     f.write(utf8bytes(json.dumps(comment_info, sort_keys=True, indent=4)))
 
     return submission_count + comment_count
+
+
+@shared_task(bind=True)
+def bulk_create_users(self, rows, admin_user_id):
+    """Create users in bulk from a list of row dicts (keyed by field name).
+
+    Reuses the shared helpers from judge.management.commands.batchadduser so the UI and the
+    CLI command share one implementation.
+    """
+    with Progress(self, 1, stage=_('Validating user data')) as p:
+        error = validate_user_rows(rows)
+        p.did(1)
+
+    if error:
+        cache.set(f'bulk_user_errors_{self.request.id}', [error], 3600)  # 1 hour
+        raise Exception(_('Validation errors found'))
+
+    has_orgs = any(str(row.get('organization', '')).strip() for row in rows)
+    logo_mapping = fetch_org_logo_mapping() if has_orgs else {}
+
+    created_users = []
+    with Progress(self, len(rows), stage=_('Creating user accounts')) as p:
+        for row in rows:
+            username = str(row.get('username', '')).strip()
+            fullname = str(row.get('fullname', '')).strip()
+            org_name = str(row.get('organization', '')).strip()
+            internal_id = str(row.get('internal_id', '')).strip()
+            username_display = str(row.get('username_display', '')).strip()
+            email = str(row.get('email', '')).strip() or None
+            group = str(row.get('group', '')).strip() or None
+            country = str(row.get('country', '')).strip() or None
+            password = generate_password()
+
+            add_user(
+                username, fullname, password,
+                username_display=username_display or None,
+                org=get_org(org_name, logo=logo_mapping.get(org_name)) if org_name else None,
+                internal_id=internal_id or None,
+                email=email,
+                group=group,
+                badge=get_badge(country) if country else None,
+            )
+            created_users.append({'username': username, 'fullname': fullname, 'password': password,
+                                   'email': email or ''})
+            p.did(1)
+
+    # Write CSV output.
+    output_path = os.path.join(
+        settings.DMOJ_USER_DATA_CACHE or tempfile.gettempdir(),
+        f'bulk_users_{self.request.id}.csv',
+    )
+    with open(output_path, 'w', newline='') as fout:
+        writer = csv.DictWriter(fout, fieldnames=['username', 'fullname', 'password', 'email'])
+        writer.writeheader()
+        writer.writerows(created_users)
+
+    return {
+        'success': True,
+        'created_count': len(created_users),
+        'output_file': output_path,
+    }

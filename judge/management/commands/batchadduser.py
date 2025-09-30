@@ -1,27 +1,8 @@
 import csv
-import secrets
 
-from django.conf import settings
-from django.contrib.auth.models import User
 from django.core.management.base import BaseCommand
 
-from judge.models import Language, Profile
-
-ALPHABET = 'abcdefghkqtxyz' + 'abcdefghkqtxyz'.upper() + '23456789'
-
-
-def generate_password():
-    return ''.join(secrets.choice(ALPHABET) for _ in range(8))
-
-
-def add_user(username, fullname, password):
-    usr = User(username=username, first_name=fullname, is_active=True)
-    usr.set_password(password)
-    usr.save()
-
-    profile = Profile(user=usr)
-    profile.language = Language.objects.get(key=settings.DEFAULT_USER_LANGUAGE)
-    profile.save()
+from judge.utils.users import add_user, generate_password, get_org
 
 
 class Command(BaseCommand):
@@ -39,12 +20,19 @@ class Command(BaseCommand):
         writer = csv.DictWriter(fout, fieldnames=['username', 'fullname', 'password'])
         writer.writeheader()
 
+        has_org = 'organization' in reader.fieldnames
+        has_internal_id = 'internal_id' in reader.fieldnames
+        has_username_display = 'username_display' in reader.fieldnames
+
         for row in reader:
             username = row['username']
             fullname = row['fullname']
+            org = get_org(row['organization']) if has_org else None
+            internal_id = row['internal_id'] if has_internal_id else None
+            username_display = row['username_display'] if has_username_display else None
             password = generate_password()
 
-            add_user(username, fullname, password)
+            add_user(username, fullname, password, username_display=username_display, org=org, internal_id=internal_id)
 
             writer.writerow({
                 'username': username,
