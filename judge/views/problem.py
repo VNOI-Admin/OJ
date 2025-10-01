@@ -48,6 +48,29 @@ from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
 from judge.views.widgets import pdf_statement_uploader, submission_uploader
 
+LANGUAGE_EXTENSION_PREFERENCE = {
+    'py': ['PY3', 'PYPY3', 'PYPY', 'PY2'],
+    'py3': ['PY3', 'PYPY3', 'PYPY'],
+    'py2': ['PYPY', 'PY2'],
+    'cpp': ['CPP20', 'CPP17', 'CPP14', 'CPP11', 'CPP03', 'CLANGX', 'CLANG'],
+    'cc': ['CPP20', 'CPP17', 'CPP14', 'CPP11', 'CPP03', 'CLANGX', 'CLANG'],
+    'cxx': ['CPP20', 'CPP17', 'CPP14', 'CPP11', 'CPP03', 'CLANGX', 'CLANG'],
+    'c': ['C11', 'CLANG', 'C'],
+    'java': ['JAVA17', 'JAVA11', 'JAVA10', 'JAVA9', 'JAVA8'],
+    'kt': ['KOTLIN'],
+    'cs': ['MONOCS'],
+    'fs': ['MONOFS'],
+    'vb': ['MONOVB'],
+    'rs': ['RUST'],
+    'go': ['GO'],
+    'js': ['V8JS'],
+    'ts': ['TS'],
+    'swift': ['SWIFT'],
+    'rb': ['RUBY2', 'RUBY18'],
+    'php': ['PHP'],
+    'pas': ['PAS'],
+}
+
 recjk = re.compile(r'[\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u3005\u3007\u3021-\u3029\u3038-\u303A\u303B\u3400-\u4DB5'
                    r'\u4E00-\u9FC3\uF900-\uFA2D\uFA30-\uFA6A\uFA70-\uFAD9\U00020000-\U0002A6D6\U0002F800-\U0002FA1D]')
 
@@ -62,6 +85,25 @@ def get_contest_problem(problem, profile):
 def get_contest_submission_count(problem, profile, virtual):
     return profile.current_contest.submissions.exclude(submission__status__in=['IE']) \
                   .filter(problem__problem=problem, participation__virtual=virtual).count()
+
+
+def select_language_for_extension(languages_qs, extension):
+    matches = list(languages_qs.filter(extension__iexact=extension))
+    if not matches:
+        return None
+
+    preference = LANGUAGE_EXTENSION_PREFERENCE.get(extension)
+    if preference:
+        preference_order = {key: idx for idx, key in enumerate(preference)}
+
+        def sort_key(lang):
+            return preference_order.get(lang.key, len(preference)), lang.pk
+
+        matches.sort(key=sort_key)
+    else:
+        matches.sort(key=lambda lang: (lang.name.lower(), lang.pk))
+
+    return matches[0]
 
 
 class ProblemMixin(object):
@@ -821,12 +863,7 @@ class ProblemAPISubmit(ProblemSubmit):
             extension = os.path.splitext(submission_file.name)[1][1:].lower() if submission_file else ''
             if not extension:
                 return JsonResponse({'detail': _('Could not infer language from file extension.')}, status=400)
-            language = (
-                usable_languages
-                .filter(extension__iexact=extension)
-                .order_by('id')
-                .first()
-            )
+            language = select_language_for_extension(usable_languages, extension)
             if language is None:
                 return JsonResponse(
                     {'detail': _('No language matches file extension "%(ext)s".') % {'ext': extension}},
