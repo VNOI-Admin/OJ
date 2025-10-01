@@ -6251,6 +6251,14 @@ msgstr "Thêm test mới"
 msgid "Save"
 msgstr "Lưu"
 
+#: templates/problem/data.html:265
+msgid "Data file (file, folder, or zip archive)"
+msgstr "Tập tin dữ liệu (file, folder hoặc tệp zip)"
+
+#: templates/problem/data.html:266 templates/problem/data.html:267
+msgid "Hold Shift while clicking to select a folder"
+msgstr "Giữ Shift khi bấm để chọn thư mục"
+
 #: templates/problem/editor.html:93
 msgid "Edit problem in admin panel for more options"
 msgstr "Sửa bài tập này ở admin panel để có nhiều tùy chỉnh hơn"
