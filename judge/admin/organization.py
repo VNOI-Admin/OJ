@@ -5,7 +5,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy as _, ngettext
 from reversion.admin import VersionAdmin
 
-from judge.models import Organization
+from judge.models import Organization, OrganizationSlugHistory
 from judge.widgets import AdminHeavySelect2MultipleWidget, AdminMartorWidget
 
 
@@ -22,6 +22,8 @@ class OrganizationAdmin(VersionAdmin):
     fields = ('name', 'slug', 'short_name', 'is_open', 'is_unlisted', 'paid_credit', 'current_consumed_credit',
               'about', 'logo_override_image', 'slots', 'creation_date', 'admins')
     list_display = ('name', 'short_name', 'is_open', 'is_unlisted', 'slots', 'show_public')
+    search_fields = ('name', 'slug', 'short_name', 'about')
+    list_filter = ('is_open', 'is_unlisted', 'creation_date')
     prepopulated_fields = {'slug': ('name',)}
     actions = ('recalculate_points',)
     actions_on_top = True
@@ -67,7 +69,23 @@ class OrganizationAdmin(VersionAdmin):
 class OrganizationRequestAdmin(admin.ModelAdmin):
     list_display = ('username', 'organization', 'state', 'time')
     readonly_fields = ('user', 'organization', 'state')
+    search_fields = ('user__user__username', 'user__user__email', 'organization__name', 'organization__slug')
+    list_filter = ('state', 'time', 'organization')
 
     @admin.display(description=_('username'), ordering='user__user__username')
     def username(self, obj):
         return obj.user.user.username
+
+
+class OrganizationSlugHistoryAdmin(admin.ModelAdmin):
+    list_display = ('old_slug', 'organization', 'changed_date')
+    readonly_fields = ('old_slug', 'organization', 'changed_date')
+    search_fields = ('old_slug', 'organization__name', 'organization__slug')
+    list_filter = ('changed_date',)
+    ordering = ('-changed_date',)
+
+    def has_add_permission(self, request):
+        return False  # Prevent manual creation, only created via signals
+
+    def has_change_permission(self, request, obj=None):
+        return False  # Read-only
