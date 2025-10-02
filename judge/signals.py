@@ -2,6 +2,7 @@ import errno
 import os
 from typing import Optional
 
+
 from django.conf import settings
 from django.contrib.flatpages.models import FlatPage
 from django.core.cache import cache
