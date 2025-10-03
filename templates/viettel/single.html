@@ -75,7 +75,7 @@
         </li>
         {% endif %}
         <li class="tab{% if tab == 'ranking' %} active{% endif %}">
-            <a href="{{ url('contest_ranking', key_public) }}">Leaderboard</a>
+            <a href="{{ url('contest_ranking', key_public) }}">Public Leaderboard</a>
         </li>
         {% if request.user.is_superuser %}
         <li class="tab">
