@@ -58,10 +58,9 @@ class ProfileForm(ModelForm):
 
     class Meta:
         model = Profile
-        fields = ['about', 'display_badge', 'organizations', 'timezone', 'language', 'ace_theme',
+        fields = ['about', 'organizations', 'timezone', 'language', 'ace_theme',
                   'site_theme', 'user_script']
         widgets = {
-            'display_badge': Select2Widget(attrs={'style': 'width:200px'}),
             'timezone': Select2Widget(attrs={'style': 'width:200px'}),
             'language': Select2Widget(attrs={'style': 'width:200px'}),
             'ace_theme': Select2Widget(attrs={'style': 'width:200px'}),
@@ -72,7 +71,6 @@ class ProfileForm(ModelForm):
         # because the user can put the solution in that profile
         if settings.VNOJ_OFFICIAL_CONTEST_MODE:
             fields.remove('about')
-            fields.remove('display_badge')
 
         has_math_config = bool(settings.MATHOID_URL)
         if has_math_config:
@@ -101,11 +99,6 @@ class ProfileForm(ModelForm):
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super(ProfileForm, self).__init__(*args, **kwargs)
-
-        self.fields['display_badge'].required = False
-        self.fields['display_badge'].queryset = self.instance.badges.all()
-        if not self.fields['display_badge'].queryset:
-            self.fields.pop('display_badge')
 
         if not user.has_perm('judge.edit_all_organization'):
             self.fields['organizations'].queryset = Organization.objects.filter(
