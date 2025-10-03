@@ -287,15 +287,9 @@
                 <table>
                     <tr>
                         <td><div class="block-header grayed">{{ _('Full name') }}:</div></td>
-                        {% if form.display_badge %}
-                            <td><div class="block-header grayed">{{ _('Display badge') }}:</div></td>
-                        {% endif %}
                     </tr>
                     <tr>
                         <td>{{ form_user.first_name }}</td>
-                        {% if form.display_badge %}
-                            <td>{{ form.display_badge }}</td>
-                        {% endif %}
                     </tr>
                 </table>
                 <hr>
