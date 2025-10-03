@@ -495,6 +495,8 @@ def edit_profile(request):
             with revisions.create_revision(atomic=True):
                 form_user.save()
                 form.save()
+                request.profile.username_display_override = form_user.cleaned_data['first_name']
+                request.profile.save()
                 revisions.set_user(request.user)
                 revisions.set_comment(_('Updated on site'))
 

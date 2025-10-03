@@ -72,6 +72,7 @@ class ProfileForm(ModelForm):
         # because the user can put the solution in that profile
         if settings.VNOJ_OFFICIAL_CONTEST_MODE:
             fields.remove('about')
+            fields.remove('display_badge')
 
         has_math_config = bool(settings.MATHOID_URL)
         if has_math_config:
@@ -119,9 +120,9 @@ class UserForm(ModelForm):
         model = User
         fields = ['first_name']
 
-        # In contest mode, we don't want user to change their name.
-        if settings.VNOJ_OFFICIAL_CONTEST_MODE:
-            fields.remove('first_name')
+        # # In contest mode, we don't want user to change their name.
+        # if settings.VNOJ_OFFICIAL_CONTEST_MODE:
+        #     fields.remove('first_name')
 
     def clean_first_name(self):
         first_name = self.cleaned_data['first_name']
