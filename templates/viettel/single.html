@@ -1,4 +1,5 @@
 {% set has_joined_public=(request.user.is_authenticated and request.profile.contest_history.filter(contest__key=key_public,virtual=0).exists()) %}
+{% set can_view_problem=(request.user.is_authenticated and request.user.profile.id in (contest or problem).tester_ids) %}
 <div style="
     min-height: 400px;
     z-index: 0;
@@ -52,7 +53,7 @@
         color: #F2F2F2;
         padding-top: 16px;
     ">{{ footer }}</h3>
-    {% if request.user.is_superuser or has_joined_public %}
+    {% if request.user.is_superuser or has_joined_public or can_view_problem %}
     <a href="{{ url('problem_submit', key_public) }}" class="button banner-button">Submit</a>
     {% else %}
     <form action="{{ url('contest_join', key_public) }}" method="post">
@@ -66,7 +67,7 @@
         <li class="tab{% if tab == 'overview' %} active{% endif %}">
             <a href="{{ url('contest_view', key_public) }}">Tổng quan</a>
         </li>
-        {% if request.user.is_superuser or has_joined_public %}
+        {% if request.user.is_superuser or has_joined_public or can_view_problem %}
         <li class="tab{% if tab == 'detail' %} active{% endif %}">
             <a href="{{ url('problem_detail', key_public) }}">Đề bài</a>
         </li>
