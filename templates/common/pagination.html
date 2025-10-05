@@ -1,0 +1,27 @@
+{% if page_obj and page_obj.paginator.num_pages > 1 %}
+    <div class="pagination">
+        <ul>
+            {% if page_obj.has_previous %}
+                <li><a href="{{ request.path }}?page=1{% for key, value in request.GET.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="{{ _('First page') }}">&laquo;</a></li>
+                <li><a href="{{ request.path }}?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="{{ _('Previous page') }}">&lsaquo;</a></li>
+            {% endif %}
+
+            {% for page in page_obj.paginator.page_range %}
+                {% if page %}
+                    <li class="{% if page == page_obj.number %}active{% endif %}">
+                        <a href="{{ request.path }}?page={{ page }}{% for key, value in request.GET.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">{{ page }}</a>
+                    </li>
+                {% else %}
+                    <li class="disabled">
+                        <a href="#">...</a>
+                    </li>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <li><a href="{{ request.path }}?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="{{ _('Next page') }}">&rsaquo;</a></li>
+                <li><a href="{{ request.path }}?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items() %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" title="{{ _('Last page') }}">&raquo;</a></li>
+            {% endif %}
+        </ul>
+    </div>
+{% endif %}
