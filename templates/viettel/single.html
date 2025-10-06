@@ -1,4 +1,4 @@
-{% set has_joined_public=(request.user.is_authenticated and request.profile.contest_history.filter(contest__key=key_public,virtual=0).exists()) %}
+{% set has_joined_public=(request.user.is_authenticated and request.profile.current_contest.contest.key == key_public) %}
 {% set can_view_problem=(request.user.is_authenticated and request.user.profile.id in (contest or problem).tester_ids) %}
 <div style="
     min-height: 400px;
