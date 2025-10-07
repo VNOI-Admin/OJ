@@ -1,10 +1,10 @@
 <h3 style="color:red;font-weight:bold">
     {% if request.user == submission.user.user %}
-        {{ _('An internal error occurred while grading, and the %(site_name)s administrators have been notified.', site_name=SITE_NAME) }}
+        {{ _('Checker error') }}
         <br>
-        {{ _('In the meantime, try resubmitting in a few seconds.') }}
+        {{ _('Try resubmitting in a few seconds.') }}
     {% else %}
-        {{ _('An internal error occurred while grading.') }}
+        {{ _('Checker error') }}
     {% endif %}
 </h3>
 
