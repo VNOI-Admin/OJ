@@ -1,4 +1,4 @@
-{% set has_joined_public=(request.user.is_authenticated and request.profile.current_contest and request.profile.current_contest.contest.key == key_public) %}
+{% set has_joined_public=(request.user.is_authenticated and request.profile.current_contest and request.profile.current_contest.contest.key == key) %}
 {% set can_view_problem=(request.user.is_authenticated and request.user.profile.id in (contest or problem).tester_ids) %}
 <div style="
     min-height: 400px;
@@ -54,9 +54,9 @@
         padding-top: 16px;
     ">{{ footer }}</h3>
     {% if request.user.is_superuser or has_joined_public or can_view_problem %}
-    <a href="{{ url('problem_submit', key_public) }}" class="button banner-button">Submit</a>
+    <a href="{{ url('problem_submit', key) }}" class="button banner-button">Submit</a>
     {% else %}
-    <form action="{{ url('contest_join', key_public) }}" method="post">
+    <form action="{{ url('contest_join', key) }}" method="post">
         {% csrf_token %}
         <input type="submit" class="button banner-button" value="{{ _('Join') }}">
     </form>
@@ -65,31 +65,38 @@
 <div class="tabs">
     <ul>
         <li class="tab{% if tab == 'overview' %} active{% endif %}">
-            <a href="{{ url('contest_view', key_public) }}">Tổng quan</a>
+            <a href="{{ url('contest_view', key) }}">Tổng quan</a>
         </li>
         {% if request.user.is_superuser or has_joined_public or can_view_problem %}
         <li class="tab{% if tab == 'detail' %} active{% endif %}">
-            <a href="{{ url('problem_detail', key_public) }}">Đề bài</a>
+            <a href="{{ url('problem_detail', key) }}">Đề bài</a>
         </li>
         <li class="tab">
-            <a href="{{ url('contest_all_user_submissions', key_public, request.user.username) }}">Các bài nộp</a>
+            <a href="{{ url('contest_all_user_submissions', key, request.user.username) }}">Các bài nộp</a>
         </li>
         {% endif %}
+        {% if key_public %}
         <li class="tab{% if tab == 'ranking' %} active{% endif %}">
             <a href="{{ url('contest_ranking', key_public) }}">Public Leaderboard</a>
         </li>
+        {% endif %}
+        {% if request.user.is_superuser and key_private %}
+        <li class="tab{% if tab == 'ranking' %} active{% endif %}">
+            <a href="{{ url('contest_ranking', key_private) }}">Private Leaderboard</a>
+        </li>
+        {% endif %}
         {% if request.user.is_superuser %}
         <li class="tab">
-            <a href="{{ url('contest_edit', key_public) }}">Edit contest</a>
+            <a href="{{ url('contest_edit', key) }}">Edit contest</a>
         </li>
         <li class="tab">
-            <a href="{{ url('problem_edit', key_public) }}">Edit problem</a>
+            <a href="{{ url('problem_edit', key) }}">Edit problem</a>
         </li>
         <li class="tab">
-            <a href="{{ url('problem_data', key_public) }}">Edit test data</a>
+            <a href="{{ url('problem_data', key) }}">Edit test data</a>
         </li>
         <li class="tab">
-            <a href="{{ url('chronological_submissions', key_public) }}">Problem submissions</a>
+            <a href="{{ url('chronological_submissions', key) }}">Problem submissions</a>
         </li>
         {% endif %}
     </ul>
