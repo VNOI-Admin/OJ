@@ -55,9 +55,8 @@ VNOJ_ORG_PP_ENTRIES = 100
 VNOJ_ORG_PP_SCALE = 1
 
 VNOJ_ENABLE_API = False
-VNOJ_ENABLE_SYNC_API = False
-# when enable sync api, you need to set a global api key
-# GLOBAL_API_KEY = None
+VNOJ_ENABLE_SYNC_API = True  # need to make this true for testing :sad:
+GLOBAL_API_KEY = 'test-api-key-123'
 
 VNOJ_OFFICIAL_CONTEST_MODE = False
 
