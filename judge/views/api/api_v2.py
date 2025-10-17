@@ -68,7 +68,10 @@ class APILoginRequiredException(Exception):
 class APILoginRequiredMixin:
     def setup_api(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            raise APILoginRequiredException()
+            global_api_key = getattr(settings, 'GLOBAL_API_KEY', None)
+            provided_key = request.headers.get('X-Global-API-Key') or request.GET.get('global_api_key')
+            if not (global_api_key and provided_key == global_api_key):
+                raise APILoginRequiredException()
         super().setup_api(request, *args, **kwargs)
 
 

@@ -233,3 +233,45 @@ class ContestSyncAPITestCase(TestCase):
         response = self.client.get('/api/contests/icpc-2025/submissions')
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.json())
+
+    def test_global_api_key_authentication_header(self):
+        """Test API access using X-Global-API-Key header"""
+        with self.settings(GLOBAL_API_KEY='test-api-key-123'):
+            response = self.client.get(
+                '/api/contests/icpc-2025',
+                HTTP_X_GLOBAL_API_KEY='test-api-key-123',
+            )
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertEqual(data['code'], self.contest.key)
+
+    def test_global_api_key_authentication_query_param(self):
+        """Test API access using global_api_key query parameter"""
+        with self.settings(GLOBAL_API_KEY='test-api-key-456'):
+            response = self.client.get(
+                '/api/contests/icpc-2025/problems?global_api_key=test-api-key-456',
+            )
+            self.assertEqual(response.status_code, 200)
+            data = response.json()
+            self.assertEqual(len(data), 2)
+
+    def test_invalid_global_api_key(self):
+        """Test API access with invalid API key returns 403"""
+        with self.settings(GLOBAL_API_KEY='correct-api-key'):
+            response = self.client.get(
+                '/api/contests/icpc-2025',
+                HTTP_X_GLOBAL_API_KEY='wrong-api-key',
+            )
+            self.assertEqual(response.status_code, 403)
+
+    def test_missing_global_api_key(self):
+        """Test API access without API key returns 403"""
+        with self.settings(GLOBAL_API_KEY='some-api-key'):
+            response = self.client.get('/api/contests/icpc-2025')
+            self.assertEqual(response.status_code, 403)
+
+    def test_no_global_api_key_configured(self):
+        """Test API access when GLOBAL_API_KEY is not configured"""
+        with self.settings(GLOBAL_API_KEY=None):
+            response = self.client.get('/api/contests/icpc-2025')
+            self.assertEqual(response.status_code, 403)
