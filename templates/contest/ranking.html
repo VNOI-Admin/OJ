@@ -76,10 +76,7 @@
                         url: queryParam ? queryParam + '&raw' : '?raw',
                     }).done(function (data) {
                         $('#ranking-table').html(data);
-                        if (localStorage.getItem('show-personal-info') == 'true') {
-                            $('.personal-info').show();
-                            $('#show-personal-info-checkbox').prop('checked', true);
-                        }
+                        $('.personal-info').show();
                         {% if is_ICPC_format %}
                             window.addMedalIndicator();
                         {% endif %}
@@ -135,15 +132,7 @@
                 window.location.href = url.replace('__username__', $(this).val());
             });
 
-            $('#show-personal-info-checkbox').click(function () {
-                $('.personal-info').toggle();
-                localStorage.setItem('show-personal-info', $('.personal-info').is(':visible') ? 'true' : 'false');
-            });
-
-            if (localStorage.getItem('show-personal-info') == 'true') {
-                $('.personal-info').show();
-                $('#show-personal-info-checkbox').prop('checked', true);
-            }
+            $('.personal-info').show();
 
             {% if show_virtual %}
                 $('#show-virtual-participations-checkbox').prop('checked', true);
@@ -716,10 +705,6 @@
                     </div>
                 </div>
             </div>
-        {% endif %}
-        {% if tab != 'official_ranking' %}
-            <input id="show-personal-info-checkbox" type="checkbox" style="vertical-align: bottom">
-            <label for="show-personal-info-checkbox" style="vertical-align: bottom">{{ _('Show full name/organization') }}</label>
         {% endif %}
         {% if tab == 'ranking' %}
             <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
