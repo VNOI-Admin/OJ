@@ -7,6 +7,10 @@ from functools import partial
 from operator import attrgetter, itemgetter
 
 from django import forms
+from django.core.paginator import InvalidPage
+
+from judge.utils.diggpaginator import DiggPaginator
+from judge.utils.views import DiggPaginatorMixin
 from django.conf import settings
 from django.contrib.auth.context_processors import PermWrapper
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
@@ -912,10 +916,11 @@ def get_contest_ranking_list(request, contest, participation=None, ranking_list=
     return users, problems, total_ac
 
 
-class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
+class ContestRankingBase(ContestMixin, TitleMixin, DiggPaginatorMixin, DetailView):
     template_name = 'contest/ranking.html'
     ranking_table_template = get_template('contest/ranking-table.html')
     tab = None
+    paginate_by = 200
 
     def get_title(self):
         raise NotImplementedError()
@@ -934,12 +939,30 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         if not self.object.can_see_own_scoreboard(self.request.user):
             raise Http404()
 
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
     def get_rendered_ranking_table(self):
         users, problems, total_ac = self.get_ranking_list()
+        if not isinstance(users, (list, tuple)):
+            users = list(users)
+        page = self.request.GET.get('page', 1)
+        try:
+            page = int(page)
+        except ValueError:
+            page = 1
+
+        paginator = DiggPaginator(users, self.paginate_by, body=6, padding=2)
+        try:
+            current_page = paginator.page(page)
+        except InvalidPage:
+            current_page = paginator.page(1)
 
         return self.ranking_table_template.render(request=self.request, context={
             'table_id': 'ranking-table',
-            'users': users,
+            'users': current_page,
             'problems': problems,
             'total_ac': total_ac,
             'contest': self.object,
@@ -948,6 +971,8 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             'perms': PermWrapper(self.request.user),
             'can_edit': self.can_edit,
             'is_ICPC_format': (self.object.format.name == ICPCContestFormat.name),
+            'page_obj': current_page,
+            'paginator': paginator,
         })
 
     def get_context_data(self, **kwargs):
@@ -957,15 +982,44 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
 
         context['rendered_ranking_table'] = self.get_rendered_ranking_table()
         context['tab'] = self.tab
+
+        context['page_obj'] = getattr(self, '_page_obj', None)
+        context['paginator'] = getattr(self, '_paginator', None)
+
         return context
 
     def get(self, request, *args, **kwargs):
         if 'raw' in request.GET:
             self.object = self.get_object()
-
             self.check_can_see_own_scoreboard()
+            users, problems, total_ac = self.get_ranking_list()
+            users = list(users)
+            page = request.GET.get('page', 1)
+            try:
+                page = int(page)
+            except ValueError:
+                page = 1
 
-            return HttpResponse(self.get_rendered_ranking_table(), content_type='text/plain')
+            paginator = DiggPaginator(users, self.paginate_by, body=6, padding=2)
+            try:
+                current_page = paginator.page(page)
+            except InvalidPage:
+                current_page = paginator.page(1)
+                
+            return HttpResponse(self.ranking_table_template.render(request=request, context={
+                'table_id': 'ranking-table',
+                'users': current_page,
+                'problems': problems,
+                'total_ac': total_ac,
+                'contest': self.object,
+                'has_rating': self.object.ratings.exists(),
+                'is_frozen': self.is_frozen,
+                'perms': PermWrapper(request.user),
+                'can_edit': self.can_edit,
+                'is_ICPC_format': (self.object.format.name == ICPCContestFormat.name),
+                'page_obj': current_page,
+                'paginator': paginator,
+            }), content_type='text/plain')
 
         return super().get(request, *args, **kwargs)
 
@@ -1024,23 +1078,112 @@ class ContestRanking(ContestRankingBase):
 
         return self.get_full_ranking_list()
 
+   def _prepare_pagination_context(self):
+    """Create paginator/page_obj for the outer pagination include."""
+    # Determine the total number of rows according to the current display logic
+    total = 0
+
+    # Default (ContestRanking, ContestPublicRanking)
+    qs = None
+    if hasattr(self, 'get_ranking_queryset'):
+        # ContestRanking has get_ranking_queryset() which already applies is_frozen + show_virtual
+        qs = self.get_ranking_queryset()
+
+        # If the user cannot view the full scoreboard, count only themselves (LIVE)
+        if isinstance(self, ContestRanking) and not self.object.can_see_full_scoreboard(self.request.user):
+            qs = self.object.users.filter(
+                user=self.request.profile,
+                virtual=ContestParticipation.LIVE
+            )
+    else:
+        # Fallback: count LIVE participations in the contest
+        qs = self.object.users.filter(virtual=ContestParticipation.LIVE)
+
+    total = qs.count()
+
+    # “Dummy” paginator used only to compute number of pages/buttons
+    page = self.request.GET.get('page', 1)
+    try:
+        page = int(page)
+    except (TypeError, ValueError):
+        page = 1
+
+    dummy = range(total)
+    paginator = DiggPaginator(dummy, self.paginate_by, body=6, padding=2)
+    try:
+        current_page = paginator.page(page)
+    except InvalidPage:
+        current_page = paginator.page(1)
+
+    # Store on self so it can be exposed to the outer context
+    self._paginator = paginator
+    self._page_obj = current_page
+    self._is_paginated = paginator.num_pages > 1
+
+    # First-page link: keep all current query params except 'page'
+    params = self.request.GET.copy()
+    params.pop('page', None)
+    qs_str = params.urlencode()
+    self._first_page_href = self.request.path + (('?' + qs_str) if qs_str else '')
+
     def get_rendered_ranking_table(self):
-        if self.bypass_cache_ranking:
-            return super().get_rendered_ranking_table()
+        # Always prepare the pagination context for the outer include,
+        # even when the table content is retrieved from cache
+        self._prepare_pagination_context()
 
-        rendered_ranking_table = cache.get(self.cache_key, None)
-        if rendered_ranking_table is None:
-            rendered_ranking_table = super().get_rendered_ranking_table()
-            cache.set(self.cache_key, rendered_ranking_table, self.object.scoreboard_cache_timeout)
+        users, problems, total_ac = self.get_ranking_list()
 
-        return rendered_ranking_table
+        page = self.request.GET.get('page', 1)
+        try:
+            page = int(page)
+        except (TypeError, ValueError):
+            page = 1
+
+        # Ensure users is a list (avoid "object of type 'generator' has no len()" errors)
+        users = list(users)
+
+        paginator = DiggPaginator(users, self.paginate_by, body=6, padding=2)
+        try:
+            current_page = paginator.page(page)
+        except InvalidPage:
+            current_page = paginator.page(1)
+
+        # (Optional) keep the outer context in sync with the paginator actually used for the table
+        self._paginator = paginator
+        self._page_obj = current_page
+        self._is_paginated = paginator.num_pages > 1
+
+        return self.ranking_table_template.render(request=self.request, context={
+            'table_id': 'ranking-table',
+            'users': current_page,
+            'problems': problems,
+            'total_ac': total_ac,
+            'contest': self.object,
+            'has_rating': self.object.ratings.exists(),
+            'is_frozen': self.is_frozen,
+            'perms': PermWrapper(self.request.user),
+            'can_edit': self.can_edit,
+            'is_ICPC_format': (self.object.format.name == ICPCContestFormat.name),
+            'page_obj': current_page,
+            'paginator': paginator,
+        })
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['has_rating'] = self.object.ratings.exists()
-        context['show_virtual'] = self.show_virtual
-        context['is_frozen'] = self.is_frozen
-        context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
+
+        self.check_can_see_own_scoreboard()
+
+        # Render (also sets _paginator/_page_obj above)
+        context['rendered_ranking_table'] = self.get_rendered_ranking_table()
+        context['tab'] = self.tab
+
+        # *** Add 3 variables for common/pagination.html ***
+        context['paginator'] = getattr(self, '_paginator', None)
+        context['page_obj'] = getattr(self, '_page_obj', None)
+        context['is_paginated'] = bool(getattr(self, '_is_paginated', False))
+        context['first_page_href'] = getattr(self, '_first_page_href', '.')  # for the anchor to build the page-1 link
+        # context['page_suffix'] = ''  # if used by the pagination template; leaving empty is fine
+
         return context
 
 
