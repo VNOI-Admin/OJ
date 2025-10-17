@@ -6799,9 +6799,13 @@ msgstr "Quên mật khẩu?"
 msgid "See you later!"
 msgstr "Hẹn gặp lại!"
 
-#: templates/registration/oauth.html:28
+#: templates/registration/oauth.html:31
 msgid "Or log in with..."
 msgstr "Hoặc đăng nhập bằng..."
+
+#: templates/registration/oauth.html:29
+msgid "Sign up with Gmail"
+msgstr "Đăng ký bằng Gmail"
 
 #: templates/registration/password_change_done.html:3
 msgid "Your password was successfully changed."
@@ -7972,3 +7976,4 @@ msgstr "Chọn tất cả"
 
 #~ msgid "Maximum single-case runtime:"
 #~ msgstr "Thời gian chạy test lâu nhất:"
+
