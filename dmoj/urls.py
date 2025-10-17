@@ -473,28 +473,31 @@ if settings.VNOJ_ENABLE_API:
         ])),
     )
 
-urlpatterns += [
-    path(
-        'api/contests/<str:contest_code>',
-        api.api_v2.APIContestSyncDetail.as_view(),
-        name='api_contest_sync_detail',
-    ),
-    path(
-        'api/contests/<str:contest_code>/problems',
-        api.api_v2.APIContestSyncProblems.as_view(),
-        name='api_contest_sync_problems',
-    ),
-    path(
-        'api/contests/<str:contest_code>/participants',
-        api.api_v2.APIContestSyncParticipants.as_view(),
-        name='api_contest_sync_participants',
-    ),
-    path(
-        'api/contests/<str:contest_code>/submissions',
-        api.api_v2.APIContestSyncSubmissions.as_view(),
-        name='api_contest_sync_submissions',
-    ),
-]
+if settings.VNOJ_ENABLE_SYNC_API:
+    urlpatterns.append(
+        path('api/v2/sync/', include([
+            path(
+                'contest/<str:contest_code>',
+                api.api_v2.APIContestSyncDetail.as_view(),
+                name='api_contest_sync_detail',
+            ),
+            path(
+                'contest/<str:contest_code>/problems',
+                api.api_v2.APIContestSyncProblems.as_view(),
+                name='api_contest_sync_problems',
+            ),
+            path(
+                'contest/<str:contest_code>/participants',
+                api.api_v2.APIContestSyncParticipants.as_view(),
+                name='api_contest_sync_participants',
+            ),
+            path(
+                'contest/<str:contest_code>/submissions',
+                api.api_v2.APIContestSyncSubmissions.as_view(),
+                name='api_contest_sync_submissions',
+            ),
+        ])),
+    )
 
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_urls.py')) as f:

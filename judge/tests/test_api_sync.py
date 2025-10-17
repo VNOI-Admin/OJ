@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from judge.models import (
@@ -17,6 +17,7 @@ from judge.models import (
 )
 
 
+@override_settings(GLOBAL_API_KEY='test-api-key-123')
 class ContestSyncAPITestCase(TestCase):
     @classmethod
     def setUpTestData(cls):
@@ -152,18 +153,12 @@ class ContestSyncAPITestCase(TestCase):
         cls.old_submission.judged_date = base_time - timedelta(days=1)
         cls.old_submission.save(update_fields=['date', 'judged_date'])
 
-    def login(self):
-        self.assertTrue(
-            self.client.login(username=self.user.username, password=self.password),
-            msg='Login failed for test user.',
-        )
-
-    def test_requires_login(self):
+    def test_requires_api_key(self):
         endpoints = [
-            '/api/contests/icpc-2025',
-            '/api/contests/icpc-2025/problems',
-            '/api/contests/icpc-2025/participants',
-            '/api/contests/icpc-2025/submissions?from_timestamp=2020-01-01T00:00:00Z',
+            '/api/v2/sync/contest/icpc-2025',
+            '/api/v2/sync/contest/icpc-2025/problems',
+            '/api/v2/sync/contest/icpc-2025/participants',
+            '/api/v2/sync/contest/icpc-2025/submissions?from_timestamp=2020-01-01T00:00:00Z',
         ]
         for endpoint in endpoints:
             with self.subTest(endpoint=endpoint):
@@ -171,8 +166,7 @@ class ContestSyncAPITestCase(TestCase):
                 self.assertEqual(response.status_code, 403)
 
     def test_contest_metadata(self):
-        self.login()
-        response = self.client.get('/api/contests/icpc-2025')
+        response = self.client.get('/api/v2/sync/contest/icpc-2025', headers={'X-Global-API-Key': 'test-api-key-123'})
         self.assertEqual(response.status_code, 200)
         data = response.json()
         self.assertEqual(
@@ -186,8 +180,10 @@ class ContestSyncAPITestCase(TestCase):
         )
 
     def test_problem_list(self):
-        self.login()
-        response = self.client.get('/api/contests/icpc-2025/problems')
+        response = self.client.get(
+            '/api/v2/sync/contest/icpc-2025/problems',
+            headers={'X-Global-API-Key': 'test-api-key-123'},
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.json(),
@@ -198,8 +194,10 @@ class ContestSyncAPITestCase(TestCase):
         )
 
     def test_participants_ranking(self):
-        self.login()
-        response = self.client.get('/api/contests/icpc-2025/participants')
+        response = self.client.get(
+            '/api/v2/sync/contest/icpc-2025/participants',
+            headers={'X-Global-API-Key': 'test-api-key-123'},
+        )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.json(),
@@ -210,27 +208,30 @@ class ContestSyncAPITestCase(TestCase):
         )
 
     def test_submissions_filtering_and_status(self):
-        self.login()
         from_ts = (self.final_submission.judged_date - timedelta(minutes=5)).isoformat()
         response = self.client.get(
-            '/api/contests/icpc-2025/submissions',
+            '/api/v2/sync/contest/icpc-2025/submissions',
             {'from_timestamp': from_ts},
+            headers={'X-Global-API-Key': 'test-api-key-123'},
         )
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.json()), 1)
         self.assertEqual(response.json()[0]['id'], str(self.final_submission.id))
 
         response_all = self.client.get(
-            '/api/contests/icpc-2025/submissions',
+            '/api/v2/sync/contest/icpc-2025/submissions',
             {'from_timestamp': from_ts, 'status': 'all'},
+            headers={'X-Global-API-Key': 'test-api-key-123'},
         )
         self.assertEqual(response_all.status_code, 200)
         ids = [entry['id'] for entry in response_all.json()]
         self.assertListEqual(ids, [str(self.final_submission.id), str(self.processing_submission.id)])
 
     def test_submissions_requires_timestamp(self):
-        self.login()
-        response = self.client.get('/api/contests/icpc-2025/submissions')
+        response = self.client.get(
+            '/api/v2/sync/contest/icpc-2025/submissions',
+            headers={'X-Global-API-Key': 'test-api-key-123'},
+        )
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.json())
 
@@ -238,8 +239,8 @@ class ContestSyncAPITestCase(TestCase):
         """Test API access using X-Global-API-Key header"""
         with self.settings(GLOBAL_API_KEY='test-api-key-123'):
             response = self.client.get(
-                '/api/contests/icpc-2025',
-                HTTP_X_GLOBAL_API_KEY='test-api-key-123',
+                '/api/v2/sync/contest/icpc-2025',
+                headers={'X-Global-API-Key': 'test-api-key-123'},
             )
             self.assertEqual(response.status_code, 200)
             data = response.json()
@@ -249,7 +250,7 @@ class ContestSyncAPITestCase(TestCase):
         """Test API access using global_api_key query parameter"""
         with self.settings(GLOBAL_API_KEY='test-api-key-456'):
             response = self.client.get(
-                '/api/contests/icpc-2025/problems?global_api_key=test-api-key-456',
+                '/api/v2/sync/contest/icpc-2025/problems?global_api_key=test-api-key-456',
             )
             self.assertEqual(response.status_code, 200)
             data = response.json()
@@ -259,19 +260,19 @@ class ContestSyncAPITestCase(TestCase):
         """Test API access with invalid API key returns 403"""
         with self.settings(GLOBAL_API_KEY='correct-api-key'):
             response = self.client.get(
-                '/api/contests/icpc-2025',
-                HTTP_X_GLOBAL_API_KEY='wrong-api-key',
+                '/api/v2/sync/contest/icpc-2025',
+                headers={'X-Global-API-Key': 'wrong-api-key'},
             )
             self.assertEqual(response.status_code, 403)
 
     def test_missing_global_api_key(self):
         """Test API access without API key returns 403"""
         with self.settings(GLOBAL_API_KEY='some-api-key'):
-            response = self.client.get('/api/contests/icpc-2025')
+            response = self.client.get('/api/v2/sync/contest/icpc-2025')
             self.assertEqual(response.status_code, 403)
 
     def test_no_global_api_key_configured(self):
         """Test API access when GLOBAL_API_KEY is not configured"""
         with self.settings(GLOBAL_API_KEY=None):
-            response = self.client.get('/api/contests/icpc-2025')
+            response = self.client.get('/api/v2/sync/contest/icpc-2025')
             self.assertEqual(response.status_code, 403)

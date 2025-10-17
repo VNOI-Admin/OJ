@@ -68,10 +68,20 @@ class APILoginRequiredException(Exception):
 class APILoginRequiredMixin:
     def setup_api(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
-            global_api_key = getattr(settings, 'GLOBAL_API_KEY', None)
-            provided_key = request.headers.get('X-Global-API-Key') or request.GET.get('global_api_key')
-            if not (global_api_key and provided_key == global_api_key):
-                raise APILoginRequiredException()
+            raise APILoginRequiredException()
+        super().setup_api(request, *args, **kwargs)
+
+
+class APIKeyRequiredException(Exception):
+    pass
+
+
+class APIKeyRequiredMixin:
+    def setup_api(self, request, *args, **kwargs):
+        global_api_key = getattr(settings, 'GLOBAL_API_KEY', None)
+        provided_key = request.headers.get('X-Global-API-Key') or request.GET.get('global_api_key')
+        if not (global_api_key and provided_key == global_api_key):
+            raise APIKeyRequiredException()
         super().setup_api(request, *args, **kwargs)
 
 
@@ -104,6 +114,7 @@ class APIMixin:
             ValidationError: (400, 'invalid filter value type'),
             PermissionDenied: (403, 'permission denied'),
             APILoginRequiredException: (403, 'login required'),
+            APIKeyRequiredException: (403, 'api key required'),
             Http404: (404, 'page/object not found'),
         }
         exception_type = type(exception)
@@ -755,13 +766,10 @@ class APIJudgeList(APIListView):
         }
 
 
-class APIContestSyncBase(APILoginRequiredMixin, APIMixin, BaseDetailView):
+class APIContestSyncBase(APIKeyRequiredMixin, APIMixin, BaseDetailView):
     model = Contest
     slug_field = 'key'
     slug_url_kwarg = 'contest_code'
-
-    def get_queryset(self):
-        return Contest.get_visible_contests(self.request.user)
 
     def get_data(self, context):
         return self.get_api_data(context)
