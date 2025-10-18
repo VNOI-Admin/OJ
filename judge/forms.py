@@ -433,7 +433,7 @@ class TagProblemCreateForm(Form):
     problem_url = forms.URLField(max_length=200,
                                  label=_('Problem URL'),
                                  help_text=_('Full URL to the problem, '
-                                             'e.g. https://oj.vnoi.info/problem/post'),
+                                             'e.g. https://oj.tcpp.edu.vn/problem/post'),
                                  widget=forms.TextInput(attrs={'style': 'width:100%'}))
 
     def __init__(self, problem_url=None, *args, **kwargs):

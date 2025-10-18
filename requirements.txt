@@ -12,6 +12,8 @@ mysqlclient
 dmoj-wpadmin @ git+https://github.com/DMOJ/dmoj-wpadmin.git
 lxml
 lxml_html_clean
+setuptools
+websocket-client
 Pygments<2.12
 mistune<2
 social-auth-core==4.3.0
@@ -44,3 +46,4 @@ django-admin-sortable2
 icalendar
 # This is a celery dependency whose latest major version is breaking everything.
 importlib-metadata<5
+pymemcache

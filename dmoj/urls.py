@@ -17,7 +17,6 @@ from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
     preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
     two_factor, user, widgets
-from judge.views.magazine import MagazinePage
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
 from judge.views.register import ActivationView, RegistrationView
@@ -33,7 +32,6 @@ admin.autodiscover()
 SEND_ACTIVATION_EMAIL = getattr(settings, 'SEND_ACTIVATION_EMAIL', True)
 REGISTRATION_COMPLETE_TEMPLATE = 'registration/registration_complete.html' if SEND_ACTIVATION_EMAIL \
                                  else 'registration/activation_complete.html'
-
 register_patterns = [
     path('activate/complete/',
          TitledTemplateView.as_view(template_name='registration/activation_complete.html',
@@ -427,7 +425,12 @@ urlpatterns = [
         path('progress', tasks.demo_progress),
     ])),
 
-    path('magazine/', MagazinePage.as_view(), name='magazine'),
+    path(r'import_users/', include([
+        path(r'', user.ImportUsersView.as_view(), name='import_users'),
+        path(r'post_file/', user.import_users_post_file, name='import_users_post_file'),
+        path(r'submit/', user.import_users_submit, name='import_users_submit'),
+        path(r'sample/', user.sample_import_users, name='import_users_sample')
+    ])),
 ]
 
 favicon_paths = ['apple-touch-icon-180x180.png', 'apple-touch-icon-114x114.png', 'android-chrome-72x72.png',
@@ -437,7 +440,7 @@ favicon_paths = ['apple-touch-icon-180x180.png', 'apple-touch-icon-114x114.png',
                  'safari-pinned-tab.svg', 'android-chrome-144x144.png', 'apple-touch-icon-152x152.png',
                  'favicon-96x96.png',
                  'favicon-32x32.png', 'favicon-16x16.png', 'android-chrome-192x192.png', 'android-chrome-48x48.png',
-                 'mstile-310x150.png', 'apple-touch-icon-144x144.png', 'browserconfig.xml', 'manifest.json',
+                 'mstile-310x150.png', 'apple-touch-icon-144x144.png', 'browserconfig.xml',
                  'apple-touch-icon-120x120.png', 'mstile-310x310.png']
 
 static_lazy = lazy(static, str)

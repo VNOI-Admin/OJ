@@ -868,7 +868,7 @@ msgid "Problem URL"
 msgstr ""
 
 #: judge/forms.py:378
-msgid "Full URL to the problem, e.g. https://oj.vnoi.info/problem/post"
+msgid "Full URL to the problem, e.g. https://oj.tcpp.edu.vn/problem/post"
 msgstr ""
 
 #: judge/forms.py:410 judge/views/register.py:26

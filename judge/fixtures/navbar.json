@@ -110,21 +110,5 @@
             "tree_id": 5,
             "level": 1
         }
-    },
-    {
-        "model": "judge.navigationbar",
-        "pk": 8,
-        "fields": {
-            "order": 8,
-            "key": "github",
-            "label": "Github",
-            "path": "https://github.com/VNOI-Admin/OJ",
-            "regex": "^https://github.com/VNOI-Admin/OJ$",
-            "parent": 5,
-            "lft": 6,
-            "rght": 7,
-            "tree_id": 5,
-            "level": 1
-        }
     }
 ]

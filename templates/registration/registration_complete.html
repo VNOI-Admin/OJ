@@ -1,5 +1,4 @@
 {% extends "base.html" %}
 {% block body %}
     <p>{{ _('You have successfully been registered. An email has been sent to the email address you provided to confirm your registration.') }}</p>
-    <p>{{ _('See you soon! If you have problems activating your account, feel free to shoot us a message at: ') }}{% if misc_config.discord_invite_link and misc_config.discord_invite_shieldio %}<a href="{{ misc_config.discord_invite_link }}"><img src="{{ misc_config.discord_invite_shieldio }}"></a>{% endif %}</p>
 {% endblock %}

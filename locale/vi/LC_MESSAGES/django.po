@@ -928,8 +928,8 @@ msgid "Problem URL"
 msgstr "Link bài"
 
 #: judge/forms.py:426
-msgid "Full URL to the problem, e.g. https://oj.vnoi.info/problem/post"
-msgstr "Link tới bài tập, ví dụ: https://oj.vnoi.info/problem/post"
+msgid "Full URL to the problem, e.g. https://oj.tcpp.edu.vn/problem/post"
+msgstr "Link tới bài tập, ví dụ: https://oj.tcpp.edu.vn/problem/post"
 
 #: judge/forms.py:482 judge/views/register.py:27
 #: templates/blog/top-contrib.html:8 templates/blog/top-pp.html:8
@@ -1402,7 +1402,7 @@ msgstr "Logo"
 msgid ""
 "This image will replace the default site logo for users inside the contest."
 msgstr ""
-"Link tới logo của kỳ thi. Ví dụ: https://oj.vnoi.info/martor/logo/hoadao.png"
+"Link tới logo của kỳ thi. Ví dụ: https://oj.tcpp.edu.vn/martor/hehehe.png"
 
 #: judge/models/contest.py:156
 msgid "the amount of live participants"
@@ -4799,8 +4799,8 @@ msgstr "dựa trên nền tảng %(dmoj)s"
 
 #: templates/base.html:364
 #, python-format
-msgid "follow us on %(github)s and %(facebook)s"
-msgstr "theo dõi VNOI trên %(github)s và %(facebook)s"
+msgid "TCOJ"
+msgstr "TCOJ"
 
 #: templates/blog/blog-list-tabs.html:4
 msgid "Newsfeed"
