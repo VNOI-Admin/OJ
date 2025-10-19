@@ -27,6 +27,7 @@ from judge.utils.opengraph import generate_opengraph
 from judge.utils.tickets import filter_visible_tickets
 from judge.utils.unicode import remove_accents
 from judge.utils.views import TitleMixin, generic_message
+from django.template.response import TemplateResponse
 
 
 @login_required
@@ -135,6 +136,96 @@ class PostListBase(ListView):
                    .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
                    .values_list('page').annotate(count=Count('page')).order_by()
         }
+        return context
+
+
+class ModernBlogList(PostListBase):
+    template_name = 'blog/modern-list.html'
+    paginate_by = 3
+    title = _('Blog')
+
+    def get_queryset(self):
+        queryset = super(ModernBlogList, self).get_queryset()
+        queryset = queryset.filter(organization=None)
+        
+        # Search functionality
+        search_query = self.request.GET.get('q', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) |
+                Q(content__icontains=search_query) |
+                Q(summary__icontains=search_query)
+            )
+        
+        # Filter functionality
+        filter_type = self.request.GET.get('filter', '').strip()
+        if filter_type == 'pinned':
+            queryset = queryset.filter(sticky=True)
+        elif filter_type == 'global':
+            queryset = queryset.filter(global_post=True)
+        
+        # Tag filter
+        tag_slug = self.request.GET.get('tag', '').strip()
+        if tag_slug:
+            queryset = queryset.filter(tags__slug=tag_slug).distinct()
+        
+        # Sort functionality
+        sort_by = self.request.GET.get('sort', 'latest').strip()
+        if sort_by == 'top':
+            queryset = queryset.order_by('-score', '-publish_on')
+        elif sort_by == 'discussed':
+            comment_counts = dict(
+                Comment.objects
+                .filter(page__startswith='b:', hidden=False)
+                .values_list('page')
+                .annotate(count=Count('page'))
+            )
+            
+            post_comment_map = {}
+            for page, count in comment_counts.items():
+                post_id = int(page[2:])  
+                post_comment_map[post_id] = count
+            
+            posts = list(queryset)
+            posts.sort(key=lambda p: post_comment_map.get(p.id, 0), reverse=True)
+            
+            return posts
+        else: 
+            queryset = queryset.order_by('-sticky', '-publish_on')
+        
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(ModernBlogList, self).get_context_data(**kwargs)
+        context['page_prefix'] = reverse('blog_modern_list')
+        
+        # Pass current filters to template
+        context['current_search'] = self.request.GET.get('q', '')
+        context['current_filter'] = self.request.GET.get('filter', '')
+        context['current_sort'] = self.request.GET.get('sort', 'latest')
+        context['current_tag'] = self.request.GET.get('tag', '')
+        
+        # Get all available tags (if tag model exists)
+        try:
+            from judge.models import BlogPostTag
+            context['tags'] = BlogPostTag.objects.all()
+        except (ImportError, AttributeError):
+            context['tags'] = []
+        
+        # Get vote information for each post
+        post_ids = [post.id for post in context['posts']]
+        post_votes = {}
+        for post_id in post_ids:
+            upvotes = BlogVote.objects.filter(blog_id=post_id, score=1).select_related('voter__user')
+            downvotes = BlogVote.objects.filter(blog_id=post_id, score=-1).select_related('voter__user')
+            post_votes[post_id] = {
+                'upvoters': list(upvotes.values_list('voter__user__username', flat=True)[:10]),
+                'downvoters': list(downvotes.values_list('voter__user__username', flat=True)[:10]),
+                'upvote_count': upvotes.count(),
+                'downvote_count': downvotes.count(),
+            }
+        context['post_votes'] = post_votes
+        
         return context
 
 
@@ -269,85 +360,40 @@ class PostView(TitleMixin, CommentedDetailView):
         return post
 
 
-class BlogPostCreate(TitleMixin, CreateView):
-    template_name = 'blog/edit.html'
-    model = BlogPost
-    form_class = BlogPostForm
-    context_object_name = 'post'
-
-    def get_title(self):
-        return _('Creating new blog post')
-
-    def get_content_title(self):
-        return _('Creating new blog post')
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
-    def form_valid(self, form):
-        with revisions.create_revision(atomic=True):
-            post = form.save()
-            post.slug = remove_accents(self.request.user.username.lower())
-            post.publish_on = timezone.now()
-            post.authors.add(self.request.user.profile)
-            post.save()
-
-            revisions.set_comment(_('Created on site'))
-            revisions.set_user(self.request.user)
-
-        on_new_blogpost(post.id)
-
-        return HttpResponseRedirect(post.get_absolute_url())
-
+class BlogPostCreate(View):
+    """Redirect blog post creation to Django admin"""
+    
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             raise PermissionDenied()
-        # hasattr(self, 'organization') -> admin org
+        
+        # Check if user has permission to create blog posts
         if request.official_contest_mode or request.user.profile.problem_count < settings.VNOJ_BLOG_MIN_PROBLEM_COUNT \
                 and not request.user.is_superuser and not hasattr(self, 'organization'):
             return generic_message(request, _('Permission denied'),
                                    _('You cannot create blog post.\n'
                                      'Note: You need to solve at least %d problems to create new blog post.')
                                    % settings.VNOJ_BLOG_MIN_PROBLEM_COUNT)
-        return super().dispatch(request, *args, **kwargs)
+        
+        # Redirect to Django admin add page
+        from django.urls import reverse
+        return HttpResponseRedirect(reverse('admin:judge_blogpost_add'))
 
 
-class BlogPostEdit(BlogPostMixin, TitleMixin, UpdateView):
-    template_name = 'blog/edit.html'
-    model = BlogPost
-    form_class = BlogPostForm
-    context_object_name = 'post'
-
-    def get_title(self):
-        return _('Updating blog post')
-
-    def get_content_title(self):
-        return _('Updating blog post')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['edit'] = True
-        context['delete'] = self.request.user.has_perm('judge.delete_blogpost')
-        return context
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
-    def form_valid(self, form):
-        with revisions.create_revision(atomic=True):
-            revisions.set_comment(_('Edited from site'))
-            revisions.set_user(self.request.user)
-            return super(BlogPostEdit, self).form_valid(form)
-
+class BlogPostEdit(BlogPostMixin, View):
+    """Redirect blog post editing to Django admin"""
+    
     def dispatch(self, request, *args, **kwargs):
         if request.official_contest_mode and not request.user.is_superuser:
             return generic_message(request, _('Permission denied'),
                                    _('You cannot edit blog post.'))
-        return super().dispatch(request, *args, **kwargs)
+        
+        # Get the post object to get its ID
+        post = self.get_object()
+        
+        # Redirect to Django admin change page
+        from django.urls import reverse
+        return HttpResponseRedirect(reverse('admin:judge_blogpost_change', args=[post.id]))
 
 
 class BlogPostDelete(BlogPostMixin, SingleObjectMixin, View):

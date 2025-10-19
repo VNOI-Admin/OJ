@@ -325,6 +325,7 @@ urlpatterns = [
     path('status/', status.status_all, name='status_all'),
     path('status/oj/', status.status_oj, name='status_oj'),
 
+    path('blog/', paged_list_view(blog.ModernBlogList, 'blog_modern_list')),
     path('posts/', paged_list_view(blog.PostList, 'blog_post_list')),
     path('posts/new', blog.BlogPostCreate.as_view(), name='blog_post_new'),
     path('posts/upvote', blog.upvote_blog, name='blog_upvote'),
@@ -472,6 +473,7 @@ if settings.VNOJ_ENABLE_API:
             path('judges', api.api_v2.APIJudgeList.as_view()),
         ])),
     )
+
 
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_urls.py')) as f:
