@@ -321,7 +321,6 @@ class PostList(PostListBase):
                 .select_related('user', 'display_badge')
                 [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
 
-
 class PostView(TitleMixin, CommentedDetailView):
     model = BlogPost
     pk_url_kwarg = 'id'
@@ -380,7 +379,7 @@ class BlogPostCreate(View):
         return HttpResponseRedirect(reverse('admin:judge_blogpost_add'))
 
 
-class BlogPostEdit(BlogPostMixin, View):
+class BlogPostEdit(BlogPostMixin, SingleObjectMixin, View):
     """Redirect blog post editing to Django admin"""
     
     def dispatch(self, request, *args, **kwargs):
