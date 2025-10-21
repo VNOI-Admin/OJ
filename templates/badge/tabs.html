@@ -1,0 +1,16 @@
+<div class="tabs">
+    <ul>
+        <li{% if tab == 'pending' %} class="active"{% endif %}>
+            <a href="{{ url('badge_requests_pending') }}">{{ _('Pending') }}</a>
+        </li>
+        <li{% if tab == 'log' %} class="active"{% endif %}>
+            <a href="{{ url('badge_requests_log') }}">{{ _('Log') }}</a>
+        </li>
+        <li{% if tab == 'approved' %} class="active"{% endif %}>
+            <a href="{{ url('badge_requests_approved') }}">{{ _('Approved') }}</a>
+        </li>
+        <li{% if tab == 'rejected' %} class="active"{% endif %}>
+            <a href="{{ url('badge_requests_rejected') }}">{{ _('Rejected') }}</a>
+        </li>
+    </ul>
+</div>
