@@ -7953,6 +7953,9 @@ msgstr "Số bài"
 msgid "Check all"
 msgstr "Chọn tất cả"
 
+msgid "If your account was created with Google sign-in, you do not need to reset a password. Please continue by signing in with Google."
+msgstr "Nếu tài khoản của bạn được tạo bằng đăng nhập Google, bạn không cần đặt lại mật khẩu. Vui lòng tiếp tục đăng nhập bằng Google."
+
 #~ msgid "Associated page"
 #~ msgstr "Trang liên kết"
 
@@ -7976,4 +7979,3 @@ msgstr "Chọn tất cả"
 
 #~ msgid "Maximum single-case runtime:"
 #~ msgstr "Thời gian chạy test lâu nhất:"
-
