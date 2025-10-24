@@ -2,12 +2,12 @@
 
 // Medium-inspired blog post detail design
 .blog-post-container {
-    max-width: 680px;
+    max-width: 80%;
     margin: 0 auto;
-    padding: 40px 24px 80px;
+    padding: 40px 0 80px;
     background: #ffffff;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Georgia', serif;
-    
+
     @media (max-width: 768px) {
         padding: 24px 16px 60px;
     }
@@ -392,8 +392,7 @@
 // Floating action bar (Medium style)
 .blog-post-floating-actions {
     position: fixed;
-    left: 50%;
-    margin-left: -500px;
+    left: 40px;
     top: 120px;
     display: flex;
     flex-direction: column;
