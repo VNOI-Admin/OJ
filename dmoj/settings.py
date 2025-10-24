@@ -789,6 +789,8 @@ ACE_DEFAULT_LIGHT_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['light']
 ACE_DEFAULT_DARK_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['dark']
 # Only allow OAuth login
 OAUTH_ONLY = False
+ICPC_CONTEST_NAME = 'ICPC vòng miền Bắc 2025'
+ICPC_CONTEST_DOMAIN = 'https://icpc.vnoi.info'
 
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
