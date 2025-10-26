@@ -1,0 +1,31 @@
+{% extends "admin/app_index.html" %}
+{% load i18n admin_urls static %}
+
+{% block app_content %}
+    <h1>{{ app_config.verbose_name }}</h1>
+    <div class="app-models module">
+        <table>
+            <caption>{% blocktrans with name=app_config.verbose_name %}Models in the {{ name }} application{% endblocktrans %}</caption>
+            <tbody>
+                {% for model in app_list.models %}
+                <tr>
+                    <th scope="row">
+                        <a href="{{ model.admin_url }}">{{ model.name }}</a>
+                    </th>
+                    <td class="model-actions">
+                        {% if model.add_url %}
+                            <a href="{{ model.add_url }}" class="addlink">{% trans 'Add' %}</a>
+                        {% endif %}
+                        {% if model.change_url %}
+                            <a href="{{ model.change_url }}" class="changelink">{% trans 'Change' %}</a>
+                        {% endif %}
+                        {% if model.delete_url %}
+                            <a href="{{ model.delete_url }}" class="deletelink">{% trans 'Delete' %}</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
