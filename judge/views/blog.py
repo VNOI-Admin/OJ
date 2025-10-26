@@ -11,17 +11,21 @@ from django.http import (Http404, HttpResponse, HttpResponseBadRequest,
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext as _
-from django.views.generic import ListView
+from django.views.generic import CreateView, ListView, UpdateView
 from django.views.generic.detail import SingleObjectMixin, View
+from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.dblock import LockModel
+from judge.forms import BlogPostForm
 from judge.models import (BlogPost, BlogVote, Comment, Contest, Language,
                           Problem, Profile, Submission, Ticket)
+from judge.tasks.webhook import on_new_blogpost
 from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.tickets import filter_visible_tickets
+from judge.utils.unicode import remove_accents
 from judge.utils.views import TitleMixin, generic_message
 
 
@@ -355,8 +359,37 @@ class PostView(TitleMixin, CommentedDetailView):
         return post
 
 
-class BlogPostCreate(View):
-    """Redirect blog post creation to Django admin"""
+class BlogPostCreate(TitleMixin, CreateView):
+    template_name = 'blog/edit.html'
+    model = BlogPost
+    form_class = BlogPostForm
+    context_object_name = 'post'
+
+    def get_title(self):
+        return _('Creating new blog post')
+
+    def get_content_title(self):
+        return _('Creating new blog post')
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        with revisions.create_revision(atomic=True):
+            post = form.save()
+            post.slug = remove_accents(self.request.user.username.lower())
+            post.publish_on = timezone.now()
+            post.authors.add(self.request.user.profile)
+            post.save()
+
+            revisions.set_comment(_('Created on site'))
+            revisions.set_user(self.request.user)
+
+        on_new_blogpost(post.id)
+
+        return HttpResponseRedirect(post.get_absolute_url())
 
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
@@ -370,25 +403,43 @@ class BlogPostCreate(View):
                                      'Note: You need to solve at least %d problems to create new blog post.')
                                    % settings.VNOJ_BLOG_MIN_PROBLEM_COUNT)
 
-        # Redirect to Django admin add page
-        from django.urls import reverse
-        return HttpResponseRedirect(reverse('admin:judge_blogpost_add'))
+        return super().dispatch(request, *args, **kwargs)
 
 
-class BlogPostEdit(BlogPostMixin, SingleObjectMixin, View):
-    """Redirect blog post editing to Django admin"""
+class BlogPostEdit(BlogPostMixin, TitleMixin, UpdateView):
+    template_name = 'blog/edit.html'
+    model = BlogPost
+    form_class = BlogPostForm
+    context_object_name = 'post'
+
+    def get_title(self):
+        return _('Updating blog post')
+
+    def get_content_title(self):
+        return _('Updating blog post')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['edit'] = True
+        context['delete'] = self.request.user.has_perm('judge.delete_blogpost')
+        return context
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
+    def form_valid(self, form):
+        with revisions.create_revision(atomic=True):
+            revisions.set_comment(_('Edited from site'))
+            revisions.set_user(self.request.user)
+            return super(BlogPostEdit, self).form_valid(form)
 
     def dispatch(self, request, *args, **kwargs):
         if request.official_contest_mode and not request.user.is_superuser:
             return generic_message(request, _('Permission denied'),
                                    _('You cannot edit blog post.'))
-
-        # Get the post object to get its ID
-        post = self.get_object()
-
-        # Redirect to Django admin change page
-        from django.urls import reverse
-        return HttpResponseRedirect(reverse('admin:judge_blogpost_change', args=[post.id]))
+        return super().dispatch(request, *args, **kwargs)
 
 
 class BlogPostDelete(BlogPostMixin, SingleObjectMixin, View):
