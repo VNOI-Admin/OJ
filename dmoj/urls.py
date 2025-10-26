@@ -332,6 +332,7 @@ urlpatterns = [
     path('posts/downvote', blog.downvote_blog, name='blog_downvote'),
     path('post/<int:id>-<slug:slug>', include([
         path('', blog.PostView.as_view(), name='blog_post'),
+        path('/modern', blog.PostModernView.as_view(), name='blog_post_modern'),
         path('/edit', blog.BlogPostEdit.as_view(), name='blog_post_edit'),
         path('/delete', blog.BlogPostDelete.as_view(), name='blog_post_delete'),
         path('/', lambda _, id, slug: HttpResponsePermanentRedirect(reverse('blog_post', args=[id, slug]))),

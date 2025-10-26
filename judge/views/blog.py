@@ -359,6 +359,10 @@ class PostView(TitleMixin, CommentedDetailView):
         return post
 
 
+class PostModernView(PostView):
+    template_name = 'blog/modern-content.html'
+
+
 class BlogPostCreate(TitleMixin, CreateView):
     template_name = 'blog/edit.html'
     model = BlogPost

@@ -133,7 +133,7 @@
           <span class="hero-badge"><i class="fa fa-thumb-tack"></i>{{ _('Featured') }}</span>
           <span class="hero-date"><i class="fa fa-clock-o"></i>{{ relative_time(hero_post.publish_on, abs=_('on {time}'), rel=_('{time}')) }}</span>
         </div>
-        <h1 class="hero-title"><a href="{{ url('blog_post', hero_post.id, hero_post.slug) }}">{{ hero_post.title }}</a></h1>
+        <h1 class="hero-title"><a href="{{ url('blog_post_modern', hero_post.id, hero_post.slug) }}">{{ hero_post.title }}</a></h1>
         <div class="hero-excerpt">
           {% cache 86400 'post_summary_hero' hero_post.id %}
             {{ hero_post.summary
@@ -229,7 +229,7 @@
           </div>
 
           <h2 class="magazine-card-title">
-            <a href="{{ url('blog_post', post.id, post.slug) }}">{{ post.title }}</a>
+            <a href="{{ url('blog_post_modern', post.id, post.slug) }}">{{ post.title }}</a>
           </h2>
 
           <div class="magazine-card-excerpt">
