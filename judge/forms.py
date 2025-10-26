@@ -735,11 +735,12 @@ class BlogPostForm(ModelForm):
 
     class Meta:
         model = BlogPost
-        fields = ['title', 'publish_on', 'visible', 'global_post', 'sticky', 'content']
+        fields = ['title', 'publish_on', 'visible', 'global_post', 'tags', 'sticky', 'content']
         widgets = {
             'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'summary': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'publish_on': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
+            'tags': Select2MultipleWidget,
         }
 
 
