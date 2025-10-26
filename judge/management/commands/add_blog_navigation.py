@@ -3,6 +3,7 @@ Management command to add Blog navigation item to the navigation bar.
 """
 from django.core.management.base import BaseCommand
 from django.db import models
+
 from judge.models import NavigationBar
 
 
@@ -22,9 +23,8 @@ class Command(BaseCommand):
             path='/blog/',
             regex=r'^/blog/',
             order=max_order + 10,
-            parent=None
+            parent=None,
         )
 
         self.stdout.write(self.style.SUCCESS(f'Successfully created Blog navigation item with order {blog_nav.order}'))
         self.stdout.write(self.style.SUCCESS('You can now access the blog at /blog/'))
-        self.stdout.write(self.style.SUCCESS('You can reorder this item in the admin panel at /admin/judge/navigationbar/'))
