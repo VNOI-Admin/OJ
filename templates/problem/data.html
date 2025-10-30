@@ -196,6 +196,7 @@
                 var standard_grader = grader === 'standard';
                 var signature_grader = grader === 'signature';
                 var output_only = grader === 'output_only';
+                var archived_grader = grader === 'archived';
                 var standard_io = $io_method.val() === 'standard';
 
                 if (!standard_grader) {
@@ -205,7 +206,7 @@
                 $tr_io_method.toggle(standard_grader);
                 $tr_io_input_file.toggle(standard_grader && !standard_io);
                 $tr_io_output_file.toggle(standard_grader && !standard_io);
-                $tr_custom_grader_file.toggle(!standard_grader && !output_only && !!grader);
+                $tr_custom_grader_file.toggle(!standard_grader && !output_only && !archived_grader && !!grader);
                 $tr_custom_header_file.toggle(signature_grader);
                 $tr_grader_args.toggle(signature_grader);
             }).change();
