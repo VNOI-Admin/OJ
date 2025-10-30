@@ -221,6 +221,12 @@ class ProblemDataCompiler(object):
                     init['signature_grader']['allow_main'] = True
                 return
 
+            if case.grader == 'archived':
+                if case.checker != 'bridged':
+                    raise ProblemDataError(_('Archived grader requires custom checker.'))
+                init['archived'] = True
+                return
+
         total_points = 0
         for i, case in enumerate(self.cases, 1):
             if case.type == 'C':
@@ -233,7 +239,7 @@ class ProblemDataCompiler(object):
                         raise ProblemDataError(_('Points must be defined for non-batch case #%d.') % i)
                     data['is_pretest'] = case.is_pretest
 
-                if not self.generator:
+                if not self.generator and self.data.grader != 'archived':
                     if case.input_file not in self.files:
                         raise ProblemDataError(_('Input file for case %(case)d does not exist: %(file)s') %
                                                ({'case': i, 'file': case.input_file}))

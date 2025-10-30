@@ -35,6 +35,7 @@ GRADERS = (
     ('interactive', _('Interactive')),
     ('signature', _('Function Signature Grading (IOI-style)')),
     ('output_only', _('Output Only')),
+    ('archived', _('Archived')),
 )
 
 IO_METHODS = (
