@@ -411,6 +411,14 @@ class ProblemSubmitForm(ModelForm):
                     self.files['submission_file'].file = archive.open('project.json')
                 except (zipfile.BadZipFile, KeyError):
                     pass
+            if lang_obj.key == 'OUTPUT':
+                try:
+                    archive = zipfile.ZipFile(content.file)
+                    if sum(info.file_size for info in archive.infolist()) > max_file_size:
+                        raise forms.ValidationError(_('Total submission size is too big! Maximum size is %s')
+                                                    % filesizeformat(max_file_size))
+                except (zipfile.BadZipFile, KeyError):
+                    pass
 
     def __init__(self, *args, judge_choices=(), **kwargs):
         super(ProblemSubmitForm, self).__init__(*args, **kwargs)
