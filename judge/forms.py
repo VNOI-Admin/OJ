@@ -415,6 +415,9 @@ class ProblemSubmitForm(ModelForm):
             if lang_obj.key == 'OUTPUT':
                 try:
                     archive = zipfile.ZipFile(content.file)
+                    if sum(info.file_size for info in archive.infolist()) > max_file_size:
+                        raise forms.ValidationError(_('Total submission size is too big! Maximum size is %s')
+                                                    % filesizeformat(max_file_size))
                     files = archive.namelist()
                     if not any(file.endswith('.ipynb') for file in files):
                         raise forms.ValidationError(_('Your submission must include a ipynb file.'))

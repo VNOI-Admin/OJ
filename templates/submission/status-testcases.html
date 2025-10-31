@@ -91,7 +91,7 @@
             {% set curr_data = cases_data.get(case.case, None) %}
             {% set has_extended_data = print_case_output or print_case_ext_feedback or (can_view_test and curr_data) %}
 
-            <tr id="{{ case.id }}" class="case-row toggle closed">
+            <tr id="{{ case.id }}" class="case-row toggle open">
                 <td>
                     {%- if has_extended_data -%}
                         <i class="fa fa-chevron-right fa-fw"></i>
