@@ -24,7 +24,7 @@ def get_submissions(submissions_path):
         for name in os.listdir(os.path.join(submissions_path, subfolder)):
             prefix = ''
             if name.lower().endswith('.cpp'):
-                language = Language.objects.get(key='CPP20')
+                language = Language.objects.get(key='CPPICPC')
                 prefix = '// '
             elif name.lower().endswith('.py'):
                 language = Language.objects.get(key='PYPY3')
