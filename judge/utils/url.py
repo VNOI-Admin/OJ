@@ -16,7 +16,10 @@ def get_absolute_url(url, host):
 
 
 def get_absolute_submission_file_url(source):
-    return get_absolute_url(source, settings.SITE_FULL_URL)
+    if hasattr(settings, 'SITE_INTERNAL_URL'):
+        return get_absolute_url(source, settings.SITE_INTERNAL_URL)
+    else:
+        return get_absolute_url(source, settings.SITE_FULL_URL)
 
 
 def get_absolute_pdf_url(pdf_url):
