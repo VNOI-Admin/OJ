@@ -1,5 +1,45 @@
 {% extends "base.html" %}
-{% block media %}{{ form.media.css }}{% endblock %}
+{% block media %}
+    {{ form.media.css }}
+    <style>
+        @media (max-width: 768px) {
+            .ticket-messages {
+                width: 100% !important;
+                margin-bottom: 1rem;
+            }
+
+            .new-message .detail {
+                padding: 0.75rem;
+            }
+
+            .new-message form {
+                width: 100%;
+            }
+
+            .body-block textarea,
+            .body-block .form-control {
+                width: 100% !important;
+                max-width: 100% !important;
+                box-sizing: border-box;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .new-message {
+                flex-direction: column;
+            }
+
+            .new-message .info .user-info {
+                display: none;
+            }
+
+            .new-message .detail {
+                width: 100%;
+                padding: 0.5rem;
+            }
+        }
+    </style>
+{% endblock %}
 
 {% block js_media %}
     {{ form.media.js }}
@@ -155,7 +195,7 @@
             }
 
             window.add_autofill_reply = function (message) {
-                $('#id_body').val(message);
+                ace.edit('martor-body').setValue(message);
             }
 
             $('.autofill-options').select2({
@@ -223,11 +263,20 @@
                 {% endfor %}
             </main>
             <hr>
+
             <section class="ticket-message new-message">
                 <div class="info">
-                    <a href="{{ url('user_page', request.user.username) }}" class="user">
-                        <img src="{{ gravatar(request.user, 80) }}" class="user-gravatar">
-                    </a>
+                    <div class="user-info">
+                        <a href="{{ url('user_page', request.user.username) }}" class="user">
+                            <img src="{{ gravatar(request.user, 80) }}" class="user-gravatar">
+                        </a>
+                    </div>
+                    <div class="autofill">
+                        <h4 style="margin-top: 1.2em;">Autofill</h4>
+                        <select class="autofill-options" style="width: 100%;">
+                        </select>
+                        <button onclick="add_reply()">Add</button>
+                    </div>
                 </div>
                 <div class="detail">
                     <form action="" method="post">
@@ -294,12 +343,6 @@
                         {% if not ticket.is_open %}style="display: none"{% endif %}>{{ _('Close ticket') }}</button>
                 <button data-ajax="{{ url('ticket_open', ticket.id) }}" data-open="1" class="open-ticket"
                         {% if ticket.is_open %}style="display: none"{% endif %}>{{ _('Reopen ticket') }}</button>
-            </div>
-            <div>
-                <h4 style="margin-top: 1.2em;">Autofill</h4>
-                <select class="autofill-options" style="width: 100%;">
-                </select>
-                <button onclick="add_reply()">Add</button>
             </div>
         </aside>
     </div>
