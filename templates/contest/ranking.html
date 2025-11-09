@@ -274,7 +274,18 @@
                 localStorage.setItem(`filter-selected-orgs-${contest_key}`, JSON.stringify([]));
             }
 
-            if (localStorage.getItem(`filter-selected-tags-${contest_key}`) === null) {
+            function parseTagsFromUrl() {
+                const tagsParam = new URLSearchParams(window.location.search).get('tags');
+                if (tagsParam) {
+                    return tagsParam.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+                }
+                return [];
+            }
+
+            let urlTags = parseTagsFromUrl();
+            if (urlTags.length > 0) {
+                localStorage.setItem(`filter-selected-tags-${contest_key}`, JSON.stringify(urlTags));
+            } else if (localStorage.getItem(`filter-selected-tags-${contest_key}`) === null) {
                 localStorage.setItem(`filter-selected-tags-${contest_key}`, JSON.stringify([]));
             }
 
@@ -443,6 +454,11 @@
                 let previous_abs_rank = -1;
                 let selected_orgs = JSON.parse(localStorage.getItem(`filter-selected-orgs-${contest_key}`));
                 let selected_tags = JSON.parse(localStorage.getItem(`filter-selected-tags-${contest_key}`));
+
+                // update url with the current filters
+                const url = new URL(window.location.href);
+                url.searchParams.set('tags', selected_tags.join(','));
+                window.history.replaceState(null, '', url.toString());
 
                 if (!selected_orgs.length && !selected_tags.length) {
                     window.clearRankingFilter();
