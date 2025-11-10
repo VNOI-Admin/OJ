@@ -23,7 +23,9 @@
 {% block media %}
     {% include "comments/media-css.html" %}
     {% compress css %}
-        <link rel="stylesheet" href="{{ static('blog-post.css') }}">
+        {# Load both light and dark versions for theme switching #}
+        <link rel="stylesheet" href="{{ static('blog-post.css') }}" id="blog-post-light">
+        <link rel="stylesheet" href="{{ static('dark/blog-post.css') }}" media="not all" id="blog-post-dark">
     {% endcompress %}
 {% endblock %}
 

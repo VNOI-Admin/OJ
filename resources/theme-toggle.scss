@@ -1,0 +1,90 @@
+@use "vars" as *;
+
+#theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    margin-right: 8px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    color: $color_primary75;
+    transition: all 0.2s ease;
+    position: relative;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: $color_primary90;
+    }
+
+    &:active {
+        transform: scale(0.95);
+    }
+
+    i {
+        font-size: 18px;
+        transition: transform 0.3s ease;
+    }
+
+    &:hover i {
+        transform: rotate(20deg);
+    }
+
+    // Optional text label (hidden on mobile)
+    .theme-toggle-text {
+        display: none;
+        margin-left: 6px;
+        font-size: 13px;
+        font-weight: 500;
+
+        @media (min-width: 1024px) {
+            display: inline;
+        }
+    }
+
+    // Tooltip
+    &::after {
+        content: attr(aria-label);
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        padding: 6px 10px;
+        background: rgba(0, 0, 0, 0.85);
+        color: white;
+        font-size: 12px;
+        border-radius: 4px;
+        white-space: nowrap;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+        z-index: 1000;
+    }
+
+    &:hover::after {
+        opacity: 1;
+        transform: translateX(-50%) translateY(8px);
+    }
+}
+
+// Animation for theme transition
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+// Smooth transition for all theme-aware elements
+* {
+    transition-property: background-color, border-color, color, fill, stroke;
+    transition-duration: 0.3s;
+    transition-timing-function: ease;
+}
+
+// Prevent transition on images and specific elements
+img, video, iframe, canvas,
+.no-theme-transition {
+    transition: none !important;
+}

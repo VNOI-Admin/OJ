@@ -8,7 +8,9 @@
   <link rel="alternate" type="application/rss+xml" href="{{ url('blog_rss') }}" title="RSS Blog Feed">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   {% compress css %}
-    <link rel="stylesheet" href="{{ static('blog-modern.css') }}">
+    {# Load both light and dark versions for theme switching #}
+    <link rel="stylesheet" href="{{ static('blog-modern.css') }}" id="blog-modern-light">
+    <link rel="stylesheet" href="{{ static('dark/blog-modern.css') }}" media="not all" id="blog-modern-dark">
   {% endcompress %}
 {% endblock %}
 

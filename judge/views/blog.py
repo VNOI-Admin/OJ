@@ -62,26 +62,49 @@ def vote_blog(request, delta):
     if blog.authors.filter(id=request.profile.id).exists():
         return HttpResponseBadRequest(_('You cannot vote your own blog'), content_type='text/plain')
 
-    vote = BlogVote()
-    vote.blog_id = blog_id
-    vote.voter = request.profile
-    vote.score = delta
-
-    while True:
-        try:
-            vote.save()
-        except IntegrityError:
-            with LockModel(write=(BlogVote,)):
-                try:
-                    vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
-                except BlogVote.DoesNotExist:
-                    # We must continue racing in case this is exploited to manipulate votes.
-                    continue
-                return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
+    # Check if user already voted
+    try:
+        existing_vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
+        
+        # If clicking the same vote button (toggle to unvote)
+        if existing_vote.score == delta:
+            existing_vote.delete()
+            BlogPost.objects.get(id=blog_id).vote(-delta)  # Remove the vote
+            return HttpResponse('unvoted', content_type='text/plain')
+        # If clicking the opposite vote button, just unvote (don't switch)
         else:
-            BlogPost.objects.get(id=blog_id).vote(delta)
-        break
-    return HttpResponse('success', content_type='text/plain')
+            existing_vote.delete()
+            BlogPost.objects.get(id=blog_id).vote(-existing_vote.score)  # Remove the current vote
+            return HttpResponse('unvoted', content_type='text/plain')
+    except BlogVote.DoesNotExist:
+        # No existing vote, create new one
+        vote = BlogVote()
+        vote.blog_id = blog_id
+        vote.voter = request.profile
+        vote.score = delta
+
+        while True:
+            try:
+                vote.save()
+            except IntegrityError:
+                with LockModel(write=(BlogVote,)):
+                    try:
+                        vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
+                    except BlogVote.DoesNotExist:
+                        # We must continue racing in case this is exploited to manipulate votes.
+                        continue
+                    # Handle race condition - vote now exists
+                    if vote.score == delta:
+                        return HttpResponse('success', content_type='text/plain')
+                    else:
+                        # If opposite vote exists, just unvote
+                        vote.delete()
+                        BlogPost.objects.get(id=blog_id).vote(-vote.score)
+                        return HttpResponse('unvoted', content_type='text/plain')
+            else:
+                BlogPost.objects.get(id=blog_id).vote(delta)
+            break
+        return HttpResponse('success', content_type='text/plain')
 
 
 def upvote_blog(request):

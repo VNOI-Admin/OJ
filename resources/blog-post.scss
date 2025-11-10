@@ -4,8 +4,8 @@
 .blog-post-container {
     max-width: 80%;
     margin: 0 auto;
-    padding: 40px 0 80px;
-    background: #ffffff;
+    padding: 40px 0px 80px 10px;
+    background: $color_blog_bg;
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Georgia', serif;
 
     @media (max-width: 768px) {
@@ -22,7 +22,7 @@
         font-weight: 700;
         line-height: 1.2;
         letter-spacing: -0.02em;
-        color: #292929;
+        color: $color_blog_text_primary;
         margin: 0 0 16px 0;
         
         @media (max-width: 768px) {
@@ -34,7 +34,7 @@
         font-size: 24px;
         font-weight: 400;
         line-height: 1.4;
-        color: #6b6b6b;
+        color: $color_blog_text_secondary;
         margin: 0 0 24px 0;
         
         @media (max-width: 768px) {
@@ -49,8 +49,8 @@
     align-items: center;
     gap: 16px;
     padding: 24px 0;
-    border-top: 1px solid #e6e6e6;
-    border-bottom: 1px solid #e6e6e6;
+    border-top: 1px solid $color_blog_border;
+    border-bottom: 1px solid $color_blog_border;
     margin-bottom: 40px;
     
     .author-info {
@@ -59,15 +59,15 @@
         .author-names {
             font-size: 16px;
             font-weight: 500;
-            color: #292929;
+            color: $color_blog_text_primary;
             margin-bottom: 4px;
             
             a {
-                color: #292929;
+                color: $color_blog_text_primary;
                 text-decoration: none;
                 
                 &:hover {
-                    color: #000000;
+                    color: $color_blog_text_secondary;
                     text-decoration: underline;
                 }
             }
@@ -75,7 +75,7 @@
         
         .post-date {
             font-size: 14px;
-            color: #6b6b6b;
+            color: $color_blog_text_secondary;
         }
     }
     
@@ -92,7 +92,7 @@
     align-items: center;
     gap: 8px;
     padding: 6px 12px;
-    background: #f2f2f2;
+    background: $color_blog_hover_bg;
     border-radius: 24px;
     
     .vote-btn {
@@ -100,30 +100,35 @@
         border: none;
         cursor: pointer;
         padding: 4px 8px;
-        color: #6b6b6b;
+        color: $color_blog_text_muted;
         font-size: 18px;
         transition: color 0.2s ease;
         
-        &:hover {
-            color: #292929;
+        &:hover:not(:disabled) {
+            color: $color_blog_text_primary;
         }
         
         &.voted {
-            color: #1a8917;
+            color: $color_blog_accent;
+        }
+        
+        &:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
         }
     }
     
     .vote-count {
         font-size: 14px;
         font-weight: 500;
-        color: #292929;
+        color: $color_blog_text_primary;
         min-width: 20px;
         text-align: center;
     }
     
     .vote-label {
         font-size: 13px;
-        color: #6b7280;
+        color: $color_blog_text_muted;
         font-weight: 500;
         margin-left: 2px;
     }
@@ -135,14 +140,14 @@
     align-items: center;
     gap: 6px;
     padding: 4px 12px;
-    background: #f2f2f2;
+    background: $color_blog_hover_bg;
     border-radius: 4px;
     font-size: 13px;
-    color: #6b6b6b;
+    color: $color_blog_text_secondary;
     text-decoration: none;
     
     &:hover {
-        background: #e6e6e6;
+        background: $color_blog_border;
     }
     
     i {
@@ -153,7 +158,7 @@
 // Edit action
 .post-edit-action {
     font-size: 14px;
-    color: #1a8917;
+    color: $color_blog_accent;
     text-decoration: none;
     
     &:hover {
@@ -166,7 +171,7 @@
     font-size: 21px;
     line-height: 1.58;
     letter-spacing: -0.003em;
-    color: #292929;
+    color: $color_blog_text_primary;
     word-wrap: break-word;
     
     @media (max-width: 768px) {
@@ -185,7 +190,7 @@
     // Headings
     h1, h2, h3, h4, h5, h6 {
         font-weight: 700;
-        color: #292929;
+        color: $color_blog_text_primary;
         margin: 48px 0 16px 0;
         line-height: 1.2;
         letter-spacing: -0.02em;
@@ -250,9 +255,9 @@
     blockquote {
         margin: 32px 0;
         padding: 16px 0 16px 24px;
-        border-left: 3px solid #292929;
+        border-left: 3px solid $color_blog_blockquote_border;
         font-style: italic;
-        color: #6b6b6b;
+        color: $color_blog_text_secondary;
         font-size: 24px;
         line-height: 1.48;
         letter-spacing: -0.014em;
@@ -270,8 +275,8 @@
     
     // Code blocks
     pre {
-        background: #f7f7f7;
-        border: 1px solid #e6e6e6;
+        background: $color_blog_code_bg;
+        border: 1px solid $color_blog_border;
         border-radius: 4px;
         padding: 20px;
         margin: 32px 0;
@@ -288,12 +293,12 @@
     
     // Inline code
     code {
-        background: #f7f7f7;
+        background: $color_blog_code_bg;
         padding: 2px 6px;
         border-radius: 3px;
         font-family: 'Monaco', 'Consolas', monospace;
         font-size: 18px;
-        color: #292929;
+        color: $color_blog_text_primary;
     }
     
     // Images
@@ -317,12 +322,12 @@
         
         th, td {
             padding: 12px;
-            border: 1px solid #e6e6e6;
+            border: 1px solid $color_blog_border;
             text-align: left;
         }
         
         th {
-            background: #f7f7f7;
+            background: $color_blog_code_bg;
             font-weight: 600;
         }
     }
@@ -330,7 +335,7 @@
     // Horizontal rule
     hr {
         border: none;
-        border-top: 1px solid #e6e6e6;
+        border-top: 1px solid $color_blog_border;
         margin: 48px 0;
     }
 }
@@ -341,12 +346,12 @@
     align-items: center;
     gap: 16px;
     padding: 32px 0;
-    border-top: 1px solid #e6e6e6;
+    border-top: 1px solid $color_blog_border;
     margin-top: 48px;
     
     .social-label {
         font-size: 14px;
-        color: #6b6b6b;
+        color: $color_blog_text_secondary;
         font-weight: 500;
     }
     
@@ -360,16 +365,16 @@
             justify-content: center;
             width: 40px;
             height: 40px;
-            background: #f2f2f2;
+            background: $color_blog_hover_bg;
             border-radius: 50%;
-            color: #6b6b6b;
+            color: $color_blog_text_secondary;
             text-decoration: none;
             font-size: 18px;
             transition: all 0.2s ease;
             
             &:hover {
-                background: #292929;
-                color: #ffffff;
+                background: $color_blog_active_bg;
+                color: $color_blog_bg;
             }
         }
     }
@@ -379,12 +384,12 @@
 .blog-post-comments {
     margin-top: 48px;
     padding-top: 48px;
-    border-top: 1px solid #e6e6e6;
+    border-top: 1px solid $color_blog_border;
     
     .comments-title {
         font-size: 24px;
         font-weight: 700;
-        color: #292929;
+        color: $color_blog_text_primary;
         margin-bottom: 32px;
     }
 }
@@ -408,8 +413,8 @@
         align-items: center;
         gap: 8px;
         padding: 12px;
-        background: #ffffff;
-        border: 1px solid #e6e6e6;
+        background: $color_blog_bg;
+        border: 1px solid $color_blog_border;
         border-radius: 24px;
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
         
@@ -418,28 +423,33 @@
             border: none;
             cursor: pointer;
             padding: 4px;
-            color: #6b6b6b;
+            color: $color_blog_text_secondary;
             font-size: 20px;
             transition: color 0.2s ease;
             
             &:hover {
-                color: #292929;
+                color: $color_blog_text_primary;
             }
             
             &.voted {
-                color: #1a8917;
+                color: $color_blog_vote_active;
+            }
+            
+            &:disabled {
+                opacity: 0.5;
+                cursor: not-allowed;
             }
         }
         
         .vote-count {
             font-size: 14px;
             font-weight: 600;
-            color: #292929;
+            color: $color_blog_text_primary;
         }
         
         .vote-label {
             font-size: 11px;
-            color: #6b7280;
+            color: $color_blog_text_tertiary;
             font-weight: 500;
             text-transform: lowercase;
         }
@@ -453,7 +463,7 @@
     left: 0;
     width: 0%;
     height: 3px;
-    background: #1a8917;
+    background: $color_blog_vote_active;
     z-index: 1000;
     transition: width 0.1s ease;
 }
