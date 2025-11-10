@@ -8,7 +8,9 @@
   <link rel="alternate" type="application/rss+xml" href="{{ url('blog_rss') }}" title="RSS Blog Feed">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   {% compress css %}
-    <link rel="stylesheet" href="{{ static('blog-modern.css') }}">
+    {# Load both light and dark versions for theme switching #}
+    <link rel="stylesheet" href="{{ static('blog-modern.css') }}" id="blog-modern-light">
+    <link rel="stylesheet" href="{{ static('dark/blog-modern.css') }}" media="not all" id="blog-modern-dark">
   {% endcompress %}
 {% endblock %}
 
@@ -34,7 +36,7 @@
                 </div>
                 {% endif %}
 
-                {% if request.user.is_authenticated %}
+                {% if request.user.is_authenticated and perms.judge.edit_all_post %}
                 <div class="nav-section">
                 <h3 class="nav-section-title">{{ _('My Content') }}</h3>
                 <ul class="nav-links">
@@ -76,6 +78,10 @@
       <button class="sidebar-toggle" aria-label="{{ _('Toggle sidebar') }}"><i class="fa fa-bars"></i></button>
 
       <div class="magazine-search">
+        <select id="search-type-select" class="search-type-select">
+          <option value="article" {% if request.GET.search_type == 'article' or not request.GET.search_type %}selected{% endif %}>{{ _('Article') }}</option>
+          <option value="author" {% if request.GET.search_type == 'author' %}selected{% endif %}>{{ _('Author') }}</option>
+        </select>
         <i class="fa fa-search search-icon" aria-hidden="true"></i>
         <input type="text" id="blog-search-input"
                placeholder="{{ _('Search articles...') }}"
@@ -96,7 +102,7 @@
 
   
 
-        {% if request.user.is_authenticated %}
+        {% if request.user.is_authenticated and perms.judge.edit_all_post %}
           <a href="{{ url('blog_post_new') }}" class="btn-new-post">
             <i class="fa fa-pencil"></i><span>{{ _('Write') }}</span>
           </a>
@@ -191,7 +197,7 @@
 
     <div id="magazine-feed"
          class="magazine-feed {% if view_mode == 'list' %}is-list{% endif %}"
-         data-next-page="{% if page_obj.has_next() %}{{ url('blog_modern_list') }}?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}{% endif %}">
+         data-next-page="{% if page_obj.has_next() %}{{ url('blog_modern_list') }}?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.search_type %}&search_type={{ request.GET.search_type }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}{% endif %}">
 
       {% for post in posts %}
         {% if loop.first and post.sticky and not request.GET.q %}

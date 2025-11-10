@@ -2,7 +2,17 @@
 {% compress js %}
     <script type="text/javascript">
         $(document).ready(function () {
+            // Track ongoing vote requests to prevent double-voting
+            var votingInProgress = {};
+            
             function ajax_vote(url, id, delta, on_success) {
+                // Prevent multiple simultaneous votes on the same post
+                if (votingInProgress[id]) {
+                    return;
+                }
+                
+                votingInProgress[id] = true;
+                
                 return $.ajax({
                     url: url,
                     type: 'POST',
@@ -10,98 +20,224 @@
                         id: id
                     },
                     success: function (data, textStatus, jqXHR) {
-                        // Update classic templates (#post-score inside #post-ID)
-                        var score = $('#post-' + id + ' #post-score').first();
-                        if (score.length) {
-                            score.text(parseInt(score.text()) + delta);
+                        // Parse response to determine action
+                        var action = data.trim(); // 'success', 'unvoted', or 'switched'
+                        
+                        if (typeof on_success !== 'undefined') {
+                            on_success(action);
                         }
-                        // Update magazine templates (#post-score-ID)
-                        var magScore = $('#post-score-' + id).first();
-                        if (magScore.length) {
-                            magScore.text(parseInt(magScore.text()) + delta);
-                        }
-                        if (typeof on_success !== 'undefined')
-                            on_success();
                     },
                     error: function (data, textStatus, jqXHR) {
                         alert('Could not vote: ' + data.responseText);
+                    },
+                    complete: function() {
+                        // Allow voting again after request completes
+                        votingInProgress[id] = false;
                     }
                 });
             }
 
             var get_$votes = function (id) {
+                // Find ALL vote buttons for this post ID
+                var upvotes = $('.upvote-link').filter(function() {
+                    var onclick = $(this).attr('onclick');
+                    return onclick && onclick.includes('(' + id + ')');
+                });
+                
+                var downvotes = $('.downvote-link').filter(function() {
+                    var onclick = $(this).attr('onclick');
+                    return onclick && onclick.includes('(' + id + ')');
+                });
+                
+                // Also check for votes within post container
                 var $post = $('#post-' + id);
+                if ($post.length) {
+                    upvotes = upvotes.add($post.find('.upvote-link'));
+                    downvotes = downvotes.add($post.find('.downvote-link'));
+                }
+                
                 return {
-                    upvote: $post.find('.upvote-link').first(),
-                    downvote: $post.find('.downvote-link').first(),
+                    upvote: upvotes,
+                    downvote: downvotes,
                 };
             };
 
             window.blog_upvote = function (id) {
-                ajax_vote('{{ url('blog_upvote') }}', id, 1, function () {
-                    var $votes = get_$votes(id);
-                    if ($votes.downvote.hasClass('voted'))
+                // Prevent voting if already in progress
+                if (votingInProgress[id]) {
+                    return;
+                }
+                
+                var $votes = get_$votes(id);
+                var $magazineCard = $('[data-post-id="' + id + '"]');
+                
+                var wasUpvoted = $votes.upvote.hasClass('voted');
+                var wasDownvoted = $votes.downvote.hasClass('voted');
+                
+                if ($magazineCard.length) {
+                    var $upvoteBtn = $magazineCard.find('[data-action="upvote"]');
+                    var $downvoteBtn = $magazineCard.find('[data-action="downvote"]');
+                    if ($upvoteBtn.length && $upvoteBtn.hasClass('voted')) {
+                        wasUpvoted = true;
+                    }
+                    if ($downvoteBtn.length && $downvoteBtn.hasClass('voted')) {
+                        wasDownvoted = true;
+                    }
+                }
+                
+                $votes.upvote.prop('disabled', true);
+                $votes.downvote.prop('disabled', true);
+                
+                if ($magazineCard.length) {
+                    var $upvoteBtn = $magazineCard.find('[data-action="upvote"]');
+                    var $downvoteBtn = $magazineCard.find('[data-action="downvote"]');
+                    $upvoteBtn.prop('disabled', true);
+                    $downvoteBtn.prop('disabled', true);
+                }
+                
+                ajax_vote('{{ url('blog_upvote') }}', id, 1, function (action) {
+                    var scoreSelectors = [
+                        '#post-' + id + ' #post-score',
+                        '#post-score-' + id,
+                        '#post-score',
+                        '#post-score-inline'
+                    ];
+                    
+                    scoreSelectors.forEach(function(selector) {
+                        var $score = $(selector);
+                        if ($score.length) {
+                            var currentScore = parseInt($score.text()) || 0;
+                            if (action === 'unvoted') {
+                                if (wasUpvoted) {
+                                    $score.text(currentScore - 1);
+                                } 
+                                else if (wasDownvoted) {
+                                    $score.text(currentScore + 1);
+                                }
+                            } else {
+                                $score.text(currentScore + 1);
+                            }
+                        }
+                    });
+                    
+                    if (action === 'unvoted') {
+                        $votes.upvote.removeClass('voted');
                         $votes.downvote.removeClass('voted');
-                    else
+                    } else {
                         $votes.upvote.addClass('voted');
+                        $votes.downvote.removeClass('voted');
+                    }
 
-                    // Update magazine card vote button if present
-                    var $magazineCard = $('[data-post-id="' + id + '"]');
                     if ($magazineCard.length) {
                         var $upvoteBtn = $magazineCard.find('[data-action="upvote"]');
                         var $downvoteBtn = $magazineCard.find('[data-action="downvote"]');
-                        var $voteCount = $magazineCard.find('#post-score-' + id);
 
-                        // If not already upvoted, increment and set states
-                        if (!$upvoteBtn.hasClass('voted')) {
+                        if (action === 'unvoted') {
+                            $upvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
+                            $downvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
+                        } else {
                             $upvoteBtn.addClass('voted').attr('aria-pressed', 'true');
-                            if ($voteCount.length) {
-                                $voteCount.text(parseInt($voteCount.text()) + 1);
-                            }
+                            $downvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
                         }
-                        // Clear downvote state and disable both to prevent duplicate votes
-                        $downvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
-                        $upvoteBtn.prop('disabled', true);
-                        $downvoteBtn.prop('disabled', true);
+                        
+                        $upvoteBtn.prop('disabled', false);
+                        $downvoteBtn.prop('disabled', false);
                     }
+                    
+                    $votes.upvote.prop('disabled', false);
+                    $votes.downvote.prop('disabled', false);
                 });
             };
 
             window.blog_downvote = function (id) {
-                ajax_vote('{{ url('blog_downvote') }}', id, -1, function () {
-                    var $votes = get_$votes(id);
-                    if ($votes.upvote.hasClass('voted'))
+                if (votingInProgress[id]) {
+                    return;
+                }
+                
+                var $votes = get_$votes(id);
+                var $magazineCard = $('[data-post-id="' + id + '"]');
+                
+                var wasUpvoted = $votes.upvote.hasClass('voted');
+                var wasDownvoted = $votes.downvote.hasClass('voted');
+                
+                if ($magazineCard.length) {
+                    var $upvoteBtn = $magazineCard.find('[data-action="upvote"]');
+                    var $downvoteBtn = $magazineCard.find('[data-action="downvote"]');
+                    if ($upvoteBtn.length && $upvoteBtn.hasClass('voted')) {
+                        wasUpvoted = true;
+                    }
+                    if ($downvoteBtn.length && $downvoteBtn.hasClass('voted')) {
+                        wasDownvoted = true;
+                    }
+                }
+                
+                $votes.upvote.prop('disabled', true);
+                $votes.downvote.prop('disabled', true);
+                
+                if ($magazineCard.length) {
+                    var $upvoteBtn = $magazineCard.find('[data-action="upvote"]');
+                    var $downvoteBtn = $magazineCard.find('[data-action="downvote"]');
+                    $upvoteBtn.prop('disabled', true);
+                    $downvoteBtn.prop('disabled', true);
+                }
+                
+                ajax_vote('{{ url('blog_downvote') }}', id, -1, function (action) {
+                    var scoreSelectors = [
+                        '#post-' + id + ' #post-score',
+                        '#post-score-' + id,
+                        '#post-score',
+                        '#post-score-inline'
+                    ];
+                    
+                    scoreSelectors.forEach(function(selector) {
+                        var $score = $(selector);
+                        if ($score.length) {
+                            var currentScore = parseInt($score.text()) || 0;
+                            if (action === 'unvoted') {
+                                if (wasDownvoted) {
+                                    $score.text(currentScore + 1);
+                                } 
+                                else if (wasUpvoted) {
+                                    $score.text(currentScore - 1);
+                                }
+                            } else {
+                                $score.text(currentScore - 1);
+                            }
+                        }
+                    });
+                    
+                    if (action === 'unvoted') {
                         $votes.upvote.removeClass('voted');
-                    else
+                        $votes.downvote.removeClass('voted');
+                    } else {
                         $votes.downvote.addClass('voted');
+                        $votes.upvote.removeClass('voted');
+                    }
 
-                    // Update magazine card vote button if present
-                    var $magazineCard = $('[data-post-id="' + id + '"]');
                     if ($magazineCard.length) {
                         var $downvoteBtn = $magazineCard.find('[data-action="downvote"]');
                         var $upvoteBtn = $magazineCard.find('[data-action="upvote"]');
-                        var $voteCount = $magazineCard.find('#post-score-' + id);
 
-                        // If not already downvoted, decrement and set states
-                        if (!$downvoteBtn.hasClass('voted')) {
+                        if (action === 'unvoted') {
+                            $upvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
+                            $downvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
+                        } else {
                             $downvoteBtn.addClass('voted').attr('aria-pressed', 'true');
-                            if ($voteCount.length) {
-                                $voteCount.text(parseInt($voteCount.text()) - 1);
-                            }
+                            $upvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
                         }
-                        // Clear upvote state and disable both to prevent duplicate votes
-                        $upvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
-                        $upvoteBtn.prop('disabled', true);
-                        $downvoteBtn.prop('disabled', true);
+                        
+                        $upvoteBtn.prop('disabled', false);
+                        $downvoteBtn.prop('disabled', false);
                     }
+                    
+                    $votes.upvote.prop('disabled', false);
+                    $votes.downvote.prop('disabled', false);
                 });
             };
 
             $('votes-link').find('a[data-featherlight]').featherlight();
 
-            // Magazine layout modern features
             if (document.querySelector('.magazine-layout')) {
-                // Sidebar toggle for mobile
                 const sidebarToggle = document.querySelector('.sidebar-toggle');
                 const sidebar = document.querySelector('.magazine-sidebar');
                 
@@ -110,7 +246,6 @@
                         sidebar.classList.toggle('show');
                     });
 
-                    // Close sidebar when clicking outside on mobile
                     document.addEventListener('click', function(e) {
                         if (window.innerWidth <= 968) {
                             if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target) && sidebar.classList.contains('show')) {
@@ -120,20 +255,35 @@
                     });
                 }
 
-                // Real-time search filtering
                 const searchInput = document.querySelector('#blog-search-input');
+                const searchTypeSelect = document.querySelector('#search-type-select');
                 let searchTimeout;
+                
+                function updateSearchPlaceholder() {
+                    if (searchTypeSelect && searchInput) {
+                        const searchType = searchTypeSelect.value;
+                        if (searchType === 'author') {
+                            searchInput.placeholder = "{{ _('Search by author...') }}";
+                        } else {
+                            searchInput.placeholder = "{{ _('Search articles...') }}";
+                        }
+                    }
+                }
                 
                 if (searchInput) {
                     searchInput.addEventListener('input', function(e) {
                         clearTimeout(searchTimeout);
                         searchTimeout = setTimeout(function() {
                             const searchValue = e.target.value.trim();
+                            const searchType = searchTypeSelect ? searchTypeSelect.value : 'article';
                             const currentUrl = new URL(window.location.href);
+                            
                             if (searchValue) {
                                 currentUrl.searchParams.set('q', searchValue);
+                                currentUrl.searchParams.set('search_type', searchType);
                             } else {
                                 currentUrl.searchParams.delete('q');
+                                currentUrl.searchParams.delete('search_type');
                             }
                             currentUrl.searchParams.delete('page');
                             window.location.href = currentUrl.toString();
@@ -141,7 +291,25 @@
                     });
                 }
 
-                // Sort dropdown handler
+                if (searchTypeSelect) {
+                    searchTypeSelect.addEventListener('change', function(e) {
+                        updateSearchPlaceholder();
+                        
+                        if (searchInput && searchInput.value.trim()) {
+                            const searchValue = searchInput.value.trim();
+                            const searchType = e.target.value;
+                            const currentUrl = new URL(window.location.href);
+                            
+                            currentUrl.searchParams.set('q', searchValue);
+                            currentUrl.searchParams.set('search_type', searchType);
+                            currentUrl.searchParams.delete('page');
+                            window.location.href = currentUrl.toString();
+                        }
+                    });
+                    
+                    updateSearchPlaceholder();
+                }
+
                 const sortSelect = document.querySelector('#sort-select');
                 if (sortSelect) {
                     sortSelect.addEventListener('change', function(e) {
@@ -157,7 +325,6 @@
                     });
                 }
 
-                // Handle vote buttons for magazine cards (support both legacy .action-btn and new .vote-btn)
                 document.querySelectorAll('.action-btn[data-action="upvote"], .vote-btn[data-action="upvote"]').forEach(function(btn) {
                     btn.addEventListener('click', function() {
                         const postId = this.getAttribute('data-post-id');
@@ -176,7 +343,6 @@
                     });
                 });
 
-                // Infinite scroll disabled; using server-side pagination
             }
         });
     </script>
