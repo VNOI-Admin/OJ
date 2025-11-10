@@ -732,6 +732,8 @@ class BlogPostForm(ModelForm):
             self.fields.pop('global_post')
         if not self.user.has_perm('judge.pin_post'):
             self.fields.pop('sticky')
+        if not self.user.has_perm('judge.add_blogposttag'):
+            self.fields.pop('tags')
 
     class Meta:
         model = BlogPost
