@@ -22,27 +22,6 @@
         <!-- Sidebar -->
         <aside class="magazine-sidebar" aria-label="{{ _('Magazine navigation') }}">
             <nav class="sidebar-nav" id="sidebar-nav" data-collapsible="true">
-                <div class="nav-section">
-                <h3 class="nav-section-title">{{ _('Browse') }}</h3>
-                <ul class="nav-links">
-                    <li class="nav-item {% if not request.GET.filter %}active{% endif %}">
-                    <a href="{{ url('blog_modern_list') }}" title="{{ _('All Posts') }}">
-                        <i class="fa fa-home"></i><span class="nav-label">{{ _('All Posts') }}</span>
-                    </a>
-                    </li>
-                    <li class="nav-item {% if request.GET.filter == 'pinned' %}active{% endif %}">
-                    <a href="{{ url('blog_modern_list') }}?filter=pinned" title="{{ _('Pinned') }}">
-                        <i class="fa fa-thumb-tack"></i><span class="nav-label">{{ _('Pinned') }}</span>
-                    </a>
-                    </li>
-                    <li class="nav-item {% if request.GET.filter == 'global' %}active{% endif %}">
-                    <a href="{{ url('blog_modern_list') }}?filter=global" title="{{ _('Global Posts') }}">
-                        <i class="fa fa-globe"></i><span class="nav-label">{{ _('Global Posts') }}</span>
-                    </a>
-                    </li>
-                </ul>
-                </div>
-
                 {% if tags %}
                 <div class="nav-section">
                 <h3 class="nav-section-title">{{ _('Tags') }}</h3>
