@@ -119,6 +119,8 @@ VNOJ_PRICE_PER_HOUR = 50
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
+VNOJ_MAGAZINE_TAG_SLUG = None
+
 CELERY_TIMEZONE = 'UTC'
 
 # Some problems have a lot of testcases, and each testcase
