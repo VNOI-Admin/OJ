@@ -64,7 +64,7 @@ def vote_blog(request, delta):
 
     # Check if user already voted
     try:
-        existing_vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)    
+        existing_vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
         # If clicking the same vote button (toggle to unvote)
         if existing_vote.score == delta:
             existing_vote.delete()
@@ -171,7 +171,7 @@ class ModernBlogList(PostListBase):
 
         # Search functionality with search type
         search_query = self.request.GET.get('q', '').strip()
-        search_type = self.request.GET.get('search_type', 'article').strip() 
+        search_type = self.request.GET.get('search_type', 'article').strip()
         if search_query:
             if search_type == 'author':
                 queryset = queryset.filter(
@@ -285,7 +285,7 @@ class PostList(PostListBase):
         context['first_page_href'] = reverse('home')
 
         context['newsfeed_link'] = f"{reverse('home')}?show_all_blogs=false"
-        context['all_blogs_link'] = reverse('blog_modern_list') 
+        context['all_blogs_link'] = reverse('blog_modern_list')
 
         context['show_all_blogs'] = self.show_all_blogs
         context['gcse_url'] = settings.GOOGLE_SEARCH_ENGINE_URL
