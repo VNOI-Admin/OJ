@@ -62,26 +62,48 @@ def vote_blog(request, delta):
     if blog.authors.filter(id=request.profile.id).exists():
         return HttpResponseBadRequest(_('You cannot vote your own blog'), content_type='text/plain')
 
-    vote = BlogVote()
-    vote.blog_id = blog_id
-    vote.voter = request.profile
-    vote.score = delta
-
-    while True:
-        try:
-            vote.save()
-        except IntegrityError:
-            with LockModel(write=(BlogVote,)):
-                try:
-                    vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
-                except BlogVote.DoesNotExist:
-                    # We must continue racing in case this is exploited to manipulate votes.
-                    continue
-                return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
+    # Check if user already voted
+    try:
+        existing_vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
+        # If clicking the same vote button (toggle to unvote)
+        if existing_vote.score == delta:
+            existing_vote.delete()
+            BlogPost.objects.get(id=blog_id).vote(-delta)  # Remove the vote
+            return HttpResponse('unvoted', content_type='text/plain')
+        # If clicking the opposite vote button, just unvote (don't switch)
         else:
-            BlogPost.objects.get(id=blog_id).vote(delta)
-        break
-    return HttpResponse('success', content_type='text/plain')
+            existing_vote.delete()
+            BlogPost.objects.get(id=blog_id).vote(-existing_vote.score)  # Remove the current vote
+            return HttpResponse('unvoted', content_type='text/plain')
+    except BlogVote.DoesNotExist:
+        # No existing vote, create new one
+        vote = BlogVote()
+        vote.blog_id = blog_id
+        vote.voter = request.profile
+        vote.score = delta
+
+        while True:
+            try:
+                vote.save()
+            except IntegrityError:
+                with LockModel(write=(BlogVote,)):
+                    try:
+                        vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
+                    except BlogVote.DoesNotExist:
+                        # We must continue racing in case this is exploited to manipulate votes.
+                        continue
+                    # Handle race condition - vote now exists
+                    if vote.score == delta:
+                        return HttpResponse('success', content_type='text/plain')
+                    else:
+                        # If opposite vote exists, just unvote
+                        vote.delete()
+                        BlogPost.objects.get(id=blog_id).vote(-vote.score)
+                        return HttpResponse('unvoted', content_type='text/plain')
+            else:
+                BlogPost.objects.get(id=blog_id).vote(delta)
+            break
+        return HttpResponse('success', content_type='text/plain')
 
 
 def upvote_blog(request):
@@ -147,15 +169,21 @@ class ModernBlogList(PostListBase):
         queryset = super(ModernBlogList, self).get_queryset()
         queryset = queryset.filter(organization=None)
 
-        # Search functionality
+        # Search functionality with search type
         search_query = self.request.GET.get('q', '').strip()
+        search_type = self.request.GET.get('search_type', 'article').strip()
         if search_query:
-            queryset = queryset.filter(
-                Q(title__icontains=search_query) |
-                Q(content__icontains=search_query) |
-                Q(summary__icontains=search_query),
-            )
-
+            if search_type == 'author':
+                queryset = queryset.filter(
+                    Q(authors__user__username__icontains=search_query) |
+                    Q(authors__username_display_override__icontains=search_query),
+                ).distinct()
+            else:
+                queryset = queryset.filter(
+                    Q(title__icontains=search_query) |
+                    Q(content__icontains=search_query) |
+                    Q(summary__icontains=search_query),
+                ).distinct()
         # Filter functionality
         filter_type = self.request.GET.get('filter', '').strip()
         if filter_type == 'pinned':
@@ -203,6 +231,7 @@ class ModernBlogList(PostListBase):
         context['current_filter'] = self.request.GET.get('filter', '')
         context['current_sort'] = self.request.GET.get('sort', 'latest')
         context['current_tag'] = self.request.GET.get('tag', '')
+        context['current_search_type'] = self.request.GET.get('search_type', 'article')
 
         # Get all available tags (if tag model exists)
         try:
@@ -256,11 +285,10 @@ class PostList(PostListBase):
         context['first_page_href'] = reverse('home')
 
         context['newsfeed_link'] = f"{reverse('home')}?show_all_blogs=false"
-        context['all_blogs_link'] = f"{reverse('home')}?show_all_blogs=true"
+        context['all_blogs_link'] = reverse('blog_modern_list')
 
         context['show_all_blogs'] = self.show_all_blogs
         context['gcse_url'] = settings.GOOGLE_SEARCH_ENGINE_URL
-
         context['page_prefix'] = reverse('blog_post_list')
         context['comments'] = Comment.most_recent(self.request.user, 10)
         context['new_problems'] = Problem.get_public_problems() \
