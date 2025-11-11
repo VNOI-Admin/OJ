@@ -176,13 +176,13 @@ class ModernBlogList(PostListBase):
             if search_type == 'author':
                 queryset = queryset.filter(
                     Q(authors__user__username__icontains=search_query) |
-                    Q(authors__username_display_override__icontains=search_query)
+                    Q(authors__username_display_override__icontains=search_query),
                 ).distinct()
             else:
                 queryset = queryset.filter(
                     Q(title__icontains=search_query) |
                     Q(content__icontains=search_query) |
-                    Q(summary__icontains=search_query)
+                    Q(summary__icontains=search_query),
                 ).distinct()
         # Filter functionality
         filter_type = self.request.GET.get('filter', '').strip()
