@@ -6,6 +6,7 @@
 {% block js_media %}
     {% include "blog/media-js.html" %}
     {% include "comments/media-js.html" %}
+    <script src="{{ static('blog-toc.js') }}"></script>
     <script>
         // Reading progress bar
         window.addEventListener('scroll', function() {
@@ -144,9 +145,7 @@
 
     <!-- Main content -->
     <article class="blog-post-content">
-        {% cache 86400 'post_content' post.id MATH_ENGINE %}
-            {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}
-        {% endcache %}
+        {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}
     </article>
 
     <!-- Social sharing -->

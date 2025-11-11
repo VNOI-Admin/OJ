@@ -332,7 +332,6 @@
         }
     }
     
-    // Horizontal rule
     hr {
         border: none;
         border-top: 1px solid $color_blog_border;
@@ -340,7 +339,6 @@
     }
 }
 
-// Social sharing section
 .blog-post-social {
     display: flex;
     align-items: center;
@@ -380,7 +378,6 @@
     }
 }
 
-// Comments section
 .blog-post-comments {
     margin-top: 48px;
     padding-top: 48px;
@@ -394,7 +391,6 @@
     }
 }
 
-// Floating action bar (Medium style)
 .blog-post-floating-actions {
     position: fixed;
     left: 40px;
@@ -456,7 +452,6 @@
     }
 }
 
-// Reading progress bar
 .reading-progress-bar {
     position: fixed;
     top: 0;
@@ -466,4 +461,188 @@
     background: $color_blog_vote_active;
     z-index: 1000;
     transition: width 0.1s ease;
+}
+
+.blog-toc-sidebar {
+    position: fixed;
+    left: 30px;
+    top: 200px;
+    width: 260px;
+    height: calc(80vh - 220px);
+    max-height: calc(100vh - 220px);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 20px;
+    background: $color_blog_bg;
+    border: 1px solid $color_blog_border;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    z-index: 101;
+    
+    @media (max-width: 1200px) {
+        display: none;
+    }
+    
+    &::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    &::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+        background: $color_blog_border;
+        border-radius: 2px;
+        
+        &:hover {
+            background: $color_blog_text_tertiary;
+        }
+    }
+}
+
+.blog-toc-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid $color_blog_border;
+    
+    h3 {
+        font-size: 14px;
+        font-weight: 600;
+        color: $color_blog_text_secondary;
+        margin: 0;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+}
+
+.blog-toc-nav {
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    top: auto !important;
+    z-index: auto !important;
+    font-size: 14px;
+}
+
+.blog-toc-list {
+    list-style: none;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    visibility: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    
+    &.blog-toc-nested {
+        margin-top: 0 !important;
+        margin-bottom: 0 !important;
+        padding-left: 16px !important;
+        padding-right: 0 !important;
+        padding-top: 0 !important;
+        padding-bottom: 0 !important;
+        border: none !important;
+        display: block !important;
+        visibility: visible !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
+
+.blog-toc-item {
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: normal;
+    display: block !important;
+    visibility: visible !important;
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.blog-toc-link {
+    display: block !important;
+    padding: 8px 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    color: $color_blog_text_secondary !important;
+    text-decoration: none !important;
+    line-height: 1.5 !important;
+    transition: color 0.2s ease !important;
+    border: none !important;
+    border-radius: 0 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    background: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+    cursor: pointer !important;
+    
+    &:link,
+    &:visited {
+        color: $color_blog_text_secondary !important;
+        background: none !important;
+        text-decoration: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+    
+    &:hover {
+        color: $color_blog_text_primary !important;
+        background: none !important;
+        text-decoration: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+    }
+    
+    &.active {
+        color: $color_blog_accent !important;
+        font-weight: 500 !important;
+        background: none !important;
+        text-decoration: none !important;
+        border: none !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        
+        &:link,
+        &:visited {
+            color: $color_blog_accent !important;
+            background: none !important;
+            text-decoration: none !important;
+            border: none !important;
+            box-shadow: none !important;
+            border-radius: 0 !important;
+        }
+    }
+}
+
+.blog-toc-list {
+    .blog-toc-link { max-width: 100% !important; }
+    .blog-toc-nested .blog-toc-link { max-width: 94% !important; }
+    .blog-toc-nested .blog-toc-nested .blog-toc-link { max-width: 88% !important; }
+    .blog-toc-nested .blog-toc-nested .blog-toc-nested .blog-toc-link { max-width: 82% !important; }
+    .blog-toc-nested .blog-toc-nested .blog-toc-nested .blog-toc-nested .blog-toc-link { max-width: 76% !important; }
+    .blog-toc-nested .blog-toc-nested .blog-toc-nested .blog-toc-nested .blog-toc-nested .blog-toc-link { max-width: 70% !important; }
+}
+
+@media (min-width: 1201px) {
+    .blog-post-container {
+        margin-left: 340px;
+    }
+    
+    .blog-post-floating-actions {
+        left: calc(40px + 300px);
+    }
 }

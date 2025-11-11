@@ -231,6 +231,9 @@
     min-width: 200px;
     max-width: 400px;
     position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0;
 
     @media (max-width: 768px) {
         flex-basis: 100%;
@@ -238,21 +241,53 @@
         order: 10;
     }
 
+    .search-type-select {
+        appearance: none;
+        padding: 12px 28px 12px 12px;
+        border: 1px solid $color_blog_border;
+        border-right: none;
+        border-radius: 8px 0 0 8px;
+        background: $color_blog_sidebar_bg;
+        font-size: 14px;
+        font-weight: 500;
+        color: $color_blog_text_primary;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2340414F' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 12px;
+        flex-shrink: 0;
+        min-width: 90px;
+
+        &:hover {
+            border-color: $color_blog_text_secondary;
+            background-color: $color_blog_hover_bg;
+        }
+
+        &:focus {
+            outline: none;
+            border-color: $color_blog_text_secondary;
+            box-shadow: 0 0 0 3px rgba(64, 65, 79, 0.1);
+        }
+    }
+
     .search-icon {
         position: absolute;
-        left: 16px;
+        left: 106px;
         top: 50%;
         transform: translateY(-50%);
         color: $color_blog_text_muted;
         font-size: 16px;
         pointer-events: none;
+        z-index: 1;
     }
 
     .search-input {
-        width: 100%;
+        flex: 1;
         padding: 10px 16px 10px 44px;
         border: 1px solid $color_blog_border;
-        border-radius: 8px;
+        border-radius: 0 8px 8px 0;
         font-size: 14px;
         font-family: inherit;
         background: $color_blog_bg;
@@ -276,7 +311,6 @@
     align-items: center;
     gap: 12px;
     flex-wrap: wrap;
-    margin-left: auto;
 
     @media (max-width: 768px) {
         width: 100%;
@@ -608,15 +642,21 @@
 .magazine-feed {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-    gap: 32px; 
+    row-gap: 50px;
+    column-gap: 32px;
     padding: 24px;
-    padding-top: 0; 
+    padding-top: 0;
+    padding-bottom: 32px;
+    margin-top: 24px; 
 
     @media (max-width: 768px) {
         grid-template-columns: 1fr;
         padding: 16px;
         padding-top: 0;
-        gap: 20px;
+        padding-bottom: 24px;
+        margin-top: 16px;
+        row-gap: 24px;
+        column-gap: 0;
     }
 
     &.is-list {

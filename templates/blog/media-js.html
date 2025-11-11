@@ -256,23 +256,58 @@
                 }
 
                 const searchInput = document.querySelector('#blog-search-input');
+                const searchTypeSelect = document.querySelector('#search-type-select');
                 let searchTimeout;
+                
+                function updateSearchPlaceholder() {
+                    if (searchTypeSelect && searchInput) {
+                        const searchType = searchTypeSelect.value;
+                        if (searchType === 'author') {
+                            searchInput.placeholder = "{{ _('Search by author...') }}";
+                        } else {
+                            searchInput.placeholder = "{{ _('Search articles...') }}";
+                        }
+                    }
+                }
                 
                 if (searchInput) {
                     searchInput.addEventListener('input', function(e) {
                         clearTimeout(searchTimeout);
                         searchTimeout = setTimeout(function() {
                             const searchValue = e.target.value.trim();
+                            const searchType = searchTypeSelect ? searchTypeSelect.value : 'article';
                             const currentUrl = new URL(window.location.href);
+                            
                             if (searchValue) {
                                 currentUrl.searchParams.set('q', searchValue);
+                                currentUrl.searchParams.set('search_type', searchType);
                             } else {
                                 currentUrl.searchParams.delete('q');
+                                currentUrl.searchParams.delete('search_type');
                             }
                             currentUrl.searchParams.delete('page');
                             window.location.href = currentUrl.toString();
                         }, 800);
                     });
+                }
+
+                if (searchTypeSelect) {
+                    searchTypeSelect.addEventListener('change', function(e) {
+                        updateSearchPlaceholder();
+                        
+                        if (searchInput && searchInput.value.trim()) {
+                            const searchValue = searchInput.value.trim();
+                            const searchType = e.target.value;
+                            const currentUrl = new URL(window.location.href);
+                            
+                            currentUrl.searchParams.set('q', searchValue);
+                            currentUrl.searchParams.set('search_type', searchType);
+                            currentUrl.searchParams.delete('page');
+                            window.location.href = currentUrl.toString();
+                        }
+                    });
+                    
+                    updateSearchPlaceholder();
                 }
 
                 const sortSelect = document.querySelector('#sort-select');

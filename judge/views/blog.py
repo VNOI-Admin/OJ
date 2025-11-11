@@ -170,14 +170,22 @@ class ModernBlogList(PostListBase):
         queryset = super(ModernBlogList, self).get_queryset()
         queryset = queryset.filter(organization=None)
 
-        # Search functionality
+        # Search functionality with search type
         search_query = self.request.GET.get('q', '').strip()
+        search_type = self.request.GET.get('search_type', 'article').strip()
+        
         if search_query:
-            queryset = queryset.filter(
-                Q(title__icontains=search_query) |
-                Q(content__icontains=search_query) |
-                Q(summary__icontains=search_query),
-            )
+            if search_type == 'author':
+                queryset = queryset.filter(
+                    Q(authors__user__username__icontains=search_query) |
+                    Q(authors__username_display_override__icontains=search_query)
+                ).distinct()
+            else:
+                queryset = queryset.filter(
+                    Q(title__icontains=search_query) |
+                    Q(content__icontains=search_query) |
+                    Q(summary__icontains=search_query)
+                ).distinct()
 
         # Filter functionality
         filter_type = self.request.GET.get('filter', '').strip()
@@ -226,6 +234,7 @@ class ModernBlogList(PostListBase):
         context['current_filter'] = self.request.GET.get('filter', '')
         context['current_sort'] = self.request.GET.get('sort', 'latest')
         context['current_tag'] = self.request.GET.get('tag', '')
+        context['current_search_type'] = self.request.GET.get('search_type', 'article')
 
         # Get all available tags (if tag model exists)
         try:
@@ -279,7 +288,7 @@ class PostList(PostListBase):
         context['first_page_href'] = reverse('home')
 
         context['newsfeed_link'] = f"{reverse('home')}?show_all_blogs=false"
-        context['all_blogs_link'] = f"{reverse('home')}?show_all_blogs=true"
+        context['all_blogs_link'] = reverse('blog_modern_list') 
 
         context['show_all_blogs'] = self.show_all_blogs
         context['gcse_url'] = settings.GOOGLE_SEARCH_ENGINE_URL

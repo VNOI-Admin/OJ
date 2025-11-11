@@ -410,22 +410,7 @@ a.close {
     text-align: right;
 }
 
-.sidebox h3 {
-    margin: 0 -5px;
-    background: $color_primary75;
-    border-radius: $widget_border_radius $widget_border_radius 0 0;
-    color: $color_primary0;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    padding-left: 7px;
-    font-size: 1.3em;
-}
 
-.sidebox h3 .fa {
-    color: $color_primary0;
-    float: right;
-    margin: 0.2em 0.4em 0 0;
-}
 
 .sidebox-content {
     border: 1px solid $color_primary25;

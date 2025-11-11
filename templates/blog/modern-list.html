@@ -99,6 +99,10 @@
       <button class="sidebar-toggle" aria-label="{{ _('Toggle sidebar') }}"><i class="fa fa-bars"></i></button>
 
       <div class="magazine-search">
+        <select id="search-type-select" class="search-type-select">
+          <option value="article" {% if request.GET.search_type == 'article' or not request.GET.search_type %}selected{% endif %}>{{ _('Article') }}</option>
+          <option value="author" {% if request.GET.search_type == 'author' %}selected{% endif %}>{{ _('Author') }}</option>
+        </select>
         <i class="fa fa-search search-icon" aria-hidden="true"></i>
         <input type="text" id="blog-search-input"
                placeholder="{{ _('Search articles...') }}"
@@ -214,7 +218,7 @@
 
     <div id="magazine-feed"
          class="magazine-feed {% if view_mode == 'list' %}is-list{% endif %}"
-         data-next-page="{% if page_obj.has_next() %}{{ url('blog_modern_list') }}?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}{% endif %}">
+         data-next-page="{% if page_obj.has_next() %}{{ url('blog_modern_list') }}?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.search_type %}&search_type={{ request.GET.search_type }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}{% endif %}">
 
       {% for post in posts %}
         {% if loop.first and post.sticky and not request.GET.q %}
