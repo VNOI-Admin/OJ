@@ -10,8 +10,16 @@
                         id: id
                     },
                     success: function (data, textStatus, jqXHR) {
+                        // Update classic templates (#post-score inside #post-ID)
                         var score = $('#post-' + id + ' #post-score').first();
-                        score.text(parseInt(score.text()) + delta);
+                        if (score.length) {
+                            score.text(parseInt(score.text()) + delta);
+                        }
+                        // Update magazine templates (#post-score-ID)
+                        var magScore = $('#post-score-' + id).first();
+                        if (magScore.length) {
+                            magScore.text(parseInt(magScore.text()) + delta);
+                        }
                         if (typeof on_success !== 'undefined')
                             on_success();
                     },
@@ -36,6 +44,26 @@
                         $votes.downvote.removeClass('voted');
                     else
                         $votes.upvote.addClass('voted');
+
+                    // Update magazine card vote button if present
+                    var $magazineCard = $('[data-post-id="' + id + '"]');
+                    if ($magazineCard.length) {
+                        var $upvoteBtn = $magazineCard.find('[data-action="upvote"]');
+                        var $downvoteBtn = $magazineCard.find('[data-action="downvote"]');
+                        var $voteCount = $magazineCard.find('#post-score-' + id);
+
+                        // If not already upvoted, increment and set states
+                        if (!$upvoteBtn.hasClass('voted')) {
+                            $upvoteBtn.addClass('voted').attr('aria-pressed', 'true');
+                            if ($voteCount.length) {
+                                $voteCount.text(parseInt($voteCount.text()) + 1);
+                            }
+                        }
+                        // Clear downvote state and disable both to prevent duplicate votes
+                        $downvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
+                        $upvoteBtn.prop('disabled', true);
+                        $downvoteBtn.prop('disabled', true);
+                    }
                 });
             };
 
@@ -46,10 +74,110 @@
                         $votes.upvote.removeClass('voted');
                     else
                         $votes.downvote.addClass('voted');
+
+                    // Update magazine card vote button if present
+                    var $magazineCard = $('[data-post-id="' + id + '"]');
+                    if ($magazineCard.length) {
+                        var $downvoteBtn = $magazineCard.find('[data-action="downvote"]');
+                        var $upvoteBtn = $magazineCard.find('[data-action="upvote"]');
+                        var $voteCount = $magazineCard.find('#post-score-' + id);
+
+                        // If not already downvoted, decrement and set states
+                        if (!$downvoteBtn.hasClass('voted')) {
+                            $downvoteBtn.addClass('voted').attr('aria-pressed', 'true');
+                            if ($voteCount.length) {
+                                $voteCount.text(parseInt($voteCount.text()) - 1);
+                            }
+                        }
+                        // Clear upvote state and disable both to prevent duplicate votes
+                        $upvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
+                        $upvoteBtn.prop('disabled', true);
+                        $downvoteBtn.prop('disabled', true);
+                    }
                 });
             };
 
             $('votes-link').find('a[data-featherlight]').featherlight();
+
+            // Magazine layout modern features
+            if (document.querySelector('.magazine-layout')) {
+                // Sidebar toggle for mobile
+                const sidebarToggle = document.querySelector('.sidebar-toggle');
+                const sidebar = document.querySelector('.magazine-sidebar');
+                
+                if (sidebarToggle && sidebar) {
+                    sidebarToggle.addEventListener('click', function() {
+                        sidebar.classList.toggle('show');
+                    });
+
+                    // Close sidebar when clicking outside on mobile
+                    document.addEventListener('click', function(e) {
+                        if (window.innerWidth <= 968) {
+                            if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target) && sidebar.classList.contains('show')) {
+                                sidebar.classList.remove('show');
+                            }
+                        }
+                    });
+                }
+
+                // Real-time search filtering
+                const searchInput = document.querySelector('#blog-search-input');
+                let searchTimeout;
+                
+                if (searchInput) {
+                    searchInput.addEventListener('input', function(e) {
+                        clearTimeout(searchTimeout);
+                        searchTimeout = setTimeout(function() {
+                            const searchValue = e.target.value.trim();
+                            const currentUrl = new URL(window.location.href);
+                            if (searchValue) {
+                                currentUrl.searchParams.set('q', searchValue);
+                            } else {
+                                currentUrl.searchParams.delete('q');
+                            }
+                            currentUrl.searchParams.delete('page');
+                            window.location.href = currentUrl.toString();
+                        }, 800);
+                    });
+                }
+
+                // Sort dropdown handler
+                const sortSelect = document.querySelector('#sort-select');
+                if (sortSelect) {
+                    sortSelect.addEventListener('change', function(e) {
+                        const sortValue = e.target.value;
+                        const currentUrl = new URL(window.location.href);
+                        if (sortValue && sortValue !== 'latest') {
+                            currentUrl.searchParams.set('sort', sortValue);
+                        } else {
+                            currentUrl.searchParams.delete('sort');
+                        }
+                        currentUrl.searchParams.delete('page');
+                        window.location.href = currentUrl.toString();
+                    });
+                }
+
+                // Handle vote buttons for magazine cards (support both legacy .action-btn and new .vote-btn)
+                document.querySelectorAll('.action-btn[data-action="upvote"], .vote-btn[data-action="upvote"]').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        const postId = this.getAttribute('data-post-id');
+                        if (postId && !this.disabled) {
+                            window.blog_upvote(postId);
+                        }
+                    });
+                });
+
+                document.querySelectorAll('.action-btn[data-action="downvote"], .vote-btn[data-action="downvote"]').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        const postId = this.getAttribute('data-post-id');
+                        if (postId && !this.disabled) {
+                            window.blog_downvote(postId);
+                        }
+                    });
+                });
+
+                // Infinite scroll disabled; using server-side pagination
+            }
         });
     </script>
 {% endcompress %}

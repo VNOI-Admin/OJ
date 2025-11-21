@@ -52,6 +52,12 @@ class FlatPageAdmin(VersionAdmin, OldFlatPageAdmin):
     form = FlatpageForm
 
 
+class BlogPostTagAdmin(admin.ModelAdmin):
+    list_display = ('name', 'slug')
+    prepopulated_fields = {'slug': ('name',)}
+    search_fields = ('name', 'slug')
+
+
 class BlogPostForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(BlogPostForm, self).__init__(*args, **kwargs)
@@ -72,7 +78,7 @@ class BlogPostForm(ModelForm):
 
 class BlogPostAdmin(VersionAdmin):
     fieldsets = (
-        (None, {'fields': ('title', 'slug', 'authors', 'organization', 'global_post',
+        (None, {'fields': ('title', 'slug', 'authors', 'organization', 'global_post', 'tags',
                            'visible', 'sticky', 'publish_on')}),
         (_('Content'), {'fields': ('content', 'og_image')}),
         (_('Summary'), {'classes': ('collapse',), 'fields': ('summary',)}),
