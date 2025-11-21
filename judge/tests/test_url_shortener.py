@@ -1,11 +1,11 @@
 import os
 from unittest.mock import patch
 
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.test import TestCase
 from django.urls import reverse
-from django.conf import settings
 
 from judge.forms import URLShortenerForm
 from judge.models import Profile, URLShortener
