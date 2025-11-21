@@ -6,14 +6,15 @@ from django.db import models
 from django.db.models import CASCADE, F
 from django.urls import reverse
 from django.utils import timezone
-from django.utils.translation import gettext_lazy as _
 from django.utils.crypto import get_random_string
+from django.utils.translation import gettext_lazy as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
 from judge.models.profile import Organization, Profile
 
 __all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost', 'BlogPostTag', 'URLShortener']
+
 
 class MiscConfig(models.Model):
     key = models.CharField(max_length=30, verbose_name=_('key'), db_index=True)
