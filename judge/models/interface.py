@@ -3,16 +3,17 @@ import re
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import CASCADE
+from django.db.models import CASCADE, F
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.crypto import get_random_string
 from django.utils.translation import gettext_lazy as _
 from mptt.fields import TreeForeignKey
 from mptt.models import MPTTModel
 
 from judge.models.profile import Organization, Profile
 
-__all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost', 'BlogPostTag']
+__all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost', 'BlogPostTag', 'URLShortener']
 
 
 class MiscConfig(models.Model):
@@ -158,3 +159,57 @@ class BlogVote(models.Model):
         unique_together = ['voter', 'blog']
         verbose_name = _('blog vote')
         verbose_name_plural = _('blog votes')
+
+
+class URLShortener(models.Model):
+    RESERVED_CODES = {'admin', 'api', 'problem', 'contest', 'user', 'post', 's', 'shortener'}
+    short_code = models.CharField(
+        max_length=30,
+        unique=True,
+        db_index=True,
+        verbose_name='Tên rút gọn',
+    )
+    long_url = models.URLField(max_length=2000, verbose_name='URL đích')
+    creator = models.ForeignKey(Profile, on_delete=models.CASCADE, related_name='shortened_urls')
+    organization = models.ForeignKey(Organization, null=True, blank=True, on_delete=models.SET_NULL)
+    description = models.TextField(blank=True, verbose_name='Mô tả')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    click_count = models.IntegerField(default=0, verbose_name='Lượt click')
+    last_accessed = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True, verbose_name='Đang hoạt động')
+
+    class Meta:
+        permissions = (
+            ('create_url_shortener', 'Có thể tạo URL rút gọn'),
+            ('view_all_url_stats', 'Xem thống kê tất cả URLs'),
+        )
+        verbose_name = 'URL rút gọn'
+        verbose_name_plural = 'URLs rút gọn'
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.short_code} → {self.long_url[:50]}'
+
+    def get_absolute_url(self):
+        return reverse('url_shortener_redirect', args=[self.short_code])
+
+    @classmethod
+    def generate_unique_code(cls, length=5, max_attempts=20):
+        allowed_chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+        attempts = 0
+        while attempts < max_attempts:
+            candidate = get_random_string(length, allowed_chars)
+            attempts += 1
+            if candidate.lower() in cls.RESERVED_CODES:
+                continue
+            if not cls.objects.filter(short_code__iexact=candidate).exists():
+                return candidate
+        raise ValidationError('Unable to generate a unique short code at this time. Please try again.')
+
+    def increment_clicks(self):
+        type(self).objects.filter(pk=self.pk).update(
+            click_count=F('click_count') + 1,
+            last_accessed=timezone.now(),
+        )
+        self.refresh_from_db(fields=['click_count', 'last_accessed'])

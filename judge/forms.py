@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import zipfile
 from operator import attrgetter, itemgetter
 
@@ -21,7 +22,7 @@ from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, LanguageLimit, \
-    Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
+    Organization, Problem, Profile, Solution, Submission, Tag, URLShortener, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -833,3 +834,53 @@ class CompareSubmissionsForm(Form):
     user = forms.ChoiceField(
         widget=HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
     )
+
+
+class URLShortenerForm(forms.ModelForm):
+    RESERVED_CODES = URLShortener.RESERVED_CODES
+
+    class Meta:
+        model = URLShortener
+        fields = ['short_code', 'long_url', 'description', 'organization']
+        widgets = {
+            'short_code': forms.TextInput(attrs={
+                'placeholder': 'vd: vnoi-roadmap-2024',
+                'pattern': '[a-zA-Z0-9_-]+',
+            }),
+            'long_url': forms.URLInput(attrs={
+                'placeholder': 'https://example.com/very/long/url',
+            }),
+            'description': forms.Textarea(attrs={'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['short_code'].required = False
+
+    def clean_short_code(self):
+        raw_code = (self.cleaned_data.get('short_code') or '').strip()
+        code = raw_code or self._generate_code_or_error()
+        self._validate_format(code)
+        self._validate_uniqueness(code)
+        return code
+
+    def _generate_code_or_error(self):
+        try:
+            return URLShortener.generate_unique_code(length=5)
+        except ValidationError as exc:
+            raise ValidationError(exc.messages[0])
+
+    def _validate_format(self, code):
+        if len(code) < 3 or len(code) > 30:
+            raise ValidationError(_('Độ dài tên rút gọn phải từ 3 đến 30 ký tự'))
+        if not re.match(r'^[a-zA-Z0-9_-]+$', code):
+            raise ValidationError(_('Chỉ được dùng chữ, số, gạch ngang và gạch dưới'))
+        if code.lower() in self.RESERVED_CODES:
+            raise ValidationError(_('Tên này đã được hệ thống sử dụng'))
+
+    def _validate_uniqueness(self, code):
+        existing = URLShortener.objects.filter(short_code__iexact=code)
+        if self.instance.pk:
+            existing = existing.exclude(pk=self.instance.pk)
+        if existing.exists():
+            raise ValidationError(_('Tên rút gọn đã tồn tại'))
