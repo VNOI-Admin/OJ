@@ -1,0 +1,334 @@
+<style>
+    /* =========================================
+       SHARED VARIABLES & BASE
+       ========================================= */
+    :root {
+        --shortener-bg: #ffffff;
+        --shortener-border: #e0e0e0;
+        --shortener-text: #333333;
+        --shortener-text-muted: #666666;
+        --shortener-input-bg: #ffffff;
+        --shortener-input-border: #cccccc;
+        --shortener-primary: #007bff;
+        --shortener-hero-bg: #f8f9fa;
+        /* Light grey for distinction */
+        --shortener-pill-bg: #f1f3f5;
+        --shortener-pill-text: #495057;
+
+        /* Button Colors */
+        --btn-cancel-bg: #dc2626;
+        --btn-cancel-text: #ffffff;
+        --btn-submit-bg: #0f6fec;
+        --btn-submit-text: #ffffff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --shortener-bg: #1e1e1e;
+            --shortener-border: #333333;
+            --shortener-text: #e0e0e0;
+            --shortener-text-muted: #aaaaaa;
+            --shortener-input-bg: #2d2d2d;
+            --shortener-input-border: #444444;
+            --shortener-primary: #4da3ff;
+            --shortener-hero-bg: #252526;
+            --shortener-pill-bg: #333333;
+            --shortener-pill-text: #cccccc;
+        }
+    }
+
+    /* =========================================
+       LAYOUT & CONTAINERS
+       ========================================= */
+    .shortener-grid {
+        display: grid;
+        grid-template-columns: minmax(320px, 2fr) minmax(240px, 1fr);
+        gap: 24px;
+        margin-top: 20px;
+    }
+
+    .shortener-inputs {
+        background: var(--shortener-bg);
+        border: 1px solid var(--shortener-border);
+        border-radius: 8px;
+        padding: 24px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    }
+
+    @media (prefers-color-scheme: dark) {
+        .shortener-inputs {
+            box-shadow: none;
+        }
+    }
+
+    /* =========================================
+       FORM ELEMENTS
+       ========================================= */
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: var(--shortener-text);
+        font-size: 14px;
+    }
+
+    /* Strict Input Styling */
+    .form-group input[type="text"],
+    .form-group input[type="url"],
+    .form-group textarea,
+    .form-group select {
+        width: 100%;
+        height: 40px;
+        /* Fixed height */
+        padding: 0 12px;
+        border: 1px solid var(--shortener-input-border);
+        border-radius: 4px;
+        font-size: 14px;
+        background-color: var(--shortener-input-bg);
+        color: var(--shortener-text);
+        transition: border-color 0.2s;
+        box-sizing: border-box;
+        line-height: normal;
+    }
+
+    .form-group textarea {
+        height: auto;
+        padding: 12px;
+        min-height: 80px;
+    }
+
+    .form-group input:focus,
+    .form-group textarea:focus,
+    .form-group select:focus {
+        border-color: var(--shortener-primary);
+        outline: none;
+    }
+
+    /* Input Group - Flexbox Alignment */
+    .input-group {
+        display: flex;
+        gap: 12px;
+        /* Increased gap for better separation */
+        align-items: center;
+        flex-wrap: nowrap;
+        /* Prevent wrapping */
+    }
+
+    .input-group input[type="text"],
+    .input-group input[type="url"] {
+        flex: 1;
+        min-width: 0;
+        width: auto !important;
+        margin: 0;
+    }
+
+    /* Gradient Border Button (Random/Copy) */
+    .input-group .button {
+        white-space: nowrap;
+        height: 40px;
+        padding: 0 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 4px;
+        cursor: pointer;
+        font-weight: 600;
+        font-size: 13px;
+        box-sizing: border-box;
+        margin: 0;
+        flex-shrink: 0;
+        /* Never shrink */
+
+        /* Gradient Border Magic */
+        border: 2px solid transparent;
+        background:
+            linear-gradient(var(--shortener-input-bg), var(--shortener-input-bg)) padding-box,
+            linear-gradient(135deg, #0f6fec, #a855f7) border-box;
+        color: var(--shortener-text);
+        transition: opacity 0.2s;
+    }
+
+    .input-group .button:hover {
+        opacity: 0.8;
+    }
+
+    .form-help {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--shortener-text-muted);
+    }
+
+    .form-error {
+        color: #d9534f;
+        font-size: 13px;
+        margin-top: 4px;
+    }
+
+    /* =========================================
+       PREVIEW CARD
+       ========================================= */
+    .shortener-preview-card {
+        border-radius: 8px;
+        padding: 20px;
+        background: var(--shortener-bg);
+        border: 1px solid var(--shortener-border);
+        color: var(--shortener-text);
+        position: sticky;
+        top: 20px;
+    }
+
+    .shortener-preview-card__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 12px;
+        border-bottom: 1px solid var(--shortener-border);
+        padding-bottom: 8px;
+    }
+
+    .shortener-preview-card__title {
+        font-size: 11px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--shortener-text-muted);
+        font-weight: 700;
+    }
+
+    .shortener-preview-card__url {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        word-break: break-all;
+        line-height: 1.4;
+        color: var(--shortener-primary);
+        font-family: monospace;
+    }
+
+    .shortener-preview-card__hint {
+        font-size: 12px;
+        color: var(--shortener-text-muted);
+        margin-top: 12px;
+    }
+
+    /* =========================================
+       ACTION BUTTONS (Cancel / Create)
+       ========================================= */
+    .shortener-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 24px;
+        width: 100%;
+    }
+
+    /* Cancel Button (1/3) */
+    .shortener-actions .button:first-child {
+        flex: 1;
+        background: var(--btn-cancel-bg);
+        color: var(--btn-cancel-text);
+        border: none;
+        border-radius: 4px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        text-decoration: none;
+    }
+
+    /* Create Button (2/3) */
+    .shortener-actions .button:last-child {
+        flex: 2;
+        background: var(--btn-submit-bg);
+        color: var(--btn-submit-text);
+        border: none;
+        border-radius: 4px;
+        height: 40px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 600;
+        cursor: pointer;
+    }
+
+    .shortener-actions .button:hover {
+        opacity: 0.9;
+    }
+
+    /* =========================================
+       LIST PAGE (HERO & TABLE)
+       ========================================= */
+    .shortener-hero {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 16px 20px;
+        border: 1px solid var(--shortener-border);
+        border-radius: 8px;
+        background: var(--shortener-hero-bg) !important;
+        margin-bottom: 24px;
+    }
+
+    .shortener-hero__title {
+        margin: 0 0 8px 0;
+        font-size: 20px;
+        color: var(--shortener-text) !important;
+        /* Force correct text color */
+        font-weight: 600;
+    }
+
+    .shortener-hero__meta {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        color: var(--shortener-text-muted) !important;
+        /* Force correct text color */
+        flex-wrap: wrap;
+        font-size: 13px;
+    }
+
+    .shortener-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--shortener-pill-bg);
+        color: var(--shortener-pill-text);
+        font-weight: 500;
+    }
+
+    .table-actions {
+        display: flex;
+        gap: 8px;
+        justify-content: flex-end;
+    }
+
+    .table-actions form {
+        margin: 0;
+    }
+
+    @media (max-width: 768px) {
+        .shortener-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .shortener-preview-card {
+            position: static;
+        }
+
+        .shortener-hero {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 16px;
+        }
+
+        .shortener-hero .button {
+            width: 100%;
+            text-align: center;
+        }
+    }
+</style>

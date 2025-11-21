@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block content_title %}Tạo URL rút gọn{% endblock %}
+
+{% block media %}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+{% endblock %}
+
+{% block body %}
+    <div class="content-description">
+        {% set submit_label = 'Tạo URL' %}
+        {% include "url_shortener/_form.html" %}
+    </div>
+{% endblock %}
