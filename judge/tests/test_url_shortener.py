@@ -1,9 +1,11 @@
+import os
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.test import TestCase
 from django.urls import reverse
+from django.conf import settings
 
 from judge.forms import URLShortenerForm
 from judge.models import Profile, URLShortener
@@ -91,6 +93,16 @@ class URLShortenerViewsTest(TestCase):
             long_url='https://example.com/hello',
             creator=self.creator_profile,
         )
+        self._ensure_jsi18n_stub()
+
+    def _ensure_jsi18n_stub(self):
+        locale = settings.LANGUAGE_CODE or 'en'
+        target_dir = os.path.join(settings.BASE_DIR, 'static', 'jsi18n', locale)
+        os.makedirs(target_dir, exist_ok=True)
+        target_file = os.path.join(target_dir, 'djangojs.js')
+        if not os.path.exists(target_file):
+            with open(target_file, 'w', encoding='utf-8') as f:
+                f.write('// stub for tests\n')
 
     def test_list_shows_only_owned_without_permission(self):
         self.client.login(username='carol', password='pwd')
