@@ -25,15 +25,10 @@
     <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
     <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
     <!-- <link rel="manifest" href="/manifest.json"> -->
-
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Noto+Sans:ital,wght@0,100..900;1,100..900&display=swap" rel="stylesheet">
-
-    <meta name="msapplication-TileColor" content="#534569">
+    <meta name="msapplication-TileColor" content="#345C8B">
     <meta name="msapplication-TileImage" content="/mstile-144x144.png">
     {# Chrome 39 for Android colour #}
-    <meta name="theme-color" content="#534569">
+    <meta name="theme-color" content="#345C8B">
     {% if og_image %}
         <meta property="og:image" content="{{ request.build_absolute_uri(og_image) }}">
     {% else %}
@@ -223,11 +218,11 @@
             {% if request.organization is not defined %}
                 <li class="home-nav-element"><a href="{{ url('home') }}">{% include "site-logo-fragment.html" %}</a></li>
                 <li class="home-nav-element"><span class="nav-divider"></span></li>
-                <li class="home-menu-item"><a href="{{ url('home') }}" class="nav-home"><b>{{ _('Home') }}</b></a></li>
+                <li class="home-menu-item"><a href="{{ url('home') }}" class="nav-home">{{ _('Home') }}</a></li>
                 {% for node in mptt_tree(nav_bar) recursive %}
                     <li>
                         <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %}">
-                            <b>{{ _(node.label) }}</b>
+                            {{ _(node.label) }}
                             {% if not node.is_leaf_node() %}
                                 <div class="nav-expand">&gt;</div>
                             {% endif %}
@@ -241,7 +236,7 @@
                 {% macro make_navbar_item(key, url, text) %}
                     <li>
                         <a href="{{ url }}" class="nav-{{ key }}"><span>
-                            <b>{{ text }}</b>
+                            {{ text }}
                         </a>
                     </li>
                 {% endmacro %}
