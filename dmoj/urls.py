@@ -326,12 +326,14 @@ urlpatterns = [
     path('status/', status.status_all, name='status_all'),
     path('status/oj/', status.status_oj, name='status_oj'),
 
+    path('blogs/', paged_list_view(blog.ModernBlogList, 'blog_modern_list')),
     path('posts/', paged_list_view(blog.PostList, 'blog_post_list')),
     path('posts/new', blog.BlogPostCreate.as_view(), name='blog_post_new'),
     path('posts/upvote', blog.upvote_blog, name='blog_upvote'),
     path('posts/downvote', blog.downvote_blog, name='blog_downvote'),
     path('post/<int:id>-<slug:slug>', include([
         path('', blog.PostView.as_view(), name='blog_post'),
+        path('/modern', blog.PostModernView.as_view(), name='blog_post_modern'),
         path('/edit', blog.BlogPostEdit.as_view(), name='blog_post_edit'),
         path('/delete', blog.BlogPostDelete.as_view(), name='blog_post_delete'),
         path('/', lambda _, id, slug: HttpResponsePermanentRedirect(reverse('blog_post', args=[id, slug]))),
@@ -471,6 +473,32 @@ if settings.VNOJ_ENABLE_API:
             path('participations', api.api_v2.APIContestParticipationList.as_view()),
             path('languages', api.api_v2.APILanguageList.as_view()),
             path('judges', api.api_v2.APIJudgeList.as_view()),
+        ])),
+    )
+
+if settings.VNOJ_ENABLE_SYNC_API:
+    urlpatterns.append(
+        path('api/v2/sync/', include([
+            path(
+                'contest/<str:contest_code>',
+                api.api_v2.APIContestSyncDetail.as_view(),
+                name='api_contest_sync_detail',
+            ),
+            path(
+                'contest/<str:contest_code>/problems',
+                api.api_v2.APIContestSyncProblems.as_view(),
+                name='api_contest_sync_problems',
+            ),
+            path(
+                'contest/<str:contest_code>/participants',
+                api.api_v2.APIContestSyncParticipants.as_view(),
+                name='api_contest_sync_participants',
+            ),
+            path(
+                'contest/<str:contest_code>/submissions',
+                api.api_v2.APIContestSyncSubmissions.as_view(),
+                name='api_contest_sync_submissions',
+            ),
         ])),
     )
 

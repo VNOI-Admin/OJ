@@ -732,14 +732,17 @@ class BlogPostForm(ModelForm):
             self.fields.pop('global_post')
         if not self.user.has_perm('judge.pin_post'):
             self.fields.pop('sticky')
+        if not self.user.has_perm('judge.add_blogposttag'):
+            self.fields.pop('tags')
 
     class Meta:
         model = BlogPost
-        fields = ['title', 'publish_on', 'visible', 'global_post', 'sticky', 'content']
+        fields = ['title', 'publish_on', 'visible', 'global_post', 'tags', 'sticky', 'content']
         widgets = {
             'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'summary': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'publish_on': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
+            'tags': Select2MultipleWidget,
         }
 
 
