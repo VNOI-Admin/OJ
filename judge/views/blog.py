@@ -128,7 +128,7 @@ class BlogPostMixin(object):
 
 class PostListBase(ListView):
     model = BlogPost
-    paginate_by = 10
+    paginate_by = 11
     context_object_name = 'posts'
     title = None
 
@@ -162,12 +162,29 @@ class PostListBase(ListView):
 
 class ModernBlogList(PostListBase):
     template_name = 'blog/modern-list.html'
-    paginate_by = 3
+    paginate_by = 11
     title = _('Blog')
 
     def get_queryset(self):
         queryset = super(ModernBlogList, self).get_queryset()
-        queryset = queryset.filter(organization=None)
+
+        # Users with edit_all_post permission can see all posts (published and unpublished)
+        if (
+            self.request.user.is_authenticated and
+            self.request.user.has_perm('judge.edit_all_post')
+        ):
+            queryset = (
+                BlogPost.objects
+                .prefetch_related('authors__user', 'authors__display_badge')
+                .filter(organization=None)
+            )
+            if self.request.user.is_authenticated:
+                profile = self.request.profile
+                queryset = queryset.annotate(
+                    my_vote=FilteredRelation('votes', condition=Q(votes__voter_id=profile.id)),
+                ).annotate(vote_score=Coalesce(F('my_vote__score'), Value(0)))
+        else:
+            queryset = queryset.filter(organization=None)
 
         # Search functionality with search type
         search_query = self.request.GET.get('q', '').strip()
@@ -410,11 +427,26 @@ class BlogPostCreate(TitleMixin, CreateView):
 
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
-            post = form.save()
+            post = form.save(commit=False)
             post.slug = remove_accents(self.request.user.username.lower())
-            post.publish_on = timezone.now()
-            post.authors.add(self.request.user.profile)
+
+            # Set publish_on if not provided
+            if not post.publish_on:
+                post.publish_on = timezone.now()
+
             post.save()
+
+            # Handle authors: if authors were selected in form, use them
+            # Otherwise, add the creator as the author
+            if 'authors' in form.cleaned_data and form.cleaned_data['authors']:
+                form.save_m2m()  # This saves the authors from the form
+            else:
+                # If no authors selected, add the creator as author
+                post.authors.add(self.request.user.profile)
+
+            # Save tags if any
+            if 'tags' in form.cleaned_data:
+                post.tags.set(form.cleaned_data['tags'])
 
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
@@ -427,13 +459,10 @@ class BlogPostCreate(TitleMixin, CreateView):
         if not request.user.is_authenticated:
             raise PermissionDenied()
 
-        # Check if user has permission to create blog posts
-        if request.official_contest_mode or request.user.profile.problem_count < settings.VNOJ_BLOG_MIN_PROBLEM_COUNT \
-                and not request.user.is_superuser and not hasattr(self, 'organization'):
+        # Check if user has permission to edit all posts (create posts)
+        if not request.user.has_perm('judge.edit_all_post'):
             return generic_message(request, _('Permission denied'),
-                                   _('You cannot create blog post.\n'
-                                     'Note: You need to solve at least %d problems to create new blog post.')
-                                   % settings.VNOJ_BLOG_MIN_PROBLEM_COUNT)
+                                   _('You do not have permission to create blog posts.'))
 
         return super().dispatch(request, *args, **kwargs)
 

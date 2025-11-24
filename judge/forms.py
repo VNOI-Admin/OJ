@@ -733,14 +733,22 @@ class BlogPostForm(ModelForm):
         if not self.user.has_perm('judge.pin_post'):
             self.fields.pop('sticky')
 
+        # Only users with edit_all_post permission can assign authors
+        if not self.user.has_perm('judge.edit_all_post'):
+            self.fields.pop('authors', None)
+
     class Meta:
         model = BlogPost
-        fields = ['title', 'publish_on', 'visible', 'global_post', 'tags', 'sticky', 'content']
+        fields = ['title', 'authors', 'publish_on', 'visible', 'global_post', 'tags', 'sticky', 'content']
         widgets = {
             'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'summary': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'publish_on': DateTimeInput(format='%Y-%m-%d %H:%M:%S', attrs={'class': 'datetimefield'}),
             'tags': Select2MultipleWidget,
+            'authors': HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
+        }
+        help_texts = {
+            'authors': _('Select one or more authors for this post. If left empty, you will be set as the author.'),
         }
 
 

@@ -57,7 +57,7 @@
                 </div>
                 {% endif %}
 
-                {% if request.user.is_authenticated %}
+                {% if request.user.is_authenticated and perms.judge.edit_all_post %}
                 <div class="nav-section">
                 <h3 class="nav-section-title">{{ _('My Content') }}</h3>
                 <ul class="nav-links">
@@ -123,7 +123,7 @@
 
   
 
-        {% if request.user.is_authenticated %}
+        {% if request.user.is_authenticated and perms.judge.edit_all_post %}
           <a href="{{ url('blog_post_new') }}" class="btn-new-post">
             <i class="fa fa-pencil"></i><span>{{ _('Write') }}</span>
           </a>
