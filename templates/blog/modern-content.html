@@ -24,9 +24,7 @@
 {% block media %}
     {% include "comments/media-css.html" %}
     {% compress css %}
-        {# Load both light and dark versions for theme switching #}
-        <link rel="stylesheet" href="{{ static('blog-post.css') }}" id="blog-post-light">
-        <link rel="stylesheet" href="{{ static('dark/blog-post.css') }}" media="not all" id="blog-post-dark">
+        <link rel="stylesheet" href="{{ static('blog-post.css') }}">
     {% endcompress %}
 {% endblock %}
 
@@ -145,7 +143,9 @@
 
     <!-- Main content -->
     <article class="blog-post-content">
-        {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}
+        {% cache 86400 'post_content' post.id MATH_ENGINE %}
+            {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}
+        {% endcache %}
     </article>
 
     <!-- Social sharing -->

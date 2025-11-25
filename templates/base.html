@@ -44,15 +44,21 @@
         <link rel="stylesheet" href="{{ FONTAWESOME_CSS }}">
     {% endif %}
     {% compress css %}
-        {# Load both light and dark stylesheets for theme switching #}
-        <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}" id="light-theme-css">
-        <link rel="stylesheet" href="{{ static(DARK_STYLE_CSS) }}" media="not all" id="dark-theme-css">
-        
+        {# TODO: once dark mode support is better, enable for all users by deleting the else branch #}
+        {% if perms.judge.test_site %}
+            {% if PREFERRED_STYLE_CSS is not none %}
+                <link rel="stylesheet" href="{{ static(PREFERRED_STYLE_CSS) }}">
+            {% else %}
+                <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}">
+                <link rel="stylesheet" href="{{ static(DARK_STYLE_CSS) }}" media="(prefers-color-scheme: dark)">
+            {% endif %}
+        {% else %}
+            <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}">
+        {% endif %}
         {% if INLINE_FONTAWESOME %}<link rel="stylesheet" href="{{ static('libs/fontawesome/font-awesome.css') }}">{% endif %}
         <link rel="stylesheet" href="{{ static('source_sans_pro.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ static('libs/clipboard/tooltip.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ static('libs/select2/select2.css') }}">
-        <link rel="stylesheet" href="{{ static('theme-toggle.css') }}">
     {% endcompress %}
     <link rel="canonical"
           href="{{ DMOJ_SCHEME }}://{{ DMOJ_CANONICAL|default(site.domain) }}{{ request.get_full_path() }}">
@@ -81,7 +87,6 @@
         {% include "extra_js.html" %}
         <script src="{{ static('common.js') }}"></script>
         <script src="{{ static('event.js') }}"></script>
-        <script src="{{ static('theme-toggle.js') }}"></script>
         <script>
             moment.locale('{{ LANGUAGE_CODE }}');
             $(function () {
@@ -227,7 +232,6 @@
                         {% endwith %}
                     </li>
                 {% endfor %}
-                <li><a href="{{ url('blog_modern_list') }}" class="nav-blog">{{ _('Blogs') }}</a></li>
             {% else %}
                 {% macro make_navbar_item(key, url, text) %}
                     <li>
@@ -243,14 +247,10 @@
                 {{ make_navbar_item('submission-list', url('submission_list_organization', org.slug), _('Submissions')) }}
                 {{ make_navbar_item('contest-list',  url('contest_list_organization', org.slug), _('Contests')) }}
                 {{ make_navbar_item('users',org.get_users_url(), _('Users')) }}
-                {{ make_navbar_item('blog', url('blog_modern_list'), _('Blogs')) }}
             {% endif %}
         </ul>
 
         <span id="user-links">
-            <button id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Toggle theme" title="Toggle theme">
-                <i class="fa fa-adjust"></i>
-            </button>
             <a href=
                 {% if request.resolver_match.view_name == "problem_detail" and problem %}
                     "{{ url('new_problem_ticket', problem.code) }}"
