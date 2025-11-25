@@ -38,7 +38,7 @@
             });
             
             if (this.headings.length === 0) {
-                console.warn('BlogTableOfContents: No headings found in content');
+                this.removeTocContainer();
                 return;
             }
 
@@ -74,20 +74,23 @@
         }
 
         createTocContainer() {
-            // Check if the TOC sidebar already exists in the template
             let existingSidebar = document.querySelector('.blog-toc-sidebar-container');
             existingSidebar.innerHTML = `
-            <aside class="blog-toc-sidebar-container">
-                <div class="blog-toc-sidebar" id="table-of-contents">
+            <div class="blog-toc-sidebar" id="table-of-contents">
 
-                <div class="blog-toc-header">
-                    <h3>Table of Contents</h3>
-                </div>
-                <div class="blog-toc-nav"></div>
-                </div>
-            </aside>
+            <div class="blog-toc-header">
+                <h3>Table of Contents</h3>
+            </div>
+            <div class="blog-toc-nav"></div>
+            </div>
             `;
             this.tocContainer = existingSidebar.querySelector('.blog-toc-nav');
+        }
+        removeTocContainer() {
+            const existingSidebar = document.querySelector('.blog-toc-sidebar-container');
+            if (existingSidebar) {
+                existingSidebar.remove();
+            }
         }
 
         generateToc() {
