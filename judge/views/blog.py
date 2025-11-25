@@ -62,48 +62,26 @@ def vote_blog(request, delta):
     if blog.authors.filter(id=request.profile.id).exists():
         return HttpResponseBadRequest(_('You cannot vote your own blog'), content_type='text/plain')
 
-    # Check if user already voted
-    try:
-        existing_vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
-        # If clicking the same vote button (toggle to unvote)
-        if existing_vote.score == delta:
-            existing_vote.delete()
-            BlogPost.objects.get(id=blog_id).vote(-delta)  # Remove the vote
-            return HttpResponse('unvoted', content_type='text/plain')
-        # If clicking the opposite vote button, just unvote (don't switch)
-        else:
-            existing_vote.delete()
-            BlogPost.objects.get(id=blog_id).vote(-existing_vote.score)  # Remove the current vote
-            return HttpResponse('unvoted', content_type='text/plain')
-    except BlogVote.DoesNotExist:
-        # No existing vote, create new one
-        vote = BlogVote()
-        vote.blog_id = blog_id
-        vote.voter = request.profile
-        vote.score = delta
+    vote = BlogVote()
+    vote.blog_id = blog_id
+    vote.voter = request.profile
+    vote.score = delta
 
-        while True:
-            try:
-                vote.save()
-            except IntegrityError:
-                with LockModel(write=(BlogVote,)):
-                    try:
-                        vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
-                    except BlogVote.DoesNotExist:
-                        # We must continue racing in case this is exploited to manipulate votes.
-                        continue
-                    # Handle race condition - vote now exists
-                    if vote.score == delta:
-                        return HttpResponse('success', content_type='text/plain')
-                    else:
-                        # If opposite vote exists, just unvote
-                        vote.delete()
-                        BlogPost.objects.get(id=blog_id).vote(-vote.score)
-                        return HttpResponse('unvoted', content_type='text/plain')
-            else:
-                BlogPost.objects.get(id=blog_id).vote(delta)
-            break
-        return HttpResponse('success', content_type='text/plain')
+    while True:
+        try:
+            vote.save()
+        except IntegrityError:
+            with LockModel(write=(BlogVote,)):
+                try:
+                    vote = BlogVote.objects.get(blog_id=blog_id, voter=request.profile)
+                except BlogVote.DoesNotExist:
+                    # We must continue racing in case this is exploited to manipulate votes.
+                    continue
+                return HttpResponseBadRequest(_('You cannot vote twice.'), content_type='text/plain')
+        else:
+            BlogPost.objects.get(id=blog_id).vote(delta)
+        break
+    return HttpResponse('success', content_type='text/plain')
 
 
 def upvote_blog(request):
@@ -128,7 +106,7 @@ class BlogPostMixin(object):
 
 class PostListBase(ListView):
     model = BlogPost
-    paginate_by = 11
+    paginate_by = 10
     context_object_name = 'posts'
     title = None
 
@@ -168,7 +146,6 @@ class PostListBase(ListView):
 
 class ModernBlogList(PostListBase):
     template_name = 'blog/modern-list.html'
-    paginate_by = 11
     title = _('Blog')
 
     def ignore_magazine_tag(self, queryset):
@@ -177,46 +154,16 @@ class ModernBlogList(PostListBase):
 
     def get_queryset(self):
         queryset = super(ModernBlogList, self).get_queryset()
+        queryset = queryset.filter(global_post=True)
 
-        # Users with edit_all_post permission can see all posts (published and unpublished)
-        if (
-            self.request.user.is_authenticated and
-            self.request.user.has_perm('judge.edit_all_post')
-        ):
-            queryset = (
-                BlogPost.objects
-                .prefetch_related('authors__user', 'authors__display_badge')
-                .filter(organization=None)
-            )
-            if self.request.user.is_authenticated:
-                profile = self.request.profile
-                queryset = queryset.annotate(
-                    my_vote=FilteredRelation('votes', condition=Q(votes__voter_id=profile.id)),
-                ).annotate(vote_score=Coalesce(F('my_vote__score'), Value(0)))
-        else:
-            queryset = queryset.filter(organization=None)
-
-        # Search functionality with search type
+        # Search functionality
         search_query = self.request.GET.get('q', '').strip()
-        search_type = self.request.GET.get('search_type', 'article').strip()
         if search_query:
-            if search_type == 'author':
-                queryset = queryset.filter(
-                    Q(authors__user__username__icontains=search_query) |
-                    Q(authors__username_display_override__icontains=search_query),
-                ).distinct()
-            else:
-                queryset = queryset.filter(
-                    Q(title__icontains=search_query) |
-                    Q(content__icontains=search_query) |
-                    Q(summary__icontains=search_query),
-                ).distinct()
-        # Filter functionality
-        filter_type = self.request.GET.get('filter', '').strip()
-        if filter_type == 'pinned':
-            queryset = queryset.filter(sticky=True)
-        elif filter_type == 'global':
-            queryset = queryset.filter(global_post=True)
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) |
+                Q(content__icontains=search_query) |
+                Q(summary__icontains=search_query),
+            )
 
         # Tag filter
         tag_slug = self.request.GET.get('tag', '').strip()
@@ -259,7 +206,6 @@ class ModernBlogList(PostListBase):
         context['current_filter'] = self.request.GET.get('filter', '')
         context['current_sort'] = self.request.GET.get('sort', 'latest')
         context['current_tag'] = self.request.GET.get('tag', '')
-        context['current_search_type'] = self.request.GET.get('search_type', 'article')
 
         # Get all available tags (if tag model exists)
         try:
@@ -313,10 +259,11 @@ class PostList(PostListBase):
         context['first_page_href'] = reverse('home')
 
         context['newsfeed_link'] = f"{reverse('home')}?show_all_blogs=false"
-        context['all_blogs_link'] = reverse('blog_modern_list')
+        context['all_blogs_link'] = f"{reverse('home')}?show_all_blogs=true"
 
         context['show_all_blogs'] = self.show_all_blogs
         context['gcse_url'] = settings.GOOGLE_SEARCH_ENGINE_URL
+
         context['page_prefix'] = reverse('blog_post_list')
         context['comments'] = Comment.most_recent(self.request.user, 10)
         context['new_problems'] = Problem.get_public_problems() \
@@ -438,26 +385,11 @@ class BlogPostCreate(TitleMixin, CreateView):
 
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
-            post = form.save(commit=False)
+            post = form.save()
             post.slug = remove_accents(self.request.user.username.lower())
-
-            # Set publish_on if not provided
-            if not post.publish_on:
-                post.publish_on = timezone.now()
-
+            post.publish_on = timezone.now()
+            post.authors.add(self.request.user.profile)
             post.save()
-
-            # Handle authors: if authors were selected in form, use them
-            # Otherwise, add the creator as the author
-            if 'authors' in form.cleaned_data and form.cleaned_data['authors']:
-                form.save_m2m()  # This saves the authors from the form
-            else:
-                # If no authors selected, add the creator as author
-                post.authors.add(self.request.user.profile)
-
-            # Save tags if any
-            if 'tags' in form.cleaned_data:
-                post.tags.set(form.cleaned_data['tags'])
 
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
@@ -470,10 +402,13 @@ class BlogPostCreate(TitleMixin, CreateView):
         if not request.user.is_authenticated:
             raise PermissionDenied()
 
-        # Check if user has permission to edit all posts (create posts)
-        if not request.user.has_perm('judge.edit_all_post'):
+        # Check if user has permission to create blog posts
+        if request.official_contest_mode or request.user.profile.problem_count < settings.VNOJ_BLOG_MIN_PROBLEM_COUNT \
+                and not request.user.is_superuser and not hasattr(self, 'organization'):
             return generic_message(request, _('Permission denied'),
-                                   _('You do not have permission to create blog posts.'))
+                                   _('You cannot create blog post.\n'
+                                     'Note: You need to solve at least %d problems to create new blog post.')
+                                   % settings.VNOJ_BLOG_MIN_PROBLEM_COUNT)
 
         return super().dispatch(request, *args, **kwargs)
 
