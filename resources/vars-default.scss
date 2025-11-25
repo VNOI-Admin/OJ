@@ -60,6 +60,30 @@ $color_problem_submit_select2: #757575;
 
 $color_voted_mark: #0000ff;
 
+// Blog-specific light mode colors
+$color_blog_bg: #ffffff;
+$color_blog_card_bg: #ffffff;
+$color_blog_sidebar_bg: #f7f7f8;
+$color_blog_border: #dee2e6;
+$color_blog_text_primary: #202123;
+$color_blog_text_secondary: #565869;
+$color_blog_text_muted: #8e8ea0;
+$color_blog_text_tertiary: #6b7280;
+$color_blog_hover_bg: #ececf1;
+$color_blog_active_bg: #202123;
+$color_blog_accent: #1958c1;
+$color_blog_code_bg: #f7f7f7;
+$color_blog_blockquote_border: #292929;
+$color_blog_vote_active: #1a8917;
+$color_blog_tag_bg: #f3f4f6;
+$color_blog_tag_border: #e5e7eb;
+$color_blog_tag_text: #374151;
+$color_blog_tag_hover_bg: #e5e7eb;
+$color_blog_tag_hover_border: #d1d5db;
+$color_blog_tag_hover_text: #1f2937;
+$color_blog_tag_active_bg: #3b82f6;
+$color_blog_hero_bg: #eff6ff;
+
 $path_to_root: '.';     // relative path from style.css to STATIC_ROOT
 
 @mixin vars-img {}
