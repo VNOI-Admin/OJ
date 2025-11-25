@@ -143,27 +143,6 @@
                         window.location.href = currentUrl.toString();
                     });
                 }
-
-                // Handle vote buttons for magazine cards (support both legacy .action-btn and new .vote-btn)
-                document.querySelectorAll('.action-btn[data-action="upvote"], .vote-btn[data-action="upvote"]').forEach(function(btn) {
-                    btn.addEventListener('click', function() {
-                        const postId = this.getAttribute('data-post-id');
-                        if (postId && !this.disabled) {
-                            window.blog_upvote(postId);
-                        }
-                    });
-                });
-
-                document.querySelectorAll('.action-btn[data-action="downvote"], .vote-btn[data-action="downvote"]').forEach(function(btn) {
-                    btn.addEventListener('click', function() {
-                        const postId = this.getAttribute('data-post-id');
-                        if (postId && !this.disabled) {
-                            window.blog_downvote(postId);
-                        }
-                    });
-                });
-
-                // Infinite scroll disabled; using server-side pagination
             }
         });
     </script>

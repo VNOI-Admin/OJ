@@ -123,7 +123,7 @@
         }
         
         &.voted {
-            color: $color_blog_accent;
+            color: $color_blog_accent !important;
         }
         
         &:disabled {
