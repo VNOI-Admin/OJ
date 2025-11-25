@@ -76,91 +76,6 @@
       </div>
     </div>
 
-    {% if posts and posts[0].sticky and not request.GET.q %}
-    {% set hero_post = posts[0] %}
-    <article class="magazine-hero">
-      <div class="hero-content">
-        <div class="hero-meta">
-          <span class="hero-badge"><i class="fa fa-thumb-tack"></i>{{ _('Featured') }}</span>
-          <span class="hero-date"><i class="fa fa-clock-o"></i>{{ relative_time(hero_post.publish_on, abs=_('on {time}'), rel=_('{time}')) }}</span>
-        </div>
-        <h1 class="hero-title"><a href="{{ url('blog_post_modern', hero_post.id, hero_post.slug) }}">{{ hero_post.title }}</a></h1>
-        <div class="hero-excerpt">
-          {% cache 86400 'post_summary_hero' hero_post.id %}
-            {{ hero_post.summary
-               | default(hero_post.content, true)
-               | markdown('blog', 'svg', lazy_load=True)
-               | striptags
-               | truncatewords_html(40)
-               | safe }}
-          {% endcache %}
-        </div>
-        <div class="hero-footer">
-          <div class="hero-author">
-            {% set authors = hero_post.authors.all() %}
-            {% if authors %}{{ link_users(authors) }}{% endif %}
-          </div>
-          
-          {# Hero tags #}
-          {% if hero_post.tags.exists() %}
-          <div class="hero-tags">
-            {% for tag in hero_post.tags.all() %}
-              <a href="{{ url('blog_modern_list') }}?tag={{ tag.slug }}" class="post-tag">{{ tag.name }}</a>
-            {% endfor %}
-          </div>
-          {% endif %}
-          
-          <div class="hero-stats">
-            {% set hero_vote_info = post_votes[hero_post.id] %}
-            
-            {# Votes display #}
-            <div class="stat-item vote-stat" data-post-id="{{ hero_post.id }}">
-              <i class="fa fa-thumbs-up"></i>
-              <span id="post-score-{{ hero_post.id }}" 
-                    title="{{ _('Total score:') }} {{ hero_post.score }} ({{ hero_vote_info.upvote_count }} {{ _('up') }}, {{ hero_vote_info.downvote_count }} {{ _('down') }})"
-                    data-toggle="tooltip">
-                {{ hero_post.score }}
-              </span>
-              <span class="stat-label">{{ _('votes') }}</span>
-              
-              {# Vote buttons #}
-              {% if request.user.is_authenticated %}
-                <div class="vote-buttons">
-      <button class="vote-btn {% if hero_post.vote_score == 1 %}voted{% endif %}"
-        data-action="upvote"
-        data-post-id="{{ hero_post.id }}"
-        onclick="blog_upvote({{ hero_post.id }}); return false;"
-        {% if hero_post.vote_score != 0 %}disabled{% endif %}
-        {% if hero_post.vote_score == 1 %}aria-pressed="true"{% else %}aria-pressed="false"{% endif %}
-        title="{{ _('Upvote') }}">
-                    <i class="fa fa-arrow-up"></i>
-                  </button>
-      <button class="vote-btn {% if hero_post.vote_score == -1 %}voted{% endif %}"
-        data-action="downvote"
-        data-post-id="{{ hero_post.id }}"
-        onclick="blog_downvote({{ hero_post.id }}); return false;"
-        {% if hero_post.vote_score != 0 %}disabled{% endif %}
-        {% if hero_post.vote_score == -1 %}aria-pressed="true"{% else %}aria-pressed="false"{% endif %}
-        title="{{ _('Downvote') }}">
-                    <i class="fa fa-arrow-down"></i>
-                  </button>
-                </div>
-              {% endif %}
-            </div>
-            
-            {# Comments display #}
-            <span class="stat-item"
-                  title="{{ _('View') }} {{ post_comment_counts[hero_post.id] | default(0) }} {{ _('comments') }}">
-              <i class="fa fa-comments"></i>
-              <span>{{ post_comment_counts[hero_post.id] | default(0) }}</span>
-              <span class="stat-label">{{ _('comments') }}</span>
-            </span>
-          </div>
-        </div>
-      </div>
-    </article>
-    {% endif %}
-
     <div id="magazine-feed"
          class="magazine-feed {% if view_mode == 'list' %}is-list{% endif %}"
          data-next-page="{% if page_obj.has_next() %}{{ url('blog_modern_list') }}?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}{% endif %}">
@@ -184,14 +99,12 @@
           </h2>
 
           <div class="magazine-card-excerpt">
-            {% cache 86400 'post_summary_card' post.id %}
-              {{ post.summary
-                 | default(post.content, true)
-                 | markdown('blog', 'svg', lazy_load=True)
-                 | striptags
-                 | truncatewords_html(25)
-                 | safe }}
-            {% endcache %}
+          {% cache 60 'post_modern_summary' post.id %}
+              {{ post.summary|default(post.content, true)|truncatewords_html(50)|markdown('blog', 'svg', lazy_load=True)|reference|str|safe }}
+          {% endcache %}
+          {%- if post.summary -%}
+              <p><a href="{{ url('blog_post', post.id, post.slug) }}">{{ _('Continue reading...') }}</a></p>
+          {%- endif -%}
           </div>
 
           <div class="card-footer">
@@ -213,7 +126,6 @@
               {% set logged_in = request.user.is_authenticated %}
               {% set vote_info = post_votes[post.id] %}
               
-              {# Votes display #}
               <div class="stat-item vote-stat" data-post-id="{{ post.id }}">
                 <i class="fa fa-thumbs-up"></i>
                 <span id="post-score-{{ post.id }}" 
@@ -221,9 +133,8 @@
                       data-toggle="tooltip">
                   {{ post.score }}
                 </span>
-                <span class="stat-label">{{ _('votes') }}</span>
+                <span class="stat-label"></span>
                 
-                {# Vote buttons #}
                 {% if logged_in %}
                   <div class="vote-buttons">
         <button class="vote-btn {% if post.vote_score == 1 %}voted{% endif %}"
