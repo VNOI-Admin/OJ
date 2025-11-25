@@ -407,66 +407,6 @@
     }
 }
 
-.blog-post-floating-actions {
-    position: fixed;
-    left: 40px;
-    top: 120px;
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-    
-    @media (max-width: 1100px) {
-        display: none;
-    }
-    
-    .floating-vote {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 8px;
-        padding: 12px;
-        background: $color_blog_bg;
-        border: 1px solid $color_blog_border;
-        border-radius: 24px;
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        
-        .vote-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 4px;
-            color: $color_blog_text_secondary;
-            font-size: 20px;
-            transition: color 0.2s ease;
-            
-            &:hover {
-                color: $color_blog_text_primary;
-            }
-            
-            &.voted {
-                color: $color_blog_vote_active;
-            }
-            
-            &:disabled {
-                opacity: 0.5;
-                cursor: not-allowed;
-            }
-        }
-        
-        .vote-count {
-            font-size: 14px;
-            font-weight: 600;
-            color: $color_blog_text_primary;
-        }
-        
-        .vote-label {
-            font-size: 11px;
-            color: $color_blog_text_tertiary;
-            font-weight: 500;
-            text-transform: lowercase;
-        }
-    }
-}
 
 .reading-progress-bar {
     position: fixed;
