@@ -19,50 +19,10 @@
 {% block body %}
     {% set view_mode = request.GET.view | default('grid') %}
     <div class="magazine-layout" id="magazine-layout" data-view="{{ view_mode }}">
-        <!-- Sidebar -->
-        <aside class="magazine-sidebar" aria-label="{{ _('Magazine navigation') }}">
-            <nav class="sidebar-nav" id="sidebar-nav" data-collapsible="true">
-
-                {% if request.user.is_authenticated and perms.judge.manage_magazine_post %}
-                <div class="nav-section">
-                <h3 class="nav-section-title">{{ _('My Content') }}</h3>
-                <ul class="nav-links">
-                    <li class="nav-item">
-                    <a href="{{ url('user_blog', request.user.username) }}" title="{{ _('My Posts') }}">
-                        <i class="fa fa-user"></i><span class="nav-label">{{ _('My Posts') }}</span>
-                    </a>
-                    </li>
-                    <li class="nav-item">
-                    <a href="{{ url('blog_post_new') }}" title="{{ _('New Post') }}">
-                        <i class="fa fa-plus"></i><span class="nav-label">{{ _('New Post') }}</span>
-                    </a>
-                    </li>
-                </ul>
-                </div>
-                {% endif %}
-
-                {% if request.user.is_staff %}
-                <div class="nav-section">
-                <h3 class="nav-section-title">{{ _('Admin') }}</h3>
-                <ul class="nav-links">
-                    <li class="nav-item">
-                    <a href="{{ url('admin:judge_blogpost_changelist') }}" title="{{ _('Manage Posts') }}">
-                        <i class="fa fa-cog"></i><span class="nav-label">{{ _('Manage Posts') }}</span>
-                    </a>
-                    </li>
-                </ul>
-                </div>
-                {% endif %}
-            </nav>
-        </aside>
-
-
-
   <!-- Main -->
   <main class="magazine-main" id="magazine-main">
     <!-- Top bar -->
     <div class="magazine-topbar">
-      <button class="sidebar-toggle" aria-label="{{ _('Toggle sidebar') }}"><i class="fa fa-bars"></i></button>
 
       <form class="magazine-search" method="get" action="{{ url('blog_modern_list') }}">
         {% if tags %}
@@ -101,8 +61,16 @@
   
 
         {% if request.user.is_authenticated and perms.judge.manage_magazine_post %}
-          <a href="{{ url('blog_post_new') }}" class="btn-new-post">
+          <a href="{{ url('user_blog', request.user.username) }}" class="btn-top-bar">
+            <i class="fa fa-user"></i><span>{{ _('My Posts') }}</span>
+          </a>
+          <a href="{{ url('blog_post_new') }}" class="btn-top-bar">
             <i class="fa fa-pencil"></i><span>{{ _('Write') }}</span>
+          </a>
+        {% endif %}
+        {% if request.user.is_staff %}
+          <a href="{{ url('admin:judge_blogpost_changelist') }}" class="btn-top-bar">
+            <i class="fa fa-cog"></i><span>{{ _('Manage') }}</span>
           </a>
         {% endif %}
       </div>

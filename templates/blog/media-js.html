@@ -101,24 +101,6 @@
 
             // Magazine layout modern features
             if (document.querySelector('.magazine-layout')) {
-                // Sidebar toggle for mobile
-                const sidebarToggle = document.querySelector('.sidebar-toggle');
-                const sidebar = document.querySelector('.magazine-sidebar');
-                
-                if (sidebarToggle && sidebar) {
-                    sidebarToggle.addEventListener('click', function() {
-                        sidebar.classList.toggle('show');
-                    });
-
-                    // Close sidebar when clicking outside on mobile
-                    document.addEventListener('click', function(e) {
-                        if (window.innerWidth <= 968) {
-                            if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target) && sidebar.classList.contains('show')) {
-                                sidebar.classList.remove('show');
-                            }
-                        }
-                    });
-                }
 
                 // Search form handling
                 const searchForm = document.querySelector('.magazine-search');

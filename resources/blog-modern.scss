@@ -176,14 +176,9 @@
 // Main Content Area
 .magazine-main {
     flex: 1;
-    margin-left: 260px;
-    width: calc(100% - 260px);
+    margin-left: 0;
+    width: 100%;
     max-width: 100%;
-
-    @media (max-width: 968px) {
-        margin-left: 0;
-        width: 100%;
-    }
 }
 
 // Top Bar
@@ -434,7 +429,7 @@
     }
 }
 
-.btn-new-post {
+.btn-top-bar {
     display: inline-flex;
     align-items: center;
     gap: 8px;
