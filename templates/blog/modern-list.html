@@ -8,9 +8,7 @@
   <link rel="alternate" type="application/rss+xml" href="{{ url('blog_rss') }}" title="RSS Blog Feed">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   {% compress css %}
-    {# Load both light and dark versions for theme switching #}
-    <link rel="stylesheet" href="{{ static('blog-modern.css') }}" id="blog-modern-light">
-    <link rel="stylesheet" href="{{ static('dark/blog-modern.css') }}" media="not all" id="blog-modern-dark">
+    <link rel="stylesheet" href="{{ static('blog-modern.css') }}">
   {% endcompress %}
 {% endblock %}
 
@@ -24,19 +22,8 @@
         <!-- Sidebar -->
         <aside class="magazine-sidebar" aria-label="{{ _('Magazine navigation') }}">
             <nav class="sidebar-nav" id="sidebar-nav" data-collapsible="true">
-                {% if tags %}
-                <div class="nav-section">
-                <h3 class="nav-section-title">{{ _('Tags') }}</h3>
-                <div class="tag-chips">
-                    {% for tag in tags %}
-                    <a class="tag-chip {% if request.GET.tag == tag.slug %}active{% endif %}"
-                        href="{{ url('blog_modern_list') }}?tag={{ tag.slug }}">{{ tag.name }}</a>
-                    {% endfor %}
-                </div>
-                </div>
-                {% endif %}
 
-                {% if request.user.is_authenticated and perms.judge.edit_all_post %}
+                {% if request.user.is_authenticated and perms.judge.manage_magazine_post %}
                 <div class="nav-section">
                 <h3 class="nav-section-title">{{ _('My Content') }}</h3>
                 <ul class="nav-links">
@@ -77,18 +64,29 @@
     <div class="magazine-topbar">
       <button class="sidebar-toggle" aria-label="{{ _('Toggle sidebar') }}"><i class="fa fa-bars"></i></button>
 
-      <div class="magazine-search">
-        <select id="search-type-select" class="search-type-select">
-          <option value="article" {% if request.GET.search_type == 'article' or not request.GET.search_type %}selected{% endif %}>{{ _('Article') }}</option>
-          <option value="author" {% if request.GET.search_type == 'author' %}selected{% endif %}>{{ _('Author') }}</option>
+      <form class="magazine-search" method="get" action="{{ url('blog_modern_list') }}">
+        {% if tags %}
+        <select name="tag" class="search-type-select" id="search-type-select" aria-label="{{ _('Search scope') }}">
+          <option value="" {% if not request.GET.tag %}selected{% endif %}>{{ _('Tags') }}</option>
+          {% for tag in tags %}
+            <option value="{{ tag.slug }}" {% if request.GET.tag == tag.slug %}selected{% endif %}>{{ tag.name }}</option>
+          {% endfor %}
         </select>
-        <i class="fa fa-search search-icon" aria-hidden="true"></i>
-        <input type="text" id="blog-search-input"
-               placeholder="{{ _('Search articles...') }}"
-               class="search-input"
-               value="{{ request.GET.q | default('') }}"
-               aria-label="{{ _('Search articles') }}">
-      </div>
+        {% endif %}
+        <div class="search-input-wrapper">
+          <button type="submit" class="search-icon" aria-label="{{ _('Search') }}">
+            <i class="fa fa-search" aria-hidden="true"></i>
+          </button>
+          <input type="text" name="q" id="blog-search-input"
+                 placeholder="{{ _('Search articles...') }}"
+                 class="search-input"
+                 value="{{ request.GET.q | default('') }}"
+                 aria-label="{{ _('Search articles') }}">
+        </div>
+        {% if request.GET.sort %}
+          <input type="hidden" name="sort" value="{{ request.GET.sort }}">
+        {% endif %}
+      </form>
 
       <div class="magazine-controls">
         <div class="select-wrap">
@@ -102,7 +100,7 @@
 
   
 
-        {% if request.user.is_authenticated and perms.judge.edit_all_post %}
+        {% if request.user.is_authenticated and perms.judge.manage_magazine_post %}
           <a href="{{ url('blog_post_new') }}" class="btn-new-post">
             <i class="fa fa-pencil"></i><span>{{ _('Write') }}</span>
           </a>
@@ -197,7 +195,7 @@
 
     <div id="magazine-feed"
          class="magazine-feed {% if view_mode == 'list' %}is-list{% endif %}"
-         data-next-page="{% if page_obj.has_next() %}{{ url('blog_modern_list') }}?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.search_type %}&search_type={{ request.GET.search_type }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}{% endif %}">
+         data-next-page="{% if page_obj.has_next() %}{{ url('blog_modern_list') }}?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.filter %}&filter={{ request.GET.filter }}{% endif %}{% if request.GET.sort %}&sort={{ request.GET.sort }}{% endif %}{% if request.GET.tag %}&tag={{ request.GET.tag }}{% endif %}{% if view_mode %}&view={{ view_mode }}{% endif %}{% endif %}">
 
       {% for post in posts %}
         {% if loop.first and post.sticky and not request.GET.q %}

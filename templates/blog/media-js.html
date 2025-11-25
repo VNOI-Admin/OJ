@@ -120,24 +120,29 @@
                     });
                 }
 
-                // Real-time search filtering
+                // Search form handling
+                const searchForm = document.querySelector('.magazine-search');
+                const searchTypeSelect = document.querySelector('#search-type-select');
+
+                // Handle tag selection change (immediate navigation)
+                if (searchTypeSelect) {
+                    searchTypeSelect.addEventListener('change', function() {
+                        if (searchForm) {
+                            searchForm.submit();
+                        }
+                    });
+                }
+
+                // Handle Enter key in search input
                 const searchInput = document.querySelector('#blog-search-input');
-                let searchTimeout;
-                
                 if (searchInput) {
-                    searchInput.addEventListener('input', function(e) {
-                        clearTimeout(searchTimeout);
-                        searchTimeout = setTimeout(function() {
-                            const searchValue = e.target.value.trim();
-                            const currentUrl = new URL(window.location.href);
-                            if (searchValue) {
-                                currentUrl.searchParams.set('q', searchValue);
-                            } else {
-                                currentUrl.searchParams.delete('q');
+                    searchInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (searchForm) {
+                                searchForm.submit();
                             }
-                            currentUrl.searchParams.delete('page');
-                            window.location.href = currentUrl.toString();
-                        }, 800);
+                        }
                     });
                 }
 

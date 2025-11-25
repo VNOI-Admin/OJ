@@ -230,10 +230,8 @@
     flex: 1;
     min-width: 200px;
     max-width: 400px;
-    position: relative;
     display: flex;
     align-items: center;
-    gap: 0;
 
     @media (max-width: 768px) {
         flex-basis: 100%;
@@ -272,20 +270,44 @@
         }
     }
 
+    .search-input-wrapper {
+        flex: 1;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
     .search-icon {
         position: absolute;
-        left: 106px;
+        left: 14px;
         top: 50%;
         transform: translateY(-50%);
-        color: $color_blog_text_muted;
-        font-size: 16px;
-        pointer-events: none;
-        z-index: 1;
+        background: none;
+        border: none;
+        color: $color_blog_text_muted !important;
+        cursor: pointer;
+        padding: 4px;
+        transition: all 0.15s ease;
+        z-index: 2;
+
+        &:hover {
+            color: $color_blog_text_primary !important;
+        }
+
+        &:focus {
+            outline: none;
+            color: $color_blog_text_primary !important;
+        }
+
+        i {
+            font-size: 16px;
+            color: inherit !important;
+        }
     }
 
     .search-input {
         flex: 1;
-        padding: 10px 16px 10px 44px;
+        padding: 12px 16px 12px 44px;
         border: 1px solid $color_blog_border;
         border-radius: 0 8px 8px 0;
         font-size: 14px;
@@ -303,6 +325,11 @@
         &::placeholder {
             color: $color_blog_text_muted;
         }
+    }
+
+    // When there's no tag select, make search input have full border radius
+    &:not(:has(.search-type-select)) .search-input {
+        border-radius: 8px;
     }
 }
 

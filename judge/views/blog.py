@@ -18,7 +18,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.dblock import LockModel
 from judge.forms import BlogPostForm
-from judge.models import (BlogPost, BlogVote, Comment, Contest, Language,
+from judge.models import (BlogPost, BlogPostTag, BlogVote, Comment, Contest, Language,
                           Problem, Profile, Submission, Ticket)
 from judge.tasks.webhook import on_new_blogpost
 from judge.utils.cachedict import CacheDict
@@ -207,11 +207,9 @@ class ModernBlogList(PostListBase):
         context['current_sort'] = self.request.GET.get('sort', 'latest')
         context['current_tag'] = self.request.GET.get('tag', '')
 
-        # Get all available tags (if tag model exists)
-        try:
-            from judge.models import BlogPostTag
-            context['tags'] = BlogPostTag.objects.all()
-        except (ImportError, AttributeError):
+        if settings.VNOJ_MAGAZINE_TAG_SLUG:
+            context['tags'] = BlogPostTag.objects.exclude(slug=settings.VNOJ_MAGAZINE_TAG_SLUG)
+        else:
             context['tags'] = []
 
         # Get vote information for each post
