@@ -101,43 +101,30 @@
 
             // Magazine layout modern features
             if (document.querySelector('.magazine-layout')) {
-                // Sidebar toggle for mobile
-                const sidebarToggle = document.querySelector('.sidebar-toggle');
-                const sidebar = document.querySelector('.magazine-sidebar');
-                
-                if (sidebarToggle && sidebar) {
-                    sidebarToggle.addEventListener('click', function() {
-                        sidebar.classList.toggle('show');
-                    });
 
-                    // Close sidebar when clicking outside on mobile
-                    document.addEventListener('click', function(e) {
-                        if (window.innerWidth <= 968) {
-                            if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target) && sidebar.classList.contains('show')) {
-                                sidebar.classList.remove('show');
-                            }
+                // Search form handling
+                const searchForm = document.querySelector('.magazine-search');
+                const searchTypeSelect = document.querySelector('#search-type-select');
+
+                // Handle tag selection change (immediate navigation)
+                if (searchTypeSelect) {
+                    searchTypeSelect.addEventListener('change', function() {
+                        if (searchForm) {
+                            searchForm.submit();
                         }
                     });
                 }
 
-                // Real-time search filtering
+                // Handle Enter key in search input
                 const searchInput = document.querySelector('#blog-search-input');
-                let searchTimeout;
-                
                 if (searchInput) {
-                    searchInput.addEventListener('input', function(e) {
-                        clearTimeout(searchTimeout);
-                        searchTimeout = setTimeout(function() {
-                            const searchValue = e.target.value.trim();
-                            const currentUrl = new URL(window.location.href);
-                            if (searchValue) {
-                                currentUrl.searchParams.set('q', searchValue);
-                            } else {
-                                currentUrl.searchParams.delete('q');
+                    searchInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (searchForm) {
+                                searchForm.submit();
                             }
-                            currentUrl.searchParams.delete('page');
-                            window.location.href = currentUrl.toString();
-                        }, 800);
+                        }
                     });
                 }
 
@@ -156,27 +143,6 @@
                         window.location.href = currentUrl.toString();
                     });
                 }
-
-                // Handle vote buttons for magazine cards (support both legacy .action-btn and new .vote-btn)
-                document.querySelectorAll('.action-btn[data-action="upvote"], .vote-btn[data-action="upvote"]').forEach(function(btn) {
-                    btn.addEventListener('click', function() {
-                        const postId = this.getAttribute('data-post-id');
-                        if (postId && !this.disabled) {
-                            window.blog_upvote(postId);
-                        }
-                    });
-                });
-
-                document.querySelectorAll('.action-btn[data-action="downvote"], .vote-btn[data-action="downvote"]').forEach(function(btn) {
-                    btn.addEventListener('click', function() {
-                        const postId = this.getAttribute('data-post-id');
-                        if (postId && !this.disabled) {
-                            window.blog_downvote(postId);
-                        }
-                    });
-                });
-
-                // Infinite scroll disabled; using server-side pagination
             }
         });
     </script>
