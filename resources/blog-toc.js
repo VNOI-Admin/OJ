@@ -74,20 +74,20 @@
         }
 
         createTocContainer() {
-            const tocSidebar = document.createElement('div');
-            tocSidebar.className = 'blog-toc-sidebar';
-            tocSidebar.innerHTML = `
+            // Check if the TOC sidebar already exists in the template
+            let existingSidebar = document.querySelector('.blog-toc-sidebar-container');
+            existingSidebar.innerHTML = `
+            <aside class="blog-toc-sidebar-container">
+                <div class="blog-toc-sidebar" id="table-of-contents">
+
                 <div class="blog-toc-header">
                     <h3>Table of Contents</h3>
                 </div>
-                <nav class="blog-toc-nav"></nav>
+                <div class="blog-toc-nav"></div>
+                </div>
+            </aside>
             `;
-
-            const blogContainer = document.querySelector('.blog-post-container');
-            if (blogContainer && blogContainer.parentNode) {
-                blogContainer.parentNode.insertBefore(tocSidebar, blogContainer);
-                this.tocContainer = tocSidebar.querySelector('.blog-toc-nav');
-            }
+            this.tocContainer = existingSidebar.querySelector('.blog-toc-nav');
         }
 
         generateToc() {
