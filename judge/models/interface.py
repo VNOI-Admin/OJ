@@ -144,6 +144,7 @@ class BlogPost(models.Model):
             ('edit_organization_post', _('Edit organization posts')),
             ('mark_global_post', _('Mark post as global')),
             ('pin_post', _('Pin post')),
+            ('manage_magazine_post', _('Manage magazine blog posts')),
         )
         verbose_name = _('blog post')
         verbose_name_plural = _('blog posts')

@@ -18,7 +18,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.dblock import LockModel
 from judge.forms import BlogPostForm
-from judge.models import (BlogPost, BlogVote, Comment, Contest, Language,
+from judge.models import (BlogPost, BlogPostTag, BlogVote, Comment, Contest, Language,
                           Problem, Profile, Submission, Ticket)
 from judge.tasks.webhook import on_new_blogpost
 from judge.utils.cachedict import CacheDict
@@ -146,7 +146,6 @@ class PostListBase(ListView):
 
 class ModernBlogList(PostListBase):
     template_name = 'blog/modern-list.html'
-    paginate_by = 3
     title = _('Blog')
 
     def ignore_magazine_tag(self, queryset):
@@ -208,11 +207,9 @@ class ModernBlogList(PostListBase):
         context['current_sort'] = self.request.GET.get('sort', 'latest')
         context['current_tag'] = self.request.GET.get('tag', '')
 
-        # Get all available tags (if tag model exists)
-        try:
-            from judge.models import BlogPostTag
-            context['tags'] = BlogPostTag.objects.all()
-        except (ImportError, AttributeError):
+        if settings.VNOJ_MAGAZINE_TAG_SLUG:
+            context['tags'] = BlogPostTag.objects.exclude(slug=settings.VNOJ_MAGAZINE_TAG_SLUG)
+        else:
             context['tags'] = []
 
         # Get vote information for each post
@@ -389,7 +386,10 @@ class BlogPostCreate(TitleMixin, CreateView):
             post = form.save()
             post.slug = remove_accents(self.request.user.username.lower())
             post.publish_on = timezone.now()
-            post.authors.add(self.request.user.profile)
+            if not form.cleaned_data.get('authors'):
+                post.authors.add(self.request.user.profile)
+            else:
+                post.authors.set(form.cleaned_data['authors'])
             post.save()
 
             revisions.set_comment(_('Created on site'))
