@@ -133,8 +133,6 @@
                       data-toggle="tooltip">
                   {{ post.score }}
                 </span>
-                <span class="stat-label"></span>
-                
                 {% if logged_in %}
                   <div class="vote-buttons">
         <button class="vote-btn {% if post.vote_score == 1 %}voted{% endif %}"
@@ -159,7 +157,6 @@
                 {% endif %}
               </div>
               
-              {# Comments display #}
               <span class="stat-item"
                     title="{{ _('View') }} {{ post_comment_counts[post.id] | default(0) }} {{ _('comments') }}">
                 <i class="fa fa-comments"></i>
