@@ -388,7 +388,10 @@ class BlogPostCreate(TitleMixin, CreateView):
             post = form.save()
             post.slug = remove_accents(self.request.user.username.lower())
             post.publish_on = timezone.now()
-            post.authors.add(self.request.user.profile)
+            if not form.cleaned_data.get('authors'):
+                post.authors.add(self.request.user.profile)
+            else:
+                post.authors.set(form.cleaned_data['authors'])
             post.save()
 
             revisions.set_comment(_('Created on site'))

@@ -732,12 +732,15 @@ class BlogPostForm(ModelForm):
             self.fields.pop('global_post')
         if not self.user.has_perm('judge.pin_post'):
             self.fields.pop('sticky')
-        if not self.user.has_perm('judge.add_blogposttag'):
+        if not self.user.has_perm('judge.manage_magazine_post'):
             self.fields.pop('tags')
-
-        # Only users with edit_all_post permission can assign authors
-        if not self.user.has_perm('judge.edit_all_post'):
             self.fields.pop('authors', None)
+
+    def clean(self):
+        cleaned_data = super().clean()
+        if not cleaned_data.get('authors') and 'authors' in self.fields:
+            cleaned_data['authors'] = [self.user.profile]
+        return cleaned_data
 
     class Meta:
         model = BlogPost
