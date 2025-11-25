@@ -735,6 +735,7 @@ class BlogPostForm(ModelForm):
         if not self.user.has_perm('judge.manage_magazine_post'):
             self.fields.pop('tags')
             self.fields.pop('authors', None)
+            self.fields.pop('summary')
 
     def clean(self):
         cleaned_data = super().clean()
@@ -744,7 +745,7 @@ class BlogPostForm(ModelForm):
 
     class Meta:
         model = BlogPost
-        fields = ['title', 'authors', 'publish_on', 'visible', 'global_post', 'tags', 'sticky', 'content']
+        fields = ['title', 'authors', 'publish_on', 'visible', 'global_post', 'tags', 'sticky', 'content', 'summary']
         widgets = {
             'content': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
             'summary': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('blog_preview')}),
@@ -754,6 +755,7 @@ class BlogPostForm(ModelForm):
         }
         help_texts = {
             'authors': _('Select one or more authors for this post. If left empty, you will be set as the author.'),
+            'summary': _('A short summary of the post to show in the list, preferably not more than 50 words.'),
         }
 
 
