@@ -1,0 +1,96 @@
+<script>
+    (function () {
+        // Use a more robust way to find the input if ID is dynamic, but standard Django ID is id_short_code
+        const input = document.getElementById('id_short_code');
+        const preview = document.getElementById('short-code-preview');
+        const lengthHint = document.getElementById('short-code-length');
+        const btnRandom = document.getElementById('btn-random-code');
+        const btnCopy = document.getElementById('btn-copy-url');
+        const baseSpan = document.getElementById('short-url-base');
+
+        function updatePreview() {
+            if (!input || !preview) return;
+            const value = (input.value || '').trim();
+            const code = value || 'ten-cua-ban';
+            preview.textContent = code;
+            if (lengthHint) {
+                lengthHint.textContent = value ? `${value.length} / 30 ký tự` : 'Sẵn sàng tạo mã ngẫu nhiên 5 ký tự';
+            }
+        }
+
+        function generateRandomCode(length) {
+            const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
+        // Run on load
+        if (input) {
+            updatePreview();
+            input.addEventListener('input', updatePreview);
+            input.addEventListener('change', updatePreview); // Also listen for change
+            input.addEventListener('keyup', updatePreview); // And keyup for good measure
+        }
+
+        if (btnRandom && input) {
+            btnRandom.addEventListener('click', function (e) {
+                e.preventDefault(); // Prevent form submission
+                const code = generateRandomCode(6);
+                input.value = code;
+                updatePreview();
+            });
+        }
+
+        if (btnCopy && baseSpan && preview) {
+            btnCopy.addEventListener('click', function (e) {
+                e.preventDefault();
+                // Construct URL without protocol if displayed that way, or add it back for copying?
+                // User wants short preview, but copying should probably include protocol? 
+                // Or maybe just copy what is shown. 
+                // Let's assume we copy the full functional URL.
+                // The baseSpan text might be "domain.com/s/".
+                // We should probably reconstruct the full URL for the clipboard to be useful.
+
+                // Check if baseSpan has protocol
+                let baseUrl = baseSpan.textContent.trim();
+                if (!baseUrl.startsWith('http')) {
+                    baseUrl = window.location.protocol + '//' + baseUrl;
+                }
+
+                const fullUrl = (baseUrl + preview.textContent).replace(/\s/g, '');
+
+                navigator.clipboard.writeText(fullUrl).then(function () {
+                    const originalHtml = btnCopy.innerHTML;
+                    btnCopy.innerHTML = '<i class="fa fa-check"></i> Copied';
+                    btnCopy.classList.add('success');
+                    setTimeout(() => {
+                        btnCopy.innerHTML = originalHtml;
+                        btnCopy.classList.remove('success');
+                    }, 2000);
+                }, function (err) {
+                    console.error('Could not copy text: ', err);
+                    // Fallback
+                    const textArea = document.createElement("textarea");
+                    textArea.value = fullUrl;
+                    document.body.appendChild(textArea);
+                    textArea.focus();
+                    textArea.select();
+                    try {
+                        document.execCommand('copy');
+                        const originalHtml = btnCopy.innerHTML;
+                        btnCopy.innerHTML = '<i class="fa fa-check"></i> Copied';
+                        setTimeout(() => {
+                            btnCopy.innerHTML = originalHtml;
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Fallback: Oops, unable to copy', err);
+                    }
+                    document.body.removeChild(textArea);
+                });
+            });
+        }
+    })();
+</script>

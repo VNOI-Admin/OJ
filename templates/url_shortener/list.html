@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block content_title %}{% endblock %}
+
+{% block body %}
+<div class="content-description">
+    <div class="shortener-hero">
+        <div>
+            <h2 class="shortener-hero__title">Quản lý URLs rút gọn</h2>
+            <div class="shortener-hero__meta">
+                <span class="shortener-pill">Tên miền rút gọn: {{ request.get_host() }}/s/...</span>
+                {% if object_list %}
+                <span class="shortener-pill">Tổng URLs: {{ page_obj.paginator.count }}</span>
+                {% endif %}
+            </div>
+        </div>
+        {% if perms.judge.create_url_shortener %}
+        <a class="button primary" href="{{ url('url_shortener_create') }}">+ Tạo URL mới</a>
+        {% endif %}
+    </div>
+
+    {% if object_list %}
+    <table class="table striped">
+        <thead>
+            <tr>
+                <th>Tên rút gọn</th>
+                <th>URL đích</th>
+                <th>Clicks</th>
+                <th>Người tạo</th>
+                <th>Trạng thái</th>
+                <th style="width: 180px; text-align: right;">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for link in object_list %}
+            <tr>
+                <td>
+                    <a href="{{ url('url_shortener_redirect', link.short_code) }}" target="_blank" rel="noopener">
+                        {{ link.short_code }}
+                    </a>
+                    {% if link.description %}
+                    <div class="muted" style="font-size: 12px;">{{ link.description }}</div>
+                    {% endif %}
+                </td>
+                <td style="word-break: break-all;">
+                    <a href="{{ link.long_url }}" target="_blank" rel="noopener">
+                        {{ link.long_url }}
+                    </a>
+                </td>
+                <td>{{ link.click_count }}</td>
+                <td>{{ link.creator.user.username }}</td>
+                <td>
+                    {% if link.is_active %}
+                    <span class="label label-success">Hoạt động</span>
+                    {% else %}
+                    <span class="label label-important">Tạm dừng</span>
+                    {% endif %}
+                </td>
+                <td style="text-align: right;">
+                    {% if link.creator == request.profile or perms.judge.view_all_url_stats %}
+                    <div class="table-actions">
+                        <a class="button" href="{{ url('url_shortener_edit', link.short_code) }}">Sửa</a>
+                        <form method="post" action="{{ url('url_shortener_delete', link.short_code) }}"
+                            onsubmit="return confirm('Bạn có chắc muốn xóa URL này?');">
+                            {% csrf_token %}
+                            <button type="submit" class="button danger">Xóa</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <span class="hint">-</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% include "list-pages.html" %}
+    {% else %}
+    <p>Chưa có URL rút gọn nào.</p>
+    {% endif %}
+</div>
+{% endblock %}
+{% block media %}
+<link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+{% include "url_shortener/_styles.html" %}
+{% endblock %}

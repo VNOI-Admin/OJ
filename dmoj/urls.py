@@ -16,7 +16,7 @@ from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed,
 from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
     preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
-    two_factor, user, widgets
+    two_factor, url_shortener, user, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
@@ -430,6 +430,14 @@ urlpatterns = [
     ])),
 
     path('magazine/', MagazinePage.as_view(), name='magazine'),
+
+    path('shortener/', include([
+        path('', url_shortener.URLShortenerListView.as_view(), name='url_shortener_list'),
+        path('create/', url_shortener.URLShortenerCreateView.as_view(), name='url_shortener_create'),
+        path('edit/<str:code>/', url_shortener.URLShortenerUpdateView.as_view(), name='url_shortener_edit'),
+        path('delete/<str:code>/', url_shortener.URLShortenerDeleteView.as_view(), name='url_shortener_delete'),
+    ])),
+    path('s/<str:code>/', url_shortener.url_shortener_redirect, name='url_shortener_redirect'),
 ]
 
 favicon_paths = ['apple-touch-icon-180x180.png', 'apple-touch-icon-114x114.png', 'android-chrome-72x72.png',

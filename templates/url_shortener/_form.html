@@ -1,0 +1,183 @@
+{% set short_base = request.scheme ~ '://' ~ request.get_host() ~ '/s/' %}
+
+<style>
+    .shortener-grid { display:grid; grid-template-columns:minmax(320px,2fr) minmax(240px,1fr); gap:16px; margin-top:12px; color:#0b1220; }
+    .shortener-inputs { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:16px; color:#0b1220; }
+    .shortener-inputs input,
+    .shortener-inputs textarea,
+    .shortener-inputs select { color:#0b1220; background:#fff; }
+    .shortener-preview-card { border-radius:12px; padding:16px; background:#fff; color:#0b1220; border:1px solid #e5e7eb; }
+    .shortener-preview-card__header { display:flex; justify-content:space-between; align-items:center; color:#0b1220; }
+    .shortener-preview-card__title { font-size:12px; letter-spacing:1px; opacity:0.9; }
+    .shortener-preview-card__url { margin:10px 0; font-weight:700; font-size:18px; word-break:break-all; color:#0b1220; }
+    .shortener-preview-card__hint { font-size:12px; opacity:0.92; color:#1f2937; }
+    .shortener-actions { display:flex; gap:0.5rem; justify-content:flex-end; margin-top:1rem; align-items:center; color: inherit; }
+    .shortener-actions .btn-cancel { flex:1; max-width:35%; background:#dc2626; color:#fff; border:1px solid #dc2626; }
+    .shortener-actions .btn-submit { flex:2; background:#16a34a; color:#fff; border:1px solid #15803d; }
+    .form-group { margin-bottom:14px; }
+    .input-group { display:flex; gap:8px; align-items:center; }
+    .input-group .button { white-space:nowrap; }
+    .ghost-gradient { background: transparent; border: 1.5px solid; border-image: linear-gradient(135deg, #0f6fec, #22d3ee) 1; color: #0f172a !important; }
+    @media (max-width: 768px) { .shortener-grid { grid-template-columns:1fr; } }
+    @media (prefers-color-scheme: dark) {
+        .shortener-grid { color: inherit; }
+        .shortener-inputs { background:transparent; border-color:#334155; color: inherit; }
+        .shortener-inputs input,
+        .shortener-inputs textarea,
+        .shortener-inputs select { color: inherit; background:transparent; }
+        .shortener-preview-card { background:transparent; color: inherit; border:1px solid #334155; }
+        .shortener-preview-card__header { color: inherit; }
+        .shortener-preview-card__url { color: inherit; }
+        .shortener-preview-card__hint { color:#cbd5e1; }
+        .ghost-gradient { color: inherit !important; border-image: linear-gradient(135deg, #60a5fa, #22d3ee) 1; }
+        .shortener-actions .btn-cancel { background:#b91c1c; border-color:#7f1d1d; }
+        .shortener-actions .btn-submit { background:#16a34a; border-color:#166534; }
+    }
+</style>
+
+<form method="post" class="form-area url-shortener-form" data-reserved="{{ form.RESERVED_CODES|join(',') }}">
+    {% csrf_token %}
+
+    {% if form.non_field_errors() %}
+    <div class="alert alert-danger">
+        {{ form.non_field_errors() }}
+    </div>
+    {% endif %}
+
+    <div class="shortener-grid">
+        <div class="shortener-inputs">
+            <div class="form-group">
+                <label for="{{ form.short_code.id_for_label }}">{{ form.short_code.label }}</label>
+                <div class="input-group">
+                    {{ form.short_code }}
+                    <button type="button" id="btn-random-code" class="button ghost-gradient" title="Tạo ngẫu nhiên">Random</button>
+                </div>
+                {% if form.short_code.errors %}
+                <div class="form-error">{{ form.short_code.errors }}</div>
+                {% endif %}
+                <div class="form-help">
+                    3–30 ký tự. Để trống để hệ thống tạo ngẫu nhiên 5 ký tự.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.long_url.id_for_label }}">{{ form.long_url.label }}</label>
+                {{ form.long_url }}
+                {% if form.long_url.errors %}
+                <div class="form-error">{{ form.long_url.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                <div class="form-error">{{ form.description.errors }}</div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="{{ form.organization.id_for_label }}">{{ form.organization.label }}</label>
+                {{ form.organization }}
+                {% if form.organization.errors %}
+                <div class="form-error">{{ form.organization.errors }}</div>
+                {% endif %}
+            </div>
+        </div>
+
+        <div class="shortener-preview">
+            <div class="shortener-preview-card">
+                <div class="shortener-preview-card__header">
+                    <span class="shortener-preview-card__title">PREVIEW</span>
+                </div>
+                <div class="shortener-preview-card__body">
+                    <div class="shortener-preview-card__url">
+                        <span id="short-url-base">{{ short_base }}</span><span id="short-code-preview">{{
+                            form.short_code.value() or 'ten-cua-ban' }}</span>
+                    </div>
+                    <button type="button" id="btn-copy-url" class="button small ghost-gradient" title="Sao chép URL">Copy</button>
+                </div>
+                <div id="short-code-length" class="shortener-preview-card__hint muted"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="shortener-actions">
+        <a class="button btn-cancel" href="{{ url('url_shortener_list') }}">Hủy</a>
+        <button type="submit" class="button btn-submit">{{ submit_label }}</button>
+    </div>
+</form>
+
+<script>
+    (function () {
+        const form = document.querySelector('.url-shortener-form');
+        const input = document.getElementById('id_short_code');
+        const preview = document.getElementById('short-code-preview');
+        const lengthHint = document.getElementById('short-code-length');
+        const btnRandom = document.getElementById('btn-random-code');
+        const btnCopy = document.getElementById('btn-copy-url');
+        const baseSpan = document.getElementById('short-url-base');
+        const reserved = (form?.dataset.reserved || '').split(',').filter(Boolean).map(s => s.trim().toLowerCase());
+
+        function updatePreview() {
+            const value = (input?.value || '').trim();
+            const code = value || 'ten-cua-ban';
+            if (preview) {
+                preview.textContent = code;
+            }
+            if (lengthHint) {
+                lengthHint.textContent = value ? `${value.length} / 30 ký tự` : 'Sẵn sàng tạo mã ngẫu nhiên 5 ký tự';
+            }
+        }
+
+        function generateRandomCode(length) {
+            const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+            for (let attempt = 0; attempt < 40; attempt++) {
+                let result = '';
+                for (let i = 0; i < length; i++) {
+                    result += chars.charAt(Math.floor(Math.random() * chars.length));
+                }
+                if (!reserved.includes(result.toLowerCase())) {
+                    return result;
+                }
+            }
+            return '';
+        }
+
+        function copyToClipboard(text) {
+            if (!navigator.clipboard) {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                return;
+            }
+            navigator.clipboard.writeText(text).catch(() => { });
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (input) {
+                updatePreview();
+                input.addEventListener('input', updatePreview);
+            }
+
+            if (btnRandom && input) {
+                btnRandom.addEventListener('click', function () {
+                    const code = generateRandomCode(5);
+                    if (code) {
+                        input.value = code;
+                        updatePreview();
+                    }
+                });
+            }
+
+            if (btnCopy && baseSpan && preview) {
+                btnCopy.addEventListener('click', function () {
+                    copyToClipboard(baseSpan.textContent + preview.textContent);
+                });
+            }
+        });
+    })();
+</script>
