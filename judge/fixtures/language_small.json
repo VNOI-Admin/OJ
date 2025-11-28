@@ -340,5 +340,39 @@
             "file_size_limit": 0,
             "include_in_problem": true
         }
+    },
+    {
+        "model": "judge.language",
+        "pk": 19,
+        "fields": {
+            "key": "CPPTHEMIS",
+            "name": "C++THEMIS",
+            "short_name": "C++(THEMIS)",
+            "common_name": "C++",
+            "ace": "c_cpp",
+            "pygments": "cpp",
+            "template": "#include <bits/stdc++.h>\r\n\r\nusing namespace std;\r\n\r\nint main() {\r\n    return 0;\r\n}",
+            "info": "",
+            "description": "Compile option: `g++ -std=c++14 -pipe -O2 -s -static -lm -x c++ -DTHEMIS -Wl,-z,stack-size=66060288`",
+            "extension": "cpp",
+    		"include_in_problem": true
+        }
+    },
+    {
+        "model": "judge.language",
+        "pk": 20,
+        "fields": {
+            "key": "PASTHEMIS",
+            "name": "Pascal (Themis)",
+            "short_name": "PASTHEMIS",
+            "common_name": "Pascal",
+            "ace": "pascal",
+            "pygments": "Compile option: `fpc -Fe/dev/stderr -dTHEMIS -O2 -XS -Sg -Cs66060288`",
+            "template": "",
+            "info": "",
+            "description": "",
+            "extension": "pas",
+    		"include_in_problem": true
+        }
     }
 ]
