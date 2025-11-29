@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% set logged_in = request.user.is_authenticated %}
+{% set profile = request.profile if logged_in else None %}
+
+{% block js_media %}
+    {% include "blog/media-js.html" %}
+    {% include "comments/media-js.html" %}
+    <script src="{{ static('blog-toc.js') }}"></script>
+    <script>
+        // Reading progress bar
+        window.addEventListener('scroll', function() {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            const progressBar = document.querySelector('.reading-progress-bar');
+            if (progressBar) {
+                progressBar.style.width = scrolled + '%';
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block media %}
+    {% include "comments/media-css.html" %}
+    {% compress css %}
+        <link rel="stylesheet" href="{{ static('blog-post.css') }}">
+    {% endcompress %}
+{% endblock %}
+
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+<div class="reading-progress-bar"></div>
+
+
+<div class="blog-post-container">
+    <!-- Header -->
+    <header class="blog-post-header">
+        <h1 class="post-title">
+            {% block content_title %}
+                {% if content_title %}{{ content_title }}{% else %}{{ title }}{% endif %}
+            {% endblock %}
+        </h1>
+        {% if post.summary %}
+            <p class="post-subtitle">{{ post.summary }}</p>
+        {% endif %}
+    </header>
+
+    <!-- Meta information -->
+    <div class="blog-post-meta">
+        <div class="author-info">
+            <div class="author-names">
+                {% with authors=post.authors.all() %}
+                    {%- if authors -%}
+                        {{ link_users(authors) }}
+                    {%- endif -%}
+                {% endwith %}
+            </div>
+            <div class="post-date">
+                {{ post.publish_on|date(_("F j, Y")) }} · {{ _('%(count)d min read', count=(post.content|length / 1000)|round(0, 'ceil')|int) }}
+            </div>
+        </div>
+
+        <div class="post-actions">
+            {% if post.organization %}
+                <a href="{{ post.organization.get_absolute_url() }}" class="organization-badge">
+                    <i class="fa fa-lock"></i>
+                    {{ post.organization.name }}
+                </a>
+            {% endif %}
+
+            {% if post.is_editable_by(request.user) %}
+                <a href="{{ url('blog_post_edit', post.id, post.slug) }}" class="post-edit-action">
+                    <i class="fa fa-pencil"></i> {{ _('Edit') }}
+                </a>
+            {% endif %}
+
+            <div class="vote-buttons" id="post-{{ post.id }}">
+                {% if logged_in %}
+                    <button class="vote-btn upvote-link {% if post.vote_score == 1 %} voted{% endif %}"
+                            onclick="blog_upvote({{ post.id }}); return false;">
+                        <i class="fa fa-chevron-up"></i>
+                    </button>
+                {% else %}
+                    <button class="vote-btn" onclick="alert('{{ _('Please log in to vote') | escapejs }}');">
+                        <i class="fa fa-chevron-up"></i>
+                    </button>
+                {% endif %}
+
+                <span class="vote-count" id="post-score">{{ post.score }}</span>
+                <span class="vote-label">{{ _('votes') }}</span>
+
+                {% if logged_in %}
+                    <button class="vote-btn downvote-link {% if post.vote_score == -1 %} voted{% endif %}"
+                            onclick="blog_downvote({{ post.id }}); return false;">
+                        <i class="fa fa-chevron-down"></i>
+                    </button>
+                {% else %}
+                    <button class="vote-btn" onclick="alert('{{ _('Please log in to vote') | escapejs }}');">
+                            <i class="fa fa-chevron-down"></i>
+                    </button>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="blog-post-layout">
+        <aside class="blog-toc-sidebar-container">
+        </aside>
+        <article class="blog-post-content">
+            {% cache 86400 'post_content' post.id MATH_ENGINE %}
+                {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}
+            {% endcache %}
+        </article>
+    </div>
+
+    <!-- Social sharing -->
+    <div class="blog-post-social">
+        <span class="social-label">{{ _('Share') }}</span>
+        <div class="social-buttons">
+            {{ post_to_facebook(request, post, '<i class="fa fa-facebook"></i>') }}
+            {{ post_to_twitter(request, SITE_NAME + ':', post, '<i class="fa fa-twitter"></i>') }}
+        </div>
+    </div>
+
+    <!-- Comments -->
+    <div class="blog-post-comments">
+        {% include "comments/list.html" %}
+    </div>
+</div>
+{% endblock %}
+
+{% block bodyend %}
+    {{ super() }}
+    {% if REQUIRE_JAX %}
+        {% include "mathjax-load.html" %}
+    {% endif %}
+{% endblock %}
