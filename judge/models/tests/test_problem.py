@@ -443,7 +443,7 @@ class ProblemTestCase(CommonDataMixin, TestCase):
                             problem_codes.append(problem.code)
 
                     self.assertCountEqual(
-                        Problem.get_editable_problems(user).distinct().values_list('code', flat=True),
+                        Problem.get_editable_problems(user).values_list('code', flat=True),
                         problem_codes,
                     )
 
