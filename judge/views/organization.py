@@ -657,7 +657,10 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
 
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
-        query_set = query_set.filter(problem__organizations=self.organization)
+        org_problem_ids = list(Problem.objects.filter(
+            organizations=self.organization
+        ).values_list('id', flat=True))
+        query_set = query_set.filter(problem_id__in=org_problem_ids)
         return query_set
 
     def get_context_data(self, **kwargs):
