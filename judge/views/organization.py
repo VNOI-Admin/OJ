@@ -9,7 +9,7 @@ from django.db.models import Count, FilteredRelation, Q
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
-from django.http import Http404, HttpResponseRedirect, JsonResponse
+from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
@@ -661,7 +661,7 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
         org_problem_ids = list(Problem.objects.filter(
-            organizations=self.organization
+            organizations=self.organization,
         ).values_list('id', flat=True))
         query_set = query_set.filter(problem_id__in=org_problem_ids)
         return query_set

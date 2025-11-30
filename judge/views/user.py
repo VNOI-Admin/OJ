@@ -17,7 +17,7 @@ from django.core.exceptions import ImproperlyConfigured, PermissionDenied, Valid
 from django.db.models import Count, F, FilteredRelation, Max, Min, Prefetch, Q
 from django.db.models.expressions import Value
 from django.db.models.fields import DateField
-from django.db.models.functions import Cast, Coalesce, ExtractYear
+from django.db.models.functions import Cast, Coalesce
 from django.forms import Form
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
