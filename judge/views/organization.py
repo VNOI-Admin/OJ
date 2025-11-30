@@ -655,6 +655,9 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
     template_name = 'organization/submission-list.html'
     permission_bypass = ['judge.view_all_submission']
 
+    def need_pagination_limit(self, request):
+        return settings.VNOJ_LOW_POWER_MODE and not request.user.is_superuser
+
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
         query_set = query_set.filter(problem__organization=self.organization)
