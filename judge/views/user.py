@@ -209,11 +209,15 @@ class UserAboutPage(UserPage):
             user_timezone = user_timezone or self.request.profile.timezone
         timezone_offset = pytz.timezone(user_timezone).utcoffset(datetime.datetime.utcnow()).seconds
 
-        submissions = (
-            self.object.submission_set
-            .annotate(date_only=Cast(F('date') + datetime.timedelta(seconds=timezone_offset), DateField()))
-            .values('date_only').annotate(cnt=Count('id'))
-        )
+        submissions_count = self.object.submission_set.count()
+        if submissions_count > settings.VNOJ_LOW_POWER_MODE_CONFIG['heat_map_limit']:
+            submissions = []
+        else:
+            submissions = (
+                self.object.submission_set
+                .annotate(date_only=Cast(F('date') + datetime.timedelta(seconds=timezone_offset), DateField()))
+                .values('date_only').annotate(cnt=Count('id'))
+            )
 
         context['submission_data'] = mark_safe(json.dumps({
             date_counts['date_only'].isoformat(): date_counts['cnt'] for date_counts in submissions
