@@ -530,7 +530,12 @@ class ConditionalUserTabMixin(object):
         return context
 
 
-class AllUserSubmissions(ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+class AllUserSubmissions(InfinitePaginationMixin, ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+    def _get_result_data(self, queryset=None):
+        if settings.VNOJ_LOW_POWER_MODE:
+            return {'categories': [], 'total': 0}
+        return super(AllUserSubmissions, self)._get_result_data(queryset)
+
     def need_pagination_limit(self, request):
         return settings.VNOJ_LOW_POWER_MODE and not request.user.is_superuser
 
@@ -718,18 +723,10 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
         if self.request.user.is_authenticated:
             return reverse('all_user_submissions', kwargs={'user': self.request.user.username})
 
-    def get(self, request, *args, **kwargs):
-        # In LOW_POWER_MODE, skip the expensive statistics query
-        if settings.VNOJ_LOW_POWER_MODE and 'results' in request.GET:
-            return JsonResponse({'categories': [], 'total': 0})
-        return super(AllSubmissions, self).get(request, *args, **kwargs)
-
     def get_context_data(self, **kwargs):
         context = super(AllSubmissions, self).get_context_data(**kwargs)
         context['dynamic_update'] = context['page_obj'].number == 1
         context['stats_update_interval'] = self.stats_update_interval
-        # Hide statistics in LOW_POWER_MODE
-        context['hide_statistics'] = settings.VNOJ_LOW_POWER_MODE
         return context
 
     def _get_result_data(self, queryset=None):

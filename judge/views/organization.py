@@ -674,9 +674,6 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
             context['title'] = self.organization.name
             context['content_title'] = self.organization.name
 
-        # Hide statistics in LOW_POWER_MODE
-        context['hide_statistics'] = settings.VNOJ_LOW_POWER_MODE
-
         return context
 
 

@@ -95,7 +95,9 @@
             // Draw the statistics graph.
             var chart = null;
             function stats_graph(raw_data) {
-                if ('{{ hide_statistics }}' == 'True') {
+                if (raw_data.categories.length === 0) {
+                    // hide the statistics-table
+                    $('#statistics-table').hide();
                     return;
                 }
                 var colors = {{ results_colors_json }};
@@ -353,7 +355,6 @@
                             </div>
                         </form>
                     </div>
-                    {% if not hide_statistics %}
                     <div id="statistics-table">
                         <h3>{{ _('Statistics') }} <i class="fa fa-pie-chart"></i></h3>
                         <div class="sidebox-content">
@@ -365,7 +366,6 @@
                             </div>
                         </div>
                     </div>
-                    {% endif %}
                 </div>
             </div>
         </div>
