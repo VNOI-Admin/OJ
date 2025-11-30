@@ -471,11 +471,25 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         context['all_submissions_link'] = self.get_all_submissions_page()
         context['tab'] = self.tab
         return context
+    
+    def need_pagination_limit(self, request):
+        return False
 
     def get(self, request, *args, **kwargs):
         check = self.access_check(request)
         if check is not None:
             return check
+
+        if self.need_pagination_limit(request):
+            max_page = settings.VNOJ_LOW_POWER_MODE_CONFIG.get('max_page', 5)
+            page_kwarg = self.page_kwarg
+            page = self.kwargs.get(page_kwarg) or self.request.GET.get(page_kwarg) or 1
+            try:
+                page_number = int(page)
+                if page_number > max_page:
+                    raise Http404()
+            except ValueError:
+                raise Http404('Page cannot be converted to an int.')
 
         self.selected_languages = set(request.GET.getlist('language'))
         self.selected_statuses = set(request.GET.getlist('status'))
@@ -517,6 +531,9 @@ class ConditionalUserTabMixin(object):
 
 
 class AllUserSubmissions(ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+    def need_pagination_limit(self, request):
+        return settings.VNOJ_LOW_POWER_MODE and not request.user.is_superuser
+
     def get_queryset(self):
         return super(AllUserSubmissions, self).get_queryset().filter(user_id=self.profile.id)
 
@@ -575,7 +592,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
     def access_check_contest(self, request):
         if self.in_contest and not self.contest.can_see_own_scoreboard(request.user):
             raise Http404()
-
+    
     def access_check(self, request):
         # FIXME: This should be rolled into the `is_accessible_by` check when implementing #1509
         if self.in_contest and request.user.is_authenticated and request.profile.id in self.contest.editor_ids:
@@ -693,7 +710,10 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
     @property
     def use_infinite_pagination(self):
         return not self.in_contest
-
+    
+    def need_pagination_limit(self, request):
+        return settings.VNOJ_LOW_POWER_MODE and not request.user.is_superuser
+    
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
             return reverse('all_user_submissions', kwargs={'user': self.request.user.username})
@@ -773,6 +793,9 @@ class AllContestSubmissions(ForceContestMixin, AllSubmissions):
 
 
 class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
+    def need_pagination_limit(self, request):
+        return False
+
     def get_title(self):
         if self.is_own:
             return _('My submissions in %(contest)s') % {'contest': self.contest.name}

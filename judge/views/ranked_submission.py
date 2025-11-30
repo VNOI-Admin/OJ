@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
@@ -12,6 +13,9 @@ __all__ = ['RankedSubmissions', 'ContestRankedSubmission']
 
 
 class RankedSubmissions(ProblemSubmissions):
+    def need_pagination_limit(self, request):
+        return settings.VNOJ_LOW_POWER_MODE and not request.user.is_superuser
+
     tab = 'best_submissions_list'
     dynamic_update = False
 
