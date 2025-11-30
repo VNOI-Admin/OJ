@@ -28,15 +28,17 @@ function install_tooltips($) {
     });
 }
 
-function init_submission_table($, submission_activity, metadata, language_code) {
+function init_submission_table($, submission_activity, language_code) {
     var activity_levels = 5; // 5 levels of activity
     var current_year = new Date().getFullYear();
+    // min year -> get from submission_activity
+    var min_year = new Date(Math.min(...Object.keys(submission_activity).map(Date.parse))).getFullYear();
     var $div = $('#submission-activity');
 
     function draw_contribution(year) {
         $div.find('#submission-activity-table td').remove();
         $div.find('#year').attr('data-year', year);
-        $div.find('#prev-year-action').css('display', year > (metadata.min_year || current_year) ? '' : 'none');
+        $div.find('#prev-year-action').css('display', year > (min_year || current_year) ? '' : 'none');
         $div.find('#next-year-action').css('display', year < current_year ? '' : 'none');
 
         var start_day = new Date(year, 0, 1);
