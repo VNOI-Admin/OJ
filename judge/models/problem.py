@@ -410,14 +410,16 @@ class Problem(models.Model):
         if user.has_perm('judge.edit_all_problem'):
             return cls.objects.all()
 
-        q = Q(authors=user.profile) | Q(curators=user.profile) | Q(suggester=user.profile)
+        q = cls.objects.filter(authors=user.profile)
+        q = q.union(cls.objects.filter(curators=user.profile))
+        q = q.union(cls.objects.filter(suggester=user.profile))
 
         if user.has_perm('judge.edit_public_problem'):
-            q |= Q(is_public=True)
+            q = q.union(cls.objects.filter(is_public=True))
         if user.has_perm('judge.suggest_new_problem'):
-            q |= Q(suggester__isnull=False, is_public=False)
+            q = q.union(cls.objects.filter(suggester__isnull=False, is_public=False))
 
-        return cls.objects.filter(q)
+        return q
 
     def __str__(self):
         return self.name
