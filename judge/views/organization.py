@@ -9,7 +9,7 @@ from django.db.models import Count, FilteredRelation, Q
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils import timezone
@@ -660,11 +660,20 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
         query_set = query_set.filter(problem__organization=self.organization)
         return query_set
 
+    def get_result_data(self):
+        if settings.VNOJ_LOW_POWER_MODE:
+            return {'categories': [], 'total': 0}
+        return super(SubmissionListOrganization, self).get_result_data()
+
     def get_context_data(self, **kwargs):
         context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
         if not self.is_in_organization_subdomain():
             context['title'] = self.organization.name
             context['content_title'] = self.organization.name
+
+        # Hide statistics in LOW_POWER_MODE
+        context['hide_statistics'] = settings.VNOJ_LOW_POWER_MODE
+
         return context
 
 
