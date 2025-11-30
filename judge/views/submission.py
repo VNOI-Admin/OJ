@@ -471,7 +471,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         context['all_submissions_link'] = self.get_all_submissions_page()
         context['tab'] = self.tab
         return context
-    
+
     def need_pagination_limit(self, request):
         return False
 
@@ -597,7 +597,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
     def access_check_contest(self, request):
         if self.in_contest and not self.contest.can_see_own_scoreboard(request.user):
             raise Http404()
-    
+
     def access_check(self, request):
         # FIXME: This should be rolled into the `is_accessible_by` check when implementing #1509
         if self.in_contest and request.user.is_authenticated and request.profile.id in self.contest.editor_ids:
@@ -715,10 +715,10 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
     @property
     def use_infinite_pagination(self):
         return not self.in_contest
-    
+
     def need_pagination_limit(self, request):
         return settings.VNOJ_LOW_POWER_MODE and not request.user.is_superuser
-    
+
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
             return reverse('all_user_submissions', kwargs={'user': self.request.user.username})
