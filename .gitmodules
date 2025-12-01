@@ -5,3 +5,6 @@
 [submodule "resources/vnoj"]
 	path = resources/vnoj
 	url = https://github.com/VNOI-Admin/vnoj-static.git
+[submodule "resources/mathjax"]
+	path = resources/mathjax
+	url = https://github.com/mathjax/MathJax.git
