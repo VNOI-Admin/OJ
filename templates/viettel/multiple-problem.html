@@ -1,0 +1,106 @@
+{% set has_joined_public=(request.user.is_authenticated and request.profile.current_contest and request.profile.current_contest.contest.key == contest_key) %}
+{% set can_view_problem=(request.user.is_authenticated and request.user.profile.id in (contest or problem).tester_ids) %}
+<div style="
+    min-height: 400px;
+    z-index: 0;
+    position: relative;
+    overflow: visible;
+    top: -10px;
+">
+    <style>
+        .bg-banner {
+            position: absolute;
+            left: 50%;
+            width: 100vw;
+            height: 100%;
+            transform: translateX(-50%);
+            z-index: -1;
+            max-width: 100em;
+        }
+        .bg-banner img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .bg-banner .overlay {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.6);
+        }
+        .banner-button {
+            max-width: 250px;
+            margin-top: 32px;
+            width: 100%;
+        }
+    </style>
+    
+    <div class="bg-banner">
+        <img src="{{ banner_url }}">
+        <div class="overlay"></div>
+    </div>
+    <a style="font-family: 'FS PF BeauSans Pro';font-weight: 400;font-size: 16px;color: white;margin-top: 30px;display: inline-block;" href="/"><i class="fa fa-lg fa-arrow-left"></i>  Trở lại trang chủ</a>
+    <h1 style="
+        font-family: 'FS PF BeauSans Pro';
+        font-weight: 600;
+        font-size: 64px;
+        color: white;
+        padding-top: 85px;
+    ">{{ header }}</h1>
+    <h3 style="
+        font-family: 'FS PF BeauSans Pro';
+        font-weight: 400;
+        font-size: 24px;
+        color: #F2F2F2;
+        padding-top: 16px;
+    ">{{ footer }}</h3>
+    {% if request.user.is_superuser or has_joined_public or can_view_problem %}
+    <a href="{{ url('problem_submit', problem_key) }}" class="button banner-button">Submit</a>
+    {% else %}
+    <form action="{{ url('contest_join', contest_key) }}" method="post">
+        {% csrf_token %}
+        <input type="submit" class="button banner-button" value="{{ _('Join') }}">
+    </form>
+    {% endif %}
+</div>
+<div class="tabs">
+    <ul>
+        <li class="tab{% if tab == 'overview' %} active{% endif %}">
+            <a href="{{ url('contest_view', contest_key) }}">Tổng quan</a>
+        </li>
+        {% if request.user.is_superuser or has_joined_public or can_view_problem %}
+        <li class="tab{% if tab == 'detail' %} active{% endif %}">
+            <a href="{{ url('problem_detail', problem_key) }}">Đề bài</a>
+        </li>
+        <li class="tab">
+            <a href="{{ url('contest_all_user_submissions', contest_key, request.user.username) }}">Các bài nộp</a>
+        </li>
+        {% endif %}
+        {% if key_public %}
+        <li class="tab{% if tab == 'ranking' %} active{% endif %}">
+            <a href="{{ url('contest_ranking', key_public) }}">Public Leaderboard</a>
+        </li>
+        {% endif %}
+        {% if request.user.is_superuser and key_private %}
+        <li class="tab{% if tab == 'ranking' %} active{% endif %}">
+            <a href="{{ url('contest_ranking', key_private) }}">Private Leaderboard</a>
+        </li>
+        {% endif %}
+        {% if request.user.is_superuser %}
+        <li class="tab">
+            <a href="{{ url('contest_edit', contest_key) }}">Edit contest</a>
+        </li>
+        <li class="tab">
+            <a href="{{ url('problem_edit', problem_key) }}">Edit problem</a>
+        </li>
+        <li class="tab">
+            <a href="{{ url('problem_data', problem_key) }}">Edit test data</a>
+        </li>
+        <li class="tab">
+            <a href="{{ url('chronological_submissions', problem_key) }}">Submissions</a>
+        </li>
+        <li class="tab">
+            <a href="{{ url('problem_manage_submissions', problem_key) }}">Manage submissions</a>
+        </li>
+        {% endif %}
+    </ul>
+</div>
