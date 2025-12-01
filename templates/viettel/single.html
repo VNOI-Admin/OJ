@@ -71,6 +71,8 @@
         <li class="tab{% if tab == 'detail' %} active{% endif %}">
             <a href="{{ url('problem_detail', key) }}">Đề bài</a>
         </li>
+        {% endif %}
+        {% if request.user.is_authenticated %}
         <li class="tab">
             <a href="{{ url('contest_all_user_submissions', key, request.user.username) }}">Các bài nộp</a>
         </li>
