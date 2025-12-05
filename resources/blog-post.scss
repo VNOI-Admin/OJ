@@ -246,13 +246,12 @@
     
     // Links
     a {
-        color: inherit;
-        text-decoration: underline;
-        text-decoration-color: rgba(41, 41, 41, 0.4);
-        text-underline-offset: 2px;
+        color: #0066cc;
+        text-decoration: none;
         
         &:hover {
-            text-decoration-color: rgba(41, 41, 41, 1);
+            text-decoration: underline;
+            color: #0052a3;
         }
     }
     
