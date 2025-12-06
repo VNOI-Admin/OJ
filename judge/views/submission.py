@@ -472,10 +472,24 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         context['tab'] = self.tab
         return context
 
+    def need_pagination_limit(self, request):
+        return False
+
     def get(self, request, *args, **kwargs):
         check = self.access_check(request)
         if check is not None:
             return check
+
+        if self.need_pagination_limit(request):
+            max_page = settings.VNOJ_LOW_POWER_MODE_CONFIG.get('max_page', 5)
+            page_kwarg = self.page_kwarg
+            page = self.kwargs.get(page_kwarg) or self.request.GET.get(page_kwarg) or 1
+            try:
+                page_number = int(page)
+                if page_number > max_page:
+                    raise Http404()
+            except ValueError:
+                raise Http404('Page cannot be converted to an int.')
 
         self.selected_languages = set(request.GET.getlist('language'))
         self.selected_statuses = set(request.GET.getlist('status'))
@@ -516,7 +530,15 @@ class ConditionalUserTabMixin(object):
         return context
 
 
-class AllUserSubmissions(ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+class AllUserSubmissions(InfinitePaginationMixin, ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+    def _get_result_data(self, queryset=None):
+        if settings.VNOJ_LOW_POWER_MODE:
+            return {'categories': [], 'total': 0}
+        return super(AllUserSubmissions, self)._get_result_data(queryset)
+
+    def need_pagination_limit(self, request):
+        return settings.VNOJ_LOW_POWER_MODE and not request.user.is_superuser
+
     def get_queryset(self):
         return super(AllUserSubmissions, self).get_queryset().filter(user_id=self.profile.id)
 
@@ -694,6 +716,9 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
     def use_infinite_pagination(self):
         return not self.in_contest
 
+    def need_pagination_limit(self, request):
+        return settings.VNOJ_LOW_POWER_MODE and not request.user.is_superuser
+
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
             return reverse('all_user_submissions', kwargs={'user': self.request.user.username})
@@ -705,6 +730,10 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
         return context
 
     def _get_result_data(self, queryset=None):
+        # Skip expensive statistics query in LOW_POWER_MODE
+        if settings.VNOJ_LOW_POWER_MODE:
+            return {'categories': [], 'total': 0}
+
         if queryset is not None or self.in_contest or self.selected_languages or \
            self.selected_statuses or self.selected_organization:
             return super(AllSubmissions, self)._get_result_data(queryset)
@@ -761,6 +790,9 @@ class AllContestSubmissions(ForceContestMixin, AllSubmissions):
 
 
 class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
+    def need_pagination_limit(self, request):
+        return False
+
     def get_title(self):
         if self.is_own:
             return _('My submissions in %(contest)s') % {'contest': self.contest.name}

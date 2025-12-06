@@ -655,16 +655,28 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
     template_name = 'organization/submission-list.html'
     permission_bypass = ['judge.view_all_submission']
 
+    def need_pagination_limit(self, request):
+        return settings.VNOJ_LOW_POWER_MODE and not request.user.is_superuser
+
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
-        query_set = query_set.filter(problem__organizations=self.organization)
+        org_problem_ids = list(Problem.objects.filter(
+            organizations=self.organization,
+        ).values_list('id', flat=True))
+        query_set = query_set.filter(problem_id__in=org_problem_ids)
         return query_set
+
+    def get_result_data(self):
+        if settings.VNOJ_LOW_POWER_MODE:
+            return {'categories': [], 'total': 0}
+        return super(SubmissionListOrganization, self).get_result_data()
 
     def get_context_data(self, **kwargs):
         context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
         if not self.is_in_organization_subdomain():
             context['title'] = self.organization.name
             context['content_title'] = self.organization.name
+
         return context
 
 
