@@ -518,9 +518,13 @@ class Contest(models.Model):
                   private_contestants=user.profile)
             )
 
-            q |= Q(authors=user.profile)
-            q |= Q(curators=user.profile)
-            q |= Q(testers=user.profile)
+            if Contest.authors.through.objects.filter(profile=user.profile).exists():
+                q |= Q(authors=user.profile)
+            if Contest.curators.through.objects.filter(profile=user.profile).exists():
+                q |= Q(curators=user.profile)
+            if Contest.testers.through.objects.filter(profile=user.profile).exists():
+                q |= Q(testers=user.profile)
+
             queryset = queryset.filter(q)
         return queryset.distinct()
 
