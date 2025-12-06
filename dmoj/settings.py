@@ -128,6 +128,9 @@ VNOJ_LOW_POWER_MODE_CONFIG = {
     'heat_map_limit': 20_000,
 }
 
+# Cache timeout for ownership statuses, improve response time for users without any edit permissions
+VNOJ_OWNERSHIP_STATUS_CACHE_TIMEOUT = 60
+
 VNOJ_MAGAZINE_TAG_SLUG = None
 
 CELERY_TIMEZONE = 'UTC'

@@ -519,17 +519,9 @@ class Contest(models.Model):
                   private_contestants=user.profile)
             )
 
-            # Cache the exists() checks for 5 seconds since role relationships rarely change
-            cache_key = 'contest_roles:%d' % user.profile.id
-            cached_roles = cache.get(cache_key)
-
-            if cached_roles is not None:
-                is_author, is_curator, is_tester = cached_roles
-            else:
-                is_author = Contest.authors.through.objects.filter(profile=user.profile).exists()
-                is_curator = Contest.curators.through.objects.filter(profile=user.profile).exists()
-                is_tester = Contest.testers.through.objects.filter(profile=user.profile).exists()
-                cache.set(cache_key, (is_author, is_curator, is_tester), 2)
+            # Most users don't own any contests, so we check ownership status
+            # first and only add expensive subqueries if they actually own contests.
+            is_author, is_curator, is_tester = get_user_contest_ownership_statuses(user.profile)
 
             if is_author:
                 q |= Q(authors=user.profile)
@@ -548,6 +540,23 @@ class Contest(models.Model):
                 is_rated=True, end_time__range=(self.end_time, self._now),
             ).order_by('end_time'):
                 rate_contest(contest)
+
+    @classmethod
+    def get_ownership_statuses(profile):
+        cache_key = 'contest_ownership_statuses:%d' % profile.id
+        cached_ownership_statuses = cache.get(cache_key)
+
+        if cached_ownership_statuses is not None:
+            return cached_ownership_statuses
+
+        is_author = Contest.authors.through.objects.filter(profile=profile).exists()
+        is_curator = Contest.curators.through.objects.filter(profile=profile).exists()
+        is_tester = Contest.testers.through.objects.filter(profile=profile).exists()
+
+        ownership_statuses = (is_author, is_curator, is_tester)
+        cache.set(cache_key, ownership_statuses, settings.VNOJ_OWNERSHIP_STATUS_CACHE_TIMEOUT)
+
+        return ownership_statuses
 
     class Meta:
         permissions = (
