@@ -3,6 +3,7 @@ import hmac
 from datetime import date, timedelta
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
@@ -518,11 +519,23 @@ class Contest(models.Model):
                   private_contestants=user.profile)
             )
 
-            if Contest.authors.through.objects.filter(profile=user.profile).exists():
+            # Cache the exists() checks for 5 seconds since role relationships rarely change
+            cache_key = 'contest_roles:%d' % user.profile.id
+            cached_roles = cache.get(cache_key)
+
+            if cached_roles is not None:
+                is_author, is_curator, is_tester = cached_roles
+            else:
+                is_author = Contest.authors.through.objects.filter(profile=user.profile).exists()
+                is_curator = Contest.curators.through.objects.filter(profile=user.profile).exists()
+                is_tester = Contest.testers.through.objects.filter(profile=user.profile).exists()
+                cache.set(cache_key, (is_author, is_curator, is_tester), 2)
+
+            if is_author:
                 q |= Q(authors=user.profile)
-            if Contest.curators.through.objects.filter(profile=user.profile).exists():
+            if is_curator:
                 q |= Q(curators=user.profile)
-            if Contest.testers.through.objects.filter(profile=user.profile).exists():
+            if is_tester:
                 q |= Q(testers=user.profile)
 
             queryset = queryset.filter(q)
