@@ -324,6 +324,7 @@
                                 <select id="status" name="status"{% if not is_in_low_power_mode %} multiple{% endif %}>
                                     {% if is_in_low_power_mode %}
                                         <option value="">{{ _('All') }}</option>
+                                        <option disabled="disabled">---</option>
                                     {% endif %}
                                     {% for id, name in all_statuses %}
                                         <option {% if id in selected_statuses %}selected{% endif %}
@@ -336,6 +337,7 @@
                                 <select id="language" name="language"{% if not is_in_low_power_mode %} multiple{% endif %}>
                                     {% if is_in_low_power_mode %}
                                         <option value="">{{ _('All') }}</option>
+                                        <option disabled="disabled">---</option>
                                     {% endif %}
                                     {% for code, name in all_languages %}
                                         <option {% if code in selected_languages %}selected{% endif %}
