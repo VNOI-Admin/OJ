@@ -63,6 +63,7 @@ class Command(BaseCommand):
         parser.add_argument('input', help='csv file containing username and teamname')
         parser.add_argument('output', help='where to store output csv file')
         parser.add_argument('prefix', help='prefix for username', type=str, nargs='?', default='')
+        parser.add_argument('--practice', action='store_true', help='also generate practice accounts with p_ prefix')
 
     def handle(self, *args, **options):
         fin = open(options['input'], 'r', encoding='utf-8')
@@ -73,14 +74,20 @@ class Command(BaseCommand):
 
         fout = open(options['output'], 'w', encoding='utf-8', newline='')
         prefix = options['prefix']
+        create_practice = options['practice']
 
         reader = csv.DictReader(fin)
-        writer = csv.DictWriter(fout, fieldnames=['id', 'username', 'teamname', 'password', 'org', 'email'])
+
+        fieldnames = ['id', 'username', 'teamname', 'password', 'org', 'email']
+        if create_practice:
+            fieldnames.extend(['practice_username', 'practice_password'])
+        writer = csv.DictWriter(fout, fieldnames=fieldnames)
         writer.writeheader()
 
         done_team_ids = set()
         has_email = 'email' in reader.fieldnames
         has_group = 'group' in reader.fieldnames
+        processed_count = 0
 
         for cnt, row in enumerate(reader, start=1):
             username = f'{prefix}{cnt}'.lower()
@@ -96,15 +103,31 @@ class Command(BaseCommand):
             done_team_ids.add(internalid)
 
             add_user(username, teamname, password, org, org_group, internalid)
+            processed_count += 1
 
-            writer.writerow({
+            output_row = {
                 'id': internalid,
                 'username': username,
                 'teamname': teamname,
                 'password': password,
                 'org': org,
                 'email': email if has_email else '',
-            })
+            }
+
+            if create_practice:
+                practice_username = f'p_{username}'
+                practice_password = generate_password()
+                add_user(practice_username, teamname, practice_password, org, org_group, internalid)
+                output_row['practice_username'] = practice_username
+                output_row['practice_password'] = practice_password
+
+            writer.writerow(output_row)
+
+            if processed_count % 10 == 0:
+                print(f'Processed {processed_count} teams...')
 
         fin.close()
         fout.close()
+
+        accounts_created = processed_count * 2 if create_practice else processed_count
+        print(f'\nCompleted! Processed {processed_count} teams, created {accounts_created} accounts total.')
