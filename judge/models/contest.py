@@ -521,7 +521,7 @@ class Contest(models.Model):
 
             # Most users don't own any contests, so we check ownership status
             # first and only add expensive subqueries if they actually own contests.
-            is_author, is_curator, is_tester = get_user_contest_ownership_statuses(user.profile)
+            is_author, is_curator, is_tester = cls.get_ownership_statuses(user.profile)
 
             if is_author:
                 q |= Q(authors=user.profile)
@@ -542,16 +542,16 @@ class Contest(models.Model):
                 rate_contest(contest)
 
     @classmethod
-    def get_ownership_statuses(profile):
+    def get_ownership_statuses(cls, profile):
         cache_key = 'contest_ownership_statuses:%d' % profile.id
         cached_ownership_statuses = cache.get(cache_key)
 
         if cached_ownership_statuses is not None:
             return cached_ownership_statuses
 
-        is_author = Contest.authors.through.objects.filter(profile=profile).exists()
-        is_curator = Contest.curators.through.objects.filter(profile=profile).exists()
-        is_tester = Contest.testers.through.objects.filter(profile=profile).exists()
+        is_author = cls.authors.through.objects.filter(profile=profile).exists()
+        is_curator = cls.curators.through.objects.filter(profile=profile).exists()
+        is_tester = cls.testers.through.objects.filter(profile=profile).exists()
 
         ownership_statuses = (is_author, is_curator, is_tester)
         cache.set(cache_key, ownership_statuses, settings.VNOJ_OWNERSHIP_STATUS_CACHE_TIMEOUT)
