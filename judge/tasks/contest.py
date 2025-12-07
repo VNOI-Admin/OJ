@@ -24,6 +24,11 @@ logger = logging.getLogger('judge.celery')
 def rescore_contest(self, contest_key):
     contest = Contest.objects.get(key=contest_key)
     participations = contest.users
+    print(f"Rescoring contest {contest_key} with {participations.count()} participations")
+
+    # invalidate cache by calling `get_max_scores` in contest
+    if hasattr(contest.format, 'get_max_scores'):
+        contest.format.get_max_scores(use_cache=False)
 
     rescored = 0
     with Progress(self, participations.count(), stage=_('Recalculating contest scores')) as p:

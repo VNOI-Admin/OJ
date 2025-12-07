@@ -1,16 +1,16 @@
 from datetime import timedelta
 
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Max
 from django.template.defaultfilters import floatformat, pluralize
 from django.urls import reverse
 from django.utils.html import format_html
 from django.utils.safestring import mark_safe
-from django.utils.translation import gettext_lazy as _
+from django.utils.translation import gettext as _
 
 from judge.contest_format.base import BaseContestFormat
 from judge.contest_format.registry import register_contest_format
-from judge.utils.timedelta import nice_repr
 
 
 @register_contest_format('viettel')
@@ -24,6 +24,29 @@ class ViettelContestFormat(BaseContestFormat):
 
     def __init__(self, contest, config):
         super(ViettelContestFormat, self).__init__(contest, config)
+
+    def get_max_scores(self, use_cache=True):
+        """
+        Get max scores for all problems, using cache if available.
+        Returns tuple: (global_maxes, problem_points)
+        """
+        cache_key = f'viettel_max_scores:{self.contest.id}'
+
+        if use_cache:
+            cached = cache.get(cache_key)
+            if cached:
+                return cached
+
+        # Calculate from database
+        global_maxes = {}
+        problem_points = {}
+        for cp in self.contest.contest_problems.all():
+            global_maxes[cp.id] = cp.submissions.aggregate(m=Max('points'))['m'] or 0
+            problem_points[cp.id] = cp.points
+
+        result = (global_maxes, problem_points)
+        cache.set(cache_key, result, 86400)
+        return result
 
     def compute_score(self, participation):
         cumtime = 0
@@ -42,20 +65,21 @@ class ViettelContestFormat(BaseContestFormat):
         return raw_data, max(cumtime, 0)
 
     def update_participation(self, participation):
-        global_maxes = {}
-        problem_points = {}
-        for cp in self.contest.contest_problems.all():
-            global_maxes[cp.id] = cp.submissions.aggregate(m=Max('points'))['m'] or 0
-            problem_points[cp.id] = cp.points
-
-        self.recalculate_score(participation, global_maxes, problem_points)
-
-        for p in self.contest.users.exclude(id=participation.id):
-            self.recalculate_score(p, global_maxes, problem_points)
-
-    def recalculate_score(self, participation, global_maxes, problem_points):
         raw_data, cumtime = self.compute_score(participation)
 
+        global_maxes, problem_points = self.get_max_scores()
+
+        for problem_id, data in raw_data.items():
+            if data['points'] > global_maxes.get(problem_id, 0):
+                # new max score -> trigger full rescore
+                from judge.tasks.contest import rescore_contest
+                rescore_contest.delay(self.contest.key)
+                return
+
+        # Recalculate score for current participation only
+        self.recalculate_score(participation, global_maxes, problem_points, raw_data, cumtime)
+
+    def recalculate_score(self, participation, global_maxes, problem_points, raw_data, cumtime):
         score = 0
         format_data = {}
 
