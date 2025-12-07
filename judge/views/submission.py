@@ -492,8 +492,16 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
             except ValueError:
                 raise Http404('Page cannot be converted to an int.')
 
-        self.selected_languages = set(request.GET.getlist('language'))
-        self.selected_statuses = set(request.GET.getlist('status'))
+        if self.is_in_low_power_mode():
+            # In low power mode, only allow filtering by a single language/status
+            language = request.GET.get('language')
+            self.selected_languages = {language} if language else set()
+            status = request.GET.get('status')
+            self.selected_statuses = {status} if status else set()
+        else:
+            # Allow multiple languages/statuses
+            self.selected_languages = set(request.GET.getlist('language'))
+            self.selected_statuses = set(request.GET.getlist('status'))
         self.selected_organization = request.GET.get('organization')
         if self.selected_organization:
             try:
