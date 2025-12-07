@@ -408,6 +408,7 @@ else:
 INSTALLED_APPS += (
     'django.contrib.admin',
     'judge',
+    'urlshortener',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.flatpages',
