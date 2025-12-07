@@ -410,7 +410,10 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
             queryset = queryset.filter(language__in=list(
                 Language.objects.filter(key__in=self.selected_languages).values_list('id', flat=True)))
         if self.selected_statuses:
-            queryset = queryset.filter(Q(result__in=self.selected_statuses) | Q(status__in=self.selected_statuses))
+            status_filter = Q(result__in=self.selected_statuses)
+            if self.could_filter_by_status():
+                status_filter |= Q(status__in=self.selected_statuses)
+            queryset = queryset.filter(status_filter)
         if self.selected_organization:
             organization_object = get_object_or_404(Organization, pk=self.selected_organization)
             queryset = queryset.filter(user__organizations=organization_object)
@@ -435,9 +438,12 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
     def get_searchable_organizations(self):
         return Organization.objects.values_list('pk', 'name')
 
+    def could_filter_by_status(self):
+        return self.request.user.is_superuser or self.request.user.is_staff
+
     def get_searchable_status_codes(self):
         hidden_codes = ['SC']
-        if not self.request.user.is_superuser and not self.request.user.is_staff:
+        if not self.could_filter_by_status():
             hidden_codes += ['IE', 'QU', 'P', 'G', 'D']
         return [(key, value) for key, value in Submission.SEARCHABLE_STATUS if key not in hidden_codes]
 
