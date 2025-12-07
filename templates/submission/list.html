@@ -337,7 +337,7 @@
                                     {% endfor %}
                                 </select>
                             </div>
-                            {% if not organization %}
+                            {% if not organization and not is_in_low_power_mode %}
                                 <div class="filter-form-group">
                                     <label for="organization"><i>{{ _('Organization') }}</i></label>
                                     <select id="organization" name="organization">

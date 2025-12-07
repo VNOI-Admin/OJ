@@ -13,9 +13,6 @@ __all__ = ['RankedSubmissions', 'ContestRankedSubmission']
 
 
 class RankedSubmissions(ProblemSubmissions):
-    def need_pagination_limit(self, request):
-        return settings.VNOJ_LOW_POWER_MODE and not request.user.is_superuser
-
     tab = 'best_submissions_list'
     dynamic_update = False
 
