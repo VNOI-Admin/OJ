@@ -15,7 +15,7 @@ def generate_password():
     return ''.join(secrets.choice(ALPHABET) for _ in range(8))
 
 
-def add_user(username, fullname, password, org):
+def add_user(username, fullname, password, org, internalid):
     usr = User(username=username, is_active=True)
     usr.set_password(password)
     usr.save()
@@ -24,6 +24,7 @@ def add_user(username, fullname, password, org):
     profile.username_display_override = fullname
     profile.language = Language.objects.get(key=settings.DEFAULT_USER_LANGUAGE)
     profile.site_theme = 'light'
+    profile.notes = internalid  # save the internal id for later use.
     profile.save()
     profile.organizations.set([org])
 
@@ -59,7 +60,7 @@ class Command(BaseCommand):
 
         reader = csv.DictReader(fin)
 
-        writer = csv.DictWriter(fout, fieldnames=['username', 'fullname', 'password'])
+        writer = csv.DictWriter(fout, fieldnames=['id', 'username', 'fullname', 'password'])
         writer.writeheader()
 
         for row in reader:
@@ -69,10 +70,12 @@ class Command(BaseCommand):
             fullname = row['name']
             org = get_org(row['org'])
             password = generate_password()
+            internalid = row['id']
 
-            add_user(username, fullname, password, org)
+            add_user(username, fullname, password, org, internalid)
 
             writer.writerow({
+                'id': internalid,
                 'username': username,
                 'fullname': fullname,
                 'password': password,
