@@ -166,8 +166,8 @@ class OrganizationMonthlyUsage(models.Model):
 
 class Badge(models.Model):
     name = models.CharField(max_length=128, verbose_name=_('badge name'))
-    mini = models.CharField(verbose_name=_('mini badge URL'), blank=True)
-    full_size = models.CharField(verbose_name=_('full size badge URL'), blank=True)
+    mini = models.CharField(max_length=255, verbose_name=_('mini badge URL'), blank=True)
+    full_size = models.CharField(max_length=255, verbose_name=_('full size badge URL'), blank=True)
 
     def __str__(self):
         return self.name
