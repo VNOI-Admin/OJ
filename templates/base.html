@@ -221,7 +221,7 @@
                 <li class="home-menu-item"><a href="{{ url('home') }}" class="nav-home">{{ _('Home') }}</a></li>
                 {% for node in mptt_tree(nav_bar) recursive %}
                     <li>
-                        <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %}">
+                        <a href="{{ node.path }}" {%if node.path.startswith('http') %}target="_blank"{% endif %} class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %}">
                             {{ _(node.label) }}
                             {% if not node.is_leaf_node() %}
                                 <div class="nav-expand">&gt;</div>
@@ -233,7 +233,7 @@
                     </li>
                 {% endfor %}
                 {% if request.user.is_authenticated and request.profile.about %}
-                    <li class="nav-container-link"><a href="{{ request.profile.about }}">{{ _('Container link') }}</a></li>
+                    <li class="nav-container-link"><a href="{{ request.profile.about }}" target="_blank">{{ _('Container link') }}</a></li>
                 {% endif %}
             {% else %}
                 {% macro make_navbar_item(key, url, text) %}
