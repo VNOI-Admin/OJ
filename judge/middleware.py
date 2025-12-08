@@ -250,3 +250,19 @@ class OrganizationSubdomainMiddleware(object):
             # inject the logo override image into the template context
             response.context_data['logo_override_image'] = request.organization.logo_override_image
         return response
+
+
+def SetDefaultLangMiddleware(get_response):
+    def middleware(request):
+        # Code to be executed for each request before processing it
+
+        if not request.COOKIES.get('django_language'):  # Language not selected by the user ?
+            # Set your default language code here
+            request.COOKIES['django_language'] = settings.LANGUAGE_CODE
+
+        response = get_response(request)
+        # If you want to process anycode after the view is called
+
+        return response
+
+    return middleware
