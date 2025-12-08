@@ -207,6 +207,10 @@ class ContestMixin(object):
                         virtual=ContestParticipation.LIVE,
                     )
                 )
+                # small fix so that users doesn't need to click the join button
+                if not self.object.ended and self.request.profile.current_contest != context['live_participation']:
+                    self.request.profile.current_contest = context['live_participation']
+                    self.request.profile.save()
             except ContestParticipation.DoesNotExist:
                 context['live_participation'] = None
                 context['has_joined'] = False
@@ -276,12 +280,8 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
     template_name = 'contest/contest.html'
 
     def is_comment_locked(self):
-        if self.object.use_clarifications:
-            now = timezone.now()
-            if self.is_in_contest or (self.object.start_time <= now and now <= self.object.end_time):
-                return True
-
-        return super(ContestDetail, self).is_comment_locked()
+        # this trigger the is_in_contest cache -> which make the fix at #210
+        return True
 
     def get_comment_page(self):
         return 'c:%s' % self.object.key
