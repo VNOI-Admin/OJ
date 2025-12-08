@@ -438,6 +438,7 @@ MIDDLEWARE = (
     'judge.middleware.ShortCircuitMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'judge.middleware.SetDefaultLangMiddleware',
     'django.middleware.locale.LocaleMiddleware',
     'judge.middleware.APIMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
