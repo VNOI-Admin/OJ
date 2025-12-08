@@ -620,7 +620,8 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         form = super().get_form(form_class)
 
         form.fields['language'].queryset = (
-            self.object.usable_languages.order_by('name', 'key')
+            (self.object.usable_languages if self.object.enable_grading else self.object.allowed_languages)
+            .order_by('name', 'key')
             .prefetch_related(Prefetch('runtimeversion_set', RuntimeVersion.objects.order_by('priority')))
         )
 
@@ -731,6 +732,7 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         context = super().get_context_data(**kwargs)
         context['langs'] = Language.objects.all()
         context['no_judges'] = not context['form'].fields['language'].queryset
+        context['enable_grading'] = self.object.enable_grading
         context['submission_limit'] = self.contest_problem and self.contest_problem.max_submissions
         context['submissions_left'] = self.remaining_submission_count
         context['ACE_URL'] = settings.ACE_URL

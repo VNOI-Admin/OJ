@@ -122,7 +122,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'code', 'name', 'suggester', 'is_public', 'is_manually_managed', 'date', 'authors',
+                'code', 'name', 'suggester', 'is_public', 'is_manually_managed', 'enable_grading', 'date', 'authors',
                 'curators', 'testers', 'is_organization_private', 'organizations', 'submission_source_visibility_mode',
                 'testcase_visibility_mode', 'testcase_result_visibility_mode', 'allow_view_feedback',
                 'is_full_markup', 'pdf_url', 'source', 'description', 'license',

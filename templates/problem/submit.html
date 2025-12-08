@@ -245,7 +245,7 @@
 
 {% block body %}
     <br>
-    {% if not no_judges %}
+    {% if not no_judges or not enable_grading %}
         {% if default_lang not in form.fields.language.queryset %}
             <div class="alert alert-warning alert-dismissable">
                 <a class="close">x</a>
@@ -295,7 +295,7 @@
                 <label for="file_upload" id="file_drag"></label>
             </div>
             <hr>
-            {% if not no_judges %}
+            {% if not no_judges or not enable_grading %}
                 <div id="language">
                     {{ form.language.errors }}
                     <div id="language-select">
@@ -315,7 +315,7 @@
 
         <hr>
 
-        {% if no_judges %}
+        {% if no_judges and enable_grading %}
             <span style="color: red">{{ _('No judge is available for this problem.') }}</span>
         {% else %}
             <div class="submit-bar">

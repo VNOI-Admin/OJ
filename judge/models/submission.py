@@ -127,7 +127,12 @@ class Submission(models.Model):
         return self.locked_after is not None and self.locked_after < timezone.now()
 
     def judge(self, *args, rejudge=False, force_judge=False, rejudge_user=None, **kwargs):
-        if force_judge or not self.is_locked:
+        if not self.problem.enable_grading:
+            # D -> Done, AB -> Aborted
+            Submission.objects.filter(id=self.id).update(status='D', result='AB')
+            SubmissionTestCase.objects.filter(submission_id=self.id).delete()
+            self.update_contest()
+        elif force_judge or not self.is_locked:
             if rejudge:
                 with revisions.create_revision(manage_manually=True):
                     if rejudge_user:

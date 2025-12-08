@@ -225,6 +225,10 @@ class Problem(models.Model):
         default=False,
     )
 
+    enable_grading = models.BooleanField(verbose_name=_('enable grading'),
+                                         default=True,
+                                         help_text=_('Whether judges are allowed to grade this problem.'))
+
     __original_points = None
 
     def __init__(self, *args, **kwargs):
