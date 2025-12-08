@@ -426,7 +426,7 @@ class JudgeHandler(ZlibPacketHandler):
         submission.case_total = total
 
         problem = submission.problem
-        sub_points = round(points / total * problem.points if total > 0 else 0, 3)
+        sub_points = points / total * problem.points if total > 0 else 0
         if not problem.partial and sub_points != problem.points:
             sub_points = 0
 
