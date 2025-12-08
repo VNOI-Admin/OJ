@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0192_add_registration_fields'),
+        ('judge', '0215_add_magazine_permission'),
     ]
 
     operations = [
