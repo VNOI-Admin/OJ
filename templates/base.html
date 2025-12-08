@@ -232,6 +232,9 @@
                         {% endwith %}
                     </li>
                 {% endfor %}
+                {% if request.user.is_authenticated and request.profile.about %}
+                    <li class="nav-container-link"><a href="{{ request.profile.about }}">{{ _('Container link') }}</a></li>
+                {% endif %}
             {% else %}
                 {% macro make_navbar_item(key, url, text) %}
                     <li>

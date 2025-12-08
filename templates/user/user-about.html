@@ -29,22 +29,6 @@
             {% endwith %}
         {% endif %}
 
-        {% if user.about %}
-            <h4>{{ _('About') }}</h4>
-            {% cache 86400 'user_about' user.id MATH_ENGINE %}
-                {{ user.about|markdown('self-description', MATH_ENGINE)|reference|str|safe }}
-            {% endcache %}
-        {% else %}
-            <i>
-                {% if user.user == request.user %}
-                    {{ _('You have not shared any information.') }}
-                {% else %}
-                    {{ _('This user has not shared any information.') }}
-                {% endif %}
-            </i>
-            <br>
-        {% endif %}
-
         <h4>{{ _('Badges & Awards') }}</h4>
         {% for badge in user.badges.all() %}
             <div style="display: inline-block; margin-left: 1em; margin-right: 1em;">
