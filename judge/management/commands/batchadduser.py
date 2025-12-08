@@ -14,8 +14,11 @@ def generate_password():
     return ''.join(secrets.choice(ALPHABET) for _ in range(8))
 
 
-def add_user(username, fullname, password):
+def add_user(username, fullname, password, is_admin=False):
     usr = User(username=username, first_name=fullname, is_active=True)
+    if is_admin:
+        usr.is_superuser = True
+        usr.is_staff = True
     usr.set_password(password)
     usr.save()
 
@@ -30,6 +33,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument('input', help='csv file containing username and fullname')
         parser.add_argument('output', help='where to store output csv file')
+        parser.add_argument('--admin', action='store_true', help='set all users as superusers')
 
     def handle(self, *args, **options):
         fin = open(options['input'], 'r')
@@ -44,7 +48,7 @@ class Command(BaseCommand):
             fullname = row['fullname']
             password = generate_password()
 
-            add_user(username, fullname, password)
+            add_user(username, fullname, password, is_admin=options['admin'])
 
             writer.writerow({
                 'username': username,
