@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import re
+import zipfile
 from datetime import timedelta
 from operator import itemgetter
 from random import randrange
@@ -553,6 +554,83 @@ user_logger = logging.getLogger('judge.user')
 user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
 
 
+def validate_zip_content(zip_file, required_files, forbidden_files=None):
+    try:
+        with zipfile.ZipFile(zip_file) as z:
+            files = set(z.namelist())
+            missing = [f for f in required_files if f not in files]
+            if missing:
+                return _('Missing files in zip: %s') % ', '.join(missing)
+
+            if forbidden_files:
+                present_forbidden = [f for f in forbidden_files if f in files]
+                if present_forbidden:
+                    return _('Forbidden files in zip: %s') % ', '.join(present_forbidden)
+    except zipfile.BadZipFile:
+        return _('Invalid zip file')
+    return None
+
+
+def validate_task1_public_test(zip_file):
+    return validate_zip_content(zip_file,
+                                required_files=['public_captions_prediction_result.txt', 'task1_cap_training.py'],
+                                forbidden_files=['task1_cap_checkpoint.pt'])
+
+
+def validate_task1_final_public(zip_file):
+    return validate_zip_content(zip_file,
+                                required_files=['public_captions_prediction_result.txt', 'task1_cap_inference.py',
+                                                'task1_cap_checkpoint.pt'])
+
+
+def validate_task1_private_test(zip_file):
+    return validate_zip_content(zip_file,
+                                required_files=['private_captions_prediction_result.txt', 'task1_cap_training.py'],
+                                forbidden_files=['task1_cap_checkpoint.pt'])
+
+
+def validate_task1_final_private(zip_file):
+    return validate_zip_content(zip_file,
+                                required_files=['private_captions_prediction_result.txt', 'task1_cap_inference.py',
+                                                'task1_cap_checkpoint.pt'])
+
+
+def validate_task2_public_test(zip_file):
+    return validate_zip_content(zip_file,
+                                required_files=['public_activity.txt', 'attack_output.zip', 'task2_training.py'],
+                                forbidden_files=['model.pth'])
+
+
+def validate_task2_final_public(zip_file):
+    return validate_zip_content(zip_file,
+                                required_files=['public_activity.txt', 'attack_output.zip', 'model.py',
+                                                'task2_inference.py', 'model.pth'])
+
+
+def validate_task2_private_test(zip_file):
+    return validate_zip_content(zip_file,
+                                required_files=['private_activity.txt', 'attack_output.zip', 'task2_training.py'],
+                                forbidden_files=['model.pth'])
+
+
+def validate_task2_final_private(zip_file):
+    return validate_zip_content(zip_file,
+                                required_files=['private_activity.txt', 'attack_output.zip', 'model.py',
+                                                'task2_inference.py', 'model.pth'])
+
+
+CLIENT_CHECKERS = {
+    'final_nlp_public': validate_task1_public_test,
+    'final_nlp_public_final': validate_task1_final_public,
+    'final_nlp_private': validate_task1_private_test,
+    'final_nlp_private_final': validate_task1_final_private,
+    'final_cv_public': validate_task2_public_test,
+    'final_cv_public_final': validate_task2_final_public,
+    'final_cv_private': validate_task2_private_test,
+    'final_cv_private_final': validate_task2_final_private,
+}
+
+
 class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFormView):
     template_name = 'problem/submit.html'
     form_class = ProblemSubmitForm
@@ -648,6 +726,20 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
             return generic_message(self.request, _('Banned from submitting'),
                                    _('You have been declared persona non grata for this problem. '
                                      'You are permanently barred from submitting to this problem.'))
+
+        # Check for client checkers
+        submission_file = form.files.get('submission_file', None)
+        if self.object.code in CLIENT_CHECKERS:
+            checker = CLIENT_CHECKERS[self.object.code]
+            if not submission_file:
+                form.add_error('submission_file', _('This problem requires a file submission.'))
+                return self.form_invalid(form)
+
+            error_msg = checker(submission_file)
+            if error_msg:
+                form.add_error('submission_file', error_msg)
+                return self.form_invalid(form)
+
         # Must check for zero and not None. None means infinite submissions remaining.
         if self.remaining_submission_count == 0:
             return generic_message(self.request, _('Too many submissions'),
