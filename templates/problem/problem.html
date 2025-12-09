@@ -202,6 +202,7 @@
         </div>
     {% endif %}
 
+    {% if problem.is_editable_by(request.user) %}
     <hr style="padding-top: 0.3em">
 
     <div class="problem-info-entry">
@@ -256,6 +257,7 @@
             <i class="fa fa-print fa-fw"></i><span class="pi-name">{{ _('Output:') }}</span>
             <span class="pi-value"><i>{{ problem.io_method.output }}</i></span>
         </div>
+    {% endif %}
     {% endif %}
 
     <hr style="padding-top: 0.7em">
