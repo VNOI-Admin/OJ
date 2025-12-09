@@ -42,10 +42,11 @@ class Command(BaseCommand):
         reader = csv.DictReader(fin)
         writer = csv.DictWriter(fout, fieldnames=['username', 'fullname', 'password'])
         writer.writeheader()
+        has_fullname = 'fullname' in reader.fieldnames
 
         for row in reader:
             username = row['username']
-            fullname = row['fullname']
+            fullname = row['fullname'] if has_fullname else row['username']
             password = generate_password()
 
             add_user(username, fullname, password, is_admin=options['admin'])
