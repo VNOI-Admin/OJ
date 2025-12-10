@@ -6,6 +6,7 @@ from django.utils import timezone
 from django.utils.translation import gettext as _
 
 from judge.models import Problem, Profile, Submission
+from judge.models.submission import SubmissionTestCase
 from judge.utils.celery import Progress
 
 __all__ = ('apply_submission_filter', 'rejudge_problem_filter', 'rescore_problem')
@@ -52,12 +53,40 @@ def rescore_problem(self, problem_id, publicy_changed=False):
 
     with Progress(self, submissions.count(), stage=_('Modifying submissions')) as p:
         rescored = 0
+        status_codes = ['SC', 'AC', 'WA', 'MLE', 'TLE', 'IR', 'RTE', 'OLE']
+
         for submission in submissions.iterator():
+            points = 0.0
+            total = 0
+            batches = {}  # batch number: (points, total)
+            for case in SubmissionTestCase.objects.filter(submission=submission):
+                if not case.batch:
+                    points += case.points
+                    total += case.total
+                else:
+                    if case.batch in batches:
+                        batches[case.batch][0] = min(batches[case.batch][0], case.points)
+                        batches[case.batch][1] = max(batches[case.batch][1], case.total)
+                    else:
+                        batches[case.batch] = [case.points, case.total]
+                i = status_codes.index(case.status)
+                if i > status:
+                    status = i
+
+            for i in batches:
+                points += batches[i][0]
+                total += batches[i][1]
+
+            points = round(points, 3)
+            total = round(total, 3)
+            submission.case_points = points
+            submission.case_total = total
+
             submission.points = round(submission.case_points / submission.case_total
                                       if submission.case_total else 0, 3) * problem.points
             if not problem.partial and submission.points < problem.points:
                 submission.points = 0
-            submission.save(update_fields=['points'])
+            submission.save(update_fields=['points', 'case_points', 'case_total'])
             submission.update_contest()
             rescored += 1
             if rescored % 10 == 0:
