@@ -69,9 +69,6 @@ def rescore_problem(self, problem_id, publicy_changed=False):
                         batches[case.batch][1] = max(batches[case.batch][1], case.total)
                     else:
                         batches[case.batch] = [case.points, case.total]
-                i = status_codes.index(case.status)
-                if i > status:
-                    status = i
 
             for i in batches:
                 points += batches[i][0]
