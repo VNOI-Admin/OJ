@@ -35,7 +35,7 @@
                     <div style="float:right">
                         {% block user_name_data scoped %}{% endblock %}
                         {% block admin_operations scoped %}{% endblock %}
-                        <div class="personal-info" style="text-align: right;">
+                        <div class="personal-info" style="display:flex; align-items:center; text-align:right;">
                             {% block personal_info_data scoped %}
                                 <em>
                                     {# DON'T USE FILTER HERE. Unlisted orgs have already filtered out via prefetch_related #}
