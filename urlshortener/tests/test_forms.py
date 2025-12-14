@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 
 from judge.models import Profile
-from urlshortener.forms import URLShortenerEditForm, URLShortenerForm
+from urlshortener.forms import URLShortenerForm
 from urlshortener.models import URLShortener
 
 
@@ -16,139 +16,91 @@ class URLShortenerFormTestCase(TestCase):
         """Test form is valid with all fields filled."""
         form = URLShortenerForm(data={
             'original_url': 'https://example.com/long/url',
-            'suffix': 'mysuffix',
+            'short_code': 'myshort_code',
             'is_active': True,
         })
         self.assertTrue(form.is_valid())
 
-    def test_valid_form_without_suffix(self):
-        """Test form auto-generates suffix when not provided."""
+    def test_valid_form_without_short_code(self):
+        """Test form is invalid when short_code is not provided (as it's required)."""
         form = URLShortenerForm(data={
             'original_url': 'https://example.com/long/url',
-            'suffix': '',
+            'short_code': '',
             'is_active': True,
         })
-        self.assertTrue(form.is_valid())
-        self.assertEqual(len(form.cleaned_data['suffix']), 8)
+        self.assertFalse(form.is_valid())
+        self.assertIn('short_code', form.errors)
 
     def test_valid_form_minimal_fields(self):
-        """Test form is valid with only required fields."""
+        """Test form is invalid with only required fields, as short_code is now required."""
         form = URLShortenerForm(data={
             'original_url': 'https://example.com',
+            'is_active': True,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('short_code', form.errors)
+
+    def test_invalid_short_code_special_chars(self):
+        """Test form rejects short_code with special characters."""
+        form = URLShortenerForm(data={
+            'original_url': 'https://example.com',
+            'short_code': 'my@short_code!',
+            'is_active': True,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('short_code', form.errors)
+
+    def test_invalid_short_code_spaces(self):
+        """Test form rejects short_code with spaces."""
+        form = URLShortenerForm(data={
+            'original_url': 'https://example.com',
+            'short_code': 'my short_code',
+            'is_active': True,
+        })
+        self.assertFalse(form.is_valid())
+        self.assertIn('short_code', form.errors)
+
+    def test_valid_short_code_with_hyphens_underscores(self):
+        """Test form accepts short_code with hyphens and underscores."""
+        form = URLShortenerForm(data={
+            'original_url': 'https://example.com',
+            'short_code': 'my-short_code_123',
             'is_active': True,
         })
         self.assertTrue(form.is_valid())
 
-    def test_invalid_suffix_special_chars(self):
-        """Test form rejects suffix with special characters."""
+    def test_short_code_too_long(self):
+        """Test form rejects short_code longer than 50 characters."""
         form = URLShortenerForm(data={
             'original_url': 'https://example.com',
-            'suffix': 'my@suffix!',
+            'short_code': 'a' * 51,
             'is_active': True,
         })
         self.assertFalse(form.is_valid())
-        self.assertIn('suffix', form.errors)
+        self.assertIn('short_code', form.errors)
 
-    def test_invalid_suffix_spaces(self):
-        """Test form rejects suffix with spaces."""
-        form = URLShortenerForm(data={
-            'original_url': 'https://example.com',
-            'suffix': 'my suffix',
-            'is_active': True,
-        })
-        self.assertFalse(form.is_valid())
-        self.assertIn('suffix', form.errors)
-
-    def test_valid_suffix_with_hyphens_underscores(self):
-        """Test form accepts suffix with hyphens and underscores."""
-        form = URLShortenerForm(data={
-            'original_url': 'https://example.com',
-            'suffix': 'my-suffix_123',
-            'is_active': True,
-        })
-        self.assertTrue(form.is_valid())
-
-    def test_suffix_too_long(self):
-        """Test form rejects suffix longer than 50 characters."""
-        form = URLShortenerForm(data={
-            'original_url': 'https://example.com',
-            'suffix': 'a' * 51,
-            'is_active': True,
-        })
-        self.assertFalse(form.is_valid())
-        self.assertIn('suffix', form.errors)
-
-    def test_duplicate_suffix(self):
-        """Test form rejects duplicate suffix."""
+    def test_duplicate_short_code(self):
+        """Test form rejects duplicate short_code."""
         URLShortener.objects.create(
             original_url='https://existing.com',
-            suffix='taken',
-            created_user=self.profile,
+            short_code='taken',
         )
 
         form = URLShortenerForm(data={
             'original_url': 'https://example.com',
-            'suffix': 'taken',
+            'short_code': 'taken',
             'is_active': True,
         })
         self.assertFalse(form.is_valid())
-        self.assertIn('suffix', form.errors)
+        self.assertIn('short_code', form.errors)
 
-    def test_invalid_localhost_url(self):
-        """Test form rejects localhost URLs."""
-        form = URLShortenerForm(data={
-            'original_url': 'http://localhost/admin',
-            'suffix': 'local',
-            'is_active': True,
-        })
-        self.assertFalse(form.is_valid())
-        self.assertIn('original_url', form.errors)
-
-    def test_invalid_127_0_0_1_url(self):
-        """Test form rejects 127.0.0.1 URLs."""
-        form = URLShortenerForm(data={
-            'original_url': 'http://127.0.0.1:8000/admin',
-            'suffix': 'local2',
-            'is_active': True,
-        })
-        self.assertFalse(form.is_valid())
-        self.assertIn('original_url', form.errors)
-
-    def test_invalid_private_ip_10(self):
-        """Test form rejects 10.x.x.x URLs."""
-        form = URLShortenerForm(data={
-            'original_url': 'http://10.0.0.1/internal',
-            'suffix': 'internal',
-            'is_active': True,
-        })
-        self.assertFalse(form.is_valid())
-        self.assertIn('original_url', form.errors)
-
-    def test_invalid_private_ip_192_168(self):
-        """Test form rejects 192.168.x.x URLs."""
-        form = URLShortenerForm(data={
-            'original_url': 'http://192.168.1.1/router',
-            'suffix': 'router',
-            'is_active': True,
-        })
-        self.assertFalse(form.is_valid())
-        self.assertIn('original_url', form.errors)
-
-    def test_invalid_private_ip_172(self):
-        """Test form rejects 172.16-31.x.x URLs."""
-        form = URLShortenerForm(data={
-            'original_url': 'http://172.16.0.1/internal',
-            'suffix': 'internal2',
-            'is_active': True,
-        })
-        self.assertFalse(form.is_valid())
-        self.assertIn('original_url', form.errors)
+    # Tests for invalid internal/private IP URLs removed as per user's instruction.
 
     def test_valid_public_ip(self):
         """Test form accepts public IP URLs."""
         form = URLShortenerForm(data={
             'original_url': 'http://8.8.8.8/something',
-            'suffix': 'google',
+            'short_code': 'google',
             'is_active': True,
         })
         self.assertTrue(form.is_valid())
@@ -156,7 +108,7 @@ class URLShortenerFormTestCase(TestCase):
     def test_missing_original_url(self):
         """Test form requires original_url."""
         form = URLShortenerForm(data={
-            'suffix': 'nourl',
+            'short_code': 'nourl',
             'is_active': True,
         })
         self.assertFalse(form.is_valid())
@@ -166,7 +118,7 @@ class URLShortenerFormTestCase(TestCase):
         """Test form rejects invalid URL format."""
         form = URLShortenerForm(data={
             'original_url': 'not-a-valid-url',
-            'suffix': 'invalid',
+            'short_code': 'invalid',
             'is_active': True,
         })
         self.assertFalse(form.is_valid())
@@ -180,61 +132,59 @@ class URLShortenerEditFormTestCase(TestCase):
         cls.profile = Profile.objects.create(user=cls.user)
         cls.shortener = URLShortener.objects.create(
             original_url='https://example.com',
-            suffix='edittest',
-            created_user=cls.profile,
+            short_code='edittest',
         )
 
-    def test_edit_form_requires_suffix(self):
-        """Test edit form requires suffix (cannot be empty)."""
-        form = URLShortenerEditForm(
+    def test_edit_form_requires_short_code(self):
+        """Test edit form requires short_code (cannot be empty)."""
+        form = URLShortenerForm(
             instance=self.shortener,
             data={
                 'original_url': 'https://example.com',
-                'suffix': '',
+                'short_code': '',
                 'is_active': True,
             },
         )
         self.assertFalse(form.is_valid())
-        self.assertIn('suffix', form.errors)
+        self.assertIn('short_code', form.errors)
 
-    def test_edit_form_allows_same_suffix(self):
-        """Test edit form allows keeping the same suffix."""
-        form = URLShortenerEditForm(
+    def test_edit_form_allows_same_short_code(self):
+        """Test edit form allows keeping the same short_code."""
+        form = URLShortenerForm(
             instance=self.shortener,
             data={
                 'original_url': 'https://example.com/updated',
-                'suffix': 'edittest',
+                'short_code': 'edittest',
                 'is_active': True,
             },
         )
         self.assertTrue(form.is_valid())
 
-    def test_edit_form_rejects_taken_suffix(self):
-        """Test edit form rejects suffix taken by another shortener."""
+    def test_edit_form_rejects_taken_short_code(self):
+        """Test edit form rejects short_code taken by another shortener."""
         URLShortener.objects.create(
             original_url='https://other.com',
-            suffix='othersuffix',
-            created_user=self.profile,
+            short_code='othershort_code',
         )
 
-        form = URLShortenerEditForm(
+        form = URLShortenerForm(
             instance=self.shortener,
             data={
                 'original_url': 'https://example.com',
-                'suffix': 'othersuffix',
+                'short_code': 'othershort_code',
                 'is_active': True,
             },
         )
         self.assertFalse(form.is_valid())
-        self.assertIn('suffix', form.errors)
+        self.assertIn('short_code', form.errors)
 
-    def test_edit_form_allows_new_unique_suffix(self):
-        """Test edit form allows changing to a new unique suffix."""
-        form = URLShortenerEditForm(
+    def test_edit_form_allows_new_unique_short_code(self):
+        """Test edit form allows changing to a new unique short_code."""
+        form = URLShortenerForm(
             instance=self.shortener,
             data={
                 'original_url': 'https://example.com',
-                'suffix': 'newsuffix',
+                'short_code': 'newshort_code',
                 'is_active': True,
             },
         )

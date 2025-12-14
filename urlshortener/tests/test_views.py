@@ -1,5 +1,5 @@
-from django.contrib.auth.models import User
-from django.test import Client, TestCase
+from django.contrib.auth.models import User, Permission
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from judge.models import Profile
@@ -17,9 +17,17 @@ class URLShortenerViewsTestCase(TestCase):
 
         cls.shortener = URLShortener.objects.create(
             original_url='https://example.com/original',
-            suffix='test1234',
-            created_user=cls.profile,
+            short_code='test1234',
         )
+
+        # Grant permissions to cls.user
+        add_permission = Permission.objects.get(codename='add_urlshortener')
+        view_permission = Permission.objects.get(codename='view_urlshortener')
+        change_permission = Permission.objects.get(codename='change_urlshortener')
+        delete_permission = Permission.objects.get(codename='delete_urlshortener')
+
+        cls.user.user_permissions.add(add_permission, view_permission, change_permission, delete_permission)
+
 
     def setUp(self):
         self.client = Client()
@@ -39,19 +47,18 @@ class URLShortenerListViewTestCase(URLShortenerViewsTestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'test1234')
 
-    def test_list_hides_other_users_shorteners(self):
-        """Test that list view hides other users' shorteners."""
+    def test_list_shows_all_shorteners(self):
+        """Test that list view shows all shorteners to a user with permission."""
         other_shortener = URLShortener.objects.create(
             original_url='https://other.com',
-            suffix='other123',
-            created_user=self.other_profile,
+            short_code='other123',
         )
 
         self.client.login(username='testuser', password='testpass')
         response = self.client.get(reverse('urlshortener_list'))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'test1234')
-        self.assertNotContains(response, 'other123')
+        self.assertContains(response, 'other123')
 
 
 class URLShortenerCreateViewTestCase(URLShortenerViewsTestCase):
@@ -73,7 +80,7 @@ class URLShortenerCreateViewTestCase(URLShortenerViewsTestCase):
         self.client.login(username='testuser', password='testpass')
         response = self.client.post(reverse('urlshortener_create'), {
             'original_url': 'https://newsite.com/path',
-            'suffix': 'newsuffix',
+            'short_code': 'newshort_code',
             'is_active': True,
         })
 
@@ -81,36 +88,21 @@ class URLShortenerCreateViewTestCase(URLShortenerViewsTestCase):
         self.assertEqual(response.status_code, 302)
 
         # Verify shortener was created
-        shortener = URLShortener.objects.get(suffix='newsuffix')
+        shortener = URLShortener.objects.get(short_code='newshort_code')
         self.assertEqual(shortener.original_url, 'https://newsite.com/path')
-        self.assertEqual(shortener.created_user, self.profile)
 
-    def test_create_post_auto_suffix(self):
-        """Test creating shortener with auto-generated suffix."""
+    @override_settings(LANGUAGE_CODE='en-US')
+    def test_create_post_empty_short_code(self):
+        """Test creating shortener with empty short_code (should fail validation)."""
         self.client.login(username='testuser', password='testpass')
         response = self.client.post(reverse('urlshortener_create'), {
             'original_url': 'https://autosite.com',
-            'suffix': '',  # Empty to auto-generate
+            'short_code': '',  # Empty
             'is_active': True,
         })
 
-        self.assertEqual(response.status_code, 302)
-
-        # Verify shortener was created with generated suffix
-        shortener = URLShortener.objects.get(original_url='https://autosite.com')
-        self.assertEqual(len(shortener.suffix), 8)
-
-    def test_create_post_invalid_url(self):
-        """Test that invalid URL is rejected."""
-        self.client.login(username='testuser', password='testpass')
-        response = self.client.post(reverse('urlshortener_create'), {
-            'original_url': 'http://localhost/admin',
-            'suffix': 'localtest',
-            'is_active': True,
-        })
-
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'Cannot shorten internal')
+        self.assertEqual(response.status_code, 200) # Form should re-render
+        self.assertContains(response, 'This field is required.')
 
 
 class URLShortenerEditViewTestCase(URLShortenerViewsTestCase):
@@ -146,7 +138,7 @@ class URLShortenerEditViewTestCase(URLShortenerViewsTestCase):
             reverse('urlshortener_edit', args=['test1234']),
             {
                 'original_url': 'https://updated.com/path',
-                'suffix': 'test1234',
+                'short_code': 'test1234',
                 'is_active': True,
             },
         )
@@ -193,7 +185,7 @@ class URLShortenerDeleteViewTestCase(URLShortenerViewsTestCase):
 
         self.assertEqual(response.status_code, 302)
         self.assertFalse(
-            URLShortener.objects.filter(suffix='test1234').exists()
+            URLShortener.objects.filter(short_code='test1234').exists()
         )
 
 
@@ -207,16 +199,16 @@ class URLShortenerRedirectViewTestCase(URLShortenerViewsTestCase):
         from django.urls import reverse as url_reverse
 
         # Manually construct the URL since it's on a different urlconf
-        response = self.client.get(f'/{self.shortener.suffix}', follow=False)
+        response = self.client.get(f'/{self.shortener.short_code}', follow=False)
 
         # Since we're not using the separate urlconf, let's test the view directly
         from urlshortener.views import URLShortenerRedirectView
         from django.test import RequestFactory
 
         factory = RequestFactory()
-        request = factory.get(f'/{self.shortener.suffix}')
+        request = factory.get(f'/{self.shortener.short_code}')
         view = URLShortenerRedirectView.as_view()
-        response = view(request, suffix=self.shortener.suffix)
+        response = view(request, short_code=self.shortener.short_code)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, 'https://example.com/original')
@@ -229,9 +221,9 @@ class URLShortenerRedirectViewTestCase(URLShortenerViewsTestCase):
         initial_count = self.shortener.access_count
 
         factory = RequestFactory()
-        request = factory.get(f'/{self.shortener.suffix}')
+        request = factory.get(f'/{self.shortener.short_code}')
         view = URLShortenerRedirectView.as_view()
-        response = view(request, suffix=self.shortener.suffix)
+        response = view(request, short_code=self.shortener.short_code)
 
         self.shortener.refresh_from_db()
         self.assertEqual(self.shortener.access_count, initial_count + 1)
@@ -242,15 +234,15 @@ class URLShortenerRedirectViewTestCase(URLShortenerViewsTestCase):
         from django.test import RequestFactory
 
         factory = RequestFactory()
-        request = factory.get(f'/{self.shortener.suffix}')
+        request = factory.get(f'/{self.shortener.short_code}')
         view = URLShortenerRedirectView.as_view()
-        response = view(request, suffix=self.shortener.suffix)
+        response = view(request, short_code=self.shortener.short_code)
 
         self.shortener.refresh_from_db()
         self.assertIsNotNone(self.shortener.last_access_time)
 
     def test_redirect_nonexistent_404(self):
-        """Test that nonexistent suffix returns 404."""
+        """Test that nonexistent short_code returns 404."""
         from urlshortener.views import URLShortenerRedirectView
         from django.test import RequestFactory
         from django.http import Http404
@@ -260,7 +252,7 @@ class URLShortenerRedirectViewTestCase(URLShortenerViewsTestCase):
         view = URLShortenerRedirectView.as_view()
 
         with self.assertRaises(Http404):
-            view(request, suffix='nonexistent')
+            view(request, short_code='nonexistent')
 
     def test_redirect_inactive_404(self):
         """Test that inactive shortener returns 404."""
@@ -272,11 +264,11 @@ class URLShortenerRedirectViewTestCase(URLShortenerViewsTestCase):
         self.shortener.save()
 
         factory = RequestFactory()
-        request = factory.get(f'/{self.shortener.suffix}')
+        request = factory.get(f'/{self.shortener.short_code}')
         view = URLShortenerRedirectView.as_view()
 
         with self.assertRaises(Http404):
-            view(request, suffix=self.shortener.suffix)
+            view(request, short_code=self.shortener.short_code)
 
     def test_redirect_no_auth_required(self):
         """Test that redirect works without authentication."""
@@ -284,10 +276,10 @@ class URLShortenerRedirectViewTestCase(URLShortenerViewsTestCase):
         from django.test import RequestFactory
 
         factory = RequestFactory()
-        request = factory.get(f'/{self.shortener.suffix}')
+        request = factory.get(f'/{self.shortener.short_code}')
         # Don't attach any user to the request
         view = URLShortenerRedirectView.as_view()
-        response = view(request, suffix=self.shortener.suffix)
+        response = view(request, short_code=self.shortener.short_code)
 
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response.url, 'https://example.com/original')

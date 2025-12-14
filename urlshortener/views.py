@@ -89,7 +89,7 @@ class URLShortenerRedirectView(RedirectView):
         except URLShortener.DoesNotExist:
             raise Http404(_('URL shortener not found.'))
 
-        if not shortener.is_accessible():
+        if not shortener.is_active:
             raise Http404(_('This shortened URL is not active.'))
 
         shortener.record_access()
