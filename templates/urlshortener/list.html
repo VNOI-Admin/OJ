@@ -46,7 +46,7 @@
                     {% for shortener in shorteners %}
                         <tr{% if not shortener.is_active %} style="opacity: 0.6;"{% endif %}>
                             <td>
-                                <code>{{ shortener.suffix }}</code>
+                                <code>{{ shortener.short_code }}</code>
                                 <span style="cursor: pointer; margin-left: 4px;" onclick="copyToClipboard('{{ shortener.get_full_short_url() }}', this)" title="{{ _('Copy full URL') }}">
                                     <i class="fa fa-clipboard"></i>
                                 </span>
@@ -73,10 +73,10 @@
                                 </td>
                             {% endif %}
                             <td>
-                                <a href="{{ url('urlshortener_edit', shortener.suffix) }}" title="{{ _('Edit') }}" style="margin-right: 8px;">
+                                <a href="{{ url('urlshortener_edit', shortener.short_code) }}" title="{{ _('Edit') }}" style="margin-right: 8px;">
                                     <i class="fa fa-pencil"></i>
                                 </a>
-                                <a href="{{ url('urlshortener_delete', shortener.suffix) }}" title="{{ _('Delete') }}">
+                                <a href="{{ url('urlshortener_delete', shortener.short_code) }}" title="{{ _('Delete') }}">
                                     <i class="fa fa-trash"></i>
                                 </a>
                             </td>

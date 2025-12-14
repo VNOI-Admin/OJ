@@ -84,13 +84,13 @@
 
 {% block js_media %}
     <script>
-        function generateSuffix() {
+        function generateShortCode() {
             var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-            var suffix = '';
+            var code = '';
             for (var i = 0; i < 8; i++) {
-                suffix += chars.charAt(Math.floor(Math.random() * chars.length));
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
             }
-            document.getElementById('id_suffix').value = suffix;
+            document.getElementById('id_short_code').value = code;
         }
     </script>
 {% endblock %}
@@ -125,30 +125,28 @@
             </div>
 
             <div class="form-group">
-                <label for="id_suffix">{{ _('Suffix') }}{% if not is_edit %} ({{ _('optional') }}){% endif %}</label>
+                <label for="id_short_code">{{ _('Short Code') }} *</label>
                 <div class="suffix-input-group">
                     <input type="text"
-                           name="suffix"
-                           id="id_suffix"
-                           value="{{ form.suffix.value() or '' }}"
+                           name="short_code"
+                           id="id_short_code"
+                           value="{{ form.short_code.value() or '' }}"
                            placeholder="{{ _('e.g., my-link') }}"
                            pattern="[a-zA-Z0-9_-]{1,50}"
-                           {% if is_edit %}required{% endif %}>
-                    {% if not is_edit %}
-                        <button type="button" class="generate-btn" onclick="generateSuffix()">
-                            <i class="fa fa-random"></i> {{ _('Generate') }}
-                        </button>
-                    {% endif %}
+                           required>
+                    <button type="button" class="generate-btn" onclick="generateShortCode()">
+                        <i class="fa fa-random"></i> {{ _('Generate') }}
+                    </button>
                 </div>
-                {% if form.suffix.errors %}
+                {% if form.short_code.errors %}
                     <ul class="errorlist">
-                        {% for error in form.suffix.errors %}
+                        {% for error in form.short_code.errors %}
                             <li>{{ error }}</li>
                         {% endfor %}
                     </ul>
                 {% endif %}
                 <div class="help-text">
-                    {{ _('The unique identifier for your short URL. Leave blank to auto-generate.') }}
+                    {{ _('The unique identifier for your short URL.') }}
                     {{ _('Only letters, numbers, underscores, and hyphens allowed.') }}
                 </div>
             </div>
@@ -165,7 +163,7 @@
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="button">{{ submit_label }}</button>
+                <button type="submit" class="button">{{ _('Save') if is_edit else _('Create') }}</button>
                 <a href="{{ url('urlshortener_list') }}" class="button">{{ _('Cancel') }}</a>
             </div>
         </form>

@@ -7,15 +7,15 @@ from django.views.generic import CreateView, DeleteView, ListView, RedirectView,
 
 from judge.utils.views import DiggPaginatorMixin, TitleMixin
 
-from urlshortener.forms import URLShortenerEditForm, URLShortenerForm
+from urlshortener.forms import URLShortenerForm
 from urlshortener.models import URLShortener
 
 
 class URLShortenerMixin:
     """Mixin for URL shortener views that require permission checks."""
     model = URLShortener
-    slug_field = 'suffix'
-    slug_url_kwarg = 'suffix'
+    slug_field = 'short_code'
+    slug_url_kwarg = 'short_code'
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
@@ -55,11 +55,6 @@ class URLShortenerCreateView(LoginRequiredMixin, TitleMixin, CreateView):
     def get_title(self):
         return _('Create URL Shortener')
 
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
-
     def form_valid(self, form):
         form.instance.created_user = self.request.profile
         return super().form_valid(form)
@@ -67,30 +62,21 @@ class URLShortenerCreateView(LoginRequiredMixin, TitleMixin, CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['is_edit'] = False
-        context['form_title'] = _('Create URL Shortener')
-        context['submit_label'] = _('Create')
         return context
 
 
 class URLShortenerEditView(URLShortenerMixin, LoginRequiredMixin, TitleMixin, UpdateView):
     """Edit an existing URL shortener."""
     model = URLShortener
-    form_class = URLShortenerEditForm
+    form_class = URLShortenerForm
     template_name = 'urlshortener/form.html'
 
     def get_title(self):
-        return _('Edit URL Shortener: %s') % self.object.suffix
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['user'] = self.request.user
-        return kwargs
+        return _('Edit URL Shortener: %s') % self.object.short_code
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['is_edit'] = True
-        context['form_title'] = _('Edit URL Shortener')
-        context['submit_label'] = _('Save Changes')
         return context
 
 
@@ -102,7 +88,7 @@ class URLShortenerDeleteView(URLShortenerMixin, LoginRequiredMixin, TitleMixin, 
     success_url = reverse_lazy('urlshortener_list')
 
     def get_title(self):
-        return _('Delete URL Shortener: %s') % self.object.suffix
+        return _('Delete URL Shortener: %s') % self.object.short_code
 
 
 class URLShortenerRedirectView(RedirectView):
@@ -110,9 +96,9 @@ class URLShortenerRedirectView(RedirectView):
     permanent = False
 
     def get_redirect_url(self, *args, **kwargs):
-        suffix = kwargs.get('suffix')
+        short_code = kwargs.get('short_code')
         try:
-            shortener = URLShortener.objects.get(suffix=suffix)
+            shortener = URLShortener.objects.get(short_code=short_code)
         except URLShortener.DoesNotExist:
             raise Http404(_('URL shortener not found.'))
 
@@ -121,16 +107,3 @@ class URLShortenerRedirectView(RedirectView):
 
         shortener.record_access()
         return shortener.original_url
-
-
-class URLShortenerRedirectLandingView(RedirectView):
-    """
-    Landing page for the shortener domain.
-    Redirects to the main site or shows an info page.
-    """
-    permanent = False
-
-    def get_redirect_url(self, *args, **kwargs):
-        from django.conf import settings
-        # Redirect to main site home page
-        return getattr(settings, 'SITE_FULL_URL', '/')

@@ -1,8 +1,5 @@
-import secrets
-import string
-
 from django.db import models
-from django.db.models import CASCADE
+from django.db.models import CASCADE, F
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -10,25 +7,9 @@ from django.utils.translation import gettext_lazy as _
 from judge.models.profile import Profile
 
 
-def generate_suffix(length=8):
-    """Generate a random suffix for the shortened URL."""
-    alphabet = string.ascii_letters + string.digits
-    return ''.join(secrets.choice(alphabet) for _ in range(length))
-
-
 class URLShortener(models.Model):
-    original_url = models.URLField(
-        verbose_name=_('original URL'),
-        max_length=2048,
-        help_text=_('The original URL to shorten.'),
-    )
-    suffix = models.CharField(
-        verbose_name=_('suffix'),
-        max_length=50,
-        unique=True,
-        db_index=True,
-        help_text=_('The unique suffix for the shortened URL.'),
-    )
+    original_url = models.URLField(verbose_name=_('original URL'))
+    short_code = models.SlugField(verbose_name=_('short code'), unique=True)
     created_user = models.ForeignKey(
         Profile,
         verbose_name=_('created by'),
@@ -69,15 +50,15 @@ class URLShortener(models.Model):
 
     def __str__(self):
         if len(self.original_url) > 50:
-            return f'{self.suffix} -> {self.original_url[:50]}...'
-        return f'{self.suffix} -> {self.original_url}'
+            return f'{self.short_code} -> {self.original_url[:50]}...'
+        return f'{self.short_code} -> {self.original_url}'
 
     def get_absolute_url(self):
-        return reverse('urlshortener_edit', args=[self.suffix])
+        return reverse('urlshortener_edit', args=[self.short_code])
 
     def get_short_url(self):
-        """Get the relative short URL path (just the suffix)."""
-        return f'/{self.suffix}'
+        """Get the relative short URL path."""
+        return f'/{self.short_code}'
 
     def get_full_short_url(self):
         """
@@ -90,7 +71,7 @@ class URLShortener(models.Model):
             # Ensure domain has scheme
             if not domain.startswith(('http://', 'https://')):
                 domain = f'https://{domain}'
-            return f'{domain.rstrip("/")}/{self.suffix}'
+            return f'{domain.rstrip("/")}/{self.short_code}'
         # Fallback to relative URL
         return self.get_short_url()
 
@@ -100,7 +81,7 @@ class URLShortener(models.Model):
 
     def record_access(self):
         """Record an access to this shortener."""
-        self.access_count += 1
+        self.access_count = F('access_count') + 1
         self.last_access_time = timezone.now()
         self.save(update_fields=['access_count', 'last_access_time'])
 
@@ -119,12 +100,3 @@ class URLShortener(models.Model):
         if user.has_perm('urlshortener.edit_all_urlshortener'):
             return True
         return self.created_user.user == user
-
-    @classmethod
-    def generate_unique_suffix(cls, length=8):
-        """Generate a unique suffix that doesn't exist in the database."""
-        for _ in range(100):  # Max 100 attempts
-            suffix = generate_suffix(length)
-            if not cls.objects.filter(suffix=suffix).exists():
-                return suffix
-        raise ValueError('Could not generate a unique suffix after 100 attempts')

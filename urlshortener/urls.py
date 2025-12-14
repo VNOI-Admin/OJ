@@ -11,8 +11,8 @@ urlpatterns = [
     path('create/', views.URLShortenerCreateView.as_view(), name='urlshortener_create'),
 
     # Edit shortener
-    path('<str:suffix>/edit/', views.URLShortenerEditView.as_view(), name='urlshortener_edit'),
+    path('<str:short_code>/edit/', views.URLShortenerEditView.as_view(), name='urlshortener_edit'),
 
     # Delete shortener
-    path('<str:suffix>/delete/', views.URLShortenerDeleteView.as_view(), name='urlshortener_delete'),
+    path('<str:short_code>/delete/', views.URLShortenerDeleteView.as_view(), name='urlshortener_delete'),
 ]

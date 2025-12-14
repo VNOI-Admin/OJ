@@ -3,7 +3,7 @@ URL patterns for the URL shortener redirect domain.
 
 This file should be used as the ROOT_URLCONF for the shortener domain
 (e.g., short.vnoj.com). It handles redirects at the root level:
-    {CUSTOM_DOMAIN}/<suffix> -> original URL
+    {CUSTOM_DOMAIN}/<short_code> -> original URL
 
 To use this, configure your Django settings or middleware to use
 'urlshortener.urls_redirect' as ROOT_URLCONF for requests to the
@@ -24,10 +24,5 @@ from django.urls import path
 from urlshortener import views
 
 urlpatterns = [
-    # Root path - could show a landing page or redirect to main site
-    path('', views.URLShortenerRedirectLandingView.as_view(), name='urlshortener_landing'),
-
-    # Redirect by suffix - this is the main functionality
-    # {CUSTOM_DOMAIN}/<suffix> redirects to original URL
-    path('<str:suffix>', views.URLShortenerRedirectView.as_view(), name='urlshortener_redirect'),
+    path('<str:short_code>', views.URLShortenerRedirectView.as_view(), name='urlshortener_redirect'),
 ]
