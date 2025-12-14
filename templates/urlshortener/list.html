@@ -1,5 +1,12 @@
 {% extends "base.html" %}
 
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'list' %}
+    {% include "urlshortener/tabs.html" %}
+{% endblock %}
+
 {% block js_media %}
     <script>
         function copyToClipboard(text, btn) {
@@ -15,12 +22,6 @@
 {% endblock %}
 
 {% block body %}
-    <div style="margin-bottom: 16px;">
-        <a href="{{ url('urlshortener_create') }}" class="button">
-            <i class="fa fa-plus"></i> {{ _('Create New Shortener') }}
-        </a>
-    </div>
-
     {% if shorteners %}
         {% if page_obj.has_other_pages() %}
             <div class="top-pagination-bar">{% include "list-pages.html" %}</div>
@@ -36,10 +37,7 @@
                         <th class="header" style="width: 8%;">{{ _('Accesses') }}</th>
                         <th class="header" style="width: 8%;">{{ _('Status') }}</th>
                         <th class="header" style="width: 12%;">{{ _('Created') }}</th>
-                        {% if can_view_all %}
-                            <th class="header" style="width: 10%;">{{ _('Owner') }}</th>
-                        {% endif %}
-                        <th class="header" style="width: 8%;">{{ _('Actions') }}</th>
+                        <th class="header" style="width: 10%;">{{ _('Actions') }}</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -65,14 +63,10 @@
                                 {% endif %}
                             </td>
                             <td>{{ shortener.created_time|date("Y-m-d H:i") }}</td>
-                            {% if can_view_all %}
-                                <td>
-                                    <a href="{{ url('user_page', shortener.created_user.user.username) }}">
-                                        {{ shortener.created_user.user.username }}
-                                    </a>
-                                </td>
-                            {% endif %}
                             <td>
+                                <a href="{{ url('urlshortener_detail', shortener.short_code) }}" title="{{ _('View') }}" style="margin-right: 8px;">
+                                    <i class="fa fa-eye"></i>
+                                </a>
                                 <a href="{{ url('urlshortener_edit', shortener.short_code) }}" title="{{ _('Edit') }}" style="margin-right: 8px;">
                                     <i class="fa fa-pencil"></i>
                                 </a>

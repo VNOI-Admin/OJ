@@ -1,88 +1,8 @@
 {% extends "base.html" %}
 
-{% block media %}
-    <style>
-        .shortener-form {
-            max-width: 600px;
-        }
-        .shortener-form .form-group {
-            margin-bottom: 16px;
-        }
-        .shortener-form label {
-            display: block;
-            font-weight: bold;
-            margin-bottom: 4px;
-        }
-        .shortener-form input[type="text"],
-        .shortener-form input[type="url"],
-        .shortener-form textarea {
-            width: 100%;
-            padding: 8px 12px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 1em;
-        }
-        .shortener-form input:focus,
-        .shortener-form textarea:focus {
-            outline: none;
-            border-color: #007bff;
-            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
-        }
-        .shortener-form .help-text {
-            font-size: 0.85em;
-            color: #666;
-            margin-top: 4px;
-        }
-        .shortener-form .error {
-            color: #dc3545;
-            font-size: 0.85em;
-            margin-top: 4px;
-        }
-        .shortener-form .errorlist {
-            list-style: none;
-            padding: 0;
-            margin: 4px 0 0 0;
-        }
-        .shortener-form .errorlist li {
-            color: #dc3545;
-            font-size: 0.85em;
-        }
-        .shortener-form .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .shortener-form .checkbox-group input {
-            width: auto;
-        }
-        .form-actions {
-            margin-top: 24px;
-            display: flex;
-            gap: 12px;
-        }
-        .generate-btn {
-            padding: 8px 12px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9em;
-        }
-        .generate-btn:hover {
-            background: #5a6268;
-        }
-        .suffix-input-group {
-            display: flex;
-            gap: 8px;
-        }
-        .suffix-input-group input {
-            flex: 1;
-        }
-    </style>
-{% endblock %}
-
 {% block js_media %}
+    {{ form.media.js }}
+    {% include "leave-warning.html" %}
     <script>
         function generateShortCode() {
             var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
@@ -95,77 +15,27 @@
     </script>
 {% endblock %}
 
+{% block media %}
+    {{ form.media.css }}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+{% endblock %}
+
 {% block body %}
-    <div class="shortener-form">
-        <form method="post" action="">
-            {% csrf_token %}
-
-            {% if form.non_field_errors() %}
-                <div class="error">
-                    {{ form.non_field_errors() }}
-                </div>
-            {% endif %}
-
-            <div class="form-group">
-                <label for="id_original_url">{{ _('Original URL') }} *</label>
-                <input type="url"
-                       name="original_url"
-                       id="id_original_url"
-                       value="{{ form.original_url.value() or '' }}"
-                       placeholder="https://example.com/very/long/url"
-                       required>
-                {% if form.original_url.errors %}
-                    <ul class="errorlist">
-                        {% for error in form.original_url.errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-                <div class="help-text">{{ _('The original URL you want to shorten.') }}</div>
-            </div>
-
-            <div class="form-group">
-                <label for="id_short_code">{{ _('Short Code') }} *</label>
-                <div class="suffix-input-group">
-                    <input type="text"
-                           name="short_code"
-                           id="id_short_code"
-                           value="{{ form.short_code.value() or '' }}"
-                           placeholder="{{ _('e.g., my-link') }}"
-                           pattern="[a-zA-Z0-9_-]{1,50}"
-                           required>
-                    <button type="button" class="generate-btn" onclick="generateShortCode()">
-                        <i class="fa fa-random"></i> {{ _('Generate') }}
-                    </button>
-                </div>
-                {% if form.short_code.errors %}
-                    <ul class="errorlist">
-                        {% for error in form.short_code.errors %}
-                            <li>{{ error }}</li>
-                        {% endfor %}
-                    </ul>
-                {% endif %}
-                <div class="help-text">
-                    {{ _('The unique identifier for your short URL.') }}
-                    {{ _('Only letters, numbers, underscores, and hyphens allowed.') }}
-                </div>
-            </div>
-
-            <div class="form-group">
-                <div class="checkbox-group">
-                    <input type="checkbox"
-                           name="is_active"
-                           id="id_is_active"
-                           {% if form.is_active.value() or (not is_edit and form.is_active.value() is none) %}checked{% endif %}>
-                    <label for="id_is_active" style="margin-bottom: 0; font-weight: normal;">{{ _('Active') }}</label>
-                </div>
-                <div class="help-text">{{ _('Inactive shorteners will not redirect.') }}</div>
-            </div>
-
-            <div class="form-actions">
-                <button type="submit" class="button">{{ _('Save') if is_edit else _('Create') }}</button>
-                <a href="{{ url('urlshortener_list') }}" class="button">{{ _('Cancel') }}</a>
-            </div>
-        </form>
-    </div>
+<div>
+    <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+        {% if form.errors %}
+            <p class="errornote">{{ _('Please correct the error below.') }}</p>
+        {% endif %}
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <table>
+            <tr>
+                <td style="float: left;"></td>
+                <td style="float: right;">
+                    <input type="submit" value="{{ _('Save') if is_edit else _('Create') }}" class="button">
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
 {% endblock %}
