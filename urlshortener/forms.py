@@ -6,14 +6,26 @@ from urlshortener.models import URLShortener
 
 class ShortCodeWidget(forms.TextInput):
     def render(self, name, value, attrs=None, renderer=None):
-        input_html = super().render(name, value, attrs, renderer)
+        final_attrs = self.build_attrs(self.attrs, attrs)
+        field_id = final_attrs.get('id')
+
+        # Add a class for styling
+        final_attrs['class'] = final_attrs.get('class', '') + ' short-code-input'
+
+        input_html = super().render(name, value, final_attrs, renderer)
         return format_html(
-            '<div style="display: inline-flex; align-items: stretch; gap: 8px;">{}'
-            '<button type="button" class="button" onclick="generateShortCode()" '
-            'style="margin: 0; padding-top: 0; padding-bottom: 0;">'
+            '<div class="short-code-widget-container">{}'
+            '<button type="button" class="button short-code-widget-button" onclick="generateShortCode(\'{}\')">'
             '<i class="fa fa-random"></i></button></div>',
             input_html,
+            field_id
         )
+
+    class Media:
+        css = {
+            'all': ['urlshortener/css/short_code_widget.css'],
+        }
+        js = ['urlshortener/js/short_code_widget.js']
 
 
 class URLShortenerForm(forms.ModelForm):
