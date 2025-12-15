@@ -58,6 +58,9 @@
     {% if not comment_lock %}
         {% include "comments/media-js.html" %}
     {% endif %}
+    {% if request.user.is_authenticated %}
+        <script type="text/javascript" src="{{ ACE_URL }}/ace.js"></script>
+    {% endif %}
     <script type="text/javascript">
         $(function() {
             $('#pdf_button').click(async function(e) {
@@ -72,6 +75,9 @@
             });
         });
     </script>
+    {% if request.user.is_authenticated %}
+        {% include "problem/submit-js.html" %}
+    {% endif %}
 {% endblock %}
 
 {% block title_row %}
@@ -125,7 +131,7 @@
 {% block info_float %}
     {% if request.user.is_authenticated and request.in_contest and submission_limit %}
         {% if submissions_left > 0 %}
-            <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+            <a href="#submit-solution-section" class="unselectable button full">
                 {{ _('Submit solution') }}
             </a>
             <div class="submissions-left">
@@ -140,10 +146,14 @@
             <div class="no-submissions-left submissions-left">{{ _('0 submissions left') }}</div>
         {% endif %}
     {% else %}
-        <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+        <a href="#submit-solution-section" class="unselectable button full">
             {{ _('Submit solution') }}
         </a>
     {% endif %}
+
+    <a href="{{ url('problem_comments', problem.code) }}" target="_blank" class="unselectable button full" style="margin-top: 0.5em;">
+        {{ _('Comment') }}
+    </a>
 
     <hr style="padding-bottom: 0.3em">
     {% if request.in_contest and contest_problem %}
@@ -364,6 +374,15 @@
         </div>
     {% endif %}
     {% include "problem/problem-detail.html" %}
+    
+    {# Inline submission form - reuse submit page #}
+    {% if request.user.is_authenticated %}
+        <hr id="submit-solution-section" style="margin-top: 2em; margin-bottom: 2em;">
+        <h3>{{ _('Submit Your Solution') }}</h3>
+        {% with inline_mode=True %}
+            {% include "problem/submit-form.html" %}
+        {% endwith %}
+    {% endif %}
 {% endblock %}
 
 {% block post_description_end %}
@@ -379,25 +398,5 @@
 {% endblock %}
 
 {% block comments %}
-    {% if comment_lock %}
-        <div class="clarifications-area">
-            <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
-            {% if has_clarifications %}
-                {% for clarification in clarifications %}
-                    <div class="problem-clarification">
-                        <div class="time">{{ relative_time(clarification.date) }}</div>
-                        <span class="body">
-                            {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
-                        </span>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p class="no-comments-message">{{ _('No clarifications have been made at this time.') }}</p>
-            {% endif %}
-        </div>
-    {% else %}
-        {% with comment_warn_code=true %}
-            {% include "comments/list.html" %}
-        {% endwith %}
-    {% endif %}
+    {# Comments section hidden - accessible via Comment button that opens /problem/<code>/comments in new tab #}
 {% endblock %}
