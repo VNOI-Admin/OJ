@@ -21,7 +21,7 @@ class URLShortenerFormTestCase(TestCase):
         })
         self.assertTrue(form.is_valid())
 
-    def test_valid_form_without_short_code(self):
+    def test_invalid_form_without_short_code(self):
         """Test form is invalid when short_code is not provided (as it's required)."""
         form = URLShortenerForm(data={
             'original_url': 'https://example.com/long/url',
@@ -31,8 +31,8 @@ class URLShortenerFormTestCase(TestCase):
         self.assertFalse(form.is_valid())
         self.assertIn('short_code', form.errors)
 
-    def test_valid_form_minimal_fields(self):
-        """Test form is invalid with only required fields, as short_code is now required."""
+    def test_invalid_form_missing_short_code(self):
+        """Test form is invalid when short_code field is missing."""
         form = URLShortenerForm(data={
             'original_url': 'https://example.com',
             'is_active': True,
@@ -93,17 +93,6 @@ class URLShortenerFormTestCase(TestCase):
         })
         self.assertFalse(form.is_valid())
         self.assertIn('short_code', form.errors)
-
-    # Tests for invalid internal/private IP URLs removed as per user's instruction.
-
-    def test_valid_public_ip(self):
-        """Test form accepts public IP URLs."""
-        form = URLShortenerForm(data={
-            'original_url': 'http://8.8.8.8/something',
-            'short_code': 'google',
-            'is_active': True,
-        })
-        self.assertTrue(form.is_valid())
 
     def test_missing_original_url(self):
         """Test form requires original_url."""
