@@ -1,5 +1,11 @@
 {% extends "base.html" %}
 
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "urlshortener/tabs.html" %}
+{% endblock %}
+
 {% block js_media %}
     {{ form.media.js }}
     {% include "leave-warning.html" %}
