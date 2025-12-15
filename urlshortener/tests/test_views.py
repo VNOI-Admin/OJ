@@ -1,5 +1,5 @@
 from django.contrib.auth.models import User, Permission
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 
 from judge.models import Profile
@@ -39,13 +39,6 @@ class URLShortenerListViewTestCase(URLShortenerViewsTestCase):
         response = self.client.get(reverse('urlshortener_list'))
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
-
-    def test_list_shows_own_shorteners(self):
-        """Test that list view shows user's own shorteners."""
-        self.client.login(username='testuser', password='testpass')
-        response = self.client.get(reverse('urlshortener_list'))
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'test1234')
 
     def test_list_shows_all_shorteners(self):
         """Test that list view shows all shorteners to a user with permission."""
@@ -91,7 +84,6 @@ class URLShortenerCreateViewTestCase(URLShortenerViewsTestCase):
         shortener = URLShortener.objects.get(short_code='newshort_code')
         self.assertEqual(shortener.original_url, 'https://newsite.com/path')
 
-    @override_settings(LANGUAGE_CODE='en-US')
     def test_create_post_empty_short_code(self):
         """Test creating shortener with empty short_code (should fail validation)."""
         self.client.login(username='testuser', password='testpass')
@@ -114,17 +106,8 @@ class URLShortenerEditViewTestCase(URLShortenerViewsTestCase):
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
-    def test_edit_get_owner(self):
-        """Test that owner can access edit form."""
-        self.client.login(username='testuser', password='testpass')
-        response = self.client.get(
-            reverse('urlshortener_edit', args=['test1234'])
-        )
-        self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'test1234')
-
-    def test_edit_denies_other_user(self):
-        """Test that non-owner cannot edit shortener."""
+    def test_edit_denies_user_without_permission(self):
+        """Test that user without permission cannot edit shortener."""
         self.client.login(username='otheruser', password='testpass')
         response = self.client.get(
             reverse('urlshortener_edit', args=['test1234'])
@@ -168,8 +151,8 @@ class URLShortenerDeleteViewTestCase(URLShortenerViewsTestCase):
         self.assertContains(response, 'test1234')
         self.assertContains(response, 'Delete')
 
-    def test_delete_denies_other_user(self):
-        """Test that non-owner cannot delete shortener."""
+    def test_delete_denies_user_without_permission(self):
+        """Test that user without permission cannot delete shortener."""
         self.client.login(username='otheruser', password='testpass')
         response = self.client.get(
             reverse('urlshortener_delete', args=['test1234'])
