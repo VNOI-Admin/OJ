@@ -111,11 +111,11 @@ class ProblemTestCase(CommonDataMixin, TestCase):
         self.organization_admin_private_problem = create_problem(
             code='org_admin_private',
             is_organization_private=True,
-            organizations=('problem organization',),
+            organization='problem organization',
         )
         self.organization_admin_problem = create_problem(
             code='organization_admin',
-            organizations=('problem organization',),
+            organization='problem organization',
         )
 
         self.suggesting_problem = create_problem(
@@ -265,7 +265,8 @@ class ProblemTestCase(CommonDataMixin, TestCase):
         self.assertFalse(self.organization_private_problem.is_accessible_by(self.users['normal']))
         self.users['normal'].profile.organizations.add(self.organizations['open'])
         self.assertFalse(self.organization_private_problem.is_accessible_by(self.users['normal']))
-        self.organization_private_problem.organizations.add(self.organizations['open'])
+        self.organization_private_problem.organization = self.organizations['open']
+        self.organization_private_problem.save()
 
         data = {
             'staff_problem_edit_own': {

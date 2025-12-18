@@ -96,15 +96,13 @@
             {% endif %}
         {% endif %}
         <h2 style="display: inline-block">{{ title }}</h2>
-        {% if problem.is_organization_private %}
+        {% if problem.is_organization_private and problem.organization %}
             <span class="organization-tags">
-                {% for org in problem.organizations.all() %}
-                    <span class="organization-tag">
-                        <a href="{{ org.get_absolute_url() }}">
-                            <i class="fa fa-lock"></i> {{ org.name }}
-                        </a>
-                    </span>
-                {% endfor %}
+                <span class="organization-tag">
+                    <a href="{{ problem.organization.get_absolute_url() }}">
+                        <i class="fa fa-lock"></i> {{ problem.organization.name }}
+                    </a>
+                </span>
             </span>
         {% endif %}
         <span class="spacer"></span>
