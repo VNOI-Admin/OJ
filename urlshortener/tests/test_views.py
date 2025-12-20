@@ -28,7 +28,6 @@ class URLShortenerViewsTestCase(TestCase):
 
         cls.user.user_permissions.add(add_permission, view_permission, change_permission, delete_permission)
 
-
     def setUp(self):
         self.client = Client()
 
@@ -42,7 +41,7 @@ class URLShortenerListViewTestCase(URLShortenerViewsTestCase):
 
     def test_list_shows_all_shorteners(self):
         """Test that list view shows all shorteners to a user with permission."""
-        other_shortener = URLShortener.objects.create(
+        other_shortener = URLShortener.objects.create(  # noqa: F841
             original_url='https://other.com',
             short_code='other123',
         )
@@ -93,7 +92,7 @@ class URLShortenerCreateViewTestCase(URLShortenerViewsTestCase):
             'is_active': True,
         })
 
-        self.assertEqual(response.status_code, 200) # Form should re-render
+        self.assertEqual(response.status_code, 200)  # Form should re-render
         self.assertContains(response, 'This field is required.')
 
 
@@ -177,10 +176,6 @@ class URLShortenerRedirectViewTestCase(URLShortenerViewsTestCase):
 
     def test_redirect_success(self):
         """Test successful redirect to original URL."""
-        # Import the redirect view URL pattern
-        from urlshortener.urls_redirect import urlpatterns
-        from django.urls import reverse as url_reverse
-
         # Manually construct the URL since it's on a different urlconf
         response = self.client.get(f'/{self.shortener.short_code}', follow=False)
 
@@ -206,7 +201,7 @@ class URLShortenerRedirectViewTestCase(URLShortenerViewsTestCase):
         factory = RequestFactory()
         request = factory.get(f'/{self.shortener.short_code}')
         view = URLShortenerRedirectView.as_view()
-        response = view(request, short_code=self.shortener.short_code)
+        response = view(request, short_code=self.shortener.short_code)  # noqa: F841
 
         self.shortener.refresh_from_db()
         self.assertEqual(self.shortener.access_count, initial_count + 1)
@@ -219,7 +214,7 @@ class URLShortenerRedirectViewTestCase(URLShortenerViewsTestCase):
         factory = RequestFactory()
         request = factory.get(f'/{self.shortener.short_code}')
         view = URLShortenerRedirectView.as_view()
-        response = view(request, short_code=self.shortener.short_code)
+        response = view(request, short_code=self.shortener.short_code)  # noqa: F841
 
         self.shortener.refresh_from_db()
         self.assertIsNotNone(self.shortener.last_access_time)

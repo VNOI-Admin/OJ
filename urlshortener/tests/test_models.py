@@ -40,7 +40,7 @@ class URLShortenerModelTestCase(TestCase):
     def test_get_absolute_url(self):
         """Test get_absolute_url returns correct detail URL."""
         url = self.shortener.get_absolute_url()
-        self.assertEqual(url, '/shorteners/test1234/') # Expect trailing slash
+        self.assertEqual(url, '/shorteners/test1234/')  # Expect trailing slash
 
     def test_get_short_url(self):
         """Test get_short_url returns just the short_code path."""
@@ -59,7 +59,7 @@ class URLShortenerModelTestCase(TestCase):
         url = self.shortener.get_full_short_url()
         self.assertEqual(url, 'https://s.example.com/test1234')
 
-    @override_settings(URLSHORTENER_DOMAIN=None) # Explicitly unset the domain
+    @override_settings(URLSHORTENER_DOMAIN=None)  # Explicitly unset the domain
     def test_get_full_short_url_without_domain(self):
         """Test get_full_short_url falls back to relative URL."""
         url = self.shortener.get_full_short_url()
