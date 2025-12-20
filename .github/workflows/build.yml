@@ -36,6 +36,8 @@ jobs:
         cp .ci.settings.py dmoj/local_settings.py
     - name: Start MySQL
       run: sudo systemctl start mysql.service
+    - name: Collect static files
+      run: python manage.py collectstatic --noinput
     - name: Run unit tests
       run: coverage run --source=. manage.py test judge urlshortener
     - name: Generate coverage report
