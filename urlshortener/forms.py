@@ -18,7 +18,7 @@ class ShortCodeWidget(forms.TextInput):
             '<button type="button" class="button short-code-widget-button" onclick="generateShortCode(\'{}\')">'
             '<i class="fa fa-random"></i></button></div>',
             input_html,
-            field_id
+            field_id,
         )
 
     class Media:

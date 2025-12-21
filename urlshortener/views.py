@@ -5,7 +5,6 @@ from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, RedirectView, UpdateView
 
 from judge.utils.views import DiggPaginatorMixin, TitleMixin
-
 from urlshortener.forms import URLShortenerForm
 from urlshortener.models import URLShortener
 

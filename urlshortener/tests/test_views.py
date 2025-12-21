@@ -1,4 +1,4 @@
-from django.contrib.auth.models import User, Permission
+from django.contrib.auth.models import Permission, User
 from django.test import Client, TestCase
 from django.urls import reverse
 
@@ -99,18 +99,14 @@ class URLShortenerCreateViewTestCase(URLShortenerViewsTestCase):
 class URLShortenerEditViewTestCase(URLShortenerViewsTestCase):
     def test_edit_requires_login(self):
         """Test that edit view requires authentication."""
-        response = self.client.get(
-            reverse('urlshortener_edit', args=['test1234'])
-        )
+        response = self.client.get(reverse('urlshortener_edit', args=['test1234']))
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
     def test_edit_denies_user_without_permission(self):
         """Test that user without permission cannot edit shortener."""
         self.client.login(username='otheruser', password='testpass')
-        response = self.client.get(
-            reverse('urlshortener_edit', args=['test1234'])
-        )
+        response = self.client.get(reverse('urlshortener_edit', args=['test1234']))
         self.assertEqual(response.status_code, 403)
 
     def test_edit_post_valid(self):
@@ -134,18 +130,14 @@ class URLShortenerEditViewTestCase(URLShortenerViewsTestCase):
 class URLShortenerDeleteViewTestCase(URLShortenerViewsTestCase):
     def test_delete_requires_login(self):
         """Test that delete view requires authentication."""
-        response = self.client.get(
-            reverse('urlshortener_delete', args=['test1234'])
-        )
+        response = self.client.get(reverse('urlshortener_delete', args=['test1234']))
         self.assertEqual(response.status_code, 302)
         self.assertIn('login', response.url)
 
     def test_delete_get_confirmation(self):
         """Test that delete shows confirmation page."""
         self.client.login(username='testuser', password='testpass')
-        response = self.client.get(
-            reverse('urlshortener_delete', args=['test1234'])
-        )
+        response = self.client.get(reverse('urlshortener_delete', args=['test1234']))
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'test1234')
         self.assertContains(response, 'Delete')
@@ -153,22 +145,16 @@ class URLShortenerDeleteViewTestCase(URLShortenerViewsTestCase):
     def test_delete_denies_user_without_permission(self):
         """Test that user without permission cannot delete shortener."""
         self.client.login(username='otheruser', password='testpass')
-        response = self.client.get(
-            reverse('urlshortener_delete', args=['test1234'])
-        )
+        response = self.client.get(reverse('urlshortener_delete', args=['test1234']))
         self.assertEqual(response.status_code, 403)
 
     def test_delete_post(self):
         """Test deleting a shortener."""
         self.client.login(username='testuser', password='testpass')
-        response = self.client.post(
-            reverse('urlshortener_delete', args=['test1234'])
-        )
+        response = self.client.post(reverse('urlshortener_delete', args=['test1234']))
 
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(
-            URLShortener.objects.filter(short_code='test1234').exists()
-        )
+        self.assertFalse(URLShortener.objects.filter(short_code='test1234').exists())
 
 
 class URLShortenerRedirectViewTestCase(URLShortenerViewsTestCase):
