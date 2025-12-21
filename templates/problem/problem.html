@@ -73,6 +73,62 @@
                 }
                 frames['raw_problem'].print();
             });
+            
+            var commentsLoaded = false;
+            var commentsVisible = false;
+            
+            function toggleComments(e) {
+                e.preventDefault();
+                
+                if (!commentsVisible) {
+                    $('#problem-comments-section').show();
+                    $('#toggle-comments-btn, #toggle-comments-btn-bottom').text({{ _('Hide comments')|htmltojs }});
+                    commentsVisible = true;
+                    
+                    if (!commentsLoaded) {
+                        loadComments();
+                    }
+                    
+                    setTimeout(function() {
+                        $('html, body').animate({
+                            scrollTop: $('#problem-comments-section').offset().top - 20
+                        }, 500);
+                    }, 100);
+                } else {
+                    $('#problem-comments-section').hide();
+                    $('#toggle-comments-btn, #toggle-comments-btn-bottom').text({{ _('Show comments')|htmltojs }});
+                    commentsVisible = false;
+                }
+            }
+            
+            $('#toggle-comments-btn, #toggle-comments-btn-bottom').click(toggleComments);
+            
+            function loadComments() {
+                $.get('{{ url("problem_comments", problem.code) }}', function(html) {
+                    var $html = $(html);
+                    var $commentsContent = $html.find('#content-left');
+                    
+                    if ($commentsContent.length) {
+                        $('#comments-content').html($commentsContent.html());
+                        commentsLoaded = true;
+                        
+                        if (typeof initializeComments === 'function') {
+                            initializeComments();
+                        }
+                    } else {
+                        $('#comments-content').html('<p>{{ _("Unable to load comments.") }}</p>');
+                    }
+                }).fail(function() {
+                    $('#comments-content').html('<p>{{ _("Error loading comments. Please try again.") }}</p>');
+                });
+            }
+            
+            window.refreshComments = function() {
+                if (commentsLoaded) {
+                    $('#comments-content').html('<p style="text-align: center;">{{ _("Refreshing comments...") }}</p>');
+                    loadComments();
+                }
+            };
         });
     </script>
     {% if request.user.is_authenticated %}
@@ -131,7 +187,7 @@
 {% block info_float %}
     {% if request.user.is_authenticated and request.in_contest and submission_limit %}
         {% if submissions_left > 0 %}
-            <a href="#submit-solution-section" class="unselectable button full">
+            <a href="{{ url('problem_submit', problem.code) }}" target="_blank" class="unselectable button full">
                 {{ _('Submit solution') }}
             </a>
             <div class="submissions-left">
@@ -146,14 +202,14 @@
             <div class="no-submissions-left submissions-left">{{ _('0 submissions left') }}</div>
         {% endif %}
     {% else %}
-        <a href="#submit-solution-section" class="unselectable button full">
+        <a href="{{ url('problem_submit', problem.code) }}" target="_blank" class="unselectable button full">
             {{ _('Submit solution') }}
         </a>
     {% endif %}
 
-    <a href="{{ url('problem_comments', problem.code) }}" target="_blank" class="unselectable button full" style="margin-top: 0.5em;">
-        {{ _('Comment') }}
-    </a>
+    <button id="toggle-comments-btn" class="unselectable button full" style="margin-top: 0.5em;">
+        {{ _('Show comments') }}
+    </button>
 
     <hr style="padding-bottom: 0.3em">
     {% if request.in_contest and contest_problem %}
@@ -382,6 +438,13 @@
         {% with inline_mode=True %}
             {% include "problem/submit-form.html" %}
         {% endwith %}
+        
+        {# Show comments button at the end of page #}
+        <div style="text-align: center; margin-top: 2em;">
+            <button id="toggle-comments-btn-bottom" class="button" style="padding: 0.8em 2em;">
+                {{ _('Show comments') }}
+            </button>
+        </div>
     {% endif %}
 {% endblock %}
 
@@ -398,5 +461,10 @@
 {% endblock %}
 
 {% block comments %}
-    {# Comments section hidden - accessible via Comment button that opens /problem/<code>/comments in new tab #}
+    <div id="problem-comments-section" style="display: none; margin-top: 2em;">
+        <hr style="margin-bottom: 2em;">
+        <div id="comments-content">
+            <p style="text-align: center;">{{ _('Loading comments...') }}</p>
+        </div>
+    </div>
 {% endblock %}

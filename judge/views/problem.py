@@ -781,7 +781,10 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
                 self.new_submission.problem.code,
             )
 
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        if self.request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            response['X-Submission-URL'] = self.get_success_url()
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
