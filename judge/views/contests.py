@@ -415,9 +415,10 @@ class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
             .add_i18n_description(self.request.LANGUAGE_CODE)
 
         # convert to problem points in contest instead of actual points
-        points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
+        contest_problem_data = list(self.object.contest_problems.values('order', 'points').order_by('order'))
         for idx, p in enumerate(context['contest_problems']):
-            p.points = points_list[idx][0]
+            p.points = contest_problem_data[idx]['points']
+            p.contest_order = contest_problem_data[idx]['order']
 
         authenticated = self.request.user.is_authenticated
         context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
@@ -721,7 +722,7 @@ class ContestLeave(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
                                    _('You are not in contest "%s".') % contest.key, 404)
 
         profile.remove_contest()
-        return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
+        return HttpResponseRedirect(reverse('contest_list'))
 
 
 ContestDay = namedtuple('ContestDay', 'date is_pad is_today starts ends oneday')
