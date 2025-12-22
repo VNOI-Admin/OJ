@@ -41,7 +41,7 @@ from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownlo
     ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Language, Organization, Problem, ProblemClarification, Profile, Submission
-from judge.tasks import on_new_contest, prepare_contest_data, run_moss, rescore_problem
+from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.opengraph import generate_opengraph
