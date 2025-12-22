@@ -109,6 +109,9 @@ urlpatterns = [
     path('accounts/', include(register_patterns)),
     path('', include('social_django.urls')),
 
+    # URL Shortener management (on main domain)
+    path('shorteners/', include('urlshortener.urls')),
+
     path('problems', include([
         path('/', problem.ProblemList.as_view(), name='problem_list'),
         path('/random/', problem.RandomProblem.as_view(), name='problem_random'),
