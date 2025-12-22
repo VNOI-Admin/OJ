@@ -1476,6 +1476,10 @@ class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMix
         contest_problems = contest.contest_problems.prefetch_related('problem').all()
         for contest_problem in contest_problems:
             problem = contest_problem.problem
+            # this change has 1 implication:
+            # - users only need write permissions for **private** problems
+            # This is not a bug! It improves the UX since a lot of users include
+            # public problems in their contests.
             if problem.is_public:
                 continue
             if not problem.is_editable_by(request.user):
