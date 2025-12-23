@@ -119,6 +119,13 @@ VNOJ_PRICE_PER_HOUR = 50
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
+# Low power mode: Optimize queries by limiting data scope for performance
+VNOJ_LOW_POWER_MODE = False
+VNOJ_LOW_POWER_MODE_CONFIG = {
+    # limit the number of submissions pages
+    'max_page': 5,
+}
+
 VNOJ_MAGAZINE_TAG_SLUG = None
 
 CELERY_TIMEZONE = 'UTC'
