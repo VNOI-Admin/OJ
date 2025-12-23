@@ -362,6 +362,8 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         return result
 
     def _get_result_data(self, queryset=None):
+        if self.is_in_low_power_mode():
+            return {'categories': [], 'total': 0}
         if queryset is None:
             queryset = self.get_queryset()
         return get_result_data(queryset.order_by())
