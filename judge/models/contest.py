@@ -513,8 +513,8 @@ class Contest(models.Model):
                 Q(view_contest_scoreboard=user.profile) |
                 Q(is_organization_private=False, is_private=False) |
                 Q(is_organization_private=False, is_private=True, private_contestants=user.profile) |
-                Q(is_organization_private=True, is_private=False, organization=user.profile.organization) |
-                Q(is_organization_private=True, is_private=True, organization=user.profile.organization,
+                Q(is_organization_private=True, is_private=False, organization__in=user.profile.organizations.all()) |
+                Q(is_organization_private=True, is_private=True, organization__in=user.profile.organizations.all(),
                   private_contestants=user.profile)
             )
 
