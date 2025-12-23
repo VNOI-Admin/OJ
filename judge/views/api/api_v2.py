@@ -310,7 +310,11 @@ class APIContestDetail(APIDetailView):
                                                                    contest.SCOREBOARD_HIDDEN),
             'scoreboard_visibility': contest.scoreboard_visibility,
             'is_organization_private': contest.is_organization_private,
-            'organization': contest.organization.id if contest.is_organization_private and contest.organization else None,
+            'organization': (
+                contest.organization.id
+                if contest.is_organization_private and contest.organization
+                else None
+            ),
             'is_private': contest.is_private,
             'tags': list(contest.tags.values_list('name', flat=True)),
             'format': {
@@ -488,7 +492,11 @@ class APIProblemDetail(APIDetailView):
             'short_circuit': problem.short_circuit,
             'languages': list(problem.allowed_languages.values_list('key', flat=True)),
             'is_organization_private': problem.is_organization_private,
-            'organization': problem.organization.id if problem.is_organization_private and problem.organization else None,
+            'organization': (
+                problem.organization.id
+                if problem.is_organization_private and problem.organization
+                else None
+            ),
             'is_public': problem.is_public,
         }
 
