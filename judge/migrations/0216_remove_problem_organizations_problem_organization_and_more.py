@@ -3,24 +3,32 @@
 from django.db import migrations, models
 import django.db.models.deletion
 
+BATCH_SIZE = 1000
 
 def migrate_organizations_to_organization(apps, schema_editor):  # noqa: ARG001
     """Migrate data from ManyToMany organizations to ForeignKey organization."""
     Problem = apps.get_model('judge', 'Problem')
 
-    for problem in Problem.objects.all():
-        # Get the first organization from the ManyToMany field
-        first_org = problem.organizations.first()
-        if first_org:
-            problem.organization = first_org
-            problem.save(update_fields=['organization'])
+    problems_to_update = []
+    for problem in Problem.objects.prefetch_related('organizations').all():
+        orgs = list(problem.organizations.all())
+        if orgs:
+            problem.organization = orgs[0]
+            problems_to_update.append(problem)
+
+        if len(problems_to_update) >= BATCH_SIZE:
+            Problem.objects.bulk_update(problems_to_update, ['organization'], batch_size=BATCH_SIZE)
+            problems_to_update = []
+
+    if problems_to_update:
+        Problem.objects.bulk_update(problems_to_update, ['organization'], batch_size=BATCH_SIZE)
 
 
 def reverse_migrate_organization_to_organizations(apps, schema_editor):  # noqa: ARG001
     """Reverse migration: copy ForeignKey organization back to ManyToMany organizations."""
     Problem = apps.get_model('judge', 'Problem')
 
-    for problem in Problem.objects.all():
+    for problem in Problem.objects.select_related('organization').all():
         if problem.organization:
             problem.organizations.add(problem.organization)
 
@@ -28,19 +36,26 @@ def migrate_contest_organizations_to_organization(apps, schema_editor):  # noqa:
     """Migrate data from ManyToMany organizations to ForeignKey organization."""
     Contest = apps.get_model('judge', 'Contest')
 
-    for contest in Contest.objects.all():
-        # Get the first organization from the ManyToMany field
-        first_org = contest.organizations.first()
-        if first_org:
-            contest.organization = first_org
-            contest.save(update_fields=['organization'])
+    contests_to_update = []
+    for contest in Contest.objects.prefetch_related('organizations').all():
+        orgs = list(contest.organizations.all())
+        if orgs:
+            contest.organization = orgs[0]
+            contests_to_update.append(contest)
+
+        if len(contests_to_update) >= BATCH_SIZE:
+            Contest.objects.bulk_update(contests_to_update, ['organization'], batch_size=BATCH_SIZE)
+            contests_to_update = []
+
+    if contests_to_update:
+        Contest.objects.bulk_update(contests_to_update, ['organization'], batch_size=BATCH_SIZE)
 
 
 def reverse_migrate_contest_organization_to_organizations(apps, schema_editor):  # noqa: ARG001
     """Reverse migration: copy ForeignKey organization back to ManyToMany organizations."""
     Contest = apps.get_model('judge', 'Contest')
 
-    for contest in Contest.objects.all():
+    for contest in Contest.objects.select_related('organization').all():
         if contest.organization:
             contest.organizations.add(contest.organization)
 
