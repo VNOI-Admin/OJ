@@ -124,6 +124,8 @@ VNOJ_LOW_POWER_MODE = False
 VNOJ_LOW_POWER_MODE_CONFIG = {
     # limit the number of submissions pages
     'max_page': 5,
+    # avoid drawing heat map for users with too many submissions
+    'heat_map_limit': 20_000,
 }
 
 VNOJ_MAGAZINE_TAG_SLUG = None
