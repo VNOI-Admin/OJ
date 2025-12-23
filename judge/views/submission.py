@@ -473,13 +473,28 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         context['first_page_href'] = (self.first_page_href or '.') + suffix
         context['my_submissions_link'] = self.get_my_submissions_page()
         context['all_submissions_link'] = self.get_all_submissions_page()
+        context['is_in_low_power_mode'] = self.is_in_low_power_mode()
         context['tab'] = self.tab
         return context
+
+    def is_in_low_power_mode(self):
+        return settings.VNOJ_LOW_POWER_MODE and not self.request.user.is_superuser
 
     def get(self, request, *args, **kwargs):
         check = self.access_check(request)
         if check is not None:
             return check
+
+        if self.is_in_low_power_mode():
+            max_page = settings.VNOJ_LOW_POWER_MODE_CONFIG.get('max_page', 5)
+            page_kwarg = self.page_kwarg
+            page = self.kwargs.get(page_kwarg) or self.request.GET.get(page_kwarg) or 1
+            try:
+                page_number = int(page)
+                if page_number > max_page:
+                    raise Http404()
+            except ValueError:
+                raise Http404('Page cannot be converted to an int.')
 
         self.selected_languages = set(request.GET.getlist('language'))
         self.selected_statuses = set(request.GET.getlist('status'))
@@ -520,7 +535,7 @@ class ConditionalUserTabMixin(object):
         return context
 
 
-class AllUserSubmissions(ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+class AllUserSubmissions(InfinitePaginationMixin, ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
     def get_queryset(self):
         return super(AllUserSubmissions, self).get_queryset().filter(user_id=self.profile.id)
 
@@ -579,6 +594,10 @@ class ProblemSubmissionsBase(SubmissionsListBase):
     def access_check_contest(self, request):
         if self.is_contest_scoped and not self.contest.can_see_own_scoreboard(request.user):
             raise Http404()
+
+    def is_in_low_power_mode(self):
+        # always allow full submissions list of problems
+        return False
 
     def access_check(self, request):
         # FIXME: This should be rolled into the `is_accessible_by` check when implementing #1509
@@ -659,6 +678,9 @@ class UserProblemSubmissions(ConditionalUserTabMixin, UserMixin, ProblemSubmissi
             'problem': format_html('<a href="{1}">{0}</a>', self.problem_name,
                                    reverse('problem_detail', args=[self.problem.code])),
         })
+
+    def is_in_low_power_mode(self):
+        return False
 
     def get_context_data(self, **kwargs):
         context = super(UserProblemSubmissions, self).get_context_data(**kwargs)
@@ -755,6 +777,9 @@ class ForceContestMixin(object):
 
 
 class AllContestSubmissions(ForceContestMixin, AllSubmissions):
+    def is_in_low_power_mode(self):
+        return False
+
     def get_content_title(self):
         return format_html(_('All submissions in <a href="{1}">{0}</a>'),
                            self.contest.name, reverse('contest_view', args=[self.contest.key]))
@@ -766,6 +791,9 @@ class AllContestSubmissions(ForceContestMixin, AllSubmissions):
 
 
 class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
+    def is_in_low_power_mode(self):
+        return False
+
     def get_title(self):
         if self.is_own:
             return _('My submissions in %(contest)s') % {'contest': self.contest.name}
