@@ -70,7 +70,7 @@
 
                 $('#status').select2({
                     theme: '{{ DMOJ_SELECT2_THEME }}',
-                    multiple: 1,
+                    multiple: {% if is_in_low_power_mode %}0{% else %}1{% endif %},
                     placeholder: {{ _('Filter by status...')|htmltojs }},
                     matcher: idAndTextMatcher,
                     width: '100%',
@@ -78,7 +78,7 @@
 
                 $('#language').select2({
                     theme: '{{ DMOJ_SELECT2_THEME }}',
-                    multiple: 1,
+                    multiple: {% if is_in_low_power_mode %}0{% else %}1{% endif %},
                     placeholder: {{ _('Filter by language...')|htmltojs }},
                     matcher: idAndTextMatcher,
                     width: '100%',
@@ -316,7 +316,11 @@
                         <form id="filter-form" name="form" action="{{ first_page_href }}" method="get">
                             <div class="filter-form-group">
                                 <label for="status"><i>{{ _('Status') }}</i></label>
-                                <select id="status" name="status" multiple>
+                                <select id="status" name="status"{% if not is_in_low_power_mode %} multiple{% endif %}>
+                                    {% if is_in_low_power_mode %}
+                                        <option value="">{{ _('All') }}</option>
+                                        <option disabled="disabled">---</option>
+                                    {% endif %}
                                     {% for id, name in all_statuses %}
                                         <option {% if id in selected_statuses %}selected{% endif %}
                                                 value="{{ id }}">{{ name }}</option>
@@ -325,14 +329,18 @@
                             </div>
                             <div class="filter-form-group">
                                 <label for="language"><i>{{ _('Language') }}</i></label>
-                                <select id="language" name="language" multiple>
+                                <select id="language" name="language"{% if not is_in_low_power_mode %} multiple{% endif %}>
+                                    {% if is_in_low_power_mode %}
+                                        <option value="">{{ _('All') }}</option>
+                                        <option disabled="disabled">---</option>
+                                    {% endif %}
                                     {% for code, name in all_languages %}
                                         <option {% if code in selected_languages %}selected{% endif %}
                                                 value="{{ code }}">{{ name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
-                            {% if not organization %}
+                            {% if not organization and not is_in_low_power_mode %}
                                 <div class="filter-form-group">
                                     <label for="organization"><i>{{ _('Organization') }}</i></label>
                                     <select id="organization" name="organization">
