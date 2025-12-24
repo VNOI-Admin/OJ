@@ -14,7 +14,7 @@ class Command(BaseCommand):
     def backfill_credit(self, org, month_start, next_month_start):
         credit_problem = (
             Submission.objects.filter(
-                problem__organization=org,
+                problem__organizations=org,
                 contest_object__isnull=True,
                 date__gte=month_start,
                 date__lt=next_month_start,
@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
         credit_contest = (
             Submission.objects.filter(
-                contest_object__organization=org,
+                contest_object__organizations=org,
                 date__gte=month_start,
                 date__lt=next_month_start,
             )

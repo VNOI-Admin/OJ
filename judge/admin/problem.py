@@ -37,7 +37,7 @@ class ProblemForm(ModelForm):
             'suggester': AdminHeavySelect2Widget(data_view='profile_select2'),
             'testers': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'banned_users': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
-            'organization': AdminHeavySelect2Widget(data_view='organization_select2'),
+            'organizations': AdminHeavySelect2MultipleWidget(data_view='organization_select2'),
             'types': AdminSelect2MultipleWidget,
             'group': AdminSelect2Widget,
             'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
@@ -123,7 +123,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         (None, {
             'fields': (
                 'code', 'name', 'suggester', 'is_public', 'is_manually_managed', 'date', 'authors',
-                'curators', 'testers', 'is_organization_private', 'organization', 'submission_source_visibility_mode',
+                'curators', 'testers', 'is_organization_private', 'organizations', 'submission_source_visibility_mode',
                 'testcase_visibility_mode', 'testcase_result_visibility_mode', 'allow_view_feedback',
                 'is_full_markup', 'pdf_url', 'source', 'description', 'license',
             ),
