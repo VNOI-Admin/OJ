@@ -21,7 +21,7 @@ from reversion import revisions
 
 from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
-    Problem, Profile, Submission
+    Problem, Profile
 from judge.models.profile import OrganizationMonthlyUsage
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
