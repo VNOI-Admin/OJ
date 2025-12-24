@@ -20,7 +20,7 @@ class InfinitePage(collections.abc.Sequence):
     This eliminates the need to count the next pages items.
     """
     def __init__(self, object_list, number, unfiltered_queryset, page_size, pad_pages, paginator):
-        self.object_list = list(object_list)
+        self.object_list = object_list
         self.number = number
         self.unfiltered_queryset = unfiltered_queryset
         self.page_size = page_size
