@@ -128,7 +128,7 @@ class ContestForm(ModelForm):
             'curators': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'testers': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'private_contestants': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
-            'organization': AdminHeavySelect2Widget(data_view='organization_select2'),
+            'organizations': AdminHeavySelect2MultipleWidget(data_view='organization_select2'),
             'tags': AdminSelect2MultipleWidget,
             'banned_users': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'view_contest_scoreboard': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
@@ -152,7 +152,7 @@ class ContestAdmin(NoBatchDeleteMixin, SortableAdminBase, VersionAdmin):
         (_('Rating'), {'fields': ('is_rated', 'rate_all', 'rate_disqualified', 'rating_floor', 'rating_ceiling',
                                   'rate_exclude')}),
         (_('Access'), {'fields': ('access_code', 'is_private', 'private_contestants', 'is_organization_private',
-                                  'organization', 'view_contest_scoreboard')}),
+                                  'organizations', 'view_contest_scoreboard')}),
         (_('Justice'), {'fields': ('banned_users',)}),
         (_('Ranking'), {'fields': ('csv_ranking',)}),
     )
@@ -197,7 +197,7 @@ class ContestAdmin(NoBatchDeleteMixin, SortableAdminBase, VersionAdmin):
         if not request.user.has_perm('judge.contest_access_code'):
             readonly += ['access_code']
         if not request.user.has_perm('judge.create_private_contest'):
-            readonly += ['is_private', 'private_contestants', 'is_organization_private', 'organization']
+            readonly += ['is_private', 'private_contestants', 'is_organization_private', 'organizations']
             if not request.user.has_perm('judge.change_contest_visibility'):
                 readonly += ['is_visible']
         if not request.user.has_perm('judge.contest_problem_label'):

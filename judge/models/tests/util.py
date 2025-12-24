@@ -140,6 +140,7 @@ class CreateProblem(CreateModel):
         'types': (ProblemType, 'name'),
         'allowed_languages': (Language, 'key'),
         'banned_users': (Profile, 'user__username'),
+        'organizations': (Organization, 'name'),
     }
     required_fields = ('code',)
 
@@ -194,6 +195,7 @@ class CreateContest(CreateModel):
         'view_contest_scoreboard': (Profile, 'user__username'),
         'rate_exclude': (Profile, 'user__username'),
         'private_contestants': (Profile, 'user__username'),
+        'organizations': (Organization, 'name'),
         'tags': (ContestTag, 'name'),
         'banned_users': (Profile, 'user__username'),
     }
