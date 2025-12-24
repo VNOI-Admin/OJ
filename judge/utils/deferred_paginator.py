@@ -16,6 +16,8 @@ class DeferredPaginationMixin:
 
 
 class DeferredPaginationListViewMixin:
+    paginated_model = None
+
     def get_context_data(self, *, object_list=None, **kwargs):
         """Get the context for this view."""
         queryset = object_list if object_list is not None else self.object_list
@@ -27,14 +29,14 @@ class DeferredPaginationListViewMixin:
                 queryset_pks, page_size
             )
             query, params = queryset_pks.query.sql_with_params()
-            queryset = self.__class__.model.objects.all()
+            queryset = self.__class__.paginated_model.objects.all()
             join_sql_subquery(
                 queryset,
                 subquery=query,
                 params=list(params),
                 join_fields=[('id', 'id')],
                 alias='deferred_object',
-                related_model=self.__class__.model,
+                related_model=self.__class__.paginated_model,
             )
             queryset = self.deferred_paginate(queryset)
 
