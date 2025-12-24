@@ -385,11 +385,18 @@ class Problem(models.Model):
 
     @classmethod
     def q_add_author_curator_tester(cls, q, profile):
+        # most users don't own any problems, so we check ownership status
+        # first and only run the expensive subqueries if they actually own problems.
+        is_author, is_curator, is_tester = cls.get_ownership_statuses(profile)
+
         # This is way faster than the obvious |= Q(authors=profile) et al. because we are not doing
         # joins and forcing the user to clean it up with .distinct().
-        q |= Exists(Problem.authors.through.objects.filter(problem=OuterRef('pk'), profile=profile))
-        q |= Exists(Problem.curators.through.objects.filter(problem=OuterRef('pk'), profile=profile))
-        q |= Exists(Problem.testers.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        if is_author:
+            q |= Exists(Problem.authors.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        if is_curator:
+            q |= Exists(Problem.curators.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        if is_tester:
+            q |= Exists(Problem.testers.through.objects.filter(problem=OuterRef('pk'), profile=profile))
         return q
 
     @classmethod
@@ -409,14 +416,33 @@ class Problem(models.Model):
         if user.has_perm('judge.edit_all_problem'):
             return cls.objects.all()
 
-        q = Q(authors=user.profile) | Q(curators=user.profile) | Q(suggester=user.profile)
+        q = cls.objects.filter(authors=user.profile)
+        q = q.union(cls.objects.filter(curators=user.profile))
+        q = q.union(cls.objects.filter(suggester=user.profile))
 
         if user.has_perm('judge.edit_public_problem'):
-            q |= Q(is_public=True)
+            q = q.union(cls.objects.filter(is_public=True))
         if user.has_perm('judge.suggest_new_problem'):
-            q |= Q(suggester__isnull=False, is_public=False)
+            q = q.union(cls.objects.filter(suggester__isnull=False, is_public=False))
 
-        return cls.objects.filter(q)
+        return q
+
+    @classmethod
+    def get_ownership_statuses(cls, profile):
+        cache_key = 'problem_ownership_statuses:%d' % profile.id
+        cached_ownership_statuses = cache.get(cache_key)
+
+        if cached_ownership_statuses is not None:
+            return cached_ownership_statuses
+
+        is_author = Problem.authors.through.objects.filter(profile=profile).exists()
+        is_curator = Problem.curators.through.objects.filter(profile=profile).exists()
+        is_tester = Problem.testers.through.objects.filter(profile=profile).exists()
+
+        ownership_statuses = (is_author, is_curator, is_tester)
+        cache.set(cache_key, ownership_statuses, settings.VNOJ_OWNERSHIP_STATUS_CACHE_TIMEOUT)
+
+        return ownership_statuses
 
     def __str__(self):
         return self.name

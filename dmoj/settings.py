@@ -119,6 +119,18 @@ VNOJ_PRICE_PER_HOUR = 50
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
+# Low power mode: Optimize queries by limiting data scope for performance
+VNOJ_LOW_POWER_MODE = False
+VNOJ_LOW_POWER_MODE_CONFIG = {
+    # limit the number of submissions pages
+    'max_page': 5,
+    # avoid drawing heat map for users with too many submissions
+    'heat_map_limit': 20_000,
+}
+
+# Cache timeout for ownership statuses, improve response time for users without any edit permissions
+VNOJ_OWNERSHIP_STATUS_CACHE_TIMEOUT = 60
+
 VNOJ_MAGAZINE_TAG_SLUG = None
 
 CELERY_TIMEZONE = 'UTC'

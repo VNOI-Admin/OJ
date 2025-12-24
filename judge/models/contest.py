@@ -3,6 +3,7 @@ import hmac
 from datetime import date, timedelta
 
 from django.conf import settings
+from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
@@ -517,9 +518,17 @@ class Contest(models.Model):
                   private_contestants=user.profile)
             )
 
-            q |= Q(authors=user.profile)
-            q |= Q(curators=user.profile)
-            q |= Q(testers=user.profile)
+            # Most users don't own any contests, so we check ownership status
+            # first and only add expensive subqueries if they actually own contests.
+            is_author, is_curator, is_tester = cls.get_ownership_statuses(user.profile)
+
+            if is_author:
+                q |= Q(authors=user.profile)
+            if is_curator:
+                q |= Q(curators=user.profile)
+            if is_tester:
+                q |= Q(testers=user.profile)
+
             queryset = queryset.filter(q)
         return queryset.distinct()
 
@@ -530,6 +539,23 @@ class Contest(models.Model):
                 is_rated=True, end_time__range=(self.end_time, self._now),
             ).order_by('end_time'):
                 rate_contest(contest)
+
+    @classmethod
+    def get_ownership_statuses(cls, profile):
+        cache_key = 'contest_ownership_statuses:%d' % profile.id
+        cached_ownership_statuses = cache.get(cache_key)
+
+        if cached_ownership_statuses is not None:
+            return cached_ownership_statuses
+
+        is_author = cls.authors.through.objects.filter(profile=profile).exists()
+        is_curator = cls.curators.through.objects.filter(profile=profile).exists()
+        is_tester = cls.testers.through.objects.filter(profile=profile).exists()
+
+        ownership_statuses = (is_author, is_curator, is_tester)
+        cache.set(cache_key, ownership_statuses, settings.VNOJ_OWNERSHIP_STATUS_CACHE_TIMEOUT)
+
+        return ownership_statuses
 
     class Meta:
         permissions = (

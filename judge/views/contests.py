@@ -48,7 +48,8 @@ from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
-from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
+from judge.utils.infinite_paginator import InfinitePaginationMixin
+from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
@@ -91,7 +92,7 @@ class ContestListMixin(object):
         return context
 
 
-class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestListMixin, ListView):
+class ContestList(QueryStringSortMixin, InfinitePaginationMixin, TitleMixin, ContestListMixin, ListView):
     model = Contest
     paginate_by = 20
     template_name = 'contest/list.html'

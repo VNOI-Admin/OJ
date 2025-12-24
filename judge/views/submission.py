@@ -410,7 +410,10 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
             queryset = queryset.filter(language__in=list(
                 Language.objects.filter(key__in=self.selected_languages).values_list('id', flat=True)))
         if self.selected_statuses:
-            queryset = queryset.filter(Q(result__in=self.selected_statuses) | Q(status__in=self.selected_statuses))
+            status_filter = Q(result__in=self.selected_statuses)
+            if self.could_filter_by_status():
+                status_filter |= Q(status__in=self.selected_statuses)
+            queryset = queryset.filter(status_filter)
         if self.selected_organization:
             organization_object = get_object_or_404(Organization, pk=self.selected_organization)
             queryset = queryset.filter(user__organizations=organization_object)
@@ -435,9 +438,12 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
     def get_searchable_organizations(self):
         return Organization.objects.values_list('pk', 'name')
 
+    def could_filter_by_status(self):
+        return self.request.user.is_superuser or self.request.user.is_staff
+
     def get_searchable_status_codes(self):
         hidden_codes = ['SC']
-        if not self.request.user.is_superuser and not self.request.user.is_staff:
+        if not self.could_filter_by_status():
             hidden_codes += ['IE', 'QU', 'P', 'G', 'D']
         return [(key, value) for key, value in Submission.SEARCHABLE_STATUS if key not in hidden_codes]
 
@@ -469,16 +475,39 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         context['first_page_href'] = (self.first_page_href or '.') + suffix
         context['my_submissions_link'] = self.get_my_submissions_page()
         context['all_submissions_link'] = self.get_all_submissions_page()
+        context['is_in_low_power_mode'] = self.is_in_low_power_mode()
         context['tab'] = self.tab
         return context
+
+    def is_in_low_power_mode(self):
+        return settings.VNOJ_LOW_POWER_MODE and not self.request.user.is_superuser
 
     def get(self, request, *args, **kwargs):
         check = self.access_check(request)
         if check is not None:
             return check
 
-        self.selected_languages = set(request.GET.getlist('language'))
-        self.selected_statuses = set(request.GET.getlist('status'))
+        if self.is_in_low_power_mode():
+            max_page = settings.VNOJ_LOW_POWER_MODE_CONFIG.get('max_page', 5)
+            page_kwarg = self.page_kwarg
+            page = self.kwargs.get(page_kwarg) or self.request.GET.get(page_kwarg) or 1
+            try:
+                page_number = int(page)
+                if page_number > max_page:
+                    raise Http404()
+            except ValueError:
+                raise Http404('Page cannot be converted to an int.')
+
+        if self.is_in_low_power_mode():
+            # In low power mode, only allow filtering by a single language/status
+            language = request.GET.get('language')
+            self.selected_languages = {language} if language else set()
+            status = request.GET.get('status')
+            self.selected_statuses = {status} if status else set()
+        else:
+            # Allow multiple languages/statuses
+            self.selected_languages = set(request.GET.getlist('language'))
+            self.selected_statuses = set(request.GET.getlist('status'))
         self.selected_organization = request.GET.get('organization')
         if self.selected_organization:
             try:
@@ -516,7 +545,12 @@ class ConditionalUserTabMixin(object):
         return context
 
 
-class AllUserSubmissions(ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+class AllUserSubmissions(InfinitePaginationMixin, ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+    def _get_result_data(self, queryset=None):
+        if settings.VNOJ_LOW_POWER_MODE:
+            return {'categories': [], 'total': 0}
+        return super(AllUserSubmissions, self)._get_result_data(queryset)
+
     def get_queryset(self):
         return super(AllUserSubmissions, self).get_queryset().filter(user_id=self.profile.id)
 
@@ -575,6 +609,10 @@ class ProblemSubmissionsBase(SubmissionsListBase):
     def access_check_contest(self, request):
         if self.in_contest and not self.contest.can_see_own_scoreboard(request.user):
             raise Http404()
+
+    def is_in_low_power_mode(self):
+        # always allow full submissions list
+        return False
 
     def access_check(self, request):
         # FIXME: This should be rolled into the `is_accessible_by` check when implementing #1509
@@ -656,6 +694,9 @@ class UserProblemSubmissions(ConditionalUserTabMixin, UserMixin, ProblemSubmissi
                                    reverse('problem_detail', args=[self.problem.code])),
         })
 
+    def is_in_low_power_mode(self):
+        return False
+
     def get_context_data(self, **kwargs):
         context = super(UserProblemSubmissions, self).get_context_data(**kwargs)
         context['dynamic_user_id'] = self.profile.id
@@ -705,6 +746,10 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
         return context
 
     def _get_result_data(self, queryset=None):
+        # Skip expensive statistics query in LOW_POWER_MODE
+        if settings.VNOJ_LOW_POWER_MODE:
+            return {'categories': [], 'total': 0}
+
         if queryset is not None or self.in_contest or self.selected_languages or \
            self.selected_statuses or self.selected_organization:
             return super(AllSubmissions, self)._get_result_data(queryset)
@@ -750,6 +795,9 @@ class ForceContestMixin(object):
 
 
 class AllContestSubmissions(ForceContestMixin, AllSubmissions):
+    def is_in_low_power_mode(self):
+        return False
+
     def get_content_title(self):
         return format_html(_('All submissions in <a href="{1}">{0}</a>'),
                            self.contest.name, reverse('contest_view', args=[self.contest.key]))
@@ -761,6 +809,9 @@ class AllContestSubmissions(ForceContestMixin, AllSubmissions):
 
 
 class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
+    def is_in_low_power_mode(self):
+        return False
+
     def get_title(self):
         if self.is_own:
             return _('My submissions in %(contest)s') % {'contest': self.contest.name}
