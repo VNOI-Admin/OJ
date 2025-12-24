@@ -355,6 +355,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
     template_name = 'submission/list.html'
     context_object_name = 'submissions'
     first_page_href = None
+    paginated_model = Submission
 
     def get_result_data(self):
         result = self._get_result_data()
