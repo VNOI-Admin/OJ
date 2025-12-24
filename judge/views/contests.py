@@ -106,7 +106,7 @@ class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestL
         return timezone.now()
 
     def _get_queryset(self):
-        return super().get_queryset().prefetch_related('tags', 'organization', 'authors', 'curators', 'testers')
+        return super().get_queryset().prefetch_related('tags', 'organizations', 'authors', 'curators', 'testers')
 
     def get_queryset(self):
         self.search_query = None
@@ -160,11 +160,11 @@ class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestL
 
 
 class PrivateContestError(Exception):
-    def __init__(self, name, is_private, is_organization_private, org):
+    def __init__(self, name, is_private, is_organization_private, orgs):
         self.name = name
         self.is_private = is_private
         self.is_organization_private = is_organization_private
-        self.org = org
+        self.orgs = orgs
 
 
 class ContestMixin(object):
@@ -230,8 +230,8 @@ class ContestMixin(object):
         context['og_image'] = self.object.og_image or metadata[1]
         context['has_moss_api_key'] = settings.MOSS_API_KEY is not None
         context['logo_override_image'] = self.object.logo_override_image
-        if not context['logo_override_image'] and self.object.organization:
-            context['logo_override_image'] = self.object.organization.logo_override_image
+        if not context['logo_override_image'] and self.object.organizations.count() == 1:
+            context['logo_override_image'] = self.object.organizations.first().logo_override_image
 
         context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
         return context
@@ -248,7 +248,7 @@ class ContestMixin(object):
             contest.access_check(self.request.user)
         except Contest.PrivateContest:
             raise PrivateContestError(contest.name, contest.is_private, contest.is_organization_private,
-                                      contest.organization)
+                                      contest.organizations.all())
         except Contest.Inaccessible:
             raise Http404()
         else:
@@ -390,7 +390,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
         # Using list() to force QuerySets evaluation, as `contest.pk = None` affects these queries
         tags = list(contest.tags.all())
-        organization = contest.organization
+        organizations = list(contest.organizations.all())
         private_contestants = list(contest.private_contestants.all())
         view_contest_scoreboard = list(contest.view_contest_scoreboard.all())
         contest_problems = list(contest.contest_problems.all())
@@ -405,7 +405,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         with revisions.create_revision(atomic=True):
             contest.save()
             contest.tags.set(tags)
-            contest.organization = organization
+            contest.organizations.set(organizations)
             contest.private_contestants.set(private_contestants)
             contest.view_contest_scoreboard.set(view_contest_scoreboard)
             contest.authors.add(self.request.profile)
@@ -1302,8 +1302,11 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super(EditContest, self).get_form_kwargs()
-        if self.object.organization:
-            kwargs['org_pk'] = self.object.organization.id
+        # Due to some limitation with query set in select2
+        # We only support this if the contest is private for only
+        # 1 organization
+        if self.object.organizations.count() == 1:
+            kwargs['org_pk'] = self.object.organizations.values_list('pk', flat=True)[0]
 
         kwargs['user'] = self.request.user
         return kwargs

@@ -111,11 +111,11 @@ class ProblemTestCase(CommonDataMixin, TestCase):
         self.organization_admin_private_problem = create_problem(
             code='org_admin_private',
             is_organization_private=True,
-            organization=self.problem_organization,
+            organizations=('problem organization',),
         )
         self.organization_admin_problem = create_problem(
             code='organization_admin',
-            organization=self.problem_organization,
+            organizations=('problem organization',),
         )
 
         self.suggesting_problem = create_problem(
@@ -265,8 +265,7 @@ class ProblemTestCase(CommonDataMixin, TestCase):
         self.assertFalse(self.organization_private_problem.is_accessible_by(self.users['normal']))
         self.users['normal'].profile.organizations.add(self.organizations['open'])
         self.assertFalse(self.organization_private_problem.is_accessible_by(self.users['normal']))
-        self.organization_private_problem.organization = self.organizations['open']
-        self.organization_private_problem.save()
+        self.organization_private_problem.organizations.add(self.organizations['open'])
 
         data = {
             'staff_problem_edit_own': {
@@ -426,7 +425,7 @@ class ProblemTestCase(CommonDataMixin, TestCase):
                 with self.subTest(list='accessible problems'):
                     # We only care about consistency between Problem.is_accessible_by and Problem.get_visible_problems
                     problem_codes = []
-                    for problem in Problem.objects.prefetch_related('authors', 'curators', 'testers', 'organization'):
+                    for problem in Problem.objects.prefetch_related('authors', 'curators', 'testers', 'organizations'):
                         if problem.is_accessible_by(user):
                             problem_codes.append(problem.code)
 
