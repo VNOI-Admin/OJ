@@ -112,9 +112,13 @@ def on_new_problem(problem_code, is_suggested=False):
         ('Points', problem.points),
     ]
 
-    if problem.is_organization_private and problem.organization:
-        org_link = f'[{problem.organization.name}]({settings.SITE_FULL_URL + problem.organization.get_absolute_url()})'
-        description.append(('Organization', org_link))
+    if problem.is_organization_private:
+        orgs_link = [
+            f'[{org.name}]({settings.SITE_FULL_URL + org.get_absolute_url()})'
+            for org in problem.organizations.all()
+        ]
+
+        description.append(('Organizations', ' '.join(orgs_link)))
 
     description = '\n'.join(f'{opt}: {val}' for opt, val in description)
 
@@ -176,9 +180,13 @@ def on_new_contest(contest_key):
         ('End time', contest.end_time.astimezone(tz).strftime('%Y-%m-%d %H:%M')),
         ('Duration', contest.end_time - contest.start_time),
     ]
-    if contest.is_organization_private and contest.organization:
-        org_link = f'[{contest.organization.name}]({settings.SITE_FULL_URL + contest.organization.get_absolute_url()})'
-        description.append(('Organization', org_link))
+    if contest.is_organization_private:
+        orgs_link = [
+            f'[{org.name}]({settings.SITE_FULL_URL + org.get_absolute_url()})'
+            for org in contest.organizations.all()
+        ]
+
+        description.append(('Organizations', ' '.join(orgs_link)))
 
     description = '\n'.join(f'{opt}: {val}' for opt, val in description)
 

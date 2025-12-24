@@ -5,13 +5,15 @@
 {% block title_row %}
     {% set tab = 'detail' %}
     {% include "contest/contest-tabs.html" %}
-    {% if contest.is_organization_private and contest.organization %}
+    {% if contest.is_organization_private %}
         <span class="organization-tags">
-            <span class="organization-tag">
-                <a href="{{ contest.organization.get_absolute_url() }}">
-                    <i class="fa fa-lock"></i> {{ contest.organization.name }}
-                </a>
-            </span>
+            {% for org in contest.organizations.all() %}
+                <span class="organization-tag">
+                    <a href="{{ org.get_absolute_url() }}">
+                        <i class="fa fa-lock"></i> {{ org.name }}
+                    </a>
+                </span>
+            {% endfor %}
         </span>
     {% endif %}
 {% endblock %}

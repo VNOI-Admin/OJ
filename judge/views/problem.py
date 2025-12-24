@@ -779,7 +779,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
         languages = problem.allowed_languages.all()
         language_limits = problem.language_limits.all()
-        organization = problem.organization
+        organizations = problem.organizations.all()
         types = problem.types.all()
         old_code = problem.code
 
@@ -794,7 +794,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             problem.curators.add(self.request.profile)
             problem.allowed_languages.set(languages)
             problem.language_limits.set(language_limits)
-            problem.organization = organization
+            problem.organizations.set(organizations)
             problem.types.set(types)
             revisions.set_user(self.request.user)
             revisions.set_comment(_('Cloned problem from %s') % old_code)

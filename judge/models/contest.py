@@ -150,9 +150,8 @@ class Contest(models.Model):
                                                          'on the contest page or not.'),
                                              default=False)
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
-    organization = models.ForeignKey(Organization, blank=True, null=True, verbose_name=_('organization'),
-                                     on_delete=models.SET_NULL,
-                                     help_text=_('If private, only this organization may see the contest'))
+    organizations = models.ManyToManyField(Organization, blank=True, verbose_name=_('organizations'),
+                                           help_text=_('If private, only these organizations may see the contest'))
     og_image = models.CharField(verbose_name=_('OpenGraph image'), default='', max_length=150, blank=True)
     logo_override_image = models.CharField(verbose_name=_('logo override image'), default='', max_length=150,
                                            blank=True,
@@ -459,7 +458,7 @@ class Contest(models.Model):
         if self.view_contest_scoreboard.filter(id=user.profile.id).exists():
             return
 
-        in_org = self.organization and user.profile.organizations.filter(id=self.organization.id).exists()
+        in_org = self.organizations.filter(id__in=user.profile.organizations.all()).exists()
         in_users = self.private_contestants.filter(id=user.profile.id).exists()
 
         if not self.is_private and self.is_organization_private:
@@ -513,8 +512,8 @@ class Contest(models.Model):
                 Q(view_contest_scoreboard=user.profile) |
                 Q(is_organization_private=False, is_private=False) |
                 Q(is_organization_private=False, is_private=True, private_contestants=user.profile) |
-                Q(is_organization_private=True, is_private=False, organization__in=user.profile.organizations.all()) |
-                Q(is_organization_private=True, is_private=True, organization__in=user.profile.organizations.all(),
+                Q(is_organization_private=True, is_private=False, organizations__in=user.profile.organizations.all()) |
+                Q(is_organization_private=True, is_private=True, organizations__in=user.profile.organizations.all(),
                   private_contestants=user.profile)
             )
 
