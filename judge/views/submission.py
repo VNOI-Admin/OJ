@@ -403,7 +403,9 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
         return queryset
 
     def deferred_paginate(self, queryset):
-        return queryset.select_related('user__user', 'user__display_badge', 'problem', 'language').order_by('-id')
+        return (queryset.select_related('user__user', 'user__display_badge', 'problem', 'language')
+                        .prefetch_related('contest_object__authors', 'contest_object__curators')
+                        .order_by('-id'))
 
     def _get_queryset(self):
         queryset = Submission.objects.all()
