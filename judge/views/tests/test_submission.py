@@ -1,6 +1,6 @@
-from django.http import Http404
 from unittest.mock import PropertyMock
 
+from django.http import Http404
 from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
@@ -232,7 +232,7 @@ class SubmissionsListBaseQuerysetTestCase(CommonDataMixin, TestCase):
                 'name': 'C++ 14',
                 'short_name': 'C++14',
                 'common_name': 'C++',
-            }
+            },
         )
         cls.sub_cpp = Submission.objects.create(
             user=cls.users['normal'].profile,
@@ -264,7 +264,7 @@ class SubmissionsListBaseQuerysetTestCase(CommonDataMixin, TestCase):
         cls.private_problem_no_access = create_problem(
             code='private_problem_no_access',
             is_public=False,
-            authors=('normal',)
+            authors=('normal',),
         )
         cls.sub_private_no_access = Submission.objects.create(
             user=cls.users['normal'].profile,
@@ -285,7 +285,7 @@ class SubmissionsListBaseQuerysetTestCase(CommonDataMixin, TestCase):
             end_time=cls._now + timezone.timedelta(days=100),
             is_visible=True,
             scoreboard_visibility=Contest.SCOREBOARD_VISIBLE,
-            show_submission_list=True, # Critical for this test
+            show_submission_list=True,  # Critical for this test
         )
         create_contest_problem(
             contest=cls.public_contest_with_private_problem,
@@ -319,11 +319,11 @@ class SubmissionsListBaseQuerysetTestCase(CommonDataMixin, TestCase):
             end_time=cls._now + timezone.timedelta(days=100),
             is_visible=True,
             scoreboard_visibility=Contest.SCOREBOARD_VISIBLE,
-            show_submission_list=True, # Critical for this test
+            show_submission_list=True,  # Critical for this test
         )
         create_contest_problem(
             contest=cls.public_contest_with_org_problem,
-            problem=cls.org_problem, # The problem 'org_problem' is organization-private
+            problem=cls.org_problem,  # The problem 'org_problem' is organization-private
         )
         # Participate both normal and other_user in this contest
         create_contest_participation(contest=cls.public_contest_with_org_problem, user='normal')
@@ -765,7 +765,7 @@ class SubmissionsListBaseQuerysetTestCase(CommonDataMixin, TestCase):
         # All submissions should be from users in the organization
         for submission in queryset:
             self.assertTrue(
-                submission.user.organizations.filter(pk=self.organizations['open'].pk).exists()
+                submission.user.organizations.filter(pk=self.organizations['open'].pk).exists(),
             )
 
     def test_combined_filters(self):
@@ -785,7 +785,7 @@ class SubmissionsListBaseQuerysetTestCase(CommonDataMixin, TestCase):
             self.assertEqual(submission.language.key, 'PY3')
             self.assertEqual(submission.result, 'AC')
             self.assertTrue(
-                submission.user.organizations.filter(pk=self.organizations['open'].pk).exists()
+                submission.user.organizations.filter(pk=self.organizations['open'].pk).exists(),
             )
 
     def test_empty_language_filter(self):
@@ -1035,9 +1035,9 @@ class ProblemSubmissionsTestCase(CommonDataMixin, TestCase):
 
             view = ProblemSubmissions()
             # Manually set up view attributes
-            view.setup(request, problem=self.super_private_problem.code) # This populates view.kwargs, etc.
-            view.request = request # Assign request to view
-            view.problem = self.super_private_problem # Assign problem instance
+            view.setup(request, problem=self.super_private_problem.code)  # This populates view.kwargs, etc.
+            view.request = request  # Assign request to view
+            view.problem = self.super_private_problem  # Assign problem instance
             view.problem_name = self.super_private_problem.translated_name(request.LANGUAGE_CODE)
 
             # Call the dispatch method which orchestrates the view logic, including access_check
@@ -1405,7 +1405,7 @@ class UserContestSubmissionsTestCase(CommonDataMixin, TestCase):
         """Helper to create UserContestSubmissions view instance."""
         factory = RequestFactory()
         request = factory.get(
-            f'/contest/{contest.key}/submissions/{target_user.username}/{problem.code}/'
+            f'/contest/{contest.key}/submissions/{target_user.username}/{problem.code}/',
         )
         request.user = request_user
         request.profile = request_user.profile if hasattr(request_user, 'profile') else None
@@ -1593,5 +1593,5 @@ class SubmissionListOrganizationQuerysetTestCase(CommonDataMixin, TestCase):
         for submission in queryset:
             self.assertEqual(submission.language.key, 'PY3')
             self.assertTrue(
-                submission.problem.organizations.filter(pk=self.organizations['open'].pk).exists()
+                submission.problem.organizations.filter(pk=self.organizations['open'].pk).exists(),
             )
