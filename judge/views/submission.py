@@ -380,6 +380,12 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
     def contest(self):
         return self.request.profile.current_contest.contest
 
+    def _get_visible_problems_subquery(self):
+        # Returns a QuerySet with visible problems for the current user, under the current submission context.
+        if not self.is_contest_scoped:
+            return Problem.get_visible_problems(self.request.user)
+        return None
+
     def _get_queryset(self):
         queryset = Submission.objects.all()
         use_straight_join(queryset)
@@ -423,8 +429,9 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
 
     def get_queryset(self):
         queryset = self._get_queryset()
-        if not self.is_contest_scoped:
-            filter_submissions_by_visible_problems(queryset, self.request.user)
+        subquery = self._get_visible_problems_subquery()
+        if subquery is not None:
+            queryset = queryset.filter(problem__in=subquery)
 
         return queryset
 

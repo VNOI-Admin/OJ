@@ -655,10 +655,11 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
     template_name = 'organization/submission-list.html'
     permission_bypass = ['judge.view_all_submission']
 
-    def _get_queryset(self):
-        query_set = super(SubmissionListOrganization, self)._get_queryset()
-        query_set = query_set.filter(problem__organizations=self.organization)
-        return query_set
+    def _get_visible_problems_subquery(self):
+        subquery = super()._get_visible_problems_subquery()
+        if subquery is None:
+            subquery = Problem.objects.all()
+        return subquery.filter(organizations=self.organization)
 
     def get_context_data(self, **kwargs):
         context = super(SubmissionListOrganization, self).get_context_data(**kwargs)
