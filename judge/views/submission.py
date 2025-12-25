@@ -386,8 +386,9 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
             return Problem.get_visible_problems(self.request.user)
         return None
 
-    def _get_queryset(self):
-        queryset = Submission.objects.all()
+    def _get_queryset(self, queryset=None):
+        if queryset is None:
+            queryset = Submission.objects.all()
         use_straight_join(queryset)
         queryset = submission_related(queryset.order_by('-id'))
         if self.show_problem:
@@ -428,10 +429,10 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         return queryset
 
     def get_queryset(self):
-        queryset = self._get_queryset()
-        subquery = self._get_visible_problems_subquery().only('id')
+        queryset = Submission.objects.all()
+        subquery = self._get_visible_problems_subquery()
         if subquery is not None:
-            query, params = subquery.query.sql_with_params()
+            query, params = subquery.only('id').query.sql_with_params()
             join_sql_subquery(
                 queryset,
                 subquery=query,
@@ -440,8 +441,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
                 alias='visible_problems',
                 related_model=Problem,
             )
-
-        return queryset
+        return self._get_queryset(queryset)
 
     def get_my_submissions_page(self):
         return None
