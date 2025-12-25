@@ -396,7 +396,6 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
     def _get_queryset(self, queryset=None):
         if queryset is None:
             queryset = Submission.objects.all()
-        use_straight_join(queryset)
         queryset = submission_related(queryset.order_by('-id'))
         if self.show_problem:
             queryset = queryset.prefetch_related(Prefetch('problem__translations',
@@ -435,8 +434,14 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
 
         return queryset
 
+    @property
+    def _early_straight_join(self):
+        return False
+
     def get_queryset(self):
         queryset = Submission.objects.all()
+        if self._early_straight_join:
+            use_straight_join(queryset)
         subquery = self._get_visible_problems_subquery()
         if subquery is not None:
             query, params = subquery.only('id').query.sql_with_params()
@@ -448,6 +453,8 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
                 alias='visible_problems',
                 related_model=Problem,
             )
+        if not self._early_straight_join:
+            use_straight_join(queryset)
         return self._get_queryset(queryset)
 
     def get_my_submissions_page(self):
@@ -719,6 +726,10 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
     @property
     def use_infinite_pagination(self):
         return not self.is_contest_scoped
+
+    @property
+    def _early_straight_join(self):
+        return True
 
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
