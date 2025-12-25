@@ -797,13 +797,6 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
                                    reverse('contest_view', args=[self.contest.key])),
         })
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        # FIXME: fix this line of code when #1509 is implemented
-        if not self.is_contest_scoped:
-            filter_submissions_by_visible_problems(queryset, self.request.user)
-        return queryset
-
 
 class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
     def get_title(self):
