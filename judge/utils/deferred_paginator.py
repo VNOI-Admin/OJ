@@ -1,3 +1,5 @@
+from django.core.exceptions import EmptyResultSet
+
 from judge.utils.raw_sql import join_sql_subquery
 
 class DeferredPaginationMixin:
@@ -28,19 +30,23 @@ class DeferredPaginationListViewMixin:
             paginator, page, queryset_pks, is_paginated = self.paginate_queryset(
                 queryset_pks, page_size
             )
-            query, params = queryset_pks.query.sql_with_params()
-            queryset = self.__class__.paginated_model.objects.all()
-            join_sql_subquery(
-                queryset,
-                subquery=query,
-                params=list(params),
-                join_fields=[('id', 'id')],
-                alias='deferred_object',
-                related_model=self.__class__.paginated_model,
-            )
-            queryset = self.deferred_paginate(queryset)
+            try:
+                query, params = queryset_pks.query.sql_with_params()
 
-            page.object_list = object_list
+                queryset = self.__class__.paginated_model.objects.all()
+                join_sql_subquery(
+                    queryset,
+                    subquery=query,
+                    params=list(params),
+                    join_fields=[('id', 'id')],
+                    alias='deferred_object',
+                    related_model=self.__class__.paginated_model,
+                )
+                queryset = self.deferred_paginate(queryset)
+            except EmptyResultSet:
+                queryset = []
+
+            page.object_list = queryset
             context = {
                 "paginator": paginator,
                 "page_obj": page,
