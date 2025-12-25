@@ -429,7 +429,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
 
     def get_queryset(self):
         queryset = self._get_queryset()
-        subquery = self._get_visible_problems_subquery()
+        subquery = self._get_visible_problems_subquery().only('id')
         if subquery is not None:
             query, params = subquery.query.sql_with_params()
             join_sql_subquery(
