@@ -58,6 +58,9 @@
     {% if not comment_lock %}
         {% include "comments/media-js.html" %}
     {% endif %}
+    {% if request.user.is_authenticated %}
+        <script type="text/javascript" src="{{ ACE_URL }}/ace.js"></script>
+    {% endif %}
     <script type="text/javascript">
         $(function() {
             $('#pdf_button').click(async function(e) {
@@ -70,8 +73,67 @@
                 }
                 frames['raw_problem'].print();
             });
+            
+            var commentsLoaded = false;
+            var commentsVisible = false;
+            
+            function toggleComments(e) {
+                e.preventDefault();
+                
+                if (!commentsVisible) {
+                    $('#problem-comments-section').show();
+                    $('#toggle-comments-btn, #toggle-comments-btn-bottom').text({{ _('Hide comments')|htmltojs }});
+                    commentsVisible = true;
+                    
+                    if (!commentsLoaded) {
+                        loadComments();
+                    }
+                    
+                    setTimeout(function() {
+                        $('html, body').animate({
+                            scrollTop: $('#problem-comments-section').offset().top - 20
+                        }, 500);
+                    }, 100);
+                } else {
+                    $('#problem-comments-section').hide();
+                    $('#toggle-comments-btn, #toggle-comments-btn-bottom').text({{ _('Show comments')|htmltojs }});
+                    commentsVisible = false;
+                }
+            }
+            
+            $('#toggle-comments-btn, #toggle-comments-btn-bottom').click(toggleComments);
+            
+            function loadComments() {
+                $.get('{{ url("problem_comments", problem.code) }}', function(html) {
+                    var $html = $(html);
+                    var $commentsContent = $html.find('#content-left');
+                    
+                    if ($commentsContent.length) {
+                        $('#comments-content').html($commentsContent.html());
+                        commentsLoaded = true;
+                        
+                        if (typeof initializeComments === 'function') {
+                            initializeComments();
+                        }
+                    } else {
+                        $('#comments-content').html('<p>{{ _("Unable to load comments.") }}</p>');
+                    }
+                }).fail(function() {
+                    $('#comments-content').html('<p>{{ _("Error loading comments. Please try again.") }}</p>');
+                });
+            }
+            
+            window.refreshComments = function() {
+                if (commentsLoaded) {
+                    $('#comments-content').html('<p style="text-align: center;">{{ _("Refreshing comments...") }}</p>');
+                    loadComments();
+                }
+            };
         });
     </script>
+    {% if request.user.is_authenticated %}
+        {% include "problem/submit-js.html" %}
+    {% endif %}
 {% endblock %}
 
 {% block title_row %}
@@ -125,7 +187,7 @@
 {% block info_float %}
     {% if request.user.is_authenticated and request.in_contest and submission_limit %}
         {% if submissions_left > 0 %}
-            <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+            <a href="{{ url('problem_submit', problem.code) }}" target="_blank" class="unselectable button full">
                 {{ _('Submit solution') }}
             </a>
             <div class="submissions-left">
@@ -140,10 +202,14 @@
             <div class="no-submissions-left submissions-left">{{ _('0 submissions left') }}</div>
         {% endif %}
     {% else %}
-        <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+        <a href="{{ url('problem_submit', problem.code) }}" target="_blank" class="unselectable button full">
             {{ _('Submit solution') }}
         </a>
     {% endif %}
+
+    <button id="toggle-comments-btn" class="unselectable button full" style="margin-top: 0.5em;">
+        {{ _('Show comments') }}
+    </button>
 
     <hr style="padding-bottom: 0.3em">
     {% if request.in_contest and contest_problem %}
@@ -364,6 +430,22 @@
         </div>
     {% endif %}
     {% include "problem/problem-detail.html" %}
+    
+    {# Inline submission form - reuse submit page #}
+    {% if request.user.is_authenticated %}
+        <hr id="submit-solution-section" style="margin-top: 2em; margin-bottom: 2em;">
+        <h3>{{ _('Submit Your Solution') }}</h3>
+        {% with inline_mode=True %}
+            {% include "problem/submit-form.html" %}
+        {% endwith %}
+        
+        {# Show comments button at the end of page #}
+        <div style="text-align: center; margin-top: 2em;">
+            <button id="toggle-comments-btn-bottom" class="button" style="padding: 0.8em 2em;">
+                {{ _('Show comments') }}
+            </button>
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block post_description_end %}
@@ -379,25 +461,10 @@
 {% endblock %}
 
 {% block comments %}
-    {% if comment_lock %}
-        <div class="clarifications-area">
-            <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
-            {% if has_clarifications %}
-                {% for clarification in clarifications %}
-                    <div class="problem-clarification">
-                        <div class="time">{{ relative_time(clarification.date) }}</div>
-                        <span class="body">
-                            {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
-                        </span>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p class="no-comments-message">{{ _('No clarifications have been made at this time.') }}</p>
-            {% endif %}
+    <div id="problem-comments-section" style="display: none; margin-top: 2em;">
+        <hr style="margin-bottom: 2em;">
+        <div id="comments-content">
+            <p style="text-align: center;">{{ _('Loading comments...') }}</p>
         </div>
-    {% else %}
-        {% with comment_warn_code=true %}
-            {% include "comments/list.html" %}
-        {% endwith %}
-    {% endif %}
+    </div>
 {% endblock %}

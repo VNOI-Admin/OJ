@@ -243,6 +243,67 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
                                           context['description'], 'problem')
         context['meta_description'] = self.object.summary or metadata[0]
         context['og_image'] = self.object.og_image or metadata[1]
+
+        # Add submission form context
+        if authed:
+            from judge.forms import ProblemSubmitForm
+            submission_instance = Submission(user=user.profile, problem=self.object)
+            judge_choices = ()
+            if can_edit:
+                judge_choices = tuple(Judge.objects.filter(online=True, problems=self.object).
+                                      values_list('name', 'name'))
+
+            context['form'] = ProblemSubmitForm(instance=submission_instance, judge_choices=judge_choices,
+                                                initial={'language': user.profile.language})
+            context['form'].fields['language'].queryset = self.object.usable_languages.order_by(
+                'name', 'key').prefetch_related(Prefetch('runtimeversion_set',
+                                                         RuntimeVersion.objects.order_by('priority')))
+            context['form'].fields['source'].widget.theme = user.profile.resolved_ace_theme
+            context['no_judges'] = not context['form'].fields['language'].queryset
+            context['default_lang'] = user.profile.language
+            context['ACE_URL'] = settings.ACE_URL
+
+        return context
+
+
+class ProblemComments(ProblemMixin, SolvedProblemMixin, TitleMixin, CommentedDetailView):
+    context_object_name = 'problem'
+    template_name = 'problem/comments.html'
+
+    def get_title(self):
+        return _('%s') % self.object.name
+
+    def get_object(self, queryset=None):
+        problem = super(ProblemComments, self).get_object(queryset)
+        user = self.request.user
+        authed = user.is_authenticated
+        self.contest_problem = (None if not authed or user.profile.current_contest is None else
+                                get_contest_problem(problem, user.profile))
+        return problem
+
+    def is_comment_locked(self):
+        if self.contest_problem and self.contest_problem.contest.use_clarifications:
+            return True
+        return super(ProblemComments, self).is_comment_locked()
+
+    def get_comment_page(self):
+        return 'p:%s' % self.object.code
+
+    def get_context_data(self, **kwargs):
+        # Ensure comment_form is in kwargs if not already present
+        if 'comment_form' not in kwargs:
+            from judge.forms import CommentForm
+            kwargs['comment_form'] = CommentForm(self.request,
+                                                 initial={'page': self.get_comment_page(), 'parent': None})
+
+        context = super(ProblemComments, self).get_context_data(**kwargs)
+
+        # Add clarifications context if in contest mode
+        if self.contest_problem and self.contest_problem.contest.use_clarifications:
+            clarifications = self.object.clarifications
+            context['has_clarifications'] = clarifications.count() > 0
+            context['clarifications'] = clarifications.order_by('-date')
+
         return context
 
 
@@ -725,7 +786,10 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
                 self.new_submission.problem.code,
             )
 
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        if self.request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
+            response['X-Submission-URL'] = self.get_success_url()
+        return response
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
