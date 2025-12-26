@@ -34,13 +34,14 @@ from django.views.generic.list import BaseListView
 from icalendar import Calendar as ICalendar, Event
 from reversion import revisions
 
+
 from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Language, Organization, Problem, ProblemClarification, Profile, Submission
-from judge.tasks import on_new_contest, prepare_contest_data, run_moss
+from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.opengraph import generate_opengraph
@@ -53,7 +54,7 @@ from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleOb
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
            'ContestParticipationList', 'ContestParticipationDisqualify', 'get_contest_ranking_list',
-           'base_contest_ranking_list']
+           'base_contest_ranking_list', 'ContestProblemMakePublic']
 
 
 def _find_contest(request, key, private_check=True):
@@ -1510,3 +1511,35 @@ class ContestDownloadData(ContestDataMixin, SingleObjectMixin, View):
         response['Content-Type'] = 'application/zip'
         response['Content-Disposition'] = 'attachment; filename=%s-data.zip' % self.object.key
         return response
+
+
+class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
+    def dispatch(self, request, *args, **kwargs):
+        if request.method != 'POST':
+            return HttpResponseForbidden()
+
+        return super(ContestProblemMakePublic, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        contest = self.get_object()
+
+        if not request.user.is_staff or not contest.is_editable_by(request.user):
+            raise PermissionDenied(_('You do not have permission to edit this contest.'))
+
+        contest_problems = contest.contest_problems.prefetch_related('problem').all()
+        for contest_problem in contest_problems:
+            problem = contest_problem.problem
+            # this change has 1 implication:
+            # - users only need write permissions for **private** problems
+            # This is not a bug! It improves the UX since a lot of users include
+            # public problems in their contests.
+            if problem.is_public:
+                continue
+            if not problem.is_editable_by(request.user):
+                raise PermissionDenied(_('You do not have permission to edit this problem.'))
+            problem.is_public = True
+            problem.date = timezone.now()
+            problem.save(update_fields=['is_public', 'date'])
+            rescore_problem.delay(problem.id, True)
+
+        return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
