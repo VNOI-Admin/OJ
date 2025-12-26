@@ -126,7 +126,7 @@ class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestL
         finished = set()
         participated_contests = set()
         joined_contests = set()
-        
+
         for contest in self._get_queryset().exclude(end_time__lt=self._now):
             if contest.start_time > self._now:
                 future.append(contest)
@@ -135,15 +135,12 @@ class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestL
 
         if self.request.user.is_authenticated:
             profile = self.request.profile
-            
             participated_contests = set(
                 ContestParticipation.objects.filter(user=profile, virtual__gte=0)
-                .values_list('contest__key', flat=True).distinct()
+                .values_list('contest__key', flat=True).distinct(),
             )
-            
             if profile.current_contest:
                 joined_contests.add(profile.current_contest.contest.key)
-            
             for participation in ContestParticipation.objects.filter(virtual=0, user=profile,
                                                                      contest_id__in=present) \
                     .select_related('contest') \
@@ -171,7 +168,7 @@ class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestL
         context.update(self.get_sort_context())
         context.update(self.get_sort_paginate_context())
         return context
-    
+
     def render_to_response(self, context, **response_kwargs):
         response = super().render_to_response(context, **response_kwargs)
         response['Cache-Control'] = 'no-store'
@@ -297,20 +294,20 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        
+
         if request.user.is_authenticated and not (self.is_editor or self.is_tester):
             profile = request.profile
             contest = self.object
-            
+
             if contest.can_join and not contest.banned_users.filter(id=profile.id).exists():
                 has_participated = ContestParticipation.objects.filter(
-                    contest=contest, user=profile, virtual__gte=0
+                    contest=contest, user=profile, virtual__gte=0,
                 ).exists()
-                
+
                 if has_participated:
                     try:
                         participation = ContestParticipation.objects.get(
-                            contest=contest, user=profile, virtual=ContestParticipation.LIVE
+                            contest=contest, user=profile, virtual=ContestParticipation.LIVE,
                         )
                         if not participation.ended and profile.current_contest != participation:
                             profile.current_contest = participation
@@ -320,14 +317,14 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
                         if (not contest.require_registration or contest.can_register) and not contest.access_code:
                             participation = ContestParticipation.objects.create(
                                 contest=contest, user=profile, virtual=ContestParticipation.LIVE,
-                                real_start=timezone.now()
+                                real_start=timezone.now(),
                             )
                             profile.current_contest = participation
                             profile.save()
                             contest._updating_stats_only = True
                             contest.update_user_count()
                             return HttpResponseRedirect(request.path)
-        
+
         return super().get(request, *args, **kwargs)
 
     def is_comment_locked(self):
