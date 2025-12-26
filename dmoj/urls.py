@@ -109,6 +109,9 @@ urlpatterns = [
     path('accounts/', include(register_patterns)),
     path('', include('social_django.urls')),
 
+    # URL Shortener management (on main domain)
+    path('shorteners/', include('urlshortener.urls')),
+
     path('problems', include([
         path('/', problem.ProblemList.as_view(), name='problem_list'),
         path('/random/', problem.RandomProblem.as_view(), name='problem_random'),
@@ -251,6 +254,8 @@ urlpatterns = [
         path('/stats', contests.ContestStats.as_view(), name='contest_stats'),
         path('/data/prepare/', contests.ContestPrepareData.as_view(), name='contest_prepare_data'),
         path('/data/download/', contests.ContestDownloadData.as_view(), name='contest_download_data'),
+        path('/make_problems_public', contests.ContestProblemMakePublic.as_view(),
+             name='contest_problems_make_public'),
 
         path('/problem/<int:problem>', contest_problem.ContestProblemSubmit.as_view(), name='contest_problem_submit'),
         path('/problem/<int:problem>/<int:submission>', contest_problem.ContestProblemSubmit.as_view(),
