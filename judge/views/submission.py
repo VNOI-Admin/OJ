@@ -370,7 +370,10 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         pass
 
     @cached_property
-    def in_contest(self):
+    def is_contest_scoped(self):
+        """
+        Returns True if this view is restricted to a specific contest's submissions.
+        """
         return False
 
     @cached_property
@@ -385,7 +388,8 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
             queryset = queryset.prefetch_related(Prefetch('problem__translations',
                                                           queryset=ProblemTranslation.objects.filter(
                                                               language=self.request.LANGUAGE_CODE), to_attr='_trans'))
-        if self.in_contest:
+        if self.is_contest_scoped:
+            # Show submissions only for this contest
             queryset = queryset.filter(contest_object=self.contest)
             if not self.contest.can_see_full_submission_list(self.request.user):
                 queryset = queryset.filter(user=self.request.profile)
@@ -419,7 +423,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
 
     def get_queryset(self):
         queryset = self._get_queryset()
-        if not self.in_contest:
+        if not self.is_contest_scoped:
             filter_submissions_by_visible_problems(queryset, self.request.user)
 
         return queryset
@@ -428,7 +432,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         return None
 
     def get_all_submissions_page(self):
-        if self.in_contest and hasattr(self, 'contest'):
+        if self.is_contest_scoped and hasattr(self, 'contest'):
             return reverse('contest_all_submissions', kwargs={'contest': self.contest.key})
         return reverse('all_submissions')
 
@@ -445,7 +449,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         context = super(SubmissionsListBase, self).get_context_data(**kwargs)
         authenticated = self.request.user.is_authenticated
         context['dynamic_update'] = False
-        context['dynamic_contest_id'] = self.in_contest and self.contest.id
+        context['dynamic_contest_id'] = self.is_contest_scoped and self.contest.id
         context['show_problem'] = self.show_problem
 
         profile = self.request.profile
@@ -550,8 +554,8 @@ class ProblemSubmissionsBase(SubmissionsListBase):
     check_contest_in_access_check = True
 
     @cached_property
-    def in_contest(self):
-        if super(ProblemSubmissionsBase, self).in_contest:
+    def is_contest_scoped(self):
+        if super(ProblemSubmissionsBase, self).is_contest_scoped:
             return True
         if not hasattr(self, 'contest'):
             return False
@@ -559,7 +563,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         return self.contest.problems.filter(id=self.problem.id).exists()
 
     def get_queryset(self):
-        if self.in_contest and not self.contest.contest_problems.filter(problem_id=self.problem.id).exists():
+        if self.is_contest_scoped and not self.contest.contest_problems.filter(problem_id=self.problem.id).exists():
             raise Http404()
         return super(ProblemSubmissionsBase, self)._get_queryset().filter(problem_id=self.problem.id)
 
@@ -573,15 +577,15 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         ))
 
     def access_check_contest(self, request):
-        if self.in_contest and not self.contest.can_see_own_scoreboard(request.user):
+        if self.is_contest_scoped and not self.contest.can_see_own_scoreboard(request.user):
             raise Http404()
 
     def access_check(self, request):
         # FIXME: This should be rolled into the `is_accessible_by` check when implementing #1509
-        if self.in_contest and request.user.is_authenticated and request.profile.id in self.contest.editor_ids:
+        if self.is_contest_scoped and request.user.is_authenticated and request.profile.id in self.contest.editor_ids:
             return
 
-        if not self.in_contest and not self.problem.is_accessible_by(request.user):
+        if not self.is_contest_scoped and not self.problem.is_accessible_by(request.user):
             raise Http404()
 
         if self.check_contest_in_access_check:
@@ -692,7 +696,7 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
 
     @property
     def use_infinite_pagination(self):
-        return not self.in_contest
+        return not self.is_contest_scoped
 
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
@@ -705,7 +709,7 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
         return context
 
     def _get_result_data(self, queryset=None):
-        if queryset is not None or self.in_contest or self.selected_languages or \
+        if queryset is not None or self.is_contest_scoped or self.selected_languages or \
            self.selected_statuses or self.selected_organization:
             return super(AllSubmissions, self)._get_result_data(queryset)
 
@@ -720,7 +724,8 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
 
 class ForceContestMixin(object):
     @property
-    def in_contest(self):
+    def is_contest_scoped(self):
+        # Force this view to behave as a contest-scoped view
         return True
 
     @property
@@ -791,13 +796,6 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
             'contest': format_html('<a href="{1}">{0}</a>', self.contest.name,
                                    reverse('contest_view', args=[self.contest.key])),
         })
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        # FIXME: fix this line of code when #1509 is implemented
-        if not self.in_contest:
-            filter_submissions_by_visible_problems(queryset, self.request.user)
-        return queryset
 
 
 class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
