@@ -66,7 +66,11 @@
     <div><a href="{{ url('submission_status', submission.id) }}">{{ _('View status') }}</a></div>
     <div><a href="{{ url('submission_source_raw', submission.id) }}">{{ _('View raw source') }}</a></div>
     {% if (request.user == submission.user.user or perms.judge.resubmit_other) and not submission.language.file_only %}
-        <div><a href="{{ url('problem_submit', submission.problem.code, submission.id) }}">{{ _('Resubmit') }}</a></div>
+        {% if submission.contest_object %}
+            <div><a href="{{ url('contest_problem_submit', submission.contest_object.key, submission.problem.code, submission.id) }}">{{ _('Resubmit') }}</a></div>
+        {% else %}
+            <div><a href="{{ url('problem_submit', submission.problem.code, submission.id) }}">{{ _('Resubmit') }}</a></div>
+        {% endif %}
     {% endif %}
     {% set can_edit = submission.problem.is_editable_by(request.user) %}
     {% if perms.judge.rejudge_submission and can_edit and not submission.is_locked %}
