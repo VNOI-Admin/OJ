@@ -63,6 +63,12 @@ class RankedSubmissions(ProblemSubmissions):
         context['hide_sidebar'] = True
         return context
 
+    def get_ordering(self):
+        if self.is_contest_scoped:
+            return ('-contest__points', 'time')
+        else:
+            return ('-points', 'time')
+
     def get_title(self):
         return _('Best solutions for %s') % self.problem_name
 
