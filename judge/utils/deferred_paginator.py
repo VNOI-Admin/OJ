@@ -1,24 +1,14 @@
 from django.core.exceptions import EmptyResultSet
+from django.views.generic import ListView
 
 from judge.utils.raw_sql import join_sql_subquery
 
-class DeferredPaginationMixin:
+
+class DeferredPaginationListView(ListView):
+    paginated_model = None
+
     def deferred_paginate(self, queryset):
         return queryset
-
-    def paginate_queryset(self, queryset, *args, **kwargs):
-        queryset_pks = queryset.values_list('pk', flat=True)
-        paginator, page, object_list, has_other = super().paginate_queryset(queryset_pks, *args, **kwargs)
-
-        object_list = queryset.model.objects.all().filter(pk__in=object_list)
-        object_list = self.deferred_paginate(object_list)
-
-        page.object_list = object_list
-        return paginator, page, object_list, has_other
-
-
-class DeferredPaginationListViewMixin:
-    paginated_model = None
 
     def get_context_data(self, *, object_list=None, **kwargs):
         """Get the context for this view."""
@@ -30,9 +20,9 @@ class DeferredPaginationListViewMixin:
             paginator, page, queryset_pks, is_paginated = self.paginate_queryset(
                 queryset_pks, page_size
             )
+
             try:
                 query, params = queryset_pks.query.sql_with_params()
-
                 queryset = self.__class__.paginated_model.objects.all()
                 join_sql_subquery(
                     queryset,
@@ -43,6 +33,11 @@ class DeferredPaginationListViewMixin:
                     related_model=self.__class__.paginated_model,
                 )
                 queryset = self.deferred_paginate(queryset)
+                ordering = self.get_ordering()
+                if ordering:
+                    if isinstance(ordering, str):
+                        ordering = (ordering,)
+                    queryset = queryset.order_by(*ordering)
             except EmptyResultSet:
                 queryset = []
 
