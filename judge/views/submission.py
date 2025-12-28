@@ -26,7 +26,7 @@ from django.views.generic import DetailView, ListView
 from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
 from judge.models.problem import ProblemTestcaseResultAccess, SubmissionSourceAccess
-from judge.utils.deferred_paginator import DeferredPaginationListViewMixin
+from judge.utils.deferred_paginator import DeferredPaginationListView
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.lazy import memo_lazy
 from judge.utils.problem_data import get_problem_testcases_data
@@ -345,7 +345,7 @@ def filter_submissions_by_visible_problems(queryset, user):
     )
 
 
-class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationListViewMixin, ListView):
+class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationListView):
     model = Submission
     paginate_by = 50
     show_problem = True
@@ -356,6 +356,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
     context_object_name = 'submissions'
     first_page_href = None
     paginated_model = Submission
+    ordering = '-id'
 
     def get_result_data(self):
         result = self._get_result_data()
@@ -384,8 +385,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
 
     def deferred_paginate(self, queryset):
         return (queryset.select_related('user__user', 'user__display_badge', 'problem', 'language')
-                        .prefetch_related('contest_object__authors', 'contest_object__curators')
-                        .order_by('-id'))
+                        .prefetch_related('contest_object__authors', 'contest_object__curators'))
 
     def _get_queryset(self):
         queryset = Submission.objects.all()
