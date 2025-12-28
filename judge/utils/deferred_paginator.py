@@ -1,3 +1,4 @@
+from django.core.exceptions import EmptyResultSet
 from django.views.generic import ListView
 
 from judge.utils.raw_sql import join_sql_subquery
@@ -19,22 +20,26 @@ class DeferredPaginationListView(ListView):
             paginator, page, queryset_pks, is_paginated = self.paginate_queryset(
                 queryset_pks, page_size
             )
-            query, params = queryset_pks.query.sql_with_params()
-            queryset = self.__class__.paginated_model.objects.all()
-            join_sql_subquery(
-                queryset,
-                subquery=query,
-                params=list(params),
-                join_fields=[('id', 'id')],
-                alias='deferred_object',
-                related_model=self.__class__.paginated_model,
-            )
-            queryset = self.deferred_paginate(queryset)
-            ordering = self.get_ordering()
-            if ordering:
-                if isinstance(ordering, str):
-                    ordering = (ordering,)
-                queryset = queryset.order_by(*ordering)
+
+            try:
+                query, params = queryset_pks.query.sql_with_params()
+                queryset = self.__class__.paginated_model.objects.all()
+                join_sql_subquery(
+                    queryset,
+                    subquery=query,
+                    params=list(params),
+                    join_fields=[('id', 'id')],
+                    alias='deferred_object',
+                    related_model=self.__class__.paginated_model,
+                )
+                queryset = self.deferred_paginate(queryset)
+                ordering = self.get_ordering()
+                if ordering:
+                    if isinstance(ordering, str):
+                        ordering = (ordering,)
+                    queryset = queryset.order_by(*ordering)
+            except EmptyResultSet:
+                queryset = []
 
             page.object_list = queryset
             context = {
