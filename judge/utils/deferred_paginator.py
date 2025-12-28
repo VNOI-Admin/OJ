@@ -1,3 +1,5 @@
+from django.views.generic import ListView
+
 from judge.utils.raw_sql import join_sql_subquery
 
 class DeferredPaginationMixin:
@@ -15,8 +17,11 @@ class DeferredPaginationMixin:
         return paginator, page, object_list, has_other
 
 
-class DeferredPaginationListViewMixin:
+class DeferredPaginationListView(ListView):
     paginated_model = None
+
+    def deferred_paginate(self, queryset):
+        return queryset
 
     def get_context_data(self, *, object_list=None, **kwargs):
         """Get the context for this view."""
@@ -39,8 +44,13 @@ class DeferredPaginationListViewMixin:
                 related_model=self.__class__.paginated_model,
             )
             queryset = self.deferred_paginate(queryset)
+            ordering = self.get_ordering()
+            if ordering:
+                if isinstance(ordering, str):
+                    ordering = (ordering,)
+                queryset = queryset.order_by(*ordering)
 
-            page.object_list = object_list
+            page.object_list = queryset
             context = {
                 "paginator": paginator,
                 "page_obj": page,
