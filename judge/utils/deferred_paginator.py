@@ -2,20 +2,6 @@ from django.views.generic import ListView
 
 from judge.utils.raw_sql import join_sql_subquery
 
-class DeferredPaginationMixin:
-    def deferred_paginate(self, queryset):
-        return queryset
-
-    def paginate_queryset(self, queryset, *args, **kwargs):
-        queryset_pks = queryset.values_list('pk', flat=True)
-        paginator, page, object_list, has_other = super().paginate_queryset(queryset_pks, *args, **kwargs)
-
-        object_list = queryset.model.objects.all().filter(pk__in=object_list)
-        object_list = self.deferred_paginate(object_list)
-
-        page.object_list = object_list
-        return paginator, page, object_list, has_other
-
 
 class DeferredPaginationListView(ListView):
     paginated_model = None
