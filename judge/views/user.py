@@ -17,7 +17,7 @@ from django.core.exceptions import ImproperlyConfigured, PermissionDenied, Valid
 from django.db.models import Count, F, FilteredRelation, Max, Min, Prefetch, Q
 from django.db.models.expressions import Value
 from django.db.models.fields import DateField
-from django.db.models.functions import Cast, Coalesce, ExtractYear
+from django.db.models.functions import Cast, Coalesce
 from django.forms import Form
 from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -209,21 +209,18 @@ class UserAboutPage(UserPage):
             user_timezone = user_timezone or self.request.profile.timezone
         timezone_offset = pytz.timezone(user_timezone).utcoffset(datetime.datetime.utcnow()).seconds
 
-        submissions = (
-            self.object.submission_set
-            .annotate(date_only=Cast(F('date') + datetime.timedelta(seconds=timezone_offset), DateField()))
-            .values('date_only').annotate(cnt=Count('id'))
-        )
+        submissions_count = self.object.submission_set.count()
+        if submissions_count > settings.VNOJ_LOW_POWER_MODE_CONFIG['heat_map_limit']:
+            submissions = []
+        else:
+            submissions = (
+                self.object.submission_set
+                .annotate(date_only=Cast(F('date') + datetime.timedelta(seconds=timezone_offset), DateField()))
+                .values('date_only').annotate(cnt=Count('id'))
+            )
 
         context['submission_data'] = mark_safe(json.dumps({
             date_counts['date_only'].isoformat(): date_counts['cnt'] for date_counts in submissions
-        }))
-        context['submission_metadata'] = mark_safe(json.dumps({
-            'min_year': (
-                self.object.submission_set
-                .annotate(year_only=ExtractYear('date'))
-                .aggregate(min_year=Min('year_only'))['min_year']
-            ),
         }))
         return context
 
