@@ -238,6 +238,17 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
             context['description'] = translation.description
             context['translated'] = True
 
+        # Apply contest problem overrides if in contest
+        if contest_problem:
+            if contest_problem.name_override:
+                context['title'] = contest_problem.name_override
+            if contest_problem.description_override:
+                context['description'] = contest_problem.description_override
+            # Use effective_pdf_url which handles override or fallback
+            context['effective_pdf_url'] = contest_problem.effective_pdf_url
+        else:
+            context['effective_pdf_url'] = self.object.absolute_pdf_url
+
         if not self.object.og_image or not self.object.summary:
             metadata = generate_opengraph('generated-meta-problem:%s:%d' % (context['language'], self.object.id),
                                           context['description'], 'problem')

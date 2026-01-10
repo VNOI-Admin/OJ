@@ -34,7 +34,7 @@
                                     <i class="attempted-problem-color fa fa-frown-o"></i>
                                 </a>
                             {% endif %}
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.effective_name or problem.i18n_name or problem.name }}</a>
                         </h2>
                         <a href="{{ url('problem_submit', problem.code) }}" class="button" style="display: inline; margin: auto 0;">
                             {{ _('Submit') }}
@@ -47,7 +47,9 @@
                         <p><strong>{{ _('Points:') }}</strong> {{ problem.points }}</p>
                     </div>
                 </div>
+                {% with effective_pdf_url=problem.effective_pdf_url, description=problem.effective_description %}
                 {% include "problem/problem-detail.html" %}
+                {% endwith %}
                 <hr>
             </div>
         </div>

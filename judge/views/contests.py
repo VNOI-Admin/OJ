@@ -304,8 +304,14 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
 
         # convert to problem points in contest instead of actual points
         points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
+        contest_problems_map = {cp.problem_id: cp for cp in self.object.contest_problems.all()}
         for idx, p in enumerate(context['contest_problems']):
             p.points = points_list[idx][0]
+            cp = contest_problems_map.get(p.id)
+            if cp:
+                p.effective_name = cp.effective_name
+                p.effective_pdf_url = cp.effective_pdf_url
+                p.effective_description = cp.effective_description
 
         context['metadata'] = {
             'has_public_editorials': any(
@@ -362,8 +368,14 @@ class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
 
         # convert to problem points in contest instead of actual points
         points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
+        contest_problems_map = {cp.problem_id: cp for cp in self.object.contest_problems.all()}
         for idx, p in enumerate(context['contest_problems']):
             p.points = points_list[idx][0]
+            cp = contest_problems_map.get(p.id)
+            if cp:
+                p.effective_name = cp.effective_name
+                p.effective_pdf_url = cp.effective_pdf_url
+                p.effective_description = cp.effective_description
 
         authenticated = self.request.user.is_authenticated
         context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []

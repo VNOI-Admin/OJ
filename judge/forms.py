@@ -682,16 +682,34 @@ class ProposeContestProblemForm(ModelForm):
 
         self.fields['problem'].queryset = Problem.get_visible_problems(self.user)
 
+    statement_file = forms.FileField(
+        required=False,
+        label=_('Statement file (PDF)'),
+        help_text=_('Upload a PDF to override the problem statement for this contest.'),
+    )
+
+    def save(self, commit=True):
+        instance = super(ProposeContestProblemForm, self).save(commit=False)
+        statement_file = self.cleaned_data.get('statement_file')
+        if statement_file:
+            from judge.views.widgets import pdf_statement_uploader
+            instance.pdf_url_override = pdf_statement_uploader(statement_file)
+        if commit:
+            instance.save()
+        return instance
+
     class Meta:
         model = ContestProblem
         verbose_name = _('Problem')
         verbose_name_plural = 'Problems'
         fields = (
             'problem', 'points', 'order', 'max_submissions',
+            'name_override', 'pdf_url_override', 'description_override',
         )
 
         widgets = {
             'problem': HeavySelect2Widget(data_view='problem_select2', attrs={'style': 'width: 100%'}),
+            'description_override': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('problem_preview')}),
         }
 
         error_messages = {

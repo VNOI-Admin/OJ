@@ -251,9 +251,9 @@
                         {% endif %}
                         <td style="text-align: left; padding-left: 2em;">
                             {% if can_view_all_problems or problem.is_public %}
-                                <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                                <a href="{{ url('problem_detail', problem.code) }}">{{ problem.effective_name or problem.i18n_name or problem.name }}</a>
                             {% else %}
-                                {{ problem.i18n_name or problem.name }}
+                                {{ problem.effective_name or problem.i18n_name or problem.name }}
                             {% endif %}
                         </td>
                         {% if not is_ICPC_format %}
