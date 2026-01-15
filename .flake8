@@ -26,4 +26,3 @@ exclude =
     # is actually a fragment to be included by settings.py
     ./.ci.settings.py,
     fc_*
-    _mytempfile/*

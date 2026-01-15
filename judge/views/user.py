@@ -1,4 +1,3 @@
-import csv
 import datetime
 import itertools
 import json
@@ -9,7 +8,7 @@ import pytz
 from django.conf import settings
 from django.contrib.auth import logout as auth_logout
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission, User
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetView, redirect_to_login
 from django.contrib.contenttypes.models import ContentType
@@ -33,8 +32,8 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from reversion import revisions
 
-from judge.forms import BatchUserUploadForm, CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, \
-    UserForm, newsletter_id
+from judge.forms import CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
+    newsletter_id
 from judge.models import BlogPost, Organization, Profile, Submission
 from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
@@ -47,15 +46,13 @@ from judge.utils.pwned import PwnedPasswordsValidator
 from judge.utils.ranker import ranker
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
-from judge.utils.user import add_user
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message
 from judge.views.blog import PostListBase
 from .contests import ContestRanking
 
-
 __all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserCommentPage', 'UserDownloadData', 'UserPrepareData',
-           'users', 'edit_profile', 'BatchUserUploadView']
+           'users', 'edit_profile']
 
 
 def remap_keys(iterable, mapping):
@@ -482,42 +479,6 @@ class UserDownloadData(LoginRequiredMixin, UserDataMixin, View):
         response['Content-Type'] = 'application/zip'
         response['Content-Disposition'] = 'attachment; filename=%s-data.zip' % self.request.user.username
         return response
-
-
-class BatchUserUploadView(PermissionRequiredMixin, TitleMixin, FormView):
-    template_name = 'user/batch_upload.html'
-    form_class = BatchUserUploadForm
-    permission_required = 'auth.add_user'
-    title = _('Batch User Upload')
-
-    def form_valid(self, form):
-        csv_file = form.cleaned_data['csv_file']
-
-        csv_file.seek(0)
-        content = csv_file.read().decode('utf-8')
-
-        reader = csv.DictReader(content.splitlines())
-
-        results = []
-        for row in reader:
-            username = row.get('username', '').strip()
-            fullname = row.get('fullname', '').strip()
-            # TODO: we can add a flag to overwrite existing users later
-            password = add_user(username, fullname, overwrite_existing=False)
-
-            results.append({
-                'username': username,
-                'fullname': fullname,
-                'password': password,
-            })
-
-        context = self.get_context_data()
-        context.update({
-            'results': results,
-            'processed': True,
-        })
-
-        return self.render_to_response(context)
 
 
 @login_required

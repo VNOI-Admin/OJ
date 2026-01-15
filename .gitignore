@@ -43,4 +43,3 @@ tmp.sh
 fc_*
 local_urls.py
 celerybeat-schedule.*
-docker-compose.yml
