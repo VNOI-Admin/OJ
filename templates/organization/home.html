@@ -125,6 +125,11 @@
                             <a href="{{ url('edit_organization', organization.slug) }}">{{ _('Edit organization') }}</a>
                         </div>
                     {% endif %}
+                    {% if perms.judge.add_profile %}
+                        <div>
+                            <a href="{{ url('bulk_user_create') }}">{{ _('Tạo tài khoản cho thí sinh') }}</a>
+                        </div>
+                    {% endif %}
                     {% if perms.judge.change_organization %}
                         <div>
                             <a href="{{ url('admin:judge_organization_change', organization.id) }}">{{ _('Admin organization') }}</a>

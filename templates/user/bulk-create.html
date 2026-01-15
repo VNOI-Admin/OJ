@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block media %}
+    {{ form.media.css }}
+    <style>
+        .centered-form {
+            padding-top: 15px;
+            max-width: 600px;
+        }
+
+        .form-area {
+            display: block;
+        }
+
+        .form-field {
+            display: flex;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .form-field label {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .form-field input[type="file"] {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .help-text {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #666;
+        }
+
+        .validation-errors {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .validation-errors ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .validation-errors li {
+            margin-bottom: 5px;
+        }
+
+        .instructions {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+
+        .instructions h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        .instructions ul {
+            margin-bottom: 0;
+            padding-left: 20px;
+        }
+
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .button:hover {
+            background-color: #0056b3;
+        }
+
+        @media (max-width: 600px) {
+            .form-field {
+                flex-direction: column;
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block js_media %}
+    {{ form.media.js }}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            $('#bulk-create-form').submit(function() {
+                var fileInput = $('#id_excel_file')[0];
+                if (!fileInput.files.length) {
+                    alert("Vui lòng chọn một tệp Excel để tải lên.");
+                    return false;
+                }
+
+                var fileName = fileInput.files[0].name;
+                var extension = fileName.split('.').pop().toLowerCase();
+                if (extension !== 'xlsx' && extension !== 'xls') {
+                    alert("Vui lòng chọn một tệp Excel hợp lệ (.xlsx hoặc .xls).");
+                    return false;
+                }
+
+                return true;
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div class="centered-form">
+        <h2>{{ _('Bulk Create Users') }}</h2>
+
+        {% if in_progress_url %}
+            <div class="alert alert-warning">
+                {{ _('Đang tạo người dùng...') }}
+            </div>
+            <a class="button" href="{{ in_progress_url }}">{{ _('Theo dõi tiến trình') }}</a>
+        {% else %}
+            <div class="instructions">
+                <h4>Hướng dẫn</h4>
+                <p>Tải lên một tệp Excel (.xlsx hoặc .xls) để tạo nhiều tài khoản người dùng cùng lúc.</p>
+                <p><strong>Định dạng tệp Excel:</strong></p>
+                <ul>
+                    <li>Dòng đầu tiên phải chứa các tiêu đề: username, name</li>
+                    <li>Username: chỉ gồm chữ cái, số, dấu chấm, dấu gạch ngang, dấu gạch dưới</li>
+                    <li>Name: họ tên/tên đội (sẽ được hiển thị lên bảng xếp hạng)</li>
+                </ul>
+                <p>Sau khi tạo thành công, bạn sẽ có thể tải về một tệp Excel chứa mật khẩu được tạo ra.</p>
+                <p> Tệp mẫu: <a href="/martor/example.xlsx">Tải xuống</a></p>
+            </div>
+
+            {% if validation_errors %}
+                <div class="validation-errors">
+                    <h4>Lỗi</h4>
+                    <p>Có các lỗi sau đã xảy ra:</p>
+                    <ul>
+                        {% for error in validation_errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form id="bulk-create-form" action="" method="post" enctype="multipart/form-data" class="form-area">
+                {% csrf_token %}
+
+                <div class="form-field">
+                    <div>
+                        <label for="{{ form.excel_file.id_for_label }}">{{ form.excel_file.label }}</label>
+                        {{ form.excel_file }}
+                        {% if form.excel_file.help_text %}
+                            <div class="help-text">{{ form.excel_file.help_text }}</div>
+                        {% endif %}
+                        {% if form.excel_file.errors %}
+                            <div class="error">{{ form.excel_file.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="form-field">
+                    <button type="submit" class="button">Tải lên và tạo người dùng</button>
+                </div>
+            </form>
+        {% endif %}
+        {% if is_finished %}
+            <div class="alert alert-warning">
+                {{ _('Dữ liệu đã sẵn sàng!') }}
+            </div>
+            <a class="button aux-download-action" href="{{ url('bulk_user_download', task_id) }}">{{ _('Tải xuống') }}</a>
+        {% endif %}
+    </div>
+{% endblock %}

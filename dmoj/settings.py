@@ -66,6 +66,8 @@ VNOJ_CP_PROBLEM = 20  # Each suggested problem equal 20 CP
 
 VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
 
+VNOJ_DEFAULT_CONTEST_ORG_PK = None
+
 VNOJ_DISPLAY_RANKS = (
     ('user', _('Normal User')),
     ('setter', _('Problem Setter')),
