@@ -281,7 +281,7 @@ class PostList(PostListBase):
         context['current_contests'] = visible_contests.filter(start_time__lte=now, end_time__gt=now)
         context['future_contests'] = visible_contests.filter(start_time__gt=now)
 
-        context['top_pp_users'] = self.get_top_pp_users()
+        context['top_rated_users'] = self.get_top_rated_users()
         context['top_contrib'] = self.get_top_contributors()
 
         if self.request.user.is_authenticated:
@@ -305,11 +305,10 @@ class PostList(PostListBase):
 
         return context
 
-    def get_top_pp_users(self):
-        return (Profile.objects.order_by('-performance_points')
-                .filter(performance_points__gt=0, is_unlisted=False)
-                .only('user', 'performance_points', 'display_rank', 'display_badge', 'rating',
-                      'username_display_override')
+    def get_top_rated_users(self):
+        return (Profile.objects.filter(rating__isnull=False, is_unlisted=False)
+                .order_by('-rating')
+                .only('user', 'rating', 'display_rank', 'display_badge', 'username_display_override')
                 .select_related('user', 'display_badge')
                 [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
 
