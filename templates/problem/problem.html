@@ -3,6 +3,9 @@
     {% if not comment_lock %}
         {% include "comments/media-css.html" %}
     {% endif %}
+    {% if request.user.is_authenticated and form %}
+        {{ form.media.css }}
+    {% endif %}
     <style>
         .title-state {
             font-size: 2em;
@@ -51,12 +54,75 @@
             position: absolute;
             left: -999em;
         }
+
+        /* Tab Styles */
+        .problem-tabs {
+            margin-top: 2em;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .problem-tabs ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+        }
+
+        .problem-tabs li {
+            margin-right: 5px;
+        }
+
+        .problem-tabs a {
+            display: block;
+            padding: 12px 24px;
+            text-decoration: none;
+            color: #333;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 5px 5px 0 0;
+            transition: all 0.3s ease;
+        }
+
+        .problem-tabs a:hover {
+            background: #e8e8e8;
+        }
+
+        .problem-tabs a.active {
+            background: #fff;
+            color: #007bff;
+            font-weight: bold;
+            border-color: #ddd;
+            border-bottom: 2px solid #fff;
+            margin-bottom: -2px;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        {% if request.user.is_authenticated %}
+        .submit-tab-content {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        {% endif %}
     </style>
 {% endblock %}
 
 {% block content_js_media %}
     {% if not comment_lock %}
         {% include "comments/media-js.html" %}
+    {% endif %}
+    {% if request.user.is_authenticated and form %}
+        {% include "problem/submit-js.html" %}
     {% endif %}
     <script type="text/javascript">
         $(function() {
@@ -70,6 +136,40 @@
                 }
                 frames['raw_problem'].print();
             });
+
+            // Tab switching functionality
+            $('.problem-tabs a').click(function(e) {
+                e.preventDefault();
+                var target = $(this).attr('href');
+
+                // Update active tab
+                $('.problem-tabs a').removeClass('active');
+                $(this).addClass('active');
+
+                // Update active content
+                $('.tab-content').removeClass('active');
+                $(target).addClass('active');
+
+                // Update URL hash without scrolling
+                if (history.pushState) {
+                    history.pushState(null, null, target);
+                } else {
+                    location.hash = target;
+                }
+            });
+
+            // Handle initial hash in URL
+            var hash = window.location.hash;
+            if (hash && $(hash).length) {
+                $('.problem-tabs a[href="' + hash + '"]').click();
+            } else {
+                // Default to submit tab if user is authenticated
+                {% if request.user.is_authenticated %}
+                $('.problem-tabs a[href="#submit"]').click();
+                {% else %}
+                $('.problem-tabs a[href="#comments"]').click();
+                {% endif %}
+            }
         });
     </script>
 {% endblock %}
@@ -379,25 +479,44 @@
 {% endblock %}
 
 {% block comments %}
-    {% if comment_lock %}
-        <div class="clarifications-area">
-            <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
-            {% if has_clarifications %}
-                {% for clarification in clarifications %}
-                    <div class="problem-clarification">
-                        <div class="time">{{ relative_time(clarification.date) }}</div>
-                        <span class="body">
-                            {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
-                        </span>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p class="no-comments-message">{{ _('No clarifications have been made at this time.') }}</p>
+    <div class="problem-tabs">
+        <ul>
+            {% if request.user.is_authenticated %}
+                <li><a href="#submit" class="active">{{ _('Submit Solution') }}</a></li>
             {% endif %}
+            <li><a href="#comments" {% if not request.user.is_authenticated %}class="active"{% endif %}>{{ _('Comments') }}</a></li>
+        </ul>
+    </div>
+
+    {% if request.user.is_authenticated %}
+        <div id="submit" class="tab-content active">
+            <div class="submit-tab-content">
+                {% include "problem/submit-form.html" %}
+            </div>
         </div>
-    {% else %}
-        {% with comment_warn_code=true %}
-            {% include "comments/list.html" %}
-        {% endwith %}
     {% endif %}
+
+    <div id="comments" class="tab-content {% if not request.user.is_authenticated %}active{% endif %}">
+        {% if comment_lock %}
+            <div class="clarifications-area">
+                <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
+                {% if has_clarifications %}
+                    {% for clarification in clarifications %}
+                        <div class="problem-clarification">
+                            <div class="time">{{ relative_time(clarification.date) }}</div>
+                            <span class="body">
+                                {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="no-comments-message">{{ _('No clarifications have been made at this time.') }}</p>
+                {% endif %}
+            </div>
+        {% else %}
+            {% with comment_warn_code=true %}
+                {% include "comments/list.html" %}
+            {% endwith %}
+        {% endif %}
+    </div>
 {% endblock %}
