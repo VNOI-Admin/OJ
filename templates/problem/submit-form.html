@@ -1,8 +1,3 @@
-{# This template contains just the form body, can be included in submit.html or problem.html #}
-{% if not inline_mode %}
-    <br>
-{% endif %}
-
 {% if not no_judges %}
     {% if default_lang not in form.fields.language.queryset %}
         <div class="alert alert-warning alert-dismissable">
@@ -31,7 +26,7 @@
     {% endif %}
 {% endif %}
 
-<form id="problem_submit" action="{{ url('problem_submit', problem.code) }}" method="post" class="form-area" enctype="multipart/form-data">
+<form id="problem_submit" action="" method="post" class="form-area" enctype="multipart/form-data">
     {% csrf_token %}
     {{ form.non_field_errors() }}
     <div id="submit-wrapper">

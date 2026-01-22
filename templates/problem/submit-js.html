@@ -1,3 +1,4 @@
+<script type="text/javascript" src="{{ ACE_URL }}/ace.js"></script>
 {{ form.media.js }}
 {% compress js %}
     <script type="text/javascript">
@@ -135,105 +136,8 @@
                     alert({{ _('Your source code must contain at most 65536 characters.')|htmltojs }});
                     event.preventDefault();
                     $('#problem_submit').find(':submit').attr('disabled', false);
-                    return false;
-                }
-                
-                if ($('#submit-solution-section').length > 0) {
-                    event.preventDefault();
-                    var $form = $(this);
-                    var $submitBtn = $form.find(':submit');
-                    var formData = new FormData(this);
-                    
-                    $submitBtn.prop('disabled', true).val({{ _('Submitting...')|htmltojs }});
-                    
-                    $('#submission-result').remove();
-                    
-                    $.ajax({
-                        url: $form.attr('action'),
-                        type: 'POST',
-                        data: formData,
-                        processData: false,
-                        contentType: false,
-                        success: function(response, status, xhr) {
-                            var redirectUrl = xhr.getResponseHeader('X-Submission-URL') || '/submissions/';
-                            
-                            if (typeof response === 'string' && response.indexOf('form-area') !== -1) {
-                                var $resultDiv = $('<div id="submission-result" class="alert alert-danger"></div>');
-                                $resultDiv.html('<h3>{{ _("Submission Error") }}</h3>' + $(response).find('.errorlist, .alert').html());
-                                $form.after($resultDiv);
-                                $submitBtn.prop('disabled', false).val({{ _('Submit!')|htmltojs }});
-                            } else {
-                                var match = redirectUrl.match(/\/submission[s]?\/(\d+)/);
-                                if (match) {
-                                    var submissionId = match[1];
-                                    loadSubmissionStatus(submissionId, $form, $submitBtn);
-                                } else {
-                                    window.location.href = redirectUrl;
-                                }
-                            }
-                        },
-                        error: function(xhr) {
-                            var $resultDiv = $('<div id="submission-result" class="alert alert-danger"></div>');
-                            if (xhr.status === 429) {
-                                $resultDiv.html('<h3>{{ _("Too Many Submissions") }}</h3><p>{{ _("You submitted too many submissions.") }}</p>');
-                            } else {
-                                $resultDiv.html('<h3>{{ _("Submission Error") }}</h3><p>' + (xhr.responseText || {{ _('An error occurred while submitting.')|htmltojs }}) + '</p>');
-                            }
-                            $form.after($resultDiv);
-                            $submitBtn.prop('disabled', false).val({{ _('Submit!')|htmltojs }});
-                        }
-                    });
-                    
-                    return false;
                 }
             });
-            
-            function loadSubmissionStatus(submissionId, $form, $submitBtn) {
-                var $resultDiv = $('<div id="submission-result" class="content-description"></div>');
-                $resultDiv.html('<h3>{{ _("Submission Status") }}</h3><p>{{ _("Loading...") }}</p>');
-                $form.after($resultDiv);
-                
-                $.get('/submission/' + submissionId, function(html) {
-                    var $html = $(html);
-                    var $content = $html.find('#content-left');
-                    if ($content.length) {
-                        $resultDiv.html($content.html());
-                        
-                        pollSubmissionStatus(submissionId, $resultDiv);
-                    } else {
-                        $resultDiv.html('<p>{{ _("Submission received!") }} <a href="/submission/' + submissionId + '" target="_blank">{{ _("View submission") }}</a></p>');
-                    }
-                    
-                    $submitBtn.prop('disabled', false).val({{ _('Submit!')|htmltojs }});
-                }).fail(function() {
-                    $resultDiv.html('<p>{{ _("Submission received!") }} <a href="/submission/' + submissionId + '" target="_blank">{{ _("View submission") }}</a></p>');
-                    $submitBtn.prop('disabled', false).val({{ _('Submit!')|htmltojs }});
-                });
-            }
-            
-            function pollSubmissionStatus(submissionId, $resultDiv) {
-                var pollInterval = setInterval(function() {
-                    $.get('/submission/' + submissionId, function(html) {
-                        var $html = $(html);
-                        var $content = $html.find('#content-left');
-                        if ($content.length) {
-                            var $status = $content.find('.submit-bar .status');
-                            $resultDiv.html($content.html());
-                            
-                            var statusText = $status.text();
-                            if (statusText && !statusText.includes('{{ _("Judging") }}') && !statusText.includes('{{ _("Pending") }}')) {
-                                clearInterval(pollInterval);
-                            }
-                        }
-                    }).fail(function() {
-                        clearInterval(pollInterval);
-                    });
-                }, 2000);
-                
-                setTimeout(function() {
-                    clearInterval(pollInterval);
-                }, 300000);
-            }
 
             function on_language_change() {
                 obj = document.getElementById('id_language');

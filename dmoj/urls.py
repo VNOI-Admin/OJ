@@ -123,7 +123,6 @@ urlpatterns = [
 
     path('problem/<str:problem>', include([
         path('', problem.ProblemDetail.as_view(), name='problem_detail'),
-        path('/comments', problem.ProblemComments.as_view(), name='problem_comments'),
         path('/edit', problem.ProblemEdit.as_view(), name='problem_edit'),
         path('/edit-type-group', problem.ProblemEditTypeGroup.as_view(), name='problem_edit_type_group'),
         path('/editorial', problem.ProblemSolution.as_view(), name='problem_editorial'),

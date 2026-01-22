@@ -165,7 +165,200 @@ class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMi
             ))
 
 
-class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
+class ProblemSubmitMixin:
+    @cached_property
+    def contest_problem(self):
+        if not self.request.user.is_authenticated or self.request.profile.current_contest is None:
+            return None
+        return get_contest_problem(self.object, self.request.profile)
+
+    @cached_property
+    def remaining_submission_count(self):
+        if not self.request.user.is_authenticated:
+            return None
+        max_subs = self.contest_problem and self.contest_problem.max_submissions
+        if max_subs is None:
+            return None
+        # When an IE submission is rejudged into a non-IE status, it will count towards the
+        # submission limit. We max with 0 to ensure that `remaining_submission_count` returns
+        # a non-negative integer, which is required for future checks in this view.
+        return max(
+            0,
+            max_subs - get_contest_submission_count(
+                self.object, self.request.profile, self.request.profile.current_contest.virtual,
+            ),
+        )
+
+    @cached_property
+    def default_language(self):
+        if not self.request.user.is_authenticated:
+            return None
+        # If old_submission exists (for resubmit), use its language
+        if hasattr(self, 'old_submission') and self.old_submission is not None:
+            return self.old_submission.language
+        return self.request.profile.language
+
+    def get_submit_form(self, **kwargs):
+        if not self.request.user.is_authenticated:
+            return None
+
+        if self.request.method == 'POST':
+            form = ProblemSubmitForm(
+                self.request.POST,
+                self.request.FILES,
+                instance=Submission(user=self.request.profile, problem=self.object),
+            )
+        else:
+            initial = kwargs.get('initial', {})
+            if 'language' not in initial:
+                initial['language'] = self.default_language
+            # For resubmit, include source code
+            if hasattr(self, 'old_submission') and self.old_submission is not None:
+                initial['source'] = self.old_submission.source.source
+
+            form = ProblemSubmitForm(
+                instance=Submission(user=self.request.profile, problem=self.object),
+                initial=initial,
+            )
+
+        # Set judge choices
+        if self.object.is_editable_by(self.request.user):
+            form.fields['judge'].choices = tuple(
+                Judge.objects.filter(online=True, problems=self.object).values_list('name', 'name'),
+            )
+        else:
+            form.fields['judge'].choices = ()
+
+        # Set language queryset
+        form.fields['language'].queryset = (
+            self.object.usable_languages.order_by('name', 'key')
+            .prefetch_related(Prefetch('runtimeversion_set', RuntimeVersion.objects.order_by('priority')))
+        )
+
+        # Set ACE editor settings
+        form_data = getattr(form, 'cleaned_data', form.initial)
+        if 'language' in form_data and form_data['language']:
+            form.fields['source'].widget.mode = form_data['language'].ace
+        if self.request.user.is_authenticated:
+            form.fields['source'].widget.theme = self.request.profile.resolved_ace_theme
+
+        return form
+
+    def get_submit_context(self):
+        return {
+            'form': self.get_submit_form(),
+            'langs': Language.objects.all(),
+            'submission_limit': self.contest_problem and self.contest_problem.max_submissions,
+            'submissions_left': self.remaining_submission_count,
+            'ACE_URL': settings.ACE_URL,
+            'default_lang': self.default_language,
+        }
+
+    def handle_submission_post(self, request):
+        form = self.get_submit_form()
+
+        if not form.is_valid():
+            return None, form  # Return None to indicate validation failure
+
+        # Validation checks
+        if (
+            not request.user.has_perm('judge.spam_submission') and
+            Submission.objects.filter(user=request.profile, rejudged_date__isnull=True)
+                              .exclude(status__in=['D', 'IE', 'CE', 'AB']).count() >= settings.DMOJ_SUBMISSION_LIMIT
+        ):
+            return HttpResponse(format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429), None
+
+        if not self.object.allowed_languages.filter(id=form.cleaned_data['language'].id).exists():
+            raise PermissionDenied()
+
+        if not request.user.is_superuser and self.object.banned_users.filter(id=request.profile.id).exists():
+            return generic_message(request, _('Banned from submitting'),
+                                   _('You have been declared persona non grata for this problem. '
+                                     'You are permanently barred from submitting to this problem.')), None
+
+        # Must check for zero and not None. None means infinite submissions remaining.
+        if self.remaining_submission_count == 0:
+            return generic_message(request, _('Too many submissions'),
+                                   _('You have exceeded the submission limit for this problem.')), None
+
+        # Organization credit check
+        if settings.VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION:
+            # check if the problem belongs to any organization
+            organizations = []
+            if self.object.is_organization_private:
+                organizations = self.object.organizations.all()
+
+            if len(organizations) == 0:
+                # check if the contest belongs to any organization
+                if self.contest_problem is not None:
+                    contest_object = request.profile.current_contest.contest
+
+                    if contest_object.is_organization_private:
+                        organizations = contest_object.organizations.all()
+
+            # check if org have credit to execute this submission
+            for org in organizations:
+                if not org.has_credit_left():
+                    org_name = org.name
+                    return generic_message(
+                        request,
+                        _('No credit'),
+                        _(
+                            'The organization %s has no credit left to execute this submission. '
+                            'Ask the organization to buy more credit.',
+                        )
+                        % org_name,
+                    ), None
+
+        # Create submission
+        with transaction.atomic():
+            new_submission = form.save(commit=False)
+
+            contest_problem = self.contest_problem
+            if contest_problem is not None:
+                # Use the contest object from current_contest.contest because we already use it
+                # in profile.update_contest().
+                new_submission.contest_object = request.profile.current_contest.contest
+                if request.profile.current_contest.live:
+                    new_submission.locked_after = new_submission.contest_object.locked_after
+                new_submission.save()
+                ContestSubmission(
+                    submission=new_submission,
+                    problem=contest_problem,
+                    participation=request.profile.current_contest,
+                ).save()
+            else:
+                new_submission.save()
+
+            submission_file = form.files.get('submission_file', None)
+            source_url = submission_uploader(
+                submission_file=submission_file,
+                problem_code=new_submission.problem.code,
+                user_id=new_submission.user.user.id,
+            ) if submission_file else ''
+
+            source = SubmissionSource(submission=new_submission, source=form.cleaned_data['source'] + source_url)
+            source.save()
+
+        # Save a query.
+        new_submission.source = source
+        new_submission.judge(force_judge=True, judge_id=form.cleaned_data['judge'])
+
+        # In contest mode, we should log the ip
+        if settings.VNOJ_OFFICIAL_CONTEST_MODE:
+            ip = request.META['REMOTE_ADDR']
+            # I didn't log the timestamp here because
+            # the logger can handle it.
+            user_submit_ip_logger.info(
+                '%s,%s,%s',
+                request.user.username,
+                ip,
+                new_submission.problem.code,
+            )
+
+        return HttpResponseRedirect(reverse('submission_status', args=(new_submission.id,))), None
+
+class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, CommentedDetailView):
     context_object_name = 'problem'
     template_name = 'problem/problem.html'
 
@@ -244,67 +437,29 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, CommentedDetailView):
         context['meta_description'] = self.object.summary or metadata[0]
         context['og_image'] = self.object.og_image or metadata[1]
 
-        # Add submission form context
-        if authed:
-            from judge.forms import ProblemSubmitForm
-            submission_instance = Submission(user=user.profile, problem=self.object)
-            judge_choices = ()
-            if can_edit:
-                judge_choices = tuple(Judge.objects.filter(online=True, problems=self.object).
-                                      values_list('name', 'name'))
-
-            context['form'] = ProblemSubmitForm(instance=submission_instance, judge_choices=judge_choices,
-                                                initial={'language': user.profile.language})
-            context['form'].fields['language'].queryset = self.object.usable_languages.order_by(
-                'name', 'key').prefetch_related(Prefetch('runtimeversion_set',
-                                                         RuntimeVersion.objects.order_by('priority')))
-            context['form'].fields['source'].widget.theme = user.profile.resolved_ace_theme
-            context['no_judges'] = not context['form'].fields['language'].queryset
-            context['default_lang'] = user.profile.language
-            context['ACE_URL'] = settings.ACE_URL
+        if user.is_authenticated:
+            submit_context = self.get_submit_context()
+            context.update(submit_context)
+            context['no_judges'] = not context['form'].fields['language'].queryset if context.get('form') else True
 
         return context
 
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
 
-class ProblemComments(ProblemMixin, SolvedProblemMixin, TitleMixin, CommentedDetailView):
-    context_object_name = 'problem'
-    template_name = 'problem/comments.html'
+        # Check if this is a submission (not a comment)
+        if 'source' in request.POST or 'submission_file' in request.FILES:
+            if not request.user.is_authenticated:
+                return HttpResponseForbidden()
 
-    def get_title(self):
-        return _('%s') % self.object.name
+            response, failed_form = self.handle_submission_post(request)
+            if failed_form:
+                # Re-render with form errors
+                return self.render_to_response(self.get_context_data(object=self.object))
+            return response
 
-    def get_object(self, queryset=None):
-        problem = super(ProblemComments, self).get_object(queryset)
-        user = self.request.user
-        authed = user.is_authenticated
-        self.contest_problem = (None if not authed or user.profile.current_contest is None else
-                                get_contest_problem(problem, user.profile))
-        return problem
-
-    def is_comment_locked(self):
-        if self.contest_problem and self.contest_problem.contest.use_clarifications:
-            return True
-        return super(ProblemComments, self).is_comment_locked()
-
-    def get_comment_page(self):
-        return 'p:%s' % self.object.code
-
-    def get_context_data(self, **kwargs):
-        # Ensure comment_form is in kwargs if not already present
-        if 'comment_form' not in kwargs:
-            from judge.forms import CommentForm
-            kwargs['comment_form'] = CommentForm(self.request,
-                                                 initial={'page': self.get_comment_page(), 'parent': None})
-
-        context = super(ProblemComments, self).get_context_data(**kwargs)
-
-        # Add clarifications context if in contest mode
-        if self.contest_problem and self.contest_problem.contest.use_clarifications:
-            clarifications = self.object.clarifications
-            context['has_clarifications'] = clarifications.count() > 0
-            context['clarifications'] = clarifications.order_by('-date')
-
-        return context
+        # Otherwise, handle as comment
+        return super(ProblemDetail, self).post(request, *args, **kwargs)
 
 
 class LatexError(Exception):
@@ -613,38 +768,9 @@ class RandomProblem(ProblemList):
 user_logger = logging.getLogger('judge.user')
 user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
 
-
-class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFormView):
+class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, ProblemSubmitMixin, SingleObjectFormView):
     template_name = 'problem/submit.html'
     form_class = ProblemSubmitForm
-
-    @cached_property
-    def contest_problem(self):
-        if self.request.profile.current_contest is None:
-            return None
-        return get_contest_problem(self.object, self.request.profile)
-
-    @cached_property
-    def remaining_submission_count(self):
-        max_subs = self.contest_problem and self.contest_problem.max_submissions
-        if max_subs is None:
-            return None
-        # When an IE submission is rejudged into a non-IE status, it will count towards the
-        # submission limit. We max with 0 to ensure that `remaining_submission_count` returns
-        # a non-negative integer, which is required for future checks in this view.
-        return max(
-            0,
-            max_subs - get_contest_submission_count(
-                self.object, self.request.profile, self.request.profile.current_contest.virtual,
-            ),
-        )
-
-    @cached_property
-    def default_language(self):
-        # If the old submission exists, use its language, otherwise use the user's default language.
-        if self.old_submission is not None:
-            return self.old_submission.language
-        return self.request.profile.language
 
     def get_content_title(self):
         return mark_safe(
@@ -658,148 +784,24 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
     def get_title(self):
         return _('Submit to %s') % self.object.translated_name(self.request.LANGUAGE_CODE)
 
-    def get_initial(self):
-        initial = {'language': self.default_language}
-        if self.old_submission is not None:
-            initial['source'] = self.old_submission.source.source
-        return initial
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs['instance'] = Submission(user=self.request.profile, problem=self.object)
-
-        if self.object.is_editable_by(self.request.user):
-            kwargs['judge_choices'] = tuple(
-                Judge.objects.filter(online=True, problems=self.object).values_list('name', 'name'),
-            )
-        else:
-            kwargs['judge_choices'] = ()
-
-        return kwargs
-
     def get_form(self, form_class=None):
-        form = super().get_form(form_class)
-
-        form.fields['language'].queryset = (
-            self.object.usable_languages.order_by('name', 'key')
-            .prefetch_related(Prefetch('runtimeversion_set', RuntimeVersion.objects.order_by('priority')))
-        )
-
-        form_data = getattr(form, 'cleaned_data', form.initial)
-        if 'language' in form_data:
-            form.fields['source'].widget.mode = form_data['language'].ace
-        form.fields['source'].widget.theme = self.request.profile.resolved_ace_theme
-
-        return form
-
-    def get_success_url(self):
-        return reverse('submission_status', args=(self.new_submission.id,))
-
-    def form_valid(self, form):
-        if (
-            not self.request.user.has_perm('judge.spam_submission') and
-            Submission.objects.filter(user=self.request.profile, rejudged_date__isnull=True)
-                              .exclude(status__in=['D', 'IE', 'CE', 'AB']).count() >= settings.DMOJ_SUBMISSION_LIMIT
-        ):
-            return HttpResponse(format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429)
-        if not self.object.allowed_languages.filter(id=form.cleaned_data['language'].id).exists():
-            raise PermissionDenied()
-        if not self.request.user.is_superuser and self.object.banned_users.filter(id=self.request.profile.id).exists():
-            return generic_message(self.request, _('Banned from submitting'),
-                                   _('You have been declared persona non grata for this problem. '
-                                     'You are permanently barred from submitting to this problem.'))
-        # Must check for zero and not None. None means infinite submissions remaining.
-        if self.remaining_submission_count == 0:
-            return generic_message(self.request, _('Too many submissions'),
-                                   _('You have exceeded the submission limit for this problem.'))
-
-        if settings.VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION:
-            # check if the problem belongs to any organization
-            organizations = []
-            if self.object.is_organization_private:
-                organizations = self.object.organizations.all()
-
-            if len(organizations) == 0:
-                # check if the contest belongs to any organization
-                if self.contest_problem is not None:
-                    contest_object = self.request.profile.current_contest.contest
-
-                    if contest_object.is_organization_private:
-                        organizations = contest_object.organizations.all()
-
-            # check if org have credit to execute this submission
-            for org in organizations:
-                if not org.has_credit_left():
-                    org_name = org.name
-                    return generic_message(
-                        self.request,
-                        _('No credit'),
-                        _(
-                            'The organization %s has no credit left to execute this submission. '
-                            'Ask the organization to buy more credit.',
-                        )
-                        % org_name,
-                    )
-
-        with transaction.atomic():
-            self.new_submission = form.save(commit=False)
-
-            contest_problem = self.contest_problem
-            if contest_problem is not None:
-                # Use the contest object from current_contest.contest because we already use it
-                # in profile.update_contest().
-                self.new_submission.contest_object = self.request.profile.current_contest.contest
-                if self.request.profile.current_contest.live:
-                    self.new_submission.locked_after = self.new_submission.contest_object.locked_after
-                self.new_submission.save()
-                ContestSubmission(
-                    submission=self.new_submission,
-                    problem=contest_problem,
-                    participation=self.request.profile.current_contest,
-                ).save()
-            else:
-                self.new_submission.save()
-
-            submission_file = form.files.get('submission_file', None)
-            source_url = submission_uploader(
-                submission_file=submission_file,
-                problem_code=self.new_submission.problem.code,
-                user_id=self.new_submission.user.user.id,
-            ) if submission_file else ''
-
-            source = SubmissionSource(submission=self.new_submission, source=form.cleaned_data['source'] + source_url)
-            source.save()
-
-        # Save a query.
-        self.new_submission.source = source
-        self.new_submission.judge(force_judge=True, judge_id=form.cleaned_data['judge'])
-
-        # In contest mode, we should log the ip
-        if settings.VNOJ_OFFICIAL_CONTEST_MODE:
-            ip = self.request.META['REMOTE_ADDR']
-            # I didn't log the timestamp here because
-            # the logger can handle it.
-            user_submit_ip_logger.info(
-                '%s,%s,%s',
-                self.request.user.username,
-                ip,
-                self.new_submission.problem.code,
-            )
-
-        response = super().form_valid(form)
-        if self.request.META.get('HTTP_X_REQUESTED_WITH') == 'XMLHttpRequest':
-            response['X-Submission-URL'] = self.get_success_url()
-        return response
+        return self.get_submit_form()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['langs'] = Language.objects.all()
-        context['no_judges'] = not context['form'].fields['language'].queryset
-        context['submission_limit'] = self.contest_problem and self.contest_problem.max_submissions
-        context['submissions_left'] = self.remaining_submission_count
-        context['ACE_URL'] = settings.ACE_URL
-        context['default_lang'] = self.default_language
+        context.update(self.get_submit_context())
+        context['no_judges'] = not context['form'].fields['language'].queryset if context.get('form') else True
         return context
+
+    def form_valid(self, form):
+        response, failed_form = self.handle_submission_post(self.request)
+        if failed_form:
+            return self.form_invalid(failed_form)
+        return response
+
+    def get_success_url(self):
+        # This is for compatibility with the parent class
+        return reverse('submission_status', args=(1,))
 
     def post(self, request, *args, **kwargs):
         try:
