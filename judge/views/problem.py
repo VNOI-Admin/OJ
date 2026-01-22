@@ -165,6 +165,10 @@ class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMi
             ))
 
 
+user_logger = logging.getLogger('judge.user')
+user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
+
+
 class ProblemSubmitMixin:
     @cached_property
     def contest_problem(self):
@@ -357,6 +361,7 @@ class ProblemSubmitMixin:
             )
 
         return HttpResponseRedirect(reverse('submission_status', args=(new_submission.id,))), None
+
 
 class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, CommentedDetailView):
     context_object_name = 'problem'
@@ -764,9 +769,6 @@ class RandomProblem(ProblemList):
                                                     request.META['QUERY_STRING']))
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
 
-
-user_logger = logging.getLogger('judge.user')
-user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
 
 class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, ProblemSubmitMixin, SingleObjectFormView):
     template_name = 'problem/submit.html'
