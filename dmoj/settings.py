@@ -382,7 +382,13 @@ else:
                         'redirects.Redirect',
                     ],
                 },
-                ('judge.BlogPost', 'fa-rss-square'),
+                {
+                    'model': 'judge.BlogPost',
+                    'icon': 'fa-rss-square',
+                    'children': [
+                        'judge.BlogPostTag',
+                    ],
+                },
                 {
                     'model': 'judge.Comment',
                     'icon': 'fa-comment-o',
@@ -402,6 +408,7 @@ else:
 INSTALLED_APPS += (
     'django.contrib.admin',
     'judge',
+    'urlshortener',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.flatpages',

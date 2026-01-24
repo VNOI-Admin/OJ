@@ -6,6 +6,7 @@
 {% block js_media %}
     {% include "blog/media-js.html" %}
     {% include "comments/media-js.html" %}
+    <script src="{{ static('blog-toc.js') }}"></script>
     <script>
         // Reading progress bar
         window.addEventListener('scroll', function() {
@@ -33,41 +34,6 @@
 {% block body %}
 <div class="reading-progress-bar"></div>
 
-<!-- Floating actions sidebar -->
-<div class="blog-post-floating-actions" id="post-{{ post.id }}">
-    <div class="floating-vote">
-        {% if logged_in %}
-            <button class="vote-btn upvote-link{% if post.vote_score == 1 %} voted{% endif %}" 
-                    onclick="blog_upvote({{ post.id }}); return false;"
-                    title="{{ _('Upvote') }}">
-                <i class="fa fa-chevron-up"></i>
-            </button>
-        {% else %}
-            <button class="vote-btn" 
-                    onclick="alert('{{ _('Please log in to vote') | escapejs }}'); return false;"
-                    title="{{ _('Please log in to vote') }}">
-                <i class="fa fa-chevron-up"></i>
-            </button>
-        {% endif %}
-        
-        <span class="vote-count" id="post-score">{{ post.score }}</span>
-        <span class="vote-label">{{ _('votes') }}</span>
-        
-        {% if logged_in %}
-            <button class="vote-btn downvote-link{% if post.vote_score == -1 %} voted{% endif %}" 
-                    onclick="blog_downvote({{ post.id }}); return false;"
-                    title="{{ _('Downvote') }}">
-                <i class="fa fa-chevron-down"></i>
-            </button>
-        {% else %}
-            <button class="vote-btn" 
-                    onclick="alert('{{ _('Please log in to vote') | escapejs }}'); return false;"
-                    title="{{ _('Please log in to vote') }}">
-                <i class="fa fa-chevron-down"></i>
-            </button>
-        {% endif %}
-    </div>
-</div>
 
 <div class="blog-post-container">
     <!-- Header -->
@@ -96,7 +62,7 @@
                 {{ post.publish_on|date(_("F j, Y")) }} · {{ _('%(count)d min read', count=(post.content|length / 1000)|round(0, 'ceil')|int) }}
             </div>
         </div>
-        
+
         <div class="post-actions">
             {% if post.organization %}
                 <a href="{{ post.organization.get_absolute_url() }}" class="organization-badge">
@@ -104,16 +70,16 @@
                     {{ post.organization.name }}
                 </a>
             {% endif %}
-            
+
             {% if post.is_editable_by(request.user) %}
                 <a href="{{ url('blog_post_edit', post.id, post.slug) }}" class="post-edit-action">
                     <i class="fa fa-pencil"></i> {{ _('Edit') }}
                 </a>
             {% endif %}
-            
-            <div class="vote-buttons">
+
+            <div class="vote-buttons" id="post-{{ post.id }}">
                 {% if logged_in %}
-                    <button class="vote-btn upvote-link{% if post.vote_score == 1 %} voted{% endif %}" 
+                    <button class="vote-btn upvote-link {% if post.vote_score == 1 %} voted{% endif %}"
                             onclick="blog_upvote({{ post.id }}); return false;">
                         <i class="fa fa-chevron-up"></i>
                     </button>
@@ -122,30 +88,33 @@
                         <i class="fa fa-chevron-up"></i>
                     </button>
                 {% endif %}
-                
-                <span class="vote-count" id="post-score-inline">{{ post.score }}</span>
+
+                <span class="vote-count" id="post-score">{{ post.score }}</span>
                 <span class="vote-label">{{ _('votes') }}</span>
-                
+
                 {% if logged_in %}
-                    <button class="vote-btn downvote-link{% if post.vote_score == -1 %} voted{% endif %}" 
+                    <button class="vote-btn downvote-link {% if post.vote_score == -1 %} voted{% endif %}"
                             onclick="blog_downvote({{ post.id }}); return false;">
                         <i class="fa fa-chevron-down"></i>
                     </button>
                 {% else %}
                     <button class="vote-btn" onclick="alert('{{ _('Please log in to vote') | escapejs }}');">
-                        <i class="fa fa-chevron-down"></i>
+                            <i class="fa fa-chevron-down"></i>
                     </button>
                 {% endif %}
             </div>
         </div>
     </div>
 
-    <!-- Main content -->
-    <article class="blog-post-content">
-        {% cache 86400 'post_content' post.id MATH_ENGINE %}
-            {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}
-        {% endcache %}
-    </article>
+    <div class="blog-post-layout">
+        <aside class="blog-toc-sidebar-container">
+        </aside>
+        <article class="blog-post-content">
+            {% cache 86400 'post_content' post.id MATH_ENGINE %}
+                {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}
+            {% endcache %}
+        </article>
+    </div>
 
     <!-- Social sharing -->
     <div class="blog-post-social">
