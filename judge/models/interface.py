@@ -12,7 +12,7 @@ from mptt.models import MPTTModel
 
 from judge.models.profile import Organization, Profile
 
-__all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost']
+__all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost', 'BlogPostTag']
 
 
 class MiscConfig(models.Model):
@@ -64,6 +64,19 @@ class NavigationBar(MPTTModel):
             return pattern
 
 
+class BlogPostTag(models.Model):
+    name = models.CharField(_('name'), max_length=40, unique=True)
+    slug = models.SlugField(_('slug'), max_length=50, unique=True)
+
+    class Meta:
+        verbose_name = _('blog tag')
+        verbose_name_plural = _('blog tags')
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+
 class BlogPost(models.Model):
     title = models.CharField(verbose_name=_('post title'), max_length=100)
     authors = models.ManyToManyField(Profile, verbose_name=_('authors'), blank=True)
@@ -79,6 +92,7 @@ class BlogPost(models.Model):
                                       help_text=_('Display this blog post at the homepage.'))
     organization = models.ForeignKey(Organization, on_delete=models.CASCADE, verbose_name=_('organization'),
                                      related_name='post_author_org', blank=True, null=True, db_index=True)
+    tags = models.ManyToManyField('BlogPostTag', related_name='posts', verbose_name=_('tags'), blank=True)
 
     def __str__(self):
         return self.title
@@ -130,6 +144,7 @@ class BlogPost(models.Model):
             ('edit_organization_post', _('Edit organization posts')),
             ('mark_global_post', _('Mark post as global')),
             ('pin_post', _('Pin post')),
+            ('manage_magazine_post', _('Manage magazine blog posts')),
         )
         verbose_name = _('blog post')
         verbose_name_plural = _('blog posts')

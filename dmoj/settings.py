@@ -55,6 +55,8 @@ VNOJ_ORG_PP_ENTRIES = 100
 VNOJ_ORG_PP_SCALE = 1
 
 VNOJ_ENABLE_API = False
+VNOJ_ENABLE_SYNC_API = True  # need to make this true for testing :sad:
+GLOBAL_API_KEY = 'test-api-key-123'
 
 VNOJ_OFFICIAL_CONTEST_MODE = False
 
@@ -116,6 +118,8 @@ VNOJ_PRICE_PER_HOUR = 50
 
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
+
+VNOJ_MAGAZINE_TAG_SLUG = None
 
 CELERY_TIMEZONE = 'UTC'
 
@@ -378,7 +382,13 @@ else:
                         'redirects.Redirect',
                     ],
                 },
-                ('judge.BlogPost', 'fa-rss-square'),
+                {
+                    'model': 'judge.BlogPost',
+                    'icon': 'fa-rss-square',
+                    'children': [
+                        'judge.BlogPostTag',
+                    ],
+                },
                 {
                     'model': 'judge.Comment',
                     'icon': 'fa-comment-o',
@@ -398,6 +408,7 @@ else:
 INSTALLED_APPS += (
     'django.contrib.admin',
     'judge',
+    'urlshortener',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.flatpages',

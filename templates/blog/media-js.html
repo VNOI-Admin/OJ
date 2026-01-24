@@ -10,8 +10,16 @@
                         id: id
                     },
                     success: function (data, textStatus, jqXHR) {
+                        // Update classic templates (#post-score inside #post-ID)
                         var score = $('#post-' + id + ' #post-score').first();
-                        score.text(parseInt(score.text()) + delta);
+                        if (score.length) {
+                            score.text(parseInt(score.text()) + delta);
+                        }
+                        // Update magazine templates (#post-score-ID)
+                        var magScore = $('#post-score-' + id).first();
+                        if (magScore.length) {
+                            magScore.text(parseInt(magScore.text()) + delta);
+                        }
                         if (typeof on_success !== 'undefined')
                             on_success();
                     },
@@ -36,6 +44,26 @@
                         $votes.downvote.removeClass('voted');
                     else
                         $votes.upvote.addClass('voted');
+
+                    // Update magazine card vote button if present
+                    var $magazineCard = $('[data-post-id="' + id + '"]');
+                    if ($magazineCard.length) {
+                        var $upvoteBtn = $magazineCard.find('[data-action="upvote"]');
+                        var $downvoteBtn = $magazineCard.find('[data-action="downvote"]');
+                        var $voteCount = $magazineCard.find('#post-score-' + id);
+
+                        // If not already upvoted, increment and set states
+                        if (!$upvoteBtn.hasClass('voted')) {
+                            $upvoteBtn.addClass('voted').attr('aria-pressed', 'true');
+                            if ($voteCount.length) {
+                                $voteCount.text(parseInt($voteCount.text()) + 1);
+                            }
+                        }
+                        // Clear downvote state and disable both to prevent duplicate votes
+                        $downvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
+                        $upvoteBtn.prop('disabled', true);
+                        $downvoteBtn.prop('disabled', true);
+                    }
                 });
             };
 
@@ -46,10 +74,76 @@
                         $votes.upvote.removeClass('voted');
                     else
                         $votes.downvote.addClass('voted');
+
+                    // Update magazine card vote button if present
+                    var $magazineCard = $('[data-post-id="' + id + '"]');
+                    if ($magazineCard.length) {
+                        var $downvoteBtn = $magazineCard.find('[data-action="downvote"]');
+                        var $upvoteBtn = $magazineCard.find('[data-action="upvote"]');
+                        var $voteCount = $magazineCard.find('#post-score-' + id);
+
+                        // If not already downvoted, decrement and set states
+                        if (!$downvoteBtn.hasClass('voted')) {
+                            $downvoteBtn.addClass('voted').attr('aria-pressed', 'true');
+                            if ($voteCount.length) {
+                                $voteCount.text(parseInt($voteCount.text()) - 1);
+                            }
+                        }
+                        // Clear upvote state and disable both to prevent duplicate votes
+                        $upvoteBtn.removeClass('voted').attr('aria-pressed', 'false');
+                        $upvoteBtn.prop('disabled', true);
+                        $downvoteBtn.prop('disabled', true);
+                    }
                 });
             };
 
             $('votes-link').find('a[data-featherlight]').featherlight();
+
+            // Magazine layout modern features
+            if (document.querySelector('.magazine-layout')) {
+
+                // Search form handling
+                const searchForm = document.querySelector('.magazine-search');
+                const searchTypeSelect = document.querySelector('#search-type-select');
+
+                // Handle tag selection change (immediate navigation)
+                if (searchTypeSelect) {
+                    searchTypeSelect.addEventListener('change', function() {
+                        if (searchForm) {
+                            searchForm.submit();
+                        }
+                    });
+                }
+
+                // Handle Enter key in search input
+                const searchInput = document.querySelector('#blog-search-input');
+                if (searchInput) {
+                    searchInput.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (searchForm) {
+                                searchForm.submit();
+                            }
+                        }
+                    });
+                }
+
+                // Sort dropdown handler
+                const sortSelect = document.querySelector('#sort-select');
+                if (sortSelect) {
+                    sortSelect.addEventListener('change', function(e) {
+                        const sortValue = e.target.value;
+                        const currentUrl = new URL(window.location.href);
+                        if (sortValue && sortValue !== 'latest') {
+                            currentUrl.searchParams.set('sort', sortValue);
+                        } else {
+                            currentUrl.searchParams.delete('sort');
+                        }
+                        currentUrl.searchParams.delete('page');
+                        window.location.href = currentUrl.toString();
+                    });
+                }
+            }
         });
     </script>
 {% endcompress %}

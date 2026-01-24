@@ -940,7 +940,9 @@
                 <th>{{ _('Input file') }}</th>
                 <th>{{ _('Output file') }}</th>
                 <th>{{ _('Points') }}</th>
+                {% if request.user.is_staff %}
                 <th>{{ _('Pretest?') }}</th>
+                {% endif %}
                 <!-- <th class="generator-args">{{ _('Generator args') }}</th> -->
                 {% if cases_formset.can_delete %}
                     <th>{{ _('Delete?') }}
@@ -973,8 +975,10 @@
                                   form['output_file'].value() in valid_files) %} class="bad-file"{% endif %}>
                         {{ form.output_file.errors }}{{ form.output_file }}
                     </td>
-                    <td>{{ form.points.errors }}{{ form.points }}</td>
-                    <td>{{ form.is_pretest.errors }}{{ form.is_pretest }}</td>
+                    <td>{{ form.points.errors }}{{ form.points }}{% if not request.user.is_staff %}{{ form.is_pretest.as_hidden() }}{% endif %}</td>
+                    {% if request.user.is_staff %}
+                        <td>{{ form.is_pretest.errors }}{{ form.is_pretest }}</td>
+                    {% endif %}
                     <!-- <td class="generator-args">{{ form.generator_args.errors }}{{ form.generator_args }}
                         <a href="javascript:void(0)" class="edit-generator-args">
                             <i class="fa fa-pencil"></i>
