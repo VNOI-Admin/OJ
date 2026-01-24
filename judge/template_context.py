@@ -7,7 +7,7 @@ from django.utils.functional import SimpleLazyObject, new_method_proxy
 
 from judge import event_poster as event
 from judge.utils.caniuse import CanIUse, SUPPORT
-from .models import NavigationBar, Profile
+from .models import NavigationBar, Profile, SiteConfiguration
 
 
 class FixedSimpleLazyObject(SimpleLazyObject):
@@ -78,9 +78,13 @@ def misc_config(request):
 
 
 def site_name(request):
-    return {'SITE_NAME': settings.SITE_NAME,
-            'SITE_LONG_NAME': settings.SITE_LONG_NAME,
-            'SITE_ADMIN_EMAIL': settings.SITE_ADMIN_EMAIL}
+    config = SiteConfiguration.get_solo()
+    return {
+        'SITE_NAME': settings.SITE_NAME,
+        'SITE_LONG_NAME': settings.SITE_LONG_NAME,
+        'SITE_ADMIN_EMAIL': settings.SITE_ADMIN_EMAIL,
+        'SITE_LOGO_IMAGE': config.site_logo_image,
+    }
 
 
 def site_theme(request):

@@ -121,7 +121,28 @@ class LicenseForm(ModelForm):
 class LicenseAdmin(admin.ModelAdmin):
     fields = ('key', 'link', 'name', 'display', 'icon', 'text')
     list_display = ('name', 'key')
-    form = LicenseForm
+
+
+class SiteConfigurationAdmin(admin.ModelAdmin):
+    """Admin interface for site logo configuration (singleton)."""
+
+    fields = ('site_logo_image',)
+
+    def has_add_permission(self, request):
+        return not self.model.objects.exists()
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    def changelist_view(self, request, extra_context=None):
+        from django.http import HttpResponseRedirect
+        obj = self.model.get_solo()
+        return HttpResponseRedirect(
+            reverse('admin:%s_%s_change' % (
+                self.model._meta.app_label,
+                self.model._meta.model_name,
+            ), args=[obj.pk]),
+        )
 
 
 class UserListFilter(admin.SimpleListFilter):

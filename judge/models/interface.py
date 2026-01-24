@@ -12,7 +12,7 @@ from mptt.models import MPTTModel
 
 from judge.models.profile import Organization, Profile
 
-__all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost', 'BlogPostTag']
+__all__ = ['MiscConfig', 'validate_regex', 'NavigationBar', 'BlogPost', 'BlogPostTag', 'SiteConfiguration']
 
 
 class MiscConfig(models.Model):
@@ -159,3 +159,37 @@ class BlogVote(models.Model):
         unique_together = ['voter', 'blog']
         verbose_name = _('blog vote')
         verbose_name_plural = _('blog votes')
+
+
+class SiteConfiguration(models.Model):
+    """
+    Singleton model for site-wide logo configuration.
+    Allows administrators to customize the site logo via admin interface.
+    """
+    site_logo_image = models.FileField(
+        upload_to='site-assets/',
+        blank=True,
+        null=True,
+        verbose_name=_('site logo image'),
+        help_text=_('Upload custom site logo. Leave blank to use default logo.'),
+    )
+
+    class Meta:
+        verbose_name = _('Site Logo')
+        verbose_name_plural = _('Site Logo')
+
+    def __str__(self):
+        return 'Site Logo Configuration'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def get_solo(cls):
+        """Get or create the singleton instance."""
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
