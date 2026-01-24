@@ -563,6 +563,16 @@
 
             $("#id_problem-data-zipfile").change((event) => {
                 let fileInput = event.target.files[0];
+
+                // 100 MB limit (Cloudflare's request body size limit)
+                if (fileInput && fileInput.size > 100 * 1024 * 1024) {
+                    alert({{ _('File too large!')|htmltojs }} + ' ' +
+                        {{ _('Your file is')|htmltojs }} + ' ' + (fileInput.size / 1048576).toFixed(2) + ' MB. ' +
+                        {{ _('Maximum allowed is 100 MB.')|htmltojs }});
+                    event.target.value = "";
+                    return;
+                }
+
                 var reader = new FileReader();
                 reader.onload = function(ev) {
                     JSZip.loadAsync(ev.target.result).then(function(zip) {
