@@ -251,15 +251,261 @@
                 href: "/custom_checkers"
             }).appendTo($checker.parent());
 
-            var $file_test = $('#id_problem-data-zipfile');
-            $("<br>").appendTo($file_test.parent());
+            const $zipInput = $('#id_problem-data-zipfile');
+            $("<br>").appendTo($zipInput.parent());
             $("<input/>", {
                 type: "submit",
                 value: {{ _('Please press this button if you have just updated the zip data')|htmltojs }},
                 class: "button",
                 style: "display: inherit",
                 id: "submit-button",
-            }).appendTo($file_test.parent());
+            }).appendTo($zipInput.parent());
+
+            const $zipLabel = $zipInput.closest('tr').find('label[for="id_problem-data-zipfile"]');
+            $zipLabel.text({{_('Data file (file, folder, or zip archive)')|htmltojs}})
+            .attr('title', {{_('Hold Shift while clicking to select a folder')|htmltojs}});    
+            $zipInput.attr('title', {{_('Hold Shift while clicking to select a folder')|htmltojs}});
+        
+
+            const allowedLooseExtensions = /\.(?:in|inp|out|ok|ans|a|txt)$/i;
+            const zipMimeType = 'application/zip';
+            let skipSyntheticZipChange = false;
+
+            function enableFileSelectionMode() {
+                $zipInput.attr('multiple', true)
+                    .attr('accept', '.zip,.in,.inp,.out,.ok,.ans,.a,.txt')
+                    .removeAttr('webkitdirectory')
+                    .removeAttr('directory');
+            }
+
+            function enableFolderSelectionMode() {
+                $zipInput.removeAttr('multiple')
+                    .attr('webkitdirectory', true)
+                    .attr('directory', true)
+                    .removeAttr('accept');
+            }
+
+            enableFileSelectionMode();
+
+            $zipInput.on('mousedown', function (event) {
+                if (event.shiftKey) {
+                    enableFolderSelectionMode();
+                } else {
+                    enableFileSelectionMode();
+                }
+            });
+
+            function normalizeRelativePath(file) {
+                if (file.webkitRelativePath && file.webkitRelativePath.length) {
+                    return file.webkitRelativePath;
+                }
+                return file.name;
+            }
+
+            function shouldIgnoreSystemPath(path) {
+                if (!path) {
+                    return true;
+                }
+                const normalized = path.replace(/^\.\/?/, '');
+                if (!normalized.length) {
+                    return true;
+                }
+                if (normalized.toUpperCase().startsWith('__MACOSX/')) {
+                    return true;
+                }
+                const segments = normalized.split('/');
+                const lastSegment = segments[segments.length - 1];
+                if (!lastSegment) {
+                    return true;
+                }
+                const lowerSegment = lastSegment.toLowerCase();
+                return lowerSegment === '.ds_store' || lowerSegment.startsWith('._');
+            }
+
+            function isAllowedLooseFile(path) {
+                const segments = path.split('/');
+                const filename = segments[segments.length - 1];
+                if (!filename) {
+                    return false;
+                }
+                if (allowedLooseExtensions.test(filename)) {
+                    return true;
+                }
+                return testcaseInputPatterns.some(function (pattern) {
+                    return pattern.test(filename);
+                }) || testcaseOutputPatterns.some(function (pattern) {
+                    return pattern.test(filename);
+                });
+            }
+
+            function resetFileInput(input) {
+                if (input) {
+                    input.value = '';
+                }
+            }
+
+            function guessZipName(files) {
+                if (!files.length) {
+                    return 'testcases.zip';
+                }
+                const first = files[0];
+                const rel = normalizeRelativePath(first);
+                const firstSegment = rel.split('/').filter(Boolean)[0];
+                if (firstSegment) {
+                    return `${firstSegment.replace(/\s+/g, '_')}.zip`;
+                }
+                const baseName = first.name.replace(/\.[^.]*$/, '') || 'testcases';
+                return `${baseName}.zip`;
+            }
+
+            function isZipFile(file) {
+                if (!file) {
+                    return false;
+                }
+                if (file.type && file.type.toLowerCase() === 'application/zip') {
+                    return true;
+                }
+                return /\.zip$/i.test(file.name || '');
+            }
+
+            function attachZipFile(zipFile) {
+                if (!zipFile) {
+                    return;
+                }
+                if (typeof DataTransfer === 'undefined') {
+                    alert({{ _('Automatic zipping is not supported in this browser. Please upload a ZIP file manually.')|htmltojs }});
+                    resetFileInput($zipInput[0]);
+                    enableFileSelectionMode();
+                    return;
+                }
+                const dataTransfer = new DataTransfer();
+                dataTransfer.items.add(zipFile);
+                skipSyntheticZipChange = true;
+                $zipInput[0].files = dataTransfer.files;
+                $zipInput.trigger('change');
+            }
+
+            function processZipFile(file) {
+                if (!file) {
+                    return;
+                }
+                window.valid_files = [];
+                const reader = new FileReader();
+                reader.onload = function (ev) {
+                    JSZip.loadAsync(ev.target.result).then(function (zip) {
+                        const allFiles = Object.keys(zip.files).sort();
+                        window.valid_files = allFiles.filter(function (path) {
+                            const entry = zip.files[path];
+                            if (entry && entry.dir) {
+                                return false;
+                            }
+                            return !shouldIgnoreSystemPath(path);
+                        });
+                        fill_testcases();
+                    }).catch(function (err) {
+                        console.error(err);
+                        alert({{ _('Test file must be a ZIP file')|htmltojs }});
+                        resetFileInput($zipInput[0]);
+                        enableFileSelectionMode();
+                    });
+                };
+                reader.onerror = function () {
+                    alert({{ _('Could not read the selected file')|htmltojs }});
+                    resetFileInput($zipInput[0]);
+                    enableFileSelectionMode();
+                };
+                reader.readAsArrayBuffer(file);
+            }
+
+            function createZipFromSelection(files) {
+                if (!files.length) {
+                    resetFileInput($zipInput[0]);
+                    enableFileSelectionMode();
+                    return;
+                }
+
+                if (files.length === 1 && isZipFile(files[0])) {
+                    attachZipFile(files[0]);
+                    return;
+                }
+
+                const zipBuilder = new JSZip();
+                const skipped = [];
+                let added = 0;
+
+                files.forEach(function (file) {
+                    const relativePath = normalizeRelativePath(file);
+                    if (shouldIgnoreSystemPath(relativePath)) {
+                        return;
+                    }
+                    if (!isAllowedLooseFile(relativePath)) {
+                        skipped.push(relativePath);
+                        return;
+                    }
+                    zipBuilder.file(relativePath, file);
+                    added += 1;
+                });
+
+                if (!added) {
+                    alert({{ _('No valid testcase files found. Please use standard testcase names such as *.in, *.inp, *.out, *.ok, *.ans, *.a or input.1')|htmltojs }});
+                    resetFileInput($zipInput[0]);
+                    enableFileSelectionMode();
+                    return;
+                }
+
+                zipBuilder.generateAsync({ type: 'blob' }).then(function (blob) {
+                    const fileName = guessZipName(files).replace(/\.zip$/i, '') + '.zip';
+                    const zipFile = new File([blob], fileName, { type: zipMimeType });
+                    attachZipFile(zipFile);
+                    if (skipped.length) {
+                        const skippedList = skipped.join('\n');
+                        alert({{ _('Some files were ignored because their names do not match allowed testcase patterns:')|htmltojs }} + '\n' + skippedList);
+                    }
+                }).catch(function (err) {
+                    console.error(err);
+                    alert({{ _('Failed to create ZIP file from selected files')|htmltojs }});
+                    resetFileInput($zipInput[0]);
+                }).finally(function () {
+                    enableFileSelectionMode();
+                });
+            }
+
+            $zipInput.on('change', function (event) {
+                const files = Array.from(event.target.files || []);
+                if (!files.length) {
+                    window.valid_files = [];
+                    enableFileSelectionMode();
+                    return;
+                }
+                if (skipSyntheticZipChange) {
+                    skipSyntheticZipChange = false;
+                    enableFileSelectionMode();
+                    processZipFile(files[0]);
+                    return;
+                }
+
+                if (files.length === 1 && isZipFile(files[0])) {
+                    enableFileSelectionMode();
+                    processZipFile(files[0]);
+                    return;
+                }
+
+                createZipFromSelection(files);
+            });
+
+            const testcaseInputPatterns = [
+                new RegExp(/^(.+\.inp|.+\.in|inp|in)$/i),
+                new RegExp(/^input.(.+\d+)$/i),
+                new RegExp(/^(.+\d+)$/),
+                new RegExp(/^(?=.*?\.in|in).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/i),
+            ];
+
+            const testcaseOutputPatterns = [
+                new RegExp(/^(.+\.out|.+\.ok|.+\.ans|out|ok|ans)$/i),
+                new RegExp(/^output.(.+\d+)$/i),
+                new RegExp(/^(.+\d+\.a)$/i),
+                new RegExp(/^(?=.*?\.out|out).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/i),
+            ];
 
             function swap_row($a, $b) {
                 var $a_order = $a.find('input[id$=order]'), $b_order = $b.find('input[id$=order]');
@@ -439,20 +685,8 @@
                 var inFiles = [], outFiles = [];
 
                 var format = ["Themis", "CMS", "Polygon", "DMOJ"];
-
-                var in_re = [
-                    new RegExp(/^(.+\.inp|.+\.in|inp|in)$/),
-                    new RegExp(/^input.(.+\d+)$/),
-                    new RegExp(/^(.+\d+)$/),
-                    new RegExp(/^(?=.*?\.in|in).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
-                ];
-
-                var out_re = [
-                    new RegExp(/^(.+\.out|.+\.ok|.+\.ans|out|ok|ans)$/),
-                    new RegExp(/^output.(.+\d+)$/),
-                    new RegExp(/^(.+\d+\.a)$/),
-                    new RegExp(/^(?=.*?\.out|out).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
-                ];
+                var in_re = testcaseInputPatterns;
+                var out_re = testcaseOutputPatterns;
 
                 var test_type = -1;
 
@@ -561,27 +795,8 @@
                 fill_testcases();
             }
 
-            $("#id_problem-data-zipfile").change((event) => {
-                let fileInput = event.target.files[0];
-                var reader = new FileReader();
-                reader.onload = function(ev) {
-                    JSZip.loadAsync(ev.target.result).then(function(zip) {
-                        let all_files = Object.keys(zip.files).sort();
-                        // ignore macos stupid files
-                        window.valid_files = all_files.filter(file => !file.startsWith('__MACOSX/') && !file.startsWith('._') && !file.startsWith('.DS_Store'));
-
-                        fill_testcases();
-                    }).catch(function(err) {
-                        console.log(err);
-                        console.error("Failed to open as ZIP file");
-                        alert({{ _('Test file must be a ZIP file')|htmltojs }});
-                        event.target.value = "";
-                    })
-                };
-                reader.readAsArrayBuffer(fileInput);
-            })
             $('form').dirty('setAsClean');
-        }).change();
+        });
     </script>
 {% endblock %}
 
