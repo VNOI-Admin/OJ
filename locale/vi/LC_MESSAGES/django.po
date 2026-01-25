@@ -7977,3 +7977,15 @@ msgstr "Chọn tất cả"
 #~ msgid "Maximum single-case runtime:"
 #~ msgstr "Thời gian chạy test lâu nhất:"
 
+
+#: templates/problem/data.html
+msgid "Your file is"
+msgstr "File của bạn là"
+
+#: templates/problem/data.html
+msgid "Maximum allowed is 100 MB."
+msgstr "Giới hạn tối đa là 100 MB."
+
+#: templates/problem/data.html
+msgid "File too large!"
+msgstr "File quá lớn!"
