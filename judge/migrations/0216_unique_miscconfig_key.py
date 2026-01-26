@@ -14,5 +14,5 @@ class Migration(migrations.Migration):
             model_name='miscconfig',
             name='key',
             field=models.CharField(max_length=30, unique=True, verbose_name='key'),
-        )
+        ),
     ]
