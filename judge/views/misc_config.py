@@ -12,6 +12,7 @@ from judge.views.widgets import static_uploader
 
 class MiscConfigForm(forms.Form):
     logo = forms.FileField(help_text='The site logo e.g. the image in the top left corner.')
+    favicon = forms.FileField(help_text='The site favicon')
 
 
 class MiscConfigEdit(TitleMixin, FormView):
@@ -28,6 +29,11 @@ class MiscConfigEdit(TitleMixin, FormView):
             if logo is not None:
                 logo_url = static_uploader(logo)
                 config, _ = MiscConfig.objects.update_or_create(key='site_logo', defaults={'value': logo_url})
+                config.save()
+            favicon = form.files.get('favicon', default=None)
+            if favicon is not None:
+                favicon_url = static_uploader(favicon)
+                config, _ = MiscConfig.objects.update_or_create(key='site_favicon', defaults={'value': favicon_url})
                 config.save()
         return super().form_valid(form)
 
