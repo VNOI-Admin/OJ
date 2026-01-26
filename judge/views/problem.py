@@ -34,7 +34,6 @@ from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGro
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
-from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
