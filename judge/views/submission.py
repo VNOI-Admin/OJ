@@ -613,10 +613,6 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         if self.is_contest_scoped and not self.contest.can_see_own_scoreboard(request.user):
             raise Http404()
 
-    def is_in_low_power_mode(self):
-        # always allow full submissions list of problems
-        return False
-
     def access_check(self, request):
         # FIXME: This should be rolled into the `is_accessible_by` check when implementing #1509
         if self.is_contest_scoped and request.user.is_authenticated and request.profile.id in self.contest.editor_ids:
