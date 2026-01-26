@@ -23,7 +23,34 @@
         widget.find('.main-martor').martor();
     }
 
+    function sort_top_level_comments_by_status() {
+        const container = $('.top-level-comments');
+        const topLevelComments = container.children().toArray();
+        const comments = [];
+        for (let i = 0; i < topLevelComments.length; ++i) {
+            let id = $(topLevelComments[i]).attr('id');
+            const comment = [topLevelComments[i]];
+            while (i + 1 < topLevelComments.length && $(topLevelComments[i + 1]).attr('id').startsWith(id + '-')) {
+                comment.push(topLevelComments[i + 1]);
+                i++;
+            }
+            comments.push(comment);
+        }
+        comments.sort((a, b) => {
+            const isABad = $(a[0]).find('.comment-display').hasClass('bad-comment');
+            const isBBad = $(b[0]).find('.comment-display').hasClass('bad-comment');
+            if (isABad && !isBBad) return 1;
+            if (!isABad && isBBad) return -1;
+            return 0;
+        });
+        container.empty();
+        comments.forEach(comment => {
+            container.append(...comment);
+        });
+    }
+
     $(document).ready(function () {
+        sort_top_level_comments_by_status();
         window.reply_comment = function (parent) {
             var $comment_reply = $('#comment-' + parent + '-reply');
             var reply_id = 'reply-' + parent;
