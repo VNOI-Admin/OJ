@@ -1,4 +1,8 @@
 {% extends "base.html" %}
+{% block media %}
+    <link rel="stylesheet" href="{{ static('organization.css') }}" type="text/css" />
+{% endblock %}
+
 {% block js_media %}
     <script src="{{ static('libs/tablesorter.js') }}" type="text/javascript"></script>
     <script type="text/javascript">
@@ -14,6 +18,15 @@
     {% set tab = 'organizations' %}
     {% include "organization/list-tabs.html" %}
 {% endblock %}
+
+{% block body %}
+    <div class="search-container">
+        <form method="get" class="search-form">
+            <input type="text" name="search" class="search-input" placeholder="{{ _('Search organizations...') }}"
+                   value="{{ request.GET.search }}">
+            <button type="submit" class="search-submit"><i class="fa fa-search"></i></button>
+        </form>
+    </div>
 
 {% macro org_table(name, queryset) %}
     <h4>{{ name }}</h4>
