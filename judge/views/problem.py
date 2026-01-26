@@ -35,6 +35,7 @@ from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
 from judge.utils.diggpaginator import DiggPaginator
+from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
 from judge.utils.problems import hot_problems, user_attempted_ids, \
@@ -528,7 +529,7 @@ class ProblemPdfView(ProblemMixin, SingleObjectMixin, View):
         return response
 
 
-class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView):
+class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, InfinitePaginationMixin, ListView):
     model = Problem
     title = gettext_lazy('Problem list')
     context_object_name = 'problems'
@@ -541,11 +542,10 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
     # Default sort by date
     default_sort = '-date'
 
-    def get_paginator(self, queryset, per_page, orphans=0,
-                      allow_empty_first_page=True, **kwargs):
-        paginator = DiggPaginator(queryset, per_page, body=6, padding=2, orphans=orphans,
-                                  count=queryset.values('pk').count(),
-                                  allow_empty_first_page=allow_empty_first_page, **kwargs)
+    def order_queryset(self, queryset):
+        """
+        Order the queryset based on the sort order.
+        """
         queryset = queryset.add_i18n_name(self.request.LANGUAGE_CODE)
         sort_key = self.order.lstrip('-')
         if sort_key in self.sql_sort:
@@ -576,8 +576,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
                 queryset = list(queryset)
                 queryset.sort(key=lambda problem: problem.types_list[0] if problem.types_list else '',
                               reverse=self.order.startswith('-'))
-        paginator.object_list = queryset
-        return paginator
+        return queryset
 
     @cached_property
     def profile(self):
@@ -639,7 +638,8 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         return queryset.distinct()
 
     def get_queryset(self):
-        return self.get_normal_queryset()
+        queryset = self.get_normal_queryset()
+        return self.order_queryset(queryset)
 
     def get_hot_problems(self):
         return hot_problems(timedelta(days=1), settings.DMOJ_PROBLEM_HOT_PROBLEM_COUNT)
