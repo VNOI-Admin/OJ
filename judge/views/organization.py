@@ -24,7 +24,6 @@ from judge.models import BlogPost, Comment, Contest, Language, Organization, Org
     Problem, Profile
 from judge.models.profile import OrganizationMonthlyUsage
 from judge.tasks import on_new_problem
-from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart
@@ -651,7 +650,7 @@ class ContestListOrganization(PrivateOrganizationMixin, ContestList):
         return context
 
 
-class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMixin, SubmissionsListBase):
+class SubmissionListOrganization(PrivateOrganizationMixin, SubmissionsListBase):
     template_name = 'organization/submission-list.html'
     permission_bypass = ['judge.view_all_submission']
 

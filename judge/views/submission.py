@@ -344,7 +344,7 @@ def filter_submissions_by_visible_problems(queryset, user):
     )
 
 
-class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
+class SubmissionsListBase(InfinitePaginationMixin, TitleMixin, ListView):
     model = Submission
     paginate_by = 50
     show_problem = True
@@ -553,7 +553,7 @@ class ConditionalUserTabMixin(object):
         return context
 
 
-class AllUserSubmissions(InfinitePaginationMixin, ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+class AllUserSubmissions(ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
     def get_queryset(self):
         return super(AllUserSubmissions, self).get_queryset().filter(user_id=self.profile.id)
 
@@ -727,7 +727,7 @@ def single_submission(request):
     })
 
 
-class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
+class AllSubmissions(SubmissionsListBase):
     stats_update_interval = 3600
 
     @property
