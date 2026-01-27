@@ -288,22 +288,22 @@ class ProblemSubmitMixin:
         # Organization credit check
         if settings.VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION:
             # check if the problem belongs to any organization
-            organizations = []
+            organization = None
             if self.object.is_organization_private:
-                organizations = self.object.organizations.all()
+                organization = self.object.organization
 
-            if len(organizations) == 0:
+            if organization is None:
                 # check if the contest belongs to any organization
                 if self.contest_problem is not None:
                     contest_object = request.profile.current_contest.contest
 
                     if contest_object.is_organization_private:
-                        organizations = contest_object.organizations.all()
+                        organization = contest_object.organization
 
             # check if org have credit to execute this submission
-            for org in organizations:
-                if not org.has_credit_left():
-                    org_name = org.name
+            if organization is not None:
+                if not organization.has_credit_left():
+                    org_name = organization.name
                     return generic_message(
                         request,
                         _('No credit'),
@@ -846,7 +846,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
         languages = problem.allowed_languages.all()
         language_limits = problem.language_limits.all()
-        organizations = problem.organizations.all()
+        organization = problem.organization
         types = problem.types.all()
         old_code = problem.code
 
@@ -861,7 +861,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             problem.curators.add(self.request.profile)
             problem.allowed_languages.set(languages)
             problem.language_limits.set(language_limits)
-            problem.organizations.set(organizations)
+            problem.organization = organization
             problem.types.set(types)
             revisions.set_user(self.request.user)
             revisions.set_comment(_('Cloned problem from %s') % old_code)
@@ -1073,11 +1073,8 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super(ProblemEdit, self).get_form_kwargs()
-        # Due to some limitation with query set in select2
-        # We only support this if the problem is private for only
-        # 1 organization
-        if self.object.organizations.count() == 1:
-            kwargs['org_pk'] = self.object.organizations.values_list('pk', flat=True)[0]
+        if self.object.organization is not None:
+            kwargs['org_pk'] = self.object.organization.id
 
         kwargs['user'] = self.request.user
         return kwargs

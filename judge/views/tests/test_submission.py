@@ -71,7 +71,7 @@ class SubmissionsListBaseQuerysetTestCase(CommonDataMixin, TestCase):
             code='org_problem',
             is_public=True,
             is_organization_private=True,
-            organizations=('open',),
+            organization=cls.organizations['open'],
         )
 
         # Create contests with different configurations
@@ -1462,14 +1462,14 @@ class SubmissionListOrganizationQuerysetTestCase(CommonDataMixin, TestCase):
             code='org_problem_open',
             is_public=True,
             is_organization_private=True,
-            organizations=('open',),
+            organization=cls.organizations['open'],
         )
 
         cls.org_problem_private = create_problem(
             code='org_problem_private',
             is_public=True,
             is_organization_private=True,
-            organizations=('private_org',),
+            organization=cls.organizations['private_org'],
         )
 
         cls.public_problem = create_problem(
@@ -1593,5 +1593,5 @@ class SubmissionListOrganizationQuerysetTestCase(CommonDataMixin, TestCase):
         for submission in queryset:
             self.assertEqual(submission.language.key, 'PY3')
             self.assertTrue(
-                submission.problem.organizations.filter(pk=self.organizations['open'].pk).exists(),
+                submission.problem.organization == self.organizations['open'],
             )
