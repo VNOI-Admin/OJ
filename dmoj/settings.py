@@ -119,6 +119,15 @@ VNOJ_PRICE_PER_HOUR = 50
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
+# Low power mode: Optimize queries by limiting data scope for performance
+VNOJ_LOW_POWER_MODE = False
+VNOJ_LOW_POWER_MODE_CONFIG = {
+    # limit the number of submissions pages
+    'max_page': 5,
+    # avoid drawing heat map for users with too many submissions
+    'heat_map_limit': 20_000,
+}
+
 VNOJ_MAGAZINE_TAG_SLUG = None
 
 CELERY_TIMEZONE = 'UTC'
@@ -668,6 +677,9 @@ PDF_STATEMENT_MAX_FILE_SIZE = 5242880
 
 SUBMISSION_FILE_UPLOAD_URL_PREFIX = '/submission_file'
 SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission_file'
+
+STATIC_UPLOAD_URL_PREFIX = '/static-upload'
+STATIC_UPLOAD_MEDIA_DIR = 'static-upload'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

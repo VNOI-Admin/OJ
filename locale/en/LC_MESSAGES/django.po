@@ -7276,3 +7276,5 @@ msgstr ""
 msgid "Check all"
 msgstr ""
 
+msgid "If your account was created with Google sign-in, you do not need to reset a password. Please continue by signing in with Google."
+msgstr "If your account was created with Google sign-in, you do not need to reset a password. Please continue by signing in with Google."
