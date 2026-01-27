@@ -122,6 +122,8 @@
                 update_math($content);
                 if (window.add_code_copy_buttons)
                     window.add_code_copy_buttons($content);
+                // Re-initialize comment toggle after loading revision
+                initializeCommentToggle();
             });
         };
 
@@ -203,11 +205,15 @@
                             var $comment = $('#comment-' + id);
                             var $area = $comment.find('.comment-body').first();
                             $area.html(data);
+                            // Reset toggle initialization flag
+                            $area.removeData('toggle-initialized');
+                            $area.next('.comment-toggle').remove();
                             update_math($comment);
                             if (window.add_code_copy_buttons)
                                 window.add_code_copy_buttons($area);
                             var $edits = $comment.find('.comment-edits').first();
                             $edits.text({{ _('updated')|htmltojs }});
+                            initializeCommentToggle();
                         }).fail(function () {
                             alert({{ _('Failed to update comment body.')|htmltojs }});
                         });
@@ -238,7 +244,61 @@
             var $comment = $('#comment-' + comment_id);
             $comment.find('.comment-body').show();
             $comment.find('.bad-comment-body').hide();
+            initializeCommentToggle();
         };
+
+        function initializeCommentToggle() {
+            var $allCommentBodies = $('.comment-body');
+
+            $allCommentBodies.each(function() {
+                var $commentBody = $(this);
+
+                if ($commentBody.hasClass('bad-comment-body')) {
+                    return;
+                }
+
+                // Skip if already processed
+                if ($commentBody.data('toggle-initialized')) {
+                    return;
+                }
+
+                if (!$commentBody.is(':visible')) {
+                    return;
+                }
+
+                var element = $commentBody[0];
+
+                var maxCollapsedHeight = 100;
+                var actualHeight = element.scrollHeight;
+
+                if (actualHeight > maxCollapsedHeight) {
+                    $commentBody.addClass('collapsed');
+
+                    var $toggle = $('<a class="comment-toggle">' + {{ _('Show more')|htmltojs }} + '</a>');
+
+                    $toggle.click(function(e) {
+                        e.preventDefault();
+                        if ($commentBody.hasClass('collapsed')) {
+                            $commentBody.removeClass('collapsed');
+                            $toggle.text({{ _('Show less')|htmltojs }});
+                        } else {
+                            $commentBody.addClass('collapsed');
+                            $toggle.text({{ _('Show more')|htmltojs }});
+                            var commentDisplay = $commentBody.closest('.comments');
+                            commentDisplay[0].scrollIntoView({ behavior: 'instant', block: 'start' });
+                        }
+                    });
+
+                    $commentBody.parent().append($toggle);
+                }
+
+                $commentBody.data('toggle-initialized', true);
+            });
+        }
+
+        $(window).on('load', function() {
+            initializeCommentToggle();
+        });
 
         var code_regex = [/input\(/, /#include/, /void\s+main/, /fn\s+main/, /func\s+main/];
         $(document).on('click', 'form.comment-warn-code .button[type=submit]', function (e) {
