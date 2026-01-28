@@ -742,5 +742,5 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
         self.object = form.save()
         self.object.authors.add(self.request.profile)
         self.object.is_organization_private = True
-        self.object.organizations.add(self.organization)
+        self.object.organization = self.organization
         self.object.save()
