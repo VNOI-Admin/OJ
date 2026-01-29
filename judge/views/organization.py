@@ -88,6 +88,49 @@ class OrganizationMixin(object):
 
 
 # Use this mixin to mark a view is public for all users, including non-members
+class OrganizationByIdMixin(object):
+    model = Organization
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['organization'] = self.organization
+        context['logo_override_image'] = self.organization.logo_override_image
+        context['meta_description'] = self.organization.about[:settings.DESCRIPTION_MAX_LENGTH]
+        return context
+
+    @cached_property
+    def organization(self):
+        return get_object_or_404(Organization, id=self.kwargs['pk'])
+
+    def dispatch(self, request, *args, **kwargs):
+        if 'pk' not in kwargs:
+            raise ImproperlyConfigured('Must pass an id')
+
+        try:
+            self.object = self.organization
+
+            # block the user from viewing other orgs in the subdomain
+            if self.is_in_organization_subdomain() and self.organization.pk != self.request.organization.pk:
+                return generic_message(request, _('Cannot view other organizations'),
+                                    _('You cannot view other organizations'), status=403)
+
+            return super(OrganizationByIdMixin, self).dispatch(request, *args, **kwargs)
+        except Http404:
+            pk = kwargs.get('pk', None)
+            return generic_message(request, _('No such organization'),
+                                _('Could not find an organization with ID "%s".') % pk)
+
+    def can_edit_organization(self, org=None):
+        if org is None:
+            org = self.organization
+        if not self.request.user.is_authenticated:
+            return False
+        return org.is_admin(self.request.profile) or self.request.user.has_perm('judge.edit_all_organization')
+
+    def is_in_organization_subdomain(self):
+        return hasattr(self.request, 'organization')
+
+
 class PublicOrganizationMixin(OrganizationMixin):
     pass
 
@@ -96,13 +139,18 @@ class PublicOrganizationMixin(OrganizationMixin):
 class PrivateOrganizationMixin(OrganizationMixin):
     # If the user has at least one of the following permissions,
     # they can access the private data even if they are not in the org
-    permission_bypass = []
+    permission_bypass = ['judge.edit_organization']
 
     # Override this method to customize the permission check
     def can_access_this_view(self):
         if self.request.user.is_authenticated:
+            # Allow superusers and staff to access any organization
+            if self.request.user.is_superuser or self.request.user.is_staff:
+                return True
+            # Allow organization members
             if self.request.profile in self.organization:
                 return True
+            # Allow users with specific permissions
             if any(self.request.user.has_perm(perm) for perm in self.permission_bypass):
                 return True
         return False
@@ -146,7 +194,14 @@ class OrganizationList(TitleMixin, ListView):
     title = gettext_lazy('Organizations')
 
     def get_queryset(self):
-        return Organization.objects.filter(is_unlisted=False)
+        queryset = Organization.objects.filter(is_unlisted=False)
+        search_query = self.request.GET.get('search', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(short_name__icontains=search_query)
+            )
+        return queryset
 
 
 class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizationListView):
@@ -471,6 +526,38 @@ class KickUserWidgetView(LoginRequiredMixin, AdminOrganizationMixin, SingleObjec
 # using PublicOrganizationMixin to allow user to view org's public information
 # like name, request join org, ...
 # However, they cannot see the organization private blog
+class OrganizationHomeById(TitleMixin, OrganizationByIdMixin, PostListBase):
+    template_name = 'organization/home.html'
+
+    def get_title(self):
+        return self.organization.name
+
+    def get_queryset(self):
+        queryset = BlogPost.objects.filter(organization=self.organization)
+
+        if not self.request.user.has_perm('judge.edit_all_post'):
+            if not self.can_edit_organization():
+                if self.request.profile in self.organization:
+                    # Normal user can only view public posts
+                    queryset = queryset.filter(publish_on__lte=timezone.now(), visible=True)
+                else:
+                    # User cannot view organization blog
+                    # if they are not in the org
+                    # even if the org is public
+                    queryset = BlogPost.objects.none()
+            else:
+                # Org admin can view public posts & their own posts
+                queryset = queryset.filter(Q(visible=True) | Q(authors=self.request.profile))
+
+        if self.request.user.is_authenticated:
+            profile = self.request.profile
+            queryset = queryset.annotate(
+                my_vote=FilteredRelation('votes', condition=Q(votes__voter_id=profile.id)),
+            ).annotate(vote_score=Coalesce(F('my_vote__score'), Value(0)))
+
+        return queryset.order_by('-sticky', '-publish_on').prefetch_related('authors__user')
+
+
 class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
     template_name = 'organization/home.html'
 
