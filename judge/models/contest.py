@@ -555,7 +555,7 @@ class Contest(models.Model):
                 Q(has_curator=True) |
                 Q(has_tester=True),
             )
-            queryset = queryset.filter(q)
+
         return queryset
 
     def rate(self):
