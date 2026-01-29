@@ -328,12 +328,8 @@
             <table class="contest-list table striped">
                 <thead>
                 <tr>
-                    <th style="width:80%">
-                        <a href="{{ sort_links.name }}" class="contest-sort-link">{{ _('Contest') }}{{ sort_order.name }}</a>
-                    </th>
-                    <th>
-                        <a href="{{ sort_links.user_count }}" class="contest-sort-link">{{ _('Users') }}{{ sort_order.user_count }}</a>
-                    </th>
+                    <th style="width:80%">{{ _('Contest') }}</th>
+                    <th>{{ _('Users') }}</th>
                     {% if not request.in_contest %}
                         <th style="width:15%"></th>
                     {% endif %}

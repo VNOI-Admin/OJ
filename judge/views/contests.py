@@ -49,7 +49,7 @@ from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
-from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
+from judge.utils.views import SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
@@ -92,15 +92,12 @@ class ContestListMixin(object):
         return context
 
 
-class ContestList(QueryStringSortMixin, InfinitePaginationMixin, TitleMixin, ContestListMixin, ListView):
+class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListView):
     model = Contest
     paginate_by = 20
     template_name = 'contest/list.html'
     title = gettext_lazy('Contests')
     context_object_name = 'past_contests'
-    all_sorts = frozenset(('name', 'user_count', 'start_time'))
-    default_desc = frozenset(('name', 'user_count'))
-    default_sort = '-start_time'
 
     @cached_property
     def _now(self):
@@ -111,7 +108,7 @@ class ContestList(QueryStringSortMixin, InfinitePaginationMixin, TitleMixin, Con
 
     def get_queryset(self):
         self.search_query = None
-        query_set = self._get_queryset().order_by(self.order, 'key').filter(end_time__lt=self._now)
+        query_set = self._get_queryset().order_by('-end_time', 'key').filter(end_time__lt=self._now)
         if 'search' in self.request.GET:
             self.search_query = search_query = ' '.join(self.request.GET.getlist('search')).strip()
             if search_query:
@@ -155,8 +152,6 @@ class ContestList(QueryStringSortMixin, InfinitePaginationMixin, TitleMixin, Con
         context['first_page_href'] = '.'
         context['page_suffix'] = '#past-contests'
         context['search_query'] = self.search_query
-        context.update(self.get_sort_context())
-        context.update(self.get_sort_paginate_context())
         return context
 
 
