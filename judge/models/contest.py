@@ -576,6 +576,9 @@ class Contest(models.Model):
         )
         verbose_name = _('contest')
         verbose_name_plural = _('contests')
+        indexes = [
+            models.Index(fields=['-end_time', 'key']),
+        ]
 
 
 class ContestAnnouncement(models.Model):

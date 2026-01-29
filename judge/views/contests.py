@@ -108,7 +108,7 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
 
     def get_queryset(self):
         self.search_query = None
-        query_set = self._get_queryset().order_by('-start_time', 'key').filter(end_time__lt=self._now)
+        query_set = self._get_queryset().order_by('-end_time', 'key').filter(end_time__lt=self._now)
         if 'search' in self.request.GET:
             self.search_query = search_query = ' '.join(self.request.GET.getlist('search')).strip()
             if search_query:
