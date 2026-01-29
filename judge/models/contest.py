@@ -510,8 +510,8 @@ class Contest(models.Model):
         if not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):
             q = Q(is_visible=True)
             private_exists = Contest.private_contestants.through.objects.filter(
-                contest_id=OuterRef("pk"),
-                profile_id=user.profile.id
+                contest_id=OuterRef('pk'),
+                profile_id=user.profile.id,
             )
             queryset = queryset.annotate(
                 has_private=Exists(private_exists),
@@ -521,19 +521,25 @@ class Contest(models.Model):
                 Q(is_organization_private=False, is_private=False) |
                 (Q(is_organization_private=False, is_private=True) & Q(has_private=True)) |
                 Q(is_organization_private=True, is_private=False, organization__in=user.profile.organizations.all()) |
-                (Q(is_organization_private=True, is_private=True, organization__in=user.profile.organizations.all()) & Q(has_private=True))
+                (
+                    Q(
+                        is_organization_private=True,
+                        is_private=True,
+                        organization__in=user.profile.organizations.all(),
+                    ) & Q(has_private=True)
+                )
             )
 
             authors_exists = Contest.authors.through.objects.filter(
-                contest_id=OuterRef("pk"),
+                contest_id=OuterRef('pk'),
                 profile_id=user.profile.id,
             )
             curators_exists = Contest.curators.through.objects.filter(
-                contest_id=OuterRef("pk"),
+                contest_id=OuterRef('pk'),
                 profile_id=user.profile.id,
             )
             testers_exists = Contest.testers.through.objects.filter(
-                contest_id=OuterRef("pk"),
+                contest_id=OuterRef('pk'),
                 profile_id=user.profile.id,
             )
 
@@ -547,7 +553,7 @@ class Contest(models.Model):
                 q |
                 Q(has_author=True) |
                 Q(has_curator=True) |
-                Q(has_tester=True)
+                Q(has_tester=True),
             )
             queryset = queryset.filter(q)
         return queryset
