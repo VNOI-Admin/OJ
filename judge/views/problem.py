@@ -460,7 +460,10 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, Commen
             response, failed_form = self.handle_submission_post(request)
             if failed_form:
                 # Re-render with form errors
-                return self.render_to_response(self.get_context_data(object=self.object))
+                return self.render_to_response(self.get_context_data(
+                    object=self.object,
+                    comment_form=self.get_comment_form(request),
+                ))
             return response
 
         # Otherwise, handle as comment
