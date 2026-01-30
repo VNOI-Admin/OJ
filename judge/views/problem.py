@@ -26,7 +26,7 @@ from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
 
-from judge.comments import CommentForm, CommentedDetailView
+from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
