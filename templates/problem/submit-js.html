@@ -137,6 +137,22 @@
                     event.preventDefault();
                     $('#problem_submit').find(':submit').attr('disabled', false);
                 }
+                
+                obj = document.getElementById('id_language');
+                fileonly = obj.options[obj.selectedIndex].getAttribute('data-fileonly');
+                if (fileonly == 'True') {
+                    file_size_limit = obj.options[obj.selectedIndex].getAttribute('data-file-size');
+                    let fileInput = $('#file_upload')[0];
+                    if (fileInput.files.length > 0) {
+                        let file = fileInput.files[0];
+                        let limitBytes = parseInt(file_size_limit) * 1024 * 1024;
+                        if (file.size > limitBytes) {
+                            alert({{ _('`Maximum file size is ${file_size_limit}MB.`') }});
+                            event.preventDefault();
+                            $('#problem_submit').find(':submit').attr('disabled', false);
+                        }
+                    }
+                }
             });
 
             function on_language_change() {
