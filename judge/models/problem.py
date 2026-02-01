@@ -198,6 +198,8 @@ class Problem(models.Model):
     user_count = models.IntegerField(verbose_name=_('number of users'), default=0,
                                      help_text=_('The number of users who solved the problem.'))
     ac_rate = models.FloatField(verbose_name=_('solve rate'), default=0)
+    data_size = models.BigIntegerField(verbose_name=_('test data size'), default=0, db_index=True,
+                                       help_text=_('Size of the test ZIP file in bytes'))
     is_full_markup = models.BooleanField(verbose_name=_('allow full markdown access'), default=False)
     submission_source_visibility_mode = models.CharField(verbose_name=_('submission source visibility'), max_length=1,
                                                          default=SubmissionSourceAccess.FOLLOW,

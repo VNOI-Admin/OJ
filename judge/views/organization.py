@@ -5,6 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+from django.db import models
 from django.db.models import Count, FilteredRelation, Q
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
@@ -37,7 +38,7 @@ from judge.views.submission import SubmissionsListBase
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
-           'KickUserWidgetView']
+           'KickUserWidgetView', 'OrganizationStorageDashboard']
 
 
 class OrganizationMixin(object):
@@ -744,3 +745,45 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
         self.object.is_organization_private = True
         self.object.organizations.add(self.organization)
         self.object.save()
+
+
+class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, ListView):
+    template_name = 'organization/storage.html'
+    context_object_name = 'problems'
+    paginate_by = 50
+
+    def get_queryset(self):
+        # Get all problems for this organization
+        queryset = Problem.objects.filter(
+            organizations=self.organization
+        ).select_related('group').only(
+            'code', 'name', 'data_size', 'group__full_name'
+        )
+        
+        # Handle sorting
+        sort = self.request.GET.get('sort', '-data_size')
+        if sort in ['data_size', '-data_size', 'code', '-code', 'name', '-name']:
+            queryset = queryset.order_by(sort)
+        else:
+            queryset = queryset.order_by('-data_size')
+            
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = _('Storage Dashboard - %s') % self.organization.name
+        context['organization'] = self.organization
+        
+        # Calculate total storage
+        total_storage = Problem.objects.filter(
+            organizations=self.organization
+        ).aggregate(total=models.Sum('data_size'))['total'] or 0
+        
+        context['total_storage'] = total_storage
+        context['total_storage_mb'] = round(total_storage / (1024 * 1024), 2)
+        context['total_storage_gb'] = round(total_storage / (1024 * 1024 * 1024), 3)
+        
+        # Get current sort parameter
+        context['current_sort'] = self.request.GET.get('sort', '-data_size')
+        
+        return context
