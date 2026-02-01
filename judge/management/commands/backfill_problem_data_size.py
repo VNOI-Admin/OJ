@@ -25,7 +25,7 @@ class Command(BaseCommand):
         zip_path = os.path.join(
             settings.DMOJ_PROBLEM_DATA_ROOT,
             problem.code,
-            'testdata.zip'
+            'testdata.zip',
         )
 
         if os.path.exists(zip_path) and os.path.isfile(zip_path):
@@ -61,6 +61,6 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f'Successfully updated {updated_count} problems, skipped {skipped_count}'
-            )
+                f'Successfully updated {updated_count} problems, skipped {skipped_count}',
+            ),
         )

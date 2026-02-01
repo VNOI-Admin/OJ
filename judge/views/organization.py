@@ -755,35 +755,35 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
     def get_queryset(self):
         # Get all problems for this organization
         queryset = Problem.objects.filter(
-            organizations=self.organization
+            organizations=self.organization,
         ).select_related('group').only(
-            'code', 'name', 'data_size', 'group__full_name'
+            'code', 'name', 'data_size', 'group__full_name',
         )
-        
+
         # Handle sorting
         sort = self.request.GET.get('sort', '-data_size')
         if sort in ['data_size', '-data_size', 'code', '-code', 'name', '-name']:
             queryset = queryset.order_by(sort)
         else:
             queryset = queryset.order_by('-data_size')
-            
+
         return queryset
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['title'] = _('Storage Dashboard - %s') % self.organization.name
         context['organization'] = self.organization
-        
+
         # Calculate total storage
         total_storage = Problem.objects.filter(
-            organizations=self.organization
+            organizations=self.organization,
         ).aggregate(total=models.Sum('data_size'))['total'] or 0
-        
+
         context['total_storage'] = total_storage
         context['total_storage_mb'] = round(total_storage / (1024 * 1024), 2)
         context['total_storage_gb'] = round(total_storage / (1024 * 1024 * 1024), 3)
-        
+
         # Get current sort parameter
         context['current_sort'] = self.request.GET.get('sort', '-data_size')
-        
+
         return context
