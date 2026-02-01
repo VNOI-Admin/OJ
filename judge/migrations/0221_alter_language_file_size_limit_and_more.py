@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0216_languagelimit_file_size_limit_alter_contest_authors_and_more'),
+        ('judge', '0220_languagelimit_file_size_limit_alter_contest_authors_and_more'),
     ]
 
     operations = [
