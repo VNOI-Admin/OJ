@@ -7,6 +7,7 @@ from operator import attrgetter
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.models import AnonymousUser
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.core.files.storage import default_storage
@@ -650,7 +651,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         return context
 
 
-class ProblemSubmissions(ProblemSubmissionsBase):
+class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
             if hasattr(self, 'contest'):
@@ -730,6 +731,39 @@ def single_submission(request):
 class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
     stats_update_interval = 3600
 
+    def public_problem_queryset(self):
+        queryset = Submission.objects.all()
+        use_straight_join(queryset)
+        queryset = submission_related(queryset.order_by('-id'))
+        if self.show_problem:
+            queryset = queryset.prefetch_related(Prefetch('problem__translations',
+                                                          queryset=ProblemTranslation.objects.filter(
+                                                              language=self.request.LANGUAGE_CODE), to_attr='_trans'))
+        queryset = queryset.filter(contest_object__isnull=True)
+
+        if self.selected_languages:
+            queryset = queryset.filter(language__in=list(
+                Language.objects.filter(key__in=self.selected_languages).values_list('id', flat=True)))
+        if self.selected_statuses:
+            status_filter = Q(result__in=self.selected_statuses)
+            if self.could_filter_by_status():
+                status_filter |= Q(status__in=self.selected_statuses)
+            queryset = queryset.filter(status_filter)
+        if self.selected_organization:
+            organization_object = get_object_or_404(Organization, pk=self.selected_organization)
+            queryset = queryset.filter(user__organizations=organization_object)
+
+        return queryset
+
+    def get_queryset(self):
+        if not self.is_contest_scoped:
+            queryset = self.public_problem_queryset()
+            filter_submissions_by_visible_problems(queryset, AnonymousUser())
+        else:
+            queryset = self._get_queryset()
+
+        return queryset
+
     @property
     def use_infinite_pagination(self):
         return not self.is_contest_scoped
@@ -742,20 +776,14 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
         context = super(AllSubmissions, self).get_context_data(**kwargs)
         context['dynamic_update'] = context['page_obj'].number == 1
         context['stats_update_interval'] = self.stats_update_interval
+        # in the all submissions page -> no need to show view submsission source link ...
+        context['completed_problem_ids'] = []
+        context['editable_problem_ids'] = []
+        context['tester_problem_ids'] = []
         return context
 
     def _get_result_data(self, queryset=None):
-        if queryset is not None or self.is_contest_scoped or self.selected_languages or \
-           self.selected_statuses or self.selected_organization:
-            return super(AllSubmissions, self)._get_result_data(queryset)
-
-        key = 'global_submission_result_data'
-        result = cache.get(key)
-        if result:
-            return result
-        result = super(AllSubmissions, self)._get_result_data(Submission.objects.all())
-        cache.set(key, result, self.stats_update_interval)
-        return result
+        return {'categories': [], 'total': 0}
 
 
 class ForceContestMixin(object):
