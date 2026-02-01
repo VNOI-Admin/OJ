@@ -139,6 +139,21 @@
                         alert({{ _('Your source code must contain at most 65536 characters.')|htmltojs }});
                         event.preventDefault();
                         $('#problem_submit').find(':submit').attr('disabled', false);
+                        return false;
+                    }
+                    
+                    // Validate file size for file-only submissions
+                    var fileInput = $('#file_upload')[0];
+                    if (fileInput && fileInput.files.length > 0) {
+                        var file = fileInput.files[0];
+                        var maxSizeKB = file_size_limit;
+                        if (maxSizeKB > 0 && file.size > maxSizeKB * 1024) {
+                            var fileSizeKB = (file.size / 1024).toFixed(2);
+                            alert('{{ _("File size ") }}' + fileSizeKB + '{{ _(" KB exceeds the maximum allowed size of ") }}' + maxSizeKB + ' KB!');
+                            event.preventDefault();
+                            $('#problem_submit').find(':submit').attr('disabled', false);
+                            return false;
+                        }
                     }
                 });
 
@@ -153,13 +168,13 @@
                             $('#file-submit').removeClass('hidden');
                         }
 
-                        file_ext = '.' + obj.options[obj.selectedIndex].getAttribute('data-ext');
-                        file_size_limit = obj.options[obj.selectedIndex].getAttribute('data-file-size');
+                        var file_ext = '.' + obj.options[obj.selectedIndex].getAttribute('data-ext');
+                        var file_size_limit = parseInt(obj.options[obj.selectedIndex].getAttribute('data-file-size'));
                         $('#file_upload').val('');
                         $('#file_upload').attr({accept: file_ext});
                         $('#file_drag').html(
                             '<b>{{ _("Click to select a file or drag a file into this box") }}</b><br>' +
-                            {{ _('`Only accept "${file_ext}". Maximum file size is ${file_size_limit}MB.`') }}
+                            {{ _('`Only accept "${file_ext}". Maximum file size is ${file_size_limit} KB.`') }}
                         );
                     } else {
                         if ($('#editor').hasClass('hidden')) {
@@ -224,10 +239,41 @@
             function handleFileChange() {
                 var file = $('#file_upload')[0].files[0];
                 if (file) {
-                    $('#file_drag').html(
-                        '<b>{{ _("File name") }}:</b> ' + file.name + '<br>' +
-                        '<b>{{ _("File size") }}:</b> ' + (file.size / (1024 * 1024)).toFixed(2) + ' MB'
-                    );
+                    // Get the current file size limit from the selected language
+                    var obj = document.getElementById('id_language');
+                    var maxSizeKB = 0;
+                    if (obj && obj.selectedIndex >= 0) {
+                        var selectedOption = obj.options[obj.selectedIndex];
+                        maxSizeKB = parseInt(selectedOption.getAttribute('data-file-size')) || 0;
+                    }
+                    
+                    var fileSizeKB = (file.size / 1024).toFixed(2);
+                    
+                    // Check if file size exceeds limit (only if limit is set and > 0)
+                    if (maxSizeKB > 0 && file.size > maxSizeKB * 1024) {
+                        $('#file_drag').html(
+                            '<div style="color: red; font-weight: bold; font-size: 1.2em; margin-bottom: 10px;">⚠ {{ _("Error: File too large!") }}</div>' +
+                            '<b>{{ _("File name") }}:</b> ' + file.name + '<br>' +
+                            '<b>{{ _("File size") }}:</b> ' + fileSizeKB + ' KB<br>' +
+                            '<b>{{ _("Maximum allowed") }}:</b> ' + maxSizeKB + ' KB<br>' +
+                            '<span style="color: red; font-weight: bold;">{{ _("Please select a smaller file.") }}</span>'
+                        );
+                        // Clear the file input
+                        $('#file_upload').val('');
+                        // Disable submit button
+                        $('#submit-button').prop('disabled', true);
+                        // Show alert as well
+                        alert('{{ _("File size ") }}' + fileSizeKB + '{{ _(" KB exceeds the maximum allowed size of ") }}' + maxSizeKB + ' KB!');
+                    } else {
+                        $('#file_drag').html(
+                            '<div style="color: green; font-weight: bold;">✓ {{ _("File ready to submit") }}</div>' +
+                            '<b>{{ _("File name") }}:</b> ' + file.name + '<br>' +
+                            '<b>{{ _("File size") }}:</b> ' + fileSizeKB + ' KB' +
+                            (maxSizeKB > 0 ? ' / ' + maxSizeKB + ' KB' : '')
+                        );
+                        // Enable submit button
+                        $('#submit-button').prop('disabled', false);
+                    }
                 }
             }
 
@@ -303,7 +349,7 @@
                             {% for lang in form.fields.language.queryset %}
                                 <option value="{{ lang.id }}" data-id="{{ lang.id }}" data-name="{{ lang.name }}"
                                         data-info="{{ lang.info }}" data-ace="{{ lang.ace }}" data-fileonly="{{ lang.file_only }}"
-                                        data-ext="{{ lang.extension }}" data-file-size="{{ lang.file_size_limit }}"
+                                        data-ext="{{ lang.extension }}" data-file-size="{{ lang_file_size_limits.get(lang.id, lang.file_size_limit) }}"
                                         data-judge-info="{{ runtime_versions(lang.runtime_versions()) }}"
                                         {% if lang.id == default_lang.id %}selected{% endif %}>{{ lang.name }}</option>
                             {% endfor %}
@@ -320,7 +366,7 @@
         {% else %}
             <div class="submit-bar">
                 {{ form.judge }}
-                <input type="submit" value="{{ _('Submit!') }}" class="button"
+                <input id="submit-button" type="submit" value="{{ _('Submit!') }}" class="button"
                        {% if request.in_contest and submission_limit and not submissions_left %}disabled{% endif %}>
             </div>
         {% endif %}
