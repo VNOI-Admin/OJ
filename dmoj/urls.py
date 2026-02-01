@@ -18,6 +18,7 @@ from judge.views import TitledTemplateView, api, blog, comment, contests, langua
     preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
     two_factor, user, widgets
 from judge.views.magazine import MagazinePage
+from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
 from judge.views.register import ActivationView, RegistrationView
@@ -108,6 +109,9 @@ urlpatterns = [
     path('i18n/', include('django.conf.urls.i18n')),
     path('accounts/', include(register_patterns)),
     path('', include('social_django.urls')),
+
+    # URL Shortener management (on main domain)
+    path('shorteners/', include('urlshortener.urls')),
 
     path('problems', include([
         path('/', problem.ProblemList.as_view(), name='problem_list'),
@@ -251,6 +255,8 @@ urlpatterns = [
         path('/stats', contests.ContestStats.as_view(), name='contest_stats'),
         path('/data/prepare/', contests.ContestPrepareData.as_view(), name='contest_prepare_data'),
         path('/data/download/', contests.ContestDownloadData.as_view(), name='contest_download_data'),
+        path('/make_problems_public', contests.ContestProblemMakePublic.as_view(),
+             name='contest_problems_make_public'),
 
         path('/rank/<str:problem>/',
              paged_list_view(ranked_submission.ContestRankedSubmission, 'contest_ranked_submissions')),
@@ -430,6 +436,8 @@ urlpatterns = [
     ])),
 
     path('magazine/', MagazinePage.as_view(), name='magazine'),
+
+    path('misc_config/', MiscConfigEdit.as_view(), name='misc_config'),
 ]
 
 favicon_paths = ['apple-touch-icon-180x180.png', 'apple-touch-icon-114x114.png', 'android-chrome-72x72.png',

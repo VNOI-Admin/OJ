@@ -362,6 +362,8 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         return result
 
     def _get_result_data(self, queryset=None):
+        if self.is_in_low_power_mode():
+            return {'categories': [], 'total': 0}
         if queryset is None:
             queryset = self.get_queryset()
         return get_result_data(queryset.order_by())
@@ -370,7 +372,10 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         pass
 
     @cached_property
-    def in_contest(self):
+    def is_contest_scoped(self):
+        """
+        Returns True if this view is restricted to a specific contest's submissions.
+        """
         return False
 
     @cached_property
@@ -385,7 +390,8 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
             queryset = queryset.prefetch_related(Prefetch('problem__translations',
                                                           queryset=ProblemTranslation.objects.filter(
                                                               language=self.request.LANGUAGE_CODE), to_attr='_trans'))
-        if self.in_contest:
+        if self.is_contest_scoped:
+            # Show submissions only for this contest
             queryset = queryset.filter(contest_object=self.contest)
             if not self.contest.can_see_full_submission_list(self.request.user):
                 queryset = queryset.filter(user=self.request.profile)
@@ -410,7 +416,10 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
             queryset = queryset.filter(language__in=list(
                 Language.objects.filter(key__in=self.selected_languages).values_list('id', flat=True)))
         if self.selected_statuses:
-            queryset = queryset.filter(Q(result__in=self.selected_statuses) | Q(status__in=self.selected_statuses))
+            status_filter = Q(result__in=self.selected_statuses)
+            if self.could_filter_by_status():
+                status_filter |= Q(status__in=self.selected_statuses)
+            queryset = queryset.filter(status_filter)
         if self.selected_organization:
             organization_object = get_object_or_404(Organization, pk=self.selected_organization)
             queryset = queryset.filter(user__organizations=organization_object)
@@ -419,7 +428,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
 
     def get_queryset(self):
         queryset = self._get_queryset()
-        if not self.in_contest:
+        if not self.is_contest_scoped:
             filter_submissions_by_visible_problems(queryset, self.request.user)
 
         return queryset
@@ -428,16 +437,19 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         return None
 
     def get_all_submissions_page(self):
-        if self.in_contest and hasattr(self, 'contest'):
+        if self.is_contest_scoped and hasattr(self, 'contest'):
             return reverse('contest_all_submissions', kwargs={'contest': self.contest.key})
         return reverse('all_submissions')
 
     def get_searchable_organizations(self):
         return Organization.objects.values_list('pk', 'name')
 
+    def could_filter_by_status(self):
+        return self.request.user.is_superuser or self.request.user.is_staff
+
     def get_searchable_status_codes(self):
         hidden_codes = ['SC']
-        if not self.request.user.is_superuser and not self.request.user.is_staff:
+        if not self.could_filter_by_status():
             hidden_codes += ['IE', 'QU', 'P', 'G', 'D']
         return [(key, value) for key, value in Submission.SEARCHABLE_STATUS if key not in hidden_codes]
 
@@ -445,7 +457,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         context = super(SubmissionsListBase, self).get_context_data(**kwargs)
         authenticated = self.request.user.is_authenticated
         context['dynamic_update'] = False
-        context['dynamic_contest_id'] = self.in_contest and self.contest.id
+        context['dynamic_contest_id'] = self.is_contest_scoped and self.contest.id
         context['show_problem'] = self.show_problem
 
         profile = self.request.profile
@@ -469,17 +481,42 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         context['first_page_href'] = (self.first_page_href or '.') + suffix
         context['my_submissions_link'] = self.get_my_submissions_page()
         context['all_submissions_link'] = self.get_all_submissions_page()
+        context['is_in_low_power_mode'] = self.is_in_low_power_mode()
         context['tab'] = self.tab
         return context
+
+    def is_in_low_power_mode(self):
+        return settings.VNOJ_LOW_POWER_MODE and not self.request.user.is_superuser
 
     def get(self, request, *args, **kwargs):
         check = self.access_check(request)
         if check is not None:
             return check
 
-        self.selected_languages = set(request.GET.getlist('language'))
-        self.selected_statuses = set(request.GET.getlist('status'))
-        self.selected_organization = request.GET.get('organization')
+        if self.is_in_low_power_mode():
+            max_page = settings.VNOJ_LOW_POWER_MODE_CONFIG.get('max_page', 5)
+            page_kwarg = self.page_kwarg
+            page = self.kwargs.get(page_kwarg) or self.request.GET.get(page_kwarg) or 1
+            try:
+                page_number = int(page)
+                if page_number > max_page:
+                    raise Http404()
+            except ValueError:
+                raise Http404('Page cannot be converted to an int.')
+
+        if self.is_in_low_power_mode():
+            # In low power mode, only allow filtering by a single language/status
+            # and does not allow filtering by organization
+            language = request.GET.get('language')
+            self.selected_languages = {language} if language else set()
+            status = request.GET.get('status')
+            self.selected_statuses = {status} if status else set()
+            self.selected_organization = None
+        else:
+            # Allow multiple languages/statuses
+            self.selected_languages = set(request.GET.getlist('language'))
+            self.selected_statuses = set(request.GET.getlist('status'))
+            self.selected_organization = request.GET.get('organization')
         if self.selected_organization:
             try:
                 self.selected_organization = int(self.selected_organization)
@@ -516,7 +553,7 @@ class ConditionalUserTabMixin(object):
         return context
 
 
-class AllUserSubmissions(ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+class AllUserSubmissions(InfinitePaginationMixin, ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
     def get_queryset(self):
         return super(AllUserSubmissions, self).get_queryset().filter(user_id=self.profile.id)
 
@@ -550,8 +587,8 @@ class ProblemSubmissionsBase(SubmissionsListBase):
     check_contest_in_access_check = True
 
     @cached_property
-    def in_contest(self):
-        if super(ProblemSubmissionsBase, self).in_contest:
+    def is_contest_scoped(self):
+        if super(ProblemSubmissionsBase, self).is_contest_scoped:
             return True
         if not hasattr(self, 'contest'):
             return False
@@ -559,7 +596,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         return self.contest.problems.filter(id=self.problem.id).exists()
 
     def get_queryset(self):
-        if self.in_contest and not self.contest.contest_problems.filter(problem_id=self.problem.id).exists():
+        if self.is_contest_scoped and not self.contest.contest_problems.filter(problem_id=self.problem.id).exists():
             raise Http404()
         return super(ProblemSubmissionsBase, self)._get_queryset().filter(problem_id=self.problem.id)
 
@@ -573,15 +610,15 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         ))
 
     def access_check_contest(self, request):
-        if self.in_contest and not self.contest.can_see_own_scoreboard(request.user):
+        if self.is_contest_scoped and not self.contest.can_see_own_scoreboard(request.user):
             raise Http404()
 
     def access_check(self, request):
         # FIXME: This should be rolled into the `is_accessible_by` check when implementing #1509
-        if self.in_contest and request.user.is_authenticated and request.profile.id in self.contest.editor_ids:
+        if self.is_contest_scoped and request.user.is_authenticated and request.profile.id in self.contest.editor_ids:
             return
 
-        if not self.in_contest and not self.problem.is_accessible_by(request.user):
+        if not self.is_contest_scoped and not self.problem.is_accessible_by(request.user):
             raise Http404()
 
         if self.check_contest_in_access_check:
@@ -656,6 +693,9 @@ class UserProblemSubmissions(ConditionalUserTabMixin, UserMixin, ProblemSubmissi
                                    reverse('problem_detail', args=[self.problem.code])),
         })
 
+    def is_in_low_power_mode(self):
+        return False
+
     def get_context_data(self, **kwargs):
         context = super(UserProblemSubmissions, self).get_context_data(**kwargs)
         context['dynamic_user_id'] = self.profile.id
@@ -692,7 +732,7 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
 
     @property
     def use_infinite_pagination(self):
-        return not self.in_contest
+        return not self.is_contest_scoped
 
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
@@ -705,7 +745,7 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
         return context
 
     def _get_result_data(self, queryset=None):
-        if queryset is not None or self.in_contest or self.selected_languages or \
+        if queryset is not None or self.is_contest_scoped or self.selected_languages or \
            self.selected_statuses or self.selected_organization:
             return super(AllSubmissions, self)._get_result_data(queryset)
 
@@ -720,7 +760,8 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
 
 class ForceContestMixin(object):
     @property
-    def in_contest(self):
+    def is_contest_scoped(self):
+        # Force this view to behave as a contest-scoped view
         return True
 
     @property
@@ -750,6 +791,9 @@ class ForceContestMixin(object):
 
 
 class AllContestSubmissions(ForceContestMixin, AllSubmissions):
+    def is_in_low_power_mode(self):
+        return False
+
     def get_content_title(self):
         return format_html(_('All submissions in <a href="{1}">{0}</a>'),
                            self.contest.name, reverse('contest_view', args=[self.contest.key]))
@@ -761,6 +805,9 @@ class AllContestSubmissions(ForceContestMixin, AllSubmissions):
 
 
 class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
+    def is_in_low_power_mode(self):
+        return False
+
     def get_title(self):
         if self.is_own:
             return _('My submissions in %(contest)s') % {'contest': self.contest.name}
@@ -791,13 +838,6 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
             'contest': format_html('<a href="{1}">{0}</a>', self.contest.name,
                                    reverse('contest_view', args=[self.contest.key])),
         })
-
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        # FIXME: fix this line of code when #1509 is implemented
-        if not self.in_contest:
-            filter_submissions_by_visible_problems(queryset, self.request.user)
-        return queryset
 
 
 class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):

@@ -88,6 +88,17 @@ def martor_image_uploader(request):
     return HttpResponse(data, content_type='application/json')
 
 
+def static_uploader(static_file):
+    ext = os.path.splitext(static_file.name)[1]
+    name = str(uuid.uuid4()) + ext
+    default_storage.save(os.path.join(settings.STATIC_UPLOAD_MEDIA_DIR, name), static_file)
+    url_base = getattr(settings, 'STATIC_UPLOAD_URL_PREFIX',
+                       urljoin(settings.MEDIA_URL, settings.STATIC_UPLOAD_MEDIA_DIR))
+    if not url_base.endswith('/'):
+        url_base += '/'
+    return urljoin(url_base, name)
+
+
 def csrf_failure(request: HttpRequest, reason=''):
     # Redirect to the same page in case of CSRF failure
     # So that we can turn on cloudflare DDOS protection without
