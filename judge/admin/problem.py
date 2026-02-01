@@ -64,7 +64,7 @@ class LanguageLimitInlineForm(ModelForm):
 
 class LanguageLimitInline(admin.TabularInline):
     model = LanguageLimit
-    fields = ('language', 'time_limit', 'memory_limit')
+    fields = ('language', 'time_limit', 'memory_limit', 'file_size_limit')
     form = LanguageLimitInlineForm
 
 

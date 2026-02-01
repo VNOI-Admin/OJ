@@ -29,7 +29,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
-from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
+from judge.models import ContestSubmission, Judge, Language, LanguageLimit, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
@@ -791,10 +791,32 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, ProblemSubmitM
     def get_form(self, form_class=None):
         return self.get_submit_form()
 
+    def _get_file_size_limit(self, language, problem):
+        """Get effective file size limit in KB (problem-specific or language default)"""
+        limit = language.file_size_limit
+        try:
+            lang_limit = LanguageLimit.objects.get(problem=problem, language=language)
+            if lang_limit.file_size_limit is not None:
+                limit = lang_limit.file_size_limit
+        except LanguageLimit.DoesNotExist:
+            pass
+        return limit
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context.update(self.get_submit_context())
-        context['no_judges'] = not context['form'].fields['language'].queryset if context.get('form') else True
+        context['langs'] = Language.objects.all()
+        context['no_judges'] = not context['form'].fields['language'].queryset
+        context['submission_limit'] = self.contest_problem and self.contest_problem.max_submissions
+        context['submissions_left'] = self.remaining_submission_count
+        context['ACE_URL'] = settings.ACE_URL
+        context['default_lang'] = self.default_language
+
+        # Build map of language ID to effective file size limit
+        context['lang_file_size_limits'] = {
+            lang.id: self._get_file_size_limit(lang, self.object)
+            for lang in context['form'].fields['language'].queryset
+        }
+
         return context
 
     def form_valid(self, form):
