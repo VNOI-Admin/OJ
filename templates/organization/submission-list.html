@@ -4,3 +4,10 @@
     {% set tab = 'submission-list' %}
     {% include "organization/tabs.html" %}
 {% endblock %}
+{% block before_submissions %}
+    <div>
+        <div class="alert alert-warning comment-lock">
+            {{ _('Only show last 2 days submissions') }}
+        </div>
+    </div>
+{% endblock %}
