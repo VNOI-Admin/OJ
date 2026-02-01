@@ -153,7 +153,7 @@ class LanguageLimitForm(ModelForm):
 
     class Meta:
         model = LanguageLimit
-        fields = ('language', 'time_limit', 'memory_limit')
+        fields = ('language', 'time_limit', 'memory_limit', 'file_size_limit')
         widgets = {
             'language': Select2Widget(attrs={'style': 'width:200px'}),
         }
@@ -377,6 +377,18 @@ class ProblemSubmitForm(ModelForm):
         self.check_submission()
         return cleaned_data
 
+    def _get_file_size_limit(self, language, problem):
+        """Get effective file size limit in KB (problem-specific or language default)"""
+        limit = language.file_size_limit
+        if problem and limit >= 0:
+            try:
+                lang_limit = LanguageLimit.objects.get(problem=problem, language=language)
+                if lang_limit.file_size_limit is not None:
+                    limit = lang_limit.file_size_limit
+            except LanguageLimit.DoesNotExist:
+                pass
+        return limit
+
     def check_submission(self):
         source = self.cleaned_data.get('source', '')
         content = self.files.get('submission_file', None)
@@ -387,18 +399,31 @@ class ProblemSubmitForm(ModelForm):
                 (source != '' and lang_obj.file_only) or (content == '' and not lang_obj.file_only):
             raise forms.ValidationError(_('Source code/file is missing or redundant. Please try again'))
 
-        if content:
-            max_file_size = lang_obj.file_size_limit * 1024 * 1024
-            ext = os.path.splitext(content.name)[1][1:]
+        problem = self.instance.problem if self.instance and self.instance.problem else None
+        max_size_kb = self._get_file_size_limit(lang_obj, problem)
+        
+        # Validate source code size
+        if source and max_size_kb > 0:
+            source_size_bytes = len(source.encode('utf-8'))
+            if source_size_bytes > max_size_kb * 1024:
+                raise forms.ValidationError(
+                    _('Source code is too large! Size: %(size)s, Maximum allowed: %(max)s') % {
+                        'size': filesizeformat(source_size_bytes),
+                        'max': filesizeformat(max_size_kb * 1024)
+                    }
+                )
 
+        # Validate file upload
+        if content:
+            ext = os.path.splitext(content.name)[1][1:]
             if ext.lower() != lang_obj.extension.lower():
                 raise forms.ValidationError(_('Wrong file type for language %(lang)s, expected %(lang_ext)s'
                                               ', found %(ext)s')
                                             % {'lang': language, 'lang_ext': lang_obj.extension, 'ext': ext})
 
-            elif content.size > max_file_size:
+            if max_size_kb > 0 and content.size > max_size_kb * 1024:
                 raise forms.ValidationError(_('File size is too big! Maximum file size is %s')
-                                            % filesizeformat(max_file_size))
+                                            % filesizeformat(max_size_kb * 1024))
 
             if lang_obj.key == 'SCRATCH':
                 try:

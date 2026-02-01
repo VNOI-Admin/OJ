@@ -71,13 +71,14 @@
 {% macro form_as_row(form) -%}
     {% if form.non_field_errors() %}
     <tr>
-        <td colspan="6">{{ form.non_field_errors() }}</td>
+        <td colspan="7">{{ form.non_field_errors() }}</td>
     </tr>
     {% endif %}
     <tr>
         <td>{{ form.id }} {{ form.language.errors }}{{ form.language }}</td>
         <td>{{ form.time_limit.errors }}{{ form.time_limit }}</td>
         <td>{{ form.memory_limit.errors }}{{ form.memory_limit }}</td>
+        <td>{{ form.file_size_limit.errors }}{{ form.file_size_limit }}</td>
         <td>
         {% if lang_limit_formset.can_delete and form.instance.pk %}
             {{ form.DELETE }}
@@ -119,6 +120,7 @@
                     <th style="width: 20em;"> {{ _('Language') }} </th>
                     <th> {{ _('Time limit (seconds)') }} </th>
                     <th> {{ _('Memory limit (KiB)') }} </th>
+                    <th> {{ _('File size limit (KB)') }} </th>
                     <th> {{ _('Delete') }} </th>
                 </tr>
             </thead>

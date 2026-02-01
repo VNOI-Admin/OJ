@@ -209,8 +209,13 @@ class JudgeHandler(ZlibPacketHandler):
                                                date__lt=sub_date).exclude(status__in=('CE', 'IE')).count() + 1
 
         try:
-            time, memory = (LanguageLimit.objects.filter(problem__id=pid, language__id=lid)
-                            .values_list('time_limit', 'memory_limit').get())
+            lang_limit = LanguageLimit.objects.filter(problem__id=pid, language__id=lid).values_list(
+                'time_limit', 'memory_limit', 'file_size_limit').get()
+            time = lang_limit[0]
+            memory = lang_limit[1]
+            # Use problem-specific file size limit if set, otherwise fall back to language default
+            if lang_limit[2] is not None:
+                file_size_limit = lang_limit[2]
         except LanguageLimit.DoesNotExist:
             pass
 
