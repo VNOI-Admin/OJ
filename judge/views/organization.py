@@ -4,6 +4,7 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
+from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Count, FilteredRelation, Q
 from django.db.models.expressions import F, Value
@@ -23,6 +24,7 @@ from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
     Problem, Profile
 from judge.models.profile import OrganizationMonthlyUsage
+from judge.models.submission import Submission
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group
@@ -650,6 +652,15 @@ class ContestListOrganization(PrivateOrganizationMixin, ContestList):
             context['title'] = self.organization.name
         return context
 
+def get_last_submission():
+    key = 'last_submission_pk_cache'
+    last_submission = cache.get(key)
+    if last_submission is None:
+        last_submission = Submission.objects.all().order_by('-id').first()
+        if last_submission:
+            last_submission = last_submission.id
+        cache.set(key, last_submission, 600)
+    return last_submission
 
 class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMixin, SubmissionsListBase):
     template_name = 'organization/submission-list.html'
@@ -658,6 +669,9 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
         query_set = query_set.filter(problem__organization=self.organization)
+        last_submission = get_last_submission()
+        if last_submission is not None:
+            query_set = query_set.filter(id__gte=last_submission - 20_000)
         return query_set
 
     def get_context_data(self, **kwargs):
