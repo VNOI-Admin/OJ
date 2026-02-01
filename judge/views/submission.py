@@ -383,6 +383,24 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
     def contest(self):
         return self.request.profile.current_contest.contest
 
+    def _do_filter_queryset(self, queryset):
+        if self.selected_languages:
+            # MariaDB can't optimize this subquery for some insane, unknown reason,
+            # so we are forcing an eager evaluation to get the IDs right here.
+            # Otherwise, with multiple language filters, MariaDB refuses to use an index
+            # (or runs the subquery for every submission, which is even more horrifying to think about).
+            queryset = queryset.filter(language__in=list(
+                Language.objects.filter(key__in=self.selected_languages).values_list('id', flat=True)))
+        if self.selected_statuses:
+            status_filter = Q(result__in=self.selected_statuses)
+            if self.could_filter_by_status():
+                status_filter |= Q(status__in=self.selected_statuses)
+            queryset = queryset.filter(status_filter)
+        if self.selected_organization:
+            organization_object = get_object_or_404(Organization, pk=self.selected_organization)
+            queryset = queryset.filter(user__organizations=organization_object)
+        return queryset
+
     def _get_queryset(self):
         queryset = Submission.objects.all()
         use_straight_join(queryset)
@@ -409,21 +427,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
                                            Q(contest_object__in=contest_queryset) |
                                            Q(contest_object__isnull=True))
 
-        if self.selected_languages:
-            # MariaDB can't optimize this subquery for some insane, unknown reason,
-            # so we are forcing an eager evaluation to get the IDs right here.
-            # Otherwise, with multiple language filters, MariaDB refuses to use an index
-            # (or runs the subquery for every submission, which is even more horrifying to think about).
-            queryset = queryset.filter(language__in=list(
-                Language.objects.filter(key__in=self.selected_languages).values_list('id', flat=True)))
-        if self.selected_statuses:
-            status_filter = Q(result__in=self.selected_statuses)
-            if self.could_filter_by_status():
-                status_filter |= Q(status__in=self.selected_statuses)
-            queryset = queryset.filter(status_filter)
-        if self.selected_organization:
-            organization_object = get_object_or_404(Organization, pk=self.selected_organization)
-            queryset = queryset.filter(user__organizations=organization_object)
+        queryset = self._do_filter_queryset(queryset)
 
         return queryset
 
@@ -741,19 +745,7 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
                                                               language=self.request.LANGUAGE_CODE), to_attr='_trans'))
         queryset = queryset.filter(contest_object__isnull=True)
 
-        if self.selected_languages:
-            queryset = queryset.filter(language__in=list(
-                Language.objects.filter(key__in=self.selected_languages).values_list('id', flat=True)))
-        if self.selected_statuses:
-            status_filter = Q(result__in=self.selected_statuses)
-            if self.could_filter_by_status():
-                status_filter |= Q(status__in=self.selected_statuses)
-            queryset = queryset.filter(status_filter)
-        if self.selected_organization:
-            organization_object = get_object_or_404(Organization, pk=self.selected_organization)
-            queryset = queryset.filter(user__organizations=organization_object)
-
-        return queryset
+        return self._do_filter_queryset(queryset)
 
     def get_queryset(self):
         if not self.is_contest_scoped:
