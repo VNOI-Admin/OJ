@@ -746,13 +746,13 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, SingleObjectFo
         context['submissions_left'] = self.remaining_submission_count
         context['ACE_URL'] = settings.ACE_URL
         context['default_lang'] = self.default_language
-        
+
         # Build map of language ID to effective file size limit
         context['lang_file_size_limits'] = {
             lang.id: self._get_file_size_limit(lang, self.object)
             for lang in context['form'].fields['language'].queryset
         }
-        
+
         return context
 
     def post(self, request, *args, **kwargs):
