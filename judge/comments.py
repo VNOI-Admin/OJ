@@ -62,6 +62,9 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
         return (CommentLock.objects.filter(page=self.get_comment_page()).exists() and
                 not self.request.user.has_perm('judge.override_comment_lock'))
 
+    def get_comment_form(self, request):
+        return CommentForm(request, initial={'page': self.get_comment_page(), 'parent': None})
+
     @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
@@ -104,7 +107,7 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
         self.object = self.get_object()
         return self.render_to_response(self.get_context_data(
             object=self.object,
-            comment_form=CommentForm(request, initial={'page': self.get_comment_page(), 'parent': None}),
+            comment_form=self.get_comment_form(request),
         ))
 
     def get_context_data(self, **kwargs):

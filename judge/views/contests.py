@@ -34,26 +34,28 @@ from django.views.generic.list import BaseListView
 from icalendar import Calendar as ICalendar, Event
 from reversion import revisions
 
+
 from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Language, Organization, Problem, ProblemClarification, Profile, Submission
-from judge.tasks import on_new_contest, prepare_contest_data, run_moss
+from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
+from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
-from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
+from judge.utils.views import SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
            'ContestParticipationList', 'ContestParticipationDisqualify', 'get_contest_ranking_list',
-           'base_contest_ranking_list']
+           'base_contest_ranking_list', 'ContestProblemMakePublic']
 
 
 def _find_contest(request, key, private_check=True):
@@ -90,26 +92,23 @@ class ContestListMixin(object):
         return context
 
 
-class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestListMixin, ListView):
+class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListView):
     model = Contest
     paginate_by = 20
     template_name = 'contest/list.html'
     title = gettext_lazy('Contests')
     context_object_name = 'past_contests'
-    all_sorts = frozenset(('name', 'user_count', 'start_time'))
-    default_desc = frozenset(('name', 'user_count'))
-    default_sort = '-start_time'
 
     @cached_property
     def _now(self):
         return timezone.now()
 
     def _get_queryset(self):
-        return super().get_queryset().prefetch_related('tags', 'organizations', 'authors', 'curators', 'testers')
+        return super().get_queryset().prefetch_related('tags', 'organization', 'authors', 'curators', 'testers')
 
     def get_queryset(self):
         self.search_query = None
-        query_set = self._get_queryset().order_by(self.order, 'key').filter(end_time__lt=self._now)
+        query_set = self._get_queryset().order_by('-end_time', 'key').filter(end_time__lt=self._now)
         if 'search' in self.request.GET:
             self.search_query = search_query = ' '.join(self.request.GET.getlist('search')).strip()
             if search_query:
@@ -153,17 +152,15 @@ class ContestList(QueryStringSortMixin, DiggPaginatorMixin, TitleMixin, ContestL
         context['first_page_href'] = '.'
         context['page_suffix'] = '#past-contests'
         context['search_query'] = self.search_query
-        context.update(self.get_sort_context())
-        context.update(self.get_sort_paginate_context())
         return context
 
 
 class PrivateContestError(Exception):
-    def __init__(self, name, is_private, is_organization_private, orgs):
+    def __init__(self, name, is_private, is_organization_private, org):
         self.name = name
         self.is_private = is_private
         self.is_organization_private = is_organization_private
-        self.orgs = orgs
+        self.org = org
 
 
 class ContestMixin(object):
@@ -229,8 +226,8 @@ class ContestMixin(object):
         context['og_image'] = self.object.og_image or metadata[1]
         context['has_moss_api_key'] = settings.MOSS_API_KEY is not None
         context['logo_override_image'] = self.object.logo_override_image
-        if not context['logo_override_image'] and self.object.organizations.count() == 1:
-            context['logo_override_image'] = self.object.organizations.first().logo_override_image
+        if not context['logo_override_image'] and self.object.organization:
+            context['logo_override_image'] = self.object.organization.logo_override_image
 
         context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
         return context
@@ -247,7 +244,7 @@ class ContestMixin(object):
             contest.access_check(self.request.user)
         except Contest.PrivateContest:
             raise PrivateContestError(contest.name, contest.is_private, contest.is_organization_private,
-                                      contest.organizations.all())
+                                      contest.organization)
         except Contest.Inaccessible:
             raise Http404()
         else:
@@ -389,7 +386,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
         # Using list() to force QuerySets evaluation, as `contest.pk = None` affects these queries
         tags = list(contest.tags.all())
-        organizations = list(contest.organizations.all())
+        organization = contest.organization
         private_contestants = list(contest.private_contestants.all())
         view_contest_scoreboard = list(contest.view_contest_scoreboard.all())
         contest_problems = list(contest.contest_problems.all())
@@ -404,7 +401,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         with revisions.create_revision(atomic=True):
             contest.save()
             contest.tags.set(tags)
-            contest.organizations.set(organizations)
+            contest.organization = organization
             contest.private_contestants.set(private_contestants)
             contest.view_contest_scoreboard.set(view_contest_scoreboard)
             contest.authors.add(self.request.profile)
@@ -1301,11 +1298,8 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super(EditContest, self).get_form_kwargs()
-        # Due to some limitation with query set in select2
-        # We only support this if the contest is private for only
-        # 1 organization
-        if self.object.organizations.count() == 1:
-            kwargs['org_pk'] = self.object.organizations.values_list('pk', flat=True)[0]
+        if self.object.organization:
+            kwargs['org_pk'] = self.object.organization.id
 
         kwargs['user'] = self.request.user
         return kwargs
@@ -1457,3 +1451,35 @@ class ContestDownloadData(ContestDataMixin, SingleObjectMixin, View):
         response['Content-Type'] = 'application/zip'
         response['Content-Disposition'] = 'attachment; filename=%s-data.zip' % self.object.key
         return response
+
+
+class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
+    def dispatch(self, request, *args, **kwargs):
+        if request.method != 'POST':
+            return HttpResponseForbidden()
+
+        return super(ContestProblemMakePublic, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        contest = self.get_object()
+
+        if not request.user.is_staff or not contest.is_editable_by(request.user):
+            raise PermissionDenied(_('You do not have permission to edit this contest.'))
+
+        contest_problems = contest.contest_problems.prefetch_related('problem').all()
+        for contest_problem in contest_problems:
+            problem = contest_problem.problem
+            # this change has 1 implication:
+            # - users only need write permissions for **private** problems
+            # This is not a bug! It improves the UX since a lot of users include
+            # public problems in their contests.
+            if problem.is_public:
+                continue
+            if not problem.is_editable_by(request.user):
+                raise PermissionDenied(_('You do not have permission to edit this problem.'))
+            problem.is_public = True
+            problem.date = timezone.now()
+            problem.save(update_fields=['is_public', 'date'])
+            rescore_problem.delay(problem.id, True)
+
+        return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))

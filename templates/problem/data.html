@@ -563,6 +563,16 @@
 
             $("#id_problem-data-zipfile").change((event) => {
                 let fileInput = event.target.files[0];
+
+                // 100 MB limit (Cloudflare's request body size limit)
+                if (fileInput && fileInput.size > 100 * 1024 * 1024) {
+                    alert({{ _('File too large!')|htmltojs }} + ' ' +
+                        {{ _('Your file is')|htmltojs }} + ' ' + (fileInput.size / (1024 * 1024)).toFixed(2) + ' MB. ' +
+                        {{ _('Maximum allowed is 100 MB.')|htmltojs }});
+                    event.target.value = "";
+                    return;
+                }
+
                 var reader = new FileReader();
                 reader.onload = function(ev) {
                     JSZip.loadAsync(ev.target.result).then(function(zip) {
@@ -675,15 +685,13 @@
 {% endblock %}
 
 {% block header %}
-    {% if problem.is_organization_private %}
+    {% if problem.is_organization_private and problem.organization %}
         <span class="organization-tags">
-            {% for org in problem.organizations.all() %}
-                <span class="organization-tag">
-                    <a href="{{ org.get_absolute_url() }}">
-                        <i class="fa fa-lock"></i> {{ org.name }}
-                    </a>
-                </span>
-            {% endfor %}
+            <span class="organization-tag">
+                <a href="{{ problem.organization.get_absolute_url() }}">
+                    <i class="fa fa-lock"></i> {{ problem.organization.name }}
+                </a>
+            </span>
         </span>
     {% endif %}
     {% if data_form.instance.has_yml() %}
@@ -725,7 +733,9 @@
                 <th>{{ _('Input file') }}</th>
                 <th>{{ _('Output file') }}</th>
                 <th>{{ _('Points') }}</th>
+                {% if request.user.is_staff %}
                 <th>{{ _('Pretest?') }}</th>
+                {% endif %}
                 <!-- <th class="generator-args">{{ _('Generator args') }}</th> -->
                 {% if cases_formset.can_delete %}
                     <th>{{ _('Delete?') }}
@@ -758,8 +768,10 @@
                                   form['output_file'].value() in valid_files) %} class="bad-file"{% endif %}>
                         {{ form.output_file.errors }}{{ form.output_file }}
                     </td>
-                    <td>{{ form.points.errors }}{{ form.points }}</td>
-                    <td>{{ form.is_pretest.errors }}{{ form.is_pretest }}</td>
+                    <td>{{ form.points.errors }}{{ form.points }}{% if not request.user.is_staff %}{{ form.is_pretest.as_hidden() }}{% endif %}</td>
+                    {% if request.user.is_staff %}
+                        <td>{{ form.is_pretest.errors }}{{ form.is_pretest }}</td>
+                    {% endif %}
                     <!-- <td class="generator-args">{{ form.generator_args.errors }}{{ form.generator_args }}
                         <a href="javascript:void(0)" class="edit-generator-args">
                             <i class="fa fa-pencil"></i>

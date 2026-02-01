@@ -2,6 +2,7 @@ import collections.abc
 import inspect
 from math import ceil
 
+from django.conf import settings
 from django.core.paginator import EmptyPage, InvalidPage
 from django.http import Http404
 from django.utils.functional import cached_property
@@ -9,6 +10,15 @@ from django.utils.inspect import method_has_no_args
 
 
 class InfinitePage(collections.abc.Sequence):
+    """
+    A page of a paginator that supports infinite pagination.
+
+    This paginator won't count all the items in the queryset, helpful for large data
+    like submissions, problems, etc.
+
+    In low power mode, the paginator will assume there's a next page if the current page is full.
+    This eliminates the need to count the next pages items.
+    """
     def __init__(self, object_list, number, unfiltered_queryset, page_size, pad_pages, paginator):
         self.object_list = list(object_list)
         self.number = number
@@ -38,6 +48,10 @@ class InfinitePage(collections.abc.Sequence):
         return len(queryset)
 
     def has_next(self):
+        if settings.VNOJ_LOW_POWER_MODE:
+            # Optimized: assume there's a next page if current page is full
+            # Trade-off: will show next button on last page when total items is multiple of page_size
+            return len(self.object_list) >= self.page_size
         return self._after_up_to_pad > 0
 
     def has_previous(self):
@@ -65,7 +79,13 @@ class InfinitePage(collections.abc.Sequence):
     @cached_property
     def main_range(self):
         start = max(1, self.number - self.pad_pages)
-        end = self.number + min(int(ceil(self._after_up_to_pad / self.page_size)), self.pad_pages)
+        if settings.VNOJ_LOW_POWER_MODE:
+            if self.has_next():
+                end = self.number + self.pad_pages
+            else:
+                end = self.number
+        else:
+            end = self.number + min(int(ceil(self._after_up_to_pad / self.page_size)), self.pad_pages)
         return range(start, end + 1)
 
     @cached_property
@@ -74,6 +94,8 @@ class InfinitePage(collections.abc.Sequence):
 
     @cached_property
     def has_trailing(self):
+        if settings.VNOJ_LOW_POWER_MODE:
+            return self.has_next()
         return self._after_up_to_pad > self.pad_pages * self.page_size
 
     @cached_property
@@ -116,6 +138,11 @@ class InfinitePaginationMixin:
     def use_infinite_pagination(self):
         return True
 
+    def get_pad_pages(self):
+        if settings.VNOJ_LOW_POWER_MODE:
+            return 1
+        return self.pad_pages
+
     def paginate_queryset(self, queryset, page_size):
         if not self.use_infinite_pagination:
             paginator, page, object_list, has_other = super().paginate_queryset(queryset, page_size)
@@ -130,7 +157,7 @@ class InfinitePaginationMixin:
             raise Http404('Page cannot be converted to an int.')
         try:
             paginator = DummyPaginator(page_size)
-            page = infinite_paginate(queryset, page_number, page_size, self.pad_pages, paginator)
+            page = infinite_paginate(queryset, page_number, page_size, self.get_pad_pages(), paginator)
             return paginator, page, page.object_list, page.has_other_pages()
         except InvalidPage as e:
             raise Http404('Invalid page (%(page_number)s): %(message)s' % {
