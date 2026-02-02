@@ -677,7 +677,7 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
                                                           queryset=ProblemTranslation.objects.filter(
                                                               language=self.request.LANGUAGE_CODE), to_attr='_trans'))
         # if not org admin -> only view submissions to public problems
-        if not self.object.is_admin(self.request.profile) or not self.request.user.is_superuser:
+        if not self.object.is_admin(self.request.profile) and not self.request.user.is_superuser:
             queryset = queryset.filter(
                 contest_object__isnull=True,
                 problem__is_organization_private=True,
