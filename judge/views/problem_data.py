@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
+from django.core.validators import RegexValidator
 from django.views.generic import DetailView
 
 from judge.highlight_code import highlight_code
@@ -55,11 +56,20 @@ def grader_args_cleaner(self):
     return data
 
 
+validate_filename = RegexValidator(
+    regex=r'^[a-zA-Z0-9_-]+\.[a-zA-Z0-9_-]+$',
+    message='%(value)s is not a valid file name with an extension.',
+    code='invalid_filename',
+)
+
+
 class ProblemDataForm(ModelForm):
     io_method = ChoiceField(choices=IO_METHODS, label=gettext_lazy('IO Method'), initial='standard', required=False,
                             widget=Select2Widget(attrs={'style': 'width: 200px'}))
-    io_input_file = CharField(max_length=100, label=gettext_lazy('Input from file'), required=False)
-    io_output_file = CharField(max_length=100, label=gettext_lazy('Output to file'), required=False)
+    io_input_file = CharField(max_length=100, label=gettext_lazy(
+        'Input from file'), required=False, validators=[validate_filename])
+    io_output_file = CharField(max_length=100, label=gettext_lazy(
+        'Output to file'), required=False, validators=[validate_filename])
     checker_type = ChoiceField(choices=CUSTOM_CHECKERS, widget=Select2Widget(attrs={'style': 'width: 200px'}))
 
     def clean_zipfile(self):
