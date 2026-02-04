@@ -1,9 +1,10 @@
-from django.contrib.admin import ModelAdmin
 from django.contrib.admin.options import StackedInline
 from django.forms import ModelForm
 from django.urls import reverse_lazy
+from reversion.admin import VersionAdmin
 
 from judge.models import TicketMessage
+from judge.utils.views import NoBatchDeleteMixin
 from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, AdminMartorWidget
 
 
@@ -29,7 +30,7 @@ class TicketForm(ModelForm):
         }
 
 
-class TicketAdmin(ModelAdmin):
+class TicketAdmin(NoBatchDeleteMixin, VersionAdmin):
     fields = ('title', 'time', 'user', 'assignees', 'content_type', 'object_id', 'notes')
     readonly_fields = ('time',)
     list_display = ('title', 'user', 'time', 'linked_item')

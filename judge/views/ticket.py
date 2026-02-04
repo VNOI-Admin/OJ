@@ -17,6 +17,7 @@ from django.views import View
 from django.views.generic import ListView
 from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormView
+from reversion import revisions
 
 from judge import event_poster as event
 from judge.models import GeneralIssue, Problem, Profile, Ticket, TicketMessage
@@ -206,8 +207,11 @@ class TicketStatusChangeView(TicketMixin, SingleObjectMixin, View):
             raise ImproperlyConfigured('Need to define open or contributive')
         ticket = self.get_object()
         if self.open is not None and ticket.is_open != self.open:
-            ticket.is_open = self.open
-            ticket.save()
+            with revisions.create_revision(atomic=True):
+                revisions.set_comment('Opened' if self.open else 'Closed')
+                revisions.set_user(self.request.user)
+                ticket.is_open = self.open
+                ticket.save()
             if event.real:
                 event.post('tickets', {
                     'type': 'ticket-status', 'id': ticket.id,
@@ -222,10 +226,13 @@ class TicketStatusChangeView(TicketMixin, SingleObjectMixin, View):
         if self.contributive is not None and ticket.is_contributive != self.contributive:
             if not request.user.has_perm('change_ticket') and self.request.profile == ticket.user:
                 return HttpResponseBadRequest(_('You cannot vote your own ticket.'), content_type='text/plain')
-            ticket.user.update_contribution_points(settings.VNOJ_CP_TICKET *
-                                                   (self.contributive - ticket.is_contributive))
-            ticket.is_contributive = self.contributive
-            ticket.save()
+            with revisions.create_revision(atomic=True):
+                revisions.set_comment('Upvoted' if self.contributive else 'Downvoted')
+                revisions.set_user(self.request.user)
+                ticket.user.update_contribution_points(settings.VNOJ_CP_TICKET *
+                                                       (self.contributive - ticket.is_contributive))
+                ticket.is_contributive = self.contributive
+                ticket.save()
         return HttpResponse(status=204)
 
 
