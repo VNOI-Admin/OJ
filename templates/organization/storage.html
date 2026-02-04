@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block media %}
+    <style>
+        .storage-summary {
+            margin: 1.5em 0;
+            padding: 1em;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+
+        .storage-summary h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .storage-value {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .storage-table {
+            width: 100%;
+            margin-top: 1em;
+        }
+
+        .storage-table th {
+            background-color: #f8f9fa;
+            padding: 0.75em;
+            text-align: left;
+            border-bottom: 2px solid #dee2e6;
+        }
+
+        .storage-table td {
+            padding: 0.75em;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .storage-table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable:hover {
+            background-color: #e9ecef;
+        }
+
+        .sortable::after {
+            content: ' ⇅';
+            color: #999;
+        }
+
+        .sortable.active-asc::after {
+            content: ' ↑';
+            color: #333;
+        }
+
+        .sortable.active-desc::after {
+            content: ' ↓';
+            color: #333;
+        }
+
+        .size-cell {
+            text-align: right;
+            font-family: monospace;
+        }
+
+        .pagination {
+            margin-top: 1.5em;
+            text-align: center;
+        }
+
+        .pagination a, .pagination span {
+            padding: 0.5em 0.75em;
+            margin: 0 0.25em;
+            border: 1px solid #dee2e6;
+            border-radius: 3px;
+            text-decoration: none;
+        }
+
+        .pagination .current {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+    </style>
+{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'storage' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+    <div class="storage-summary">
+        <h3>{{ _('Storage Summary') }}</h3>
+        <p>
+            {{ _('Total problems:') }} <span class="storage-value">{{ paginator.count }}</span>
+        </p>
+        <p>
+            {{ _('Total storage used:') }}
+            <span class="storage-value">
+                {% if total_storage == 0 %}
+                    0 MB
+                {% elif total_storage_gb >= 1 %}
+                    {{ total_storage_gb }} GB
+                {% else %}
+                    {{ total_storage_mb }} MB
+                {% endif %}
+            </span>
+            {% if total_storage > 0 %}
+                ({{ total_storage|filesizeformat }})
+            {% endif %}
+        </p>
+    </div>
+
+    <table class="storage-table">
+        <thead>
+            <tr>
+                <th class="sortable {% if current_sort == 'code' %}active-asc{% elif current_sort == '-code' %}active-desc{% endif %}"
+                    onclick="location.href='?sort={% if current_sort == 'code' %}-code{% else %}code{% endif %}'">
+                    {{ _('Problem Code') }}
+                </th>
+                <th class="sortable {% if current_sort == 'name' %}active-asc{% elif current_sort == '-name' %}active-desc{% endif %}"
+                    onclick="location.href='?sort={% if current_sort == 'name' %}-name{% else %}name{% endif %}'">
+                    {{ _('Problem Name') }}
+                </th>
+                <th>{{ _('Category') }}</th>
+                <th class="sortable {% if current_sort == 'data_size' %}active-asc{% elif current_sort == '-data_size' %}active-desc{% endif %}"
+                    onclick="location.href='?sort={% if current_sort == '-data_size' %}data_size{% else %}-data_size{% endif %}'"
+                    style="text-align: right;">
+                    {{ _('Storage Size') }}
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for problem in problems %}
+            <tr>
+                <td>
+                    <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code }}</a>
+                </td>
+                <td>{{ problem.name }}</td>
+                <td>{{ problem.group.full_name }}</td>
+                <td class="size-cell">
+                    {% if problem.data_size > 0 %}
+                        {{ problem.data_size|filesizeformat }}
+                    {% else %}
+                        <span style="color: #999;">{{ _('No data') }}</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="4" style="text-align: center; padding: 2em; color: #999;">
+                    {{ _('No problems found for this organization.') }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if is_paginated %}
+    <div class="pagination">
+        {% if page_obj.has_previous %}
+            <a href="?page=1&sort={{ current_sort }}">{{ _('First') }}</a>
+            <a href="?page={{ page_obj.previous_page_number }}&sort={{ current_sort }}">{{ _('Previous') }}</a>
+        {% endif %}
+
+        <span class="current">
+            {{ _('Page %(current)s of %(total)s', current=page_obj.number, total=paginator.num_pages) }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?page={{ page_obj.next_page_number }}&sort={{ current_sort }}">{{ _('Next') }}</a>
+            <a href="?page={{ paginator.num_pages }}&sort={{ current_sort }}">{{ _('Last') }}</a>
+        {% endif %}
+    </div>
+    {% endif %}
+{% endblock %}
