@@ -525,14 +525,14 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
            user.has_perm('judge.edit_all_problem'):
             context['new_problems'] = Problem.objects.filter(
                 is_public=True, is_organization_private=True,
-                organizations=self.object) \
+                organization=self.object) \
                 .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
 
         see_private_contest = user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')
         if context['is_member'] or see_private_contest:
             new_contests = Contest.objects.filter(
                 is_visible=True, is_organization_private=True,
-                organizations=self.object) \
+                organization=self.object) \
                 .order_by('-end_time', '-id')
 
             if not see_private_contest:
@@ -573,7 +573,7 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         problems of other admins unless they are authors/curators/testers
         """
         if self.request.user.has_perm('judge.see_private_problem'):
-            return Q(organizations=self.organization)
+            return Q(organization=self.organization)
 
         _filter = Q(is_public=True)
 
@@ -583,7 +583,7 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
             _filter |= Q(curators=self.profile)
             _filter |= Q(testers=self.profile)
 
-        return _filter & Q(organizations=self.organization)
+        return _filter & Q(organization=self.organization)
 
 
 class MonthlyCreditUsageOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, ListView):
@@ -641,7 +641,7 @@ class ContestListOrganization(PrivateOrganizationMixin, ContestList):
 
     def _get_queryset(self):
         query_set = super(ContestListOrganization, self)._get_queryset()
-        query_set = query_set.filter(is_organization_private=True, organizations=self.organization)
+        query_set = query_set.filter(is_organization_private=True, organization=self.organization)
         return query_set
 
     def get_context_data(self, **kwargs):
@@ -657,7 +657,7 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
 
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
-        query_set = query_set.filter(problem__organizations=self.organization)
+        query_set = query_set.filter(problem__organization=self.organization)
         return query_set
 
     def get_context_data(self, **kwargs):
@@ -689,7 +689,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
 
             problem.is_organization_private = True
-            problem.organizations.add(self.organization)
+            problem.organization = self.organization
             problem.date = timezone.now()
             self.save_statement(form, problem)
             problem.save()
@@ -742,5 +742,5 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
         self.object = form.save()
         self.object.authors.add(self.request.profile)
         self.object.is_organization_private = True
-        self.object.organizations.add(self.organization)
+        self.object.organization = self.organization
         self.object.save()

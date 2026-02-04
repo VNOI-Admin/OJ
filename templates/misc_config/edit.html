@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {{ form.media.js }}
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+    <style>
+        .hidden {
+            display: none;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div>
+    {% if request.user.is_staff %}
+        <div class="alert alert-warning alert-dismissable">
+            <a class="close">x</a>
+            <a href="{{ url('admin:judge_miscconfig_changelist') }}">{{ _('Configure in admin panel for more options') }}</a>
+        </div>
+    {% endif %}
+    <form action="" method="post" class="form-area" enctype="multipart/form-data" style="display: flex; justify-content: center; flex-direction: column;">
+        {% if form.errors %}
+            <p class="errornote"> {{ _('Please correct the error below.') }}</p>
+        {% endif %}
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <table>
+            <tr><td style="float: left;">
+            <td style="float: right;"><input type="submit" value="{{ _('Update') }}" class="button"></td></tr>
+        </table>
+    </form>
+    </div>
+{% endblock %}
+

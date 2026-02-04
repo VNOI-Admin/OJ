@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
-from django.db.models import CASCADE, Q
+from django.db.models import CASCADE, Exists, OuterRef, Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -150,8 +150,9 @@ class Contest(models.Model):
                                                          'on the contest page or not.'),
                                              default=False)
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
-    organizations = models.ManyToManyField(Organization, blank=True, verbose_name=_('organizations'),
-                                           help_text=_('If private, only these organizations may see the contest'))
+    organization = models.ForeignKey(Organization, blank=True, null=True, verbose_name=_('organization'),
+                                     on_delete=models.SET_NULL,
+                                     help_text=_('If private, only this organization may see the contest'))
     og_image = models.CharField(verbose_name=_('OpenGraph image'), default='', max_length=150, blank=True)
     logo_override_image = models.CharField(verbose_name=_('logo override image'), default='', max_length=150,
                                            blank=True,
@@ -458,7 +459,7 @@ class Contest(models.Model):
         if self.view_contest_scoreboard.filter(id=user.profile.id).exists():
             return
 
-        in_org = self.organizations.filter(id__in=user.profile.organizations.all()).exists()
+        in_org = self.organization and user.profile.organizations.filter(id=self.organization.id).exists()
         in_users = self.private_contestants.filter(id=user.profile.id).exists()
 
         if not self.is_private and self.is_organization_private:
@@ -508,20 +509,54 @@ class Contest(models.Model):
         queryset = cls.objects.defer('description')
         if not (user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')):
             q = Q(is_visible=True)
+            private_exists = Contest.private_contestants.through.objects.filter(
+                contest_id=OuterRef('pk'),
+                profile_id=user.profile.id,
+            )
+            queryset = queryset.annotate(
+                has_private=Exists(private_exists),
+            )
             q &= (
                 Q(view_contest_scoreboard=user.profile) |
                 Q(is_organization_private=False, is_private=False) |
-                Q(is_organization_private=False, is_private=True, private_contestants=user.profile) |
-                Q(is_organization_private=True, is_private=False, organizations__in=user.profile.organizations.all()) |
-                Q(is_organization_private=True, is_private=True, organizations__in=user.profile.organizations.all(),
-                  private_contestants=user.profile)
+                (Q(is_organization_private=False, is_private=True) & Q(has_private=True)) |
+                Q(is_organization_private=True, is_private=False, organization__in=user.profile.organizations.all()) |
+                (
+                    Q(
+                        is_organization_private=True,
+                        is_private=True,
+                        organization__in=user.profile.organizations.all(),
+                    ) & Q(has_private=True)
+                )
             )
 
-            q |= Q(authors=user.profile)
-            q |= Q(curators=user.profile)
-            q |= Q(testers=user.profile)
-            queryset = queryset.filter(q)
-        return queryset.distinct()
+            authors_exists = Contest.authors.through.objects.filter(
+                contest_id=OuterRef('pk'),
+                profile_id=user.profile.id,
+            )
+            curators_exists = Contest.curators.through.objects.filter(
+                contest_id=OuterRef('pk'),
+                profile_id=user.profile.id,
+            )
+            testers_exists = Contest.testers.through.objects.filter(
+                contest_id=OuterRef('pk'),
+                profile_id=user.profile.id,
+            )
+
+            queryset = queryset.annotate(
+                has_author=Exists(authors_exists),
+                has_curator=Exists(curators_exists),
+                has_tester=Exists(testers_exists),
+            )
+
+            queryset = queryset.filter(
+                q |
+                Q(has_author=True) |
+                Q(has_curator=True) |
+                Q(has_tester=True),
+            )
+
+        return queryset
 
     def rate(self):
         with transaction.atomic():
@@ -547,6 +582,9 @@ class Contest(models.Model):
         )
         verbose_name = _('contest')
         verbose_name_plural = _('contests')
+        indexes = [
+            models.Index(fields=['-end_time', 'key']),
+        ]
 
 
 class ContestAnnouncement(models.Model):

@@ -34,7 +34,7 @@ from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGro
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
-from judge.utils.diggpaginator import DiggPaginator
+from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
 from judge.utils.problems import hot_problems, user_attempted_ids, \
@@ -288,22 +288,22 @@ class ProblemSubmitMixin:
         # Organization credit check
         if settings.VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION:
             # check if the problem belongs to any organization
-            organizations = []
+            organization = None
             if self.object.is_organization_private:
-                organizations = self.object.organizations.all()
+                organization = self.object.organization
 
-            if len(organizations) == 0:
+            if organization is None:
                 # check if the contest belongs to any organization
                 if self.contest_problem is not None:
                     contest_object = request.profile.current_contest.contest
 
                     if contest_object.is_organization_private:
-                        organizations = contest_object.organizations.all()
+                        organization = contest_object.organization
 
             # check if org have credit to execute this submission
-            for org in organizations:
-                if not org.has_credit_left():
-                    org_name = org.name
+            if organization is not None:
+                if not organization.has_credit_left():
+                    org_name = organization.name
                     return generic_message(
                         request,
                         _('No credit'),
@@ -471,7 +471,10 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, Commen
             response, failed_form = self.handle_submission_post(request)
             if failed_form:
                 # Re-render with form errors
-                return self.render_to_response(self.get_context_data(object=self.object))
+                return self.render_to_response(self.get_context_data(
+                    object=self.object,
+                    comment_form=self.get_comment_form(request),
+                ))
             return response
 
         # Otherwise, handle as comment
@@ -539,7 +542,7 @@ class ProblemPdfView(ProblemMixin, SingleObjectMixin, View):
         return response
 
 
-class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView):
+class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, InfinitePaginationMixin, ListView):
     model = Problem
     title = gettext_lazy('Problem list')
     context_object_name = 'problems'
@@ -552,11 +555,10 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
     # Default sort by date
     default_sort = '-date'
 
-    def get_paginator(self, queryset, per_page, orphans=0,
-                      allow_empty_first_page=True, **kwargs):
-        paginator = DiggPaginator(queryset, per_page, body=6, padding=2, orphans=orphans,
-                                  count=queryset.values('pk').count(),
-                                  allow_empty_first_page=allow_empty_first_page, **kwargs)
+    def order_queryset(self, queryset):
+        """
+        Order the queryset based on the sort order.
+        """
         queryset = queryset.add_i18n_name(self.request.LANGUAGE_CODE)
         sort_key = self.order.lstrip('-')
         if sort_key in self.sql_sort:
@@ -587,8 +589,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
                 queryset = list(queryset)
                 queryset.sort(key=lambda problem: problem.types_list[0] if problem.types_list else '',
                               reverse=self.order.startswith('-'))
-        paginator.object_list = queryset
-        return paginator
+        return queryset
 
     @cached_property
     def profile(self):
@@ -650,7 +651,8 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, ListView
         return queryset.distinct()
 
     def get_queryset(self):
-        return self.get_normal_queryset()
+        queryset = self.get_normal_queryset()
+        return self.order_queryset(queryset)
 
     def get_hot_problems(self):
         return hot_problems(timedelta(days=1), settings.DMOJ_PROBLEM_HOT_PROBLEM_COUNT)
@@ -858,7 +860,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
         languages = problem.allowed_languages.all()
         language_limits = problem.language_limits.all()
-        organizations = problem.organizations.all()
+        organization = problem.organization
         types = problem.types.all()
         old_code = problem.code
 
@@ -873,7 +875,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             problem.curators.add(self.request.profile)
             problem.allowed_languages.set(languages)
             problem.language_limits.set(language_limits)
-            problem.organizations.set(organizations)
+            problem.organization = organization
             problem.types.set(types)
             revisions.set_user(self.request.user)
             revisions.set_comment(_('Cloned problem from %s') % old_code)
@@ -1085,11 +1087,8 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
 
     def get_form_kwargs(self):
         kwargs = super(ProblemEdit, self).get_form_kwargs()
-        # Due to some limitation with query set in select2
-        # We only support this if the problem is private for only
-        # 1 organization
-        if self.object.organizations.count() == 1:
-            kwargs['org_pk'] = self.object.organizations.values_list('pk', flat=True)[0]
+        if self.object.organization is not None:
+            kwargs['org_pk'] = self.object.organization.id
 
         kwargs['user'] = self.request.user
         return kwargs
