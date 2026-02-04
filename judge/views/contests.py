@@ -50,7 +50,7 @@ from judge.utils.problems import _get_result_data, user_attempted_ids, user_comp
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 from judge.utils.views import SingleObjectFormView, TitleMixin, \
-    add_file_response, generic_message
+    add_file_response, generic_message, paginate_query_context
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
@@ -152,6 +152,7 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
         context['first_page_href'] = '.'
         context['page_suffix'] = '#past-contests'
         context['search_query'] = self.search_query
+        context.update(paginate_query_context(self.request))
         return context
 
 
