@@ -66,7 +66,7 @@ class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
     verbose_name = _('Problem')
     verbose_name_plural = _('Problems')
     fields = ('problem', 'points', 'partial', 'is_pretested', 'max_submissions', 'output_prefix_override', 'order',
-              'rejudge_column', 'rescore_column')
+              'rejudge_column', 'rescore_column', 'name_override', 'pdf_url_override', 'description_override')
     readonly_fields = ('rejudge_column', 'rescore_column')
     form = ContestProblemInlineForm
 
