@@ -7,20 +7,23 @@ from operator import itemgetter
 from random import randrange
 
 from django.conf import settings
+from django.contrib import auth
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models import BooleanField, Case, F, Prefetch, Q, When
 from django.db.utils import ProgrammingError
-from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone, translation
+from django.utils.decorators import method_decorator
 from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import CreateView, FormView, ListView, UpdateView, View
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin
@@ -29,6 +32,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
+from judge.ip_auth import IPBasedAuthBackend
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
@@ -44,6 +48,29 @@ from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
 from judge.views.widgets import pdf_statement_uploader, submission_uploader
 
+LANGUAGE_EXTENSION_PREFERENCE = {
+    'py': ['PY3', 'PYPY3', 'PYPY', 'PY2'],
+    'py3': ['PY3', 'PYPY3', 'PYPY'],
+    'py2': ['PYPY', 'PY2'],
+    'cpp': ['CPP20', 'CPP17', 'CPP14', 'CPP11', 'CPP03', 'CLANGX', 'CLANG'],
+    'cc': ['CPP20', 'CPP17', 'CPP14', 'CPP11', 'CPP03', 'CLANGX', 'CLANG'],
+    'cxx': ['CPP20', 'CPP17', 'CPP14', 'CPP11', 'CPP03', 'CLANGX', 'CLANG'],
+    'c': ['C11', 'CLANG', 'C'],
+    'java': ['JAVA17', 'JAVA11', 'JAVA10', 'JAVA9', 'JAVA8'],
+    'kt': ['KOTLIN'],
+    'cs': ['MONOCS'],
+    'fs': ['MONOFS'],
+    'vb': ['MONOVB'],
+    'rs': ['RUST'],
+    'go': ['GO'],
+    'js': ['V8JS'],
+    'ts': ['TS'],
+    'swift': ['SWIFT'],
+    'rb': ['RUBY2', 'RUBY18'],
+    'php': ['PHP'],
+    'pas': ['PAS'],
+}
+
 recjk = re.compile(r'[\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u3005\u3007\u3021-\u3029\u3038-\u303A\u303B\u3400-\u4DB5'
                    r'\u4E00-\u9FC3\uF900-\uFA2D\uFA30-\uFA6A\uFA70-\uFAD9\U00020000-\U0002A6D6\U0002F800-\U0002FA1D]')
 
@@ -58,6 +85,25 @@ def get_contest_problem(problem, profile):
 def get_contest_submission_count(problem, profile, virtual):
     return profile.current_contest.submissions.exclude(submission__status__in=['IE']) \
                   .filter(problem__problem=problem, participation__virtual=virtual).count()
+
+
+def select_language_for_extension(languages_qs, extension):
+    matches = list(languages_qs.filter(extension__iexact=extension))
+    if not matches:
+        return None
+
+    preference = LANGUAGE_EXTENSION_PREFERENCE.get(extension)
+    if preference:
+        preference_order = {key: idx for idx, key in enumerate(preference)}
+
+        def sort_key(lang):
+            return preference_order.get(lang.key, len(preference)), lang.pk
+
+        matches.sort(key=sort_key)
+    else:
+        matches.sort(key=lambda lang: (lang.name.lower(), lang.pk))
+
+    return matches[0]
 
 
 class ProblemMixin(object):
@@ -776,6 +822,34 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, ProblemSubmitM
     template_name = 'problem/submit.html'
     form_class = ProblemSubmitForm
 
+    @cached_property
+    def contest_problem(self):
+        if self.request.profile.current_contest is None:
+            return None
+        return get_contest_problem(self.object, self.request.profile)
+
+    @cached_property
+    def remaining_submission_count(self):
+        max_subs = self.contest_problem and self.contest_problem.max_submissions
+        if max_subs is None:
+            return None
+        # When an IE submission is rejudged into a non-IE status, it will count towards the
+        # submission limit. We max with 0 to ensure that remaining_submission_count returns
+        # a non-negative integer, which is required for future checks in this view.
+        return max(
+            0,
+            max_subs - get_contest_submission_count(
+                self.object, self.request.profile, self.request.profile.current_contest.virtual,
+            ),
+        )
+
+    @cached_property
+    def default_language(self):
+        # If the old submission exists, use its language, otherwise use the user's default language.
+        if self.old_submission is not None:
+            return self.old_submission.language
+        return self.request.profile.language
+
     def get_content_title(self):
         return mark_safe(
             escape(_('Submit to %s')) % format_html(
@@ -836,6 +910,106 @@ class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, ProblemSubmitM
             self.old_submission = None
 
         return super().dispatch(request, *args, **kwargs)
+
+
+@method_decorator(csrf_exempt, name='dispatch')
+class ProblemAPISubmit(ProblemSubmit):
+    http_method_names = ['post']
+
+    def dispatch(self, request, *args, **kwargs):
+        backend = None
+        backend_path = request.session.get(auth.BACKEND_SESSION_KEY, '')
+        if backend_path:
+            try:
+                backend = auth.load_backend(backend_path)
+            except ImportError:
+                backend = None
+        if not isinstance(backend, IPBasedAuthBackend):
+            return JsonResponse({'detail': _('IP-based authentication required.')}, status=403)
+
+        if request.method == 'POST':
+            content_type = request.META.get('CONTENT_TYPE', '').lower()
+            if 'multipart/form-data' not in content_type:
+                return JsonResponse({'detail': _('This endpoint only accepts multipart/form-data.')}, status=400)
+            if 'submission_file' not in request.FILES:
+                return JsonResponse({'detail': _('submission_file is required.')}, status=400)
+
+        self._api_form_data = None
+        self._api_form_files = None
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        if self._api_form_data is not None:
+            kwargs['data'] = self._api_form_data
+        if self._api_form_files is not None:
+            kwargs['files'] = self._api_form_files
+        return kwargs
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        data = request.POST.copy()
+        files = request.FILES
+        submission_file = files.get('submission_file')
+
+        usable_languages = self.object.usable_languages
+
+        language_pk = data.get('language')
+        language = None
+
+        if not language_pk:
+            extension = os.path.splitext(submission_file.name)[1][1:].lower() if submission_file else ''
+            if not extension:
+                return JsonResponse({'detail': _('Could not infer language from file extension.')}, status=400)
+            language = select_language_for_extension(usable_languages, extension)
+            if language is None:
+                return JsonResponse(
+                    {'detail': _('No language matches file extension "%(ext)s".') % {'ext': extension}},
+                    status=400,
+                )
+            data['language'] = str(language.pk)
+        else:
+            try:
+                language = usable_languages.get(pk=language_pk)
+            except Language.DoesNotExist:
+                return JsonResponse({'detail': _('Invalid language for this problem.')}, status=400)
+
+        if language is None:
+            return JsonResponse({'detail': _('Unable to resolve submission language.')}, status=400)
+
+        files_for_form = files
+
+        if not language.file_only:
+            if submission_file is None:
+                return JsonResponse({'detail': _('submission_file is required.')}, status=400)
+            try:
+                file_content = submission_file.read()
+            except OSError:
+                return JsonResponse({'detail': _('Could not read submission file.')}, status=400)
+            try:
+                data['source'] = file_content.decode('utf-8')
+            except UnicodeDecodeError:
+                return JsonResponse({'detail': _('Submission file must be UTF-8 encoded.')}, status=400)
+            files_for_form = files.copy()
+            files_for_form.pop('submission_file', None)
+        else:
+            if 'source' not in data:
+                data['source'] = ''
+
+        self._api_form_data = data
+        self._api_form_files = files_for_form
+        return super().post(request, *args, **kwargs)
+
+    def form_invalid(self, form):
+        self._api_form_data = None
+        self._api_form_files = None
+        return JsonResponse({'errors': form.errors}, status=400)
+
+    def form_valid(self, form):
+        super().form_valid(form)
+        self._api_form_data = None
+        self._api_form_files = None
+        return JsonResponse({'id': self.new_submission.id})
 
 
 class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObjectFormView):

@@ -132,6 +132,7 @@ urlpatterns = [
         path('/pdf/<slug:language>', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/clone', problem.ProblemClone.as_view(), name='problem_clone'),
         path('/submit', problem.ProblemSubmit.as_view(), name='problem_submit'),
+        path('/api_submit', problem.ProblemAPISubmit.as_view(), name='problem_api_submit'),
         path('/resubmit/<int:submission>', problem.ProblemSubmit.as_view(), name='problem_submit'),
         path('/update-polygon', problem.ProblemUpdatePolygon.as_view(), name='problem_update_polygon'),
 
