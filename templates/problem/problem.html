@@ -126,6 +126,11 @@
     {% endif %}
     <script type="text/javascript">
         $(function() {
+            // Remove any hash fragment on page load to prevent auto-navigation to comments/submit
+            if (window.location.hash) {
+                history.replaceState(null, null, window.location.pathname + window.location.search);
+            }
+
             $('#pdf_button').click(async function(e) {
                 e.preventDefault();
                 if (!$('#raw_problem').attr("src"))
