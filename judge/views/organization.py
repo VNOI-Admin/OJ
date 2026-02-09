@@ -22,7 +22,7 @@ from reversion import revisions
 
 from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
-    Problem, Profile, ProblemData
+    Problem, ProblemData, Profile
 from judge.models.profile import OrganizationMonthlyUsage
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -759,7 +759,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
     def get_queryset(self):
         # Get problems with their storage data
         sort = self.request.GET.get('sort', '-data_size')
-        
+
         allowed_sorts = ['data_size', '-data_size']
         if sort not in allowed_sorts:
             sort = '-data_size'
@@ -770,7 +770,8 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
         ).select_related('data_files', 'group').annotate(
             test_data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
             submission_size=Coalesce(F('data_files__submission_files_size'), Value(0)),
-            data_size=Coalesce(F('data_files__zipfile_size'), Value(0)) + Coalesce(F('data_files__submission_files_size'), Value(0))
+            data_size=Coalesce(F('data_files__zipfile_size'),
+                               Value(0)) + Coalesce(F('data_files__submission_files_size'), Value(0)),
         ).only(
             'code', 'name', 'group__full_name',
         ).order_by(sort, 'code')
@@ -779,55 +780,55 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Cache key for total storage
         cache_key = f'org_storage_total_{self.organization.id}'
         cache_timeout = 3600  # 1 hour
-        
+
         # Try to get total storage from cache
         cached_data = cache.get(cache_key)
-        
+
         if cached_data is None:
             # Calculate total storage - this could be expensive for large orgs
             storage_totals = ProblemData.objects.filter(
                 problem__organization=self.organization,
             ).aggregate(
                 test_data=Sum('zipfile_size'),
-                submissions=Sum('submission_files_size')
+                submissions=Sum('submission_files_size'),
             )
-            
+
             test_data_total = storage_totals['test_data'] or 0
             submissions_total = storage_totals['submissions'] or 0
             total_storage = test_data_total + submissions_total
-            
+
             cached_data = {
                 'total': total_storage,
                 'test_data': test_data_total,
                 'submissions': submissions_total,
             }
-            
+
             # Cache the result
             cache.set(cache_key, cached_data, cache_timeout)
-        
+
         # Add storage information to context
         total_storage = cached_data['total']
         context['total_storage'] = total_storage
         context['total_storage_bytes'] = total_storage
         context['total_storage_mb'] = total_storage / (1024 * 1024)
         context['total_storage_gb'] = total_storage / (1024 * 1024 * 1024)
-        
+
         context['test_data_storage'] = cached_data['test_data']
         context['test_data_storage_mb'] = cached_data['test_data'] / (1024 * 1024)
         context['submission_storage'] = cached_data['submissions']
         context['submission_storage_mb'] = cached_data['submissions'] / (1024 * 1024)
-        
+
         # Count problems with storage
         context['problems_with_storage'] = ProblemData.objects.filter(
             problem__organization=self.organization,
         ).filter(
-            Q(zipfile_size__gt=0) | Q(submission_files_size__gt=0)
+            Q(zipfile_size__gt=0) | Q(submission_files_size__gt=0),
         ).count()
-        
+
         context['current_sort'] = self.request.GET.get('sort', '-data_size')
-        
+
         return context

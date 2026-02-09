@@ -114,16 +114,16 @@ class ProblemData(models.Model):
         """Calculate total size of all submission files for this problem."""
         from django.conf import settings
         from django.core.files.storage import default_storage
-        
+
         total_size = 0
         submission_dir = os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, self.problem.code)
-        
+
         try:
             # Check if the directory exists
             if default_storage.exists(submission_dir):
                 # Walk through all subdirectories and files
                 dirs, files = default_storage.listdir(submission_dir)
-                
+
                 # Process files in root directory
                 for filename in files:
                     file_path = os.path.join(submission_dir, filename)
@@ -131,7 +131,7 @@ class ProblemData(models.Model):
                         total_size += default_storage.size(file_path)
                     except (OSError, IOError):
                         pass
-                
+
                 # Process subdirectories (user_id directories)
                 for user_dir in dirs:
                     user_path = os.path.join(submission_dir, user_dir)
@@ -147,14 +147,14 @@ class ProblemData(models.Model):
                         pass
         except (OSError, IOError):
             pass
-        
+
         self.submission_files_size = total_size
 
     def save(self, *args, **kwargs):
         # Update zipfile size before saving
         self.update_zipfile_size()
         super(ProblemData, self).save(*args, **kwargs)
-        
+
         # Invalidate organization storage cache when size changes
         if self.problem.organization:
             from django.core.cache import cache
