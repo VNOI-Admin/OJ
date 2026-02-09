@@ -91,9 +91,75 @@ class ProblemData(models.Model):
 
     grader_args = models.TextField(verbose_name=_('grader arguments'), blank=True,
                                    help_text=_('grader arguments as a JSON object'))
+    zipfile_size = models.BigIntegerField(verbose_name=_('test data storage size'), default=0,
+                                          help_text=_('Size of the test data zip file in bytes.'))
+    submission_files_size = models.BigIntegerField(verbose_name=_('submission files storage size'), default=0,
+                                                   help_text=_('Size of all submission files in bytes.'))
 
     def has_yml(self):
         return problem_data_storage.exists('%s/init.yml' % self.problem.code)
+
+    def update_zipfile_size(self):
+        """Update the zipfile_size field based on the actual file size."""
+        if self.zipfile:
+            try:
+                self.zipfile_size = self.zipfile.size
+            except (OSError, IOError):
+                # If file doesn't exist or can't be accessed, set size to 0
+                self.zipfile_size = 0
+        else:
+            self.zipfile_size = 0
+
+    def update_submission_files_size(self):
+        """Calculate total size of all submission files for this problem."""
+        from django.conf import settings
+        from django.core.files.storage import default_storage
+        
+        total_size = 0
+        submission_dir = os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, self.problem.code)
+        
+        try:
+            # Check if the directory exists
+            if default_storage.exists(submission_dir):
+                # Walk through all subdirectories and files
+                dirs, files = default_storage.listdir(submission_dir)
+                
+                # Process files in root directory
+                for filename in files:
+                    file_path = os.path.join(submission_dir, filename)
+                    try:
+                        total_size += default_storage.size(file_path)
+                    except (OSError, IOError):
+                        pass
+                
+                # Process subdirectories (user_id directories)
+                for user_dir in dirs:
+                    user_path = os.path.join(submission_dir, user_dir)
+                    try:
+                        _, user_files = default_storage.listdir(user_path)
+                        for filename in user_files:
+                            file_path = os.path.join(user_path, filename)
+                            try:
+                                total_size += default_storage.size(file_path)
+                            except (OSError, IOError):
+                                pass
+                    except (OSError, IOError):
+                        pass
+        except (OSError, IOError):
+            pass
+        
+        self.submission_files_size = total_size
+
+    def save(self, *args, **kwargs):
+        # Update zipfile size before saving
+        self.update_zipfile_size()
+        super(ProblemData, self).save(*args, **kwargs)
+        
+        # Invalidate organization storage cache when size changes
+        if self.problem.organization:
+            from django.core.cache import cache
+            cache_key = f'org_storage_total_{self.problem.organization.id}'
+            cache.delete(cache_key)
 
     def _update_code(self, original, new):
         try:
