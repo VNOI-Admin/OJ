@@ -98,6 +98,14 @@ VNOJ_INTERACT_MIN_PROBLEM_COUNT = 5
 # Minimum problem count required to create new blogs
 VNOJ_BLOG_MIN_PROBLEM_COUNT = 10
 
+# Comment validation settings
+VNOJ_COMMENT_MIN_CONTRIBUTION = 0  # Minimum contribution points required to comment
+VNOJ_COMMENT_MIN_LENGTH = 10  # Minimum comment length in characters
+VNOJ_COMMENT_MAX_LENGTH = 10000  # Maximum comment length in characters
+VNOJ_COMMENT_BLACKLIST_TERMS = []  # List of forbidden terms in comments
+VNOJ_COMMENT_RATE_LIMIT_COUNT = 5  # Max comments within rate limit window
+VNOJ_COMMENT_RATE_LIMIT_WINDOW = datetime.timedelta(seconds=600)  # Rate limit window
+
 VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
 VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem

@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django import forms
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -40,55 +38,49 @@ class CommentForm(ModelForm):
         super(CommentForm, self).__init__(*args, **kwargs)
         self.fields['body'].widget.attrs.update({'placeholder': _('Comment body')})
 
+    def clean_body(self, body):
+        """Validate comment body content."""
+        if len(body) < settings.VNOJ_COMMENT_MIN_LENGTH:
+            raise ValidationError(_('Comment is too short (min %d chars).') % settings.VNOJ_COMMENT_MIN_LENGTH)
+        if len(body) > settings.VNOJ_COMMENT_MAX_LENGTH:
+            raise ValidationError(_('Comment is too long (max %d chars).') % settings.VNOJ_COMMENT_MAX_LENGTH)
+
+        if settings.VNOJ_COMMENT_BLACKLIST_TERMS:
+            body_casefolded = body.casefold()
+            blacklist_casefolded = [term.casefold() for term in settings.VNOJ_COMMENT_BLACKLIST_TERMS]
+            for term in blacklist_casefolded:
+                if term in body_casefolded:
+                    raise ValidationError(_('Your comment contains forbidden content.'))
+
     def clean(self):
         cleaned_data = super(CommentForm, self).clean()
         if self.request is not None and self.request.user.is_authenticated:
             profile = self.request.profile
             body = cleaned_data.get('body')
 
-            # Mute
             if profile.mute:
                 suffix_msg = '' if profile.ban_reason is None else _(' Reason: ') + profile.ban_reason
                 raise ValidationError(_('Your part is silent, little toad.') + suffix_msg)
 
-            # Solved problems count
             elif profile.is_new_user:
                 raise ValidationError(_('You need to have solved at least %d problems '
                                         'before your voice can be heard.') % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT)
 
-            # Contribution points
-            min_contrib = getattr(settings, 'VNOJ_COMMENT_MIN_CONTRIBUTION', 0)
-            if profile.contribution_points < min_contrib:
-                raise ValidationError(_('You need at least %d contribution points to comment.') % min_contrib)
+            if profile.contribution_points < settings.VNOJ_COMMENT_MIN_CONTRIBUTION:
+                raise ValidationError(
+                    _('You need at least %d contribution points to comment.') % settings.VNOJ_COMMENT_MIN_CONTRIBUTION,
+                )
 
-            # Checks that require body content
             if body:
-                # Comment length
-                min_len = getattr(settings, 'VNOJ_COMMENT_MIN_LENGTH', 10)
-                max_len = getattr(settings, 'VNOJ_COMMENT_MAX_LENGTH', 10000)
-                if len(body) < min_len:
-                    raise ValidationError(_('Comment is too short (min %d chars).') % min_len)
-                if len(body) > max_len:
-                    raise ValidationError(_('Comment is too long (max %d chars).') % max_len)
+                self.clean_body(body)
 
-                # Blacklist
-                blacklist = getattr(settings, 'VNOJ_COMMENT_BLACKLIST_TERMS', [])
-                if blacklist:
-                    body_lower = body.lower()
-                    for term in blacklist:
-                        if term.lower() in body_lower:
-                            raise ValidationError(_('Your comment contains forbidden content.'))
-
-            # Rate limit
-            limit_count = getattr(settings, 'VNOJ_COMMENT_RATE_LIMIT_COUNT', 5)
-            limit_time = getattr(settings, 'VNOJ_COMMENT_RATE_LIMIT_TIME', 600)  # seconds
-            if limit_count > 0:
-                time_threshold = timezone.now() - timedelta(seconds=limit_time)
+            if settings.VNOJ_COMMENT_RATE_LIMIT_COUNT > 0:
+                time_threshold = timezone.now() - settings.VNOJ_COMMENT_RATE_LIMIT_WINDOW
                 recent_comments = Comment.objects.filter(
                     author=profile,
                     time__gte=time_threshold,
                 ).count()
-                if recent_comments >= limit_count:
+                if recent_comments >= settings.VNOJ_COMMENT_RATE_LIMIT_COUNT:
                     raise ValidationError(_('You are commenting too fast. Chill out.'))
 
         return cleaned_data
