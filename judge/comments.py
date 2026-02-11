@@ -39,7 +39,6 @@ class CommentForm(ModelForm):
         self.fields['body'].widget.attrs.update({'placeholder': _('Comment body')})
 
     def clean_body(self, body):
-        """Validate comment body content."""
         if len(body) < settings.VNOJ_COMMENT_MIN_LENGTH:
             raise ValidationError(_('Comment is too short (min %d chars).') % settings.VNOJ_COMMENT_MIN_LENGTH)
         if len(body) > settings.VNOJ_COMMENT_MAX_LENGTH:
@@ -56,7 +55,6 @@ class CommentForm(ModelForm):
         cleaned_data = super(CommentForm, self).clean()
         if self.request is not None and self.request.user.is_authenticated:
             profile = self.request.profile
-            body = cleaned_data.get('body')
 
             if profile.mute:
                 suffix_msg = '' if profile.ban_reason is None else _(' Reason: ') + profile.ban_reason
@@ -70,9 +68,6 @@ class CommentForm(ModelForm):
                 raise ValidationError(
                     _('You need at least %d contribution points to comment.') % settings.VNOJ_COMMENT_MIN_CONTRIBUTION,
                 )
-
-            if body:
-                self.clean_body(body)
 
             if settings.VNOJ_COMMENT_RATE_LIMIT_COUNT > 0:
                 time_threshold = timezone.now() - settings.VNOJ_COMMENT_RATE_LIMIT_WINDOW
