@@ -100,6 +100,12 @@
             <a href="{{ url('problem_update_polygon', object.code) }}">{{ _('Update problem from Codeforces Polygon package') }}</a>
         </div>
     {% endif %}
+    {% if problem_is_deletable %}
+        <div class="alert alert-danger alert-dismissable">
+            <a class="close">x</a>
+            <a href="{{ url('problem_delete', object.code) }}">{{ _('Delete this problem') }}</a>
+        </div>
+    {% endif %}
     <form action="" method="post" class="form-area" enctype="multipart/form-data" style="display: flex; justify-content: center; flex-direction: column;">
         {% if form.errors or solution_formset.errors %}
             <p class="errornote"> {{ _('Please correct the error below.') }}</p>

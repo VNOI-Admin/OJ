@@ -29,9 +29,9 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
-from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
+from judge.models import ContestProblem, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
-from judge.tasks import on_new_problem
+from judge.tasks import delete_problem, on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -41,6 +41,7 @@ from judge.utils.problems import hot_problems, user_attempted_ids, \
     user_completed_ids
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
+from judge.utils.celery import redirect_to_task_status
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
 from judge.views.widgets import pdf_statement_uploader, submission_uploader
 
@@ -878,6 +879,76 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         return super().dispatch(request, *args, **kwargs)
 
 
+class ProblemDelete(LoginRequiredMixin, ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMixin, View):
+    """View for deleting a problem (async via Celery)"""
+    template_name = 'problem/delete.html'
+
+    def get_title(self):
+        return _('Delete problem {0}').format(self.object.name)
+
+    def get_content_title(self):
+        return mark_safe(escape(_('Delete problem %s')) % (
+            format_html('<a href="{1}">{0}</a>', self.object.name,
+                        reverse('problem_detail', args=[self.object.code]))))
+
+    def get_object(self, queryset=None):
+        problem = super().get_object(queryset)
+        if not problem.is_deletable_by(self.request.user):
+            raise PermissionDenied()
+        return problem
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['submission_count'] = Submission.objects.filter(problem=self.object).count()
+        context['contest_count'] = ContestProblem.objects.filter(problem=self.object).count()
+        context['active_contest_count'] = ContestProblem.objects.filter(
+            problem=self.object,
+            contest__end_time__gt=timezone.now(),
+        ).count()
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return self.render_to_response(self.get_context_data(object=self.object))
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+
+        # Check if problem is in any active contest
+        active_contests = ContestProblem.objects.filter(
+            problem=self.object,
+            contest__end_time__gt=timezone.now(),
+        ).select_related('contest')
+
+        if active_contests.exists():
+            contest_names = ', '.join(cp.contest.name for cp in active_contests[:3])
+            return generic_message(
+                request,
+                _('Cannot delete problem'),
+                _('Problem "{0}" is in {1} active contest(s): {2}. Please wait until the contest(s) end.').format(
+                    self.object.name,
+                    active_contests.count(),
+                    contest_names,
+                ),
+                status=400,
+            )
+
+        result = delete_problem.delay(self.object.id)
+
+        return redirect_to_task_status(
+            result,
+            message=_('Deleting problem "{0}"...').format(self.object.name),
+            redirect=reverse('problem_list'),
+        )
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except PermissionDenied:
+            return generic_message(request, _("Can't delete problem"),
+                                   _('You are not allowed to delete this problem.'), status=403)
+
+
 class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     template_name = 'problem/suggest.html'
     model = Problem
@@ -1072,6 +1143,7 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         data = super().get_context_data(**kwargs)
         data['lang_limit_formset'] = self.get_language_limit_formset()
         data['solution_formset'] = self.get_solution_formset()
+        data['problem_is_deletable'] = self.object.is_deletable_by(self.request.user)
         return data
 
     def get_form_kwargs(self):

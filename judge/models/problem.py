@@ -326,6 +326,17 @@ class Problem(models.Model):
     def is_subs_manageable_by(self, user):
         return user.is_staff and self.is_rejudgeable_by(user)
 
+    def is_deletable_by(self, user):
+        if not user.is_authenticated:
+            return False
+        if user.has_perm('judge.edit_all_problem'):
+            return True
+        if not user.has_perm('judge.delete_own_problem'):
+            return False
+        if user.profile.id in self.editor_ids:
+            return True
+        return False
+
     def is_testcase_accessible_by(self, user):
         if self.testcase_visibility_mode == ProblemTestcaseAccess.ALWAYS:
             return True
@@ -617,6 +628,7 @@ class Problem(models.Model):
             ('create_organization_problem', _('Create organization problem')),
             ('edit_all_problem', _('Edit all problems')),
             ('edit_public_problem', _('Edit all public problems')),
+            ('delete_own_problem', _('Delete own problems')),
             ('suggest_new_problem', _('Suggest new problem')),
             ('problem_full_markup', _('Edit problems with full markup')),
             ('clone_problem', _('Clone problem')),

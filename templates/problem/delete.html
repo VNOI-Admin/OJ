@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title_row %}{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+    <div id="content-body">
+        <h2>{{ _('Confirm Problem Deletion') }}</h2>
+        <hr>
+
+        <div class="block-warning">
+            <h3>{{ _('Warning: This action is irreversible!') }}</h3>
+            <p>{{ _('You are about to permanently delete problem:') }}</p>
+            <p><strong>{{ object.code }}</strong> - {{ object.name }}</p>
+
+            <h4>{{ _('The following will be deleted:') }}</h4>
+            <ul>
+                <li>{{ _('Problem statement and all associated data') }}</li>
+                <li>{{ ngettext('%(count)d submission', '%(count)d submissions', submission_count, count=submission_count) }}</li>
+                {% if contest_count > 0 %}
+                    <li>{{ _('Links to %(count)d contest(s)', count=contest_count) }}</li>
+                {% endif %}
+            </ul>
+
+            {% if active_contest_count > 0 %}
+                <div class="alert alert-danger">
+                    <strong>{{ _('Error:') }}</strong> {{ _('This problem is currently in %(count)d active contest(s) and cannot be deleted until the contest(s) end.', count=active_contest_count) }}
+                </div>
+            {% endif %}
+
+            <p>{{ _('This action cannot be undone. Are you sure you want to proceed?') }}</p>
+        </div>
+
+        <form method="post" action="">
+            {% csrf_token %}
+            <div style="margin-top: 20px;">
+                <a href="{{ url('problem_detail', object.code) }}" class="button">{{ _('Cancel') }}</a>
+                {% if active_contest_count == 0 %}
+                    <button type="submit" class="button" style="background-color: #d32f2f; color: white;">
+                        {{ _('Delete Problem') }}
+                    </button>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+
+    <style>
+        .block-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 4px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .block-warning h3 {
+            color: #856404;
+            margin-top: 0;
+        }
+
+        .block-warning h4 {
+            margin-top: 15px;
+            color: #856404;
+        }
+
+        .block-warning ul {
+            margin: 10px 0;
+        }
+
+        .alert-danger {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 12px;
+            border-radius: 4px;
+            margin: 15px 0;
+        }
+
+        .button {
+            display: inline-block;
+            padding: 10px 20px;
+            margin-right: 10px;
+            text-decoration: none;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #6c757d;
+            color: white;
+        }
+
+        .button:hover {
+            opacity: 0.9;
+        }
+    </style>
+{% endblock %}

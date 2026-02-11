@@ -123,6 +123,18 @@ class ProblemTestCase(CommonDataMixin, TestCase):
             suggester=self.users['suggester'].profile,
         )
 
+        self.users.update({
+            'staff_problem_delete_own': create_user(
+                username='staff_problem_delete_own',
+                user_permissions=('delete_own_problem', 'edit_own_problem'),
+            ),
+        })
+
+        self.deletable_problem = create_problem(
+            code='deletable',
+            authors=('staff_problem_delete_own',),
+        )
+
     def test_basic_problem(self):
         self.assertEqual(str(self.basic_problem), self.basic_problem.name)
         self.assertCountEqual(
@@ -446,6 +458,27 @@ class ProblemTestCase(CommonDataMixin, TestCase):
                         Problem.get_editable_problems(user).distinct().values_list('code', flat=True),
                         problem_codes,
                     )
+
+    def test_is_deletable_by(self):
+        """Test is_deletable_by method with various user permissions"""
+        data = {
+            'staff_problem_delete_own': {
+                'is_deletable_by': self.assertTrue,
+            },
+            'staff_problem_edit_all': {
+                'is_deletable_by': self.assertTrue,
+            },
+            'staff_problem_edit_own': {
+                'is_deletable_by': self.assertFalse,
+            },
+            'normal': {
+                'is_deletable_by': self.assertFalse,
+            },
+            'anonymous': {
+                'is_deletable_by': self.assertFalse,
+            },
+        }
+        self._test_object_methods_with_users(self.deletable_problem, data)
 
 
 @override_settings(LANGUAGE_CODE='en-US', LANGUAGES=(('en', 'English'),))

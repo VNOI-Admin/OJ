@@ -102,6 +102,8 @@ VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
 VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem
 
+VNOJ_PROBLEM_DELETE_BATCH_SIZE = 5000  # Batch size for async problem deletion
+
 VNOJ_SHOULD_BAN_FOR_CHEATING_IN_CONTESTS = False
 VNOJ_CONTEST_CHEATING_BAN_MESSAGE = 'Banned for multiple cheating offenses during contests'
 VNOJ_MAX_DISQUALIFICATIONS_BEFORE_BANNING = 3
