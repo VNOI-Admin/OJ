@@ -99,12 +99,12 @@ VNOJ_INTERACT_MIN_PROBLEM_COUNT = 5
 VNOJ_BLOG_MIN_PROBLEM_COUNT = 10
 
 # Comment validation settings
-VNOJ_COMMENT_MIN_CONTRIBUTION = 0  # Minimum contribution points required to comment
-VNOJ_COMMENT_MIN_LENGTH = 10  # Minimum comment length in characters
-VNOJ_COMMENT_MAX_LENGTH = 10000  # Maximum comment length in characters
-VNOJ_COMMENT_BLACKLIST_TERMS = []  # List of forbidden terms in comments
-VNOJ_COMMENT_RATE_LIMIT_COUNT = 5  # Max comments within rate limit window
-VNOJ_COMMENT_RATE_LIMIT_WINDOW = datetime.timedelta(seconds=600)  # Rate limit window
+VNOJ_COMMENT_MIN_CONTRIBUTION = 0
+VNOJ_COMMENT_MIN_LENGTH = 10
+VNOJ_COMMENT_MAX_LENGTH = 10000
+VNOJ_COMMENT_BLACKLIST_TERMS = []
+VNOJ_COMMENT_RATE_LIMIT_COUNT = 5
+VNOJ_COMMENT_RATE_LIMIT_WINDOW = datetime.timedelta(seconds=600)
 
 VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
