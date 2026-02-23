@@ -52,7 +52,6 @@ class CommentForm(ModelForm):
                     raise ValidationError(_('Your comment contains forbidden content.'))
 
     def clean(self):
-        cleaned_data = super(CommentForm, self).clean()
         if self.request is not None and self.request.user.is_authenticated:
             profile = self.request.profile
 
@@ -69,16 +68,14 @@ class CommentForm(ModelForm):
                     _('You need at least %d contribution points to comment.') % settings.VNOJ_COMMENT_MIN_CONTRIBUTION,
                 )
 
-            if settings.VNOJ_COMMENT_RATE_LIMIT_COUNT > 0:
-                time_threshold = timezone.now() - settings.VNOJ_COMMENT_RATE_LIMIT_WINDOW
-                recent_comments = Comment.objects.filter(
-                    author=profile,
-                    time__gte=time_threshold,
-                ).count()
-                if recent_comments >= settings.VNOJ_COMMENT_RATE_LIMIT_COUNT:
-                    raise ValidationError(_('You are commenting too fast. Chill out.'))
+            if (settings.VNOJ_COMMENT_RATE_LIMIT_COUNT is not None
+                    and Comment.objects.filter(author=profile,
+                                              time__gte=timezone.now() - settings.VNOJ_COMMENT_RATE_LIMIT_WINDOW,
+                                              ).count() >= settings.VNOJ_COMMENT_RATE_LIMIT_COUNT
+                    ):
+                raise ValidationError(_('You are commenting too fast. Chill out.'))
 
-        return cleaned_data
+        return super(CommentForm, self).clean()
 
 
 class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
