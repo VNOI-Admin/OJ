@@ -86,6 +86,7 @@ class BlogPostAdmin(VersionAdmin):
     prepopulated_fields = {'slug': ('title',)}
     list_display = ('id', 'title', 'show_authors', 'visible', 'global_post', 'sticky', 'publish_on')
     list_display_links = ('id', 'title')
+    filter_horizontal = ('tags',)
     ordering = ('-publish_on',)
     form = BlogPostForm
     date_hierarchy = 'publish_on'
