@@ -39,7 +39,7 @@ jobs:
         key: pip-${{ runner.os }}-${{ secrets.CACHE_VERSION }}-${{ hashFiles('requirements.txt') }}
     - name: Install unit test dependencies
       run: |
-        pip install wheel
+        pip install wheel "setuptools<82"
         pip install -r requirements.txt
         pip install coverage
         cp .ci.settings.py dmoj/local_settings.py
