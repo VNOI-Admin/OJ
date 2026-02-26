@@ -267,7 +267,11 @@ class Contest(models.Model):
             return True
         if user.profile.id in self.editor_ids:
             return True
-        if self.view_contest_scoreboard.filter(id=user.profile.id).exists():
+        cache = getattr(self, '_prefetched_objects_cache', {})
+        if 'view_contest_scoreboard' in cache:
+            if any(p.id == user.profile.id for p in self.view_contest_scoreboard.all()):
+                return True
+        elif self.view_contest_scoreboard.filter(id=user.profile.id).exists():
             return True
         if self.scoreboard_visibility == self.SCOREBOARD_AFTER_PARTICIPATION and self.has_completed_contest(user):
             return True
@@ -377,12 +381,27 @@ class Contest(models.Model):
 
     @cached_property
     def author_ids(self):
+        cache = getattr(self, '_prefetched_objects_cache', {})
+        if 'authors' in cache:
+            return frozenset(p.id for p in self.authors.all())
         return Contest.authors.through.objects.filter(contest=self).values_list('profile_id', flat=True)
 
     @cached_property
     def editor_ids(self):
-        return self.author_ids.union(
-            Contest.curators.through.objects.filter(contest=self).values_list('profile_id', flat=True))
+        cache = getattr(self, '_prefetched_objects_cache', {})
+        if 'authors' in cache:
+            author_ids = frozenset(p.id for p in self.authors.all())
+        else:
+            author_ids = frozenset(
+                Contest.authors.through.objects.filter(contest=self).values_list('profile_id', flat=True),
+            )
+
+        if 'curators' in cache:
+            return author_ids | frozenset(p.id for p in self.curators.all())
+
+        return author_ids | frozenset(
+            Contest.curators.through.objects.filter(contest=self).values_list('profile_id', flat=True),
+        )
 
     @cached_property
     def tester_ids(self):
