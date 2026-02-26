@@ -68,11 +68,11 @@ class CommentForm(ModelForm):
                     _('You need at least %d contribution points to comment.') % settings.VNOJ_COMMENT_MIN_CONTRIBUTION,
                 )
 
-            if (settings.VNOJ_COMMENT_RATE_LIMIT_COUNT is not None
-                    and Comment.objects.filter(author=profile,
-                                              time__gte=timezone.now() - settings.VNOJ_COMMENT_RATE_LIMIT_WINDOW,
-                                              ).count() >= settings.VNOJ_COMMENT_RATE_LIMIT_COUNT
-                    ):
+            if (settings.VNOJ_COMMENT_RATE_LIMIT_COUNT is not None and
+                    Comment.objects.filter(
+                        author=profile,
+                        time__gte=timezone.now() - settings.VNOJ_COMMENT_RATE_LIMIT_WINDOW,
+                    ).count() >= settings.VNOJ_COMMENT_RATE_LIMIT_COUNT):
                 raise ValidationError(_('You are commenting too fast. Chill out.'))
 
         return super(CommentForm, self).clean()
