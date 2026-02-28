@@ -162,13 +162,6 @@
             var hash = window.location.hash;
             if (hash && $(hash).length) {
                 $('.problem-tabs a[href="' + hash + '"]').click();
-            } else {
-                // Default to submit tab if user is authenticated
-                {% if request.user.is_authenticated %}
-                $('.problem-tabs a[href="#submit"]').click();
-                {% else %}
-                $('.problem-tabs a[href="#comments"]').click();
-                {% endif %}
             }
         });
     </script>
