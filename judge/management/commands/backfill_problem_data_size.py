@@ -28,32 +28,24 @@ class Command(BaseCommand):
         for problem_data in problem_data_list:
             problem_code = problem_data.problem.code
             old_zipfile_size = problem_data.zipfile_size
-            old_submission_size = problem_data.submission_files_size
 
             # Calculate new sizes
             problem_data.update_zipfile_size()
-            problem_data.update_submission_files_size()
 
             new_zipfile_size = problem_data.zipfile_size
-            new_submission_size = problem_data.submission_files_size
-            total_size = new_zipfile_size + new_submission_size
 
             # Check if anything changed
-            if old_zipfile_size != new_zipfile_size or old_submission_size != new_submission_size:
+            if old_zipfile_size != new_zipfile_size:
                 updated_count += 1
 
                 self.stdout.write(
                     f'Problem: {problem_code}\n'
-                    f'  Test data: {self.
-                                    _format_size(old_zipfile_size)} -> {self._format_size(new_zipfile_size)}\n'
-                    f'  Submissions: {self.
-                                      _format_size(old_submission_size)} -> {self._format_size(new_submission_size)}\n'
-                    f'  Total: {self._format_size(total_size)}\n',
+                    f'  Test data: {self._format_size(old_zipfile_size)} -> {self._format_size(new_zipfile_size)}\n'
                 )
 
                 if not dry_run:
                     # Use update_fields to avoid triggering save hooks again
-                    problem_data.save(update_fields=['zipfile_size', 'submission_files_size'])
+                    problem_data.save(update_fields=['zipfile_size'])
 
         if dry_run:
             self.stdout.write(self.style.WARNING(f'\nDRY RUN: Would update {updated_count}/{total_count} problems'))
