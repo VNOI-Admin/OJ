@@ -14,9 +14,9 @@ from django.views.generic import RedirectView
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
-from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
-    preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
-    two_factor, user, widgets
+from judge.views import TitledTemplateView, api, blog, comment, contest_problem, contests, language, license, \
+    mailgun, organization, preview, problem, problem_manage, ranked_submission, register, stats, status, \
+    submission, tag, tasks, ticket, two_factor, user, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -257,6 +257,10 @@ urlpatterns = [
         path('/data/download/', contests.ContestDownloadData.as_view(), name='contest_download_data'),
         path('/make_problems_public', contests.ContestProblemMakePublic.as_view(),
              name='contest_problems_make_public'),
+
+        path('/problem/<int:problem>', contest_problem.ContestProblemSubmit.as_view(), name='contest_problem_submit'),
+        path('/problem/<int:problem>/<int:submission>', contest_problem.ContestProblemSubmit.as_view(),
+             name='contest_problem_submit'),
 
         path('/rank/<str:problem>/',
              paged_list_view(ranked_submission.ContestRankedSubmission, 'contest_ranked_submissions')),
