@@ -124,6 +124,9 @@
                         <div>
                             <a href="{{ url('edit_organization', organization.slug) }}">{{ _('Edit organization') }}</a>
                         </div>
+                        <div>
+                            <a href="{{ url('organization_storage', organization.slug) }}">{{ _('Storage') }}</a>
+                        </div>
                     {% endif %}
                     {% if perms.judge.change_organization %}
                         <div>
