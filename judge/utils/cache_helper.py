@@ -11,8 +11,8 @@ class CacheFactory:
     def get_cache(self):
         return cache.get(self.get_cache_key())
 
-    def set_cache(self, data, timeout):
-        cache.set(self.get_cache_key(), data, timeout)
+    def set_cache(self, data, timeout_s=3600):
+        cache.set(self.get_cache_key(), data, timeout_s)
 
     def delete_cache(self):
         cache_key = self.get_cache_key()
