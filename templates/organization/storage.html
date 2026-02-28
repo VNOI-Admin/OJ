@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block media %}
+    <style>
+        .storage-table {
+            td, th {
+                &.problem-code, &.problem-name {
+                    text-align: left;
+                    padding: 0 10px;
+                }
+
+                &.problem-code {
+                    word-break: break-all;
+                }
+            }
+        }
+    </style>
+{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'storage' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+    <div class="storage-summary">
+        <h3>{{ _('Storage Summary') }}</h3>
+        <div style="margin-left: 2em; color: #666;">
+            <p style="margin: 0.25em 0;">
+                {{ _('Test data:') }} {{ test_data_storage|filesizeformat }}
+            </p>
+        </div>
+    </div>
+
+    <table class="storage-table table">
+        <thead>
+            <tr>
+                <th>{{ _('Problem Code') }}</th>
+                <th>{{ _('Problem Name') }}</th>
+                <th>{{ _('Test Data') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for problem in problems %}
+            <tr>
+                <td class="problem-code">
+                    <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code }}</a>
+                </td>
+                <td class="problem-name">
+                    <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                </td>
+                <td class="size-cell">
+                    {{ problem.data_size|filesizeformat }}
+                </td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 2em; color: #999;">
+                    {{ _('No problems found for this organization.') }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if page_obj.has_other_pages() %}
+        <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+    {% endif %}
+{% endblock %}
