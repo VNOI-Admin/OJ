@@ -1,0 +1,252 @@
+<script type="text/javascript" src="{{ ACE_URL }}/ace.js"></script>
+{{ form.media.js }}
+{% compress js %}
+    <script type="text/javascript">
+        $(function () {
+            function format(state) {
+                if (!state.id) return state.text; // optgroup
+                return state.text;
+            }
+
+            window.previous_template = '';
+
+            function update_language_template() {
+                var source = $('textarea#id_source');
+                if (source.val() == window.previous_template.replace(/\r/g, '') || source.val() == '') {
+                    var lang_id = $('#id_language').val();
+                    var code = localStorage.getItem('submit:' + $('#id_language').val());
+
+                    function update_submit_area(code) {
+                        window.previous_template = code;
+                        source.val(code);
+                        window.ace_source.getSession().setValue(code);
+                    }
+
+                    if (code != null) {
+                        update_submit_area(code);
+                    } else {
+                        $.get('{{ url('language_template_ajax') }}', {
+                            id: lang_id
+                        }).done(function (template) {
+                            update_submit_area(template);
+                        });
+                    }
+                }
+            }
+
+            function makeDisplayData(data) {
+                var site_data = data.attr('data-info');
+                var judge_data = data.attr('data-judge-info');
+                var display_data = site_data || judge_data;
+                return display_data;
+            }
+
+            function formatSelection(state) {
+                if (!state.id) return state.text; // optgroup
+                var data = makeDisplayData($("option[data-id=" + state.id + "]"));
+                return $('<span>').append($('<b>').text(state.text), ' (', data, ')');
+            }
+
+            // Terrible hack, adapted from https://github.com/select2/select2/issues/4436
+            $.fn.select2.amd.define('select2/data/customAdapter', ['select2/results', 'select2/utils'], function (Result, Utils) {
+                RefPresenter = function ($element, options, dataAdapter) {
+                    RefPresenter.__super__.constructor.call(this, $element, options, dataAdapter);
+                };
+                Utils.Extend(RefPresenter, Result);
+                RefPresenter.prototype.bind = function (container, $container) {
+                    container.on('results:focus', function (params) {
+                        var data = makeDisplayData($("option[data-id=" + params.data.id + "]"));
+                        $("#result-version-info").text(data);
+                    });
+                    RefPresenter.__super__.bind.call(this, container, $container);
+                };
+                return RefPresenter;
+            });
+
+            var customAdapter = $.fn.select2.amd.require('select2/data/customAdapter');
+
+            $("#id_language").select2({
+                theme: '{{ DMOJ_SELECT2_THEME }}',
+                templateResult: format,
+                templateSelection: formatSelection,
+                resultsAdapter: customAdapter
+            });
+
+            $('#id_language').on('select2:open', function (evt) {
+                var dropdown = $('.select2-dropdown');
+                if (!$('#result-version-info').length)
+                    dropdown.append($("<span id=\"result-version-info\">"));
+                dropdown.attr('id', 'language-select2');
+            });
+
+            $('#id_judge').on('select2:open', function (evt) {
+                var dropdown = $('.select2-dropdown');
+                $('#result-version-info').remove();
+                dropdown.attr('id', 'judge-select2');
+            });
+
+            $('#id_language').change(function () {
+                var lang = $("#id_language").find("option:selected").attr('data-ace');
+                window.ace_source.getSession().setMode("ace/mode/" + lang);
+                update_language_template();
+            });
+
+            $('#ace_source').on('ace_load', function (e, editor) {
+                update_language_template();
+                editor.commands.addCommand({
+                    name: 'save',
+                    bindKey: {win: 'Ctrl-S', mac: 'Command-S'},
+                    exec: function () {
+                        localStorage.setItem('submit:' + $('#id_language').val(), editor.getSession().getValue());
+                    }
+                });
+                editor.commands.addCommand({
+                    name: 'open',
+                    bindKey: {win: 'Ctrl-O', mac: 'Command-O'},
+                    exec: function () {
+                        $('#file_select').click();
+                    }
+                });
+                editor.getSession().setUseWrapMode(true);
+                editor.setFontSize(14);
+                editor.setPrintMarginColumn(100);
+                editor.focus();
+
+                $(editor.container).on('dragover', function (e) {
+                    var types = e.originalEvent.dataTransfer.types;
+                    if (types && Array.prototype.indexOf.call(types, 'Files') !== -1) {
+                        e.stopPropagation();
+                        e.preventDefault();
+                    }
+                });
+
+                $(editor.container).on('drop', function (e) {
+                    e.preventDefault();
+                    $('#file_select').prop('files', e.originalEvent.dataTransfer.files);
+                    handleFileSelect();
+                });
+            });
+
+            $(window).resize(function () {
+                $('#ace_source').height(Math.max($(window).height() - 353, 100));
+            }).resize();
+
+            $('#problem_submit').submit(function (event) {
+                if ($('#id_source').val().length > 65536) {
+                    alert({{ _('Your source code must contain at most 65536 characters.')|htmltojs }});
+                    event.preventDefault();
+                    $('#problem_submit').find(':submit').attr('disabled', false);
+                }
+                
+                obj = document.getElementById('id_language');
+                fileonly = obj.options[obj.selectedIndex].getAttribute('data-fileonly');
+                if (fileonly == 'True') {
+                    file_size_limit = obj.options[obj.selectedIndex].getAttribute('data-file-size');
+                    let fileInput = $('#file_upload')[0];
+                    if (fileInput.files.length > 0) {
+                        let file = fileInput.files[0];
+                        let limitBytes = parseInt(file_size_limit) * 1024 * 1024;
+                        if (file.size > limitBytes) {
+                            alert({{ _('`Maximum file size is ${file_size_limit}MB.`') }});
+                            event.preventDefault();
+                            $('#problem_submit').find(':submit').attr('disabled', false);
+                        }
+                    }
+                }
+            });
+
+            function on_language_change() {
+                obj = document.getElementById('id_language');
+                fileonly = obj.options[obj.selectedIndex].getAttribute('data-fileonly');
+                if (fileonly == 'True') {
+                    if (!$('#editor').hasClass('hidden')) {
+                        $('#editor').addClass('hidden');
+                    }
+                    if ($('#file-submit').hasClass('hidden')) {
+                        $('#file-submit').removeClass('hidden');
+                    }
+
+                    file_ext = '.' + obj.options[obj.selectedIndex].getAttribute('data-ext');
+                    file_size_limit = obj.options[obj.selectedIndex].getAttribute('data-file-size');
+                    $('#file_upload').val('');
+                    $('#file_upload').attr({accept: file_ext});
+                    $('#file_drag').html(
+                        '<b>{{ _("Click to select a file or drag a file into this box") }}</b><br>' +
+                        {{ _('`Only accept "${file_ext}". Maximum file size is ${file_size_limit}MB.`') }}
+                    );
+                } else {
+                    if ($('#editor').hasClass('hidden')) {
+                        $('#editor').removeClass('hidden');
+                    }
+                    if (!$('#file-submit').hasClass('hidden')) {
+                        $('#file-submit').addClass('hidden');
+                    }
+                }
+            };
+
+            $("#id_language").change( function() {
+                on_language_change();
+            });
+
+            on_language_change();
+
+            function fileDragHover(e) {
+                e.stopPropagation();
+                e.preventDefault();
+
+                if (e.type === 'dragover') {
+                    $('#file_drag').addClass('hover');
+                } else {
+                    $('#file_drag').removeClass('hover');
+                }
+            }
+
+            function fileDropHandler(e) {
+                fileDragHover(e);
+                $('#file_upload').prop('files', e.originalEvent.dataTransfer.files);
+                handleFileChange()
+            }
+
+            $('#file_drag').on('dragover', fileDragHover);
+            $('#file_drag').on('dragleave', fileDragHover);
+            $('#file_drag').on('drop', fileDropHandler);
+        });
+
+        function handleFileSelect() {
+            var file = $('#file_select')[0].files[0];
+            if (file && window.FileReader) {
+                var reader = new FileReader();
+                reader.onload = function () {
+                    ace_source.session.setValue(reader.result);
+
+                    if (file.name.search('.') != -1) {
+                        var ext = file.name.split('.').pop();
+                        var languages = $('#id_language')[0].options;
+                        for (var i = languages.length - 1; i >= 0; i--) {
+                            if (languages[i].getAttribute('data-fileonly') === 'False' && languages[i].getAttribute('data-ext') === ext) {
+                                $('#id_language').val(languages[i].value).change();
+                                break;
+                            }
+                        }
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        function handleFileChange() {
+            var file = $('#file_upload')[0].files[0];
+            if (file) {
+                $('#file_drag').html(
+                    '<b>{{ _("File name") }}:</b> ' + file.name + '<br>' +
+                    '<b>{{ _("File size") }}:</b> ' + (file.size / (1024 * 1024)).toFixed(2) + ' MB'
+                );
+            }
+        }
+
+        // https://stackoverflow.com/questions/43043113/how-to-force-reloading-a-page-when-using-browser-back-button#comment105570384_43043658
+        if (window.performance.getEntriesByType("navigation")[0].type === "back_forward") {
+            location.reload(true);
+        }
+    </script>
+{% endcompress %}

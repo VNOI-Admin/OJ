@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "urlshortener/tabs.html" %}
+{% endblock %}
+
+{% block js_media %}
+    <script>
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(function() {
+                var originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa fa-check"></i> {{ _("Copied!") }}';
+                setTimeout(function() {
+                    btn.innerHTML = originalText;
+                }, 1500);
+            });
+        }
+    </script>
+{% endblock %}
+
+{% block media %}
+    <style>
+        .shortener-detail {
+            max-width: 800px;
+        }
+        .shortener-detail dl {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 8px 16px;
+        }
+        .shortener-detail dt {
+            font-weight: bold;
+        }
+        .shortener-detail dd {
+            margin: 0;
+        }
+        .shortener-detail .actions {
+            margin-top: 24px;
+            display: flex;
+            gap: 12px;
+        }
+        .short-url-box {
+            background: #f5f5f5;
+            padding: 12px 16px;
+            border-radius: 4px;
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin: 8px 0;
+        }
+        .short-url-box code {
+            font-size: 1.1em;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div class="shortener-detail">
+    <div class="short-url-box">
+        <code>{{ shortener.get_full_short_url() }}</code>
+        <button type="button" class="button" onclick="copyToClipboard('{{ shortener.get_full_short_url() }}', this)">
+            <i class="fa fa-clipboard"></i> {{ _('Copy') }}
+        </button>
+    </div>
+
+    <dl>
+        <dt>{{ _('Original URL') }}</dt>
+        <dd><a href="{{ shortener.original_url }}" target="_blank" rel="noopener noreferrer">{{ shortener.original_url }}</a></dd>
+
+        <dt>{{ _('Short Code') }}</dt>
+        <dd><code>{{ shortener.short_code }}</code></dd>
+
+        <dt>{{ _('Status') }}</dt>
+        <dd>
+            {% if shortener.is_active %}
+                <span style="color: #155724;">{{ _('Active') }}</span>
+            {% else %}
+                <span style="color: #721c24;">{{ _('Inactive') }}</span>
+            {% endif %}
+        </dd>
+
+        <dt>{{ _('Access Count') }}</dt>
+        <dd>{{ shortener.access_count }}</dd>
+
+        <dt>{{ _('Created') }}</dt>
+        <dd>{{ shortener.created_time|date("Y-m-d H:i") }}</dd>
+
+        {% if shortener.last_access_time %}
+        <dt>{{ _('Last Accessed') }}</dt>
+        <dd>{{ shortener.last_access_time|date("Y-m-d H:i") }}</dd>
+        {% endif %}
+    </dl>
+
+    <div class="actions">
+        <a href="{{ url('urlshortener_edit', shortener.short_code) }}" class="button">
+            <i class="fa fa-pencil"></i> {{ _('Edit') }}
+        </a>
+        <a href="{{ url('urlshortener_delete', shortener.short_code) }}" class="button">
+            <i class="fa fa-trash"></i> {{ _('Delete') }}
+        </a>
+    </div>
+</div>
+{% endblock %}

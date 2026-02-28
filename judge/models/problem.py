@@ -214,8 +214,9 @@ class Problem(models.Model):
     objects = TranslatedProblemQuerySet.as_manager()
     tickets = GenericRelation('Ticket')
 
-    organizations = models.ManyToManyField(Organization, blank=True, verbose_name=_('organizations'),
-                                           help_text=_('If private, only these organizations may see the problem.'))
+    organization = models.ForeignKey(Organization, blank=True, null=True, verbose_name=_('organization'),
+                                     on_delete=SET_NULL,
+                                     help_text=_('If private, only this organization may see the problem.'))
     is_organization_private = models.BooleanField(verbose_name=_('private to organizations'), default=False)
 
     suggester = models.ForeignKey(Profile, blank=True, null=True, related_name='suggested_problems', on_delete=SET_NULL)
@@ -293,8 +294,8 @@ class Problem(models.Model):
                 return True
 
             # If the user is in the organization.
-            if user.is_authenticated and \
-                    self.organizations.filter(id__in=user.profile.organizations.all()):
+            if user.is_authenticated and self.organization and \
+                    user.profile.organizations.filter(id=self.organization.id).exists():
                 return True
 
         if not user.is_authenticated:
@@ -395,7 +396,7 @@ class Problem(models.Model):
     @classmethod
     def organization_filter_q(cls, queryset):
         q = Q(is_organization_private=True)
-        q &= Exists(Problem.organizations.through.objects.filter(problem=OuterRef('pk'), organization__in=queryset))
+        q &= Q(organization__in=queryset)
         return q
 
     @classmethod

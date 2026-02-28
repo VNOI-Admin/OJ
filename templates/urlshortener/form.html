@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "urlshortener/tabs.html" %}
+{% endblock %}
+
+{% block js_media %}
+    {{ form.media.js }}
+    {% include "leave-warning.html" %}
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+{% endblock %}
+
+{% block body %}
+<div>
+    <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+        {% if form.errors %}
+            <p class="errornote">{{ _('Please correct the error below.') }}</p>
+        {% endif %}
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <table>
+            <tr>
+                <td style="float: left;"></td>
+                <td style="float: right;">
+                    <input type="submit" value="{{ _('Save') if is_edit else _('Create') }}" class="button">
+                </td>
+            </tr>
+        </table>
+    </form>
+</div>
+{% endblock %}

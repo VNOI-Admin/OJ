@@ -98,6 +98,14 @@ VNOJ_INTERACT_MIN_PROBLEM_COUNT = 5
 # Minimum problem count required to create new blogs
 VNOJ_BLOG_MIN_PROBLEM_COUNT = 10
 
+# Comment validation settings
+VNOJ_COMMENT_MIN_CONTRIBUTION = -20
+VNOJ_COMMENT_MIN_LENGTH = 10
+VNOJ_COMMENT_MAX_LENGTH = 10000
+VNOJ_COMMENT_BLACKLIST_TERMS = []
+VNOJ_COMMENT_RATE_LIMIT_COUNT = None  # maximum number of comments allowed within the time window
+VNOJ_COMMENT_RATE_LIMIT_WINDOW = datetime.timedelta(seconds=600)
+
 VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
 VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem
@@ -118,6 +126,15 @@ VNOJ_PRICE_PER_HOUR = 50
 
 
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
+
+# Low power mode: Optimize queries by limiting data scope for performance
+VNOJ_LOW_POWER_MODE = False
+VNOJ_LOW_POWER_MODE_CONFIG = {
+    # limit the number of submissions pages
+    'max_page': 5,
+    # avoid drawing heat map for users with too many submissions
+    'heat_map_limit': 20_000,
+}
 
 VNOJ_MAGAZINE_TAG_SLUG = None
 
@@ -408,6 +425,7 @@ else:
 INSTALLED_APPS += (
     'django.contrib.admin',
     'judge',
+    'urlshortener',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.flatpages',
@@ -667,6 +685,9 @@ PDF_STATEMENT_MAX_FILE_SIZE = 5242880
 
 SUBMISSION_FILE_UPLOAD_URL_PREFIX = '/submission_file'
 SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission_file'
+
+STATIC_UPLOAD_URL_PREFIX = '/static-upload'
+STATIC_UPLOAD_MEDIA_DIR = 'static-upload'
 
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases

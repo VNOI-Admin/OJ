@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'list' %}
+    {% include "urlshortener/tabs.html" %}
+{% endblock %}
+
+{% block js_media %}
+    <script>
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(function() {
+                var originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa fa-check"></i>';
+                setTimeout(function() {
+                    btn.innerHTML = originalText;
+                }, 1500);
+            });
+        }
+    </script>
+{% endblock %}
+
+{% block body %}
+    {% if shorteners %}
+        {% if page_obj.has_other_pages() %}
+            <div class="top-pagination-bar">{% include "list-pages.html" %}</div>
+        {% endif %}
+
+        <div class="h-scrollable-table">
+            {% spaceless %}
+            <table class="users-table table striped">
+                <thead>
+                    <tr>
+                        <th class="header">{{ _('Short URL') }}</th>
+                        <th class="header">{{ _('Original URL') }}</th>
+                        <th class="header" style="width: 8%;">{{ _('Accesses') }}</th>
+                        <th class="header" style="width: 8%;">{{ _('Status') }}</th>
+                        <th class="header" style="width: 12%;">{{ _('Created') }}</th>
+                        <th class="header" style="width: 10%;">{{ _('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for shortener in shorteners %}
+                        <tr{% if not shortener.is_active %} style="opacity: 0.6;"{% endif %}>
+                            <td>
+                                <code>{{ shortener.short_code }}</code>
+                                <span style="cursor: pointer; margin-left: 4px;" onclick="copyToClipboard('{{ shortener.get_full_short_url() }}', this)" title="{{ _('Copy full URL') }}">
+                                    <i class="fa fa-clipboard"></i>
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ shortener.original_url }}" target="_blank" rel="noopener noreferrer" title="{{ shortener.original_url }}">
+                                    {{ shortener.original_url[:50] }}{% if shortener.original_url|length > 50 %}...{% endif %}
+                                </a>
+                            </td>
+                            <td>{{ shortener.access_count }}</td>
+                            <td>
+                                {% if shortener.is_active %}
+                                    <span style="color: #155724;">{{ _('Active') }}</span>
+                                {% else %}
+                                    <span style="color: #721c24;">{{ _('Inactive') }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ shortener.created_time|date("Y-m-d H:i") }}</td>
+                            <td>
+                                <a href="{{ url('urlshortener_detail', shortener.short_code) }}" title="{{ _('View') }}" style="margin-right: 8px;">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                                <a href="{{ url('urlshortener_edit', shortener.short_code) }}" title="{{ _('Edit') }}" style="margin-right: 8px;">
+                                    <i class="fa fa-pencil"></i>
+                                </a>
+                                <a href="{{ url('urlshortener_delete', shortener.short_code) }}" title="{{ _('Delete') }}">
+                                    <i class="fa fa-trash"></i>
+                                </a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endspaceless %}
+        </div>
+
+        {% if page_obj.has_other_pages() %}
+            <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+        {% endif %}
+    {% else %}
+        <p>{{ _('You have not created any URL shorteners yet.') }}</p>
+    {% endif %}
+{% endblock %}

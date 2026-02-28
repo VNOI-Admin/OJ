@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.db.models import Count, FilteredRelation, Q
+from django.db.models import Count, FilteredRelation, Q, Sum
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
@@ -21,14 +21,16 @@ from reversion import revisions
 
 from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
-    Problem, Profile
+    Problem, ProblemData, Profile
 from judge.models.profile import OrganizationMonthlyUsage
 from judge.tasks import on_new_problem
+from judge.utils import cache_helper
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart
-from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message
+from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message, \
+    paginate_query_context
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
@@ -37,7 +39,7 @@ from judge.views.submission import SubmissionsListBase
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
-           'KickUserWidgetView']
+           'KickUserWidgetView', 'OrganizationStorageDashboard']
 
 
 class OrganizationMixin(object):
@@ -525,14 +527,14 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
            user.has_perm('judge.edit_all_problem'):
             context['new_problems'] = Problem.objects.filter(
                 is_public=True, is_organization_private=True,
-                organizations=self.object) \
+                organization=self.object) \
                 .order_by('-date', '-id')[:settings.DMOJ_BLOG_NEW_PROBLEM_COUNT]
 
         see_private_contest = user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest')
         if context['is_member'] or see_private_contest:
             new_contests = Contest.objects.filter(
                 is_visible=True, is_organization_private=True,
-                organizations=self.object) \
+                organization=self.object) \
                 .order_by('-end_time', '-id')
 
             if not see_private_contest:
@@ -573,7 +575,7 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         problems of other admins unless they are authors/curators/testers
         """
         if self.request.user.has_perm('judge.see_private_problem'):
-            return Q(organizations=self.organization)
+            return Q(organization=self.organization)
 
         _filter = Q(is_public=True)
 
@@ -583,7 +585,7 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
             _filter |= Q(curators=self.profile)
             _filter |= Q(testers=self.profile)
 
-        return _filter & Q(organizations=self.organization)
+        return _filter & Q(organization=self.organization)
 
 
 class MonthlyCreditUsageOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, ListView):
@@ -641,7 +643,7 @@ class ContestListOrganization(PrivateOrganizationMixin, ContestList):
 
     def _get_queryset(self):
         query_set = super(ContestListOrganization, self)._get_queryset()
-        query_set = query_set.filter(is_organization_private=True, organizations=self.organization)
+        query_set = query_set.filter(is_organization_private=True, organization=self.organization)
         return query_set
 
     def get_context_data(self, **kwargs):
@@ -657,7 +659,7 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
 
     def _get_queryset(self):
         query_set = super(SubmissionListOrganization, self)._get_queryset()
-        query_set = query_set.filter(problem__organizations=self.organization)
+        query_set = query_set.filter(problem__organization=self.organization)
         return query_set
 
     def get_context_data(self, **kwargs):
@@ -689,7 +691,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
 
             problem.is_organization_private = True
-            problem.organizations.add(self.organization)
+            problem.organization = self.organization
             problem.date = timezone.now()
             self.save_statement(form, problem)
             problem.save()
@@ -742,5 +744,54 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
         self.object = form.save()
         self.object.authors.add(self.request.profile)
         self.object.is_organization_private = True
-        self.object.organizations.add(self.organization)
+        self.object.organization = self.organization
         self.object.save()
+
+
+class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
+                                   InfinitePaginationMixin, ListView):
+    """Dashboard showing storage usage for organization admins."""
+    template_name = 'organization/storage.html'
+    context_object_name = 'problems'
+    paginate_by = 100
+
+    def get_title(self):
+        return _('Storage Dashboard - %s') % self.organization.name
+
+    def get_queryset(self):
+        queryset = Problem.objects.filter(
+            organization=self.organization,
+        ).annotate(
+            data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
+        ).only(
+            'code', 'name',
+        ).order_by('-data_size')
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+
+        cache_factory = cache_helper.organization_storage_cache_factory(self.organization.id)
+        cached_data = cache_factory.get_cache()
+
+        if cached_data is None:
+            storage_totals = ProblemData.objects.filter(
+                problem__organization=self.organization,
+            ).aggregate(
+                test_data=Sum('zipfile_size'),
+            )
+
+            test_data_total = storage_totals['test_data'] or 0
+
+            cached_data = {
+                'test_data': test_data_total,
+            }
+
+            cache_factory.set_cache(cached_data)
+
+        context['test_data_storage'] = cached_data['test_data']
+
+        context.update(paginate_query_context(self.request))
+
+        return context

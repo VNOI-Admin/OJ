@@ -97,6 +97,19 @@ a {
 .comment-body {
     word-wrap: break-word;
     word-break: break-word;
+
+    &.collapsed {
+        max-height: 100px;
+        overflow: hidden;
+    }
+}
+
+.comment-toggle {
+    cursor: pointer;
+
+    &:hover {
+        text-decoration: underline;
+    }
 }
 
 .previous-revision, .next-revision {
