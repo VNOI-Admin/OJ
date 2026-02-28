@@ -162,7 +162,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             end_time=_now + timezone.timedelta(days=6),
             is_visible=True,
             is_organization_private=True,
-            organizations=('open',),
+            organization=self.organizations['open'],
             view_contest_scoreboard=('normal',),
             testers=('non_staff_tester',),
         )
@@ -173,7 +173,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             end_time=_now + timezone.timedelta(days=6),
             is_visible=True,
             is_organization_private=True,
-            organizations=('open',),
+            organization=self.organizations['open'],
             view_contest_scoreboard=('normal',),
             testers=('non_staff_tester',),
         )
@@ -471,7 +471,8 @@ class ContestTestCase(CommonDataMixin, TestCase):
         self.private_contest.private_contestants.add(self.users['normal'].profile)
         with self.assertRaises(Contest.PrivateContest):
             self.private_contest.access_check(self.users['normal'])
-        self.private_contest.organizations.add(self.organizations['open'])
+        self.private_contest.organization = self.organizations['open']
+        self.private_contest.save()
         self.users['normal'].profile.organizations.add(self.organizations['open'])
 
         data = {
@@ -736,7 +737,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
             with self.subTest(user=name):
                 # We only care about consistency between Contest.is_accessible_by and Contest.get_visible_contests
                 contest_keys = []
-                for contest in Contest.objects.prefetch_related('testers', 'private_contestants', 'organizations'):
+                for contest in Contest.objects.prefetch_related('testers', 'private_contestants', 'organization'):
                     if contest.is_accessible_by(user):
                         contest_keys.append(contest.key)
 

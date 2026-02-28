@@ -379,38 +379,38 @@ class ProblemSubmitForm(ModelForm):
 
     def check_submission(self):
         source = self.cleaned_data.get('source', '')
-        content = self.files.get('submission_file', None)
-        language = self.cleaned_data.get('language', None)
-        lang_obj = Language.objects.get(name=language)
+        content = self.files.get('submission_file')
+        lang_obj = self.cleaned_data.get('language')
 
-        if (source != '' and content is not None) or (source == '' and content is None) or \
-                (source != '' and lang_obj.file_only) or (content == '' and not lang_obj.file_only):
-            raise forms.ValidationError(_('Source code/file is missing or redundant. Please try again'))
+        if lang_obj is not None:
+            if (source != '' and content is not None) or (source == '' and content is None) or \
+                    (source != '' and lang_obj.file_only) or (content == '' and not lang_obj.file_only):
+                raise forms.ValidationError(_('Source code/file is missing or redundant. Please try again'))
 
-        if content:
-            max_file_size = lang_obj.file_size_limit * 1024 * 1024
-            ext = os.path.splitext(content.name)[1][1:]
+            if content:
+                max_file_size = lang_obj.file_size_limit * 1024 * 1024
+                ext = os.path.splitext(content.name)[1][1:]
 
-            if ext.lower() != lang_obj.extension.lower():
-                raise forms.ValidationError(_('Wrong file type for language %(lang)s, expected %(lang_ext)s'
-                                              ', found %(ext)s')
-                                            % {'lang': language, 'lang_ext': lang_obj.extension, 'ext': ext})
+                if ext.lower() != lang_obj.extension.lower():
+                    raise forms.ValidationError(_('Wrong file type for language %(lang)s, expected %(lang_ext)s'
+                                                ', found %(ext)s')
+                                                % {'lang': lang_obj, 'lang_ext': lang_obj.extension, 'ext': ext})
 
-            elif content.size > max_file_size:
-                raise forms.ValidationError(_('File size is too big! Maximum file size is %s')
-                                            % filesizeformat(max_file_size))
+                elif content.size > max_file_size:
+                    raise forms.ValidationError(_('File size is too big! Maximum file size is %s')
+                                                % filesizeformat(max_file_size))
 
-            if lang_obj.key == 'SCRATCH':
-                try:
-                    archive = zipfile.ZipFile(content.file)
-                    info = archive.getinfo('project.json')
-                    if info.file_size > max_file_size:
-                        raise forms.ValidationError(_('project.json is too big! Maximum file size is %s')
-                                                    % filesizeformat(max_file_size))
+                if lang_obj.key == 'SCRATCH':
+                    try:
+                        archive = zipfile.ZipFile(content.file)
+                        info = archive.getinfo('project.json')
+                        if info.file_size > max_file_size:
+                            raise forms.ValidationError(_('project.json is too big! Maximum file size is %s')
+                                                        % filesizeformat(max_file_size))
 
-                    self.files['submission_file'].file = archive.open('project.json')
-                except (zipfile.BadZipFile, KeyError):
-                    pass
+                        self.files['submission_file'].file = archive.open('project.json')
+                    except (zipfile.BadZipFile, KeyError):
+                        pass
 
     def __init__(self, *args, judge_choices=(), **kwargs):
         super(ProblemSubmitForm, self).__init__(*args, **kwargs)

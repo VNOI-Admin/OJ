@@ -162,13 +162,6 @@
             var hash = window.location.hash;
             if (hash && $(hash).length) {
                 $('.problem-tabs a[href="' + hash + '"]').click();
-            } else {
-                // Default to submit tab if user is authenticated
-                {% if request.user.is_authenticated %}
-                $('.problem-tabs a[href="#submit"]').click();
-                {% else %}
-                $('.problem-tabs a[href="#comments"]').click();
-                {% endif %}
             }
         });
     </script>
@@ -196,15 +189,13 @@
             {% endif %}
         {% endif %}
         <h2 style="display: inline-block">{{ title }}</h2>
-        {% if problem.is_organization_private %}
+        {% if problem.is_organization_private and problem.organization %}
             <span class="organization-tags">
-                {% for org in problem.organizations.all() %}
-                    <span class="organization-tag">
-                        <a href="{{ org.get_absolute_url() }}">
-                            <i class="fa fa-lock"></i> {{ org.name }}
-                        </a>
-                    </span>
-                {% endfor %}
+                <span class="organization-tag">
+                    <a href="{{ problem.organization.get_absolute_url() }}">
+                        <i class="fa fa-lock"></i> {{ problem.organization.name }}
+                    </a>
+                </span>
             </span>
         {% endif %}
         <span class="spacer"></span>

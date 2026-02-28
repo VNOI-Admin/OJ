@@ -38,15 +38,43 @@ class CommentForm(ModelForm):
         super(CommentForm, self).__init__(*args, **kwargs)
         self.fields['body'].widget.attrs.update({'placeholder': _('Comment body')})
 
+    def clean_body(self, body):
+        if len(body) < settings.VNOJ_COMMENT_MIN_LENGTH:
+            raise ValidationError(_('Comment is too short (min %d chars).') % settings.VNOJ_COMMENT_MIN_LENGTH)
+        if len(body) > settings.VNOJ_COMMENT_MAX_LENGTH:
+            raise ValidationError(_('Comment is too long (max %d chars).') % settings.VNOJ_COMMENT_MAX_LENGTH)
+
+        if settings.VNOJ_COMMENT_BLACKLIST_TERMS:
+            body_casefolded = body.casefold()
+            blacklist_casefolded = [term.casefold() for term in settings.VNOJ_COMMENT_BLACKLIST_TERMS]
+            for term in blacklist_casefolded:
+                if term in body_casefolded:
+                    raise ValidationError(_('Your comment contains forbidden content.'))
+
     def clean(self):
         if self.request is not None and self.request.user.is_authenticated:
             profile = self.request.profile
+
             if profile.mute:
                 suffix_msg = '' if profile.ban_reason is None else _(' Reason: ') + profile.ban_reason
                 raise ValidationError(_('Your part is silent, little toad.') + suffix_msg)
+
             elif profile.is_new_user:
                 raise ValidationError(_('You need to have solved at least %d problems '
                                         'before your voice can be heard.') % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT)
+
+            if profile.contribution_points < settings.VNOJ_COMMENT_MIN_CONTRIBUTION:
+                raise ValidationError(
+                    _('You need at least %d contribution points to comment.') % settings.VNOJ_COMMENT_MIN_CONTRIBUTION,
+                )
+
+            if (settings.VNOJ_COMMENT_RATE_LIMIT_COUNT is not None and
+                    Comment.objects.filter(
+                        author=profile,
+                        time__gte=timezone.now() - settings.VNOJ_COMMENT_RATE_LIMIT_WINDOW,
+                    ).count() >= settings.VNOJ_COMMENT_RATE_LIMIT_COUNT):
+                raise ValidationError(_('You are commenting too fast. Chill out.'))
+
         return super(CommentForm, self).clean()
 
 
@@ -61,6 +89,9 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
     def is_comment_locked(self):
         return (CommentLock.objects.filter(page=self.get_comment_page()).exists() and
                 not self.request.user.has_perm('judge.override_comment_lock'))
+
+    def get_comment_form(self, request):
+        return CommentForm(request, initial={'page': self.get_comment_page(), 'parent': None})
 
     @method_decorator(login_required)
     def post(self, request, *args, **kwargs):
@@ -104,7 +135,7 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
         self.object = self.get_object()
         return self.render_to_response(self.get_context_data(
             object=self.object,
-            comment_form=CommentForm(request, initial={'page': self.get_comment_page(), 'parent': None}),
+            comment_form=self.get_comment_form(request),
         ))
 
     def get_context_data(self, **kwargs):

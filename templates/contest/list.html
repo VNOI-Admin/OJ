@@ -79,14 +79,12 @@
                     <i class="fa fa-eye-slash"></i> {{ _('hidden') }}
                 </span>
             {% endif %}
-            {% if contest.is_organization_private %}
-                {% for org in contest.organizations.all() %}
-                    <span style="background-color: #cccccc" class="contest-tag">
-                        <a href="{{ org.get_absolute_url() }}" style="color: #000000">
-                            <i class="fa fa-lock"></i> {{ org.name }}
-                        </a>
-                    </span>
-                {% endfor %}
+            {% if contest.is_organization_private and contest.organization %}
+                <span style="background-color: #cccccc" class="contest-tag">
+                    <a href="{{ contest.organization.get_absolute_url() }}" style="color: #000000">
+                        <i class="fa fa-lock"></i> {{ contest.organization.name }}
+                    </a>
+                </span>
             {% elif contest.is_private %}
                 <span style="background-color: #666666; color: #ffffff" class="contest-tag">
                     <i class="fa fa-lock"></i> {{ _('private') }}
@@ -330,12 +328,8 @@
             <table class="contest-list table striped">
                 <thead>
                 <tr>
-                    <th style="width:80%">
-                        <a href="{{ sort_links.name }}" class="contest-sort-link">{{ _('Contest') }}{{ sort_order.name }}</a>
-                    </th>
-                    <th>
-                        <a href="{{ sort_links.user_count }}" class="contest-sort-link">{{ _('Users') }}{{ sort_order.user_count }}</a>
-                    </th>
+                    <th style="width:80%">{{ _('Contest') }}</th>
+                    <th>{{ _('Users') }}</th>
                     {% if not request.in_contest %}
                         <th style="width:15%"></th>
                     {% endif %}

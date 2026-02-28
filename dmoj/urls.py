@@ -300,6 +300,7 @@ urlpatterns = [
         path('/edit', organization.EditOrganization.as_view(), name='edit_organization'),
         path('/kick', organization.KickUserWidgetView.as_view(), name='organization_user_kick'),
         path('/usage', organization.MonthlyCreditUsageOrganization.as_view(), name='organization_monthly_usage'),
+        path('/storage', organization.OrganizationStorageDashboard.as_view(), name='organization_storage'),
         path('/problems/', organization.ProblemListOrganization.as_view(), name='problem_list_organization'),
         path('/contests/', organization.ContestListOrganization.as_view(), name='contest_list_organization'),
         path('/submissions/',

@@ -195,21 +195,21 @@ class Submission(models.Model):
     def update_credit(self, consumed_credit):
         problem = self.problem
 
-        organizations = []
-        if problem.is_organization_private:
-            organizations = problem.organizations.all()
+        organization = None
+        if problem.is_organization_private and problem.organization:
+            organization = problem.organization
 
-        if len(organizations) == 0:
+        if organization is None:
             contest_object = None
             try:
                 contest_object = self.contest_object
             except AttributeError:
                 pass
 
-            if contest_object is not None and contest_object.is_organization_private:
-                organizations = contest_object.organizations.all()
+            if contest_object is not None and contest_object.is_organization_private and contest_object.organization:
+                organization = contest_object.organization
 
-        for organization in organizations:
+        if organization:
             organization.consume_credit(consumed_credit)
 
     update_credit.alters_data = True
