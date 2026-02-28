@@ -1,7 +1,6 @@
 import errno
 import os
 
-from django.core.cache import cache
 from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
@@ -117,7 +116,7 @@ class ProblemData(models.Model):
 
         # Invalidate organization storage cache when size changes
         if self.problem.organization:
-            cache_key = cache_helper.organization_storage_cache_factory(self.problem.organization.id).delete_cache()
+            cache_helper.organization_storage_cache_factory(self.problem.organization.id).delete_cache()
 
     def _update_code(self, original, new):
         try:

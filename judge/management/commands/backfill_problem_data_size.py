@@ -40,7 +40,7 @@ class Command(BaseCommand):
 
                 self.stdout.write(
                     f'Problem: {problem_code}\n'
-                    f'  Test data: {self._format_size(old_zipfile_size)} -> {self._format_size(new_zipfile_size)}\n'
+                    f'  Test data: {self._format_size(old_zipfile_size)} -> {self._format_size(new_zipfile_size)}\n',
                 )
 
                 if not dry_run:

@@ -1,5 +1,6 @@
 from django.core.cache import cache
 
+
 class CacheFactory:
     def __init__(self, key):
         self._key = key
@@ -16,6 +17,7 @@ class CacheFactory:
     def delete_cache(self):
         cache_key = self.get_cache_key()
         cache.delete(cache_key)
+
 
 def organization_storage_cache_factory(organization_id):
     return CacheFactory(f'org_storage_total_{organization_id}')

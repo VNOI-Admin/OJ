@@ -4,7 +4,6 @@ from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import Count, FilteredRelation, Q, Sum
 from django.db.models.expressions import F, Value
@@ -30,7 +29,8 @@ from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart
-from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message, paginate_query_context
+from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message, \
+    paginate_query_context
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
@@ -748,7 +748,8 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
         self.object.save()
 
 
-class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, InfinitePaginationMixin, ListView):
+class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
+                                   InfinitePaginationMixin, ListView):
     """Dashboard showing storage usage for organization admins."""
     template_name = 'organization/storage.html'
     context_object_name = 'problems'
