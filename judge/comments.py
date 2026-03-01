@@ -38,18 +38,21 @@ class CommentForm(ModelForm):
         super(CommentForm, self).__init__(*args, **kwargs)
         self.fields['body'].widget.attrs.update({'placeholder': _('Comment body')})
 
-    def clean_body(self, body):
-        if len(body) < settings.VNOJ_COMMENT_MIN_LENGTH:
-            raise ValidationError(_('Comment is too short (min %d chars).') % settings.VNOJ_COMMENT_MIN_LENGTH)
-        if len(body) > settings.VNOJ_COMMENT_MAX_LENGTH:
-            raise ValidationError(_('Comment is too long (max %d chars).') % settings.VNOJ_COMMENT_MAX_LENGTH)
+    def clean_body(self):
+        body = self.cleaned_data['body']
+        if self.request is not None and not self.request.user.is_staff:
+            if len(body) < settings.VNOJ_COMMENT_MIN_LENGTH:
+                raise ValidationError(_('Comment is too short (min %d chars).') % settings.VNOJ_COMMENT_MIN_LENGTH)
+            if len(body) > settings.VNOJ_COMMENT_MAX_LENGTH:
+                raise ValidationError(_('Comment is too long (max %d chars).') % settings.VNOJ_COMMENT_MAX_LENGTH)
 
-        if settings.VNOJ_COMMENT_BLACKLIST_TERMS:
-            body_casefolded = body.casefold()
-            blacklist_casefolded = [term.casefold() for term in settings.VNOJ_COMMENT_BLACKLIST_TERMS]
-            for term in blacklist_casefolded:
-                if term in body_casefolded:
-                    raise ValidationError(_('Your comment contains forbidden content.'))
+            if settings.VNOJ_COMMENT_BLACKLIST_TERMS:
+                body_casefolded = body.casefold()
+                blacklist_casefolded = [term.casefold() for term in settings.VNOJ_COMMENT_BLACKLIST_TERMS]
+                for term in blacklist_casefolded:
+                    if term in body_casefolded:
+                        raise ValidationError(_('Your comment contains forbidden content.'))
+        return body
 
     def clean(self):
         if self.request is not None and self.request.user.is_authenticated:
@@ -62,18 +65,19 @@ class CommentForm(ModelForm):
             elif profile.is_new_user:
                 raise ValidationError(_('You need to have solved at least %d problems '
                                         'before your voice can be heard.') % settings.VNOJ_INTERACT_MIN_PROBLEM_COUNT)
+            if not self.request.user.is_staff:
+                if profile.contribution_points < settings.VNOJ_COMMENT_MIN_CONTRIBUTION:
+                    raise ValidationError(
+                        _('You need at least %d contribution points to comment.')
+                        % settings.VNOJ_COMMENT_MIN_CONTRIBUTION,
+                    )
 
-            if profile.contribution_points < settings.VNOJ_COMMENT_MIN_CONTRIBUTION:
-                raise ValidationError(
-                    _('You need at least %d contribution points to comment.') % settings.VNOJ_COMMENT_MIN_CONTRIBUTION,
-                )
-
-            if (settings.VNOJ_COMMENT_RATE_LIMIT_COUNT is not None and
-                    Comment.objects.filter(
-                        author=profile,
-                        time__gte=timezone.now() - settings.VNOJ_COMMENT_RATE_LIMIT_WINDOW,
-                    ).count() >= settings.VNOJ_COMMENT_RATE_LIMIT_COUNT):
-                raise ValidationError(_('You are commenting too fast. Chill out.'))
+                if (settings.VNOJ_COMMENT_RATE_LIMIT_COUNT is not None and
+                        Comment.objects.filter(
+                            author=profile,
+                            time__gte=timezone.now() - settings.VNOJ_COMMENT_RATE_LIMIT_WINDOW,
+                        ).count() >= settings.VNOJ_COMMENT_RATE_LIMIT_COUNT):
+                    raise ValidationError(_('You are commenting too fast. Chill out.'))
 
         return super(CommentForm, self).clean()
 
