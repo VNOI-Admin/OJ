@@ -68,7 +68,8 @@ class CommentForm(ModelForm):
             if not self.request.user.is_staff:
                 if profile.contribution_points < settings.VNOJ_COMMENT_MIN_CONTRIBUTION:
                     raise ValidationError(
-                        _('You need at least %d contribution points to comment.') % settings.VNOJ_COMMENT_MIN_CONTRIBUTION,
+                        _('You need at least %d contribution points to comment.')
+                        % settings.VNOJ_COMMENT_MIN_CONTRIBUTION,
                     )
 
                 if (settings.VNOJ_COMMENT_RATE_LIMIT_COUNT is not None and
