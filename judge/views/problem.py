@@ -40,8 +40,8 @@ from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
 from judge.utils.problems import hot_problems, user_attempted_ids, \
     user_completed_ids
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
-from judge.utils.tickets import own_ticket_filter
 from judge.utils.celery import redirect_to_task_status
+from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
 from judge.views.widgets import pdf_statement_uploader, submission_uploader
 

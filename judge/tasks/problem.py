@@ -1,4 +1,5 @@
 import shutil
+
 from celery import shared_task
 from django.conf import settings
 from django.db import transaction
