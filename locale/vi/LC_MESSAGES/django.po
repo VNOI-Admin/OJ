@@ -4793,7 +4793,7 @@ msgid "This site works best with JavaScript enabled."
 msgstr "Trang web này hoạt động tốt nhất khi JavaScript được cho phép."
 
 #: templates/base.html:372
-msgid "powered by %(dmoj)s and %(vnoi)s"
+msgid "proudly powered by %(dmoj)s and %(vnoi)s"
 msgstr "dựa trên nền tảng %(dmoj)s và %(vnoi)s"
 
 #: templates/base.html:377
