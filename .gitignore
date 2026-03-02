@@ -32,6 +32,7 @@ vo21.json
 tmp.json
 language_voj.json
 /static
+/media
 backup*.json
 custom_script_*
 websocket/config.js
