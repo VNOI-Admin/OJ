@@ -6772,7 +6772,7 @@ msgstr ""
 
 #: templates/registration/activation_email_subject.txt:1
 #, python-format
-msgid "Activate your %(SITE_NAME)s account)"
+msgid "Activate your %(SITE_NAME)s account"
 msgstr "Kích hoạt tài khoản %(SITE_NAME)s"
 
 #: templates/registration/login.html:9

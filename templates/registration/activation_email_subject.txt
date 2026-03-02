@@ -1,1 +1,1 @@
-{% trans %}Activate your {{ SITE_NAME }} account){% endtrans %}
+{% trans %}Activate your {{ SITE_NAME }} account{% endtrans %}

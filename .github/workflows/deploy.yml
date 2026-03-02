@@ -1,8 +1,7 @@
 name: Deploy TLOJ to VPS
 on:
-  pull_request:
+  push:
     branches: ["master"]
-    types: [closed]
 jobs:
   deploy:
     if: github.event.pull_request.merged == true
