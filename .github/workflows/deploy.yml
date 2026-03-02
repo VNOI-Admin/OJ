@@ -1,4 +1,4 @@
-name: Deploy TLOJ to VPS
+name: deploy
 on:
   push:
     branches: ["master"]
