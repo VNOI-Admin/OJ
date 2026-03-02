@@ -369,16 +369,23 @@
     <footer>
         <span id="footer-content">
             <br>
-            {{_('proudly powered by %(dmoj)s', dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'))}} |
-            {{_('follow us on %(github)s and %(facebook)s', github=safe('<a style="color: #808080" href="https://github.com/VNOI-Admin/OJ"><b>Github</b></a>'), facebook=safe('<a style="color: #808080" href="https://www.facebook.com/vnoi.wiki"><b>Facebook</b></a>'))}}
+            {{_('proudly powered by %(vnoj)s (based on %(dmoj)s)',
+                dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'),
+                vnoj=safe('<a style="color: #808080" href="https://github.com/VNOI-Admin/OJ"><b>VNOJ</b></a>')
+            )}}
+            |
+            {{_('follow us on %(github)s and %(facebook)s',
+                github=safe('<a style="color: #808080" href="https://github.com/tloi-dalat"><b>Github</b></a>'),
+                facebook=safe('<a style="color: #808080" href="https://fb.com/tloi.dl"><b>Facebook</b></a>')
+            )}}
             {% if misc_config.footer %}
                 {{ misc_config.footer|safe }} |
             {% endif %}
             <form id="set_language" action="{{ url('set_language') }}" method="post" style="display: inline">
                 {% csrf_token %}
-            <input name="next" type="hidden" value="{{ request.get_full_path() }}">
-            <input name="language" type="hidden" value="{{LANGUAGE_CODE}}">
-          </form>
+                <input name="next" type="hidden" value="{{ request.get_full_path() }}">
+                <input name="language" type="hidden" value="{{LANGUAGE_CODE}}">
+            </form>
         </span>
     </footer>
 </div>

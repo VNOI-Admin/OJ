@@ -4792,15 +4792,13 @@ msgstr "Tới bảng xếp hạng"
 msgid "This site works best with JavaScript enabled."
 msgstr "Trang web này hoạt động tốt nhất khi JavaScript được cho phép."
 
-#: templates/base.html:363
-#, python-format
-msgid "proudly powered by %(dmoj)s"
-msgstr "dựa trên nền tảng %(dmoj)s"
+#: templates/base.html:372
+msgid "proudly powered by %(vnoj)s (based on %(dmoj)s)"
+msgstr "được phát triển dựa trên %(vnoj)s (nền tảng %(dmoj)s)"
 
-#: templates/base.html:364
-#, python-format
+#: templates/base.html:377
 msgid "follow us on %(github)s and %(facebook)s"
-msgstr "theo dõi VNOI trên %(github)s và %(facebook)s"
+msgstr "theo dõi bọn mình trên %(github)s và %(facebook)s"
 
 #: templates/blog/blog-list-tabs.html:4
 msgid "Newsfeed"
@@ -6742,7 +6740,7 @@ msgid ""
 "Please activate your %(site_name)s account in the next %(expiration_days)d "
 "days."
 msgstr ""
-"Hãy kích hoạt tài khoản %(site_name)s của bạn trong vòng %(expiration_days)d "
+"Hãy kích hoạt tài khoản %(site_name)s của bạn trong vòng %(expiration_days)d ngày "
 "tới"
 
 #: templates/registration/activation_email.html:5
