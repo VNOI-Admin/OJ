@@ -139,6 +139,13 @@
     }
 }
 
+.open-tickets, .own-open-tickets {
+    .title {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+    }
+}
+
 .open-tickets {
     .object {
         margin-left: 1em;
