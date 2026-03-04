@@ -4272,7 +4272,7 @@ msgstr "Tạo file Init.yml cho %s"
 #: judge/views/problem_manage.py:51 judge/views/problem_manage.py:54
 #, python-format
 msgid "Managing submissions for %s"
-msgstr "Quản lí các bài nộp cho %s"
+msgstr "Quản lý các bài nộp cho %s"
 
 #: judge/views/problem_manage.py:98
 #, python-format
@@ -6501,7 +6501,7 @@ msgstr "Các báo cáo của tôi"
 
 #: templates/problem/problem.html:191
 msgid "Manage submissions"
-msgstr "Quản lí submissions"
+msgstr "Quản lý bài nộp"
 
 #: templates/problem/problem.html:207 templates/problem/problem.html:209
 msgid "(partial)"

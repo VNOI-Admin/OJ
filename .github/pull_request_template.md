@@ -1,37 +1,15 @@
-# Description
+# Summary
 
-_Please include a summary of the change and which issue is fixed. Please also include relevant motivation and context._
+Briefly describe the change in this PR.
 
-_Please remove options that are not relevant_
-Type of change: bug fix, new feature, refactor, or something else?
+# Check
 
-## What
+Before submitting this PR, please answer the following:
 
-What does the PR do?
+**Are you confident that this change will NOT crash the site or break critical functionality?**
 
-## Why
-
-Why this PR is needed?
-
-Fixes # (issue)
-
-# How Has This Been Tested?
-
-Please describe the tests that you ran to verify your changes. Provide instructions so we can reproduce. Please also list any relevant details for your test configuration
-
-- [ ] Test A
-- [ ] Test B
-
-# Checklist
-
-_Put an `x` in the boxes that apply. You can also fill these out after creating the PR. If you're unsure about any of them, don't hesitate to ask. We're here to help! This is simply a reminder of what we are going to look for before merging your code._
-
-- [ ] I have explained the purpose of this PR.
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the README/documentation
-- [ ] Any dependent changes have been merged and published in downstream modules
-- [ ] Informed of breaking changes, testing and migrations (if applicable).
-- [ ] Attached screenshots (if applicable).
-
-By submitting this pull request, I confirm that my contribution is made under the terms of the AGPL-3.0 License.
+* [ ] **Absolutely yes** - I tested thoroughly and I'm fully confident.
+* [ ] **Probably yes** - I tested the main paths and nothing seems risky.
+* [ ] **Unsure** - I'm not completely certain.
+* [ ] **Probably no** - There might be some risk or untested areas.
+* [ ] **Absolutely no** - This change could potentially break things.
