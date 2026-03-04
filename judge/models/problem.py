@@ -324,7 +324,14 @@ class Problem(models.Model):
         return user.has_perm('judge.rejudge_submission') and self.is_editable_by(user)
 
     def is_subs_manageable_by(self, user):
-        return user.is_staff and self.is_rejudgeable_by(user)
+        if user.is_staff and self.is_rejudgeable_by(user):
+            return True
+
+        if user.is_authenticated and user.has_perm('judge.manage_own_problem_submissions') \
+                and self.is_editable_by(user):
+            return True
+
+        return False
 
     def is_testcase_accessible_by(self, user):
         if self.testcase_visibility_mode == ProblemTestcaseAccess.ALWAYS:
@@ -614,6 +621,7 @@ class Problem(models.Model):
         permissions = (
             ('see_private_problem', _('See hidden problems')),
             ('edit_own_problem', _('Edit own problems')),
+            ('manage_own_problem_submissions', _('Manage submissions for own problems')),
             ('create_organization_problem', _('Create organization problem')),
             ('edit_all_problem', _('Edit all problems')),
             ('edit_public_problem', _('Edit all public problems')),
