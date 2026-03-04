@@ -166,14 +166,7 @@
             // Handle initial hash in URL
             var hash = window.location.hash;
             if (hash && $(hash).length) {
-                switchTab(hash, false);
-            } else {
-                // Default to submit tab if user is authenticated (without updating URL)
-                {% if request.user.is_authenticated %}
-                switchTab('#submit', false);
-                {% else %}
-                switchTab('#comments', false);
-                {% endif %}
+                $('.problem-tabs a[href="' + hash + '"]').click();
             }
         });
     </script>

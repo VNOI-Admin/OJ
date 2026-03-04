@@ -10,13 +10,22 @@ jobs:
       with:
         python-version: '3.12'
     - name: Install flake8
-      run: pip install flake8 flake8-import-order flake8-future-import flake8-commas flake8-logging-format flake8-quotes
+      run: pip install "setuptools<82" flake8 flake8-import-order flake8-future-import flake8-commas flake8-logging-format flake8-quotes
     - name: Lint with flake8
       run: |
         flake8 --version
         flake8
   unit:
     runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: dmoj
+        ports:
+          - 13306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python 3.12
@@ -34,8 +43,6 @@ jobs:
         pip install -r requirements.txt
         pip install coverage
         cp .ci.settings.py dmoj/local_settings.py
-    - name: Start MySQL
-      run: sudo systemctl start mysql.service
     - name: Collect jsi18n
       run: python manage.py compilejsi18n
     - name: Run unit tests
