@@ -76,6 +76,18 @@ class Organization(models.Model):
         default=settings.VNOJ_MONTHLY_FREE_CREDIT,
         help_text=_('Amount of free credits allocated each month'),
     )
+    max_problems = models.IntegerField(
+        default=None, null=True, blank=True,
+        verbose_name=_('maximum problems'),
+        help_text=_('Maximum number of problems this org can create. '
+                    'Leave blank to use default from settings.'),
+    )
+    max_storage = models.BigIntegerField(
+        default=None, null=True, blank=True,
+        verbose_name=_('maximum storage (bytes)'),
+        help_text=_('Maximum storage for test data in bytes. '
+                    'Leave blank to use default from settings.'),
+    )
 
     _pp_table = [pow(settings.VNOJ_ORG_PP_STEP, i) for i in range(settings.VNOJ_ORG_PP_ENTRIES)]
 
@@ -137,6 +149,33 @@ class Organization(models.Model):
 
         self.current_consumed_credit += consumed
         self.save(update_fields=['free_credit', 'paid_credit', 'current_consumed_credit'])
+
+    def get_max_problems(self):
+        if self.max_problems is not None:
+            return self.max_problems
+        return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS
+
+    def get_max_storage(self):
+        if self.max_storage is not None:
+            return self.max_storage
+        return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE
+
+    def get_current_problem_count(self):
+        return self.problem_set.count()
+
+    def get_current_storage(self):
+        from django.apps import apps
+        ProblemData = apps.get_model('judge', 'ProblemData')
+        result = ProblemData.objects.filter(
+            problem__organization=self,
+        ).aggregate(total=Sum('zipfile_size'))
+        return result['total'] or 0
+
+    def can_create_problem(self):
+        return self.get_current_problem_count() < self.get_max_problems()
+
+    def can_upload_data(self):
+        return self.get_current_storage() <= self.get_max_storage()
 
     class Meta:
         ordering = ['name']
