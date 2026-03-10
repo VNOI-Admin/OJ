@@ -659,6 +659,15 @@ class LanguageLimit(models.Model):
     memory_limit = models.IntegerField(verbose_name=_('memory limit'),
                                        validators=[MinValueValidator(settings.DMOJ_PROBLEM_MIN_MEMORY_LIMIT),
                                                    MaxValueValidator(settings.DMOJ_PROBLEM_MAX_MEMORY_LIMIT)])
+    file_size_limit = models.IntegerField(
+        verbose_name=_('file size limit'),
+        null=True,
+        blank=True,
+        validators=[MinValueValidator(settings.DMOJ_PROBLEM_MIN_FILE_SIZE_LIMIT),
+                    MaxValueValidator(settings.DMOJ_PROBLEM_MAX_FILE_SIZE_LIMIT)],
+        help_text=_('File size limit in kilobytes (KB) for this problem and language. '
+                    'Leave blank to use the default language limit.'),
+    )
 
     class Meta:
         unique_together = ('problem', 'language')
