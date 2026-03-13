@@ -15,8 +15,8 @@ from django.views.generic import RedirectView
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
-    preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
-    two_factor, user, widgets
+    preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, submission, tag, \
+    tasks, ticket, two_factor, user, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -120,6 +120,7 @@ urlpatterns = [
         path('/suggest', problem.ProblemSuggest.as_view(), name='problem_suggest'),
         path('/create', problem.ProblemCreate.as_view(), name='problem_create'),
         path('/import-polygon', problem.ProblemImportPolygon.as_view(), name='problem_import_polygon'),
+        path('/downloads', problem_download.ProblemDownloadListView.as_view(), name='problem_download_list'),
     ])),
 
     path('problem/<str:problem>', include([
@@ -145,6 +146,9 @@ urlpatterns = [
         path('/test_data/init', problem_init_view, name='problem_data_init'),
         path('/test_data/diff', ProblemSubmissionDiff.as_view(), name='problem_submission_diff'),
         path('/data/<path:path>', problem_data_file, name='problem_data_file'),
+
+        path('/download/package', problem_download.DownloadProblemFullPackage.as_view(),
+             name='problem_download_full_package'),
 
         path('/tickets/', ticket.ProblemTicketListView.as_view(), name='problem_ticket_list'),
         path('/tickets/new', ticket.NewProblemTicketView.as_view(), name='new_problem_ticket'),
