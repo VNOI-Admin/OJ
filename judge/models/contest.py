@@ -745,6 +745,35 @@ class ContestProblem(models.Model):
                                           validators=[MinValueOrNoneValidator(1, _('Why include a problem you '
                                                                                    "can't submit to?"))])
 
+    # Override fields for contest-specific statements
+    name_override = models.CharField(max_length=256, verbose_name=_('name override'), blank=True,
+                                     help_text=_('Override the problem name for this contest. '
+                                                 'Leave blank to use original.'))
+    description_override = models.TextField(verbose_name=_('description override'), blank=True,
+                                            help_text=_('Override the problem description for this contest. '
+                                                        'Leave blank to use original.'))
+    pdf_url_override = models.CharField(max_length=200, verbose_name=_('PDF statement override'), blank=True,
+                                        help_text=_('Override the PDF statement URL for this contest. '
+                                                    'Leave blank to use original.'))
+
+    @property
+    def effective_name(self):
+        """Return the name to display (override or original)."""
+        return self.name_override or self.problem.name
+
+    @property
+    def effective_pdf_url(self):
+        """Return the PDF URL to use (override or original)."""
+        from judge.utils.url import get_absolute_pdf_url
+        if self.pdf_url_override:
+            return get_absolute_pdf_url(self.pdf_url_override)
+        return self.problem.absolute_pdf_url
+
+    @property
+    def effective_description(self):
+        """Return the description to use (override or original)."""
+        return self.description_override or self.problem.description
+
     class Meta:
         unique_together = ('problem', 'contest')
         verbose_name = _('contest problem')
