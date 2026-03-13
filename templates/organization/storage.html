@@ -39,6 +39,7 @@
                 <th>{{ _('Problem Code') }}</th>
                 <th>{{ _('Problem Name') }}</th>
                 <th>{{ _('Test Data') }}</th>
+                <th>{{ _('Download') }}</th>
             </tr>
         </thead>
         <tbody>
@@ -52,6 +53,11 @@
                 </td>
                 <td class="size-cell">
                     {{ problem.data_size|filesizeformat }}
+                </td>
+                <td>
+                    <a href="{{ url('problem_download_full_package', problem.code) }}" class="btn btn-xs">
+                        <i class="fa fa-download"></i> {{ _('Package') }}
+                    </a>
                 </td>
             </tr>
             {% else %}

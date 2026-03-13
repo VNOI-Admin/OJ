@@ -147,12 +147,6 @@ urlpatterns = [
         path('/test_data/diff', ProblemSubmissionDiff.as_view(), name='problem_submission_diff'),
         path('/data/<path:path>', problem_data_file, name='problem_data_file'),
 
-        path('/download/statement', problem_download.DownloadProblemStatement.as_view(),
-             name='problem_download_statement'),
-        path('/download/statement/zip', problem_download.DownloadProblemStatementZip.as_view(),
-             name='problem_download_statement_zip'),
-        path('/download/tests', problem_download.DownloadProblemTestData.as_view(),
-             name='problem_download_test_data'),
         path('/download/package', problem_download.DownloadProblemFullPackage.as_view(),
              name='problem_download_full_package'),
 
