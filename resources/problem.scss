@@ -258,6 +258,7 @@ ul.problem-list {
 #problem_submit {
     width: 100%;
     box-sizing: border-box;
+    overflow: hidden;
 
     .hidden {
         display: none;
@@ -281,6 +282,28 @@ ul.problem-list {
 
         #id_language {
             width: 100%;
+        }
+
+        #language-select {
+            width: 100%;
+            max-width: 100%;
+
+            .select2-container {
+                width: 100% !important;
+                max-width: 100%;
+                box-sizing: border-box;
+            }
+
+            .select2-selection--single {
+                overflow: hidden;
+
+                .select2-selection__rendered {
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                    padding-right: 25px;
+                }
+            }
         }
     }
 
