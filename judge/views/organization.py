@@ -390,6 +390,11 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
     def get_title(self):
         return _('Create new organization')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             revisions.set_comment(_('Created on site'))
@@ -400,6 +405,10 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
             # short_name is show in ranking
             org.short_name = org.slug[:20]
             org.free_credit = org.monthly_free_credit_limit
+            org.storage_expiration = (
+                timezone.now().date() +
+                timezone.timedelta(days=settings.VNOJ_ORGANIZATION_DEFAULT_STORAGE_EXPIRATION_DAYS)
+            )
             add_admin_to_group(form)
             # don't need to org.save, the form.save() in `add_admin_to_group` will do it
             return HttpResponseRedirect(self.get_success_url())
@@ -685,6 +694,16 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
         return kwargs
 
     def form_valid(self, form):
+        # Check problem count quota
+        if not self.organization.can_create_problem():
+            return generic_message(
+                self.request,
+                _('Problem limit reached'),
+                _('This organization has reached its maximum number of problems (%d). '
+                  'Please delete some problems before creating new ones.')
+                % self.organization.get_max_problems(),
+            )
+
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()
             problem.authors.add(self.request.user.profile)
@@ -779,18 +798,33 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             storage_totals = ProblemData.objects.filter(
                 problem__organization=self.organization,
             ).aggregate(
-                test_data=Sum('zipfile_size'),
+                total_storage=Sum('zipfile_size'),
             )
 
-            test_data_total = storage_totals['test_data'] or 0
+            total_storage_used = storage_totals['total_storage'] or 0
 
             cached_data = {
-                'test_data': test_data_total,
+                'total_storage': total_storage_used,
             }
 
             cache_factory.set_cache(cached_data)
 
-        context['test_data_storage'] = cached_data['test_data']
+        context['total_storage'] = cached_data.get('total_storage', cached_data.get('test_data', 0))
+
+        # Quota information
+        org = self.organization
+        context['max_storage'] = org.get_max_storage()
+        context['max_problems'] = org.get_max_problems()
+        context['problem_count'] = org.get_current_problem_count()
+        context['storage_exceeded'] = context['total_storage'] > org.get_max_storage()
+        context['problem_limit_reached'] = context['problem_count'] >= org.get_max_problems()
+        context['storage_expiration'] = org.storage_expiration
+        context['storage_expired'] = org.is_storage_expired()
+        days = org.get_days_remaining()
+        if days is not None:
+            context['days_remaining_display'] = ngettext('%d day remaining', '%d days remaining', days) % days
+        else:
+            context['days_remaining_display'] = None
 
         context.update(paginate_query_context(self.request))
 

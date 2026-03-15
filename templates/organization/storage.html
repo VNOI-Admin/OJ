@@ -14,6 +14,15 @@
                 }
             }
         }
+
+        .quota-warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 0.75em 1em;
+            margin: 0.5em 0;
+            border-radius: 4px;
+        }
     </style>
 {% endblock %}
 
@@ -28,9 +37,42 @@
         <h3>{{ _('Storage Summary') }}</h3>
         <div style="margin-left: 2em; color: #666;">
             <p style="margin: 0.25em 0;">
-                {{ _('Test data:') }} {{ test_data_storage|filesizeformat }}
+                {{ _('Total Storage:') }} {{ total_storage|filesizeformat }}
+                / {{ max_storage|filesizeformat }}
+            </p>
+            <p style="margin: 0.25em 0;">
+                {{ _('Problems:') }} {{ problem_count }} / {{ max_problems }}
             </p>
         </div>
+
+        {% if storage_expiration %}
+            <p style="margin: 0.25em 0; margin-left: 2em; color: #666;">
+                {{ _('Plan expires:') }} {{ storage_expiration }}
+                {% if storage_expired %}
+                    — <strong style="color: #dc3545;">{{ _('Expired') }}</strong>
+                {% elif days_remaining_display %}
+                    ({{ days_remaining_display }})
+                {% endif %}
+            </p>
+        {% endif %}
+
+        {% if storage_expired %}
+        <div class="quota-warning">
+            {{ _('Storage plan has expired! Please contact an administrator to renew.') }}
+        </div>
+        {% endif %}
+
+        {% if storage_exceeded %}
+        <div class="quota-warning">
+            {{ _('Storage limit reached! Please delete some files or test data to free up space.') }}
+        </div>
+        {% endif %}
+
+        {% if problem_limit_reached %}
+        <div class="quota-warning">
+            {{ _('Problem limit reached! Please delete some problems before creating new ones.') }}
+        </div>
+        {% endif %}
     </div>
 
     <table class="storage-table table">
@@ -38,7 +80,7 @@
             <tr>
                 <th>{{ _('Problem Code') }}</th>
                 <th>{{ _('Problem Name') }}</th>
-                <th>{{ _('Test Data') }}</th>
+                <th>{{ _('Total Size') }}</th>
             </tr>
         </thead>
         <tbody>
