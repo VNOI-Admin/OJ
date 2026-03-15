@@ -390,6 +390,11 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
     def get_title(self):
         return _('Create new organization')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             revisions.set_comment(_('Created on site'))
