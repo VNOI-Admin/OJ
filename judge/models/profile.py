@@ -88,6 +88,11 @@ class Organization(models.Model):
         help_text=_('Maximum storage for test data in bytes. '
                     'Leave blank to use default from settings.'),
     )
+    storage_expiration = models.DateField(
+        default=None, null=True, blank=True,
+        verbose_name=_('storage expiration date'),
+        help_text=_('Expiry date of the paid storage plan. Leave blank for no expiration.'),
+    )
 
     _pp_table = [pow(settings.VNOJ_ORG_PP_STEP, i) for i in range(settings.VNOJ_ORG_PP_ENTRIES)]
 
@@ -156,9 +161,22 @@ class Organization(models.Model):
         return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS
 
     def get_max_storage(self):
+        if self.is_storage_expired():
+            return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE
         if self.max_storage is not None:
             return self.max_storage
         return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE
+
+    def is_storage_expired(self):
+        if self.storage_expiration is None:
+            return False
+        return self.storage_expiration < timezone.now().date()
+
+    def get_days_remaining(self):
+        if self.storage_expiration is None:
+            return None
+        remaining = (self.storage_expiration - timezone.now().date()).days
+        return max(remaining, 0)
 
     def get_current_problem_count(self):
         return self.problem_set.count()
@@ -172,9 +190,13 @@ class Organization(models.Model):
         return result['total'] or 0
 
     def can_create_problem(self):
+        if self.is_storage_expired():
+            return False
         return self.get_current_problem_count() < self.get_max_problems()
 
     def can_upload_data(self):
+        if self.is_storage_expired():
+            return False
         return self.get_current_storage() <= self.get_max_storage()
 
     class Meta:

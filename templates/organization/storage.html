@@ -45,6 +45,23 @@
             </p>
         </div>
 
+        {% if storage_expiration %}
+            <p style="margin: 0.25em 0; margin-left: 2em; color: #666;">
+                {{ _('Plan expires:') }} {{ storage_expiration }}
+                {% if storage_expired %}
+                    — <strong style="color: #dc3545;">{{ _('Expired') }}</strong>
+                {% elif days_remaining_display %}
+                    ({{ days_remaining_display }})
+                {% endif %}
+            </p>
+        {% endif %}
+
+        {% if storage_expired %}
+        <div class="quota-warning">
+            {{ _('Storage plan has expired! Please contact an administrator to renew.') }}
+        </div>
+        {% endif %}
+
         {% if storage_exceeded %}
         <div class="quota-warning">
             {{ _('Storage limit reached! Please delete some files or test data to free up space.') }}
