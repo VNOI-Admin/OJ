@@ -1,5 +1,6 @@
 import json
 import logging
+from multiprocessing import context
 import os
 import re
 from datetime import timedelta
@@ -29,8 +30,8 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
-from judge.models import Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
+from judge.models import Contest, ContestParticipation, ContestProblem, ContestSubmission, Judge, Language, \
+    Problem, ProblemGroup, ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
@@ -55,9 +56,11 @@ def get_contest_problem(problem, profile):
         return None
 
 
-def get_contest_submission_count(problem, profile, virtual):
-    return profile.current_contest.submissions.exclude(submission__status__in=['IE']) \
-                  .filter(problem__problem=problem, participation__virtual=virtual).count()
+def get_contest_submission_count(problem, participation):
+    if not participation:
+        return 0
+    return participation.submissions.exclude(submission__status__in=['IE']) \
+                  .filter(problem__problem=problem).count()
 
 
 class ProblemDeleted(Exception):
@@ -184,10 +187,26 @@ user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
 
 class ProblemSubmitMixin:
     @cached_property
-    def contest_problem(self):
-        if not self.request.user.is_authenticated or self.request.profile.current_contest is None:
+    def participation(self):
+        if not self.request.user.is_authenticated:
             return None
-        return get_contest_problem(self.object, self.request.profile)
+        if hasattr(self, 'explicit_participation') and self.explicit_participation:
+            return self.explicit_participation
+        return self.request.profile.current_contest
+    
+    @cached_property
+    def contest_problem(self):
+        if hasattr(self, '_explicit_contest_problem') and self._explicit_contest_problem:
+            return self._explicit_contest_problem
+
+        if not self.request.user.is_authenticated or not self.participation:
+            return None
+        
+        try:
+            return self.object.contests.get(contest_id=self.participation.contest_id)
+        except ObjectDoesNotExist:
+            return None
+        
 
     @cached_property
     def remaining_submission_count(self):
@@ -196,15 +215,9 @@ class ProblemSubmitMixin:
         max_subs = self.contest_problem and self.contest_problem.max_submissions
         if max_subs is None:
             return None
-        # When an IE submission is rejudged into a non-IE status, it will count towards the
-        # submission limit. We max with 0 to ensure that `remaining_submission_count` returns
-        # a non-negative integer, which is required for future checks in this view.
         return max(
             0,
-            max_subs - get_contest_submission_count(
-                self.object, self.request.profile, self.request.profile.current_contest.virtual,
-            ),
-        )
+            max_subs - get_contest_submission_count(self.object, self.participation),
 
     @cached_property
     def default_language(self):
@@ -332,11 +345,10 @@ class ProblemSubmitMixin:
             new_submission = form.save(commit=False)
 
             contest_problem = self.contest_problem
-            if contest_problem is not None:
-                # Use the contest object from current_contest.contest because we already use it
-                # in profile.update_contest().
-                new_submission.contest_object = request.profile.current_contest.contest
-                if request.profile.current_contest.live:
+            if contest_problem is not None and self.participation:
+                # Dùng self.participation thay vì request.profile.current_contest
+                new_submission.contest_object = self.participation.contest
+                if self.participation.live:
                     new_submission.locked_after = new_submission.contest_object.locked_after
                 new_submission.save()
                 ContestSubmission(
@@ -413,9 +425,7 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, Commen
             context['clarifications'] = clarifications.order_by('-date')
             context['submission_limit'] = contest_problem.max_submissions
             if contest_problem.max_submissions:
-                context['submissions_left'] = max(contest_problem.max_submissions -
-                                                  get_contest_submission_count(self.object, user.profile,
-                                                                               user.profile.current_contest.virtual), 0)
+                context['submissions_left'] = self.remaining_submission_count
 
         context['available_judges'] = Judge.objects.filter(online=True, problems=self.object)
         context['show_languages'] = self.object.allowed_languages.count() != Language.objects.count()
@@ -1188,3 +1198,66 @@ class ProblemDelete(ProblemMixin, TitleMixin, DetailView):
         except PermissionDenied:
             return generic_message(request, _("Can't delete problem"),
                                    _('You are not allowed to delete this problem.'), status=403)
+
+
+class ContestProblemDetail(ProblemDetail):
+    def get_object(self, queryset=None):
+        contest_key = self.kwargs.get('contest')
+        order = self.kwargs.get('order') 
+        
+        print(f'Fetching ContestProblem for contest_key={contest_key}, order={order}')
+        cp = get_object_or_404(
+            ContestProblem.objects.select_related('problem', 'contest'),
+            contest__key=contest_key,
+            order=order 
+        )
+        self._explicit_contest_problem = cp
+        problem = cp.problem
+
+        user = self.request.user
+        if user.is_authenticated:
+            self.explicit_participation = ContestParticipation.objects.filter(
+                user=user.profile,
+                contest=cp.contest
+            ).first()
+        else:
+            self.explicit_participation = None
+
+        if not problem.is_accessible_by(user):
+            if not (self.explicit_participation and cp.contest.is_accessible_by(user)):
+                raise Http404()
+
+        return problem
+
+    def get_comment_page(self):
+        cp = self._explicit_contest_problem
+        return 'cp:%s:%s' % (cp.contest.key, cp.order)
+    
+
+class ContestProblemSubmit(ProblemSubmit):
+    def get_object(self, queryset=None):
+        contest_key = self.kwargs.get('contest') 
+        order = self.kwargs.get('order')
+
+        cp = get_object_or_404(
+            ContestProblem.objects.select_related('problem', 'contest'),
+            contest__key=contest_key,
+            order=order 
+        )
+        self._explicit_contest_problem = cp
+        problem = cp.problem
+
+        user = self.request.user
+        if user.is_authenticated:
+            self.explicit_participation = ContestParticipation.objects.filter(
+                user=user.profile,
+                contest=cp.contest
+            ).first()
+        else:
+            self.explicit_participation = None
+
+        if not problem.is_accessible_by(user):
+            if not (self.explicit_participation and cp.contest.is_accessible_by(user)):
+                raise Http404()
+
+        return problem

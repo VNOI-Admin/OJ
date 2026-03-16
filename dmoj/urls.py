@@ -274,7 +274,8 @@ urlpatterns = [
              contests.ContestParticipationList.as_view(), name='contest_participation'),
         path('/participation/disqualify', contests.ContestParticipationDisqualify.as_view(),
              name='contest_participation_disqualify'),
-
+        path('/<int:order>/', problem.ContestProblemDetail.as_view(), name='contest_problem_detail'),
+        path('/<int:order>/submit', problem.ContestProblemSubmit.as_view(), name='contest_problem_submit'),
         path('/', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),
 
