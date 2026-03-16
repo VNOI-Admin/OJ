@@ -35,6 +35,8 @@
                 return confirm({{ _('Are you sure you want to register?')|htmltojs }});
             });
 
+
+
             {% if hide_private_contests is not none %}
                 {% if hide_private_contests %}
                     $('#hide-private-contests-checkbox').prop('checked', true);
@@ -141,8 +143,8 @@
         style="opacity: 50%;">({{ contest.virtual_count }})</span>
 {% endmacro %}
 
-{% macro contest_join(contest, request, finished_contests) %}
-    {% if request.in_contest and contest.key == request.participation.contest.key %}
+{% macro contest_join(contest, request, finished_contests, joined_contests) %}
+    {% if contest.key in joined_contests %}
         <td><span>Already joined</span></td>
     {% else %}
         <td>
@@ -224,7 +226,7 @@
                             <td>
                                 {{ user_count(contest, request.user) }}
                             </td>
-                            {{ contest_join(contest, request, finished_contests) }}
+                            {{ contest_join(contest, request, finished_contests, joined_contests) }}
                         </tr>
                     {% endwith %}
                 {% endfor %}
@@ -262,7 +264,7 @@
                             {{ user_count(contest, request.user) }}
                         </td>
                         {% if not contest.require_registration or contest.can_register %}
-                            {{ contest_join(contest, request, finished_contests) }}
+                            {{ contest_join(contest, request, finished_contests, joined_contests) }}
                         {% else %}
                             {{ contest_register(contest, request) }}
                         {% endif %}
