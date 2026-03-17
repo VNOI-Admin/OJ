@@ -230,6 +230,11 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         else:
             context['testcase_limit'] = settings.VNOJ_TESTCASE_HARD_LIMIT
             context['testcase_soft_limit'] = settings.VNOJ_TESTCASE_SOFT_LIMIT
+
+        problem = self.object
+        if problem.is_organization_private and problem.organization:
+            context['storage_quota_exceeded'] = not problem.organization.can_upload_data()
+
         return context
 
     def check_valid(self, data_form, cases_formset):

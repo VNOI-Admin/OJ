@@ -1002,6 +1002,13 @@
             <li>{{ data_form.instance.feedback }}</li>
         </ul>
     {% endif %}
+    {% if storage_quota_exceeded %}
+        <div class="alert alert-warning" style="border: 2px solid #dc3545; background: #f8d7da; color: #721c24;
+                padding: 1em; margin-bottom: 1em; border-radius: 4px;">
+            <strong>{{ _('Storage limit exceeded!') }}</strong>
+            {{ _('This organization has reached its storage quota. Please delete some test data before uploading more.') }}
+        </div>
+    {% endif %}
     <form action="" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ cases_formset.management_form }}
