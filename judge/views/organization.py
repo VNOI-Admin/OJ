@@ -682,6 +682,18 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
 class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
     permission_required = 'judge.create_organization_problem'
 
+    def dispatch(self, request, *args, **kwargs):
+        result = super().dispatch(request, *args, **kwargs)
+        if hasattr(self, 'organization') and not self.organization.can_create_problem():
+            return generic_message(
+                request,
+                _('Problem limit reached'),
+                _('This organization has reached its maximum number of problems (%d). '
+                  'Please delete some problems before creating new ones.')
+                % self.organization.get_max_problems(),
+            )
+        return result
+
     def get_initial(self):
         initial = super(ProblemCreateOrganization, self).get_initial()
         initial = initial.copy()
@@ -694,16 +706,6 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
         return kwargs
 
     def form_valid(self, form):
-        # Check problem count quota
-        if not self.organization.can_create_problem():
-            return generic_message(
-                self.request,
-                _('Problem limit reached'),
-                _('This organization has reached its maximum number of problems (%d). '
-                  'Please delete some problems before creating new ones.')
-                % self.organization.get_max_problems(),
-            )
-
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()
             problem.authors.add(self.request.user.profile)
