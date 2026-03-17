@@ -230,6 +230,11 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         else:
             context['testcase_limit'] = settings.VNOJ_TESTCASE_HARD_LIMIT
             context['testcase_soft_limit'] = settings.VNOJ_TESTCASE_SOFT_LIMIT
+
+        problem = self.object
+        if problem.is_organization_private and problem.organization:
+            context['storage_quota_exceeded'] = not problem.organization.can_upload_data()
+
         return context
 
     def check_valid(self, data_form, cases_formset):
@@ -244,6 +249,21 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
             )
             cases_formset._non_form_errors.append(error)
             return False
+
+        # Storage quota check for organization problems
+        problem = self.object
+        if problem.is_organization_private and problem.organization:
+            org = problem.organization
+            if not org.can_upload_data():
+                error = ValidationError(
+                    _('Storage limit exceeded for organization "%(org)s". '
+                      'Please delete some test data before uploading more.')
+                    % {'org': org.name},
+                    code='storage_exceeded',
+                )
+                data_form.add_error(None, error)
+                return False
+
         return True
 
     def post(self, request, *args, **kwargs):
