@@ -32,7 +32,7 @@ app.conf.beat_schedule = {
     },
     'problem-garbage-collector': {
         'task': 'judge.tasks.problem.problem_garbage_collect',
-        'schedule': crontab(settings.VNOJ_PROBLEM_GARBAGE_COLLECTOR_CRONTAB_KWARGS),
+        'schedule': crontab(**settings.VNOJ_PROBLEM_GARBAGE_COLLECTOR_CRONTAB_KWARGS),
         'options': {
             'expires': 60 * 60 * 24,
         }
