@@ -2,12 +2,13 @@ from collections import defaultdict
 from math import e
 
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Case, Count, ExpressionWrapper, F, When
 from django.db.models.fields import FloatField
 from django.utils import timezone
 from django.utils.translation import gettext_noop
 
-from judge.models import Problem, Submission
+from judge.models import ContestSubmission, Problem, Submission, SubmissionSource, SubmissionTestCase
 
 __all__ = ['contest_completed_ids', 'get_result_data', 'user_completed_ids', 'user_editable_ids', 'user_tester_ids']
 
@@ -122,3 +123,9 @@ def hot_problems(duration, limit):
 
         cache.set(cache_key, qs, 900)
     return qs
+
+
+@transaction.atomic
+def delete_problem(problem: Problem):
+    SubmissionTestCase.objects.filter(submission_problem=problem).delete()
+    problem.delete()

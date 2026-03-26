@@ -117,6 +117,11 @@ class ProblemTestcaseResultAccess:
     ONLY_SUBMISSION_RESULT = 'S'
 
 
+class ExpiredProblemDeletionManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(deleted_at__lt=timezone.now() - settings.VNOJ_PROBLEM_DELETION_GRACE_PERIOD)
+
+
 class Problem(models.Model):
     SUBMISSION_SOURCE_ACCESS = (
         (SubmissionSourceAccess.FOLLOW, _('Follow global setting')),
@@ -211,8 +216,11 @@ class Problem(models.Model):
                                                        choices=PROBLEM_TESTCASE_RESULT_ACCESS,
                                                        help_text=_('What testcase result should be showed to users?'))
 
+    deleted_at = models.DateTimeField(verbose_name=_('deleted at'), null=True, db_index=True)
+
     objects = TranslatedProblemQuerySet.as_manager()
     tickets = GenericRelation('Ticket')
+    expired_deletion = ExpiredProblemDeletionManager()
 
     organization = models.ForeignKey(Organization, blank=True, null=True, verbose_name=_('organization'),
                                      on_delete=SET_NULL,
@@ -609,6 +617,17 @@ class Problem(models.Model):
     def _rescore(self):
         from judge.tasks import rescore_problem
         transaction.on_commit(rescore_problem.s(self.id, False).delay)
+
+    @property
+    def is_deleted(self):
+        return self.deleted_at is not None
+
+    def mark_as_deleted(self):
+        """Soft-delete this problem. Use the garbage collector to permanently remove it after the grace period."""
+        self.deleted_at = timezone.now()
+        self.save(update_fields=['deleted_at'])
+
+    mark_as_deleted.alters_data = True
 
     class Meta:
         permissions = (
