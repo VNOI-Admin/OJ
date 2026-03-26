@@ -1,6 +1,5 @@
 import json
 import logging
-from multiprocessing import context
 import os
 import re
 from datetime import timedelta
@@ -30,9 +29,9 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
+from judge.models import ContestParticipation, ContestProblem
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission
-from judge.models import ContestProblem, ContestParticipation
+    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
@@ -44,6 +43,7 @@ from judge.utils.problems import hot_problems, user_attempted_ids, \
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
+from judge.views.submission import ProblemSubmissions, UserContestSubmissions
 from judge.views.widgets import pdf_statement_uploader, submission_uploader
 
 recjk = re.compile(r'[\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u3005\u3007\u3021-\u3029\u3038-\u303A\u303B\u3400-\u4DB5'
@@ -61,7 +61,7 @@ def get_contest_submission_count(problem, participation):
     if not participation:
         return 0
     return participation.submissions.exclude(submission__status__in=['IE']) \
-                  .filter(problem__problem=problem).count()
+        .filter(problem__problem=problem).count()
 
 
 class ProblemMixin(object):
@@ -181,7 +181,7 @@ class ProblemSubmitMixin:
         if hasattr(self, 'explicit_participation') and self.explicit_participation:
             return self.explicit_participation
         return self.request.profile.current_contest
-    
+
     @cached_property
     def contest_problem(self):
         if hasattr(self, '_explicit_contest_problem') and self._explicit_contest_problem:
@@ -189,12 +189,11 @@ class ProblemSubmitMixin:
 
         if not self.request.user.is_authenticated or not self.participation:
             return None
-        
+
         try:
             return self.object.contests.get(contest_id=self.participation.contest_id)
         except ObjectDoesNotExist:
             return None
-        
 
     @cached_property
     def remaining_submission_count(self):
@@ -205,7 +204,10 @@ class ProblemSubmitMixin:
             return None
         return max(
             0,
-            max_subs - get_contest_submission_count(self.object, self.participation),
+            max_subs - get_contest_submission_count(
+                self.object, self.participation,
+            ),
+        )
 
     @cached_property
     def default_language(self):
@@ -1154,13 +1156,13 @@ class ProblemEditTypeGroup(PermissionRequiredMixin, ProblemMixin, TitleMixin, Up
 class ContestProblemDetail(ProblemDetail):
     def get_object(self, queryset=None):
         contest_key = self.kwargs.get('contest')
-        order = self.kwargs.get('order') 
-        
+        order = self.kwargs.get('order')
+
         print(f'Fetching ContestProblem for contest_key={contest_key}, order={order}')
         cp = get_object_or_404(
             ContestProblem.objects.select_related('problem', 'contest'),
             contest__key=contest_key,
-            order=order 
+            order=order,
         )
         self._explicit_contest_problem = cp
         problem = cp.problem
@@ -1169,7 +1171,7 @@ class ContestProblemDetail(ProblemDetail):
         if user.is_authenticated:
             self.explicit_participation = ContestParticipation.objects.filter(
                 user=user.profile,
-                contest=cp.contest
+                contest=cp.contest,
             ).first()
         else:
             self.explicit_participation = None
@@ -1183,17 +1185,17 @@ class ContestProblemDetail(ProblemDetail):
     def get_comment_page(self):
         cp = self._explicit_contest_problem
         return 'cp:%s:%s' % (cp.contest.key, cp.order)
-    
+
 
 class ContestProblemSubmit(ProblemSubmit):
     def get_object(self, queryset=None):
-        contest_key = self.kwargs.get('contest') 
+        contest_key = self.kwargs.get('contest')
         order = self.kwargs.get('order')
 
         cp = get_object_or_404(
             ContestProblem.objects.select_related('problem', 'contest'),
             contest__key=contest_key,
-            order=order 
+            order=order,
         )
         self._explicit_contest_problem = cp
         problem = cp.problem
@@ -1202,7 +1204,7 @@ class ContestProblemSubmit(ProblemSubmit):
         if user.is_authenticated:
             self.explicit_participation = ContestParticipation.objects.filter(
                 user=user.profile,
-                contest=cp.contest
+                contest=cp.contest,
             ).first()
         else:
             self.explicit_participation = None
@@ -1212,3 +1214,36 @@ class ContestProblemSubmit(ProblemSubmit):
                 raise Http404()
 
         return problem
+
+
+class ContestOrderAllSubmissions(ProblemSubmissions):
+
+    def dispatch(self, request, *args, **kwargs):
+        contest_key = kwargs.get('contest')
+        order = kwargs.pop('order', None)
+
+        if order is not None:
+            cp = get_object_or_404(
+                ContestProblem.objects.select_related('problem'),
+                contest__key=contest_key,
+                order=order,
+            )
+            kwargs['problem'] = cp.problem.code
+        return super().dispatch(request, *args, **kwargs)
+
+
+class ContestOrderUserSubmissions(UserContestSubmissions):
+
+    def dispatch(self, request, *args, **kwargs):
+        contest_key = kwargs.get('contest')
+        order = kwargs.pop('order', None)
+        print(f'ContestOrderUserSubmissions dispatch: contest_key={contest_key}, order={order}, kwargs={kwargs}')
+        if order is not None:
+            cp = get_object_or_404(
+                ContestProblem.objects.select_related('problem'),
+                contest__key=contest_key,
+                order=order,
+            )
+            kwargs['problem'] = cp.problem.code
+
+        return super().dispatch(request, *args, **kwargs)
