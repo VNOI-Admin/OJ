@@ -216,7 +216,11 @@
 {% block info_float %}
     {% if request.user.is_authenticated and request.in_contest and submission_limit %}
         {% if submissions_left > 0 %}
-            <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+            {% if contest_problem %}
+                <a href="{{ url('contest_problem_submit', contest_problem.contest.key, contest_problem.order) }}" class="unselectable button full">
+            {% else %}
+                <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+            {% endif %}
                 {{ _('Submit solution') }}
             </a>
             <div class="submissions-left">
@@ -231,7 +235,11 @@
             <div class="no-submissions-left submissions-left">{{ _('0 submissions left') }}</div>
         {% endif %}
     {% else %}
-        <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+        {% if request.in_contest and contest_problem %}
+            <a href="{{ url('contest_problem_submit', contest_problem.contest.key, contest_problem.order) }}" class="unselectable button full">
+        {% else %}
+            <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+        {% endif %}
             {{ _('Submit solution') }}
         </a>
     {% endif %}
@@ -239,10 +247,11 @@
     <hr style="padding-bottom: 0.3em">
     {% if request.in_contest and contest_problem %}
         {% set contest = contest_problem.contest %}
-        <div><a href="{{ url('contest_user_submissions', contest.key, request.user.username, problem.code) }}">{{ _('My submissions') }}</a></div>
-        {% if contest.can_see_full_submission_list(request.user) %}
-            <div><a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a></div>
-            <div><a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ _('Best submissions') }}</a></div>
+            <div><a href="{{ url('contest_order_user_submissions', contest.key, contest_problem.order, request.user.username) }}">{{ _('My submissions') }}</a></div> 
+            {% if contest.can_see_full_submission_list(request.user) %}
+                <div><a href="{{ url('contest_order_all_submissions', contest.key, contest_problem.order) }}">{{ _('All submissions') }}</a></div>
+                
+                <div><a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ _('Best submissions') }}</a></div>
         {% endif %}
     {% else %}
         {% if request.user.is_authenticated and has_submissions %}
