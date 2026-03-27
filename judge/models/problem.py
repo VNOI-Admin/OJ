@@ -122,6 +122,11 @@ class ExpiredProblemDeletionManager(models.Manager):
         return super().get_queryset().filter(deleted_at__lt=timezone.now() - settings.VNOJ_PROBLEM_DELETION_GRACE_PERIOD)
 
 
+class AvailableProblemManager(models.Manager):
+    def get_queryset(self):
+        return super().get_queryset().filter(deleted_at__isnull=True)
+
+
 class Problem(models.Model):
     SUBMISSION_SOURCE_ACCESS = (
         (SubmissionSourceAccess.FOLLOW, _('Follow global setting')),
@@ -221,6 +226,7 @@ class Problem(models.Model):
     objects = TranslatedProblemQuerySet.as_manager()
     tickets = GenericRelation('Ticket')
     expired_deletion = ExpiredProblemDeletionManager()
+    available = AvailableProblemManager()
 
     organization = models.ForeignKey(Organization, blank=True, null=True, verbose_name=_('organization'),
                                      on_delete=SET_NULL,
