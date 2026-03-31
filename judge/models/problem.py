@@ -119,7 +119,8 @@ class ProblemTestcaseResultAccess:
 
 class ExpiredProblemDeletionManager(models.Manager):
     def get_queryset(self):
-        return super().get_queryset().filter(deleted_at__lt=timezone.now() - settings.VNOJ_PROBLEM_DELETION_GRACE_PERIOD)
+        return super().get_queryset().filter(
+            deleted_at__lt=timezone.now() - settings.VNOJ_PROBLEM_DELETION_GRACE_PERIOD)
 
 
 class AvailableProblemManager(models.Manager):

@@ -35,7 +35,7 @@ app.conf.beat_schedule = {
         'schedule': crontab(**settings.VNOJ_PROBLEM_GARBAGE_COLLECTOR_CRONTAB_KWARGS),
         'options': {
             'expires': 60 * 60 * 24,
-        }
+        },
     },
     'organization-monthly-reset': {
         'task': 'judge.tasks.organization.organization_monthly_reset',

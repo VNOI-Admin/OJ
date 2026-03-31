@@ -1,10 +1,9 @@
 from celery import shared_task
-
 from django.conf import settings
 from django.utils import timezone
 
-from judge.utils.problems import delete_problem
 from judge.models import Problem
+from judge.utils.problems import delete_problem
 
 
 @shared_task

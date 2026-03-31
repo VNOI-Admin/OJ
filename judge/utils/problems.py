@@ -8,7 +8,7 @@ from django.db.models.fields import FloatField
 from django.utils import timezone
 from django.utils.translation import gettext_noop
 
-from judge.models import ContestSubmission, Problem, Submission, SubmissionSource, SubmissionTestCase
+from judge.models import Problem, Submission, SubmissionTestCase
 
 __all__ = ['contest_completed_ids', 'get_result_data', 'user_completed_ids', 'user_editable_ids', 'user_tester_ids']
 
