@@ -13,7 +13,7 @@ from django.db import transaction
 from django.db.models import BooleanField, Case, F, Prefetch, Q, When
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone, translation
@@ -60,15 +60,22 @@ def get_contest_submission_count(problem, profile, virtual):
                   .filter(problem__problem=problem, participation__virtual=virtual).count()
 
 
+class ProblemDeleted(Exception):
+    def __init__(self, problem_name):
+        self.problem_name = problem_name
+
+
 class ProblemMixin(object):
     model = Problem
     slug_url_kwarg = 'problem'
     slug_field = 'code'
 
     def get_object(self, queryset=None):
-        problem = super(ProblemMixin, self).get_object(queryset)
+        problem: Problem = super(ProblemMixin, self).get_object(queryset)
         if not problem.is_accessible_by(self.request.user):
             raise Http404()
+        if problem.is_deleted:
+            raise ProblemDeleted(problem_name=problem.name)
         return problem
 
     def no_such_problem(self):
@@ -81,6 +88,12 @@ class ProblemMixin(object):
             return super(ProblemMixin, self).get(request, *args, **kwargs)
         except Http404:
             return self.no_such_problem()
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except ProblemDeleted as e:
+            return render(request, 'problem/deleted.html', {'title': e.problem_name})
 
 
 class SolvedProblemMixin(object):

@@ -127,5 +127,5 @@ def hot_problems(duration, limit):
 
 @transaction.atomic
 def delete_problem(problem: Problem):
-    SubmissionTestCase.objects.filter(submission_problem=problem).delete()
+    SubmissionTestCase.objects.filter(submission__problem=problem).delete()
     problem.delete()

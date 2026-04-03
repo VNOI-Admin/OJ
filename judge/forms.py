@@ -680,7 +680,7 @@ class ProposeContestProblemForm(ModelForm):
         self.user = kwargs.pop('user', None)
         super(ProposeContestProblemForm, self).__init__(*args, **kwargs)
 
-        self.fields['problem'].queryset = Problem.get_visible_problems(self.user)
+        self.fields['problem'].queryset = Problem.get_visible_problems(self.user, include_deleted=True)
 
     class Meta:
         model = ContestProblem
