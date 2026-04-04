@@ -1153,16 +1153,11 @@ class ProblemEditTypeGroup(PermissionRequiredMixin, ProblemMixin, TitleMixin, Up
         return self.render_to_response(self.get_context_data(object=self.object))
 
 
-class ProblemDelete(LoginRequiredMixin, TitleMixin, DetailView):
+class ProblemDelete(ProblemMixin, TitleMixin, DetailView):
     template_name = 'problem/confirm_delete.html'
-    model = Problem
-    slug_url_kwarg = 'problem'
-    slug_field = 'code'
 
     def get_object(self, queryset=None):
-        problem = get_object_or_404(Problem, code=self.kwargs['problem'])
-        if not problem.is_accessible_by(self.request.user):
-            raise Http404()
+        problem = super().get_object(queryset)
         if not problem.is_editable_by(self.request.user):
             raise PermissionDenied()
         return problem
@@ -1177,10 +1172,6 @@ class ProblemDelete(LoginRequiredMixin, TitleMixin, DetailView):
         ).distinct()
         context['next'] = self.request.GET.get('next', reverse('problem_list'))
         return context
-
-    def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        return self.render_to_response(self.get_context_data())
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
