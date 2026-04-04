@@ -98,29 +98,17 @@ class TranslatedProblemQuerySet(SearchQuerySet):
         )
 
 
-class ProblemAvailabilityQuerySet(models.QuerySet):
-    def available(self):
-        return self.filter(deleted_at__isnull=True)
-
-    def expired(self):
-        return self.filter(deleted_at__lt=timezone.now() - settings.VNOJ_PROBLEM_DELETION_GRACE_PERIOD)
-
-
-class ProblemQuerySet(ProblemAvailabilityQuerySet, TranslatedProblemQuerySet):
-    pass
-
-
-ProblemManager = models.Manager.from_queryset(ProblemQuerySet)
+ProblemManager = models.Manager.from_queryset(TranslatedProblemQuerySet)
 
 
 class ExpiredProblemDeletionManager(ProblemManager):
     def get_queryset(self):
-        return super().get_queryset().expired()
+        return super().get_queryset().filter(deleted_at__lt=timezone.now() - settings.VNOJ_PROBLEM_DELETION_GRACE_PERIOD)
 
 
 class AvailableProblemManager(ProblemManager):
     def get_queryset(self):
-        return super().get_queryset().available()
+        return super().get_queryset().filter(deleted_at__isnull=True)
 
 
 class SubmissionSourceAccess:

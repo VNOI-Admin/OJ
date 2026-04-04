@@ -71,7 +71,7 @@ class ProblemMixin(object):
     slug_field = 'code'
 
     def get_object(self, queryset=None):
-        problem: Problem = super(ProblemMixin, self).get_object(queryset)
+        problem = super(ProblemMixin, self).get_object(queryset)
         if not problem.is_accessible_by(self.request.user):
             raise Http404()
         if problem.is_deleted:
