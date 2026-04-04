@@ -21,7 +21,7 @@ from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import CreateView, FormView, ListView, UpdateView, View
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
@@ -29,7 +29,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
-from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
+from judge.models import Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
@@ -617,7 +617,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
 
     def get_normal_queryset(self):
         _filter = self.get_filter()
-        queryset = Problem.objects.filter(_filter).select_related('group').defer('description', 'summary')
+        queryset = Problem.available.filter(_filter).select_related('group').defer('description', 'summary')
 
         if self.profile is not None and self.hide_solved:
             queryset = queryset.exclude(id__in=Submission.objects
@@ -1151,3 +1151,46 @@ class ProblemEditTypeGroup(PermissionRequiredMixin, ProblemMixin, TitleMixin, Up
             return HttpResponseRedirect(reverse('problem_detail', args=[self.object.code]))
 
         return self.render_to_response(self.get_context_data(object=self.object))
+
+
+class ProblemDelete(LoginRequiredMixin, TitleMixin, DetailView):
+    template_name = 'problem/confirm_delete.html'
+    model = Problem
+    slug_url_kwarg = 'problem'
+    slug_field = 'code'
+
+    def get_object(self, queryset=None):
+        problem = get_object_or_404(Problem, code=self.kwargs['problem'])
+        if not problem.is_accessible_by(self.request.user):
+            raise Http404()
+        if not problem.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return problem
+
+    def get_title(self):
+        return _('Delete problem %s') % self.object.name
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['affected_contests'] = Contest.objects.filter(
+            contest_problems__problem=self.object,
+        ).distinct()
+        context['next'] = self.request.GET.get('next', reverse('problem_list'))
+        return context
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return self.render_to_response(self.get_context_data())
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        self.object.mark_as_deleted()
+        next_url = request.POST.get('next', reverse('problem_list'))
+        return HttpResponseRedirect(next_url)
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except PermissionDenied:
+            return generic_message(request, _("Can't delete problem"),
+                                   _('You are not allowed to delete this problem.'), status=403)
