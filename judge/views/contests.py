@@ -40,7 +40,7 @@ from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
-    Language, Organization, Problem, ProblemClarification, Profile, Submission
+    Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
 from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
@@ -1467,6 +1467,7 @@ class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMix
         if not request.user.is_staff or not contest.is_editable_by(request.user):
             raise PermissionDenied(_('You do not have permission to edit this contest.'))
 
+        now = timezone.now()
         contest_problems = contest.contest_problems.prefetch_related('problem').all()
         for contest_problem in contest_problems:
             problem = contest_problem.problem
@@ -1479,8 +1480,10 @@ class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMix
             if not problem.is_editable_by(request.user):
                 raise PermissionDenied(_('You do not have permission to edit this problem.'))
             problem.is_public = True
-            problem.date = timezone.now()
+            problem.date = now
             problem.save(update_fields=['is_public', 'date'])
             rescore_problem.delay(problem.id, True)
+
+            Solution.objects.filter(problem=problem).update(is_public=True, publish_on=now)
 
         return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
