@@ -1175,9 +1175,12 @@ class ProblemDelete(ProblemMixin, TitleMixin, DetailView):
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
-        self.object.mark_as_deleted()
-        next_url = request.POST.get('next', reverse('problem_list'))
-        return HttpResponseRedirect(next_url)
+        with revisions.create_revision(atomic=True):
+            self.object.mark_as_deleted()
+            revisions.set_user(self.request.user)
+            revisions.set_comment(_('Marked as deleted'))
+            next_url = request.POST.get('next', reverse('problem_list'))
+            return HttpResponseRedirect(next_url)
 
     def dispatch(self, request, *args, **kwargs):
         try:
