@@ -1,5 +1,3 @@
-from operator import attrgetter
-
 from django import forms
 from django.contrib import admin
 from django.db import transaction
@@ -10,7 +8,8 @@ from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy as _, ngettext
 from reversion.admin import VersionAdmin
 
-from judge.models import LanguageLimit, Problem, ProblemClarification, ProblemTranslation, Profile, Solution
+from judge.models import LanguageLimit, Problem, ProblemClarification, ProblemTranslation, Solution
+from judge.models.role import ProblemRole, ROLE_AUTHOR
 from judge.utils.views import NoBatchDeleteMixin
 from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, AdminMartorWidget, \
     AdminSelect2MultipleWidget, AdminSelect2Widget, CheckboxSelectMultipleWithSelectAll
@@ -21,10 +20,7 @@ class ProblemForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(ProblemForm, self).__init__(*args, **kwargs)
-        self.fields['authors'].widget.can_add_related = False
-        self.fields['curators'].widget.can_add_related = False
         self.fields['suggester'].widget.can_add_related = False
-        self.fields['testers'].widget.can_add_related = False
         self.fields['banned_users'].widget.can_add_related = False
         self.fields['change_message'].widget.attrs.update({
             'placeholder': gettext('Describe the changes you made (optional)'),
@@ -32,10 +28,7 @@ class ProblemForm(ModelForm):
 
     class Meta:
         widgets = {
-            'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
-            'curators': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'suggester': AdminHeavySelect2Widget(data_view='profile_select2'),
-            'testers': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'banned_users': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'organization': AdminHeavySelect2Widget(data_view='organization_select2'),
             'types': AdminSelect2MultipleWidget,
@@ -48,13 +41,18 @@ class ProblemCreatorListFilter(admin.SimpleListFilter):
     title = parameter_name = 'creator'
 
     def lookups(self, request, model_admin):
-        queryset = Profile.objects.exclude(authored_problems=None).values_list('user__username', flat=True)
+        queryset = ProblemRole.objects.filter(
+            role=ROLE_AUTHOR,
+        ).values_list('user__user__username', flat=True).distinct()
         return [(name, name) for name in queryset]
 
     def queryset(self, request, queryset):
         if self.value() is None:
             return queryset
-        return queryset.filter(authors__user__username=self.value())
+        return queryset.filter(
+            problem_roles__role=ROLE_AUTHOR,
+            problem_roles__user__user__username=self.value(),
+        )
 
 
 class LanguageLimitInlineForm(ModelForm):
@@ -118,12 +116,26 @@ class ProblemTranslationInline(admin.StackedInline):
     has_add_permission = has_change_permission = has_delete_permission = has_permission_full_markup
 
 
+class ProblemRoleInlineForm(ModelForm):
+    class Meta:
+        model = ProblemRole
+        fields = ('user', 'role')
+        widgets = {'user': AdminHeavySelect2Widget(data_view='profile_select2')}
+
+
+class ProblemRoleInline(admin.TabularInline):
+    model = ProblemRole
+    fields = ('user', 'role')
+    extra = 0
+    form = ProblemRoleInlineForm
+
+
 class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'code', 'name', 'suggester', 'is_public', 'is_manually_managed', 'date', 'authors',
-                'curators', 'testers', 'is_organization_private', 'organization', 'submission_source_visibility_mode',
+                'code', 'name', 'suggester', 'is_public', 'is_manually_managed', 'date',
+                'is_organization_private', 'organization', 'submission_source_visibility_mode',
                 'testcase_visibility_mode', 'testcase_result_visibility_mode', 'allow_view_feedback',
                 'is_full_markup', 'pdf_url', 'source', 'description', 'license',
             ),
@@ -138,8 +150,9 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
     )
     list_display = ['code', 'name', 'show_authors', 'points', 'is_public', 'show_public']
     ordering = ['code']
-    search_fields = ('code', 'name', 'authors__user__username', 'curators__user__username')
-    inlines = [LanguageLimitInline, ProblemClarificationInline, ProblemSolutionInline, ProblemTranslationInline]
+    search_fields = ('code', 'name', 'problem_roles__user__user__username')
+    inlines = [ProblemRoleInline, LanguageLimitInline, ProblemClarificationInline,
+               ProblemSolutionInline, ProblemTranslationInline]
     list_max_show_all = 1000
     actions_on_top = True
     actions_on_bottom = True
@@ -173,7 +186,10 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
 
     @admin.display(description=_('authors'))
     def show_authors(self, obj):
-        return ', '.join(map(attrgetter('user.username'), obj.authors.all()))
+        return ', '.join(
+            ProblemRole.objects.filter(problem=obj, role=ROLE_AUTHOR)
+            .values_list('user__user__username', flat=True),
+        )
 
     @admin.display(description='')
     def show_public(self, obj):
@@ -203,7 +219,9 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
                                             count) % count)
 
     def get_queryset(self, request):
-        return Problem.get_editable_problems(request.user).prefetch_related('authors__user').distinct()
+        return Problem.get_editable_problems(request.user).prefetch_related(
+            'problem_roles__user__user',
+        ).distinct()
 
     def has_change_permission(self, request, obj=None):
         if obj is None:
@@ -216,9 +234,7 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
         return super(ProblemAdmin, self).formfield_for_manytomany(db_field, request, **kwargs)
 
     def get_form(self, *args, **kwargs):
-        form = super(ProblemAdmin, self).get_form(*args, **kwargs)
-        form.base_fields['authors'].queryset = Profile.objects.all()
-        return form
+        return super(ProblemAdmin, self).get_form(*args, **kwargs)
 
     def save_model(self, request, obj, form, change):
         super(ProblemAdmin, self).save_model(request, obj, form, change)

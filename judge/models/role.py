@@ -67,3 +67,31 @@ class ContestRole(models.Model):
         if roles:
             qs = qs.filter(role__in=roles)
         return Exists(qs)
+
+
+class ProblemRole(models.Model):
+    problem = models.ForeignKey(
+        'Problem', verbose_name=_('problem'), related_name='problem_roles', on_delete=CASCADE,
+    )
+    user = models.ForeignKey(
+        Profile, verbose_name=_('user'), related_name='problem_roles', on_delete=CASCADE,
+    )
+    role = models.CharField(max_length=1, choices=ROLE_CHOICES, verbose_name=_('role'))
+
+    class Meta:
+        unique_together = ('problem', 'user', 'role')
+        verbose_name = _('problem role')
+        verbose_name_plural = _('problem roles')
+
+    def __str__(self):
+        return f'{self.user} - {self.get_role_display()} of {self.problem}'
+
+    @staticmethod
+    def exists_for(user, role=None, roles=None):
+        filters = {'problem_id': OuterRef('pk'), 'user': user}
+        if role:
+            filters['role'] = role
+        qs = ProblemRole.objects.filter(**filters)
+        if roles:
+            qs = qs.filter(role__in=roles)
+        return Exists(qs)

@@ -8,12 +8,16 @@ from django.utils import timezone
 from django.utils.translation import gettext_noop
 
 from judge.models import Problem, Submission
+from judge.models.role import ProblemRole, ROLE_TESTER
 
 __all__ = ['contest_completed_ids', 'get_result_data', 'user_completed_ids', 'user_editable_ids', 'user_tester_ids']
 
 
 def user_tester_ids(profile):
-    return set(Problem.testers.through.objects.filter(profile=profile).values_list('problem_id', flat=True))
+    return set(ProblemRole.objects.filter(
+        user=profile,
+        role=ROLE_TESTER,
+    ).values_list('problem_id', flat=True))
 
 
 def user_editable_ids(profile):
