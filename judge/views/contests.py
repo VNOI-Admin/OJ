@@ -1455,11 +1455,7 @@ class ContestDownloadData(ContestDataMixin, SingleObjectMixin, View):
 
 
 class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
-    def dispatch(self, request, *args, **kwargs):
-        if request.method != 'POST':
-            return HttpResponseForbidden()
-
-        return super(ContestProblemMakePublic, self).dispatch(request, *args, **kwargs)
+    http_method_names = ['post']
 
     def post(self, request, *args, **kwargs):
         contest = self.get_object()
