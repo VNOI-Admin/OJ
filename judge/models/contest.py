@@ -18,7 +18,7 @@ from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MO
 from judge import contest_format, event_poster as event
 from judge.models.problem import Problem
 from judge.models.profile import Organization, Profile
-from judge.models.role import ContestRole, ROLE_AUTHOR, ROLE_CURATOR, ROLE_TESTER, RoleQuerySetAdapter
+from judge.models.role import ContestRole, RoleQuerySetAdapter, ROLE_AUTHOR, ROLE_CURATOR, ROLE_TESTER
 from judge.models.submission import Submission
 from judge.ratings import rate_contest
 from judge.utils.unicode import utf8bytes

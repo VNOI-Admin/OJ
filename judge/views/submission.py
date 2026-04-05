@@ -335,10 +335,11 @@ def abort_submission(request, submission):
 
 
 def filter_submissions_by_visible_problems(queryset, user):
+    subquery, params = Problem.get_visible_problems(user).only('id').query.sql_with_params()
     join_sql_subquery(
         queryset,
-        subquery=str(Problem.get_visible_problems(user).only('id').query),
-        params=[],
+        subquery=subquery,
+        params=list(params),
         join_fields=[('problem_id', 'id')],
         alias='visible_problems',
         related_model=Problem,

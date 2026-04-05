@@ -23,7 +23,7 @@ from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
     Problem, ProblemData, Profile
 from judge.models.profile import OrganizationMonthlyUsage
-from judge.models.role import ContestRole, ROLE_AUTHOR
+from judge.models.role import ContestRole, ProblemRole, ROLE_AUTHOR
 from judge.tasks import on_new_problem
 from judge.utils import cache_helper
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -582,9 +582,7 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
 
         # Authors, curators, and testers should always have access, so OR at the very end.
         if self.profile is not None:
-            _filter |= Q(authors=self.profile)
-            _filter |= Q(curators=self.profile)
-            _filter |= Q(testers=self.profile)
+            _filter |= ProblemRole.exists_for(self.profile)
 
         return _filter & Q(organization=self.organization)
 
@@ -688,7 +686,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()
-            problem.authors.add(self.request.user.profile)
+            ProblemRole.objects.get_or_create(problem=problem, user=self.request.user.profile, role=ROLE_AUTHOR)
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
 
             problem.is_organization_private = True

@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
-from django.db.models import CASCADE, Exists, F, FilteredRelation, OuterRef, Q, SET_NULL
+from django.db.models import CASCADE, F, FilteredRelation, Q, SET_NULL
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils import timezone
@@ -18,6 +18,7 @@ from django.utils.translation import gettext_lazy as _
 from judge.fulltext import SearchQuerySet
 from judge.models.problem_data import problem_data_storage
 from judge.models.profile import Organization, Profile
+from judge.models.role import ProblemRole, ROLE_AUTHOR, ROLE_CURATOR, ROLE_TESTER, RoleQuerySetAdapter
 from judge.models.runtime import Language
 from judge.user_translations import gettext as user_gettext
 from judge.utils.url import get_absolute_pdf_url
@@ -151,15 +152,6 @@ class Problem(models.Model):
                                           'if it is not yours'))
     description = models.TextField(verbose_name=_('problem body'), blank=True,
                                    validators=[disallowed_characters_validator])
-    authors = models.ManyToManyField(Profile, verbose_name=_('creators'), blank=True, related_name='authored_problems',
-                                     help_text=_('These users will be able to edit the problem, '
-                                                 'and be listed as authors.'))
-    curators = models.ManyToManyField(Profile, verbose_name=_('curators'), blank=True, related_name='curated_problems',
-                                      help_text=_('These users will be able to edit the problem, '
-                                                  'but not be listed as authors.'))
-    testers = models.ManyToManyField(Profile, verbose_name=_('testers'), blank=True, related_name='tested_problems',
-                                     help_text=_(
-                                         'These users will be able to view the private problem, but not edit it.'))
     types = models.ManyToManyField(ProblemType, verbose_name=_('problem types'),
                                    help_text=_("The type of problem, as shown on the problem's page."))
     group = models.ForeignKey(ProblemGroup, verbose_name=_('problem group'), on_delete=CASCADE,
@@ -238,6 +230,23 @@ class Problem(models.Model):
         if 'points' in self.__dict__:
             self.__original_points = self.points
 
+    def _role_users(self, role):
+        return RoleQuerySetAdapter(Profile.objects.filter(
+            problem_roles__problem=self, problem_roles__role=role,
+        ))
+
+    @property
+    def authors(self):
+        return self._role_users(ROLE_AUTHOR)
+
+    @property
+    def curators(self):
+        return self._role_users(ROLE_CURATOR)
+
+    @property
+    def testers(self):
+        return self._role_users(ROLE_TESTER)
+
     @property
     def absolute_pdf_url(self):
         return get_absolute_pdf_url(self.pdf_url) if self.pdf_url else None
@@ -250,7 +259,14 @@ class Problem(models.Model):
         return self.allowed_languages.values_list('common_name', flat=True).distinct().order_by('common_name')
 
     def is_editor(self, profile):
-        return (self.authors.filter(id=profile.id) | self.curators.filter(id=profile.id)).exists()
+        return ProblemRole.objects.filter(
+            problem=self,
+            user=profile,
+        ).filter(role=ROLE_AUTHOR).exists() or ProblemRole.objects.filter(
+            problem=self,
+            user=profile,
+            role=ROLE_CURATOR,
+        ).exists()
 
     @property
     def is_suggesting(self):
@@ -315,7 +331,7 @@ class Problem(models.Model):
             return True
 
         # If user is a tester.
-        if self.testers.filter(id=user.profile.id).exists():
+        if ProblemRole.objects.filter(problem=self, user=user.profile, role=ROLE_TESTER).exists():
             return True
 
         return False
@@ -386,11 +402,7 @@ class Problem(models.Model):
 
     @classmethod
     def q_add_author_curator_tester(cls, q, profile):
-        # This is way faster than the obvious |= Q(authors=profile) et al. because we are not doing
-        # joins and forcing the user to clean it up with .distinct().
-        q |= Exists(Problem.authors.through.objects.filter(problem=OuterRef('pk'), profile=profile))
-        q |= Exists(Problem.curators.through.objects.filter(problem=OuterRef('pk'), profile=profile))
-        q |= Exists(Problem.testers.through.objects.filter(problem=OuterRef('pk'), profile=profile))
+        q |= ProblemRole.exists_for(profile)
         return q
 
     @classmethod
@@ -410,7 +422,10 @@ class Problem(models.Model):
         if user.has_perm('judge.edit_all_problem'):
             return cls.objects.all()
 
-        q = Q(authors=user.profile) | Q(curators=user.profile) | Q(suggester=user.profile)
+        q = (
+            ProblemRole.exists_for(user.profile, roles=[ROLE_AUTHOR, ROLE_CURATOR]) |
+            Q(suggester=user.profile)
+        )
 
         if user.has_perm('judge.edit_public_problem'):
             q |= Q(is_public=True)
@@ -427,12 +442,21 @@ class Problem(models.Model):
 
     @cached_property
     def author_ids(self):
-        return Problem.authors.through.objects.filter(problem=self).values_list('profile_id', flat=True)
+        return ProblemRole.objects.filter(
+            problem=self, role=ROLE_AUTHOR,
+        ).values_list('user_id', flat=True)
 
     @cached_property
     def editor_ids(self):
-        editors = self.author_ids.union(
-            Problem.curators.through.objects.filter(problem=self).values_list('profile_id', flat=True))
+        editors = ProblemRole.objects.filter(
+            problem=self,
+            role=ROLE_AUTHOR,
+        ).values_list('user_id', flat=True).union(
+            ProblemRole.objects.filter(
+                problem=self,
+                role=ROLE_CURATOR,
+            ).values_list('user_id', flat=True),
+        )
         if self.suggester is not None:
             editors = list(editors)
             editors.append(self.suggester.id)
@@ -440,7 +464,9 @@ class Problem(models.Model):
 
     @cached_property
     def tester_ids(self):
-        return Problem.testers.through.objects.filter(problem=self).values_list('profile_id', flat=True)
+        return ProblemRole.objects.filter(
+            problem=self, role=ROLE_TESTER,
+        ).values_list('user_id', flat=True)
 
     @cached_property
     def usable_common_names(self):

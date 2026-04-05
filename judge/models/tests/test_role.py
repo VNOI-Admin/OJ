@@ -1,8 +1,9 @@
 from django.db import IntegrityError
+from django.db.models import Q
 from django.test import TestCase
 
-from judge.models.role import ContestRole, ROLE_AUTHOR
-from judge.models.tests.util import CommonDataMixin, create_contest
+from judge.models.role import ContestRole, ProblemRole, ROLE_AUTHOR, ROLE_CURATOR
+from judge.models.tests.util import CommonDataMixin, create_contest, create_problem
 
 
 class ContestRoleTestCase(CommonDataMixin, TestCase):
@@ -32,7 +33,38 @@ class ContestRoleTestCase(CommonDataMixin, TestCase):
     def test_unique_together(self):
         with self.assertRaises(IntegrityError):
             ContestRole.objects.create(
-                contest=self.contest,
-                user=self.users['normal'].profile,
-                role=ROLE_AUTHOR,
+                contest=self.contest, user=self.users['normal'].profile, role=ROLE_AUTHOR,
             )
+
+
+class ProblemRoleTestCase(CommonDataMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        cls.problem = create_problem(
+            code='role_problem',
+            authors=('normal',),
+            curators=('staff_problem_edit_own',),
+            testers=('staff_problem_see_all',),
+        )
+
+    def test_role_properties(self):
+        self.assertIn(self.users['normal'].profile, self.problem.authors)
+        self.assertIn(self.users['staff_problem_edit_own'].profile, self.problem.curators)
+        self.assertIn(self.users['staff_problem_see_all'].profile, self.problem.testers)
+
+    def test_editor_helpers(self):
+        self.assertTrue(self.problem.is_editor(self.users['normal'].profile))
+        self.assertTrue(self.problem.is_editor(self.users['staff_problem_edit_own'].profile))
+        self.assertFalse(self.problem.is_editor(self.users['staff_problem_see_all'].profile))
+
+    def test_unique_together(self):
+        with self.assertRaises(IntegrityError):
+            ProblemRole.objects.create(
+                problem=self.problem, user=self.users['normal'].profile, role=ROLE_AUTHOR,
+            )
+
+    def test_tester_role_is_not_editor(self):
+        self.assertFalse(ProblemRole.objects.filter(
+            problem=self.problem, user=self.users['staff_problem_see_all'].profile,
+        ).filter(Q(role=ROLE_AUTHOR) | Q(role=ROLE_CURATOR)).exists())
