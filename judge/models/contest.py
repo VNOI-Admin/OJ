@@ -18,12 +18,13 @@ from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MO
 from judge import contest_format, event_poster as event
 from judge.models.problem import Problem
 from judge.models.profile import Organization, Profile
+from judge.models.role import ContestRole, ROLE_AUTHOR, ROLE_CURATOR, ROLE_TESTER, RoleQuerySetAdapter
 from judge.models.submission import Submission
 from judge.ratings import rate_contest
 from judge.utils.unicode import utf8bytes
 
 __all__ = ['Contest', 'ContestTag', 'ContestAnnouncement', 'ContestParticipation', 'ContestProblem',
-           'ContestSubmission', 'Rating']
+           'ContestSubmission', 'Rating', 'ContestRole']
 
 
 class MinValueOrNoneValidator(MinValueValidator):
@@ -74,14 +75,6 @@ class Contest(models.Model):
     key = models.CharField(max_length=32, verbose_name=_('contest id'), unique=True,
                            validators=[RegexValidator('^[a-z0-9_]+$', _('Contest id must be ^[a-z0-9_]+$'))])
     name = models.CharField(max_length=100, verbose_name=_('contest name'), db_index=True)
-    authors = models.ManyToManyField(Profile, help_text=_('These users will be able to edit the contest.'),
-                                     related_name='authors+')
-    curators = models.ManyToManyField(Profile, help_text=_('These users will be able to edit the contest, '
-                                                           'but will not be listed as authors.'),
-                                      related_name='curators+', blank=True)
-    testers = models.ManyToManyField(Profile, help_text=_('These users will be able to view the contest, '
-                                                          'but not edit it.'),
-                                     blank=True, related_name='testers+')
     description = models.TextField(verbose_name=_('description'), blank=True)
     problems = models.ManyToManyField(Problem, verbose_name=_('problems'), through='ContestProblem')
     start_time = models.DateTimeField(verbose_name=_('start time'), db_index=True)
@@ -318,6 +311,23 @@ class Contest(models.Model):
             return False
         return True
 
+    def _role_users(self, role):
+        return RoleQuerySetAdapter(Profile.objects.filter(
+            contest_roles__contest=self, contest_roles__role=role,
+        ))
+
+    @property
+    def authors(self):
+        return self._role_users(ROLE_AUTHOR)
+
+    @property
+    def curators(self):
+        return self._role_users(ROLE_CURATOR)
+
+    @property
+    def testers(self):
+        return self._role_users(ROLE_TESTER)
+
     @property
     def contest_window_length(self):
         return self.end_time - self.start_time
@@ -375,18 +385,22 @@ class Contest(models.Model):
     def ended(self):
         return self.end_time < self._now
 
+    def _role_ids(self, roles):
+        return ContestRole.objects.filter(
+            contest=self, role__in=roles,
+        ).values_list('user_id', flat=True)
+
     @cached_property
     def author_ids(self):
-        return Contest.authors.through.objects.filter(contest=self).values_list('profile_id', flat=True)
+        return self._role_ids([ROLE_AUTHOR])
 
     @cached_property
     def editor_ids(self):
-        return self.author_ids.union(
-            Contest.curators.through.objects.filter(contest=self).values_list('profile_id', flat=True))
+        return self._role_ids([ROLE_AUTHOR, ROLE_CURATOR])
 
     @cached_property
     def tester_ids(self):
-        return Contest.testers.through.objects.filter(contest=self).values_list('profile_id', flat=True)
+        return self._role_ids([ROLE_TESTER])
 
     @classmethod
     def get_id_secret(cls, contest_id):
@@ -530,31 +544,9 @@ class Contest(models.Model):
                 )
             )
 
-            authors_exists = Contest.authors.through.objects.filter(
-                contest_id=OuterRef('pk'),
-                profile_id=user.profile.id,
-            )
-            curators_exists = Contest.curators.through.objects.filter(
-                contest_id=OuterRef('pk'),
-                profile_id=user.profile.id,
-            )
-            testers_exists = Contest.testers.through.objects.filter(
-                contest_id=OuterRef('pk'),
-                profile_id=user.profile.id,
-            )
-
             queryset = queryset.annotate(
-                has_author=Exists(authors_exists),
-                has_curator=Exists(curators_exists),
-                has_tester=Exists(testers_exists),
-            )
-
-            queryset = queryset.filter(
-                q |
-                Q(has_author=True) |
-                Q(has_curator=True) |
-                Q(has_tester=True),
-            )
+                has_role=ContestRole.exists_for(user.profile),
+            ).filter(q | Q(has_role=True))
 
         return queryset
 

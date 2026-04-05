@@ -1,12 +1,12 @@
-from operator import attrgetter
-
 from judge.models import SubmissionSourceAccess
+from judge.models.role import ContestRole, ROLE_AUTHOR, ROLE_CURATOR
 from . import registry
 
 
-# TODO: maybe refactor this?
 def get_editor_ids(contest):
-    return set(map(attrgetter('id'), contest.authors.all())) | set(map(attrgetter('id'), contest.curators.all()))
+    return set(ContestRole.objects.filter(
+        contest=contest, role__in=[ROLE_AUTHOR, ROLE_CURATOR],
+    ).values_list('user_id', flat=True))
 
 
 @registry.function

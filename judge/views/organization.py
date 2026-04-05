@@ -23,6 +23,7 @@ from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
     Problem, ProblemData, Profile
 from judge.models.profile import OrganizationMonthlyUsage
+from judge.models.role import ContestRole, ROLE_AUTHOR
 from judge.tasks import on_new_problem
 from judge.utils import cache_helper
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -742,7 +743,7 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
 
     def save_contest_form(self, form):
         self.object = form.save()
-        self.object.authors.add(self.request.profile)
+        ContestRole.objects.get_or_create(contest=self.object, user=self.request.profile, role=ROLE_AUTHOR)
         self.object.is_organization_private = True
         self.object.organization = self.organization
         self.object.save()

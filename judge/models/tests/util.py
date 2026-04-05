@@ -3,6 +3,7 @@ from django.utils import timezone
 
 from judge.models import BlogPost, Contest, ContestParticipation, ContestProblem, ContestTag, Language, Organization, \
     Problem, ProblemGroup, ProblemType, Profile, Solution
+from judge.models.role import ContestRole, ROLE_AUTHOR, ROLE_CURATOR, ROLE_TESTER
 
 
 class CreateModel:
@@ -187,9 +188,6 @@ create_solution = CreateSolution()
 class CreateContest(CreateModel):
     model = Contest
     m2m_fields = {
-        'authors': (Profile, 'user__username'),
-        'curators': (Profile, 'user__username'),
-        'testers': (Profile, 'user__username'),
         'problems': (Problem, 'code'),
         'view_contest_scoreboard': (Profile, 'user__username'),
         'rate_exclude': (Profile, 'user__username'),
@@ -208,6 +206,31 @@ class CreateContest(CreateModel):
             'end_time': _now + timezone.timedelta(days=100),
             'show_submission_list': False,
         }
+
+    def __call__(self, *args, **kwargs):
+        authors = kwargs.pop('authors', ())
+        curators = kwargs.pop('curators', ())
+        testers = kwargs.pop('testers', ())
+        obj = super().__call__(*args, **kwargs)
+        for username in authors:
+            ContestRole.objects.get_or_create(
+                contest=obj,
+                user=Profile.objects.get(user__username=username),
+                role=ROLE_AUTHOR,
+            )
+        for username in curators:
+            ContestRole.objects.get_or_create(
+                contest=obj,
+                user=Profile.objects.get(user__username=username),
+                role=ROLE_CURATOR,
+            )
+        for username in testers:
+            ContestRole.objects.get_or_create(
+                contest=obj,
+                user=Profile.objects.get(user__username=username),
+                role=ROLE_TESTER,
+            )
+        return obj
 
 
 create_contest = CreateContest()
