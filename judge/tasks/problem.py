@@ -3,7 +3,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from judge.models import Problem
-from judge.utils.problems import delete_problem
+from judge.utils.problems import fast_delete_problem
 
 
 @shared_task
@@ -13,4 +13,4 @@ def problem_garbage_collect():
     for problem in problems:
         if timezone.now() > end:
             break
-        delete_problem(problem)
+        fast_delete_problem(problem)
