@@ -426,7 +426,9 @@ class ProblemTestCase(CommonDataMixin, TestCase):
                 with self.subTest(list='accessible problems'):
                     # We only care about consistency between Problem.is_accessible_by and Problem.get_visible_problems
                     problem_codes = []
-                    for problem in Problem.objects.prefetch_related('authors', 'curators', 'testers', 'organization'):
+                    for problem in Problem.objects.prefetch_related(
+                        'problem_roles', 'problem_roles__user', 'organization',
+                    ):
                         if problem.is_accessible_by(user):
                             problem_codes.append(problem.code)
 
@@ -438,7 +440,7 @@ class ProblemTestCase(CommonDataMixin, TestCase):
                 with self.subTest(list='editable problems'):
                     # We only care about consistency between Problem.is_editable_by and Problem.get_editable_problems
                     problem_codes = []
-                    for problem in Problem.objects.prefetch_related('authors', 'curators'):
+                    for problem in Problem.objects.prefetch_related('problem_roles', 'problem_roles__user'):
                         if problem.is_editable_by(user):
                             problem_codes.append(problem.code)
 

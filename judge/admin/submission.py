@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import admin, messages
 from django.core.cache import cache
 from django.core.exceptions import PermissionDenied
-from django.db.models import Q
+from django.db.models import Exists, OuterRef
 from django.http import HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 from django.urls import path, reverse
@@ -17,6 +17,7 @@ from reversion.admin import VersionAdmin
 
 from judge.models import ContestParticipation, ContestProblem, ContestSubmission, Profile, Submission, \
     SubmissionSource, SubmissionTestCase
+from judge.models.role import ProblemRole, ROLE_AUTHOR, ROLE_CURATOR
 from judge.utils.raw_sql import use_straight_join
 from judge.widgets import AdminAceWidget
 
@@ -143,8 +144,12 @@ class SubmissionAdmin(VersionAdmin):
         )
         use_straight_join(queryset)
         if not request.user.has_perm('judge.edit_all_problem'):
-            id = request.profile.id
-            queryset = queryset.filter(Q(problem__authors__id=id) | Q(problem__curators__id=id)).distinct()
+            queryset = queryset.annotate(
+                has_editor=Exists(ProblemRole.objects.filter(
+                    problem_id=OuterRef('problem_id'), user_id=request.profile.id,
+                    role__in=[ROLE_AUTHOR, ROLE_CURATOR],
+                )),
+            ).filter(has_editor=True).distinct()
         return queryset
 
     def has_add_permission(self, request):
@@ -173,8 +178,12 @@ class SubmissionAdmin(VersionAdmin):
                               level=messages.ERROR)
             return
         if not request.user.has_perm('judge.edit_all_problem'):
-            id = request.profile.id
-            queryset = queryset.filter(Q(problem__authors__id=id) | Q(problem__curators__id=id))
+            queryset = queryset.annotate(
+                has_editor=Exists(ProblemRole.objects.filter(
+                    problem_id=OuterRef('problem_id'), user_id=request.profile.id,
+                    role__in=[ROLE_AUTHOR, ROLE_CURATOR],
+                )),
+            ).filter(has_editor=True)
         judged = len(queryset)
         for model in queryset:
             model.judge(rejudge=True, batch_rejudge=True, rejudge_user=request.user)

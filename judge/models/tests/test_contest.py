@@ -737,7 +737,9 @@ class ContestTestCase(CommonDataMixin, TestCase):
             with self.subTest(user=name):
                 # We only care about consistency between Contest.is_accessible_by and Contest.get_visible_contests
                 contest_keys = []
-                for contest in Contest.objects.prefetch_related('testers', 'private_contestants', 'organization'):
+                for contest in Contest.objects.prefetch_related(
+                    'contest_roles', 'contest_roles__user', 'private_contestants', 'organization',
+                ):
                     if contest.is_accessible_by(user):
                         contest_keys.append(contest.key)
 

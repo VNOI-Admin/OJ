@@ -31,6 +31,7 @@ from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm,
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
 from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
+from judge.models.role import ProblemRole, ROLE_CURATOR
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
@@ -861,7 +862,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         problem.date = timezone.now()
         with revisions.create_revision(atomic=True):
             problem.save(is_clone=True)
-            problem.curators.add(self.request.profile)
+            ProblemRole.objects.get_or_create(problem=problem, user=self.request.profile, role=ROLE_CURATOR)
             problem.allowed_languages.set(languages)
             problem.language_limits.set(language_limits)
             problem.organization = organization
@@ -903,7 +904,7 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()
-            problem.curators.add(self.request.user.profile)
+            ProblemRole.objects.get_or_create(problem=problem, user=self.request.user.profile, role=ROLE_CURATOR)
             problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
             problem.date = timezone.now()
             self.save_statement(form, problem)

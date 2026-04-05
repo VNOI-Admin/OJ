@@ -11,6 +11,7 @@ from judge.models.problem_data import CHECKERS, ProblemData, ProblemTestCase, pr
     problem_directory_file
 from judge.models.profile import Badge, Organization, OrganizationMonthlyUsage, OrganizationRequest, \
     Profile, WebAuthnCredential
+from judge.models.role import ContestRole, ProblemRole, ROLE_AUTHOR, ROLE_CURATOR, ROLE_TESTER
 from judge.models.runtime import Judge, Language, RuntimeVersion
 from judge.models.submission import SUBMISSION_RESULT, Submission, SubmissionSource, SubmissionTestCase
 from judge.models.tag import Tag, TagData, TagGroup, TagProblem
@@ -21,6 +22,8 @@ revisions.register(Problem, follow=['language_limits'])
 revisions.register(LanguageLimit)
 revisions.register(Contest, follow=['contest_problems'])
 revisions.register(ContestProblem)
+revisions.register(ContestRole)
+revisions.register(ProblemRole)
 revisions.register(Organization)
 revisions.register(BlogPost)
 revisions.register(Solution)

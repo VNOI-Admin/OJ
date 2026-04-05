@@ -15,6 +15,7 @@ from django.views.decorators.http import require_POST
 from reversion.admin import VersionAdmin
 
 from judge.models import Contest, ContestAnnouncement, ContestProblem, ContestSubmission, Profile, Rating, Submission
+from judge.models.role import ContestRole, ROLE_AUTHOR, ROLE_CURATOR
 from judge.ratings import rate_contest
 from judge.utils.views import NoBatchDeleteMixin
 from judge.widgets import AdminAceWidget, AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, \
@@ -124,9 +125,6 @@ class ContestForm(ModelForm):
 
     class Meta:
         widgets = {
-            'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
-            'curators': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
-            'testers': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'private_contestants': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'organization': AdminHeavySelect2Widget(data_view='organization_select2'),
             'tags': AdminSelect2MultipleWidget,
@@ -137,9 +135,23 @@ class ContestForm(ModelForm):
         }
 
 
+class ContestRoleInlineForm(ModelForm):
+    class Meta:
+        model = ContestRole
+        fields = ('user', 'role')
+        widgets = {'user': AdminHeavySelect2Widget(data_view='profile_select2')}
+
+
+class ContestRoleInline(admin.TabularInline):
+    model = ContestRole
+    fields = ('user', 'role')
+    extra = 0
+    form = ContestRoleInlineForm
+
+
 class ContestAdmin(NoBatchDeleteMixin, SortableAdminBase, VersionAdmin):
     fieldsets = (
-        (None, {'fields': ('key', 'name', 'authors', 'curators', 'testers')}),
+        (None, {'fields': ('key', 'name')}),
         (_('Settings'), {'fields': ('is_visible', 'use_clarifications', 'push_announcements', 'disallow_virtual',
                                     'hide_problem_tags', 'hide_problem_authors', 'show_short_display',
                                     'run_pretests_only', 'locked_after', 'scoreboard_visibility',
@@ -159,7 +171,7 @@ class ContestAdmin(NoBatchDeleteMixin, SortableAdminBase, VersionAdmin):
     list_display = ('key', 'name', 'is_visible', 'is_rated', 'locked_after', 'start_time', 'end_time', 'time_limit',
                     'user_count')
     search_fields = ('key', 'name')
-    inlines = [ContestProblemInline, ContestAnnouncementInline]
+    inlines = [ContestRoleInline, ContestProblemInline, ContestAnnouncementInline]
     actions_on_top = True
     actions_on_bottom = True
     form = ContestForm
@@ -186,7 +198,11 @@ class ContestAdmin(NoBatchDeleteMixin, SortableAdminBase, VersionAdmin):
         if request.user.has_perm('judge.edit_all_contest'):
             return queryset
         else:
-            return queryset.filter(Q(authors=request.profile) | Q(curators=request.profile)).distinct()
+            return queryset.filter(
+                contest_roles__user=request.profile,
+            ).filter(
+                Q(contest_roles__role=ROLE_AUTHOR) | Q(contest_roles__role=ROLE_CURATOR),
+            ).distinct()
 
     def get_readonly_fields(self, request, obj=None):
         readonly = []
@@ -358,18 +374,9 @@ class ContestAdmin(NoBatchDeleteMixin, SortableAdminBase, VersionAdmin):
     def get_form(self, request, obj=None, **kwargs):
         form = super(ContestAdmin, self).get_form(request, obj, **kwargs)
         if 'problem_label_script' in form.base_fields:
-            # form.base_fields['problem_label_script'] does not exist when the user has only view permission
-            # on the model.
             form.base_fields['problem_label_script'].widget = AdminAceWidget(
                 mode='lua', theme=request.profile.resolved_ace_theme,
             )
-
-        perms = ('edit_own_contest', 'edit_all_contest')
-        form.base_fields['curators'].queryset = Profile.objects.filter(
-            Q(user__is_superuser=True) |
-            Q(user__groups__permissions__codename__in=perms) |
-            Q(user__user_permissions__codename__in=perms),
-        ).distinct()
         return form
 
 

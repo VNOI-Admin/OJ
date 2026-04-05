@@ -19,6 +19,7 @@ from lxml import etree as ET
 
 from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemTranslation, \
     ProblemType, Profile, Solution
+from judge.models.role import ProblemRole, ROLE_AUTHOR, ROLE_CURATOR
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import django_uploader
 
@@ -812,8 +813,10 @@ class PolygonImporter:
         })
         problem.save()
         problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-        problem.authors.set(self.meta['authors'])
-        problem.curators.set(self.meta['curators'])
+        for author in self.meta['authors']:
+            ProblemRole.objects.get_or_create(problem=problem, user=author, role=ROLE_AUTHOR)
+        for curator in self.meta['curators']:
+            ProblemRole.objects.get_or_create(problem=problem, user=curator, role=ROLE_CURATOR)
         problem.types.set([ProblemType.objects.order_by('id').first()])  # Uncategorized
         problem.save()
 
