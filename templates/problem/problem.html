@@ -138,29 +138,24 @@
             });
 
             // Tab switching functionality
-            function switchTab(target, updateUrl) {
+            $('.problem-tabs a').click(function(e) {
+                e.preventDefault();
+                var target = $(this).attr('href');
+
                 // Update active tab
                 $('.problem-tabs a').removeClass('active');
-                $('.problem-tabs a[href="' + target + '"]').addClass('active');
+                $(this).addClass('active');
 
                 // Update active content
                 $('.tab-content').removeClass('active');
                 $(target).addClass('active');
 
-                // Update URL hash without scrolling (only if updateUrl is true)
-                if (updateUrl) {
-                    if (history.pushState) {
-                        history.pushState(null, null, target);
-                    } else {
-                        location.hash = target;
-                    }
+                // Update URL hash without scrolling
+                if (history.pushState) {
+                    history.pushState(null, null, target);
+                } else {
+                    location.hash = target;
                 }
-            }
-
-            $('.problem-tabs a').click(function(e) {
-                e.preventDefault();
-                var target = $(this).attr('href');
-                switchTab(target, true);
             });
 
             // Handle initial hash in URL
