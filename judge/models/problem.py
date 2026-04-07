@@ -98,6 +98,20 @@ class TranslatedProblemQuerySet(SearchQuerySet):
         )
 
 
+ProblemManager = models.Manager.from_queryset(TranslatedProblemQuerySet)
+
+
+class ExpiredProblemDeletionManager(ProblemManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(
+            deleted_at__lt=timezone.now() - settings.VNOJ_PROBLEM_DELETION_GRACE_PERIOD)
+
+
+class AvailableProblemManager(ProblemManager):
+    def get_queryset(self):
+        return super().get_queryset().filter(deleted_at__isnull=True)
+
+
 class SubmissionSourceAccess:
     ALWAYS = 'A'
     SOLVED = 'S'
@@ -211,8 +225,12 @@ class Problem(models.Model):
                                                        choices=PROBLEM_TESTCASE_RESULT_ACCESS,
                                                        help_text=_('What testcase result should be showed to users?'))
 
-    objects = TranslatedProblemQuerySet.as_manager()
+    deleted_at = models.DateTimeField(verbose_name=_('deleted at'), null=True, db_index=True)
+
+    objects = ProblemManager()
     tickets = GenericRelation('Ticket')
+    expired_deletion = ExpiredProblemDeletionManager()
+    available = AvailableProblemManager()
 
     organization = models.ForeignKey(Organization, blank=True, null=True, verbose_name=_('organization'),
                                      on_delete=SET_NULL,
@@ -343,10 +361,10 @@ class Problem(models.Model):
         return False
 
     @classmethod
-    def get_visible_problems(cls, user):
+    def get_visible_problems(cls, user, include_deleted=False):
         # Do unauthenticated check here so we can skip authentication checks later on.
         if not user.is_authenticated:
-            return cls.get_public_problems()
+            return cls.get_public_problems(include_deleted)
 
         # Conditions for visible problem:
         #   - `judge.edit_all_problem` or `judge.see_private_problem`
@@ -358,7 +376,7 @@ class Problem(models.Model):
         #       - is_public problems
         #           - not is_organization_private or in organization or `judge.see_organization_problem`
         #           - author or curator or tester
-        queryset = cls.objects.defer('description')
+        queryset = (cls.objects if include_deleted else cls.available).defer('description')
 
         edit_own_problem = user.has_perm('judge.edit_own_problem')
         edit_public_problem = edit_own_problem and user.has_perm('judge.edit_public_problem')
@@ -400,8 +418,10 @@ class Problem(models.Model):
         return q
 
     @classmethod
-    def get_public_problems(cls):
-        return cls.objects.filter(is_public=True, is_organization_private=False).defer('description')
+    def get_public_problems(cls, include_deleted=False):
+        return ((cls.objects if include_deleted else cls.available)
+                .filter(is_public=True, is_organization_private=False)
+                .defer('description'))
 
     @classmethod
     def get_editable_problems(cls, user):
@@ -609,6 +629,17 @@ class Problem(models.Model):
     def _rescore(self):
         from judge.tasks import rescore_problem
         transaction.on_commit(rescore_problem.s(self.id, False).delay)
+
+    @property
+    def is_deleted(self):
+        return self.deleted_at is not None
+
+    def mark_as_deleted(self):
+        """Soft-delete this problem. Use the garbage collector to permanently remove it after the grace period."""
+        self.deleted_at = timezone.now()
+        self.save(update_fields=['deleted_at'])
+
+    mark_as_deleted.alters_data = True
 
     class Meta:
         permissions = (

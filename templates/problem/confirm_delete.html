@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block media %}
+    <style>
+        #delete-panel {
+            position: relative;
+            margin: 5em auto auto -12em;
+            top: 40%;
+            left: 50%;
+            width: 24em;
+        }
+
+        .btn-danger {
+            background: linear-gradient(to bottom, #d9534f 0, #c9302c 100%) repeat-x !important;
+        }
+
+        .btn-danger:hover {
+            background: #c9302c !important;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <form id="delete-panel" action="" method="post" class="form-area">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <p>{{ _('Are you sure you want to delete this problem? This action cannot be easily undone.') }}</p>
+
+        {% if affected_contests %}
+            <p><strong>{{ _('Affected contests:') }}</strong></p>
+            <ul>
+                {% for contest in affected_contests %}
+                    <li><a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a></li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p><i class="fa fa-check-circle" style="color: green;"></i> {{ _('This problem is not used in any contests.') }}</p>
+        {% endif %}
+
+        <hr>
+        <div>
+            <input type="submit" class="btn-danger" value="{{ _('Delete') }}" style="float: right;">
+            <a href="{{ next }}" style="float: right; margin-right: 0.5em; line-height: 2.2;">{{ _('Cancel') }}</a>
+        </div>
+    </form>
+{% endblock %}

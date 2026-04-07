@@ -759,7 +759,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
         return _('Storage Dashboard - %s') % self.organization.name
 
     def get_queryset(self):
-        queryset = Problem.objects.filter(
+        queryset = Problem.available.filter(
             organization=self.organization,
         ).annotate(
             data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
