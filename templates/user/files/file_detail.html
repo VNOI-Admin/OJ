@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{{ file.filename }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title mb-0">{{ file.filename }}</h3>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-3">{% trans "File Type" %}</dt>
+                        <dd class="col-sm-9">
+                            <span class="badge badge-info">{{ file.get_file_type_display }}</span>
+                        </dd>
+
+                        <dt class="col-sm-3">{% trans "Size" %}</dt>
+                        <dd class="col-sm-9">
+                            {% widthratio file.size 1048576 1 %} MB 
+                            <small class="text-muted">({{ file.size }} bytes)</small>
+                        </dd>
+
+                        <dt class="col-sm-3">{% trans "Visibility" %}</dt>
+                        <dd class="col-sm-9">
+                            {% if file.is_public %}
+                                <span class="badge badge-success">{% trans "Public" %}</span>
+                            {% else %}
+                                <span class="badge badge-danger">{% trans "Private" %}</span>
+                            {% endif %}
+                        </dd>
+
+                        <dt class="col-sm-3">{% trans "Uploaded" %}</dt>
+                        <dd class="col-sm-9">
+                            {{ file.uploaded_at|date:"DATETIME_FORMAT" }}
+                        </dd>
+
+                        <dt class="col-sm-3">{% trans "Last Accessed" %}</dt>
+                        <dd class="col-sm-9">
+                            {{ file.last_accessed|date:"DATETIME_FORMAT" }}
+                        </dd>
+
+                        <dt class="col-sm-3">{% trans "Access Count" %}</dt>
+                        <dd class="col-sm-9">
+                            {{ file.access_count }}
+                        </dd>
+
+                        {% if file.description %}
+                            <dt class="col-sm-3">{% trans "Description" %}</dt>
+                            <dd class="col-sm-9">
+                                {{ file.description|linebreaks }}
+                            </dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Usage Information -->
+            {% if file.usages.exists %}
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">{% trans "File Usage" %}</h5>
+                    </div>
+                    <div class="card-body">
+                        <p class="text-muted">{% trans "This file is currently used in the following context(s):" %}</p>
+                        <ul>
+                            {% for usage in file.usages.all %}
+                                <li>
+                                    <strong>{{ usage.get_usage_type_display }}</strong>
+                                    {% if usage.context_description %}
+                                        - {{ usage.context_description }}
+                                    {% elif usage.problem_id %}
+                                        - {% trans "Problem" %} #{{ usage.problem_id }}
+                                    {% elif usage.submission_id %}
+                                        - {% trans "Submission" %} #{{ usage.submission_id }}
+                                    {% endif %}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info mt-4">
+                    {% trans "This file is not currently used anywhere in the system." %}
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Actions -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Actions" %}</h5>
+                </div>
+                <div class="card-body">
+                    <a 
+                        href="{% url 'user_file_download' file.uuid %}" 
+                        class="btn btn-primary btn-block mb-2"
+                    >
+                        <i class="fa fa-download"></i> {% trans "Download" %}
+                    </a>
+                    <a 
+                        href="{% url 'user_file_edit' file.uuid %}" 
+                        class="btn btn-secondary btn-block mb-2"
+                    >
+                        <i class="fa fa-edit"></i> {% trans "Edit" %}
+                    </a>
+                    <a 
+                        href="{% url 'user_file_delete' file.uuid %}" 
+                        class="btn btn-danger btn-block"
+                    >
+                        <i class="fa fa-trash"></i> {% trans "Delete" %}
+                    </a>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="card mt-4">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">{% trans "Information" %}</h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted small">
+                        {% trans "You can download this file at any time. If you need to update it, delete this file and upload a new version." %}
+                    </p>
+                    {% if not file.is_public %}
+                        <p class="text-muted small">
+                            {% trans "This file is private and can only be accessed by you." %}
+                        </p>
+                    {% else %}
+                        <p class="text-muted small">
+                            {% trans "This file is public and can be accessed by any user." %}
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <a href="{% url 'user_file_list' %}" class="btn btn-outline-secondary">
+                <i class="fa fa-arrow-left"></i> {% trans "Back to Files" %}
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .card-header {
+        background-color: #f8f9fa;
+        border-bottom: 1px solid #dee2e6;
+        padding: 15px;
+    }
+
+    .card-body {
+        padding: 15px;
+    }
+
+    dl {
+        margin: 0;
+    }
+
+    dt {
+        font-weight: 600;
+    }
+
+    dd {
+        margin-bottom: 15px;
+    }
+
+    .badge {
+        display: inline-block;
+        padding: 5px 10px;
+        border-radius: 3px;
+    }
+</style>
+{% endblock %}

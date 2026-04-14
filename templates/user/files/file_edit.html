@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Edit File" %} - {{ file.filename }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <h1>{% trans "Edit File" %}</h1>
+            <p class="text-muted">
+                {{ file.filename }}
+            </p>
+
+            <form method="post" class="form">
+                {% csrf_token %}
+
+                <div class="form-group">
+                    <label><strong>{% trans "Filename" %}</strong></label>
+                    <input type="text" class="form-control" value="{{ file.filename }}" disabled>
+                    <small class="text-muted">{% trans "You cannot change the filename after upload." %}</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}">
+                        <strong>{{ form.description.label }}</strong>
+                    </label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="text-danger mt-1">
+                            {{ form.description.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-check">
+                    {{ form.is_public }}
+                    <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
+                        {{ form.is_public.label }}
+                        <small class="text-muted">
+                            {% trans "(Allow other users to download this file)" %}
+                        </small>
+                    </label>
+                    {% if form.is_public.errors %}
+                        <div class="text-danger mt-1">
+                            {{ form.is_public.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-group mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa fa-save"></i> {% trans "Save Changes" %}
+                    </button>
+                    <a href="{% url 'user_file_detail' file.uuid %}" class="btn btn-secondary">
+                        {% trans "Cancel" %}
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    form {
+        background: #f9f9f9;
+        padding: 20px;
+        border-radius: 5px;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-check {
+        padding-left: 0;
+        margin-bottom: 20px;
+    }
+
+    label strong {
+        display: block;
+        margin-bottom: 5px;
+    }
+
+    textarea {
+        width: 100%;
+        max-width: 100%;
+    }
+</style>
+{% endblock %}
