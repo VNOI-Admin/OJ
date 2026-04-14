@@ -13,7 +13,7 @@ from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed,
 from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, notification, \
     organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
-    submission, tag, tasks, ticket, two_factor, user, widgets
+    submission, tag, tasks, ticket, two_factor, user, user_files, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -202,6 +202,12 @@ urlpatterns = [
     path('set-theme/', user.set_theme, name='set_theme'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
+    path('files/', user_files.UserFileListView.as_view(), name='user_file_list'),
+    path('files/upload', user_files.UserFileUploadView.as_view(), name='user_file_upload'),
+    path('files/<uuid:uuid>', user_files.UserFileDetailView.as_view(), name='user_file_detail'),
+    path('files/<uuid:uuid>/edit', user_files.UserFileEditView.as_view(), name='user_file_edit'),
+    path('files/<uuid:uuid>/delete', user_files.UserFileDeleteView.as_view(), name='user_file_delete'),
+    path('files/<uuid:uuid>/download', user_files.UserFileDownloadView.as_view(), name='user_file_download'),
     path('user/<str:user>', include([
         path('', user.UserAboutPage.as_view(), name='user_page'),
         path('/ban', user.UserBan.as_view(), name='user_ban'),
