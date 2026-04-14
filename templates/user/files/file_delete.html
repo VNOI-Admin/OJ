@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load i18n %}
+
+{% block title %}{% trans "Delete File" %} - {{ file.filename }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="alert alert-warning" role="alert">
+                <h4 class="alert-heading">
+                    <i class="fa fa-warning"></i> {% trans "Confirm Deletion" %}
+                </h4>
+                <p>
+                    {% trans "Are you sure you want to delete this file?" %}
+                </p>
+                <hr>
+                <p class="mb-0">
+                    <strong>{% trans "Filename:" %}</strong> {{ file.filename }}<br>
+                    <strong>{% trans "File Type:" %}</strong> {{ file.get_file_type_display }}<br>
+                    <strong>{% trans "Size:" %}</strong> {% widthratio file.size 1024 1 %}KB<br>
+                    <strong>{% trans "Uploaded:" %}</strong> {{ file.uploaded_at|date:"SHORT_DATE_FORMAT" }}
+                </p>
+            </div>
+
+            {% if file.usages.exists %}
+                <div class="alert alert-info">
+                    <h5>{% trans "This file is in use" %}</h5>
+                    <p>
+                        {% blocktrans count counter=file.usages.count %}
+                            This file is currently used in {{ counter }} context. Deleting it may affect that usage.
+                        {% plural %}
+                            This file is currently used in {{ counter }} contexts. Deleting it may affect those usages.
+                        {% endblocktrans %}
+                    </p>
+                </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-danger btn-lg btn-block mb-2">
+                    <i class="fa fa-trash"></i> {% trans "Yes, Delete This File" %}
+                </button>
+                <a href="{% url 'user_file_detail' file.uuid %}" class="btn btn-secondary btn-lg btn-block">
+                    {% trans "Cancel" %}
+                </a>
+            </form>
+
+            <div class="alert alert-info mt-4">
+                <p class="mb-0">
+                    <small>
+                        {% trans "This action cannot be undone. Please make sure you have a backup if needed." %}
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
