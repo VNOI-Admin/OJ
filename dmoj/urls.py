@@ -210,6 +210,7 @@ urlpatterns = [
     path('files/<uuid:uuid>', user_files.UserFileDetailView.as_view(), name='user_file_detail'),
     path('files/<uuid:uuid>/edit', user_files.UserFileEditView.as_view(), name='user_file_edit'),
     path('files/<uuid:uuid>/delete', user_files.UserFileDeleteView.as_view(), name='user_file_delete'),
+    path('files/<uuid:uuid>/view', user_files.UserFileAccessView.as_view(), name='user_file_access'),
     path('files/<uuid:uuid>/download', user_files.UserFileDownloadView.as_view(), name='user_file_download'),
     path('user/<str:user>', include([
         path('', user.UserAboutPage.as_view(), name='user_page'),
@@ -530,3 +531,8 @@ try:
         exec(f.read(), globals())
 except IOError:
     pass
+
+# Serve media files in development
+if settings.DEBUG:
+    from django.conf.urls.static import static
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

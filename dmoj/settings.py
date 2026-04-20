@@ -752,6 +752,10 @@ STATICFILES_DIRS = [
 ]
 STATIC_URL = '/static/'
 
+# Media files (user uploads)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
 # Define a cache
 CACHES = {}
 
