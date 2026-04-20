@@ -30,5 +30,6 @@
     {% endif %}
     {% if user.user == request.user %}
         {{ make_tab('edit', 'fa-edit', url('user_edit_profile'), _('Edit profile')) }}
+        {{ make_tab('files', 'fa-file', url('user_file_list'), _('My Files')) }}
     {% endif %}
 {% endblock %}
