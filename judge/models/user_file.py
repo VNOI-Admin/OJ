@@ -1,25 +1,26 @@
 import os
 import uuid
+import mimetypes
 
-from django.core.validators import FileExtensionValidator
 from django.db import models
-from django.utils.translation import gettext_lazy as _
+from django.urls import reverse
 from django.utils import timezone
-
-from judge.utils.problem_data import ProblemDataStorage
+from django.utils.translation import gettext_lazy as _
 
 __all__ = ['user_file_storage', 'UserFile', 'FileUsage']
 
-user_file_storage = ProblemDataStorage()
+from django.core.files.storage import default_storage
+user_file_storage = default_storage
 
 
 def user_file_directory(instance, filename):
-    """Generate a unique directory for user files."""
-    return os.path.join('user_files', str(instance.user.id), str(instance.uuid), os.path.basename(filename))
+    """Generate file path using UUID_filename format."""
+    base_name = os.path.basename(filename)
+    return os.path.join('user_files', f'{instance.uuid}_{base_name}')
 
 
 class UserFile(models.Model):
-    """Model representing user-uploaded files."""
+    """Model for storing user-uploaded files with metadata and usage tracking."""
     
     FILE_TYPE_CHOICES = (
         ('checker', _('Custom Checker')),
@@ -73,6 +74,28 @@ class UserFile(models.Model):
         return f"{self.filename} ({self.user.user.username})"
     
     def save(self, *args, **kwargs):
+        """Update file size and ensure filename is set before saving."""
+        # Revoke previously shared links when transitioning from public to private.
+        if self.pk:
+            try:
+                previous = UserFile.objects.only('is_public').get(pk=self.pk)
+                if previous.is_public and not self.is_public:
+                    self.uuid = uuid.uuid4()
+            except UserFile.DoesNotExist:
+                pass
+
+        if self.file:
+            file_basename = os.path.basename(self.file.name)
+
+            # On create, always derive filename from uploaded file to preserve extension.
+            if self._state.adding or not self.filename:
+                self.filename = file_basename
+            # If filename was manually set without extension, append extension from file.
+            elif '.' not in os.path.basename(self.filename) and '.' in file_basename:
+                _, ext = os.path.splitext(file_basename)
+                if ext:
+                    self.filename = f'{self.filename}{ext}'
+        
         # Update file size if not already set
         if not self.size and self.file:
             try:
@@ -87,17 +110,43 @@ class UserFile(models.Model):
         self.access_count += 1
         self.save(update_fields=['last_accessed', 'access_count'])
     
-    def get_usage_contexts(self):
-        """Return all usage contexts for this file."""
-        return self.usages.all()
+    def get_absolute_url(self):
+        """Return the absolute URL for this file."""
+        return reverse('user_file_detail', kwargs={'uuid': self.uuid})
     
     def get_download_url(self):
         """Return the safe download URL for this file."""
-        return f'/api/v2/user/files/{self.uuid}/download/'
-    
-    def get_absolute_url(self):
-        """Return the absolute URL for this file."""
-        return f'/user/files/{self.uuid}/'
+        return reverse('user_file_download', kwargs={'uuid': self.uuid})
+
+    def get_access_url(self):
+        """Return the safe inline view URL for this file."""
+        return reverse('user_file_access', kwargs={'uuid': self.uuid})
+
+    def get_resolved_filename(self):
+        """Return filename with extension recovered from storage path when needed."""
+        stored_basename = os.path.basename(self.file.name or '')
+        download_name = (self.filename or '').strip()
+
+        if not download_name:
+            return stored_basename
+
+        if '.' not in os.path.basename(download_name) and '.' in stored_basename:
+            _, ext = os.path.splitext(stored_basename)
+            if ext:
+                return f'{download_name}{ext}'
+
+        return download_name
+
+    def get_resolved_mime_type(self):
+        """Return best-effort MIME type for serving this file."""
+        download_name = self.get_resolved_filename()
+        mime_type, _ = mimetypes.guess_type(download_name)
+        if mime_type:
+            return mime_type
+
+        stored_basename = os.path.basename(self.file.name or '')
+        mime_type, _ = mimetypes.guess_type(stored_basename)
+        return mime_type or 'application/octet-stream'
 
 
 class FileUsage(models.Model):
@@ -151,7 +200,7 @@ class FileUsage(models.Model):
                 from judge.models import Problem
                 problem = Problem.objects.get(id=self.problem_id)
                 return f"Problem {problem.code}"
-            except:
+            except Exception:
                 return f"Problem #{self.problem_id}"
         elif self.submission_id:
             return f"Submission #{self.submission_id}"
