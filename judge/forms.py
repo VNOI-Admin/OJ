@@ -22,7 +22,7 @@ from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, Language, \
-    LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
+    LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, UserFile, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -894,3 +894,56 @@ class CompareSubmissionsForm(Form):
     user = forms.ChoiceField(
         widget=HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
     )
+
+
+# ============================================================================
+# User File Upload Forms
+# ============================================================================
+
+class UserFileUploadForm(ModelForm):
+    """Form for uploading new user files."""
+
+    class Meta:
+        model = UserFile
+        fields = ['file', 'file_type', 'description', 'is_public']
+        widgets = {
+            'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
+            'file_type': forms.Select(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_file(self):
+        """Validate uploaded file."""
+        file_obj = self.cleaned_data.get('file')
+        if file_obj:
+            # Check file size (e.g., max 500 MB)
+            max_size = 500 * 1024 * 1024  # 500 MB
+            if file_obj.size > max_size:
+                raise ValidationError(
+                    _('File size exceeds maximum allowed size of 500 MB.')
+                )
+        return file_obj
+
+    def save(self, commit=True):
+        """Save and ensure filename is captured from file."""
+        instance = super().save(commit=False)
+        # Ensure filename is set from the uploaded file if not provided
+        if instance.file and not instance.filename:
+            import os
+            instance.filename = os.path.basename(instance.file.name)
+        if commit:
+            instance.save()
+        return instance
+
+
+class UserFileEditForm(ModelForm):
+    """Form for editing user file metadata."""
+
+    class Meta:
+        model = UserFile
+        fields = ['description', 'is_public']
+        widgets = {
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }

@@ -1,159 +1,97 @@
 {% extends "base.html" %}
-{% load i18n %}
 
-{% block title %}{% trans "Upload File" %}{% endblock %}
+{% block title %}{{ _('Upload File') }}{% endblock %}
 
 {% block content %}
-<div class="container">
+<div class="container mt-4">
     <div class="row">
         <div class="col-md-8 offset-md-2">
-            <h1>{% trans "Upload New File" %}</h1>
-            <p class="text-muted">
-                {% trans "Upload a file to your personal library. You can manage, download, or delete files at any time." %}
-            </p>
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">{{ _('Upload New File') }}</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data" novalidate>
+                        {{ csrf_token }}
+                        
+                        {% if form.non_field_errors() %}
+                            <div class="alert alert-danger" role="alert">
+                                {% for error in form.non_field_errors() %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
 
-            <form method="post" enctype="multipart/form-data" class="form">
-                {% csrf_token %}
-
-                <div class="form-group">
-                    <label for="{{ form.file.id_for_label }}">
-                        <strong>{{ form.file.label }}</strong>
-                    </label>
-                    {{ form.file }}
-                    {% if form.file.help_text %}
-                        <small class="form-text text-muted d-block mt-1">
-                            {{ form.file.help_text|safe }}
-                        </small>
-                    {% endif %}
-                    {% if form.file.errors %}
-                        <div class="text-danger mt-1">
-                            {{ form.file.errors }}
+                        <div class="form-group">
+                            <label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+                            {{ form.file(class="form-control-file" + (" is-invalid" if form.file.errors else "")) }}
+                            {% if form.file.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.file.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <small class="form-text text-muted">
+                                {{ _('Maximum file size: 500 MB') }}
+                            </small>
                         </div>
-                    {% endif %}
-                </div>
 
-                <div class="form-group">
-                    <label for="{{ form.file_type.id_for_label }}">
-                        <strong>{{ form.file_type.label }}</strong>
-                    </label>
-                    {{ form.file_type }}
-                    {% if form.file_type.errors %}
-                        <div class="text-danger mt-1">
-                            {{ form.file_type.errors }}
+                        <div class="form-group">
+                            <label for="{{ form.file_type.id_for_label }}">{{ form.file_type.label }}</label>
+                            {{ form.file_type(class="form-control" + (" is-invalid" if form.file_type.errors else "")) }}
+                            {% if form.file_type.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.file_type.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
-                    {% endif %}
-                </div>
 
-                <div class="form-group">
-                    <label for="{{ form.description.id_for_label }}">
-                        {{ form.description.label }}
-                    </label>
-                    {{ form.description }}
-                    {% if form.description.errors %}
-                        <div class="text-danger mt-1">
-                            {{ form.description.errors }}
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="3") }}
+                            {% if form.description.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.description.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
-                    {% endif %}
-                </div>
 
-                <div class="form-check">
-                    {{ form.is_public }}
-                    <label class="form-check-label" for="{{ form.is_public.id_for_label }}">
-                        {{ form.is_public.label }}
-                        <small class="text-muted">
-                            {% trans "(Allow other users to download this file)" %}
-                        </small>
-                    </label>
-                    {% if form.is_public.errors %}
-                        <div class="text-danger mt-1">
-                            {{ form.is_public.errors }}
+                        <div class="form-group">
+                            <label for="{{ form.is_public.id_for_label }}">
+                                {{ form.is_public }}
+                                <span>{{ form.is_public.label }}</span>
+                            </label>
+                            {% if form.is_public.errors %}
+                                <div class="invalid-feedback d-block">
+                                    {% for error in form.is_public.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
                         </div>
-                    {% endif %}
-                </div>
 
-                <div class="form-group mt-4">
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fa fa-upload"></i> {% trans "Upload" %}
-                    </button>
-                    <a href="{% url 'user_file_list' %}" class="btn btn-secondary">
-                        {% trans "Cancel" %}
-                    </a>
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-upload"></i> {{ _('Upload File') }}
+                            </button>
+                            <a href="{{ url('user_file_list') }}" class="btn btn-secondary">
+                                {{ _('Cancel') }}
+                            </a>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
 
-            <!-- File Type Help -->
             <div class="alert alert-info mt-4">
-                <h5>{% trans "File Type Guide" %}</h5>
-                <dl>
-                    <dt>{% trans "Custom Checker" %}</dt>
-                    <dd>{% trans "A custom C++ program for validating solutions." %}</dd>
-                    
-                    <dt>{% trans "Custom Grader" %}</dt>
-                    <dd>{% trans "A custom C++ program for grading interactive problems." %}</dd>
-                    
-                    <dt>{% trans "Header File" %}</dt>
-                    <dd>{% trans "A C++ header file for problem solutions." %}</dd>
-                    
-                    <dt>{% trans "Image" %}</dt>
-                    <dd>{% trans "An image file (PNG, JPG, etc.) for use in problems or content." %}</dd>
-                    
-                    <dt>{% trans "Document" %}</dt>
-                    <dd>{% trans "A text or PDF document." %}</dd>
-                    
-                    <dt>{% trans "Code" %}</dt>
-                    <dd>{% trans "Source code in any programming language." %}</dd>
-                    
-                    <dt>{% trans "Test Data" %}</dt>
-                    <dd>{% trans "Test input/output files or datasets." %}</dd>
-                    
-                    <dt>{% trans "Other" %}</dt>
-                    <dd>{% trans "Any other file type." %}</dd>
-                </dl>
+                <strong>{{ _('Tip:') }}</strong>
+                {{ _('After uploading, you can edit the file details and manage sharing settings from the file list.') }}
             </div>
         </div>
     </div>
 </div>
-
-<style>
-    form {
-        background: #f9f9f9;
-        padding: 20px;
-        border-radius: 5px;
-    }
-
-    .form-group {
-        margin-bottom: 20px;
-    }
-
-    .form-check {
-        padding-left: 0;
-        margin-bottom: 20px;
-    }
-
-    label strong {
-        display: block;
-        margin-bottom: 5px;
-    }
-
-    input[type="file"],
-    select,
-    textarea {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    dl {
-        margin: 0;
-    }
-
-    dt {
-        font-weight: 600;
-        margin-top: 10px;
-    }
-
-    dd {
-        margin-left: 20px;
-        margin-bottom: 5px;
-    }
-</style>
 {% endblock %}
