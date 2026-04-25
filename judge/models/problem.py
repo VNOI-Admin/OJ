@@ -196,7 +196,7 @@ class Problem(models.Model):
     partial = models.BooleanField(verbose_name=_('allows partial points'), default=False)
     allowed_languages = models.ManyToManyField(Language, verbose_name=_('allowed languages'),
                                                help_text=_('List of allowed submission languages.'))
-    is_public = models.BooleanField(verbose_name=_('publicly visible'), db_index=True, default=False)
+    is_public = models.BooleanField(verbose_name=_('publicly visible'), default=False)
     is_manually_managed = models.BooleanField(verbose_name=_('manually managed'), db_index=True, default=False,
                                               help_text=_('Whether judges should be allowed to manage data or not.'))
     date = models.DateTimeField(verbose_name=_('date of publishing'), null=True, blank=True, db_index=True,
@@ -658,6 +658,9 @@ class Problem(models.Model):
             ('import_polygon_package', _('Import Codeforces Polygon package')),
             ('edit_type_group_all_problem', _('Edit type and group for all problems')),
         )
+        indexes = [
+            models.Index(fields=['is_public', 'is_organization_private', '-date']),
+        ]
         verbose_name = _('problem')
         verbose_name_plural = _('problems')
 
