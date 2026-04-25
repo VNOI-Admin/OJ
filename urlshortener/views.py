@@ -4,7 +4,7 @@ from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, RedirectView, UpdateView
 
-from judge.utils.views import DiggPaginatorMixin, TitleMixin
+from judge.utils.views import DiggPaginatorMixin, TitleMixin, paginate_query_context
 from urlshortener.forms import URLShortenerForm
 from urlshortener.models import URLShortener
 
@@ -24,6 +24,11 @@ class URLShortenerListView(PermissionRequiredMixin, TitleMixin, DiggPaginatorMix
 
     def get_title(self):
         return _('URL Shorteners')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(paginate_query_context(self.request))
+        return context
 
 
 class URLShortenerCreateView(PermissionRequiredMixin, TitleMixin, CreateView):
