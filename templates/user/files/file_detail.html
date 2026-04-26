@@ -88,11 +88,15 @@
                                         {{ usage.get_usage_type_display() }}
                                     </h6>
                                     <small class="text-muted">
-                                        {% if usage.problem %}
-                                            {{ _('Problem:') }} <strong>{{ usage.problem.code }}</strong>
+                                        {% if usage.context_description %}
+                                            {{ usage.context_description }}
+                                        {% elif usage.problem_id %}
+                                            {{ _('Problem ID:') }} <strong>{{ usage.problem_id }}</strong>
+                                        {% elif usage.contest_id %}
+                                            {{ _('Contest ID:') }} <strong>{{ usage.contest_id }}</strong>
                                         {% endif %}
-                                        {% if usage.submission %}
-                                            {{ _('Submission ID:') }} <strong>{{ usage.submission.id }}</strong>
+                                        {% if usage.submission_id %}
+                                            {{ _('Submission ID:') }} <strong>{{ usage.submission_id }}</strong>
                                         {% endif %}
                                     </small>
                                 </div>
@@ -113,13 +117,17 @@
                     <a href="{{ url('user_file_download', file.uuid) }}" class="btn btn-primary btn-block mb-2">
                         <i class="fa fa-download"></i> {{ _('Download File') }}
                     </a>
-                    <a href="{{ url('user_file_edit', file.uuid) }}" class="btn btn-secondary btn-block mb-2">
-                        <i class="fa fa-edit"></i> {{ _('Edit Metadata') }}
-                    </a>
-                    <a href="{{ url('user_file_delete', file.uuid) }}" class="btn btn-danger btn-block" 
-                        onclick="return confirm('{{ _('Are you sure?') }}')">
-                        <i class="fa fa-trash"></i> {{ _('Delete File') }}
-                    </a>
+                    {% if can_edit %}
+                        <a href="{{ url('user_file_edit', file.uuid) }}" class="btn btn-secondary btn-block mb-2">
+                            <i class="fa fa-edit"></i> {{ _('Edit Metadata') }}
+                        </a>
+                    {% endif %}
+                    {% if can_delete %}
+                        <a href="{{ url('user_file_delete', file.uuid) }}" class="btn btn-danger btn-block"
+                           onclick="return confirm('{{ _('Are you sure?') }}')">
+                            <i class="fa fa-trash"></i> {{ _('Delete File') }}
+                        </a>
+                    {% endif %}
                 </div>
             </div>
 

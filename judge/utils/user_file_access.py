@@ -28,30 +28,73 @@ class AccessHandler:
         return self._next_handler.handle(context)
 
 
-class PublicFileAccessHandler(AccessHandler):
-    """Allow immediate access for public files."""
+class SuperuserAccessHandler(AccessHandler):
+    """Allow superusers to bypass all checks."""
 
     def handle(self, context):
-        if context.file_obj.is_public:
+        if context.request.user.is_authenticated and context.request.user.is_superuser:
             return context.file_obj
         return super().handle(context)
 
 
-class AuthenticatedAccessHandler(AccessHandler):
-    """Require authentication for non-public files."""
+class PublicFileAccessHandler(AccessHandler):
+    """Allow immediate access for public files."""
 
     def handle(self, context):
+        if context.file_obj.is_public and not context.file_obj.requires_context_authorization:
+            return context.file_obj
+        return super().handle(context)
+
+
+class ScopedAuthenticationAccessHandler(AccessHandler):
+    """Require authentication for scoped files before context checks."""
+
+    def handle(self, context):
+        if not context.file_obj.requires_context_authorization:
+            return super().handle(context)
         if not context.request.user.is_authenticated:
             raise Http404(_ACCESS_DENIED_MESSAGE)
         return super().handle(context)
 
 
-class OwnerAccessHandler(AccessHandler):
-    """Require ownership for non-public files."""
+class ScopedOwnerAccessHandler(AccessHandler):
+    """Allow scoped file owner to access directly."""
 
     def handle(self, context):
-        request_profile = getattr(context.request, 'profile', None)
-        if request_profile is None or context.file_obj.user != request_profile:
+        if not context.file_obj.requires_context_authorization:
+            return super().handle(context)
+        if context.file_obj.is_owned_by(context.request.user):
+            return context.file_obj
+        return super().handle(context)
+
+
+class ScopedContestAccessHandler(AccessHandler):
+    """Allow access when user can see any related contest context."""
+
+    def handle(self, context):
+        if not context.file_obj.requires_context_authorization:
+            return super().handle(context)
+        if context.file_obj.can_view_by_contest_context(context.request.user):
+            return context.file_obj
+        return super().handle(context)
+
+
+class ScopedProblemAccessHandler(AccessHandler):
+    """Allow access when user can see any related problem context."""
+
+    def handle(self, context):
+        if not context.file_obj.requires_context_authorization:
+            return super().handle(context)
+        if context.file_obj.can_view_by_problem_context(context.request.user):
+            return context.file_obj
+        raise Http404(_ACCESS_DENIED_MESSAGE)
+
+
+class PrivateFileAccessHandler(AccessHandler):
+    """Require model-level permissions for non-public files."""
+
+    def handle(self, context):
+        if not context.file_obj.can_view_by(context.request.user):
             raise Http404(_ACCESS_DENIED_MESSAGE)
         return context.file_obj
 
@@ -60,9 +103,13 @@ class UserFileAccessChain:
     """Authorization chain for user file visibility."""
 
     def __init__(self):
-        self._head = PublicFileAccessHandler()
-        authenticated = self._head.set_next(AuthenticatedAccessHandler())
-        authenticated.set_next(OwnerAccessHandler())
+        self._head = SuperuserAccessHandler()
+        public = self._head.set_next(PublicFileAccessHandler())
+        scoped_auth = public.set_next(ScopedAuthenticationAccessHandler())
+        scoped_owner = scoped_auth.set_next(ScopedOwnerAccessHandler())
+        scoped_contest = scoped_owner.set_next(ScopedContestAccessHandler())
+        scoped_problem = scoped_contest.set_next(ScopedProblemAccessHandler())
+        scoped_problem.set_next(PrivateFileAccessHandler())
 
     def authorize(self, request, file_obj):
         context = AccessContext(request, file_obj)

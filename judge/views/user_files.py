@@ -2,10 +2,11 @@ from django.db.models import Q
 from django.http import FileResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView
 
-from judge.forms import UserFileUploadForm, UserFileEditForm
-from judge.models import FileUsage, Problem, UserFile
+from judge.forms import UserFileEditForm, UserFileUploadForm
+from judge.models import UserFile
 from judge.utils.user_file_access import UserFileAccessChain
 from judge.utils.views import TitleMixin, generic_message
 
@@ -14,31 +15,50 @@ __all__ = [
     'UserFileEditView', 'UserFileDeleteView', 'UserFileDownloadView', 'UserFileAccessView'
 ]
 
+_PERMISSION_DENIED_TITLE = _('Permission denied')
+_PERMISSION_DENIED_MESSAGE = _('You do not have permission to use user files.')
+
 
 class UserFileBaseMixin(TitleMixin):
     """Base mixin for user file views with common configuration."""
-    
+
     model = UserFile
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
     context_object_name = 'file'
-    
+
     def get_queryset(self):
         """Base queryset - to be overridden by subclasses."""
         return UserFile.objects.all()
 
 
-class UserOwnedFilesMixin(UserFileBaseMixin):
-    """Mixin restricting access to authenticated user's own files."""
-    
+class UserFilePermissionMixin(UserFileBaseMixin):
+    """Enforce login and model-level permission checks for user file actions."""
+
+    required_permission = None
+
     def dispatch(self, request, *args, **kwargs):
-        """Require authentication for owned files."""
         if not request.user.is_authenticated:
             return redirect('login')
+
+        if self.required_permission and not request.user.has_perm(self.required_permission):
+            return generic_message(
+                request,
+                _PERMISSION_DENIED_TITLE,
+                _PERMISSION_DENIED_MESSAGE,
+                status=403,
+            )
+
         return super().dispatch(request, *args, **kwargs)
-    
+
+
+class UserOwnedFilesMixin(UserFilePermissionMixin):
+    """Mixin restricting mutating actions to owner-visible querysets."""
+
     def get_queryset(self):
-        """Filter to only current user's files."""
+        """Filter to only current user's files, except for superusers."""
+        if self.request.user.is_superuser:
+            return UserFile.objects.all()
         return UserFile.objects.filter(user=self.request.profile)
 
 
@@ -46,7 +66,7 @@ class PublicAccessMixin(UserFileBaseMixin):
     """Mixin providing permission-checked object access for public/private files."""
 
     access_chain = UserFileAccessChain()
-    
+
     def get_object(self, queryset=None):
         """Load file by UUID and validate access through handler chain."""
         uuid_value = self.kwargs.get(self.slug_url_kwarg)
@@ -59,30 +79,17 @@ class PublicAccessMixin(UserFileBaseMixin):
 
 
 class UserFileListView(UserOwnedFilesMixin, ListView):
-    """List all files uploaded by the current user and files used in their problems/contests."""
-    
+    """List files uploaded by the current user with filtering support."""
+
+    required_permission = 'judge.view_userfile'
     title = 'My Files'
     template_name = 'user/files/file_list.html'
     paginate_by = 20
     context_object_name = 'files'
-    
+
     def get_queryset(self):
-        """Return files owned by user plus files referenced by user's problems."""
-        user_profile = self.request.profile
-
-        queryset = UserFile.objects.filter(user=user_profile).distinct()
-
-        user_problem_ids = list(Problem.objects.filter(
-            Q(authors=user_profile) | Q(curators=user_profile)
-        ).values_list('id', flat=True))
-
-        if user_problem_ids:
-            problem_files = UserFile.objects.filter(
-                usages__problem_id__in=user_problem_ids
-            ).distinct()
-            queryset = queryset | problem_files
-
-        queryset = queryset.order_by('-uploaded_at')
+        """Return files owned by the current user with optional filters."""
+        queryset = super().get_queryset().order_by('-uploaded_at')
 
         search = self.request.GET.get('search', '')
         file_type = self.request.GET.get('file_type', '')
@@ -92,39 +99,50 @@ class UserFileListView(UserOwnedFilesMixin, ListView):
             queryset = queryset.filter(
                 Q(filename__icontains=search) | Q(description__icontains=search)
             )
-        if file_type:
+        if file_type and file_type in dict(UserFile.FILE_TYPE_CHOICES):
             queryset = queryset.filter(file_type=file_type)
         if visibility == 'public':
             queryset = queryset.filter(is_public=True)
         elif visibility == 'private':
             queryset = queryset.filter(is_public=False)
-        
+
         return queryset
-    
+
     def get_context_data(self, **kwargs):
         """Add filter options and search parameters to context."""
+        search = self.request.GET.get('search', '')
+        file_type = self.request.GET.get('file_type', '')
+        visibility = self.request.GET.get('visibility', '')
+
         context = super().get_context_data(**kwargs)
         context.update({
-            'search': self.request.GET.get('search', ''),
-            'file_type': self.request.GET.get('file_type', ''),
-            'visibility': self.request.GET.get('visibility', ''),
+            'search': search,
+            'file_type': file_type,
+            'visibility': visibility,
             'file_type_choices': UserFile.FILE_TYPE_CHOICES,
+            'search_query': f'&search={search}' if search else '',
+            'type_query': f'&file_type={file_type}' if file_type else '',
+            'visibility_query': f'&visibility={visibility}' if visibility else '',
+            'can_upload': UserFile.can_upload_by(self.request.user),
+            'can_edit': self.request.user.is_superuser or self.request.user.has_perm('judge.change_userfile'),
+            'can_delete': self.request.user.is_superuser or self.request.user.has_perm('judge.delete_userfile'),
         })
         return context
 
 
 class UserFileUploadView(UserOwnedFilesMixin, CreateView):
     """Upload a new file."""
-    
+
+    required_permission = 'judge.add_userfile'
     title = 'Upload New File'
     form_class = UserFileUploadForm
     template_name = 'user/files/file_upload.html'
-    
+
     def form_valid(self, form):
         """Attach current user to the form instance before saving."""
         form.instance.user = self.request.profile
         return super().form_valid(form)
-    
+
     def get_success_url(self):
         """Redirect to the file list after successful upload."""
         return reverse_lazy('user_file_list')
@@ -132,60 +150,38 @@ class UserFileUploadView(UserOwnedFilesMixin, CreateView):
 
 class UserFileDetailView(PublicAccessMixin, DetailView):
     """View details of a single file with usage information and access control."""
-    
+
     title = 'File Details'
     template_name = 'user/files/file_detail.html'
-    
+
     def get_object(self, queryset=None):
         """Get object with additional permission checks for related problems/contests."""
         obj = super().get_object(queryset=queryset)
         self._check_related_access(obj)
         return obj
-    
-    def _check_related_access(self, file_obj):
-        """Verify user can access problems that reference this file."""
-        usages = FileUsage.objects.filter(user_file=file_obj, problem_id__isnull=False)
 
-        for usage in usages:
-            if usage.problem_id:
-                try:
-                    problem = Problem.objects.get(id=usage.problem_id)
-                    if not self._can_access_problem(problem):
-                        raise Http404('File access denied - related problem is not accessible.')
-                except Problem.DoesNotExist:
-                    raise Http404('File access denied - related problem not found.')
-    
-    def _can_access_problem(self, problem):
-        """Check if current user can access a problem."""
-        if problem is None:
-            return True
-        
-        # If problem is public, anyone can see it
-        if problem.is_public:
-            return True
-        
-        # If user not authenticated, deny private problem access
-        if not self.request.user.is_authenticated:
-            return False
-        
-        # Check if user is problem owner or curator
-        user_profile = self.request.profile
-        if problem.authors.filter(id=user_profile.id).exists():
-            return True
-        if problem.curators.filter(id=user_profile.id).exists():
-            return True
-        
-        # Default: deny private problem access for non-owners
-        return False
+    def _check_related_access(self, file_obj):
+        """Verify user can access the scoped context that references this file."""
+        if file_obj.requires_context_authorization and not file_obj.can_view_by_context(self.request.user):
+            raise Http404('File access denied - related context is not accessible.')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update({
+            'can_edit': self.object.can_change_by(self.request.user),
+            'can_delete': self.object.can_delete_by(self.request.user),
+        })
+        return context
 
 
 class UserFileEditView(UserOwnedFilesMixin, UpdateView):
     """Edit file metadata (description and visibility)."""
-    
+
+    required_permission = 'judge.change_userfile'
     title = 'Edit File'
     form_class = UserFileEditForm
     template_name = 'user/files/file_edit.html'
-    
+
     def get_success_url(self):
         """Redirect back to file detail page after editing."""
         return reverse_lazy('user_file_detail', kwargs={'uuid': self.object.uuid})
@@ -193,7 +189,8 @@ class UserFileEditView(UserOwnedFilesMixin, UpdateView):
 
 class UserFileDeleteView(UserOwnedFilesMixin, DeleteView):
     """Delete a file with confirmation."""
-    
+
+    required_permission = 'judge.delete_userfile'
     title = 'Delete File'
     template_name = 'user/files/file_delete.html'
     success_url = reverse_lazy('user_file_list')
@@ -201,9 +198,9 @@ class UserFileDeleteView(UserOwnedFilesMixin, DeleteView):
 
 class UserFileDownloadView(PublicAccessMixin, DetailView):
     """Serve a file while enforcing permission checks."""
-    
+
     template_name = None  # No template needed for download
-    
+
     def get_object(self, queryset=None):
         """Get object with strict permission verification."""
         return super().get_object(queryset=queryset)
@@ -236,7 +233,7 @@ class UserFileDownloadView(PublicAccessMixin, DetailView):
                 f'File not found or cannot be accessed: {str(e)}',
                 status=404
             )
-    
+
     def get(self, request, *args, **kwargs):
         """Handle file download with permission verification and access tracking."""
         return self._serve_file(request, as_attachment=True)

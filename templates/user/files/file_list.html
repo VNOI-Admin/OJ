@@ -12,69 +12,68 @@
     </div>
 
     <!-- Upload Section -->
-    <div class="row mb-5">
-        <div class="col-md-12">
-            <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0"><i class="fa fa-cloud-upload"></i> {{ _('Upload New File') }}</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post" action="{{ url('user_file_upload') }}" enctype="multipart/form-data">
-                        {{ csrf_token }}
-                        
-                        <div class="form-group">
-                            <label><strong>{{ _('File') }}</strong></label>
-                            <div class="upload-zone border-2 border-dashed p-4 text-center rounded" id="uploadZone" style="cursor: pointer; transition: all 0.3s;">
-                                <div class="mb-3">
-                                    <i class="fa fa-cloud-upload fa-3x text-muted"></i>
-                                </div>
-                                <p class="text-muted mb-2">{{ _('Drag and drop your file here or click to browse') }}</p>
-                                <input type="file" name="file" id="fileInput" class="d-none" required>
-                                <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
-                                    {{ _('Choose File') }}
-                                </button>
-                                <div id="fileName" class="mt-2"></div>
-                            </div>
-                        </div>
+    {% if can_upload %}
+        <div class="row mb-5">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0"><i class="fa fa-cloud-upload"></i> {{ _('Upload New File') }}</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="post" action="{{ url('user_file_upload') }}" enctype="multipart/form-data">
+                            {{ csrf_token }}
 
-                        <div class="form-row">
-                            <div class="form-group col-md-6">
-                                <label for="id_file_type"><strong>{{ _('File Type') }}</strong></label>
-                                <select name="file_type" id="id_file_type" class="form-control" required>
-                                    <option value="">{{ _('-- Select Type --') }}</option>
-                                    <option value="document">{{ _('Document') }}</option>
-                                    <option value="image">{{ _('Image') }}</option>
-                                    <option value="archive">{{ _('Archive') }}</option>
-                                    <option value="code">{{ _('Code') }}</option>
-                                    <option value="data">{{ _('Data') }}</option>
-                                    <option value="other">{{ _('Other') }}</option>
-                                </select>
-                            </div>
-                            <div class="form-group col-md-6">
-                                <label for="id_is_public"><strong>{{ _('Visibility') }}</strong></label>
-                                <div class="custom-control custom-checkbox">
-                                    <input type="checkbox" class="custom-control-input" id="id_is_public" name="is_public">
-                                    <label class="custom-control-label" for="id_is_public">
-                                        {{ _('Make this file accessible to other users') }}
-                                    </label>
+                            <div class="form-group">
+                                <label><strong>{{ _('File') }}</strong></label>
+                                <div class="upload-zone border-2 border-dashed p-4 text-center rounded" id="uploadZone" style="cursor: pointer; transition: all 0.3s;">
+                                    <div class="mb-3">
+                                        <i class="fa fa-cloud-upload fa-3x text-muted"></i>
+                                    </div>
+                                    <p class="text-muted mb-2">{{ _('Drag and drop your file here or click to browse') }}</p>
+                                    <input type="file" name="file" id="fileInput" class="d-none" required>
+                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
+                                        {{ _('Choose File') }}
+                                    </button>
+                                    <div id="fileName" class="mt-2"></div>
                                 </div>
                             </div>
-                        </div>
 
-                        <div class="form-group">
-                            <label for="id_description"><strong>{{ _('Description (Optional)') }}</strong></label>
-                            <textarea name="description" id="id_description" class="form-control" rows="3" 
-                                placeholder="{{ _('Add notes about this file...') }}"></textarea>
-                        </div>
+                            <div class="form-row">
+                                <div class="form-group col-md-6">
+                                    <label for="id_file_type"><strong>{{ _('File Type') }}</strong></label>
+                                    <select name="file_type" id="id_file_type" class="form-control" required>
+                                        <option value="">{{ _('-- Select Type --') }}</option>
+                                        {% for value, label in file_type_choices %}
+                                            <option value="{{ value }}">{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="form-group col-md-6">
+                                    <label for="id_is_public"><strong>{{ _('Visibility') }}</strong></label>
+                                    <div class="custom-control custom-checkbox">
+                                        <input type="checkbox" class="custom-control-input" id="id_is_public" name="is_public">
+                                        <label class="custom-control-label" for="id_is_public">
+                                            {{ _('Make this file accessible to other users') }}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <button type="submit" class="btn btn-primary">
-                            <i class="fa fa-upload"></i> {{ _('Upload File') }}
-                        </button>
-                    </form>
+                            <div class="form-group">
+                                <label for="id_description"><strong>{{ _('Description (Optional)') }}</strong></label>
+                                <textarea name="description" id="id_description" class="form-control" rows="3"
+                                          placeholder="{{ _('Add notes about this file...') }}"></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-upload"></i> {{ _('Upload File') }}
+                            </button>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    {% endif %}
 
     <!-- File Dashboard Section -->
     <div class="row">
@@ -94,12 +93,9 @@
                             <div class="form-group mr-2">
                                 <select name="file_type" class="form-control">
                                     <option value="">{{ _('All Types') }}</option>
-                                    <option value="document" {% if file_type == 'document' %}selected{% endif %}>{{ _('Document') }}</option>
-                                    <option value="image" {% if file_type == 'image' %}selected{% endif %}>{{ _('Image') }}</option>
-                                    <option value="archive" {% if file_type == 'archive' %}selected{% endif %}>{{ _('Archive') }}</option>
-                                    <option value="code" {% if file_type == 'code' %}selected{% endif %}>{{ _('Code') }}</option>
-                                    <option value="data" {% if file_type == 'data' %}selected{% endif %}>{{ _('Data') }}</option>
-                                    <option value="other" {% if file_type == 'other' %}selected{% endif %}>{{ _('Other') }}</option>
+                                    {% for value, label in file_type_choices %}
+                                        <option value="{{ value }}" {% if file_type == value %}selected{% endif %}>{{ label }}</option>
+                                    {% endfor %}
                                 </select>
                             </div>
                             <div class="form-group mr-2">
@@ -166,16 +162,20 @@
                                             <a href="{{ url('user_file_detail', file.uuid) }}" class="btn btn-info" title="{{ _('View Details') }}">
                                                 <i class="fa fa-info-circle"></i>
                                             </a>
-                                            <a href="{{ url('user_file_edit', file.uuid) }}" class="btn btn-secondary" title="{{ _('Edit') }}">
-                                                <i class="fa fa-edit"></i>
-                                            </a>
+                                            {% if can_edit %}
+                                                <a href="{{ url('user_file_edit', file.uuid) }}" class="btn btn-secondary" title="{{ _('Edit') }}">
+                                                    <i class="fa fa-edit"></i>
+                                                </a>
+                                            {% endif %}
                                             <a href="{{ url('user_file_download', file.uuid) }}" class="btn btn-success" title="{{ _('Download') }}">
                                                 <i class="fa fa-download"></i>
                                             </a>
-                                            <a href="{{ url('user_file_delete', file.uuid) }}" class="btn btn-danger" title="{{ _('Delete') }}" 
-                                                onclick="return confirm('{{ _('Are you sure?') }}')">
-                                                <i class="fa fa-trash"></i>
-                                            </a>
+                                            {% if can_delete %}
+                                                <a href="{{ url('user_file_delete', file.uuid) }}" class="btn btn-danger" title="{{ _('Delete') }}"
+                                                   onclick="return confirm('{{ _('Are you sure?') }}')">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
+                                            {% endif %}
                                         </div>
                                     </td>
                                 </tr>
@@ -253,35 +253,37 @@ const uploadZone = document.getElementById('uploadZone');
 const fileInput = document.getElementById('fileInput');
 const fileName = document.getElementById('fileName');
 
-uploadZone.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    uploadZone.classList.add('dragover');
-    uploadZone.style.backgroundColor = '#e9ecef';
-});
+if (uploadZone && fileInput && fileName) {
+    uploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        uploadZone.classList.add('dragover');
+        uploadZone.style.backgroundColor = '#e9ecef';
+    });
 
-uploadZone.addEventListener('dragleave', () => {
-    uploadZone.classList.remove('dragover');
-    uploadZone.style.backgroundColor = 'transparent';
-});
+    uploadZone.addEventListener('dragleave', () => {
+        uploadZone.classList.remove('dragover');
+        uploadZone.style.backgroundColor = 'transparent';
+    });
 
-uploadZone.addEventListener('drop', (e) => {
-    e.preventDefault();
-    uploadZone.classList.remove('dragover');
-    uploadZone.style.backgroundColor = 'transparent';
-    fileInput.files = e.dataTransfer.files;
-    updateFileName();
-});
+    uploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        uploadZone.classList.remove('dragover');
+        uploadZone.style.backgroundColor = 'transparent';
+        fileInput.files = e.dataTransfer.files;
+        updateFileName();
+    });
 
-uploadZone.addEventListener('click', () => {
-    fileInput.click();
-});
+    uploadZone.addEventListener('click', () => {
+        fileInput.click();
+    });
 
-fileInput.addEventListener('change', updateFileName);
+    fileInput.addEventListener('change', updateFileName);
 
-function updateFileName() {
-    if (fileInput.files.length > 0) {
-        fileName.textContent = '✓ ' + fileInput.files[0].name;
-        fileName.className = 'text-success font-weight-bold';
+    function updateFileName() {
+        if (fileInput.files.length > 0) {
+            fileName.textContent = '✓ ' + fileInput.files[0].name;
+            fileName.className = 'text-success font-weight-bold';
+        }
     }
 }
 </script>
