@@ -2,289 +2,133 @@
 
 {% block title %}{{ _('My Files') }}{% endblock %}
 
-{% block content %}
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <h1>{{ _('My Files') }}</h1>
-            <p class="text-muted">{{ _('Upload, manage, and share your files') }}</p>
-        </div>
-    </div>
-
-    <!-- Upload Section -->
-    {% if can_upload %}
-        <div class="row mb-5">
-            <div class="col-md-12">
-                <div class="card">
-                    <div class="card-header bg-primary text-white">
-                        <h4 class="mb-0"><i class="fa fa-cloud-upload"></i> {{ _('Upload New File') }}</h4>
-                    </div>
-                    <div class="card-body">
-                        <form method="post" action="{{ url('user_file_upload') }}" enctype="multipart/form-data">
-                            {{ csrf_token }}
-
-                            <div class="form-group">
-                                <label><strong>{{ _('File') }}</strong></label>
-                                <div class="upload-zone border-2 border-dashed p-4 text-center rounded" id="uploadZone" style="cursor: pointer; transition: all 0.3s;">
-                                    <div class="mb-3">
-                                        <i class="fa fa-cloud-upload fa-3x text-muted"></i>
-                                    </div>
-                                    <p class="text-muted mb-2">{{ _('Drag and drop your file here or click to browse') }}</p>
-                                    <input type="file" name="file" id="fileInput" class="d-none" required>
-                                    <button type="button" class="btn btn-outline-primary" onclick="document.getElementById('fileInput').click()">
-                                        {{ _('Choose File') }}
-                                    </button>
-                                    <div id="fileName" class="mt-2"></div>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group col-md-6">
-                                    <label for="id_file_type"><strong>{{ _('File Type') }}</strong></label>
-                                    <select name="file_type" id="id_file_type" class="form-control" required>
-                                        <option value="">{{ _('-- Select Type --') }}</option>
-                                        {% for value, label in file_type_choices %}
-                                            <option value="{{ value }}">{{ label }}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                                <div class="form-group col-md-6">
-                                    <label for="id_is_public"><strong>{{ _('Visibility') }}</strong></label>
-                                    <div class="custom-control custom-checkbox">
-                                        <input type="checkbox" class="custom-control-input" id="id_is_public" name="is_public">
-                                        <label class="custom-control-label" for="id_is_public">
-                                            {{ _('Make this file accessible to other users') }}
-                                        </label>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="id_description"><strong>{{ _('Description (Optional)') }}</strong></label>
-                                <textarea name="description" id="id_description" class="form-control" rows="3"
-                                          placeholder="{{ _('Add notes about this file...') }}"></textarea>
-                            </div>
-
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-upload"></i> {{ _('Upload File') }}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-
-    <!-- File Dashboard Section -->
-    <div class="row">
-        <div class="col-md-12">
-            <h3 class="mb-3">{{ _('Your Files') }}</h3>
-
-            {% if files %}
-                <!-- Filters -->
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <form method="get" class="form-inline" id="filterForm">
-                            <div class="form-group mr-2 flex-grow-1">
-                                <input type="text" name="search" class="form-control w-100" 
-                                    placeholder="{{ _('Search by filename...') }}"
-                                    value="{{ search }}">
-                            </div>
-                            <div class="form-group mr-2">
-                                <select name="file_type" class="form-control">
-                                    <option value="">{{ _('All Types') }}</option>
-                                    {% for value, label in file_type_choices %}
-                                        <option value="{{ value }}" {% if file_type == value %}selected{% endif %}>{{ label }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                            <div class="form-group mr-2">
-                                <select name="visibility" class="form-control">
-                                    <option value="">{{ _('All Files') }}</option>
-                                    <option value="public" {% if visibility == 'public' %}selected{% endif %}>{{ _('Public Only') }}</option>
-                                    <option value="private" {% if visibility == 'private' %}selected{% endif %}>{{ _('Private Only') }}</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-secondary">
-                                <i class="fa fa-filter"></i> {{ _('Filter') }}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Files Table -->
-                <div class="table-responsive">
-                    <table class="table table-hover">
-                        <thead class="table-light">
-                            <tr>
-                                <th>{{ _('Filename') }}</th>
-                                <th>{{ _('Type') }}</th>
-                                <th>{{ _('Size') }}</th>
-                                <th>{{ _('Uploaded') }}</th>
-                                <th>{{ _('Accessed') }}</th>
-                                <th>{{ _('Visibility') }}</th>
-                                <th>{{ _('Actions') }}</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for file in files %}
-                                <tr>
-                                    <td>
-                                        <a href="{{ url('user_file_detail', file.uuid) }}">
-                                            <strong>{{ file.filename }}</strong>
-                                        </a>
-                                    </td>
-                                    <td>
-                                        <span class="badge badge-info">{{ file.get_file_type_display() }}</span>
-                                    </td>
-                                    <td>
-                                        {{ file.size|filesizeformat }}
-                                    </td>
-                                    <td>
-                                        {{ file.uploaded_at|date('SHORT_DATE_FORMAT') }}
-                                    </td>
-                                    <td>
-                                        {% if file.last_accessed %}
-                                            {{ file.last_accessed|date('SHORT_DATE_FORMAT') }}
-                                        {% else %}
-                                            <em class="text-muted">{{ _('Never') }}</em>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if file.is_public %}
-                                            <span class="badge badge-success">{{ _('Public') }}</span>
-                                        {% else %}
-                                            <span class="badge badge-warning">{{ _('Private') }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm" role="group">
-                                            <a href="{{ url('user_file_detail', file.uuid) }}" class="btn btn-info" title="{{ _('View Details') }}">
-                                                <i class="fa fa-info-circle"></i>
-                                            </a>
-                                            {% if can_edit %}
-                                                <a href="{{ url('user_file_edit', file.uuid) }}" class="btn btn-secondary" title="{{ _('Edit') }}">
-                                                    <i class="fa fa-edit"></i>
-                                                </a>
-                                            {% endif %}
-                                            <a href="{{ url('user_file_download', file.uuid) }}" class="btn btn-success" title="{{ _('Download') }}">
-                                                <i class="fa fa-download"></i>
-                                            </a>
-                                            {% if can_delete %}
-                                                <a href="{{ url('user_file_delete', file.uuid) }}" class="btn btn-danger" title="{{ _('Delete') }}"
-                                                   onclick="return confirm('{{ _('Are you sure?') }}')">
-                                                    <i class="fa fa-trash"></i>
-                                                </a>
-                                            {% endif %}
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-
-                <!-- Pagination -->
-                {% if is_paginated %}
-                    <nav aria-label="Page navigation">
-                        <ul class="pagination justify-content-center">
-                            {% if page_obj.has_previous() %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page=1{{ search_query }}{{ type_query }}{{ visibility_query }}">
-                                        {{ _('First') }}
-                                    </a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.previous_page_number() }}{{ search_query }}{{ type_query }}{{ visibility_query }}">
-                                        {{ _('Previous') }}
-                                    </a>
-                                </li>
-                            {% endif %}
-
-                            <li class="page-item active">
-                                <span class="page-link">
-                                    {{ _('Page') }} {{ page_obj.number }} {{ _('of') }} {{ page_obj.paginator.num_pages }}
-                                </span>
-                            </li>
-
-                            {% if page_obj.has_next() %}
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.next_page_number() }}{{ search_query }}{{ type_query }}{{ visibility_query }}">
-                                        {{ _('Next') }}
-                                    </a>
-                                </li>
-                                <li class="page-item">
-                                    <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{{ search_query }}{{ type_query }}{{ visibility_query }}">
-                                        {{ _('Last') }}
-                                    </a>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </nav>
-                {% endif %}
-            {% else %}
-                <div class="alert alert-info text-center py-5">
-                    <h4>{{ _('No files yet') }}</h4>
-                    <p>{{ _('Upload your first file using the upload form above') }}</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
+{% block body %}
 <style>
-    .upload-zone {
-        cursor: pointer;
-        transition: background-color 0.3s;
+    .file-list-header {
+        margin-bottom: 1em;
     }
-    
-    .upload-zone:hover,
-    .upload-zone.dragover {
-        background-color: #e9ecef;
+
+    .file-list-actions {
+        display: flex;
+        gap: 0.4em;
+        justify-content: center;
+        flex-wrap: wrap;
     }
-    
-    .table-hover tbody tr:hover {
-        background-color: #f5f5f5;
+
+    .file-empty {
+        padding: 1em 1.2em;
+        margin-top: 0.7em;
     }
 </style>
 
-<script>
-const uploadZone = document.getElementById('uploadZone');
-const fileInput = document.getElementById('fileInput');
-const fileName = document.getElementById('fileName');
+<div class="file-list-header">
+    <h2>{{ _('My Files') }}</h2>
+    <p>{{ _('Upload, manage, and share your files') }}</p>
+</div>
 
-if (uploadZone && fileInput && fileName) {
-    uploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadZone.classList.add('dragover');
-        uploadZone.style.backgroundColor = '#e9ecef';
-    });
+{% if can_upload %}
+    <div class="sidebox">
+        <h3>{{ _('Upload') }} <i class="fa fa-cloud-upload"></i></h3>
+        <div class="sidebox-content">
+            <p>{{ _('Upload page includes file selection, visibility, and description settings.') }}</p>
+            <form method="get" action="{{ url('user_file_upload') }}">
+                <button type="submit" class="button">
+                    <i class="fa fa-upload"></i> {{ _('Go to Upload Form') }}
+                </button>
+            </form>
+        </div>
+    </div>
+{% endif %}
 
-    uploadZone.addEventListener('dragleave', () => {
-        uploadZone.classList.remove('dragover');
-        uploadZone.style.backgroundColor = 'transparent';
-    });
+{% if files %}
+    <div class="h-scrollable-table">
+        <table class="table striped">
+            <thead>
+                <tr>
+                    <th>{{ _('Filename') }}</th>
+                    <th>{{ _('Type') }}</th>
+                    <th>{{ _('Size') }}</th>
+                    <th>{{ _('Uploaded') }}</th>
+                    <th>{{ _('Accessed') }}</th>
+                    <th>{{ _('Visibility') }}</th>
+                    <th>{{ _('Actions') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for file in files %}
+                    <tr>
+                        <td>
+                            <a href="{{ url('user_file_detail', file.uuid) }}">{{ file.filename }}</a>
+                        </td>
+                        <td>{{ file.get_file_type_display() }}</td>
+                        <td>{{ file.size|filesizeformat }}</td>
+                        <td>{{ file.uploaded_at|date('SHORT_DATE_FORMAT') }}</td>
+                        <td>
+                            {% if file.last_accessed %}
+                                {{ file.last_accessed|date('SHORT_DATE_FORMAT') }}
+                            {% else %}
+                                <em>{{ _('Never') }}</em>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if file.is_public %}
+                                {{ _('Public') }}
+                            {% else %}
+                                {{ _('Private') }}
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="file-list-actions">
+                                <a href="{{ url('user_file_detail', file.uuid) }}" class="button inline-button" title="{{ _('View Details') }}">
+                                    <i class="fa fa-info-circle"></i>
+                                </a>
+                                {% if can_edit %}
+                                    <a href="{{ url('user_file_edit', file.uuid) }}" class="button inline-button" title="{{ _('Edit') }}">
+                                        <i class="fa fa-edit"></i>
+                                    </a>
+                                {% endif %}
+                                <a href="{{ url('user_file_download', file.uuid) }}" class="button inline-button" title="{{ _('Download') }}">
+                                    <i class="fa fa-download"></i>
+                                </a>
+                                {% if can_delete %}
+                                    <a href="{{ url('user_file_delete', file.uuid) }}" class="button inline-button" title="{{ _('Delete') }}">
+                                        <i class="fa fa-trash"></i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-    uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('dragover');
-        uploadZone.style.backgroundColor = 'transparent';
-        fileInput.files = e.dataTransfer.files;
-        updateFileName();
-    });
+    {% if is_paginated %}
+        <div class="bottom-pagination-bar">
+            <ul class="pagination">
+                {% if page_obj.has_previous() %}
+                    <li><a href="?page=1">«</a></li>
+                    <li><a href="?page={{ page_obj.previous_page_number() }}">{{ _('Previous') }}</a></li>
+                {% else %}
+                    <li class="disabled-page"><span>«</span></li>
+                    <li class="disabled-page"><span>{{ _('Previous') }}</span></li>
+                {% endif %}
 
-    uploadZone.addEventListener('click', () => {
-        fileInput.click();
-    });
+                <li class="active-page"><span>{{ _('Page') }} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
 
-    fileInput.addEventListener('change', updateFileName);
-
-    function updateFileName() {
-        if (fileInput.files.length > 0) {
-            fileName.textContent = '✓ ' + fileInput.files[0].name;
-            fileName.className = 'text-success font-weight-bold';
-        }
-    }
-}
-</script>
+                {% if page_obj.has_next() %}
+                    <li><a href="?page={{ page_obj.next_page_number() }}">{{ _('Next') }}</a></li>
+                    <li><a href="?page={{ page_obj.paginator.num_pages }}">»</a></li>
+                {% else %}
+                    <li class="disabled-page"><span>{{ _('Next') }}</span></li>
+                    <li class="disabled-page"><span>»</span></li>
+                {% endif %}
+            </ul>
+        </div>
+    {% endif %}
+{% else %}
+    <div class="alert alert-info file-empty">
+        {{ _('No files yet. Use the upload button above to add your first file.') }}
+    </div>
+{% endif %}
 {% endblock %}
