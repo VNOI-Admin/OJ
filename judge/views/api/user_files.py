@@ -5,10 +5,11 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db.models import Q
-from django.http import FileResponse, JsonResponse
+from django.http import FileResponse, JsonResponse, Http404
 from django.views.generic.detail import BaseDetailView
 
 from judge.models import UserFile
+from judge.utils.user_file_access import UserFileAccessChain
 from judge.views.api.api_v2 import APIMixin, APILoginRequiredMixin, APIListView
 
 __all__ = [
@@ -143,8 +144,9 @@ class UserFileDownloadView(UserFilePermissionMixin, APIMixin, BaseDetailView):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-
-        if not self.object.can_view_by(request.user):
+        try:
+            UserFileAccessChain().authorize(request, self.object)
+        except Http404:
             raise PermissionDenied()
 
         self.object.update_last_accessed()

@@ -2,16 +2,15 @@ import os
 import uuid
 import mimetypes
 
+from django.conf import settings
+from django.core.files.storage import FileSystemStorage, Storage
 from django.db import models
 from django.db.models import Q
-from django.core.files.storage import default_storage
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 __all__ = ['user_file_storage', 'UserFile', 'FileUsage']
-
-user_file_storage = default_storage
 
 USER_FILE_STORAGE_SCOPE_PROBLEM = 'problem'
 USER_FILE_STORAGE_SCOPE_CONTEST = 'contest'
@@ -28,14 +27,109 @@ USER_FILE_CONTEXT_SCOPES = frozenset((
     USER_FILE_STORAGE_SCOPE_CONTEST,
 ))
 
+USER_FILE_STORAGE_PREFIX = 'user_files'
+
+
+def _build_user_file_storage(scope):
+    root_map = getattr(settings, 'USER_FILE_STORAGE_ROOTS', {}) or {}
+    url_map = getattr(settings, 'USER_FILE_STORAGE_URL_PREFIXES', {}) or {}
+    default_root = getattr(settings, 'USER_FILE_STORAGE_ROOT', settings.MEDIA_ROOT)
+    default_url = getattr(settings, 'USER_FILE_STORAGE_URL_PREFIX', settings.MEDIA_URL)
+
+    if scope not in USER_FILE_STORAGE_SCOPE_VALUES:
+        scope = USER_FILE_STORAGE_SCOPE_MARTOR
+
+    root = root_map.get(scope)
+    if not root:
+        root = os.path.join(default_root, USER_FILE_STORAGE_PREFIX, scope)
+
+    base_url = url_map.get(scope)
+    if not base_url:
+        base_url = os.path.join(default_url.rstrip('/'), USER_FILE_STORAGE_PREFIX, scope) + '/'
+    elif not base_url.endswith('/'):
+        base_url += '/'
+
+    return FileSystemStorage(location=root, base_url=base_url)
+
+
+class UserFileStorageRouter(Storage):
+    """Route file operations to a storage backend based on scope prefix."""
+
+    def __init__(self):
+        self._storages = {scope: _build_user_file_storage(scope) for scope in USER_FILE_STORAGE_SCOPE_VALUES}
+
+    @staticmethod
+    def _split_scope(name):
+        clean_name = name.lstrip('/')
+        parts = clean_name.split('/', 2)
+        if len(parts) >= 2 and parts[0] == USER_FILE_STORAGE_PREFIX and parts[1] in USER_FILE_STORAGE_SCOPE_VALUES:
+            scope = parts[1]
+            remainder = parts[2] if len(parts) > 2 else ''
+            return scope, remainder
+        return USER_FILE_STORAGE_SCOPE_MARTOR, clean_name
+
+    def _resolve(self, name):
+        scope, remainder = self._split_scope(name)
+        storage = self._storages.get(scope) or self._storages[USER_FILE_STORAGE_SCOPE_MARTOR]
+        return storage, remainder
+
+    def _open(self, name, mode='rb'):
+        storage, remainder = self._resolve(name)
+        return storage._open(remainder, mode)
+
+    def _save(self, name, content):
+        scope, remainder = self._split_scope(name)
+        storage = self._storages.get(scope) or self._storages[USER_FILE_STORAGE_SCOPE_MARTOR]
+        saved_name = storage._save(remainder, content)
+        return os.path.join(USER_FILE_STORAGE_PREFIX, scope, saved_name)
+
+    def delete(self, name):
+        storage, remainder = self._resolve(name)
+        return storage.delete(remainder)
+
+    def exists(self, name):
+        storage, remainder = self._resolve(name)
+        return storage.exists(remainder)
+
+    def listdir(self, path):
+        storage, remainder = self._resolve(path)
+        return storage.listdir(remainder)
+
+    def size(self, name):
+        storage, remainder = self._resolve(name)
+        return storage.size(remainder)
+
+    def url(self, name):
+        storage, remainder = self._resolve(name)
+        return storage.url(remainder)
+
+    def path(self, name):
+        storage, remainder = self._resolve(name)
+        return storage.path(remainder)
+
+    def get_available_name(self, name, max_length=None):
+        scope, remainder = self._split_scope(name)
+        storage = self._storages.get(scope) or self._storages[USER_FILE_STORAGE_SCOPE_MARTOR]
+        available = storage.get_available_name(remainder, max_length=max_length)
+        return os.path.join(USER_FILE_STORAGE_PREFIX, scope, available)
+
+    def get_valid_name(self, name):
+        scope, remainder = self._split_scope(name)
+        storage = self._storages.get(scope) or self._storages[USER_FILE_STORAGE_SCOPE_MARTOR]
+        valid = storage.get_valid_name(remainder)
+        return os.path.join(USER_FILE_STORAGE_PREFIX, scope, valid)
+
+
+user_file_storage = UserFileStorageRouter()
+
 
 def user_file_directory(instance, filename):
-    """Generate file path using UUID_filename format."""
+    """Generate storage path for uploaded user files."""
     base_name = os.path.basename(filename)
     scope = getattr(instance, 'storage_scope', USER_FILE_STORAGE_SCOPE_MARTOR)
     if scope not in USER_FILE_STORAGE_SCOPE_VALUES:
         scope = USER_FILE_STORAGE_SCOPE_MARTOR
-    return os.path.join('user_files', scope, f'{instance.uuid}_{base_name}')
+    return os.path.join(USER_FILE_STORAGE_PREFIX, scope, base_name)
 
 
 class UserFile(models.Model):

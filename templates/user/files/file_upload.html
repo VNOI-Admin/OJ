@@ -2,96 +2,125 @@
 
 {% block title %}{{ _('Upload File') }}{% endblock %}
 
-{% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8 offset-md-2">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">{{ _('Upload New File') }}</h4>
+{% block body %}
+<style>
+    .file-upload-wrap {
+        max-width: 860px;
+    }
+
+    .file-upload-form .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.8em;
+        align-items: start;
+    }
+
+    .file-upload-form label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 0.3em;
+    }
+
+    .file-upload-actions {
+        display: flex;
+        gap: 0.5em;
+        flex-wrap: wrap;
+    }
+
+    @media (max-width: 700px) {
+        .file-upload-form .form-row {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<div class="file-upload-wrap">
+    <h2>{{ _('Upload New File') }}</h2>
+    <p>{{ _('Choose a file and metadata, then submit to save it into your file library.') }}</p>
+
+    <div class="sidebox">
+        <h3>{{ _('Upload form') }} <i class="fa fa-upload"></i></h3>
+        <div class="sidebox-content">
+            <form method="post" enctype="multipart/form-data" novalidate class="file-upload-form">
+                {{ csrf_token }}
+
+                {% if form.non_field_errors() %}
+                    <div class="alert alert-danger" role="alert">
+                        {% for error in form.non_field_errors() %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="form-group">
+                    <label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+                    {{ form.file }}
+                    {% if form.file.errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.file.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    <small>{{ _('Maximum file size: 500 MB') }}</small>
                 </div>
-                <div class="card-body">
-                    <form method="post" enctype="multipart/form-data" novalidate>
-                        {{ csrf_token }}
-                        
-                        {% if form.non_field_errors() %}
-                            <div class="alert alert-danger" role="alert">
-                                {% for error in form.non_field_errors() %}
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.file_type.id_for_label }}">{{ form.file_type.label }}</label>
+                        {{ form.file_type }}
+                        {% if form.file_type.errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.file_type.errors %}
                                     <p>{{ error }}</p>
                                 {% endfor %}
                             </div>
                         {% endif %}
+                    </div>
 
-                        <div class="form-group">
-                            <label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
-                            {{ form.file(class="form-control-file" + (" is-invalid" if form.file.errors else "")) }}
-                            {% if form.file.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.file.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <small class="form-text text-muted">
-                                {{ _('Maximum file size: 500 MB') }}
-                            </small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ form.file_type.id_for_label }}">{{ form.file_type.label }}</label>
-                            {{ form.file_type(class="form-control" + (" is-invalid" if form.file_type.errors else "")) }}
-                            {% if form.file_type.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.file_type.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
-                            {{ form.description(class="form-control" + (" is-invalid" if form.description.errors else ""), rows="3") }}
-                            {% if form.description.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.description.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="form-group">
-                            <label for="{{ form.is_public.id_for_label }}">
-                                {{ form.is_public }}
-                                <span>{{ form.is_public.label }}</span>
-                            </label>
-                            {% if form.is_public.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.is_public.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-upload"></i> {{ _('Upload File') }}
-                            </button>
-                            <a href="{{ url('user_file_list') }}" class="btn btn-secondary">
-                                {{ _('Cancel') }}
-                            </a>
-                        </div>
-                    </form>
+                    <div class="form-group">
+                        <label for="{{ form.is_public.id_for_label }}">{{ _('Visibility') }}</label>
+                        <label for="{{ form.is_public.id_for_label }}">
+                            {{ form.is_public }}
+                            <span>{{ form.is_public.label }}</span>
+                        </label>
+                        {% if form.is_public.errors %}
+                            <div class="alert alert-danger">
+                                {% for error in form.is_public.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
                 </div>
-            </div>
 
-            <div class="alert alert-info mt-4">
-                <strong>{{ _('Tip:') }}</strong>
-                {{ _('After uploading, you can edit the file details and manage sharing settings from the file list.') }}
-            </div>
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}">{{ form.description.label }}</label>
+                    {{ form.description }}
+                    {% if form.description.errors %}
+                        <div class="alert alert-danger">
+                            {% for error in form.description.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="form-submit-group file-upload-actions">
+                    <button type="submit" class="button">
+                        <i class="fa fa-upload"></i> {{ _('Upload File') }}
+                    </button>
+                    <a href="{{ url('user_file_list') }}" class="button">
+                        <i class="fa fa-arrow-left"></i> {{ _('Back to file list') }}
+                    </a>
+                </div>
+            </form>
         </div>
+    </div>
+
+    <div class="alert alert-info">
+        <strong>{{ _('Tip:') }}</strong>
+        {{ _('After upload, you can edit visibility and description from the file detail page.') }}
     </div>
 </div>
 {% endblock %}
