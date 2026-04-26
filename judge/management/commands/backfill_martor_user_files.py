@@ -7,7 +7,7 @@ from django.core.files.storage import default_storage
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
-from judge.models import FileUsage, Problem, UserFile
+from judge.models import Contest, FileUsage, Problem, UserFile
 
 
 class Command(BaseCommand):
@@ -39,10 +39,12 @@ class Command(BaseCommand):
         created = 0
         processed = 0
 
-        for problem in Problem.objects.only('id', 'code', 'description', 'is_public', 'suggester_id').iterator():
+        def backfill_problem(problem):
+            nonlocal created, processed
+
             matches = pattern.findall(problem.description or '')
             if not matches:
-                continue
+                return
 
             for url in matches:
                 filename = os.path.basename(url)
@@ -77,7 +79,7 @@ class Command(BaseCommand):
                         file=content_file,
                         filename=filename,
                         file_type='image',
-                        storage_scope=UserFile.STORAGE_SCOPE_MARTOR,
+                        storage_scope=UserFile.STORAGE_SCOPE_PROBLEM,
                         is_public=problem.is_public,
                     )
 
@@ -90,8 +92,71 @@ class Command(BaseCommand):
 
                 created += 1
 
+        def backfill_contest(contest):
+            nonlocal created, processed
+
+            matches = pattern.findall(contest.description or '')
+            if not matches:
+                return
+
+            for url in matches:
+                filename = os.path.basename(url)
+                if not filename:
+                    continue
+
+                storage_path = os.path.join(settings.MARTOR_UPLOAD_MEDIA_DIR, filename)
+                if not default_storage.exists(storage_path):
+                    continue
+
+                processed += 1
+                if limit and created >= limit:
+                    break
+
+                if dry_run:
+                    self.stdout.write(
+                        f'Would create UserFile for {storage_path} (contest {contest.key})',
+                    )
+                    created += 1
+                    continue
+
+                with transaction.atomic():
+                    user_profile = contest.authors.first()
+                    if user_profile is None and contest.curators.exists():
+                        user_profile = contest.curators.first()
+                    if user_profile is None:
+                        continue
+
+                    content = default_storage.open(storage_path, 'rb').read()
+                    content_file = ContentFile(content, name=filename)
+
+                    user_file = UserFile.objects.create(
+                        user=user_profile,
+                        file=content_file,
+                        filename=filename,
+                        file_type='image',
+                        storage_scope=UserFile.STORAGE_SCOPE_CONTEST,
+                        is_public=contest.is_visible and not contest.is_private,
+                    )
+
+                    FileUsage.objects.create(
+                        file=user_file,
+                        usage_type='markdown_content',
+                        contest_id=contest.id,
+                        context_description=f'Contest {contest.key} description',
+                    )
+
+                created += 1
+
+        for problem in Problem.objects.only('id', 'code', 'description', 'is_public', 'suggester_id').iterator():
+            backfill_problem(problem)
             if limit and created >= limit:
                 break
+
+        if not limit or created < limit:
+            for contest in Contest.objects.only('id', 'key', 'description', 'is_visible', 'is_private').iterator():
+                backfill_contest(contest)
+                if limit and created >= limit:
+                    break
 
         if dry_run:
             self.stdout.write(self.style.WARNING(
