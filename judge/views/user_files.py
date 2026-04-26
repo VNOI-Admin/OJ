@@ -1,4 +1,5 @@
-from django.db.models import Q
+import os
+
 from django.http import FileResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
@@ -79,50 +80,23 @@ class PublicAccessMixin(UserFileBaseMixin):
 
 
 class UserFileListView(UserOwnedFilesMixin, ListView):
-    """List files uploaded by the current user with filtering support."""
+    """List files uploaded by the current user."""
 
     required_permission = 'judge.view_userfile'
+
     title = 'My Files'
     template_name = 'user/files/file_list.html'
     paginate_by = 20
     context_object_name = 'files'
 
     def get_queryset(self):
-        """Return files owned by the current user with optional filters."""
-        queryset = super().get_queryset().order_by('-uploaded_at')
-
-        search = self.request.GET.get('search', '')
-        file_type = self.request.GET.get('file_type', '')
-        visibility = self.request.GET.get('visibility', '')
-
-        if search:
-            queryset = queryset.filter(
-                Q(filename__icontains=search) | Q(description__icontains=search)
-            )
-        if file_type and file_type in dict(UserFile.FILE_TYPE_CHOICES):
-            queryset = queryset.filter(file_type=file_type)
-        if visibility == 'public':
-            queryset = queryset.filter(is_public=True)
-        elif visibility == 'private':
-            queryset = queryset.filter(is_public=False)
-
-        return queryset
+        """Return files owned by the current user ordered by upload time."""
+        return super().get_queryset().order_by('-uploaded_at')
 
     def get_context_data(self, **kwargs):
-        """Add filter options and search parameters to context."""
-        search = self.request.GET.get('search', '')
-        file_type = self.request.GET.get('file_type', '')
-        visibility = self.request.GET.get('visibility', '')
-
+        """Add permission-based UI flags to context."""
         context = super().get_context_data(**kwargs)
         context.update({
-            'search': search,
-            'file_type': file_type,
-            'visibility': visibility,
-            'file_type_choices': UserFile.FILE_TYPE_CHOICES,
-            'search_query': f'&search={search}' if search else '',
-            'type_query': f'&file_type={file_type}' if file_type else '',
-            'visibility_query': f'&visibility={visibility}' if visibility else '',
             'can_upload': UserFile.can_upload_by(self.request.user),
             'can_edit': self.request.user.is_superuser or self.request.user.has_perm('judge.change_userfile'),
             'can_delete': self.request.user.is_superuser or self.request.user.has_perm('judge.delete_userfile'),
@@ -134,6 +108,7 @@ class UserFileUploadView(UserOwnedFilesMixin, CreateView):
     """Upload a new file."""
 
     required_permission = 'judge.add_userfile'
+
     title = 'Upload New File'
     form_class = UserFileUploadForm
     template_name = 'user/files/file_upload.html'
@@ -141,6 +116,10 @@ class UserFileUploadView(UserOwnedFilesMixin, CreateView):
     def form_valid(self, form):
         """Attach current user to the form instance before saving."""
         form.instance.user = self.request.profile
+        form.instance.storage_scope = UserFile.STORAGE_SCOPE_MARTOR
+        uploaded_file = form.cleaned_data.get('file')
+        if uploaded_file:
+            form.instance.filename = os.path.basename(uploaded_file.name)
         return super().form_valid(form)
 
     def get_success_url(self):
@@ -178,6 +157,7 @@ class UserFileEditView(UserOwnedFilesMixin, UpdateView):
     """Edit file metadata (description and visibility)."""
 
     required_permission = 'judge.change_userfile'
+
     title = 'Edit File'
     form_class = UserFileEditForm
     template_name = 'user/files/file_edit.html'
@@ -191,6 +171,7 @@ class UserFileDeleteView(UserOwnedFilesMixin, DeleteView):
     """Delete a file with confirmation."""
 
     required_permission = 'judge.delete_userfile'
+
     title = 'Delete File'
     template_name = 'user/files/file_delete.html'
     success_url = reverse_lazy('user_file_list')

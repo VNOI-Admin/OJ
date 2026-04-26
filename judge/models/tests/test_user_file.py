@@ -130,12 +130,18 @@ class UserFilePermissionTest(TestCase):
 
     def test_scoped_problem_file_checks_problem_access(self):
         request = self._request_with_user(self.other)
-        self.assertEqual(self.access_chain.authorize(request, self.problem_scoped_file), self.problem_scoped_file)
+        self.assertEqual(
+            self.access_chain.authorize(request, self.problem_scoped_file),
+            self.problem_scoped_file,
+        )
 
     def test_scoped_contest_file_checks_contest_access(self):
         allowed_request = self._request_with_user(self.other)
         denied_request = self._request_with_user(self.upload_only)
 
-        self.assertEqual(self.access_chain.authorize(allowed_request, self.contest_scoped_file), self.contest_scoped_file)
+        self.assertEqual(
+            self.access_chain.authorize(allowed_request, self.contest_scoped_file),
+            self.contest_scoped_file,
+        )
         with self.assertRaises(Http404):
             self.access_chain.authorize(denied_request, self.contest_scoped_file)
