@@ -175,7 +175,7 @@
             <div class="no-submissions-left submissions-left">{{ _('0 submissions left') }}</div>
         {% endif %}
     {% else %}
-        {% if request.in_contest and contest_problem %}
+        {% if contest_problem %}
             <a href="{{ url('contest_problem_submit', contest_problem.contest.key, contest_problem.order) }}" class="unselectable button full">
         {% else %}
             <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
@@ -185,13 +185,15 @@
     {% endif %}
 
     <hr style="padding-bottom: 0.3em">
-    {% if request.in_contest and contest_problem %}
+    {% if contest_problem %}
         {% set contest = contest_problem.contest %}
-            <div><a href="{{ url('contest_order_user_submissions', contest.key, contest_problem.order, request.user.username) }}">{{ _('My submissions') }}</a></div> 
+            {% if request.user.is_authenticated and has_submissions %}
+                <div><a href="{{ url('contest_order_user_submissions', contest.key, contest_problem.order, request.user.username) }}">{{ _('My submissions') }}</a></div> 
+            {% endif %}
             {% if contest.can_see_full_submission_list(request.user) %}
                 <div><a href="{{ url('contest_order_all_submissions', contest.key, contest_problem.order) }}">{{ _('All submissions') }}</a></div>
                 
-                <div><a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ _('Best submissions') }}</a></div>
+                <div><a href="{{ url('contest_ranked_submissions', contest.key, contest_problem.order) }}">{{ _('Best submissions') }}</a></div>
         {% endif %}
     {% else %}
         {% if request.user.is_authenticated and has_submissions %}
