@@ -625,9 +625,23 @@ class ProblemSubmissionsBase(SubmissionsListBase):
             self.access_check_contest(request)
 
     def get(self, request, *args, **kwargs):
-        if 'problem' not in kwargs:
-            raise ImproperlyConfigured('Must pass a problem')
-        self.problem = get_object_or_404(Problem, code=kwargs['problem'])
+        if 'problem' in kwargs:
+            self.problem = get_object_or_404(Problem, code=kwargs['problem'])
+        elif 'order' in kwargs:
+            if not hasattr(self, 'contest'):
+                raise ImproperlyConfigured('Must pass a contest for order-based problem lookup')
+            try:
+                order = int(kwargs['order'])
+            except ValueError:
+                raise Http404()
+            try:
+                self.problem = Problem.objects.get(contests__contest=self.contest, contests__order=order)
+                # attach the problem order for future use
+                self.problem.order = order
+            except Problem.DoesNotExist:
+                raise Http404()
+        else:
+            raise ImproperlyConfigured('Must pass a problem/order argument')
         self.problem_name = self.problem.translated_name(self.request.LANGUAGE_CODE)
         return super(ProblemSubmissionsBase, self).get(request, *args, **kwargs)
 
@@ -643,7 +657,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
             context['dynamic_problem_id'] = self.problem.id
         if hasattr(self, 'contest'):
             context['best_submissions_link'] = reverse('contest_ranked_submissions',
-                                                       kwargs={'problem': self.problem.code,
+                                                       kwargs={'order': self.problem.order,
                                                                'contest': self.contest.key})
         else:
             context['best_submissions_link'] = reverse('ranked_submissions', kwargs={'problem': self.problem.code})

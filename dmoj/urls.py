@@ -260,7 +260,7 @@ urlpatterns = [
         path('/make_problems_public', contests.ContestProblemMakePublic.as_view(),
              name='contest_problems_make_public'),
 
-        path('/rank/<str:problem>/',
+        path('/rank/<int:order>/',
              paged_list_view(ranked_submission.ContestRankedSubmission, 'contest_ranked_submissions')),
 
         path('/submissions/',
