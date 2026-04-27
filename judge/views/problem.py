@@ -1194,7 +1194,7 @@ class ContestProblemDetail(ContestProblemMixin, ProblemDetail):
     def get_comment_page(self):
         cp = self.contest_problem
         return 'cp:%s:%s' % (cp.contest.key, cp.order)
-    
+
     def is_comment_locked(self):
         # TODO: maybe we just don't allow comments at all in the contest?
         if self.contest_problem and self.contest_problem.contest.use_clarifications:
