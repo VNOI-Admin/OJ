@@ -13,7 +13,7 @@ from django.db import transaction
 from django.db.models import BooleanField, Case, F, Prefetch, Q, When
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone, translation
@@ -21,7 +21,7 @@ from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
-from django.views.generic import CreateView, FormView, ListView, UpdateView, View
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
 from django.views.generic.base import TemplateResponseMixin
 from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
@@ -29,9 +29,9 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
-from judge.models import ContestParticipation, ContestProblem
-from judge.models import ContestSubmission, Judge, Language, Problem, ProblemGroup, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
+
+from judge.models import Contest, ContestParticipation, ContestProblem, ContestSubmission, Judge, Language, \
+    Problem, ProblemGroup, ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
@@ -64,6 +64,11 @@ def get_contest_submission_count(problem, participation):
         .filter(problem__problem=problem).count()
 
 
+class ProblemDeleted(Exception):
+    def __init__(self, problem_name):
+        self.problem_name = problem_name
+
+
 class ProblemMixin(object):
     model = Problem
     slug_url_kwarg = 'problem'
@@ -73,6 +78,8 @@ class ProblemMixin(object):
         problem = super(ProblemMixin, self).get_object(queryset)
         if not problem.is_accessible_by(self.request.user):
             raise Http404()
+        if problem.is_deleted:
+            raise ProblemDeleted(problem_name=problem.name)
         return problem
 
     def no_such_problem(self):
@@ -85,6 +92,12 @@ class ProblemMixin(object):
             return super(ProblemMixin, self).get(request, *args, **kwargs)
         except Http404:
             return self.no_such_problem()
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except ProblemDeleted as e:
+            return render(request, 'problem/deleted.html', {'title': e.problem_name})
 
 
 class SolvedProblemMixin(object):
@@ -617,7 +630,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
 
     def get_normal_queryset(self):
         _filter = self.get_filter()
-        queryset = Problem.objects.filter(_filter).select_related('group').defer('description', 'summary')
+        queryset = Problem.available.filter(_filter).select_related('group').defer('description', 'summary')
 
         if self.profile is not None and self.hide_solved:
             queryset = queryset.exclude(id__in=Submission.objects
@@ -1247,3 +1260,40 @@ class ContestOrderUserSubmissions(UserContestSubmissions):
             kwargs['problem'] = cp.problem.code
 
         return super().dispatch(request, *args, **kwargs)
+
+
+class ProblemDelete(ProblemMixin, TitleMixin, DetailView):
+    template_name = 'problem/confirm_delete.html'
+
+    def get_object(self, queryset=None):
+        problem = super().get_object(queryset)
+        if not problem.is_editable_by(self.request.user):
+            raise PermissionDenied()
+        return problem
+
+    def get_title(self):
+        return _('Delete problem %s') % self.object.name
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['affected_contests'] = Contest.objects.filter(
+            contest_problems__problem=self.object,
+        ).distinct()
+        context['next'] = self.request.GET.get('next', reverse('problem_list'))
+        return context
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        with revisions.create_revision(atomic=True):
+            self.object.mark_as_deleted()
+            revisions.set_user(self.request.user)
+            revisions.set_comment(_('Marked as deleted'))
+            next_url = request.POST.get('next', reverse('problem_list'))
+            return HttpResponseRedirect(next_url)
+
+    def dispatch(self, request, *args, **kwargs):
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except PermissionDenied:
+            return generic_message(request, _("Can't delete problem"),
+                                   _('You are not allowed to delete this problem.'), status=403)
