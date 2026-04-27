@@ -49,13 +49,6 @@ recjk = re.compile(r'[\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u3005\u3007\u3021-
                    r'\u4E00-\u9FC3\uF900-\uFA2D\uFA30-\uFA6A\uFA70-\uFAD9\U00020000-\U0002A6D6\U0002F800-\U0002FA1D]')
 
 
-def get_contest_problem(problem, profile):
-    try:
-        return problem.contests.get(contest_id=profile.current_contest.contest_id)
-    except ObjectDoesNotExist:
-        return None
-
-
 def get_contest_submission_count(problem, participation):
     if not participation:
         return 0
@@ -187,7 +180,7 @@ user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
 
 class ProblemSubmitMixin:
     @cached_property
-    def participation(self):
+    def participation(self) -> ContestParticipation | None:
         if not self.request.user.is_authenticated:
             return None
         if hasattr(self, 'explicit_participation') and self.explicit_participation:
@@ -195,25 +188,15 @@ class ProblemSubmitMixin:
         return self.request.profile.current_contest
 
     @cached_property
-    def contest_problem(self):
-        if hasattr(self, '_explicit_contest_problem') and self._explicit_contest_problem:
-            return self._explicit_contest_problem
-
-        if not self.request.user.is_authenticated or not self.participation:
-            return None
-
-        try:
-            return self.object.contests.get(contest_id=self.participation.contest_id)
-        except ObjectDoesNotExist:
-            return None
-
-    @cached_property
     def remaining_submission_count(self):
         if not self.request.user.is_authenticated:
             return None
-        max_subs = self.contest_problem and self.contest_problem.max_submissions
+        max_subs = hasattr(self, 'contest_problem') and self.contest_problem.max_submissions
         if max_subs is None:
             return None
+        # When an IE submission is rejudged into a non-IE status, it will count towards the
+        # submission limit. We max with 0 to ensure that `remaining_submission_count` returns
+        # a non-negative integer, which is required for future checks in this view.
         return max(
             0,
             max_subs - get_contest_submission_count(
@@ -280,7 +263,7 @@ class ProblemSubmitMixin:
         return {
             'form': self.get_submit_form(),
             'langs': Language.objects.all(),
-            'submission_limit': self.contest_problem and self.contest_problem.max_submissions,
+            'submission_limit': hasattr(self, 'contest_problem') and self.contest_problem.max_submissions,
             'submissions_left': self.remaining_submission_count,
             'ACE_URL': settings.ACE_URL,
             'default_lang': self.default_language,
@@ -323,7 +306,7 @@ class ProblemSubmitMixin:
             if organization is None:
                 # check if the contest belongs to any organization
                 if self.contest_problem is not None:
-                    contest_object = request.profile.current_contest.contest
+                    contest_object = self.participation.contest
 
                     if contest_object.is_organization_private:
                         organization = contest_object.organization
@@ -348,7 +331,8 @@ class ProblemSubmitMixin:
 
             contest_problem = self.contest_problem
             if contest_problem is not None and self.participation:
-                # Dùng self.participation thay vì request.profile.current_contest
+                # use self.participation instead of request.profile.current_contest
+                # TODO: remove current_contest field after migrate to the new contest code system
                 new_submission.contest_object = self.participation.contest
                 if self.participation.live:
                     new_submission.locked_after = new_submission.contest_object.locked_after
@@ -356,7 +340,7 @@ class ProblemSubmitMixin:
                 ContestSubmission(
                     submission=new_submission,
                     problem=contest_problem,
-                    participation=request.profile.current_contest,
+                    participation=self.participation,
                 ).save()
             else:
                 new_submission.save()
@@ -394,22 +378,6 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, Commen
     context_object_name = 'problem'
     template_name = 'problem/problem.html'
 
-    def get_object(self, queryset=None):
-        problem = super(ProblemDetail, self).get_object(queryset)
-
-        user = self.request.user
-        authed = user.is_authenticated
-        self.contest_problem = (None if not authed or user.profile.current_contest is None else
-                                get_contest_problem(problem, user.profile))
-
-        return problem
-
-    def is_comment_locked(self):
-        if self.contest_problem and self.contest_problem.contest.use_clarifications:
-            return True
-
-        return super(ProblemDetail, self).is_comment_locked()
-
     def get_comment_page(self):
         return 'p:%s' % self.object.code
 
@@ -417,17 +385,8 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, Commen
         context = super(ProblemDetail, self).get_context_data(**kwargs)
         user = self.request.user
         authed = user.is_authenticated
-        contest_problem = self.contest_problem
         context['has_submissions'] = authed and Submission.objects.filter(user=user.profile,
                                                                           problem=self.object).exists()
-        context['contest_problem'] = contest_problem
-        if contest_problem:
-            clarifications = self.object.clarifications
-            context['has_clarifications'] = clarifications.count() > 0
-            context['clarifications'] = clarifications.order_by('-date')
-            context['submission_limit'] = contest_problem.max_submissions
-            if contest_problem.max_submissions:
-                context['submissions_left'] = self.remaining_submission_count
 
         context['available_judges'] = Judge.objects.filter(online=True, problems=self.object)
         context['show_languages'] = self.object.allowed_languages.count() != Language.objects.count()
@@ -1202,18 +1161,17 @@ class ProblemDelete(ProblemMixin, TitleMixin, DetailView):
                                    _('You are not allowed to delete this problem.'), status=403)
 
 
-class ContestProblemDetail(ProblemDetail):
+class ContestProblemMixin:
     def get_object(self, queryset=None):
         contest_key = self.kwargs.get('contest')
         order = self.kwargs.get('order')
 
-        print(f'Fetching ContestProblem for contest_key={contest_key}, order={order}')
         cp = get_object_or_404(
             ContestProblem.objects.select_related('problem', 'contest'),
             contest__key=contest_key,
             order=order,
         )
-        self._explicit_contest_problem = cp
+        self.contest_problem = cp
         problem = cp.problem
 
         user = self.request.user
@@ -1231,38 +1189,34 @@ class ContestProblemDetail(ProblemDetail):
 
         return problem
 
+
+class ContestProblemDetail(ContestProblemMixin, ProblemDetail):
     def get_comment_page(self):
-        cp = self._explicit_contest_problem
+        cp = self.contest_problem
         return 'cp:%s:%s' % (cp.contest.key, cp.order)
+    
+    def is_comment_locked(self):
+        # TODO: maybe we just don't allow comments at all in the contest?
+        if self.contest_problem and self.contest_problem.contest.use_clarifications:
+            return True
+
+        return super(ContestProblemDetail, self).is_comment_locked()
+
+    def get_context_data(self, **kwargs):
+        context = super(ContestProblemDetail, self).get_context_data(**kwargs)
+        context['contest_problem'] = self.contest_problem
+        if self.contest_problem:
+            clarifications = self.object.clarifications
+            context['has_clarifications'] = clarifications.count() > 0
+            context['clarifications'] = clarifications.order_by('-date')
+            context['submission_limit'] = self.contest_problem.max_submissions
+            if self.contest_problem.max_submissions:
+                context['submissions_left'] = self.remaining_submission_count
+        return context
 
 
-class ContestProblemSubmit(ProblemSubmit):
-    def get_object(self, queryset=None):
-        contest_key = self.kwargs.get('contest')
-        order = self.kwargs.get('order')
-
-        cp = get_object_or_404(
-            ContestProblem.objects.select_related('problem', 'contest'),
-            contest__key=contest_key,
-            order=order,
-        )
-        self._explicit_contest_problem = cp
-        problem = cp.problem
-
-        user = self.request.user
-        if user.is_authenticated:
-            self.explicit_participation = ContestParticipation.objects.filter(
-                user=user.profile,
-                contest=cp.contest,
-            ).first()
-        else:
-            self.explicit_participation = None
-
-        if not problem.is_accessible_by(user):
-            if not (self.explicit_participation and cp.contest.is_accessible_by(user)):
-                raise Http404()
-
-        return problem
+class ContestProblemSubmit(ContestProblemMixin, ProblemSubmit):
+    pass
 
 
 class ContestOrderAllSubmissions(ProblemSubmissions):
@@ -1284,7 +1238,6 @@ class ContestOrderUserSubmissions(UserContestSubmissions):
     def dispatch(self, request, *args, **kwargs):
         contest_key = kwargs.get('contest')
         order = kwargs.pop('order', None)
-        print(f'ContestOrderUserSubmissions dispatch: contest_key={contest_key}, order={order}, kwargs={kwargs}')
         if order is not None:
             cp = get_object_or_404(
                 ContestProblem.objects.select_related('problem'),
