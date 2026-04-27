@@ -29,7 +29,6 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
-
 from judge.models import Contest, ContestParticipation, ContestProblem, ContestSubmission, Judge, Language, \
     Problem, ProblemGroup, ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
