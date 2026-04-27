@@ -325,9 +325,11 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
             .add_i18n_name(self.request.LANGUAGE_CODE)
 
         # convert to problem points in contest instead of actual points
-        points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
+        # also attach the .order field to problem
+        points_list = list(self.object.contest_problems.values_list('points', 'order').order_by('order'))
         for idx, p in enumerate(context['contest_problems']):
             p.points = points_list[idx][0]
+            p.order = points_list[idx][1]
 
         context['metadata'] = {
             'has_public_editorials': any(
@@ -383,9 +385,11 @@ class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
             .add_i18n_description(self.request.LANGUAGE_CODE)
 
         # convert to problem points in contest instead of actual points
-        points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
+        # also attach the .order field to problem
+        points_list = list(self.object.contest_problems.values_list('points', 'order').order_by('order'))
         for idx, p in enumerate(context['contest_problems']):
             p.points = points_list[idx][0]
+            p.order = points_list[idx][1]
 
         authenticated = self.request.user.is_authenticated
         context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
