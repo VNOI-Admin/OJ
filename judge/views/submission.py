@@ -148,7 +148,7 @@ class SubmissionSource(SubmissionDetailBase):
 
 
 @require_GET
-def SubmissionProblemRedirect(request, submission):
+def submission_problem_redirect(request, submission):
     """
     Redirects to the problem page of a submission. This is used for the "View problem"/"Resubmit" link on the
     submission status page.
