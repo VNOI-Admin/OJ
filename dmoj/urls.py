@@ -186,7 +186,7 @@ urlpatterns = [
     path('src/<int:submission>/download', submission.SubmissionSourceDownload.as_view(),
          name='submission_source_download'),
 
-    path('submission/<int:submission>/problem', submission.SubmissionProblemRedirect,
+    path('submission/<int:submission>/problem', submission.submission_problem_redirect,
          name='submission_problem_redirect'),
     path('submission/<int:submission>', include([
         path('', submission.SubmissionStatus.as_view(), name='submission_status'),
