@@ -285,6 +285,8 @@ urlpatterns = [
         path('/<int:order>/submit', problem.ContestProblemSubmit.as_view(), name='contest_problem_submit'),
         path('/<int:order>/resubmit/<int:submission>', problem.ContestProblemSubmit.as_view(),
              name='contest_problem_submit'),
+        path('/<int:order>/tickets/new', ticket.NewContestProblemTicketView.as_view(),
+             name='new_contest_problem_ticket'),
         path('/', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),
 
