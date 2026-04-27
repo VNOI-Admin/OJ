@@ -265,7 +265,7 @@ class ProblemSubmitMixin:
         return {
             'form': self.get_submit_form(),
             'langs': Language.objects.all(),
-            'submission_limit': hasattr(self, 'contest_problem') and self.contest_problem.max_submissions,
+            'submission_limit': self.contest_problem and self.contest_problem.max_submissions,
             'submissions_left': self.remaining_submission_count,
             'ACE_URL': settings.ACE_URL,
             'default_lang': self.default_language,
