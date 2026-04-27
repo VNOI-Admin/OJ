@@ -92,7 +92,7 @@ class ContestRankedSubmission(ForceContestMixin, RankedSubmissions):
         if self.problem.is_accessible_by(self.request.user):
             return mark_safe(escape(_('Best solutions for %(problem)s in %(contest)s')) % {
                 'problem': format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                       reverse('problem_detail', args=[self.problem.code])),
+                                       reverse('contest_problem_detail', args=[self.contest.key, self.problem.order])),
                 'contest': format_html('<a href="{1}">{0}</a>', self.contest.name,
                                        reverse('contest_view', args=[self.contest.key])),
             })
