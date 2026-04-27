@@ -653,7 +653,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
     def is_contest_scoped(self):
         if super(ProblemSubmissionsBase, self).is_contest_scoped:
             return True
-        if not hasattr(self, 'contest'):
+        if not hasattr(self, 'contest') or self.contest is None:
             return False
         # return true if user is accessing a problem inside a contest
         return self.contest.problems.filter(id=self.problem.id).exists()
