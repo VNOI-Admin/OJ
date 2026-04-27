@@ -179,6 +179,8 @@ user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
 
 
 class ProblemSubmitMixin:
+    contest_problem = None
+
     @cached_property
     def participation(self) -> ContestParticipation | None:
         if not self.request.user.is_authenticated:
@@ -191,7 +193,7 @@ class ProblemSubmitMixin:
     def remaining_submission_count(self):
         if not self.request.user.is_authenticated:
             return None
-        max_subs = hasattr(self, 'contest_problem') and self.contest_problem.max_submissions
+        max_subs = self.contest_problem.max_submissions if self.contest_problem else None
         if max_subs is None:
             return None
         # When an IE submission is rejudged into a non-IE status, it will count towards the
@@ -1184,7 +1186,7 @@ class ContestProblemMixin:
             self.explicit_participation = ContestParticipation.objects.filter(
                 user=user.profile,
                 contest=cp.contest,
-            ).first()
+            ).order_by('-virtual').first()  # get the last participation
         else:
             self.explicit_participation = None
 
@@ -1200,6 +1202,8 @@ class ContestProblemMixin:
 
     @cached_property
     def contest(self):
+        if hasattr(self, 'contest_problem') and self.contest_problem is not None:
+            return self.contest_problem.contest
         return get_object_or_404(Contest, key=self.contest_key)
 
     def get_context_data(self, **kwargs):
