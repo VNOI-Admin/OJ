@@ -5,6 +5,8 @@ from django.utils import timezone
 from judge.models import Problem
 from judge.utils.problems import fast_delete_problem
 
+__all__ = ('problem_garbage_collect',)
+
 
 @shared_task
 def problem_garbage_collect():
