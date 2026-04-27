@@ -471,7 +471,11 @@
 
 {% block post_description_end %}
     {% if request.user.is_authenticated and not request.profile.mute %}
-        <a href="{{ url('new_problem_ticket', problem.code) }}" class="button clarify">
+        {% if contest_problem %}
+            <a href="{{ url('new_contest_problem_ticket', contest_problem.contest.key, contest_problem.order) }}" class="button clarify">
+        {% else %}
+            <a href="{{ url('new_problem_ticket', problem.code) }}" class="button clarify">
+        {% endif %}
             {%- if comment_lock and request.profile.current_contest.live -%}
                 {{ _('Request clarification') }}
             {%- else -%}
