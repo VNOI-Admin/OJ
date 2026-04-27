@@ -1162,14 +1162,19 @@ class ProblemDelete(ProblemMixin, TitleMixin, DetailView):
 
 
 class ContestProblemMixin:
-    def get_object(self, queryset=None):
-        contest_key = self.kwargs.get('contest')
-        order = self.kwargs.get('order')
+    def dispatch(self, request, *args, **kwargs):
+        self.contest_key = kwargs.get('contest')
+        self.order = kwargs.get('order')
 
+        if self.contest_key is None or self.order is None:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self, queryset=None):
         cp = get_object_or_404(
             ContestProblem.objects.select_related('problem', 'contest'),
-            contest__key=contest_key,
-            order=order,
+            contest__key=self.contest_key,
+            order=self.order,
         )
         self.contest_problem = cp
         problem = cp.problem
@@ -1188,6 +1193,20 @@ class ContestProblemMixin:
                 raise Http404()
 
         return problem
+
+    @cached_property
+    def is_contest_scoped(self):
+        return True
+
+    @cached_property
+    def contest(self):
+        return get_object_or_404(Contest, key=self.contest_key)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['contest_key'] = self.contest_key
+        context['order'] = self.order
+        return context
 
 
 class ContestProblemDetail(ContestProblemMixin, ProblemDetail):
@@ -1219,31 +1238,29 @@ class ContestProblemSubmit(ContestProblemMixin, ProblemSubmit):
     pass
 
 
-class ContestOrderAllSubmissions(ProblemSubmissions):
-    def dispatch(self, request, *args, **kwargs):
-        contest_key = kwargs.get('contest')
-        order = kwargs.pop('order', None)
-
-        if order is not None:
-            cp = get_object_or_404(
-                ContestProblem.objects.select_related('problem'),
-                contest__key=contest_key,
-                order=order,
-            )
-            kwargs['problem'] = cp.problem.code
-        return super().dispatch(request, *args, **kwargs)
+class ContestOrderAllSubmissions(ContestProblemMixin, ProblemSubmissions):
+    def get_content_title(self):
+        return mark_safe(escape(_('All submissions for %s')) % (
+            format_html('<a href="{1}">{0}</a>', self.problem_name,
+                        reverse('contest_problem_detail', args=[self.contest_key, self.order])),
+        ))
 
 
-class ContestOrderUserSubmissions(UserContestSubmissions):
-    def dispatch(self, request, *args, **kwargs):
-        contest_key = kwargs.get('contest')
-        order = kwargs.pop('order', None)
-        if order is not None:
-            cp = get_object_or_404(
-                ContestProblem.objects.select_related('problem'),
-                contest__key=contest_key,
-                order=order,
-            )
-            kwargs['problem'] = cp.problem.code
-
-        return super().dispatch(request, *args, **kwargs)
+class ContestOrderUserSubmissions(ContestProblemMixin, UserContestSubmissions):
+    def get_content_title(self):
+        if self.problem.is_accessible_by(self.request.user):
+            return mark_safe(escape(_("{user}'s submissions for {problem} in {contest}")).format(
+                user=format_html('<a href="{1}">{0}</a>', self.profile.display_name,
+                                 reverse('user_page', args=[self.username])),
+                problem=format_html('<a href="{1}">{0}</a>', self.problem_name,
+                                    reverse('contest_problem_detail', args=[self.contest_key, self.order])),
+                contest=format_html('<a href="{1}">{0}</a>', self.contest.name,
+                                    reverse('contest_view', args=[self.contest.key])),
+            ))
+        return mark_safe(escape(_("{user}'s submissions for problem {label} in {contest}")).format(
+            user=format_html('<a href="{1}">{0}</a>', self.profile.display_name,
+                             reverse('user_page', args=[self.username])),
+            label=self.get_problem_label(self.problem),
+            contest=format_html('<a href="{1}">{0}</a>', self.contest.name,
+                                reverse('contest_view', args=[self.contest.key])),
+        ))
