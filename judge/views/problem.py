@@ -1235,7 +1235,14 @@ class ContestProblemDetail(ContestProblemMixin, ProblemDetail):
 
 
 class ContestProblemSubmit(ContestProblemMixin, ProblemSubmit):
-    pass
+    def get_content_title(self):
+        return mark_safe(
+            escape(_('Submit to %s')) % format_html(
+                '<a href="{0}">{1}</a>',
+                reverse('contest_problem_detail', args=[self.contest_key, self.order]),
+                self.object.translated_name(self.request.LANGUAGE_CODE),
+            ),
+        )
 
 
 class ContestOrderAllSubmissions(ContestProblemMixin, ProblemSubmissions):
