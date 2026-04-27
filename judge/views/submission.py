@@ -380,7 +380,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
 
     @cached_property
     def contest(self):
-        return self.request.profile.current_contest.contest
+        return None
 
     def _get_queryset(self):
         queryset = Submission.objects.all()
@@ -628,16 +628,12 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         if 'problem' in kwargs:
             self.problem = get_object_or_404(Problem, code=kwargs['problem'])
         elif 'order' in kwargs:
-            if not hasattr(self, 'contest'):
+            if 'contest' not in kwargs:
                 raise ImproperlyConfigured('Must pass a contest for order-based problem lookup')
             try:
-                order = int(kwargs['order'])
-            except ValueError:
-                raise Http404()
-            try:
-                self.problem = Problem.objects.get(contests__contest=self.contest, contests__order=order)
+                self.problem = Problem.objects.get(contests__contest__key=self.contest_key, contests__order=self.order)
                 # attach the problem order for future use
-                self.problem.order = order
+                self.problem.order = self.order
             except Problem.DoesNotExist:
                 raise Http404()
         else:
@@ -646,8 +642,8 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         return super(ProblemSubmissionsBase, self).get(request, *args, **kwargs)
 
     def get_all_submissions_page(self):
-        if hasattr(self, 'contest'):
-            return reverse('contest_all_submissions', kwargs={'contest': self.contest.key})
+        if hasattr(self, 'contest_key'):
+            return reverse('contest_order_all_submissions', kwargs={'contest': self.contest_key, 'order': self.order})
         return reverse('chronological_submissions', kwargs={'problem': self.problem.code})
 
     def get_context_data(self, **kwargs):
@@ -655,10 +651,10 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         if self.dynamic_update:
             context['dynamic_update'] = context['page_obj'].number == 1
             context['dynamic_problem_id'] = self.problem.id
-        if hasattr(self, 'contest'):
+        if hasattr(self, 'contest_key'):
             context['best_submissions_link'] = reverse('contest_ranked_submissions',
-                                                       kwargs={'order': self.problem.order,
-                                                               'contest': self.contest.key})
+                                                       kwargs={'order': self.order,
+                                                               'contest': self.contest_key})
         else:
             context['best_submissions_link'] = reverse('ranked_submissions', kwargs={'problem': self.problem.code})
         return context
@@ -667,10 +663,10 @@ class ProblemSubmissionsBase(SubmissionsListBase):
 class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
-            if hasattr(self, 'contest'):
-                return reverse('contest_user_submissions', kwargs={'problem': self.problem.code,
-                                                                   'user': self.request.user.username,
-                                                                   'contest': self.contest.key})
+            if hasattr(self, 'contest_key') and hasattr(self, 'order'):
+                return reverse('contest_order_user_submissions', kwargs={'order': self.order,
+                                                                         'user': self.request.user.username,
+                                                                         'contest': self.contest_key})
             return reverse('user_submissions', kwargs={'problem': self.problem.code,
                                                        'user': self.request.user.username})
 
@@ -809,6 +805,14 @@ class ForceContestMixin(object):
 
     def get_problem_label(self, problem):
         return self.contest.get_label_for_problem(self.get_problem_number(problem) - 1)
+
+    def dispatch(self, request, *args, **kwargs):
+        self.contest_key = kwargs.get('contest')
+        self.order = kwargs.get('order')
+
+        if self.contest_key is None or self.order is None:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
         if 'contest' not in kwargs:
