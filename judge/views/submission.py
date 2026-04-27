@@ -25,6 +25,7 @@ from django.views.generic import DetailView, ListView
 
 from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
+from judge.models.contest import ContestProblem
 from judge.models.problem import ProblemTestcaseResultAccess, SubmissionSourceAccess
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.lazy import memo_lazy
@@ -98,14 +99,26 @@ class SubmissionDetailBase(LoginRequiredMixin, TitleMixin, SubmissionMixin, Deta
 
     def get_content_title(self):
         submission = self.object
+        if self.object.contest_object:
+            problem_url = reverse('submission_problem_redirect', args=[self.object.id])
+        else:
+            problem_url = reverse('problem_detail', args=[submission.problem.code])
         return mark_safe(escape(_('Submission of %(problem)s by %(user)s')) % {
             'problem': format_html('<a href="{0}">{1}</a>',
-                                   reverse('problem_detail', args=[submission.problem.code]),
+                                   problem_url,
                                    submission.problem.translated_name(self.request.LANGUAGE_CODE)),
             'user': format_html('<a href="{0}">{1}</a>',
                                 reverse('user_page', args=[submission.user.user.username]),
                                 submission.user.display_name),
         })
+
+    def get_context_data(self, **kwargs):
+        context = super(SubmissionDetailBase, self).get_context_data(**kwargs)
+        if self.object.contest_object:
+            context['resubmit_url'] = reverse('submission_problem_redirect', args=[self.object.id]) + '?resubmit=1'
+        else:
+            context['resubmit_url'] = reverse('problem_submit', args=[self.object.problem.code, self.object.id])
+        return context
 
 
 class SubmissionSource(SubmissionDetailBase):
@@ -132,6 +145,56 @@ class SubmissionSource(SubmissionDetailBase):
             return super().get(request, *args, **kwargs)
         except SubmissionSourcePermissionDenied:
             return generic_message(request, 'Access denied', 'This source cannot be viewed by normal users.', 404)
+
+
+@require_GET
+def SubmissionProblemRedirect(request, submission):
+    """
+    Redirects to the problem page of a submission. This is used for the "View problem"/"Resubmit" link on the
+    submission status page.
+
+    - Why do we need this? Because a submission can be associated with a contest problem,
+    and we want to redirect to the contest problem page in that case, instead of the global problem page.
+
+    - Then why do we need a separate view for this? Why not just look up the problem in the submission status view and
+    redirect from there?
+
+    It's optimization thing, this view only needed when the user clicks the "View problem" link, which is much less
+    frequent than viewing the submission status page.
+
+    By doing the redirection in a separate view, we can avoid doing extra database queries for every submission status
+    page view, and only do it when necessary.
+
+    This view doesn't check any permissions since the target page should handle it already
+    """
+    submission_id = submission
+    is_resubmit = request.GET.get('resubmit') == '1'
+
+    submission = Submission.objects.filter(id=submission_id).values(
+        'problem_id', 'contest_object_id', 'contest_object__key',
+    ).first()
+
+    if submission is None or submission['contest_object_id'] is None:
+        raise Http404()
+
+    problem_contest = ContestProblem.objects.filter(
+        contest_id=submission['contest_object_id'],
+        problem_id=submission['problem_id'],
+    ).only('order').first()
+    if problem_contest is None:
+        raise Http404()
+
+    if is_resubmit:
+        return HttpResponseRedirect(reverse('contest_problem_submit',
+                                            kwargs={
+                                                'contest': submission['contest_object__key'],
+                                                'order': problem_contest.order, 'submission': submission_id,
+                                            }))
+    return HttpResponseRedirect(reverse('contest_problem_detail',
+                                        kwargs={
+                                            'contest': submission['contest_object__key'],
+                                            'order': problem_contest.order,
+                                        }))
 
 
 @require_GET

@@ -186,6 +186,8 @@ urlpatterns = [
     path('src/<int:submission>/download', submission.SubmissionSourceDownload.as_view(),
          name='submission_source_download'),
 
+    path('submission/<int:submission>/problem', submission.SubmissionProblemRedirect,
+         name='submission_problem_redirect'),
     path('submission/<int:submission>', include([
         path('', submission.SubmissionStatus.as_view(), name='submission_status'),
         path('/abort', submission.abort_submission, name='submission_abort'),
@@ -280,6 +282,8 @@ urlpatterns = [
              paged_list_view(problem.ContestOrderUserSubmissions, 'contest_order_user_submissions')),
         path('/<int:order>/', problem.ContestProblemDetail.as_view(), name='contest_problem_detail'),
         path('/<int:order>/submit', problem.ContestProblemSubmit.as_view(), name='contest_problem_submit'),
+        path('/<int:order>/resubmit/<int:submission>', problem.ContestProblemSubmit.as_view(),
+             name='contest_problem_submit'),
         path('/', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),
 
