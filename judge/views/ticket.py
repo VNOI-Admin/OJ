@@ -24,7 +24,7 @@ from judge.tasks import on_new_ticket, on_new_ticket_message
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.tickets import filter_visible_tickets, own_ticket_filter
 from judge.utils.views import SingleObjectFormView, TitleMixin, paginate_query_context
-from judge.views.problem import ProblemMixin
+from judge.views.problem import ContestProblemMixin, ProblemMixin
 from judge.widgets import MartorWidget
 
 ticket_widget = MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('ticket_preview')})
@@ -63,6 +63,9 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
     def get_assignees(self):
         return []
 
+    def get_linked_item(self):
+        return self.object
+
     def get_form_kwargs(self):
         kwargs = super(NewTicketView, self).get_form_kwargs()
         kwargs['request'] = self.request
@@ -70,7 +73,7 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
 
     def form_valid(self, form):
         ticket = Ticket(user=self.request.profile, title=form.cleaned_data['title'])
-        ticket.linked_item = self.object
+        ticket.linked_item = self.get_linked_item()
         ticket.save()
         message = TicketMessage(ticket=ticket, user=ticket.user, body=form.cleaned_data['body'])
         message.save()
@@ -142,6 +145,32 @@ class NewProblemTicketView(ProblemMixin, TitleMixin, NewTicketView):
     def get_content_title(self):
         return mark_safe(escape(_('New ticket for %s')) %
                          format_html('<a href="{0}">{1}</a>', reverse('problem_detail', args=[self.object.code]),
+                                     self.object.translated_name(self.request.LANGUAGE_CODE)))
+
+    def form_valid(self, form):
+        if not self.object.is_accessible_by(self.request.user):
+            raise Http404()
+        return super().form_valid(form)
+
+
+class NewContestProblemTicketView(ContestProblemMixin, TitleMixin, NewTicketView):
+    template_name = 'ticket/new_problem.html'
+
+    def get_linked_item(self):
+        return self.contest_problem
+
+    def get_assignees(self):
+        assignees = set(self.object.authors.values_list('id', flat=True))
+        assignees |= set(self.contest_problem.contest.authors.values_list('id', flat=True))
+        return Profile.objects.filter(id__in=assignees)
+
+    def get_title(self):
+        return _('New ticket for %s') % self.object.name
+
+    def get_content_title(self):
+        return mark_safe(escape(_('New ticket for %s')) %
+                         format_html('<a href="{0}">{1}</a>',
+                                     reverse('contest_problem_detail', args=[self.contest_key, self.order]),
                                      self.object.translated_name(self.request.LANGUAGE_CODE)))
 
     def form_valid(self, form):

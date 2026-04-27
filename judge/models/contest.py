@@ -751,6 +751,14 @@ class ContestProblem(models.Model):
                                           validators=[MinValueOrNoneValidator(1, _('Why include a problem you '
                                                                                    "can't submit to?"))])
 
+    def __str__(self):
+        return _('Problem %(order)s in %(contest)s') % {
+            'order': self.order, 'contest': self.contest.name,
+        }
+
+    def get_absolute_url(self):
+        return reverse('contest_problem_detail', args=[self.contest.key, self.order])
+
     class Meta:
         unique_together = ('problem', 'contest')
         verbose_name = _('contest problem')
