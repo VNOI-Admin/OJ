@@ -5,7 +5,7 @@
         #access-code-form {
             margin: 50px auto 0;
             display: block;
-            max-width: 500px;
+            max-width: 800px;
         }
 
         #id_access_code {
@@ -15,19 +15,52 @@
         .button-line {
             text-align: right;
         }
+
+        #contest-terms {
+            max-width: 800px;
+            margin: 30px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        .terms-agree {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+        }
+        /* error should be red and highlighted */
     </style>
 {% endblock %}
 
 {% block body %}
     <form id="access-code-form" action="" method="post" class="form-area">
         {% csrf_token %}
-        {% if form.errors or wrong_code %}
-            <div id="form-errors">
-                <p class="error">{{ _('Invalid access code.') }}</p>
+        {% if needs_terms %}
+            <div id="contest-terms">
+                {{ contest.terms|markdown('contest', MATH_ENGINE)|reference|str|safe }}
+                <div class="terms-agree">
+                    <label>
+                        {{ form.terms_agreed }}
+                        {{ form.terms_agreed.label }}
+                    </label>
+                    {% if form.terms_agreed.errors %}
+                    <div id="form-errors">
+                        <p class="error">{{ form.terms_agreed.errors.0 }}</p>
+                    </div>
+                    {% endif %}
+                </div>
             </div>
         {% endif %}
-        <p>{{ _('Please enter your access code:') }}</p>
-        <p>{{ form.access_code }}</p>
+        {% if needs_access_code %}
+            {% if form.access_code.errors %}
+                <div id="form-errors">
+                    <p class="error">{{ form.access_code.errors.0 }}</p>
+                </div>
+            {% endif %}
+            <p>{{ _('Please enter your access code:') }}</p>
+            <p>{{ form.access_code }}</p>
+        {% endif %}
         <p class="button-line">
             <button type="submit">{{ _('Join Contest') }}</button>
         </p>
