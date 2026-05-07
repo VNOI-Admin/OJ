@@ -13,7 +13,9 @@
         }
 
         .button-line {
-            text-align: right;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 30px;
         }
 
         #contest-terms {
@@ -35,6 +37,7 @@
 {% block body %}
     <form id="access-code-form" action="" method="post" class="form-area">
         {% csrf_token %}
+        <h2 style="text-align: center; margin-bottom: 30px;">{{_('Contest')}}: {{ contest.name }}</h2>
         {% if needs_terms %}
             <div id="contest-terms">
                 {{ contest.terms|markdown('contest', MATH_ENGINE)|reference|str|safe }}
