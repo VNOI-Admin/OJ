@@ -133,6 +133,7 @@ class ContestForm(ModelForm):
             'banned_users': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'view_contest_scoreboard': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'description': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
+            'terms': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
             'banned_judges': AdminSelect2MultipleWidget(),
         }
 
@@ -147,7 +148,7 @@ class ContestAdmin(NoBatchDeleteMixin, SortableAdminBase, VersionAdmin):
                                     'points_precision', 'banned_judges')}),
         (_('Scheduling'), {'fields': ('start_time', 'end_time', 'registration_start', 'registration_end',
                                       'time_limit')}),
-        (_('Details'), {'fields': ('description', 'og_image', 'logo_override_image', 'tags', 'summary')}),
+        (_('Details'), {'fields': ('description', 'terms', 'og_image', 'logo_override_image', 'tags', 'summary')}),
         (_('Format'), {'fields': ('format_name', 'frozen_last_minutes', 'format_config', 'problem_label_script')}),
         (_('Rating'), {'fields': ('is_rated', 'rate_all', 'rate_disqualified', 'rating_floor', 'rating_ceiling',
                                   'rate_exclude')}),
