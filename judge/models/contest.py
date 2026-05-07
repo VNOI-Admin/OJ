@@ -83,6 +83,7 @@ class Contest(models.Model):
                                                           'but not edit it.'),
                                      blank=True, related_name='testers+')
     description = models.TextField(verbose_name=_('description'), blank=True)
+    terms = models.TextField(verbose_name=_('terms'), blank=True)
     problems = models.ManyToManyField(Problem, verbose_name=_('problems'), through='ContestProblem')
     start_time = models.DateTimeField(verbose_name=_('start time'), db_index=True)
     end_time = models.DateTimeField(verbose_name=_('end time'), db_index=True)
