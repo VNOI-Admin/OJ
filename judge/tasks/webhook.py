@@ -271,7 +271,7 @@ def queue_time_stats():
 
     embed = DiscordEmbed(title=f'Queue time, {start_time:%Y-%m-%d}', color='03b2f8')
     embed.set_image('attachment://chart.png')
-    webhook = DiscordWebhook(url=webhook_config.webhook_url)
+    webhook = DiscordWebhook(url=webhook_config['url'], thread_id=webhook_config['thread_id'])
     webhook.add_file(chart_bytes, 'chart.png')
     webhook.add_embed(embed)
     webhook.execute()
