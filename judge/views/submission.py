@@ -26,6 +26,7 @@ from django.views.generic import DetailView, ListView
 from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
 from judge.models.problem import ProblemTestcaseResultAccess, SubmissionSourceAccess
+from judge.models.role import ContestRole, ROLE_AUTHOR, ROLE_CURATOR
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.lazy import memo_lazy
 from judge.utils.problem_data import get_problem_testcases_data
@@ -41,7 +42,7 @@ def submission_related(queryset):
               'memory', 'points', 'result', 'status', 'case_points', 'case_total', 'current_testcase', 'contest_object',
               'locked_after', 'problem__submission_source_visibility_mode', 'problem__testcase_result_visibility_mode',
               'user__username_display_override', 'user__display_badge__name', 'user__display_badge__mini') \
-        .prefetch_related('contest_object__authors', 'contest_object__curators')
+        .prefetch_related('contest_object__contest_roles', 'contest_object__contest_roles__user')
 
 
 class SubmissionPermissionDenied(PermissionDenied):
@@ -400,10 +401,14 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
 
             if not self.request.user.has_perm('judge.see_private_contest'):
                 # Show submissions for any contest you can edit or visible scoreboard
-                contest_queryset = Contest.objects.filter(Q(authors=self.request.profile) |
-                                                          Q(curators=self.request.profile) |
-                                                          Q(scoreboard_visibility=Contest.SCOREBOARD_VISIBLE) |
-                                                          Q(end_time__lt=timezone.now())).distinct()
+                contest_queryset = Contest.objects.annotate(
+                    has_editor=ContestRole.exists_for(
+                        self.request.profile, roles=[ROLE_AUTHOR, ROLE_CURATOR]),
+                ).filter(
+                    Q(has_editor=True) |
+                    Q(scoreboard_visibility=Contest.SCOREBOARD_VISIBLE) |
+                    Q(end_time__lt=timezone.now()),
+                ).distinct()
                 queryset = queryset.filter(Q(user=self.request.profile) |
                                            Q(contest_object__in=contest_queryset) |
                                            Q(contest_object__isnull=True))

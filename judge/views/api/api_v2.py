@@ -14,6 +14,7 @@ from judge.models import (
     Contest, ContestParticipation, ContestTag, Judge, Language, Organization, Problem, ProblemType, Profile, Rating,
     Submission,
 )
+from judge.models.role import ContestRole, ROLE_AUTHOR, ROLE_CURATOR
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.raw_sql import join_sql_subquery, use_straight_join
 from judge.views.submission import group_test_cases
@@ -371,8 +372,8 @@ class APIContestParticipationList(APIListView):
             q = Q(end_time__lt=self._now)
             if self.request.user.is_authenticated:
                 if self.request.user.has_perm('judge.edit_own_contest'):
-                    q |= Q(authors=self.request.profile)
-                    q |= Q(curators=self.request.profile)
+                    q |= ContestRole.exists_for(
+                        self.request.profile, roles=[ROLE_AUTHOR, ROLE_CURATOR])
                 q |= Q(view_contest_scoreboard=self.request.profile)
             visible_contests = visible_contests.filter(q)
 

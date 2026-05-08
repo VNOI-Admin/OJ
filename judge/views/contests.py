@@ -41,6 +41,7 @@ from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownlo
     ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Language, Organization, Problem, ProblemClarification, Profile, Submission
+from judge.models.role import ContestRole, ROLE_AUTHOR
 from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
@@ -104,7 +105,7 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
         return timezone.now()
 
     def _get_queryset(self):
-        return super().get_queryset().prefetch_related('tags', 'organization', 'authors', 'curators', 'testers')
+        return super().get_queryset().prefetch_related('tags', 'organization', 'contest_roles', 'contest_roles__user')
 
     def get_queryset(self):
         self.search_query = None
@@ -133,7 +134,7 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
             for participation in ContestParticipation.objects.filter(virtual=0, user=self.request.profile,
                                                                      contest_id__in=present) \
                     .select_related('contest') \
-                    .prefetch_related('contest__authors', 'contest__curators', 'contest__testers') \
+                    .prefetch_related('contest__contest_roles', 'contest__contest_roles__user') \
                     .annotate(key=F('contest__key')):
                 if participation.ended:
                     finished.add(participation.contest.key)
@@ -429,7 +430,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             contest.organization = organization
             contest.private_contestants.set(private_contestants)
             contest.view_contest_scoreboard.set(view_contest_scoreboard)
-            contest.authors.add(self.request.profile)
+            ContestRole.objects.get_or_create(contest=contest, user=self.request.profile, role=ROLE_AUTHOR)
 
             for problem in contest_problems:
                 problem.contest = contest
@@ -1219,7 +1220,7 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
 
     def save_contest_form(self, form):
         self.object = form.save()
-        self.object.authors.add(self.request.profile)
+        ContestRole.objects.get_or_create(contest=self.object, user=self.request.profile, role=ROLE_AUTHOR)
         self.object.save()
 
     def post(self, request, *args, **kwargs):
