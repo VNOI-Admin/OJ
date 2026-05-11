@@ -62,7 +62,8 @@ def run_moss(self, contest_key):
                 if subs.exists():
                     try:
                         moss_call = MOSS(moss_api_key, language=moss_lang, matching_file_limit=100,
-                                         comment='%s - %s' % (contest.key, problem.code))
+                                         comment='%s - %s' % (contest.key, problem.code),
+                                         moss_host=settings.MOSS_HOST, moss_port=settings.MOSS_PORT)
 
                         users = set()
 
@@ -74,8 +75,8 @@ def run_moss(self, contest_key):
 
                         result.url = moss_call.process()
                         result.submission_count = len(users)
-                    except Exception as e:
-                        logger.error('Error running MOSS for %s - %s: %s', contest.key, problem.code, type(e))
+                    except Exception:
+                        logger.exception('Error running MOSS for %s - %s: %s', contest.key, problem.code)
 
                 moss_results.append(result)
                 p.did(1)
