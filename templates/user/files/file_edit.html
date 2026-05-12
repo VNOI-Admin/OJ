@@ -3,89 +3,90 @@
 {% block title %}{{ _('Edit File') }} - {{ file.filename }}{% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">{{ _('Edit File Metadata') }}</h4>
-                    <small class="text-muted">{{ file.filename }}</small>
-                </div>
-                <div class="card-body">
-                    <form method="post" novalidate>
-                        {{ csrf_token }}
-                        
-                        {% if form.non_field_errors() %}
-                            <div class="alert alert-danger" role="alert">
-                                {% for error in form.non_field_errors() %}
-                                    <p>{{ error }}</p>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
+<style>
+    .file-edit-wrap {
+        max-width: 640px;
+    }
 
-                        <div class="form-group">
-                            <label for="{{ form.description.id_for_label }}">
-                                {{ form.description.label }}
-                            </label>
-                            {{ form.description }}
-                            {% if form.description.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.description.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <small class="form-text text-muted">
-                                {{ _('Optional description for this file') }}
-                            </small>
-                        </div>
+    .block-header {
+        font-weight: 600;
+        margin-top: 0.8em;
+        margin-bottom: 0.3em;
+    }
 
-                        <div class="form-group">
-                            <label for="{{ form.is_public.id_for_label }}">
-                                {{ form.is_public }}
-                                <span>{{ form.is_public.label }}</span>
-                            </label>
-                            {% if form.is_public.errors %}
-                                <div class="invalid-feedback d-block">
-                                    {% for error in form.is_public.errors %}
-                                        {{ error }}
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                            <small class="form-text text-muted">
-                                {{ _('If checked, this file is accessible to all users') }}
-                            </small>
-                        </div>
+    .fullwidth {
+        display: block;
+        overflow: hidden;
+    }
 
-                        <div class="form-group">
-                            <button type="submit" class="btn btn-primary">
-                                <i class="fa fa-save"></i> {{ _('Save Changes') }}
-                            </button>
-                            <a href="{{ url('user_file_detail', file.uuid) }}" class="btn btn-secondary">
-                                {{ _('Cancel') }}
-                            </a>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
+    .fullwidth textarea,
+    .fullwidth input[type="text"] {
+        width: 100%;
+    }
 
-        <div class="col-md-4">
-            <!-- File Info Sidebar -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">{{ _('File Information') }}</h5>
+    .form-field-error {
+        color: #c00;
+        margin-top: 0.2em;
+        font-size: 0.9em;
+    }
+
+    .edit-actions {
+        display: flex;
+        gap: 0.5em;
+        margin-top: 1em;
+    }
+
+    .back-link {
+        margin-bottom: 1em;
+        display: block;
+    }
+</style>
+
+<div class="file-edit-wrap">
+    <a class="back-link" href="{{ url('user_file_detail', file.uuid) }}">
+        <i class="fa fa-arrow-left"></i> {{ _('Back to file details') }}
+    </a>
+
+    <div class="sidebox">
+        <h3>{{ _('Edit metadata') }} <i class="fa fa-edit"></i></h3>
+        <div class="sidebox-content">
+            <form method="post" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors() %}
+                    <div class="form-field-error">
+                        {% for error in form.non_field_errors() %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+
+                <div class="block-header">{{ form.description.label }}</div>
+                <span class="fullwidth">{{ form.description }}</span>
+                {% if form.description.errors %}
+                    <div class="form-field-error">{{ form.description.errors }}</div>
+                {% endif %}
+
+                <div style="margin-top: 0.8em;">
+                    {{ form.is_public }}
+                    <label for="{{ form.is_public.id_for_label }}" style="float: unset; display: inline;">
+                        {{ form.is_public.label }}
+                    </label>
+                    {% if form.is_public.errors %}
+                        <div class="form-field-error">{{ form.is_public.errors }}</div>
+                    {% endif %}
+                    <small>&mdash; {{ _('if checked, this file is accessible to all users') }}</small>
                 </div>
-                <div class="card-body">
-                    <p><strong>{{ _('Filename:') }}</strong><br>{{ file.filename }}</p>
-                    <p><strong>{{ _('File Type:') }}</strong><br>
-                        <span class="badge badge-info">{{ file.get_file_type_display() }}</span>
-                    </p>
-                    <p><strong>{{ _('File Size:') }}</strong><br>{{ file.size|filesizeformat }}</p>
-                    <p><strong>{{ _('Uploaded:') }}</strong><br>{{ file.uploaded_at|date('DATETIME_FORMAT') }}</p>
-                    <p><strong>{{ _('Access Count:') }}</strong><br>{{ file.access_count }}</p>
+
+                <div class="edit-actions">
+                    <button type="submit" class="button">
+                        <i class="fa fa-save"></i> {{ _('Save changes') }}
+                    </button>
+                    <a href="{{ url('user_file_detail', file.uuid) }}" class="button">
+                        {{ _('Cancel') }}
+                    </a>
                 </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>

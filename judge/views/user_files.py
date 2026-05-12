@@ -1,5 +1,6 @@
 import os
 
+from django.contrib import messages
 from django.http import FileResponse, Http404
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
@@ -82,8 +83,6 @@ class PublicAccessMixin(UserFileBaseMixin):
 class UserFileListView(UserOwnedFilesMixin, ListView):
     """List files uploaded by the current user."""
 
-    required_permission = 'judge.view_userfile'
-
     title = 'My Files'
     template_name = 'user/files/file_list.html'
     paginate_by = 20
@@ -94,12 +93,11 @@ class UserFileListView(UserOwnedFilesMixin, ListView):
         return super().get_queryset().order_by('-uploaded_at')
 
     def get_context_data(self, **kwargs):
-        """Add permission-based UI flags to context."""
         context = super().get_context_data(**kwargs)
         context.update({
-            'can_upload': UserFile.can_upload_by(self.request.user),
-            'can_edit': self.request.user.is_superuser or self.request.user.has_perm('judge.change_userfile'),
-            'can_delete': self.request.user.is_superuser or self.request.user.has_perm('judge.delete_userfile'),
+            'can_upload': True,
+            'can_edit': True,
+            'can_delete': True,
         })
         return context
 
@@ -107,23 +105,27 @@ class UserFileListView(UserOwnedFilesMixin, ListView):
 class UserFileUploadView(UserOwnedFilesMixin, CreateView):
     """Upload a new file."""
 
-    required_permission = 'judge.add_userfile'
-
     title = 'Upload New File'
     form_class = UserFileUploadForm
     template_name = 'user/files/file_upload.html'
 
     def form_valid(self, form):
-        """Attach current user to the form instance before saving."""
         form.instance.user = self.request.profile
         form.instance.storage_scope = UserFile.STORAGE_SCOPE_MARTOR
         uploaded_file = form.cleaned_data.get('file')
         if uploaded_file:
             form.instance.filename = os.path.basename(uploaded_file.name)
-        return super().form_valid(form)
+        response = super().form_valid(form)
+        messages.success(
+            self.request,
+            _('File "%(name)s" uploaded. UUID: %(uuid)s') % {
+                'name': self.object.filename,
+                'uuid': self.object.uuid,
+            },
+        )
+        return response
 
     def get_success_url(self):
-        """Redirect to the file list after successful upload."""
         return reverse_lazy('user_file_list')
 
 
@@ -146,17 +148,18 @@ class UserFileDetailView(PublicAccessMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        can_edit = self.object.can_change_by(self.request.user)
         context.update({
-            'can_edit': self.object.can_change_by(self.request.user),
+            'can_edit': can_edit,
             'can_delete': self.object.can_delete_by(self.request.user),
         })
+        if can_edit:
+            context['form'] = UserFileEditForm(instance=self.object)
         return context
 
 
 class UserFileEditView(UserOwnedFilesMixin, UpdateView):
     """Edit file metadata (description and visibility)."""
-
-    required_permission = 'judge.change_userfile'
 
     title = 'Edit File'
     form_class = UserFileEditForm
@@ -169,8 +172,6 @@ class UserFileEditView(UserOwnedFilesMixin, UpdateView):
 
 class UserFileDeleteView(UserOwnedFilesMixin, DeleteView):
     """Delete a file with confirmation."""
-
-    required_permission = 'judge.delete_userfile'
 
     title = 'Delete File'
     template_name = 'user/files/file_delete.html'
