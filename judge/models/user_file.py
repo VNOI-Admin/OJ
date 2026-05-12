@@ -3,7 +3,7 @@ import uuid
 import mimetypes
 
 from django.conf import settings
-from django.core.files.storage import FileSystemStorage, Storage
+from django.core.files.storage import FileSystemStorage
 from django.db import models
 from django.db.models import Q
 from django.urls import reverse
@@ -30,106 +30,32 @@ USER_FILE_CONTEXT_SCOPES = frozenset((
 USER_FILE_STORAGE_PREFIX = 'user_files'
 
 
-def _build_user_file_storage(scope):
-    root_map = getattr(settings, 'USER_FILE_STORAGE_ROOTS', {}) or {}
-    url_map = getattr(settings, 'USER_FILE_STORAGE_URL_PREFIXES', {}) or {}
-    default_root = getattr(settings, 'USER_FILE_STORAGE_ROOT', settings.MEDIA_ROOT)
-    default_url = getattr(settings, 'USER_FILE_STORAGE_URL_PREFIX', settings.MEDIA_URL)
-
-    if scope not in USER_FILE_STORAGE_SCOPE_VALUES:
-        scope = USER_FILE_STORAGE_SCOPE_MARTOR
-
-    root = root_map.get(scope)
-    if not root:
-        root = os.path.join(default_root, USER_FILE_STORAGE_PREFIX, scope)
-
-    base_url = url_map.get(scope)
-    if not base_url:
-        base_url = os.path.join(default_url.rstrip('/'), USER_FILE_STORAGE_PREFIX, scope) + '/'
-    elif not base_url.endswith('/'):
+def _build_user_file_storage():
+    root = getattr(settings, 'USER_FILE_STORAGE_ROOT', settings.MEDIA_ROOT)
+    base_url = getattr(settings, 'USER_FILE_STORAGE_URL_PREFIX', settings.MEDIA_URL)
+    if not base_url.endswith('/'):
         base_url += '/'
-
     return FileSystemStorage(location=root, base_url=base_url)
 
 
-class UserFileStorageRouter(Storage):
-    """Route file operations to a storage backend based on scope prefix."""
-
-    def __init__(self):
-        self._storages = {scope: _build_user_file_storage(scope) for scope in USER_FILE_STORAGE_SCOPE_VALUES}
-
-    @staticmethod
-    def _split_scope(name):
-        clean_name = name.lstrip('/')
-        parts = clean_name.split('/', 2)
-        if len(parts) >= 2 and parts[0] == USER_FILE_STORAGE_PREFIX and parts[1] in USER_FILE_STORAGE_SCOPE_VALUES:
-            scope = parts[1]
-            remainder = parts[2] if len(parts) > 2 else ''
-            return scope, remainder
-        return USER_FILE_STORAGE_SCOPE_MARTOR, clean_name
-
-    def _resolve(self, name):
-        scope, remainder = self._split_scope(name)
-        storage = self._storages.get(scope) or self._storages[USER_FILE_STORAGE_SCOPE_MARTOR]
-        return storage, remainder
-
-    def _open(self, name, mode='rb'):
-        storage, remainder = self._resolve(name)
-        return storage._open(remainder, mode)
-
-    def _save(self, name, content):
-        scope, remainder = self._split_scope(name)
-        storage = self._storages.get(scope) or self._storages[USER_FILE_STORAGE_SCOPE_MARTOR]
-        saved_name = storage._save(remainder, content)
-        return os.path.join(USER_FILE_STORAGE_PREFIX, scope, saved_name)
-
-    def delete(self, name):
-        storage, remainder = self._resolve(name)
-        return storage.delete(remainder)
-
-    def exists(self, name):
-        storage, remainder = self._resolve(name)
-        return storage.exists(remainder)
-
-    def listdir(self, path):
-        storage, remainder = self._resolve(path)
-        return storage.listdir(remainder)
-
-    def size(self, name):
-        storage, remainder = self._resolve(name)
-        return storage.size(remainder)
-
-    def url(self, name):
-        storage, remainder = self._resolve(name)
-        return storage.url(remainder)
-
-    def path(self, name):
-        storage, remainder = self._resolve(name)
-        return storage.path(remainder)
-
-    def get_available_name(self, name, max_length=None):
-        scope, remainder = self._split_scope(name)
-        storage = self._storages.get(scope) or self._storages[USER_FILE_STORAGE_SCOPE_MARTOR]
-        available = storage.get_available_name(remainder, max_length=max_length)
-        return os.path.join(USER_FILE_STORAGE_PREFIX, scope, available)
-
-    def get_valid_name(self, name):
-        scope, remainder = self._split_scope(name)
-        storage = self._storages.get(scope) or self._storages[USER_FILE_STORAGE_SCOPE_MARTOR]
-        valid = storage.get_valid_name(remainder)
-        return os.path.join(USER_FILE_STORAGE_PREFIX, scope, valid)
-
-
-user_file_storage = UserFileStorageRouter()
+user_file_storage = _build_user_file_storage()
 
 
 def user_file_directory(instance, filename):
-    """Generate storage path for uploaded user files."""
-    base_name = os.path.basename(filename)
-    scope = getattr(instance, 'storage_scope', USER_FILE_STORAGE_SCOPE_MARTOR)
-    if scope not in USER_FILE_STORAGE_SCOPE_VALUES:
-        scope = USER_FILE_STORAGE_SCOPE_MARTOR
-    return os.path.join(USER_FILE_STORAGE_PREFIX, scope, base_name)
+    """Generate storage path for uploaded user files with UUID-based names."""
+    original_name = os.path.basename(filename)
+    display_name = os.path.basename(getattr(instance, 'filename', '') or original_name)
+
+    display_base, _ = os.path.splitext(display_name)
+    _, safe_ext = os.path.splitext(original_name)
+    if not safe_ext:
+        safe_ext = os.path.splitext(display_name)[1]
+
+    if not display_base:
+        display_base = os.path.splitext(original_name)[0] or 'file'
+
+    file_uuid = getattr(instance, 'uuid', None) or uuid.uuid4()
+    return f'{file_uuid}_{display_base}{safe_ext}'
 
 
 class UserFile(models.Model):
@@ -209,11 +135,11 @@ class UserFile(models.Model):
 
     @classmethod
     def can_list_by(cls, user):
-        return user.is_authenticated and (user.is_superuser or user.has_perm('judge.view_userfile'))
+        return user.is_authenticated
 
     @classmethod
     def can_upload_by(cls, user):
-        return user.is_authenticated and (user.is_superuser or user.has_perm('judge.add_userfile'))
+        return user.is_authenticated
 
     def is_owned_by(self, user):
         return self.user_id == self._profile_id(user)
@@ -267,21 +193,21 @@ class UserFile(models.Model):
             return False
         if user.is_superuser:
             return True
-        return user.has_perm('judge.view_userfile') and self.is_owned_by(user)
+        return self.is_owned_by(user)
 
     def can_change_by(self, user):
         if not user.is_authenticated:
             return False
         if user.is_superuser:
             return True
-        return user.has_perm('judge.change_userfile') and self.is_owned_by(user)
+        return self.is_owned_by(user)
 
     def can_delete_by(self, user):
         if not user.is_authenticated:
             return False
         if user.is_superuser:
             return True
-        return user.has_perm('judge.delete_userfile') and self.is_owned_by(user)
+        return self.is_owned_by(user)
 
     def save(self, *args, **kwargs):
         """Update file size and ensure filename is set before saving."""
@@ -297,8 +223,8 @@ class UserFile(models.Model):
         if self.file:
             file_basename = os.path.basename(self.file.name)
 
-            # On create, always derive filename from uploaded file to preserve extension.
-            if self._state.adding or not self.filename:
+            # If filename is missing, derive it from the stored file name.
+            if not self.filename:
                 self.filename = file_basename
             # If filename was manually set without extension, append extension from file.
             elif '.' not in os.path.basename(self.filename) and '.' in file_basename:

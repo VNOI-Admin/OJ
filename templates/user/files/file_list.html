@@ -2,12 +2,12 @@
 
 {% block title %}{{ _('My Files') }}{% endblock %}
 
+{% block header %}
+    <a href="{{ url('user_file_upload') }}" class="button">{{ _('Upload new file') }}</a>
+{% endblock %}
+
 {% block body %}
 <style>
-    .file-list-header {
-        margin-bottom: 1em;
-    }
-
     .file-list-actions {
         display: flex;
         gap: 0.4em;
@@ -16,29 +16,30 @@
     }
 
     .file-empty {
-        padding: 1em 1.2em;
-        margin-top: 0.7em;
+        padding: 0.8em 0;
+        color: #666;
+    }
+
+    ul.messages {
+        list-style: none;
+        padding: 0;
+        margin-bottom: 1em;
+    }
+
+    ul.messages li {
+        padding: 0.6em 1em;
+        border-left: 3px solid #4caf50;
+        background: #f6fff6;
+        margin-bottom: 0.4em;
+    }
+
+    ul.messages li.error {
+        border-color: #c00;
+        background: #fff6f6;
     }
 </style>
 
-<div class="file-list-header">
-    <h2>{{ _('My Files') }}</h2>
-    <p>{{ _('Upload, manage, and share your files') }}</p>
-</div>
-
-{% if can_upload %}
-    <div class="sidebox">
-        <h3>{{ _('Upload') }} <i class="fa fa-cloud-upload"></i></h3>
-        <div class="sidebox-content">
-            <p>{{ _('Upload page includes file selection, visibility, and description settings.') }}</p>
-            <form method="get" action="{{ url('user_file_upload') }}">
-                <button type="submit" class="button">
-                    <i class="fa fa-upload"></i> {{ _('Go to Upload Form') }}
-                </button>
-            </form>
-        </div>
-    </div>
-{% endif %}
+{% include "messages.html" %}
 
 {% if files %}
     <div class="h-scrollable-table">
@@ -46,10 +47,9 @@
             <thead>
                 <tr>
                     <th>{{ _('Filename') }}</th>
-                    <th>{{ _('Type') }}</th>
+                    <th>{{ _('Source') }}</th>
                     <th>{{ _('Size') }}</th>
                     <th>{{ _('Uploaded') }}</th>
-                    <th>{{ _('Accessed') }}</th>
                     <th>{{ _('Visibility') }}</th>
                     <th>{{ _('Actions') }}</th>
                 </tr>
@@ -60,16 +60,17 @@
                         <td>
                             <a href="{{ url('user_file_detail', file.uuid) }}">{{ file.filename }}</a>
                         </td>
-                        <td>{{ file.get_file_type_display() }}</td>
-                        <td>{{ file.size|filesizeformat }}</td>
-                        <td>{{ file.uploaded_at|date('SHORT_DATE_FORMAT') }}</td>
                         <td>
-                            {% if file.last_accessed %}
-                                {{ file.last_accessed|date('SHORT_DATE_FORMAT') }}
+                            {% if file.storage_scope == 'problem' %}
+                                {{ _('Problem') }}
+                            {% elif file.storage_scope == 'contest' %}
+                                {{ _('Contest') }}
                             {% else %}
-                                <em>{{ _('Never') }}</em>
+                                {{ _('User') }}
                             {% endif %}
                         </td>
+                        <td>{{ file.size|filesizeformat }}</td>
+                        <td>{{ file.uploaded_at|date('SHORT_DATE_FORMAT') }}</td>
                         <td>
                             {% if file.is_public %}
                                 {{ _('Public') }}
@@ -79,22 +80,10 @@
                         </td>
                         <td>
                             <div class="file-list-actions">
-                                <a href="{{ url('user_file_detail', file.uuid) }}" class="button inline-button" title="{{ _('View Details') }}">
-                                    <i class="fa fa-info-circle"></i>
-                                </a>
-                                {% if can_edit %}
-                                    <a href="{{ url('user_file_edit', file.uuid) }}" class="button inline-button" title="{{ _('Edit') }}">
-                                        <i class="fa fa-edit"></i>
-                                    </a>
-                                {% endif %}
-                                <a href="{{ url('user_file_download', file.uuid) }}" class="button inline-button" title="{{ _('Download') }}">
-                                    <i class="fa fa-download"></i>
-                                </a>
-                                {% if can_delete %}
-                                    <a href="{{ url('user_file_delete', file.uuid) }}" class="button inline-button" title="{{ _('Delete') }}">
-                                        <i class="fa fa-trash"></i>
-                                    </a>
-                                {% endif %}
+                                <a href="{{ url('user_file_detail', file.uuid) }}" class="button inline-button">{{ _('View') }}</a>
+                                <a href="{{ url('user_file_edit', file.uuid) }}" class="button inline-button">{{ _('Edit') }}</a>
+                                <a href="{{ url('user_file_download', file.uuid) }}" class="button inline-button">{{ _('Download') }}</a>
+                                <a href="{{ url('user_file_delete', file.uuid) }}" class="button inline-button">{{ _('Delete') }}</a>
                             </div>
                         </td>
                     </tr>
@@ -127,8 +116,6 @@
         </div>
     {% endif %}
 {% else %}
-    <div class="alert alert-info file-empty">
-        {{ _('No files yet. Use the upload button above to add your first file.') }}
-    </div>
+    <p class="file-empty">{{ _('No files yet. Click "Upload new file" to add your first file.') }}</p>
 {% endif %}
 {% endblock %}
