@@ -3,144 +3,247 @@
 {% block title %}{{ file.filename }} - {{ _('My Files') }}{% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    <div class="row mb-4">
-        <div class="col-md-12">
-            <a href="{{ url('user_file_list') }}" class="btn btn-secondary">
-                <i class="fa fa-arrow-left"></i> {{ _('Back to Files') }}
-            </a>
+<style>
+    .file-detail-wrap {
+        max-width: 860px;
+    }
+
+    .file-detail-meta td:first-child {
+        font-weight: 600;
+        width: 160px;
+        padding-right: 1em;
+    }
+
+    .file-uuid {
+        font-family: Consolas, Liberation Mono, Monaco, Courier New, monospace;
+        font-size: 0.85em;
+        word-break: break-all;
+        -webkit-user-select: all;
+        user-select: all;
+    }
+
+    .file-actions {
+        display: flex;
+        gap: 0.5em;
+        flex-wrap: wrap;
+        margin-top: 0.5em;
+    }
+
+    .usage-list {
+        margin: 0;
+        padding-left: 1.2em;
+    }
+
+    .usage-list li {
+        margin-bottom: 0.2em;
+    }
+
+    .back-link {
+        margin-bottom: 1em;
+        display: block;
+    }
+
+    .public-url-row {
+        display: flex;
+        align-items: center;
+        gap: 0.5em;
+        flex-wrap: wrap;
+    }
+
+    .public-url-input {
+        flex: 1;
+        min-width: 200px;
+        font-family: Consolas, Liberation Mono, Monaco, Courier New, monospace;
+        font-size: 0.85em;
+    }
+
+    .block-header {
+        font-weight: 600;
+        margin-top: 0.8em;
+        margin-bottom: 0.3em;
+    }
+
+    .fullwidth {
+        display: block;
+        overflow: hidden;
+    }
+
+    .fullwidth textarea,
+    .fullwidth input[type="text"] {
+        width: 100%;
+    }
+
+    .form-field-error {
+        color: #c00;
+        margin-top: 0.2em;
+        font-size: 0.9em;
+    }
+
+    .edit-actions {
+        display: flex;
+        gap: 0.5em;
+        margin-top: 1em;
+    }
+</style>
+
+<div class="file-detail-wrap">
+    <a class="back-link" href="{{ url('user_file_list') }}">
+        &larr; {{ _('Back to My Files') }}
+    </a>
+
+    <div class="sidebox">
+        <h3>{{ _('File information') }}</h3>
+        <div class="sidebox-content">
+            <table class="file-detail-meta">
+                <tr>
+                    <td>{{ _('Filename') }}</td>
+                    <td>{{ file.filename }}</td>
+                </tr>
+                <tr>
+                    <td>{{ _('File type') }}</td>
+                    <td>{{ file.get_file_type_display() }}</td>
+                </tr>
+                <tr>
+                    <td>{{ _('Size') }}</td>
+                    <td>{{ file.size|filesizeformat }}</td>
+                </tr>
+                <tr>
+                    <td>{{ _('Uploaded') }}</td>
+                    <td>{{ file.uploaded_at|date('DATETIME_FORMAT') }}</td>
+                </tr>
+                <tr>
+                    <td>{{ _('Last accessed') }}</td>
+                    <td>
+                        {% if file.last_accessed %}
+                            {{ file.last_accessed|date('DATETIME_FORMAT') }}
+                        {% else %}
+                            <em>{{ _('Never') }}</em>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td>{{ _('Access count') }}</td>
+                    <td>{{ file.access_count }}</td>
+                </tr>
+                <tr>
+                    <td>{{ _('Visibility') }}</td>
+                    <td>
+                        {% if file.is_public %}
+                            {{ _('Public') }} &mdash; <small>{{ _('accessible to all users') }}</small>
+                        {% else %}
+                            {{ _('Private') }} &mdash; <small>{{ _('only you can access') }}</small>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if file.description %}
+                    <tr>
+                        <td>{{ _('Description') }}</td>
+                        <td>{{ file.description }}</td>
+                    </tr>
+                {% endif %}
+                <tr>
+                    <td>{{ _('UUID') }}</td>
+                    <td><span class="file-uuid">{{ file.uuid }}</span></td>
+                </tr>
+                {% if file.is_public %}
+                    <tr>
+                        <td>{{ _('Public URL') }}</td>
+                        <td>
+                            <div class="public-url-row">
+                                <input type="text" class="public-url-input" id="public-url-field"
+                                    value="{{ request.build_absolute_uri(url('user_file_access', file.uuid)) }}"
+                                    readonly>
+                                <button type="button" class="button" onclick="copyPublicUrl()">{{ _('Copy') }}</button>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </table>
+
+            <div class="file-actions">
+                <a href="{{ url('user_file_download', file.uuid) }}" class="button">{{ _('Download') }}</a>
+                {% if can_delete %}
+                    <a href="{{ url('user_file_delete', file.uuid) }}" class="button">{{ _('Delete') }}</a>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    <div class="row">
-        <div class="col-md-8">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="mb-0">{{ file.filename }}</h4>
-                </div>
-                <div class="card-body">
-                    <table class="table table-borderless">
-                        <tr>
-                            <th style="width: 25%">{{ _('File Type') }}</th>
-                            <td>
-                                <span class="badge badge-info">{{ file.get_file_type_display() }}</span>
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>{{ _('File Size') }}</th>
-                            <td>{{ file.size|filesizeformat }}</td>
-                        </tr>
-                        <tr>
-                            <th>{{ _('Uploaded') }}</th>
-                            <td>{{ file.uploaded_at|date('DATETIME_FORMAT') }}</td>
-                        </tr>
-                        <tr>
-                            <th>{{ _('Last Accessed') }}</th>
-                            <td>
-                                {% if file.last_accessed %}
-                                    {{ file.last_accessed|date('DATETIME_FORMAT') }}
-                                {% else %}
-                                    <em class="text-muted">{{ _('Never') }}</em>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>{{ _('Access Count') }}</th>
-                            <td>{{ file.access_count }}</td>
-                        </tr>
-                        <tr>
-                            <th>{{ _('Visibility') }}</th>
-                            <td>
-                                {% if file.is_public %}
-                                    <span class="badge badge-success">{{ _('Public') }}</span>
-                                    <small class="text-muted">{{ _('Accessible to all users') }}</small>
-                                {% else %}
-                                    <span class="badge badge-warning">{{ _('Private') }}</span>
-                                    <small class="text-muted">{{ _('Only you can access') }}</small>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>{{ _('Description') }}</th>
-                            <td>
-                                {% if file.description %}
-                                    {{ file.description }}
-                                {% else %}
-                                    <em class="text-muted">{{ _('No description') }}</em>
-                                {% endif %}
-                            </td>
-                        </tr>
-                    </table>
-                </div>
+    {% if file.usages.exists() %}
+        <div class="sidebox">
+            <h3>{{ _('Used in') }}</h3>
+            <div class="sidebox-content">
+                <ul class="usage-list">
+                    {% for usage in file.usages.all() %}
+                        <li>
+                            <strong>{{ usage.get_usage_type_display() }}</strong>
+                            {% if usage.context_description %}
+                                &mdash; {{ usage.context_description }}
+                            {% elif usage.problem_id %}
+                                &mdash; {{ _('Problem ID:') }} {{ usage.problem_id }}
+                            {% elif usage.contest_id %}
+                                &mdash; {{ _('Contest ID:') }} {{ usage.contest_id }}
+                            {% endif %}
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
+        </div>
+    {% endif %}
 
-            <!-- Usage Contexts -->
-            {% if file.usages.exists() %}
-                <div class="card mt-4">
-                    <div class="card-header">
-                        <h5 class="mb-0">{{ _('Used In') }}</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="list-group">
-                            {% for usage in file.usages.all() %}
-                                <div class="list-group-item">
-                                    <h6 class="mb-1">
-                                        {{ usage.get_usage_type_display() }}
-                                    </h6>
-                                    <small class="text-muted">
-                                        {% if usage.context_description %}
-                                            {{ usage.context_description }}
-                                        {% elif usage.problem_id %}
-                                            {{ _('Problem ID:') }} <strong>{{ usage.problem_id }}</strong>
-                                        {% elif usage.contest_id %}
-                                            {{ _('Contest ID:') }} <strong>{{ usage.contest_id }}</strong>
-                                        {% endif %}
-                                        {% if usage.submission_id %}
-                                            {{ _('Submission ID:') }} <strong>{{ usage.submission_id }}</strong>
-                                        {% endif %}
-                                    </small>
-                                </div>
+    {% if can_edit %}
+        <div class="sidebox">
+            <h3>{{ _('Edit metadata') }}</h3>
+            <div class="sidebox-content">
+                <form method="post" action="{{ url('user_file_edit', file.uuid) }}" novalidate>
+                    {% csrf_token %}
+
+                    {% if form.non_field_errors() %}
+                        <div class="form-field-error">
+                            {% for error in form.non_field_errors() %}
+                                <p>{{ error }}</p>
                             {% endfor %}
                         </div>
+                    {% endif %}
+
+                    <div class="block-header">{{ form.description.label }}</div>
+                    <span class="fullwidth">{{ form.description }}</span>
+                    {% if form.description.errors %}
+                        <div class="form-field-error">{{ form.description.errors }}</div>
+                    {% endif %}
+
+                    <div style="margin-top: 0.8em;">
+                        {{ form.is_public }}
+                        <label for="{{ form.is_public.id_for_label }}" style="float: unset; display: inline;">
+                            {{ form.is_public.label }}
+                        </label>
+                        {% if form.is_public.errors %}
+                            <div class="form-field-error">{{ form.is_public.errors }}</div>
+                        {% endif %}
+                        <small>&mdash; {{ _('if checked, this file is accessible to all users') }}</small>
                     </div>
-                </div>
-            {% endif %}
-        </div>
 
-        <div class="col-md-4">
-            <!-- Actions -->
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="mb-0">{{ _('Actions') }}</h5>
-                </div>
-                <div class="card-body">
-                    <a href="{{ url('user_file_download', file.uuid) }}" class="btn btn-primary btn-block mb-2">
-                        <i class="fa fa-download"></i> {{ _('Download File') }}
-                    </a>
-                    {% if can_edit %}
-                        <a href="{{ url('user_file_edit', file.uuid) }}" class="btn btn-secondary btn-block mb-2">
-                            <i class="fa fa-edit"></i> {{ _('Edit Metadata') }}
-                        </a>
-                    {% endif %}
-                    {% if can_delete %}
-                        <a href="{{ url('user_file_delete', file.uuid) }}" class="btn btn-danger btn-block"
-                           onclick="return confirm('{{ _('Are you sure?') }}')">
-                            <i class="fa fa-trash"></i> {{ _('Delete File') }}
-                        </a>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Info Card -->
-            <div class="card mt-3">
-                <div class="card-body">
-                    <p class="small text-muted mb-0">
-                        <strong>{{ _('UUID:') }}</strong><br>
-                        <code>{{ file.uuid }}</code>
-                    </p>
-                </div>
+                    <div class="edit-actions">
+                        <button type="submit" class="button">{{ _('Save changes') }}</button>
+                    </div>
+                </form>
             </div>
         </div>
-    </div>
+    {% endif %}
 </div>
+
+{% if file.is_public %}
+<script>
+function copyPublicUrl() {
+    var field = document.getElementById('public-url-field');
+    field.select();
+    field.setSelectionRange(0, 99999);
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(field.value);
+    } else {
+        document.execCommand('copy');
+    }
+}
+</script>
+{% endif %}
 {% endblock %}

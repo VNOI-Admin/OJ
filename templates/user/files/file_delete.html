@@ -3,55 +3,76 @@
 {% block title %}{{ _('Delete File') }} - {{ file.filename }}{% endblock %}
 
 {% block body %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
-                <div class="card-header bg-danger text-white">
-                    <h4 class="mb-0"><i class="fa fa-warning"></i> {{ _('Delete File') }}</h4>
+<style>
+    .file-delete-wrap {
+        max-width: 560px;
+    }
+
+    .file-delete-meta td:first-child {
+        font-weight: 600;
+        width: 120px;
+        padding-right: 1em;
+    }
+
+    .delete-actions {
+        display: flex;
+        gap: 0.5em;
+        margin-top: 1em;
+    }
+
+    .back-link {
+        margin-bottom: 1em;
+        display: block;
+    }
+</style>
+
+<div class="file-delete-wrap">
+    <a class="back-link" href="{{ url('user_file_detail', file.uuid) }}">
+        <i class="fa fa-arrow-left"></i> {{ _('Back to file details') }}
+    </a>
+
+    <div class="sidebox">
+        <h3><i class="fa fa-warning"></i> {{ _('Confirm deletion') }}</h3>
+        <div class="sidebox-content">
+            <p>{{ _('Are you sure you want to permanently delete this file? This action cannot be undone.') }}</p>
+
+            <table class="file-delete-meta">
+                <tr>
+                    <td>{{ _('Filename') }}</td>
+                    <td>{{ file.filename }}</td>
+                </tr>
+                <tr>
+                    <td>{{ _('Type') }}</td>
+                    <td>{{ file.get_file_type_display() }}</td>
+                </tr>
+                <tr>
+                    <td>{{ _('Size') }}</td>
+                    <td>{{ file.size|filesizeformat }}</td>
+                </tr>
+                <tr>
+                    <td>{{ _('Uploaded') }}</td>
+                    <td>{{ file.uploaded_at|date('DATETIME_FORMAT') }}</td>
+                </tr>
+            </table>
+
+            {% if file.usages.exists() %}
+                <p style="margin-top: 0.8em;">
+                    <strong>{{ _('Note:') }}</strong>
+                    {{ _('This file is referenced in') }} <strong>{{ file.usages.count() }}</strong> {{ _('place(s).') }}
+                </p>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="delete-actions">
+                    <button type="submit" class="button">
+                        <i class="fa fa-trash"></i> {{ _('Yes, delete permanently') }}
+                    </button>
+                    <a href="{{ url('user_file_detail', file.uuid) }}" class="button">
+                        {{ _('Cancel') }}
+                    </a>
                 </div>
-                <div class="card-body">
-                    <div class="alert alert-danger" role="alert">
-                        <h5 class="alert-heading">{{ _('Warning!') }}</h5>
-                        <p>{{ _('Are you sure you want to permanently delete this file?') }}</p>
-                        <p class="mb-0">{{ _('This action cannot be undone.') }}</p>
-                    </div>
-
-                    <div class="card bg-light mb-3">
-                        <div class="card-body">
-                            <p class="mb-1"><strong>{{ _('Filename:') }}</strong></p>
-                            <p class="mb-3">{{ file.filename }}</p>
-
-                            <p class="mb-1"><strong>{{ _('File Type:') }}</strong></p>
-                            <p class="mb-3">{{ file.get_file_type_display() }}</p>
-
-                            <p class="mb-1"><strong>{{ _('File Size:') }}</strong></p>
-                            <p class="mb-3">{{ file.size|filesizeformat }}</p>
-
-                            <p class="mb-1"><strong>{{ _('Uploaded:') }}</strong></p>
-                            <p>{{ file.uploaded_at|date('DATETIME_FORMAT') }}</p>
-                        </div>
-                    </div>
-
-                    {% if file.usages.exists() %}
-                        <div class="alert alert-warning mb-3">
-                            <strong>{{ _('Note:') }}</strong>
-                            {{ _('This file is used in') }} <strong>{{ file.usages.count() }}</strong> {{ _('place(s)') }}
-                        </div>
-                    {% endif %}
-                </div>
-                <div class="card-footer">
-                    <form method="post" onsubmit="return confirm('{{ _('This action cannot be undone. Continue?') }}')">
-                        {{ csrf_token }}
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fa fa-trash"></i> {{ _('Yes, Delete Permanently') }}
-                        </button>
-                        <a href="{{ url('user_file_detail', file.uuid) }}" class="btn btn-secondary">
-                            {{ _('Cancel') }}
-                        </a>
-                    </form>
-                </div>
-            </div>
+            </form>
         </div>
     </div>
 </div>
