@@ -83,15 +83,7 @@
     {% for cell in user.problem_cells %}
         {{ cell }}
     {% endfor %}
-    {% if has_rating %}
-        <td class="rating-column">
-            {% if user.participation_rating %}
-                {% cache 86400 'rating_number' user.participation_rating %}
-                    {{ rating_number(user.participation_rating) }}
-                {% endcache %}
-            {% endif %}
-        </td>
-    {% endif %}
+    <td class="rating-column">{% if user.participation_rating %}{{ rating_number(user.participation_rating) }}{% endif %}</td>
 {% endblock %}
 
 {% block point %}
