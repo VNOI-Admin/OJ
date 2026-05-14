@@ -650,7 +650,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         return context
 
 
-class ProblemSubmissions(ProblemSubmissionsBase):
+class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
             if hasattr(self, 'contest'):
