@@ -1,10 +1,10 @@
+from django.conf import settings
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from judge.models import Language, Submission
-from judge.utils.problems import get_result_data
 from judge.utils.raw_sql import join_sql_subquery
 from judge.views.submission import ForceContestMixin, ProblemSubmissions
 
@@ -16,6 +16,9 @@ class RankedSubmissions(ProblemSubmissions):
     dynamic_update = False
 
     def get_queryset(self):
+        if settings.VNOJ_EXTREME_LOW_POWER_MODE:
+            return []
+
         params = [self.problem.id]
         if self.is_contest_scoped:
             contest_join = 'INNER JOIN judge_contestsubmission AS cs ON (sub.id = cs.submission_id)'
@@ -73,9 +76,7 @@ class RankedSubmissions(ProblemSubmissions):
         ))
 
     def _get_result_data(self, queryset=None):
-        if queryset is None:
-            queryset = super(RankedSubmissions, self).get_queryset()
-        return get_result_data(queryset.order_by())
+        return {'categories': [], 'total': 0}
 
 
 class ContestRankedSubmission(ForceContestMixin, RankedSubmissions):
