@@ -182,7 +182,9 @@
         <div><a href="{{ url('contest_user_submissions', contest.key, request.user.username, problem.code) }}">{{ _('My submissions') }}</a></div>
         {% if contest.can_see_full_submission_list(request.user) %}
             <div><a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a></div>
-            <div><a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ _('Best submissions') }}</a></div>
+            {% if problem.is_public %}
+                <div><a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ _('Best submissions') }}</a></div>
+            {% endif %}
         {% endif %}
     {% else %}
         {% if request.user.is_authenticated and has_submissions %}
@@ -191,7 +193,9 @@
             </div>
         {% endif %}
         <div><a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a></div>
-        <div><a href="{{ url('ranked_submissions', problem.code) }}">{{ _('Best submissions') }}</a></div>
+        {% if problem.is_public %}
+            <div><a href="{{ url('ranked_submissions', problem.code) }}">{{ _('Best submissions') }}</a></div>
+        {% endif %}
     {% endif %}
     {% if (editorial and editorial.is_accessible_by(request.user)) and not request.in_contest %}
         <hr>
