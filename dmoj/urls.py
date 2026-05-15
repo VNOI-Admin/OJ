@@ -133,7 +133,6 @@ urlpatterns = [
         path('/resubmit/<int:submission>', problem.ProblemSubmit.as_view(), name='problem_submit'),
         path('/update-polygon', problem.ProblemUpdatePolygon.as_view(), name='problem_update_polygon'),
 
-        path('/rank/', paged_list_view(ranked_submission.RankedSubmissions, 'ranked_submissions')),
         path('/submissions/', paged_list_view(submission.ProblemSubmissions, 'chronological_submissions')),
         path('/submissions/<str:user>/', paged_list_view(submission.UserProblemSubmissions, 'user_submissions')),
 
@@ -259,9 +258,6 @@ urlpatterns = [
         path('/data/download/', contests.ContestDownloadData.as_view(), name='contest_download_data'),
         path('/make_problems_public', contests.ContestProblemMakePublic.as_view(),
              name='contest_problems_make_public'),
-
-        path('/rank/<str:problem>/',
-             paged_list_view(ranked_submission.ContestRankedSubmission, 'contest_ranked_submissions')),
 
         path('/submissions/',
              paged_list_view(submission.AllContestSubmissions, 'contest_all_submissions')),
