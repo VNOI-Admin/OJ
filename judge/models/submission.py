@@ -284,6 +284,9 @@ class Submission(models.Model):
 
             # For user_completed_ids
             models.Index(fields=['user', 'result']),
+
+            # For user submissions page
+            models.Index(fields=['user', '-id']),
         ]
 
 
