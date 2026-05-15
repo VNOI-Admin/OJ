@@ -1,4 +1,5 @@
 from django.core.exceptions import EmptyResultSet
+from django.db.models import F
 from django.views.generic import ListView
 
 from judge.utils.raw_sql import join_sql_subquery
@@ -16,7 +17,11 @@ class DeferredPaginationListView(ListView):
         page_size = self.get_paginate_by(queryset)
         context_object_name = self.get_context_object_name(queryset)
         if page_size:
-            queryset_pks = queryset.values_list('pk', flat=True)
+            # Alias the pk explicitly: window-filtered querysets compile to a wrapped
+            # subquery whose columns are renamed (col1, ...), so the raw 'id' column
+            # name cannot be relied on for the join below.
+            queryset_pks = queryset.annotate(deferred_pk=F('pk')).values_list(
+                'deferred_pk', flat=True)
             paginator, page, queryset_pks, is_paginated = self.paginate_queryset(
                 queryset_pks, page_size
             )
@@ -28,7 +33,7 @@ class DeferredPaginationListView(ListView):
                     queryset,
                     subquery=query,
                     params=list(params),
-                    join_fields=[('id', 'id')],
+                    join_fields=[('id', 'deferred_pk')],
                     alias='deferred_object',
                     related_model=self.__class__.paginated_model,
                 )
