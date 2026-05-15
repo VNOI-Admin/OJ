@@ -17,7 +17,8 @@ class RankedSubmissions(ProblemSubmissions):
 
     def get_queryset(self):
         if settings.VNOJ_EXTREME_LOW_POWER_MODE:
-            return []
+            # return empty queryset to avoid heavy query
+            return Submission.objects.none()
 
         params = [self.problem.id]
         if self.is_contest_scoped:
