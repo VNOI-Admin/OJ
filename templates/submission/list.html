@@ -313,6 +313,7 @@
     {% endif %}
 
     <div id="common-content">
+        {% if not hide_sidebar %}
         <div id="content-right" class="submission">
             <div class="info-float">
                 <div class="sidebox">
@@ -377,6 +378,7 @@
                 </div>
             </div>
         </div>
+        {% endif %}
 
         <div id="content-left" class="submission">
             <div class="ws-closed">
