@@ -1,11 +1,13 @@
+from django.db.models import F, Window
+from django.db.models.functions import RowNumber
+from django.http import Http404
 from django.urls import reverse
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
-from judge.models import Language, Submission
+from judge.models import Submission
 from judge.utils.problems import get_result_data
-from judge.utils.raw_sql import join_sql_subquery
 from judge.views.submission import ForceContestMixin, ProblemSubmissions
 
 __all__ = ['RankedSubmissions', 'ContestRankedSubmission']
@@ -15,53 +17,47 @@ class RankedSubmissions(ProblemSubmissions):
     tab = 'best_submissions_list'
     dynamic_update = False
 
+    def access_check(self, request):
+        # only show ranked submissions for public problems
+        if not self.problem.is_public:
+            raise Http404()
+
+        super().access_check(request)
+
+    def _base_queryset(self):
+        # Rankings are viewer-independent: rank all submissions of the problem,
+        # regardless of any contest visibility the viewer has.
+        queryset = Submission.objects.filter(problem_id=self.problem.id)
+        if self.is_contest_scoped:
+            queryset = queryset.filter(contest_object=self.contest)
+        return queryset
+
     def get_queryset(self):
-        params = [self.problem.id]
-        if self.is_contest_scoped:
-            contest_join = 'INNER JOIN judge_contestsubmission AS cs ON (sub.id = cs.submission_id)'
-            points = 'cs.points'
-            constraint = ' AND sub.contest_object_id = %s'
-            params.append(self.contest.id)
-        else:
-            contest_join = ''
-            points = 'sub.points'
-            constraint = ''
+        points = 'contest__points' if self.is_contest_scoped else 'points'
+        # This queryset must stay free of display joins (language, badge, ...) so the
+        # window scan is answered entirely from the (problem, user, -points, -time)
+        # index. DeferredPaginationListView paginates its pks and hydrates only the
+        # page's rows via deferred_paginate.
+        return self._base_queryset() \
+            .filter(user__is_unlisted=False, **{points + '__gt': 0}) \
+            .annotate(user_rank=Window(
+                RowNumber(),
+                partition_by=F('user_id'),
+                order_by=[F(points).desc(), F('time').asc(nulls_last=True), F('id').asc()],
+            )) \
+            .filter(user_rank=1) \
+            .order_by('-' + points, 'time')
 
-        if self.selected_languages:
-            lang_ids = Language.objects.filter(key__in=self.selected_languages).values_list('id', flat=True)
-            if lang_ids:
-                constraint += f' AND sub.language_id IN ({", ".join(["%s"] * len(lang_ids))})'
-                params.extend(lang_ids)
-            self.selected_languages = set()
+    # if you want to use the default pagination, you can uncomment the following method
+    # and use `.values('id')` in the `get_queryset`
 
-        queryset = super(RankedSubmissions, self).get_queryset().filter(user__is_unlisted=False)
-        join_sql_subquery(
-            queryset,
-            subquery="""
-                SELECT sub.id AS id
-                FROM (
-                    SELECT sub.user_id AS uid, MAX(sub.points) AS points
-                    FROM judge_submission AS sub {contest_join}
-                    WHERE sub.problem_id = %s AND {points} > 0 {constraint}
-                    GROUP BY sub.user_id
-                ) AS highscore STRAIGHT_JOIN (
-                    SELECT sub.user_id AS uid, sub.points, MIN(sub.time) as time
-                    FROM judge_submission AS sub {contest_join}
-                    WHERE sub.problem_id = %s AND {points} > 0 {constraint}
-                    GROUP BY sub.user_id, {points}
-                ) AS fastest ON (highscore.uid = fastest.uid AND highscore.points = fastest.points)
-                    STRAIGHT_JOIN judge_submission AS sub
-                        ON (sub.user_id = fastest.uid AND sub.time = fastest.time)
-                WHERE sub.problem_id = %s {constraint}
-                GROUP BY sub.user_id
-            """.format(points=points, contest_join=contest_join, constraint=constraint),
-            params=params * 3, alias='best_subs', join_fields=[('id', 'id')], related_model=Submission,
-        )
-
-        if self.is_contest_scoped:
-            return queryset.order_by('-contest__points', 'time')
-        else:
-            return queryset.order_by('-points', 'time')
+    # def paginate_queryset(self, queryset, page_size):
+    #     paginator, page, object_list, has_other = super().paginate_queryset(queryset, page_size)
+    #     # Fetch the display joins only for the rows on this page.
+    #     ids = [row['id'] for row in object_list]
+    #     subs = {sub.id: sub for sub in submission_related(Submission.objects.filter(id__in=ids))}
+    #     page.object_list = object_list = [subs[i] for i in ids]
+    #     return paginator, page, object_list, has_other
 
     def get_ordering(self):
         if self.is_contest_scoped:
@@ -80,7 +76,7 @@ class RankedSubmissions(ProblemSubmissions):
 
     def _get_result_data(self, queryset=None):
         if queryset is None:
-            queryset = super(RankedSubmissions, self).get_queryset()
+            queryset = self._base_queryset()
         return get_result_data(queryset.order_by())
 
 
@@ -107,6 +103,3 @@ class ContestRankedSubmission(ForceContestMixin, RankedSubmissions):
             'contest': format_html('<a href="{1}">{0}</a>', self.contest.name,
                                    reverse('contest_view', args=[self.contest.key])),
         })
-
-    def _get_queryset(self):
-        return super()._get_queryset().filter(contest_object=self.contest)
