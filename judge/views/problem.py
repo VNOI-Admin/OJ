@@ -610,8 +610,9 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
 
     def get_filter(self):
         _filter = Q(is_public=True) & Q(is_organization_private=False)
-        if self.profile is not None:
-            _filter = Problem.q_add_author_curator_tester(_filter, self.profile)
+        # Thuc: temporary disable author/curator/tester filter since it causes performance issues
+        # if self.profile is not None:
+        #     _filter = Problem.q_add_author_curator_tester(_filter, self.profile)
         return _filter
 
     def get_normal_queryset(self):
