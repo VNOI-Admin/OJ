@@ -5,7 +5,6 @@
         {{ make_tab('create', 'fa-plus', url('blog_post_new'), _('Create new blog post')) }}
     {% endif %}
     {{ make_tab('about', 'fa-info-circle', url('user_page', user.user.username), _('About')) }}
-    {{ make_tab('problems', 'fa-puzzle-piece', url('user_problems', user.user.username), _('Statistics')) }}
     {% if not request.official_contest_mode %}
         {{ make_tab('blogs', 'fa-rss', url('user_blog', user.user.username), _('Blogs')) }}
     {% endif %}
