@@ -714,13 +714,20 @@ class ProposeContestProblemFormSet(
             # Don't bother validating the formset unless each form is valid on its own
             return
         orders = []
+        # form set don't have self.user, so we need to get user from forms
+        user = None
         for form in self.forms:
+            user = user or getattr(form, 'user', None)
             if self.can_delete and self._should_delete_form(form):
                 continue
             order = form.cleaned_data.get('order')
             if order and order in orders:
                 raise ValidationError(_('Problems must have distinct order.'))
             orders.append(order)
+
+        # if not super user and too many problem -> error
+        if len(orders) >= settings.VNOJ_CONTEST_PROBLEM_COUNT_LIMIT and user and not user.is_superuser:
+            raise ValidationError(_('Contest cannot have more than %d problems.') % settings.VNOJ_CONTEST_PROBLEM_COUNT_LIMIT)
 
 
 class BlogPostForm(ModelForm):

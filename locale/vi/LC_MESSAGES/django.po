@@ -8629,3 +8629,8 @@ msgstr "URL rút gọn này không hoạt động."
 
 #~ msgid "Maximum single-case runtime:"
 #~ msgstr "Thời gian chạy test lâu nhất:"
+
+#: judge/forms.py:729
+#, python-format
+msgid "Contest cannot have more than %d problems."
+msgstr "Kỳ thi không thể có nhiều hơn %d bài"
