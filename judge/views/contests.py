@@ -797,6 +797,12 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
 
         return context
 
+    def dispatch(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if not self.can_edit:
+            raise Http404()
+        return super().dispatch(request, *args, **kwargs)
+
 
 ContestRankingProfile = namedtuple(
     'ContestRankingProfile',
