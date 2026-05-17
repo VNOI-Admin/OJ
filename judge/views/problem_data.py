@@ -209,7 +209,7 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
                 return ZipFile(self.request.FILES['problem-data-zipfile']).namelist()
             elif data.zipfile:
                 return ZipFile(data.zipfile.path).namelist()
-        except BadZipfile:
+        except (BadZipfile, FileNotFoundError):
             return []
         return []
 
