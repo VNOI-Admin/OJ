@@ -705,7 +705,19 @@ class ProposeContestProblemFormSet(
             ContestProblem,
             form=ProposeContestProblemForm,
             can_delete=True,
+            max_num=settings.MAX_CONTEST_PROBLEMS_COUNT,
+            validate_max=True,
         )):
+
+    def full_clean(self):
+        # Django < 5.0 doesn't support override the too_many_forms message in the constructor.
+        # So we have to do it ourselves
+        super().full_clean()
+
+        for error in self._non_form_errors.as_data():
+            if error.code == 'too_many_forms':
+                error.message = _('Contest cannot have more than %(limit)d problems.') % \
+                    {'limit': self.max_num}
 
     def clean(self) -> None:
         """Checks that no Contest problems have the same order."""

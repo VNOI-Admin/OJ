@@ -136,6 +136,9 @@ VNOJ_LOW_POWER_MODE_CONFIG = {
     'heat_map_limit': 20_000,
 }
 
+# maximum number of problems in a contest
+MAX_CONTEST_PROBLEMS_COUNT = None
+
 VNOJ_MAGAZINE_TAG_SLUG = None
 
 CELERY_TIMEZONE = 'UTC'
