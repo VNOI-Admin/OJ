@@ -225,12 +225,12 @@
     <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
         {{ contest_problem_formset.management_form }}
-        <table class="django-as-table">{{ form.as_table() }}</table>
-        <hr>
-        <center><h3> {{ _('Problems') }} </h3></center>
         {% if contest_problem_formset.non_form_errors() %}
             {{ contest_problem_formset.non_form_errors() }}
         {% endif %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <hr>
+        <center><h3> {{ _('Problems') }} </h3></center>
         <table class="table">
             <thead>
                 <tr>
