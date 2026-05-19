@@ -156,7 +156,7 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
         return context
 
 
-class PrivateContestError(Exception):
+class PrivateContestError(PermissionDenied):
     def __init__(self, name, is_private, is_organization_private, org):
         self.name = name
         self.is_private = is_private
