@@ -606,6 +606,11 @@
                     },
                     error: function (response) {
                         console.log("error", response);
+                        if (response.responseJSON) {
+                            alert(response.responseJSON.error);
+                        } else {
+                            alert(response.responseText);
+                        }
                         $('.upload-progress[data-field-name=' + field_name + ']').hide();
                     }
                 });
