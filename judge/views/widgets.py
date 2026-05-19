@@ -9,6 +9,7 @@ from django.core.files.storage import default_storage
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, \
     HttpResponseRedirect
 from django.views.decorators.http import require_POST
+from django.utils.translation import gettext_lazy as _
 
 from judge.models import Submission
 from martor.api import imgur_uploader
@@ -84,7 +85,7 @@ def martor_image_uploader(request):
     if request.user.is_staff or request.user.has_perm('judge.can_upload_image'):
         data = django_uploader(image)
     else:
-        data = imgur_uploader(image)
+        return HttpResponseForbidden(_('You do not have permission to upload images'))
     return HttpResponse(data, content_type='application/json')
 
 
