@@ -8,11 +8,10 @@ from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, \
     HttpResponseRedirect
-from django.views.decorators.http import require_POST
 from django.utils.translation import gettext_lazy as _
+from django.views.decorators.http import require_POST
 
 from judge.models import Submission
-from martor.api import imgur_uploader
 
 __all__ = ['rejudge_submission']
 
