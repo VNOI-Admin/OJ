@@ -239,6 +239,9 @@ DISCORD_WEBHOOK = {
     'queue_time_stats': None,
 }
 
+# list of text will not be sent to `on_error` webhook
+IGNORED_ERRORS_FOR_DISCORD_WEBHOOK = []
+
 SITE_FULL_URL = None  # ie 'https://oj.vnoi.info', please remove the last / if needed
 
 ACE_URL = '/static/vnoj/ace/1.4.14'
