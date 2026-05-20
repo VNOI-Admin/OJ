@@ -8,6 +8,9 @@ from django.core.cache import cache
 from django.views.debug import ExceptionReporter
 
 
+logger = logging.getLogger(__name__)
+
+
 def new_webhook():
     cache.add('error_discord_webhook_throttle', 0, settings.VNOJ_DISCORD_WEBHOOK_THROTTLING[1])
     return cache.incr('error_discord_webhook_throttle')
@@ -71,6 +74,15 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
         webhook_config = settings.DISCORD_WEBHOOK.get('on_error', None)
         if webhook_config is None:
             return
+        
+        settings_idx = message.find('Settings:')
+        message_without_settings = message[:settings_idx] if settings_idx != -1 else message
+
+        for ignored_error in settings.IGNORED_ERRORS_FOR_DISCORD_WEBHOOK:
+            if ignored_error in message_without_settings:
+                logger.info('Ignored error for Discord webhook: %s', ignored_error)
+                return
+
         if isinstance(webhook_config, str):
             webhook_config = {
                 'url': webhook_config,
