@@ -30,7 +30,7 @@ class JudgeList(object):
         self.lock = RLock()
         self.min_tier = None
         self.problems = set()
-        self.problem_ids = []
+        self.problem_ids = set()
 
     def _handle_free_judge(self, judge):
         with self.lock:
@@ -109,12 +109,22 @@ class JudgeList(object):
                 if judge.name == judge_id:
                     judge.disconnect(force=force)
 
-    def update_problems_all(self, problems, problem_ids):
+    def update_problems_all(
+        self,
+        new_problems=set(),
+        new_problem_ids=set(),
+        deleted_problems=set(),
+        deleted_problem_ids=set(),
+    ):
         with self.lock:
-            self.problems = problems
-            self.problem_ids = problem_ids
+            self.problems = (self.problems | new_problems) - deleted_problems
+            self.problem_ids = (
+                self.problem_ids | new_problem_ids
+            ) - deleted_problem_ids
             for judge in self.judges:
-                judge.update_problems(problems, problem_ids)
+                judge.update_problems(
+                    new_problems, new_problem_ids, deleted_problems, deleted_problem_ids,
+                )
                 if not judge.working:
                     self._handle_free_judge(judge)
 
