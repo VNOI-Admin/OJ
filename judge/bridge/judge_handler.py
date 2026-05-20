@@ -326,12 +326,19 @@ class JudgeHandler(ZlibPacketHandler):
         if not Submission.objects.filter(id=id).update(batch=True):
             logger.warning('Unknown submission: %s', id)
 
+    def replace_problems(self, problems, problem_ids):
+        logger.info('%s: Replacing problem list', self.name)
+        self.problems = problems
+        self.judge.problems.set(problem_ids)
+        logger.info('%s: Replaced %d problems', self.name, len(self.problems))
+        json_log.info(self._make_json_log(action='update-problems', count=len(self.problems)))
+
     def update_problems(
         self,
-        new_problems=set(),
-        new_problem_ids=set(),
-        deleted_problems=set(),
-        deleted_problem_ids=set(),
+        new_problems=frozenset(),
+        new_problem_ids=frozenset(),
+        deleted_problems=frozenset(),
+        deleted_problem_ids=frozenset(),
     ):
         logger.info('%s: Updating problem list', self.name)
         self.problems = (new_problems | self.problems) - deleted_problems

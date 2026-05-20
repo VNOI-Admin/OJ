@@ -111,10 +111,10 @@ class JudgeList(object):
 
     def update_problems_all(
         self,
-        new_problems=set(),
-        new_problem_ids=set(),
-        deleted_problems=set(),
-        deleted_problem_ids=set(),
+        new_problems=frozenset(),
+        new_problem_ids=frozenset(),
+        deleted_problems=frozenset(),
+        deleted_problem_ids=frozenset(),
     ):
         with self.lock:
             self.problems = (self.problems | new_problems) - deleted_problems
@@ -130,7 +130,7 @@ class JudgeList(object):
 
     def update_problems(self, judge, problems, problem_ids):
         with self.lock:
-            judge.update_problems(problems, problem_ids)
+            judge.replace_problems(problems, problem_ids)
             if not judge.working:
                 self._handle_free_judge(judge)
 
