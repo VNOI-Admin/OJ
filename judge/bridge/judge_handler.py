@@ -335,10 +335,10 @@ class JudgeHandler(ZlibPacketHandler):
 
     def update_problems(
         self,
-        new_problems=frozenset(),
-        new_problem_ids=frozenset(),
-        deleted_problems=frozenset(),
-        deleted_problem_ids=frozenset(),
+        new_problems,
+        new_problem_ids,
+        deleted_problems,
+        deleted_problem_ids,
     ):
         logger.info('%s: Updating problem list', self.name)
         self.problems = (new_problems | self.problems) - deleted_problems
