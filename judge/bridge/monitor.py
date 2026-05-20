@@ -65,6 +65,7 @@ class Monitor:
 
         self.judges = judges
         self.problem_globs = problem_globs
+        self.problems = set()
 
         self.updater_exit = False
         self.updater_signal = threading.Event()
@@ -87,9 +88,26 @@ class Monitor:
                     problems.append(problem)
         problems = set(problems)
 
+        new_problems = problems - self.problems
+        deleted_problems = self.problems - problems
+
         _ensure_connection()
-        problem_ids = list(Problem.objects.filter(code__in=list(problems)).values_list('id', flat=True))
-        self.judges.update_problems_all(problems, problem_ids)
+
+        if new_problems or deleted_problems:
+            new_problem_ids = set(
+                Problem.objects.filter(code__in=new_problems).values_list('id', flat=True),
+            ) if new_problems else set()
+            deleted_problem_ids = set(
+                Problem.objects.filter(code__in=deleted_problems).values_list('id', flat=True),
+            ) if deleted_problems else set()
+            self.judges.update_problems_all(
+                new_problems=new_problems,
+                new_problem_ids=new_problem_ids,
+                deleted_problems=deleted_problems,
+                deleted_problem_ids=deleted_problem_ids,
+            )
+
+        self.problems = problems
 
     def updater_thread(self) -> None:
         while True:
