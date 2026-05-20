@@ -1438,19 +1438,21 @@ class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMix
         contest_problems = contest.contest_problems.prefetch_related('problem').all()
         for contest_problem in contest_problems:
             problem = contest_problem.problem
-            # this change has 1 implication:
-            # - users only need write permissions for **private** problems
-            # This is not a bug! It improves the UX since a lot of users include
-            # public problems in their contests.
-            if problem.is_public:
-                continue
-            if not problem.is_editable_by(request.user):
-                raise PermissionDenied(_('You do not have permission to edit this problem.'))
-            problem.is_public = True
-            problem.date = now
-            problem.save(update_fields=['is_public', 'date'])
-            rescore_problem.delay(problem.id, True)
+            # - users only require write permissions for **private** problems.
+            # This is not a bug! As many users include
+            # public problems in their contests, this allows them to make
+            # other problems public without needing write permissions for everything.
+            is_editable = problem.is_editable_by(request.user)
 
-            Solution.objects.filter(problem=problem).update(is_public=True, publish_on=now)
+            if not problem.is_public:
+                if not is_editable:
+                    raise PermissionDenied(_('You do not have permission to edit this problem.'))
+                problem.is_public = True
+                problem.date = now
+                problem.save(update_fields=['is_public', 'date'])
+                rescore_problem.delay(problem.id, True)
+
+            if is_editable:
+                Solution.objects.filter(problem=problem, is_public=False).update(is_public=True, publish_on=now)
 
         return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
