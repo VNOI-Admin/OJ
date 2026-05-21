@@ -114,13 +114,13 @@ class ContestProblemMakePublicTestCase(TestCase):
         self.assertFalse(Solution.objects.filter(problem=self.problem_without_editorial).exists())
 
     @patch('judge.views.contests.rescore_problem')
-    def test_already_public_problem_editorial_untouched(self, mock_rescore):
+    def test_already_public_problem_editorial_should_be_published(self, mock_rescore):
         self.client.force_login(self.staff_editor)
         self.client.post(self._get_url())
 
         self.public_problem_solution.refresh_from_db()
-        self.assertFalse(self.public_problem_solution.is_public)
-        self.assertGreater(self.public_problem_solution.publish_on, timezone.now())
+        self.assertTrue(self.public_problem_solution.is_public)
+        self.assertLessEqual(self.public_problem_solution.publish_on, timezone.now())
 
     @patch('judge.views.contests.rescore_problem')
     def test_rescore_called_for_published_problems(self, mock_rescore):
