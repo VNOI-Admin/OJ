@@ -1,45 +1,5 @@
 {% extends "base.html" %}
-{% block media %}
-    {{ form.media.css }}
-    <style>
-        @media (max-width: 768px) {
-            .ticket-messages {
-                width: 100% !important;
-                margin-bottom: 1rem;
-            }
-
-            .new-message .detail {
-                padding: 0.75rem;
-            }
-
-            .new-message form {
-                width: 100%;
-            }
-
-            .body-block textarea,
-            .body-block .form-control {
-                width: 100% !important;
-                max-width: 100% !important;
-                box-sizing: border-box;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .new-message {
-                flex-direction: column;
-            }
-
-            .new-message .info .user-info {
-                display: none;
-            }
-
-            .new-message .detail {
-                width: 100%;
-                padding: 0.5rem;
-            }
-        }
-    </style>
-{% endblock %}
+{% block media %}{{ form.media.css }}{% endblock %}
 
 {% block js_media %}
     {{ form.media.js }}
@@ -198,37 +158,81 @@
                 ace.edit('martor-body').setValue(message);
             }
 
-            $('.autofill-options').select2({
-                theme: '{{ DMOJ_SELECT2_THEME }}',
-                multiple: false,
-                closeOnSelect: true,
-                placeholder: '{{ _('Select reply') }}',
-            });
+            const AUTOFILL_OPTIONS = {{ autofill_replies|safe }};
 
-            const selection = $('.autofill-options').data().select2.selection;
-            const results = $('.autofill-options').data().select2.results;
+            var selectedIdx = null;
 
-            $('.autofill-options').on('select2:selecting', function(e) {
-                console.log(e);
-            });
+            function updateTriggerText() {
+                if (selectedIdx === null) return;
+                var opt = AUTOFILL_OPTIONS[selectedIdx];
+                var lang = $('.lang-toggle.active').data('lang');
+                $('.autofill-trigger').addClass('has-value')
+                    .find('.trigger-text').text(lang === 'vi' ? opt.vi : opt.en);
+            }
 
-            window.get_options = function() {
-                const options = ["No coments", "Read the problem statement", "Yes", "No", "Question is unclear", "Read the global announcement"];
-                let reply_options = $('.autofill-options');
-                reply_options.empty();
-                options.forEach(function(option) {
-                    reply_options.append($('<option>', {
-                        value: option,
-                        text: option
-                    }));
+            function renderList(filter) {
+                var $list = $('.autofill-list').empty();
+                var query = (filter || '').toLowerCase();
+                var count = 0;
+                AUTOFILL_OPTIONS.forEach(function(opt, i) {
+                    if (query && !opt.en.toLowerCase().includes(query) && !opt.vi.toLowerCase().includes(query)) return;
+                    var $item = $('<div class="autofill-item">').attr('data-idx', i);
+                    if (i === selectedIdx) $item.addClass('active');
+                    $item.append($('<div class="item-en">').text(opt.en));
+                    $item.append($('<div class="item-vi">').text(opt.vi));
+                    $item.on('click', function() {
+                        selectedIdx = i;
+                        updateTriggerText();
+                        closePopup();
+                        insertSelected();
+                    });
+                    $list.append($item);
+                    count++;
                 });
+                if (count === 0) {
+                    $list.append($('<div class="autofill-no-results">').text('No results'));
+                }
             }
-            window.get_options();
 
-            window.add_reply = function() {
-                const reply = $('.autofill-options').val();
-                add_autofill_reply(reply);
+            function openPopup() {
+                renderList('');
+                $('.autofill-search').val('');
+                $('.autofill-popup').addClass('open');
+                $('.autofill-search').focus();
             }
+
+            function closePopup() {
+                $('.autofill-popup').removeClass('open');
+            }
+
+            $('.autofill-trigger').on('click', function(e) {
+                e.stopPropagation();
+                $('.autofill-popup').hasClass('open') ? closePopup() : openPopup();
+            });
+
+            $('.autofill-popup').on('click', function(e) {
+                e.stopPropagation();
+            });
+
+            $('.autofill-search').on('input', function() {
+                renderList($(this).val());
+            });
+
+            $(document).on('click', closePopup);
+
+            function insertSelected() {
+                if (selectedIdx === null) return;
+                var option = AUTOFILL_OPTIONS[selectedIdx];
+                var lang = $('.lang-toggle.active').data('lang');
+                add_autofill_reply(lang === 'vi' ? option.vi : option.en);
+            }
+
+            $('.lang-toggle').on('click', function() {
+                $('.lang-toggle').removeClass('active');
+                $(this).addClass('active');
+                updateTriggerText();
+                insertSelected();
+            });
         });
     </script>
 
@@ -271,12 +275,25 @@
                             <img src="{{ gravatar(request.user, 80) }}" class="user-gravatar">
                         </a>
                     </div>
-                    <div class="autofill">
-                        <h4 style="margin-top: 1.2em;">Autofill</h4>
-                        <select class="autofill-options" style="width: 100%;">
-                        </select>
-                        <button onclick="add_reply()">Add</button>
-                    </div>
+                    {% if autofill_replies %}
+                        <div class="autofill">
+                            <h4 style="margin-top: 1.2em;">Autofill</h4>
+                            <div class="autofill-popup-wrap">
+                                <div class="autofill-trigger" tabindex="0" role="combobox">
+                                    <span class="trigger-text">Select reply...</span>
+                                    <i class="fa fa-chevron-down" style="font-size:0.7rem;margin-left:6px;"></i>
+                                </div>
+                                <div class="autofill-popup">
+                                    <input class="autofill-search" type="text" placeholder="Search...">
+                                    <div class="autofill-list"></div>
+                                </div>
+                            </div>
+                            <div class="autofill-controls">
+                                <button class="lang-toggle active" data-lang="en">EN</button>
+                                <button class="lang-toggle" data-lang="vi">VI</button>
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
                 <div class="detail">
                     <form action="" method="post">
