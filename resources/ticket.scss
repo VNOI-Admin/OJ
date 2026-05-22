@@ -222,3 +222,107 @@ div.ticket-title {
 .new-message .button, #edit-notes .submit {
     margin: 10px 0 0 auto;
 }
+
+.auto-reply {
+    margin: 10px 0;
+    padding: 10px;
+    border: 1px $color_primary50 solid;
+    border-radius: 5px;
+    background: $color_primary10;
+    cursor: pointer;
+}
+
+.autofill-popup-wrap { position: relative; }
+
+.autofill-trigger {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff;
+    border: 1px solid $color_primary25;
+    border-radius: $widget_border_radius;
+    padding: 6px 10px;
+    cursor: pointer;
+    width: 100%;
+    box-sizing: border-box;
+    user-select: none;
+    color: $color_primary33;
+    font-size: 0.88rem;
+
+    .trigger-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        flex: 1;
+    }
+
+    &.has-value { color: $color_primary90; }
+}
+
+.autofill-popup {
+    display: none;
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    min-width: 300px;
+    background: $color_primary0;
+    border: 1px solid $color_primary25;
+    border-radius: $widget_border_radius;
+    box-shadow: 0 4px 16px rgba(0,0,0,.15);
+    z-index: 9999;
+
+    &.open { display: block; }
+}
+
+.autofill-search {
+    width: 100%;
+    border: none;
+    border-bottom: 1px solid $color_primary10;
+    padding: 8px 10px;
+    outline: none;
+    box-sizing: border-box;
+}
+
+.autofill-list { max-height: 280px; overflow-y: auto; }
+
+.autofill-item {
+    padding: 8px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid $color_primary5;
+
+    &:last-child { border-bottom: none; }
+    &:hover, &.active { background: $color_info25; }
+
+    .item-vi { font-size: 0.78rem; color: $color_primary50; margin-top: 1px; }
+}
+
+.autofill-no-results { padding: 10px; color: $color_primary33; font-size: 0.85rem; text-align: center; }
+
+.autofill-controls { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.4rem; }
+
+.lang-toggle { padding: 3px 10px; font-size: 0.75rem; }
+.lang-toggle:not(.active) { opacity: 0.45; }
+
+@media (max-width: 768px) {
+    .ticket-messages {
+        width: 100% !important;
+        margin-bottom: 1rem;
+    }
+
+    .new-message .detail { padding: 0.75rem; }
+    .new-message form { width: 100%; }
+
+    .body-block textarea,
+    .body-block .form-control {
+        width: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box;
+    }
+}
+
+@media (max-width: 480px) {
+    .new-message { flex-direction: column; }
+    .new-message .info .user-info { display: none; }
+    .new-message .detail { width: 100%; padding: 0.5rem; }
+}
