@@ -66,6 +66,33 @@ VNOJ_CP_COMMENT = 1   # Each comment vote equals 1 CP
 VNOJ_CP_TICKET = 10   # Each good ticket equals CP
 VNOJ_CP_PROBLEM = 20  # Each suggested problem equal 20 CP
 
+TICKET_AUTOFILL_REPLIES = [
+    {'en': 'No comments',
+     'vi': 'Không có nhận xét'},
+    {'en': 'Read the problem statement',
+     'vi': 'Đọc đề bài'},
+    {'en': 'Yes',
+     'vi': 'Có'},
+    {'en': 'No',
+     'vi': 'Không'},
+    {'en': 'Use English, please',
+     'vi': 'Vui lòng sử dụng tiếng Anh'},
+    {'en': 'Use Vietnamese, please',
+     'vi': 'Vui lòng sử dụng tiếng Việt'},
+    {'en': 'We could not understand your question',
+     'vi': 'Chúng tôi không hiểu câu hỏi của bạn'},
+    {'en': 'Read the global announcement',
+     'vi': 'Đọc thông báo chung'},
+    {'en': 'Unfortunately, we cannot answer this, as it will give you an unfair advantage',
+     'vi': 'Rất tiếc, chúng tôi không thể trả lời vì điều này sẽ tạo ra lợi thế không công bằng cho bạn'},
+    {'en': 'Your logic or calculations are incorrect, please check carefully',
+     'vi': 'Logic hoặc tính toán của bạn không chính xác, vui lòng kiểm tra lại'},
+    {'en': 'The examples and notes are correct',
+     'vi': 'Các ví dụ và ghi chú đều đúng'},
+    {'en': 'There is a queue of submissions being judged, please wait for your turn',
+     'vi': 'Đang có hàng đợi chấm bài, vui lòng chờ đến lượt của bạn'},
+]
+
 VNOJ_HOMEPAGE_TOP_USERS_COUNT = 5
 
 VNOJ_DISPLAY_RANKS = (

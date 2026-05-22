@@ -194,6 +194,8 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
         context = super(TicketView, self).get_context_data(**kwargs)
         context['ticket_messages'] = self.object.messages.select_related('user__user')
         context['assignees'] = self.object.assignees.select_related('user', 'display_badge')
+        if self.request.user.is_staff:
+            context['autofill_replies'] = json.dumps(getattr(settings, 'TICKET_AUTOFILL_REPLIES', []))
         return context
 
 
