@@ -21,12 +21,19 @@ class OrganizationAdmin(VersionAdmin):
     readonly_fields = ('creation_date', 'current_consumed_credit')
     fields = ('name', 'slug', 'short_name', 'is_open', 'is_unlisted', 'paid_credit', 'current_consumed_credit',
               'about', 'logo_override_image', 'slots', 'creation_date', 'admins')
-    list_display = ('name', 'short_name', 'is_open', 'is_unlisted', 'slots', 'show_public')
+    list_display = ('id', 'name', 'short_name', 'is_open', 'is_unlisted', 'slots', 'show_public')
     prepopulated_fields = {'slug': ('name',)}
     actions = ('recalculate_points',)
     actions_on_top = True
     actions_on_bottom = True
     form = OrganizationForm
+    search_fields = ('name', 'short_name')
+    
+    def id(self, obj):
+        return format_html('<a href="/organization/{}" target="_blank">{}</a>', obj.id, obj.id)
+    id.short_description = 'ID'
+    id.admin_order_field = 'id'
+    list_filter = ('is_open', 'is_unlisted')
 
     @admin.display(description='')
     def show_public(self, obj):
