@@ -6,6 +6,7 @@ from django.utils.translation import gettext, gettext_lazy as _, ngettext
 from reversion.admin import VersionAdmin
 
 from judge.models import Organization
+from judge.utils.organization import rename_organization_contests
 from judge.widgets import AdminHeavySelect2MultipleWidget, AdminMartorWidget
 
 
@@ -62,6 +63,31 @@ class OrganizationAdmin(VersionAdmin):
         self.message_user(request, ngettext('%d organization has scores recalculated.',
                                             '%d organizations have scores recalculated.',
                                             count) % count)
+
+    def save_model(self, request, obj, form, change):
+        if change and 'slug' in form.changed_data:
+            # Get the old slug before saving
+            old_org = Organization.objects.get(pk=obj.pk)
+            old_slug = old_org.slug
+            new_slug = obj.slug
+
+            # Save the organization first
+            super().save_model(request, obj, form, change)
+
+            # Rename contests with new prefix
+            renamed_count = rename_organization_contests(obj, old_slug, new_slug)
+
+            if renamed_count > 0:
+                self.message_user(
+                    request,
+                    ngettext(
+                        '%d contest has been renamed with the new organization prefix.',
+                        '%d contests have been renamed with the new organization prefix.',
+                        renamed_count,
+                    ) % renamed_count,
+                )
+        else:
+            super().save_model(request, obj, form, change)
 
 
 class OrganizationRequestAdmin(admin.ModelAdmin):
