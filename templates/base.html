@@ -102,18 +102,19 @@
                 '{{ EVENT_DAEMON_POLL_LOCATION }}',
                 {{ EVENT_LAST_MSG }}
             );
-            {% if request.user.is_authenticated %}
-                $(function () {
-                    event_dispatcher.auto_reconnect = true;
-                    event_dispatcher.on('tickets_{{ request.profile.ticket_secret }}', function (data) {
-                        var prefix = data.type === 'new-ticket'
-                            ? {{ _('You have a new ticket: ')|htmltojs }}
-                            : {{ _('You have a new reply on ticket ')|htmltojs }};
-                        alert(prefix + data.title + '\n\n' + data.body);
-                    });
-                })
-            {% endif %}
         </script>
+        {% if request.user.is_authenticated %}
+            <script>
+                window.ticketNotify = {
+                    channel: 'tickets_{{ request.profile.ticket_secret }}',
+                    newTicket: '{{ _("You have a new ticket: ") }}',
+                    newReply: '{{ _("You have a new reply on ticket ") }}',
+                    access: '{{ _("Access ticket") }}',
+                    close: '{{ _("Close") }}',
+                };
+            </script>
+            <script src="{{ static('ticket_notification.js') }}"></script>
+        {% endif %}
     {% endif %}
     {% if request.in_contest %}
         <script>$(function () {

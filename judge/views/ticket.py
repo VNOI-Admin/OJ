@@ -84,6 +84,7 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
             for assignee in ticket.assignees.all():
                 event.post(f'tickets_{assignee.ticket_secret}', {
                     'type': 'new-ticket',
+                    'id': ticket.id,
                     'title': ticket.title,
                     'body': message.body,
                 })
@@ -193,6 +194,7 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
             if self.request.profile != self.object.user:
                 event.post(f'tickets_{self.object.user.ticket_secret}', {
                     'type': 'new-reply',
+                    'id': self.object.id,
                     'title': self.object.title,
                     'body': message.body,
                 })
