@@ -81,6 +81,12 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
                 'message': message.id, 'user': ticket.user_id,
                 'assignees': list(ticket.assignees.values_list('id', flat=True)),
             })
+            for assignee in ticket.assignees.all():
+                event.post(f'tickets_{assignee.ticket_secret}', {
+                    'type': 'new-ticket',
+                    'title': ticket.title,
+                    'body': message.body,
+                })
         on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, form.cleaned_data['body'])
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
@@ -186,6 +192,7 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
             })
             if self.request.profile != self.object.user:
                 event.post(f'tickets_{self.object.user.ticket_secret}', {
+                    'type': 'new-reply',
                     'title': self.object.title,
                     'body': message.body,
                 })
