@@ -20,8 +20,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
-from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, LanguageLimit, \
-    Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
+from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, Language, \
+    LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -537,6 +537,12 @@ class CustomAuthenticationForm(AuthenticationForm, SocialAuthMixin):
 
     def confirm_login_allowed(self, user):
         if user.profile.is_banned:
+            if user.profile.ban_reason == settings.VNOJ_CONTEST_CHEATING_BAN_MESSAGE:
+                self.cheating_contests = ContestParticipation.objects.filter(
+                    user=user.profile,
+                    contest__is_organization_private=False,
+                    is_disqualified=True,
+                ).select_related('contest').order_by('contest__end_time')
             raise forms.ValidationError(
                 _('This account has been banned. Reason: %s') % user.profile.ban_reason,
                 code='banned',
