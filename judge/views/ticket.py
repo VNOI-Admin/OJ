@@ -132,7 +132,7 @@ class NewProblemTicketView(ProblemMixin, TitleMixin, NewTicketView):
         if self.request.in_contest:
             contest = self.request.participation.contest
             if self.object.contests.filter(contest=contest).exists():
-                return contest.authors.all()
+                return list(contest.authors.all()) + list(contest.curators.all())
         return self.object.authors.all()
 
     def get_title(self):
