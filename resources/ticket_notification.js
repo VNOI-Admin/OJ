@@ -12,7 +12,8 @@ $(function () {
             transform: 'translate(-50%, -50%)', zIndex: 9999,
             background: '#3c3c3c', color: '#fff',
             padding: '28px 32px', borderRadius: '8px',
-            width: '480px', boxShadow: '0 8px 32px rgba(0,0,0,.5)',
+            width: 'max-content', maxWidth: '420px',
+            boxShadow: '0 8px 32px rgba(0,0,0,.5)',
             fontFamily: 'inherit', fontSize: '16px', lineHeight: '1.6',
         });
 
