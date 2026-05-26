@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import hmac
 import json
 import secrets
@@ -26,6 +27,7 @@ from judge.models.runtime import Language
 from judge.ratings import rating_class
 from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
+from judge.utils.unicode import utf8bytes
 
 __all__ = ['Organization', 'OrganizationMonthlyUsage', 'Profile', 'OrganizationRequest', 'WebAuthnCredential']
 
@@ -237,6 +239,15 @@ class Profile(models.Model):
     data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
     username_display_override = models.CharField(max_length=100, blank=True, verbose_name=_('display name override'),
                                                  help_text=_('Name displayed in place of username.'))
+
+    @classmethod
+    def get_ticket_secret(cls, profile_id):
+        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_TICKET_KEY), b'%d' % profile_id, hashlib.sha512)
+                    .hexdigest()[:16] + '%08x' % profile_id)
+
+    @cached_property
+    def ticket_secret(self):
+        return self.get_ticket_secret(self.id)
 
     @cached_property
     def organization(self):

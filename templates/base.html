@@ -103,6 +103,18 @@
                 {{ EVENT_LAST_MSG }}
             );
         </script>
+        {% if request.user.is_authenticated %}
+            <script>
+                window.ticketNotify = {
+                    channel: 'tickets_{{ request.profile.ticket_secret }}',
+                    newTicket: '{{ _("You have a new ticket: ") }}',
+                    newReply: '{{ _("You have a new reply on ticket ") }}',
+                    access: '{{ _("Access ticket") }}',
+                    close: '{{ _("Close") }}',
+                };
+            </script>
+            <script src="{{ static('ticket_notification.js') }}"></script>
+        {% endif %}
     {% endif %}
     {% if request.in_contest %}
         <script>$(function () {
