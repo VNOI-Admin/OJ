@@ -9,7 +9,6 @@ def error(request, context, status):
 
 
 def error404(request, exception=None):
-    # TODO: "panic: go back"
     return render(request, 'generic-message.html', {
         'title': _('404 error'),
         'message': _('Could not find page "%s"') % request.path,
@@ -17,11 +16,10 @@ def error404(request, exception=None):
 
 
 def error403(request, exception=None):
-    return error(request, {
-        'id': 'unauthorized_access',
-        'description': _('no permission for %s') % request.path,
-        'code': 403,
-    }, 403)
+    return render(request, 'generic-message.html', {
+        'title': _('403 error'),
+        'message': _('No permission for "%s"') % request.path,
+    }, status=403)
 
 
 def error500(request):
