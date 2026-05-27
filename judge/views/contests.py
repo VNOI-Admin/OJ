@@ -1431,7 +1431,7 @@ class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMix
     def post(self, request, *args, **kwargs):
         contest = self.get_object()
 
-        if not request.user.is_staff or not contest.is_editable_by(request.user):
+        if not contest.is_editable_by(request.user):
             raise PermissionDenied(_('You do not have permission to edit this contest.'))
 
         now = timezone.now()
