@@ -34,9 +34,18 @@ class Ticket(models.Model):
 
 
 class TicketMessage(models.Model):
+    OPEN = 'open'
+    CLOSE = 'close'
+    ACTION_CHOICES = [
+        (OPEN, _('opened')),
+        (CLOSE, _('closed')),
+    ]
+
     ticket = models.ForeignKey(Ticket, verbose_name=_('ticket'), related_name='messages',
                                related_query_name='message', on_delete=models.CASCADE)
     user = models.ForeignKey(Profile, verbose_name=_('user'), related_name='ticket_messages',
                              on_delete=models.CASCADE)
-    body = models.TextField(verbose_name=_('message body'))
+    body = models.TextField(verbose_name=_('message body'), blank=True, default='')
+    action = models.CharField(verbose_name=_('action'), max_length=10, null=True, blank=True,
+                              choices=ACTION_CHOICES)
     time = models.DateTimeField(verbose_name=_('message time'), auto_now_add=True)

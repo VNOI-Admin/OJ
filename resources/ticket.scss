@@ -159,6 +159,33 @@ div.ticket-title {
     margin-bottom: 0;
 }
 
+.ticket-action {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 0 8px 12px;
+    margin: 8px 0 0 20px;
+    border-left: 2px solid $color_primary50;
+    color: #586069;
+    font-size: 0.9em;
+
+    .action-icon {
+        .fa-check-circle {
+            color: #44AD41;
+        }
+        .fa-exclamation-circle {
+            color: #DE2121;
+        }
+    }
+
+    .action-gravatar {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        vertical-align: middle;
+    }
+}
+
 .ticket-message {
     display: flex;
     padding-top: 15px;

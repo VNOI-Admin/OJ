@@ -1,3 +1,6 @@
+{% if message.action %}
+{% include "ticket/action.html" %}
+{% else %}
 <section id="message-{{ message.id }}" class="ticket-message">
     <div class="info">
         <a href="{{ url('user_page', message.user.user.username) }}" class="user">
@@ -24,3 +27,4 @@
         </div>
     </div>
 </section>
+{% endif %}
