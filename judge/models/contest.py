@@ -637,11 +637,16 @@ class ContestParticipation(models.Model):
         if not settings.VNOJ_SHOULD_BAN_FOR_CHEATING_IN_CONTESTS or self.contest.is_organization_private:
             return
 
-        disqualifications_count = ContestParticipation.objects.filter(
+        qs = ContestParticipation.objects.filter(
             user=self.user,
             contest__is_organization_private=False,
             is_disqualified=True,
-        ).count()
+        )
+        ban_count_from = settings.VNOJ_BAN_COUNT_FROM_DATE
+        if ban_count_from is not None:
+            qs = qs.filter(contest__start_time__gte=ban_count_from)
+
+        disqualifications_count = qs.count()
         if disqualifications_count >= settings.VNOJ_MAX_DISQUALIFICATIONS_BEFORE_BANNING and \
                 not self.user.is_banned:
             self.user.ban_user(settings.VNOJ_CONTEST_CHEATING_BAN_MESSAGE)
