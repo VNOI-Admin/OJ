@@ -189,7 +189,7 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
                 'assignees': list(self.object.assignees.values_list('id', flat=True)),
             })
             event.post('ticket-%d' % self.object.id, {
-                'type': 'ticket-message', 'message': message.id,
+                'type': 'ticket-action', 'message': message.id,
             })
 
             recipient_ids = []
@@ -243,10 +243,7 @@ class TicketStatusChangeView(TicketMixin, SingleObjectMixin, View):
                     'title': ticket.title,
                 })
                 event.post('ticket-%d' % ticket.id, {
-                    'type': 'ticket-status', 'open': self.open,
-                })
-                event.post('ticket-%d' % ticket.id, {
-                    'type': 'ticket-message', 'message': action_msg.id,
+                    'type': 'ticket-action', 'open': self.open, 'message': action_msg.id,
                 })
 
         if self.contributive is not None and ticket.is_contributive != self.contributive:

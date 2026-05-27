@@ -110,11 +110,14 @@
                 decrease_page_ref();
             });
 
-            function ticket_status(ticket) {
-                update_ticket_state(ticket.open);
-                if (is_highest_ref())
-                    notify('ticket', (ticket.open ? {{ _('Reopened: ')|htmltojs }} :
-                        {{ _('Closed: ')|htmltojs }}) + $title.text());
+            function ticket_action(data) {
+                if (data.open !== undefined) {
+                    update_ticket_state(data.open);
+                    if (is_highest_ref())
+                        notify('ticket', (data.open ? {{ _('Reopened: ')|htmltojs }} :
+                            {{ _('Closed: ')|htmltojs }}) + $title.text());
+                }
+                ticket_message(data);
             }
 
             function ticket_message(ticket) {
@@ -143,11 +146,8 @@
                 event_dispatcher.on('ticket-{{ ticket.id }}', function (message) {
                         console.log(message);
                         switch (message.type) {
-                            case 'ticket-status':
-                                ticket_status(message);
-                                break;
-                            case 'ticket-message':
-                                ticket_message(message);
+                            case 'ticket-action':
+                                ticket_action(message);
                                 break;
                         }
                     }
