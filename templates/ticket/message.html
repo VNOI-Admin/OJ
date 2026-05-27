@@ -1,4 +1,4 @@
-{% if message.action %}
+{% if message.action != 'message' %}
 {% include "ticket/action.html" %}
 {% else %}
 <section id="message-{{ message.id }}" class="ticket-message">

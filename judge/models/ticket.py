@@ -36,9 +36,11 @@ class Ticket(models.Model):
 class TicketMessage(models.Model):
     OPEN = 'open'
     CLOSE = 'close'
+    MESSAGE = 'message'
     ACTION_CHOICES = [
         (OPEN, _('opened')),
         (CLOSE, _('closed')),
+        (MESSAGE, _('message')),
     ]
 
     ticket = models.ForeignKey(Ticket, verbose_name=_('ticket'), related_name='messages',
@@ -46,6 +48,6 @@ class TicketMessage(models.Model):
     user = models.ForeignKey(Profile, verbose_name=_('user'), related_name='ticket_messages',
                              on_delete=models.CASCADE)
     body = models.TextField(verbose_name=_('message body'), blank=True, default='')
-    action = models.CharField(verbose_name=_('action'), max_length=10, null=True, blank=True,
+    action = models.CharField(verbose_name=_('action'), max_length=10, default=MESSAGE,
                               choices=ACTION_CHOICES)
     time = models.DateTimeField(verbose_name=_('message time'), auto_now_add=True)
