@@ -140,6 +140,9 @@ VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem
 VNOJ_SHOULD_BAN_FOR_CHEATING_IN_CONTESTS = False
 VNOJ_CONTEST_CHEATING_BAN_MESSAGE = 'Banned for multiple cheating offenses during contests'
 VNOJ_MAX_DISQUALIFICATIONS_BEFORE_BANNING = 3
+# Only count disqualifications from contests starting on or after this date.
+# Set to None to count all disqualifications regardless of date.
+VNOJ_BAN_COUNT_FROM_DATE = datetime.datetime(2026, 1, 1, tzinfo=datetime.timezone.utc)
 
 # List of subdomain that will be ignored in organization subdomain middleware
 VNOJ_IGNORED_ORGANIZATION_SUBDOMAINS = ['oj', 'www', 'localhost']
