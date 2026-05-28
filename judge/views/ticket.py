@@ -405,6 +405,7 @@ class TicketMessageDataAjax(TicketMixin, SingleObjectMixin, View):
             'message': get_template('ticket/message.html').render({'message': message, 'ticket': ticket}, request),
             'notification': {
                 'title': _('New Ticket Message For: %s') % ticket.title,
-                'body': truncatechars(message.body, 200) if message.action == TicketMessage.MESSAGE else _('Status changed'),
+                'body': truncatechars(message.body, 200)
+                if message.action == TicketMessage.MESSAGE else _('Status changed'),
             },
         })
