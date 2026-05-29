@@ -238,7 +238,7 @@ $(function () {
 });
 
 window.notification_template = {
-    icon: '/logo.png'
+    icon: '/static/icons/logo.png'
 };
 window.notification_timeout = 5000;
 
