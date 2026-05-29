@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-26 09:45+0000\n"
+"POT-Creation-Date: 2026-05-27 07:07+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -44,7 +44,7 @@ msgstr "Người dùng bị cấm"
 #: templates/submission/info-base.html:15
 #: templates/submission/submission-list-tabs.html:15
 #: templates/tag/problem.html:30 templates/tag/tag-list-tabs.html:10
-#: templates/ticket/message.html:18
+#: templates/ticket/message.html:21
 msgid "Admin"
 msgstr "Quản trị"
 
@@ -125,7 +125,7 @@ msgstr "trang liên kết"
 msgid "Included contests"
 msgstr "Các kỳ thi"
 
-#: judge/admin/contest.py:66 judge/forms.py:687
+#: judge/admin/contest.py:66 judge/forms.py:693
 #: templates/contest/contest.html:206 templates/contest/contest.html:316
 #: templates/contest/moss.html:40 templates/problem/list.html:162
 #: templates/user/user-problems.html:58 templates/user/user-problems.html:102
@@ -268,7 +268,7 @@ msgstr "tác giả"
 #: judge/admin/interface.py:129 judge/admin/profile.py:111
 #: judge/admin/submission.py:222 judge/models/contest.py:610
 #: judge/models/contest.py:774 judge/models/profile.py:479
-#: judge/models/profile.py:510 judge/models/ticket.py:39
+#: judge/models/profile.py:510 judge/models/ticket.py:48
 msgid "user"
 msgstr "thành viên"
 
@@ -759,7 +759,7 @@ msgstr "Mã xác thực hai yếu tố không hợp lệ."
 msgid "Scratch codes must be 16 Base32 characters."
 msgstr "Mã dự phòng phải có 16 ký tự Base32."
 
-#: judge/forms.py:45 judge/forms.py:644
+#: judge/forms.py:45 judge/forms.py:650
 msgid "Invalid scratch code."
 msgstr "Mã dự phòng không hợp lệ."
 
@@ -812,7 +812,7 @@ msgstr ""
 "Nếu bài tập này không công khai, chỉ những thành viên này có thể thấy được "
 "bài tập."
 
-#: judge/forms.py:189 judge/forms.py:792
+#: judge/forms.py:189 judge/forms.py:798
 msgid "You can paste a list of usernames into this box."
 msgstr ""
 "Có thể gán một danh sách các username vào đây thay vì gõ tay (phân cách bằng "
@@ -863,12 +863,12 @@ msgstr ""
 "Điểm của bài, từ 0 tới 2. Có thể xấp xỉ điểm như sau: bài có điểm 0.5 sẽ khó "
 "như bài 1 thi HSG QG; 1 điểm = bài 2; 1.5 điểm = bài 3."
 
-#: judge/forms.py:254 judge/forms.py:852
+#: judge/forms.py:254 judge/forms.py:858
 msgid "Only accept alphanumeric characters (a-z, 0-9) and underscore (_)"
 msgstr ""
 "Chỉ có thể chứa các ký tự viết thường (a-z), số (0-9) và dấu gạch dưới (_)"
 
-#: judge/forms.py:270 judge/forms.py:650 judge/models/problem.py:155
+#: judge/forms.py:270 judge/forms.py:656 judge/models/problem.py:155
 msgid "Problem code must be ^[a-z0-9_]+$"
 msgstr "Mã bài phải khớp regex ^[a-z0-9_]+$"
 
@@ -961,61 +961,61 @@ msgstr "Tên truy cập"
 msgid "Password"
 msgstr "Mật khẩu"
 
-#: judge/forms.py:541
+#: judge/forms.py:547
 #, python-format
 msgid "This account has been banned. Reason: %s"
 msgstr "Tài khoản này đã bị cấm vì lý do: %s"
 
-#: judge/forms.py:572
+#: judge/forms.py:578
 msgid "Invalid code length."
 msgstr "Độ dài mã không hợp lệ."
 
-#: judge/forms.py:603
+#: judge/forms.py:609
 msgid "Invalid WebAuthn response."
 msgstr "Phản hồi WebAuthn không hợp lệ."
 
-#: judge/forms.py:606
+#: judge/forms.py:612
 msgid "No WebAuthn challenge issued."
 msgstr "Không có thách thức WebAuthn nào được phát hành."
 
-#: judge/forms.py:612
+#: judge/forms.py:618
 msgid "Invalid WebAuthn credential ID."
 msgstr "ID thông tin xác thực WebAuthn không hợp lệ."
 
-#: judge/forms.py:642
+#: judge/forms.py:648
 msgid "Invalid two-factor authentication token or scratch code."
 msgstr "Mã xác thực hai yếu tố hoặc mã dự phòng không hợp lệ."
 
-#: judge/forms.py:646
+#: judge/forms.py:652
 msgid "Must specify either totp_token or webauthn_response."
 msgstr "Phải chỉ định totp_token hoặc webauthn_response."
 
-#: judge/forms.py:655
+#: judge/forms.py:661
 msgid "Problem with code already exists."
 msgstr "Mã bài tập đã tồn tại."
 
-#: judge/forms.py:669 judge/models/contest.py:75
+#: judge/forms.py:675 judge/models/contest.py:75
 msgid "Contest id must be ^[a-z0-9_]+$"
 msgstr "id kỳ thi phải khớp regex ^[a-z0-9_]+$"
 
-#: judge/forms.py:674
+#: judge/forms.py:680
 msgid "Contest with key already exists."
 msgstr "Mã kỳ thi đã tồn tại."
 
-#: judge/forms.py:698
+#: judge/forms.py:704
 msgid "No such problem."
 msgstr "Không tìm thấy bài."
 
-#: judge/forms.py:719
+#: judge/forms.py:725
 #, python-format
 msgid "Contest cannot have more than %(limit)d problems."
 msgstr "Kỳ thi không thể có nhiều hơn %(limit)d bài."
 
-#: judge/forms.py:734
+#: judge/forms.py:740
 msgid "Problems must have distinct order."
 msgstr "Các bài tập phải có thứ tự khác nhau."
 
-#: judge/forms.py:769
+#: judge/forms.py:775
 msgid ""
 "Select one or more authors for this post. If left empty, you will be set as "
 "the author."
@@ -1023,7 +1023,7 @@ msgstr ""
 "Chọn một hoặc nhiều tác giả cho bài viết. Nếu để trống, bạn sẽ được đặt làm "
 "tác giả."
 
-#: judge/forms.py:770
+#: judge/forms.py:776
 msgid ""
 "A short summary of the post to show in the list, preferably not more than 50 "
 "words."
@@ -1031,17 +1031,17 @@ msgstr ""
 "Tóm tắt ngắn của bài viết để hiển thị trong danh sách, tốt nhất không quá 50 "
 "từ."
 
-#: judge/forms.py:802
+#: judge/forms.py:808
 #, python-format
 msgid "Contest duration cannot be longer than %d days"
 msgstr "Thời gian diễn ra contest không được kéo dài quá %d ngày"
 
-#: judge/forms.py:814
+#: judge/forms.py:820
 #, python-format
 msgid "Contest id must starts with `%s`"
 msgstr "Mã kỳ thi phải bắt đầu bằng `%s`"
 
-#: judge/forms.py:847
+#: judge/forms.py:853
 msgid ""
 "Users are able to pratice contest problems even if the contest has ended, so "
 "don't set the contest time too high if you don't really need it."
@@ -1054,7 +1054,7 @@ msgstr ""
 msgid "N j, Y, g:i a"
 msgstr "j, M, Y, G:i"
 
-#: judge/jinja2/datetime.py:31
+#: judge/jinja2/datetime.py:31 templates/ticket/action.html:17
 #, python-brace-format
 msgid "{time}"
 msgstr "{time}"
@@ -3509,11 +3509,11 @@ msgstr "AC"
 
 #: judge/models/ticket.py:20
 msgid "ticket title"
-msgstr "tên vấn đề"
+msgstr "tên ticket"
 
 #: judge/models/ticket.py:21
 msgid "ticket creator"
-msgstr "người báo cáo vấn đề"
+msgstr "người báo cáo ticket"
 
 #: judge/models/ticket.py:23
 msgid "creation time"
@@ -3547,15 +3547,31 @@ msgstr "ticket có đóng góp không?"
 msgid "is ticket open?"
 msgstr "ticket có đang mở không?"
 
-#: judge/models/ticket.py:37
+#: judge/models/ticket.py:41
+msgid "opened"
+msgstr "đã mở"
+
+#: judge/models/ticket.py:42
+msgid "closed"
+msgstr "đã đóng"
+
+#: judge/models/ticket.py:43
+msgid "message"
+msgstr "tin nhắn"
+
+#: judge/models/ticket.py:46
 msgid "ticket"
 msgstr "ticket"
 
-#: judge/models/ticket.py:41
+#: judge/models/ticket.py:50
 msgid "message body"
 msgstr "nội dung"
 
-#: judge/models/ticket.py:42
+#: judge/models/ticket.py:51
+msgid "action"
+msgstr "hành động"
+
+#: judge/models/ticket.py:53
 msgid "message time"
 msgstr "thời gian tin nhắn"
 
@@ -4043,21 +4059,25 @@ msgstr "Bạn không có quyền chỉnh sửa kỳ thi này."
 msgid "You do not have permission to edit this problem."
 msgstr "Bạn không có quyền chỉnh sửa bài tập này."
 
-#: judge/views/error.py:14
+#: judge/views/error.py:13
 msgid "404 error"
 msgstr "lỗi 404"
 
-#: judge/views/error.py:15
+#: judge/views/error.py:14
 #, python-format
 msgid "Could not find page \"%s\""
 msgstr "Không thể tìm thấy trang \"%s\""
 
-#: judge/views/error.py:22
-#, python-format
-msgid "no permission for %s"
-msgstr "không cho phép %s"
+#: judge/views/error.py:20
+msgid "403 error"
+msgstr "lỗi 403"
 
-#: judge/views/error.py:30
+#: judge/views/error.py:21
+#, python-format
+msgid "No permission for \"%s\""
+msgstr "Không có quyền truy cập \"%s\""
+
+#: judge/views/error.py:28
 #, python-format
 msgid "corrupt page %s"
 msgstr "trang lỗi %s"
@@ -4680,7 +4700,7 @@ msgstr "Thêm tag %s từ trang web"
 
 #: judge/views/ticket.py:34 judge/views/ticket.py:41
 msgid "Ticket title"
-msgstr "Tiêu đề của vấn đề"
+msgstr "Tiêu đề của ticket"
 
 #: judge/views/ticket.py:42
 msgid "Link to the issue"
@@ -4704,37 +4724,41 @@ msgstr "Báo cáo vấn đề cho %s"
 msgid "%(title)s - Ticket %(id)d"
 msgstr "%(title)s - Vấn đề %(id)d"
 
-#: judge/views/ticket.py:248
+#: judge/views/ticket.py:251
 msgid "You cannot vote your own ticket."
 msgstr "Bạn không thể tự đánh giá"
 
-#: judge/views/ticket.py:330
+#: judge/views/ticket.py:333
 #, python-format
 msgid "Tickets - Page %(number)d of %(total)d"
-msgstr "Các vấn đề - Trang %(number)d / %(total)d"
+msgstr "Các tickets - Trang %(number)d / %(total)d"
 
-#: judge/views/ticket.py:381
+#: judge/views/ticket.py:384
 #, python-format
 msgid "New Ticket: %s"
-msgstr "Vấn đề mới: %s"
+msgstr "Ticket mới: %s"
 
-#: judge/views/ticket.py:382
+#: judge/views/ticket.py:385
 #, python-format
 msgid "#%(id)d, assigned to: %(users)s"
 msgstr "#%(id)d, phân công cho: %(users)s"
 
-#: judge/views/ticket.py:384
+#: judge/views/ticket.py:387
 msgid ", "
 msgstr ", "
 
-#: judge/views/ticket.py:384
+#: judge/views/ticket.py:387
 msgid "no one"
 msgstr "không ai cả"
 
-#: judge/views/ticket.py:404
+#: judge/views/ticket.py:407
 #, python-format
 msgid "New Ticket Message For: %s"
-msgstr "Tin nhắn mới cho vấn đề: %s"
+msgstr "Tin nhắn mới cho ticket: %s"
+
+#: judge/views/ticket.py:408
+msgid "Status changed"
+msgstr "Trạng thái đã thay đổi"
 
 #: judge/views/two_factor.py:50
 msgid "Enable Two-factor Authentication"
@@ -6285,6 +6309,10 @@ msgstr "Bài nộp theo ngôn ngữ"
 msgid "Language AC Rate"
 msgstr "Tỉ lệ AC theo ngôn ngữ"
 
+#: templates/generic-message.html:5
+msgid "Go back"
+msgstr "Quay lại"
+
 #: templates/leave-warning.html:6
 msgid "Changes you made may not be saved."
 msgstr "Những thay đổi của bạn có thể không được lưu lại."
@@ -7321,16 +7349,20 @@ msgid "Invalid username or password."
 msgstr "Tên người dùng hoặc mật khẩu không hợp lệ."
 
 #: templates/registration/login.html:14
+msgid "Disqualified contests:"
+msgstr "Các kỳ thi bị truất quyền:"
+
+#: templates/registration/login.html:22
 msgid ""
 "If you have problems with your account, feel free to shoot us a message at: "
 msgstr "Nếu bạn có vấn đề về tài khoản, hãy liên hệ với chúng mình qua: "
 
-#: templates/registration/login.html:33
+#: templates/registration/login.html:41
 #: templates/registration/two_factor_auth.html:92
 msgid "Login!"
 msgstr "Đăng nhập!"
 
-#: templates/registration/login.html:36
+#: templates/registration/login.html:44
 msgid "Forgot your password?"
 msgstr "Quên mật khẩu?"
 
@@ -8060,11 +8092,19 @@ msgstr "Đã Hoàn Thành!"
 msgid "Failed!"
 msgstr "Thất bại!"
 
-#: templates/ticket/list.html:69 templates/ticket/ticket.html:116
+#: templates/ticket/action.html:12
+msgid "closed this"
+msgstr "đã đóng ticket này"
+
+#: templates/ticket/action.html:14
+msgid "reopened this"
+msgstr "đã mở lại ticket này"
+
+#: templates/ticket/list.html:69 templates/ticket/ticket.html:117
 msgid "Reopened: "
 msgstr "Đã mở lại: "
 
-#: templates/ticket/list.html:72 templates/ticket/ticket.html:117
+#: templates/ticket/list.html:72 templates/ticket/ticket.html:118
 msgid "Closed: "
 msgstr "Đã đóng: "
 
@@ -8093,12 +8133,12 @@ msgstr[0] "Người được phân công"
 msgid "Assignees"
 msgstr "Phân công"
 
-#: templates/ticket/message.html:11
+#: templates/ticket/message.html:14
 #, python-brace-format
 msgid "messaged on {time}"
 msgstr "đã nhắn lúc {time}"
 
-#: templates/ticket/message.html:11
+#: templates/ticket/message.html:14
 #, python-brace-format
 msgid "messaged {time}"
 msgstr "đã nhắn {time}"
@@ -8148,11 +8188,11 @@ msgstr "Hủy bình chọn"
 
 #: templates/ticket/ticket.html:360
 msgid "Close ticket"
-msgstr "Đóng vấn đề"
+msgstr "Đóng ticket"
 
 #: templates/ticket/ticket.html:362
 msgid "Reopen ticket"
-msgstr "Mở lại vấn đề"
+msgstr "Mở lại ticket"
 
 #: templates/urlshortener/confirm_delete.html:65
 msgid ""

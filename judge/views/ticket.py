@@ -189,7 +189,7 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
                 'assignees': list(self.object.assignees.values_list('id', flat=True)),
             })
             event.post('ticket-%d' % self.object.id, {
-                'type': 'ticket-message', 'message': message.id,
+                'type': 'ticket-action', 'message': message.id,
             })
 
             recipient_ids = []
@@ -232,6 +232,9 @@ class TicketStatusChangeView(TicketMixin, SingleObjectMixin, View):
         if self.open is not None and ticket.is_open != self.open:
             ticket.is_open = self.open
             ticket.save()
+            action_msg = TicketMessage(ticket=ticket, user=request.profile, body='',
+                                       action=TicketMessage.OPEN if self.open else TicketMessage.CLOSE)
+            action_msg.save()
             if event.real:
                 event.post('tickets', {
                     'type': 'ticket-status', 'id': ticket.id,
@@ -240,7 +243,7 @@ class TicketStatusChangeView(TicketMixin, SingleObjectMixin, View):
                     'title': ticket.title,
                 })
                 event.post('ticket-%d' % ticket.id, {
-                    'type': 'ticket-status', 'open': self.open,
+                    'type': 'ticket-action', 'open': self.open, 'message': action_msg.id,
                 })
 
         if self.contributive is not None and ticket.is_contributive != self.contributive:
@@ -402,6 +405,7 @@ class TicketMessageDataAjax(TicketMixin, SingleObjectMixin, View):
             'message': get_template('ticket/message.html').render({'message': message, 'ticket': ticket}, request),
             'notification': {
                 'title': _('New Ticket Message For: %s') % ticket.title,
-                'body': truncatechars(message.body, 200),
+                'body': truncatechars(message.body, 200)
+                if message.action == TicketMessage.MESSAGE else _('Status changed'),
             },
         })

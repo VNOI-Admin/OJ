@@ -18,7 +18,8 @@ class TicketMessageForm(ModelForm):
 class TicketMessageInline(StackedInline):
     model = TicketMessage
     form = TicketMessageForm
-    fields = ('user', 'body')
+    fields = ('user', 'body', 'action')
+    readonly_fields = ('action',)
 
 
 class TicketForm(ModelForm):
