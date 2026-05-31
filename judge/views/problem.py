@@ -1166,9 +1166,9 @@ class ProblemDelete(ProblemMixin, TitleMixin, DetailView):
 class ContestProblemMixin:
     def dispatch(self, request, *args, **kwargs):
         self.contest_key = kwargs.get('contest')
-        self.order = kwargs.get('order')
+        self.problem_order = kwargs.get('order')
 
-        if self.contest_key is None or self.order is None:
+        if self.contest_key is None or self.problem_order is None:
             raise Http404()
         return super().dispatch(request, *args, **kwargs)
 
@@ -1176,7 +1176,7 @@ class ContestProblemMixin:
         cp = get_object_or_404(
             ContestProblem.objects.select_related('problem', 'contest'),
             contest__key=self.contest_key,
-            order=self.order,
+            order=self.problem_order,
         )
         self.contest_problem = cp
         problem = cp.problem
@@ -1209,7 +1209,7 @@ class ContestProblemMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['contest_key'] = self.contest_key
-        context['order'] = self.order
+        context['order'] = self.problem_order
         return context
 
 
@@ -1243,7 +1243,7 @@ class ContestProblemSubmit(ContestProblemMixin, ProblemSubmit):
         return mark_safe(
             escape(_('Submit to %s')) % format_html(
                 '<a href="{0}">{1}</a>',
-                reverse('contest_problem_detail', args=[self.contest_key, self.order]),
+                reverse('contest_problem_detail', args=[self.contest_key, self.problem_order]),
                 self.object.translated_name(self.request.LANGUAGE_CODE),
             ),
         )
@@ -1253,7 +1253,7 @@ class ContestOrderAllSubmissions(ContestProblemMixin, ProblemSubmissions):
     def get_content_title(self):
         return mark_safe(escape(_('All submissions for %s')) % (
             format_html('<a href="{1}">{0}</a>', self.problem_name,
-                        reverse('contest_problem_detail', args=[self.contest_key, self.order])),
+                        reverse('contest_problem_detail', args=[self.contest_key, self.problem_order])),
         ))
 
 
@@ -1264,7 +1264,7 @@ class ContestOrderUserSubmissions(ContestProblemMixin, UserContestSubmissions):
                 user=format_html('<a href="{1}">{0}</a>', self.profile.display_name,
                                  reverse('user_page', args=[self.username])),
                 problem=format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                    reverse('contest_problem_detail', args=[self.contest_key, self.order])),
+                                    reverse('contest_problem_detail', args=[self.contest_key, self.problem_order])),
                 contest=format_html('<a href="{1}">{0}</a>', self.contest.name,
                                     reverse('contest_view', args=[self.contest.key])),
             ))
