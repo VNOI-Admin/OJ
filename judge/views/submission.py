@@ -694,9 +694,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
             if 'contest' not in kwargs:
                 raise ImproperlyConfigured('Must pass a contest for order-based problem lookup')
             try:
-                self.problem = Problem.objects.get(contests__contest__key=self.contest_key, contests__order=self.order)
-                # attach the problem order for future use
-                self.problem.order = self.order
+                self.problem = Problem.objects.get(contests__contest__key=self.contest_key, contests__order=self.problem_order)
             except Problem.DoesNotExist:
                 raise Http404()
         else:
@@ -706,7 +704,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
 
     def get_all_submissions_page(self):
         if hasattr(self, 'contest_key'):
-            return reverse('contest_order_all_submissions', kwargs={'contest': self.contest_key, 'order': self.order})
+            return reverse('contest_order_all_submissions', kwargs={'contest': self.contest_key, 'order': self.problem_order})
         return reverse('chronological_submissions', kwargs={'problem': self.problem.code})
 
     def get_context_data(self, **kwargs):
@@ -716,7 +714,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
             context['dynamic_problem_id'] = self.problem.id
         if hasattr(self, 'contest_key'):
             context['best_submissions_link'] = reverse('contest_ranked_submissions',
-                                                       kwargs={'order': self.order,
+                                                       kwargs={'order': self.problem_order,
                                                                'contest': self.contest_key})
         else:
             context['best_submissions_link'] = reverse('ranked_submissions', kwargs={'problem': self.problem.code})
@@ -726,8 +724,8 @@ class ProblemSubmissionsBase(SubmissionsListBase):
 class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
-            if hasattr(self, 'contest_key') and hasattr(self, 'order'):
-                return reverse('contest_order_user_submissions', kwargs={'order': self.order,
+            if hasattr(self, 'contest_key'):
+                return reverse('contest_order_user_submissions', kwargs={'order': self.problem_order,
                                                                          'user': self.request.user.username,
                                                                          'contest': self.contest_key})
             return reverse('user_submissions', kwargs={'problem': self.problem.code,
@@ -858,17 +856,21 @@ class ForceContestMixin(object):
 
     def dispatch(self, request, *args, **kwargs):
         self.contest_key = kwargs.get('contest')
-        self.order = kwargs.get('order')
-
-        if self.contest_key is None or self.order is None:
-            raise Http404()
+        if self.contest_key is None:
+            raise ImproperlyConfigured('Must pass a contest')
         return super().dispatch(request, *args, **kwargs)
 
     def get(self, request, *args, **kwargs):
-        if 'contest' not in kwargs:
-            raise ImproperlyConfigured('Must pass a contest')
         self._contest = get_object_or_404(Contest, key=kwargs['contest'])
         return super(ForceContestMixin, self).get(request, *args, **kwargs)
+
+
+class ForceContestProblemOrderMixin(ForceContestMixin):
+    def dispatch(self, request, *args, **kwargs):
+        self.problem_order = kwargs.get('order')
+        if self.problem_order is None:
+            raise ImproperlyConfigured('Must pass a problem order')
+        return super().dispatch(request, *args, **kwargs)
 
 
 class AllContestSubmissions(ForceContestMixin, AllSubmissions):
@@ -921,7 +923,7 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
         })
 
 
-class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
+class UserContestSubmissions(ForceContestProblemOrderMixin, UserProblemSubmissions):
     def get_title(self):
         if self.problem.is_accessible_by(self.request.user):
             return _("{user}'s submissions for {problem} in {contest}").format(
