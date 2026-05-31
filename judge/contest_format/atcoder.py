@@ -106,7 +106,7 @@ class AtCoderContestFormat(DefaultContestFormat):
                        ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
                        self.best_solution_state(format_data['points'], contest_problem.points)),
                 url=reverse('contest_user_submissions',
-                            args=[self.contest.key, participation.user.user.username, contest_problem.problem.code]),
+                            args=[self.contest.key, participation.user.user.username, contest_problem.order]),
                 points=floatformat(format_data['points'], -self.contest.points_precision),
                 penalty=penalty,
                 time=nice_repr(timedelta(seconds=format_data['time']), 'noday'),

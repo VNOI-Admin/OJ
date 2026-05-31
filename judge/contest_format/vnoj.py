@@ -197,7 +197,7 @@ class VNOJContestFormat(DefaultContestFormat):
         if format_data:
             first_solved = first_solves.get(str(contest_problem.id), None) == participation.id
             url = reverse('contest_user_submissions',
-                          args=[self.contest.key, participation.user.user.username, contest_problem.problem.code])
+                          args=[self.contest.key, participation.user.user.username, contest_problem.order])
 
             if not frozen:
                 # Fast path for non-frozen contests

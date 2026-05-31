@@ -268,7 +268,7 @@ urlpatterns = [
              paged_list_view(submission.AllContestSubmissions, 'contest_all_submissions')),
         path('/submissions/<str:user>/',
              paged_list_view(submission.UserAllContestSubmissions, 'contest_all_user_submissions')),
-        path('/submissions/<str:user>/<str:problem>/',
+        path('/submissions/<str:user>/<int:order>/',
              paged_list_view(submission.UserContestSubmissions, 'contest_user_submissions')),
 
         path('/participations/', contests.ContestParticipationList.as_view(), name='contest_participation_own'),

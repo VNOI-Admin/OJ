@@ -193,7 +193,7 @@ class ICPCContestFormat(DefaultContestFormat):
                      ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
                      self.best_solution_state(format_data[prefix + 'points'], contest_problem.points))
             url = reverse('contest_user_submissions',
-                          args=[self.contest.key, participation.user.user.username, contest_problem.problem.code])
+                          args=[self.contest.key, participation.user.user.username, contest_problem.order])
 
             if not format_data[prefix + 'points']:
                 return format_html(
