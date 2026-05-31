@@ -22,7 +22,11 @@
     <div class="sub-info{% if submission.status == 'G' %} sub-info-grading{% endif %}">
         {% if show_problem %}
             <div class="name">
-                <a href="{{ url('problem_detail', submission.problem.code) }}">{{ problem_name }}</a>
+                {% if submission.contest_object_id %}
+                    <a href="{{ url('submission_problem_redirect', submission.id) }}">{{ problem_name }}</a>
+                {% else %}
+                    <a href="{{ url('problem_detail', submission.problem.code) }}">{{ problem_name }}</a>
+                {% endif %}
             </div>
         {% endif %}
         <div>
