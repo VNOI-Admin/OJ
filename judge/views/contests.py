@@ -232,6 +232,7 @@ class ContestMixin(object):
             context['logo_override_image'] = self.object.organization.logo_override_image
 
         context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
+        context['hide_problem_code'] = self.is_in_contest or not self.object.ended
         return context
 
     def get_object(self, queryset=None):
