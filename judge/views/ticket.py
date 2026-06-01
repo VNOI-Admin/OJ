@@ -170,7 +170,7 @@ class NewContestProblemTicketView(ContestProblemMixin, TitleMixin, NewTicketView
     def get_content_title(self):
         return mark_safe(escape(_('New ticket for %s')) %
                          format_html('<a href="{0}">{1}</a>',
-                                     reverse('contest_problem_detail', args=[self.contest_key, self.order]),
+                                     reverse('contest_problem_detail', args=[self.contest_key, self.problem_order]),
                                      self.object.translated_name(self.request.LANGUAGE_CODE)))
 
     def form_valid(self, form):
