@@ -1210,8 +1210,6 @@ class ContestProblemMixin:
         context = super().get_context_data(**kwargs)
         context['contest_key'] = self.contest_key
         context['problem_order'] = self.problem_order
-        # TODO: remove after template is updated to use `problem_order`
-        context['order'] = self.problem_order
         context['hide_problem_code'] = True
         return context
 
@@ -1253,8 +1251,31 @@ class ContestProblemSubmit(ContestProblemMixin, ProblemSubmit):
 
 
 class ContestProblemSubmissions(ContestProblemMixin, ProblemSubmissions):
+    def _setup_problem(self, request, *args, **kwargs):
+        self.get_object()  # ContestProblemMixin.get_object() — sets self.contest_problem
+        self.problem = self.contest_problem.problem
+        self.problem_name = self.problem.translated_name(request.LANGUAGE_CODE)
+
     def get_content_title(self):
         return mark_safe(escape(_('All submissions for %s')) % (
             format_html('<a href="{1}">{0}</a>', self.problem_name,
                         reverse('contest_problem_detail', args=[self.contest_key, self.problem_order])),
         ))
+
+    def get_all_submissions_page(self):
+        return reverse('contest_problem_submissions',
+                       kwargs={'contest': self.contest_key, 'order': self.problem_order})
+
+    def get_my_submissions_page(self):
+        if self.request.user.is_authenticated:
+            return reverse('contest_user_problem_submissions',
+                           kwargs={'order': self.problem_order,
+                                   'user': self.request.user.username,
+                                   'contest': self.contest_key})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['best_submissions_link'] = reverse('contest_ranked_submissions',
+                                                   kwargs={'order': self.problem_order,
+                                                           'contest': self.contest_key})
+        return context
