@@ -1252,29 +1252,9 @@ class ContestProblemSubmit(ContestProblemMixin, ProblemSubmit):
         )
 
 
-class ContestOrderAllSubmissions(ContestProblemMixin, ProblemSubmissions):
+class ContestProblemSubmissions(ContestProblemMixin, ProblemSubmissions):
     def get_content_title(self):
         return mark_safe(escape(_('All submissions for %s')) % (
             format_html('<a href="{1}">{0}</a>', self.problem_name,
                         reverse('contest_problem_detail', args=[self.contest_key, self.problem_order])),
-        ))
-
-
-class ContestOrderUserSubmissions(ContestProblemMixin, UserContestSubmissions):
-    def get_content_title(self):
-        if self.problem.is_accessible_by(self.request.user):
-            return mark_safe(escape(_("{user}'s submissions for {problem} in {contest}")).format(
-                user=format_html('<a href="{1}">{0}</a>', self.profile.display_name,
-                                 reverse('user_page', args=[self.username])),
-                problem=format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                    reverse('contest_problem_detail', args=[self.contest_key, self.problem_order])),
-                contest=format_html('<a href="{1}">{0}</a>', self.contest.name,
-                                    reverse('contest_view', args=[self.contest.key])),
-            ))
-        return mark_safe(escape(_("{user}'s submissions for problem {label} in {contest}")).format(
-            user=format_html('<a href="{1}">{0}</a>', self.profile.display_name,
-                             reverse('user_page', args=[self.username])),
-            label=self.get_problem_label(self.problem),
-            contest=format_html('<a href="{1}">{0}</a>', self.contest.name,
-                                reverse('contest_view', args=[self.contest.key])),
         ))

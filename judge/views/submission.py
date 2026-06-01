@@ -704,7 +704,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
 
     def get_all_submissions_page(self):
         if hasattr(self, 'contest_key'):
-            return reverse('contest_order_all_submissions', kwargs={'contest': self.contest_key, 'order': self.problem_order})
+            return reverse('contest_problem_submissions', kwargs={'contest': self.contest_key, 'order': self.problem_order})
         return reverse('chronological_submissions', kwargs={'problem': self.problem.code})
 
     def get_context_data(self, **kwargs):
@@ -725,7 +725,7 @@ class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
             if hasattr(self, 'contest_key'):
-                return reverse('contest_order_user_submissions', kwargs={'order': self.problem_order,
+                return reverse('contest_user_problem_submissions', kwargs={'order': self.problem_order,
                                                                          'user': self.request.user.username,
                                                                          'contest': self.contest_key})
             return reverse('user_submissions', kwargs={'problem': self.problem.code,
@@ -961,7 +961,7 @@ class UserContestSubmissions(ForceContestProblemOrderMixin, UserProblemSubmissio
                 user=format_html('<a href="{1}">{0}</a>', self.profile.display_name,
                                  reverse('user_page', args=[self.username])),
                 problem=format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                    reverse('problem_detail', args=[self.problem.code])),
+                                    reverse('contest_problem_detail', args=[self.contest_key, self.problem_order])),
                 contest=format_html('<a href="{1}">{0}</a>', self.contest.name,
                                     reverse('contest_view', args=[self.contest.key])),
             ))
