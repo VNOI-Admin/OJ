@@ -171,7 +171,13 @@
     <div class="problem-title">
         {% if request.user.is_authenticated %}
             {% if problem.id in completed_problem_ids %}
-                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                <a 
+                    {% if hide_problem_code %}
+                        href="{{ url('contest_order_user_submissions', contest_key, problem_order, request.user.username) }}"
+                    {% else %}
+                        href="{{ url('user_submissions', problem.code, request.user.username) }}"
+                    {% endif %}
+                >
                     {% if problem.is_public or request.in_contest %}
                         <i class="solved-problem-color title-state fa fa-check-circle"></i>
                     {% else %}
@@ -179,7 +185,13 @@
                     {% endif %}
                 </a>
             {% elif problem.id in attempted_problems %}
-                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                <a 
+                    {% if hide_problem_code %}
+                        href="{{ url('contest_order_user_submissions', contest_key, problem_order, request.user.username) }}"
+                    {% else %}
+                        href="{{ url('user_submissions', problem.code, request.user.username) }}"
+                    {% endif %}
+                >
                     {% if problem.is_public or request.in_contest %}
                         <i class="attempted-problem-color title-state fa fa-frown-o"></i>
                     {% else %}

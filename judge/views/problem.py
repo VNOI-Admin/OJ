@@ -1209,7 +1209,10 @@ class ContestProblemMixin:
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['contest_key'] = self.contest_key
+        context['problem_order'] = self.problem_order
+        # TODO: remove after template is updated to use `problem_order`
         context['order'] = self.problem_order
+        context['hide_problem_code'] = True
         return context
 
 
