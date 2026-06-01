@@ -173,7 +173,7 @@
             {% if problem.id in completed_problem_ids %}
                 <a 
                     {% if hide_problem_code %}
-                        href="{{ url('contest_order_user_submissions', contest_key, problem_order, request.user.username) }}"
+                        href="{{ url('contest_user_problem_submissions', contest_key, problem_order, request.user.username) }}"
                     {% else %}
                         href="{{ url('user_submissions', problem.code, request.user.username) }}"
                     {% endif %}
@@ -187,7 +187,7 @@
             {% elif problem.id in attempted_problems %}
                 <a 
                     {% if hide_problem_code %}
-                        href="{{ url('contest_order_user_submissions', contest_key, problem_order, request.user.username) }}"
+                        href="{{ url('contest_user_problem_submissions', contest_key, problem_order, request.user.username) }}"
                     {% else %}
                         href="{{ url('user_submissions', problem.code, request.user.username) }}"
                     {% endif %}
@@ -260,10 +260,10 @@
     {% if contest_problem %}
         {% set contest = contest_problem.contest %}
             {% if request.user.is_authenticated and has_submissions %}
-                <div><a href="{{ url('contest_order_user_submissions', contest.key, contest_problem.order, request.user.username) }}">{{ _('My submissions') }}</a></div> 
+                <div><a href="{{ url('contest_user_problem_submissions', contest.key, contest_problem.order, request.user.username) }}">{{ _('My submissions') }}</a></div> 
             {% endif %}
             {% if contest.can_see_full_submission_list(request.user) %}
-                <div><a href="{{ url('contest_order_all_submissions', contest.key, contest_problem.order) }}">{{ _('All submissions') }}</a></div>
+                <div><a href="{{ url('contest_problem_submissions', contest.key, contest_problem.order) }}">{{ _('All submissions') }}</a></div>
                 
                 <div><a href="{{ url('contest_ranked_submissions', contest.key, contest_problem.order) }}">{{ _('Best submissions') }}</a></div>
         {% endif %}
