@@ -687,24 +687,17 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         if self.check_contest_in_access_check:
             self.access_check_contest(request)
 
-    def get(self, request, *args, **kwargs):
-        if 'problem' in kwargs:
-            self.problem = get_object_or_404(Problem, code=kwargs['problem'])
-        elif 'order' in kwargs:
-            if 'contest' not in kwargs:
-                raise ImproperlyConfigured('Must pass a contest for order-based problem lookup')
-            try:
-                self.problem = Problem.objects.get(contests__contest__key=self.contest_key, contests__order=self.problem_order)
-            except Problem.DoesNotExist:
-                raise Http404()
-        else:
-            raise ImproperlyConfigured('Must pass a problem/order argument')
+    def _setup_problem(self, request, *args, **kwargs):
+        if 'problem' not in kwargs:
+            raise ImproperlyConfigured('Must pass a problem argument')
+        self.problem = get_object_or_404(Problem, code=kwargs['problem'])
         self.problem_name = self.problem.translated_name(self.request.LANGUAGE_CODE)
+
+    def get(self, request, *args, **kwargs):
+        self._setup_problem(request, *args, **kwargs)
         return super(ProblemSubmissionsBase, self).get(request, *args, **kwargs)
 
     def get_all_submissions_page(self):
-        if hasattr(self, 'contest_key'):
-            return reverse('contest_problem_submissions', kwargs={'contest': self.contest_key, 'order': self.problem_order})
         return reverse('chronological_submissions', kwargs={'problem': self.problem.code})
 
     def get_context_data(self, **kwargs):
@@ -712,22 +705,13 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         if self.dynamic_update:
             context['dynamic_update'] = context['page_obj'].number == 1
             context['dynamic_problem_id'] = self.problem.id
-        if hasattr(self, 'contest_key'):
-            context['best_submissions_link'] = reverse('contest_ranked_submissions',
-                                                       kwargs={'order': self.problem_order,
-                                                               'contest': self.contest_key})
-        else:
-            context['best_submissions_link'] = reverse('ranked_submissions', kwargs={'problem': self.problem.code})
+        context['best_submissions_link'] = reverse('ranked_submissions', kwargs={'problem': self.problem.code})
         return context
 
 
 class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
-            if hasattr(self, 'contest_key'):
-                return reverse('contest_user_problem_submissions', kwargs={'order': self.problem_order,
-                                                                         'user': self.request.user.username,
-                                                                         'contest': self.contest_key})
             return reverse('user_submissions', kwargs={'problem': self.problem.code,
                                                        'user': self.request.user.username})
 
@@ -871,6 +855,32 @@ class ForceContestProblemOrderMixin(ForceContestMixin):
         if self.problem_order is None:
             raise ImproperlyConfigured('Must pass a problem order')
         return super().dispatch(request, *args, **kwargs)
+
+    def _setup_problem(self, request, *args, **kwargs):
+        try:
+            self.problem = Problem.objects.get(
+                contests__contest__key=self.contest_key, contests__order=self.problem_order)
+        except Problem.DoesNotExist:
+            raise Http404()
+        self.problem_name = self.problem.translated_name(request.LANGUAGE_CODE)
+
+    def get_all_submissions_page(self):
+        return reverse('contest_problem_submissions',
+                       kwargs={'contest': self.contest_key, 'order': self.problem_order})
+
+    def get_my_submissions_page(self):
+        if self.request.user.is_authenticated:
+            return reverse('contest_user_problem_submissions',
+                           kwargs={'order': self.problem_order,
+                                   'user': self.request.user.username,
+                                   'contest': self.contest_key})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['best_submissions_link'] = reverse('contest_ranked_submissions',
+                                                   kwargs={'order': self.problem_order,
+                                                           'contest': self.contest_key})
+        return context
 
 
 class AllContestSubmissions(ForceContestMixin, AllSubmissions):
