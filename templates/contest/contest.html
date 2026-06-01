@@ -250,10 +250,10 @@
                         {% endif %}
                         <td style="text-align: left; padding-left: 2em;">
                             {% if can_view_all_problems or problem.is_public %}
-                                {% if contest.ended and not is_in_contest %}
-                                    <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
-                                {% else %}
+                                {% if hide_problem_code %}
                                     <a href="{{ url('contest_problem_detail', contest.key, problem.order) }}">{{ problem.i18n_name or problem.name }}</a>
+                                {% else %}
+                                    <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
                                 {% endif %}
                             {% else %}
                                 {{ problem.i18n_name or problem.name }}
