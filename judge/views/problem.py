@@ -8,7 +8,7 @@ from random import randrange
 
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
-from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
+from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
 from django.db.models import BooleanField, Case, F, Prefetch, Q, When
 from django.db.utils import ProgrammingError
@@ -1169,7 +1169,7 @@ class ContestProblemMixin:
         self.problem_order = kwargs.get('order')
 
         if self.contest_key is None or self.problem_order is None:
-            raise Http404()
+            raise ImproperlyConfigured('Must pass a contest key and problem order')
         return super().dispatch(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
