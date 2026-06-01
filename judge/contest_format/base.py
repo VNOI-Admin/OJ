@@ -1,5 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
+from django.urls import reverse
+
 
 class abstractclassmethod(classmethod):
     __isabstractmethod__ = True
@@ -116,6 +118,11 @@ class BaseContestFormat(metaclass=ABCMeta):
         :return: A generator, where each item is an individual line.
         """
         raise NotImplementedError()
+
+    def get_user_problem_submissions_url(self, contest_problem, participation):
+        return reverse('contest_user_problem_submissions',
+                       args=[self.contest.key, contest_problem.order,
+                             participation.user.user.username])
 
     @classmethod
     def best_solution_state(cls, points, total):
