@@ -6,7 +6,7 @@ from django.utils.translation import gettext as _
 from judge.models import Language, Submission
 from judge.utils.problems import get_result_data
 from judge.utils.raw_sql import join_sql_subquery
-from judge.views.submission import ForceContestMixin, ProblemSubmissions
+from judge.views.submission import ForceContestMixin, ForceContestProblemOrderMixin, ProblemSubmissions
 
 __all__ = ['RankedSubmissions', 'ContestRankedSubmission']
 
@@ -78,7 +78,7 @@ class RankedSubmissions(ProblemSubmissions):
         return get_result_data(queryset.order_by())
 
 
-class ContestRankedSubmission(ForceContestMixin, RankedSubmissions):
+class ContestRankedSubmission(ForceContestProblemOrderMixin, RankedSubmissions):
     def get_title(self):
         if self.problem.is_accessible_by(self.request.user):
             return _('Best solutions for %(problem)s in %(contest)s') % {
@@ -92,7 +92,7 @@ class ContestRankedSubmission(ForceContestMixin, RankedSubmissions):
         if self.problem.is_accessible_by(self.request.user):
             return mark_safe(escape(_('Best solutions for %(problem)s in %(contest)s')) % {
                 'problem': format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                       reverse('contest_problem_detail', args=[self.contest.key, self.problem.order])),
+                                       reverse('contest_problem_detail', args=[self.contest.key, self.problem_order])),
                 'contest': format_html('<a href="{1}">{0}</a>', self.contest.name,
                                        reverse('contest_view', args=[self.contest.key])),
             })
