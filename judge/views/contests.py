@@ -48,7 +48,10 @@ from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
-from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
+from judge.utils.problems import (
+    _get_result_data, contest_attempted_ids, contest_completed_ids, user_attempted_ids, user_completed_ids,
+)
+from judge.utils.ranker import ranker
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 from judge.utils.views import SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message, paginate_query_context
@@ -360,8 +363,13 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['can_announce'] = self.object.is_editable_by(self.request.user)
 
         authenticated = self.request.user.is_authenticated
-        context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
-        context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
+        if authenticated and self.is_in_contest:
+            participation = self.request.profile.current_contest
+            context['completed_problem_ids'] = contest_completed_ids(participation)
+            context['attempted_problem_ids'] = contest_attempted_ids(participation)
+        else:
+            context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
+            context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
         context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD)
 
@@ -393,8 +401,13 @@ class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
             p.order = points_list[idx][1]
 
         authenticated = self.request.user.is_authenticated
-        context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
-        context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
+        if authenticated and self.is_in_contest:
+            participation = self.request.profile.current_contest
+            context['completed_problem_ids'] = contest_completed_ids(participation)
+            context['attempted_problem_ids'] = contest_attempted_ids(participation)
+        else:
+            context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
+            context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
         return context
 
