@@ -43,6 +43,14 @@
 {% endblock %}
 
 {% block users_js_media %}
+    {% if ranking_json is defined %}
+        {% compress js %}
+            <script type="text/javascript" src="{{ static('contest-ranking.js') }}"></script>
+        {% endcompress %}
+        <script type="text/javascript">
+            window.RANKING_DATA = {{ ranking_json|safe }};
+        </script>
+    {% endif %}
     {% if not contest.ended %}
         <script type="text/javascript">
             $(function () {
@@ -66,7 +74,28 @@
                     if ($('body').hasClass('window-hidden')) {
                         return ranking_outdated = true;
                     }
-                    var queryParam = window.location.search
+                    var queryParam = window.location.search;
+                    {% if ranking_json is defined %}
+                    $.ajax({
+                        url: queryParam ? queryParam + '&data' : '?data',
+                        dataType: 'json',
+                    }).done(function (data) {
+                        window.renderRankingTable(data);
+                        install_tooltips();
+                        if (localStorage.getItem('show-personal-info') == 'true') {
+                            $('.personal-info').show();
+                            $('#show-personal-info-checkbox').prop('checked', true);
+                        }
+                        {% if tab == 'ranking' %}
+                            window.getOrganizationCodes();
+                            window.applyRankingFilter();
+                        {% endif %}
+                        window.enableAdminOperations();
+                    }).always(function () {
+                        ranking_outdated = false;
+                        setTimeout(update_ranking, 10000);
+                    });
+                    {% else %}
                     $.ajax({
                         url: queryParam ? queryParam + '&raw' : '?raw',
                     }).done(function (data) {
@@ -83,6 +112,7 @@
                         ranking_outdated = false;
                         setTimeout(update_ranking, 10000);
                     });
+                    {% endif %}
                 }
                 $(window).on('dmoj:window-visible', function () {
                     if (ranking_outdated) {
@@ -95,6 +125,11 @@
     {% endif %}
     <script type="text/javascript">
         $(function () {
+            if (window.RANKING_DATA) {
+                window.renderRankingTable(window.RANKING_DATA);
+                if (window.install_tooltips) window.install_tooltips();
+            }
+
             var url = '{{ url('contest_participation', contest.key, '__username__') }}';
             var placeholder = $('#search-contest').replaceWith($('<select>').attr({
                 id: 'search-contest'
@@ -504,7 +539,11 @@
 {% endblock %}
 
 {% block users_table %}
-    {{ rendered_ranking_table }}
+    {% if ranking_json is defined %}
+        <div id="ranking-container"></div>
+    {% else %}
+        {{ rendered_ranking_table }}
+    {% endif %}
 {% endblock %}
 
 {% block body %}

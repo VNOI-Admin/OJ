@@ -47,6 +47,19 @@ class BaseContestFormat(metaclass=ABCMeta):
         """
         raise NotImplementedError()
 
+    def get_format_data_for_api(self, entry, problem_points, frozen=False):
+        """
+        Returns a sanitized copy of a single problem's format_data entry safe to expose via the ranking JSON API.
+        When frozen=True, formats that support scoreboard freezing should strip post-freeze results so they are
+        not leaked to end users. The default implementation returns the entry unchanged (no freeze support).
+
+        :param entry: A dict — one problem's format_data entry for a single participation.
+        :param problem_points: Maximum points for the problem (used by some formats to detect pre-freeze AC).
+        :param frozen: Whether to apply freeze sanitisation (True when the scoreboard is currently frozen).
+        :return: A dict safe to serialise and send to the browser.
+        """
+        return entry
+
     @abstractmethod
     def get_first_solves_and_total_ac(self, problems, participations, frozen=False):
         """
