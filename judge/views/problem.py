@@ -180,32 +180,9 @@ user_submit_ip_logger = logging.getLogger('judge.user_submit_ip_logger')
 
 
 class ProblemSubmitMixin:
-    contest_problem = None
-
-    @cached_property
-    def participation(self) -> ContestParticipation | None:
-        if not self.request.user.is_authenticated:
-            return None
-        if hasattr(self, 'explicit_participation') and self.explicit_participation:
-            return self.explicit_participation
-        return self.request.profile.current_contest
-
     @cached_property
     def remaining_submission_count(self):
-        if not self.request.user.is_authenticated:
-            return None
-        max_subs = self.contest_problem.max_submissions if self.contest_problem else None
-        if max_subs is None:
-            return None
-        # When an IE submission is rejudged into a non-IE status, it will count towards the
-        # submission limit. We max with 0 to ensure that `remaining_submission_count` returns
-        # a non-negative integer, which is required for future checks in this view.
-        return max(
-            0,
-            max_subs - get_contest_submission_count(
-                self.object, self.participation,
-            ),
-        )
+        return None
 
     @cached_property
     def default_language(self):
@@ -266,11 +243,17 @@ class ProblemSubmitMixin:
         return {
             'form': self.get_submit_form(),
             'langs': Language.objects.all(),
-            'submission_limit': self.contest_problem and self.contest_problem.max_submissions,
-            'submissions_left': self.remaining_submission_count,
             'ACE_URL': settings.ACE_URL,
             'default_lang': self.default_language,
         }
+
+    def _get_credit_organization(self):
+        if self.object.is_organization_private:
+            return self.object.organization
+        return None
+
+    def _save_submission(self, new_submission):
+        new_submission.save()
 
     def handle_submission_post(self, request):
         form = self.get_submit_form()
@@ -301,52 +284,22 @@ class ProblemSubmitMixin:
 
         # Organization credit check
         if settings.VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION:
-            # check if the problem belongs to any organization
-            organization = None
-            if self.object.is_organization_private:
-                organization = self.object.organization
-
-            if organization is None:
-                # check if the contest belongs to any organization
-                if self.contest_problem is not None:
-                    contest_object = self.participation.contest
-
-                    if contest_object.is_organization_private:
-                        organization = contest_object.organization
-
-            # check if org have credit to execute this submission
-            if organization is not None:
-                if not organization.has_credit_left():
-                    org_name = organization.name
-                    return generic_message(
-                        request,
-                        _('No credit'),
-                        _(
-                            'The organization %s has no credit left to execute this submission. '
-                            'Ask the organization to buy more credit.',
-                        )
-                        % org_name,
-                    ), None
+            organization = self._get_credit_organization()
+            if organization is not None and not organization.has_credit_left():
+                return generic_message(
+                    request,
+                    _('No credit'),
+                    _(
+                        'The organization %s has no credit left to execute this submission. '
+                        'Ask the organization to buy more credit.',
+                    )
+                    % organization.name,
+                ), None
 
         # Create submission
         with transaction.atomic():
             new_submission = form.save(commit=False)
-
-            contest_problem = self.contest_problem
-            if contest_problem is not None and self.participation:
-                # use self.participation instead of request.profile.current_contest
-                # TODO: remove current_contest field after migrate to the new contest code system
-                new_submission.contest_object = self.participation.contest
-                if self.participation.live:
-                    new_submission.locked_after = new_submission.contest_object.locked_after
-                new_submission.save()
-                ContestSubmission(
-                    submission=new_submission,
-                    problem=contest_problem,
-                    participation=self.participation,
-                ).save()
-            else:
-                new_submission.save()
+            self._save_submission(new_submission)
 
             submission_file = form.files.get('submission_file', None)
             source_url = submission_uploader(
@@ -1224,7 +1177,58 @@ class ContestProblemMixin:
         return context
 
 
-class ContestProblemDetail(ContestProblemMixin, ProblemDetail):
+class ContestProblemSubmitMixin(ContestProblemMixin, ProblemSubmitMixin):
+    @cached_property
+    def participation(self) -> ContestParticipation | None:
+        if not self.request.user.is_authenticated:
+            return None
+        if hasattr(self, 'explicit_participation') and self.explicit_participation:
+            return self.explicit_participation
+        return self.request.profile.current_contest
+
+    @cached_property
+    def remaining_submission_count(self):
+        if not self.request.user.is_authenticated:
+            return None
+        max_subs = self.contest_problem.max_submissions if self.contest_problem else None
+        if max_subs is None:
+            return None
+        # When an IE submission is rejudged into a non-IE status, it will count towards the
+        # submission limit. We max with 0 to ensure that `remaining_submission_count` returns
+        # a non-negative integer, which is required for future checks in this view.
+        return max(
+            0,
+            max_subs - get_contest_submission_count(self.object, self.participation),
+        )
+
+    def get_submit_context(self):
+        context = super().get_submit_context()
+        context['submission_limit'] = self.contest_problem and self.contest_problem.max_submissions
+        context['submissions_left'] = self.remaining_submission_count
+        return context
+
+    def _get_credit_organization(self):
+        org = super()._get_credit_organization()
+        if org is None and self.contest.is_organization_private:
+            return self.contest.organization
+        return org
+
+    def _save_submission(self, new_submission):
+        if self.contest_problem and self.participation:
+            new_submission.contest_object = self.participation.contest
+            if self.participation.live:
+                new_submission.locked_after = new_submission.contest_object.locked_after
+            new_submission.save()
+            ContestSubmission(
+                submission=new_submission,
+                problem=self.contest_problem,
+                participation=self.participation,
+            ).save()
+        else:
+            super()._save_submission(new_submission)
+
+
+class ContestProblemDetail(ContestProblemSubmitMixin, ProblemDetail):
     def get_comment_page(self):
         cp = self.contest_problem
         return 'cp:%s:%s' % (cp.contest.key, cp.order)
@@ -1249,7 +1253,7 @@ class ContestProblemDetail(ContestProblemMixin, ProblemDetail):
         return context
 
 
-class ContestProblemSubmit(ContestProblemMixin, ProblemSubmit):
+class ContestProblemSubmit(ContestProblemSubmitMixin, ProblemSubmit):
     def get_content_title(self):
         return mark_safe(
             escape(_('Submit to %s')) % format_html(
