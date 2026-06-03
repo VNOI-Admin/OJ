@@ -1190,9 +1190,8 @@ class ContestProblemMixin:
         else:
             self.explicit_participation = None
 
-        if not problem.is_accessible_by(user):
-            if not (self.explicit_participation and cp.contest.is_accessible_by(user)):
-                raise Http404()
+        if not cp.is_accessible_by(user):
+            raise Http404()
 
         return problem
 

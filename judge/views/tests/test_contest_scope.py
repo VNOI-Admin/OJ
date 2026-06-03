@@ -23,7 +23,7 @@ Views / surfaces tested:
   - HTTP integration for key contest-scoped URLs (no /problem/<code>/ in response)
 """
 from django.http import Http404
-from django.test import RequestFactory, TestCase
+from django.test import RequestFactory, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 
@@ -261,6 +261,48 @@ class ContestProblemDetailContextTest(ContestScopeTestBase):
         view = self._make_view(self.users['non_participant'], self.active_contest, 2)
         with self.assertRaises(Http404):
             view.get_object()
+
+    def test_private_problem_accessible_for_problem_editor_without_participation(self):
+        """Problem author/curator can access their own private problem even without contest participation."""
+        problem_editor = create_user(username='prob_editor')
+        self.private_problem.authors.add(problem_editor.profile)
+        try:
+            view = self._make_view(problem_editor, self.active_contest, 2)
+            problem = view.get_object()
+            self.assertEqual(problem.code, 'scope_private')
+        finally:
+            self.private_problem.authors.remove(problem_editor.profile)
+
+    def test_private_problem_accessible_with_see_private_problem_permission(self):
+        """User with see_private_problem can access a private problem without participation."""
+        privileged = create_user(username='see_priv', user_permissions=('see_private_problem',))
+        view = self._make_view(privileged, self.active_contest, 2)
+        problem = view.get_object()
+        self.assertEqual(problem.code, 'scope_private')
+
+    def test_contest_editor_without_participation_cannot_access_private_problem(self):
+        """A contest editor who hasn't joined cannot access a private problem via contest URL."""
+        editor = create_user(username='contest_ed')
+        self.active_contest.authors.add(editor.profile)
+        try:
+            view = self._make_view(editor, self.active_contest, 2)
+            with self.assertRaises(Http404):
+                view.get_object()
+        finally:
+            self.active_contest.authors.remove(editor.profile)
+
+    def test_private_problem_accessible_for_contest_tester_with_participation(self):
+        """A tester who has joined the contest can access a private problem."""
+        tester = create_user(username='contest_tester')
+        self.active_contest.testers.add(tester.profile)
+        create_contest_participation(contest=self.active_contest, user=tester.username)
+        try:
+            view = self._make_view(tester, self.active_contest, 2)
+            problem = view.get_object()
+            self.assertEqual(problem.code, 'scope_private')
+        finally:
+            self.active_contest.testers.remove(tester.profile)
+
 
 
 # ---------------------------------------------------------------------------
@@ -764,6 +806,7 @@ class SubmissionRowTemplateTest(ContestScopeTestBase):
 # HTTP integration — full request/response cycle for key contest-scoped URLs
 # ---------------------------------------------------------------------------
 
+@override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
 class ContestScopeHttpIntegrationTest(ContestScopeTestBase):
     """
     End-to-end HTTP tests: fetch contest-scoped pages and assert that

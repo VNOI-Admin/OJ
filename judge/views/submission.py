@@ -947,8 +947,13 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
 
 
 class UserContestSubmissions(ForceContestProblemOrderMixin, UserProblemSubmissions):
+    @cached_property
+    def _contest_problem(self):
+        from judge.models.contest import ContestProblem
+        return ContestProblem.objects.get(contest=self.contest, order=self.problem_order)
+
     def get_title(self):
-        if self.problem.is_accessible_by(self.request.user):
+        if self._contest_problem.is_accessible_by(self.request.user):
             return _("{user}'s submissions for {problem} in {contest}").format(
                 user=self.profile.display_name,
                 problem=self.problem_name,
@@ -966,7 +971,7 @@ class UserContestSubmissions(ForceContestProblemOrderMixin, UserProblemSubmissio
             raise Http404()
 
     def get_content_title(self):
-        if self.problem.is_accessible_by(self.request.user):
+        if self._contest_problem.is_accessible_by(self.request.user):
             return mark_safe(escape(_("{user}'s submissions for {problem} in {contest}")).format(
                 user=format_html('<a href="{1}">{0}</a>', self.profile.display_name,
                                  reverse('user_page', args=[self.username])),
