@@ -37,8 +37,9 @@ from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
-from judge.utils.problems import hot_problems, user_attempted_ids, \
-    user_completed_ids
+from judge.utils.problems import (
+    contest_attempted_ids, contest_completed_ids, hot_problems, user_attempted_ids, user_completed_ids,
+)
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
@@ -1204,6 +1205,16 @@ class ContestProblemMixin:
         if hasattr(self, 'contest_problem') and self.contest_problem is not None:
             return self.contest_problem.contest
         return get_object_or_404(Contest, key=self.contest_key)
+
+    def get_completed_problems(self):
+        if self.explicit_participation:
+            return contest_completed_ids(self.explicit_participation)
+        return []
+
+    def get_attempted_problems(self):
+        if self.explicit_participation:
+            return contest_attempted_ids(self.explicit_participation)
+        return []
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

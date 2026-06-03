@@ -24,11 +24,11 @@
                     <div style="display: flex">
                         <h2 style="margin-top: 0.5em; margin-right: 0.5em;">
                             {% if problem.id in completed_problem_ids %}
-                                <a href="{{ url('contest_user_problem_submissions', contest.key, problem.order, request.user.username) }}">
+                                <a href="{{ url('contest_user_problem_submissions', contest.key, problem.order, request.user.username) if hide_problem_code else url('user_submissions', problem.code, request.user.username) }}">
                                     <i class="solved-problem-color fa fa-check-circle"></i>
                                 </a>
                             {% elif problem.id in attempted_problem_ids %}
-                                <a href="{{ url('contest_user_problem_submissions', contest.key, problem.order, request.user.username) }}">
+                                <a href="{{ url('contest_user_problem_submissions', contest.key, problem.order, request.user.username) if hide_problem_code else url('user_submissions', problem.code, request.user.username) }}">
                                     <i class="attempted-problem-color fa fa-frown-o"></i>
                                 </a>
                             {% endif %}
