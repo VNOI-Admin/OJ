@@ -759,6 +759,15 @@ class ContestProblem(models.Model):
     def get_absolute_url(self):
         return reverse('contest_problem_detail', args=[self.contest.key, self.order])
 
+    def is_accessible_by(self, user):
+        if self.problem.is_accessible_by(user):
+            return True
+        if not user.is_authenticated:
+            return False
+        if not self.contest.is_accessible_by(user):
+            return False
+        return self.contest.users.filter(user=user.profile).exists()
+
     class Meta:
         unique_together = ('problem', 'contest')
         verbose_name = _('contest problem')

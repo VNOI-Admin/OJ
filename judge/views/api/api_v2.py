@@ -465,7 +465,7 @@ class APIProblemDetail(APIDetailView):
 
     def get_object(self, queryset=None):
         problem = super().get_object(queryset)
-        if not problem.is_accessible_by(self.request.user, skip_contest_problem_check=True):
+        if not problem.is_accessible_by(self.request.user):
             raise Http404()
         return problem
 

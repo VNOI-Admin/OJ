@@ -1,4 +1,5 @@
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -79,8 +80,13 @@ class RankedSubmissions(ProblemSubmissions):
 
 
 class ContestRankedSubmission(ForceContestProblemOrderMixin, RankedSubmissions):
+    @cached_property
+    def _contest_problem(self):
+        from judge.models.contest import ContestProblem
+        return ContestProblem.objects.get(contest=self.contest, problem=self.problem)
+
     def get_title(self):
-        if self.problem.is_accessible_by(self.request.user):
+        if self._contest_problem.is_accessible_by(self.request.user):
             return _('Best solutions for %(problem)s in %(contest)s') % {
                 'problem': self.problem_name, 'contest': self.contest.name,
             }
@@ -89,7 +95,7 @@ class ContestRankedSubmission(ForceContestProblemOrderMixin, RankedSubmissions):
         }
 
     def get_content_title(self):
-        if self.problem.is_accessible_by(self.request.user):
+        if self._contest_problem.is_accessible_by(self.request.user):
             return mark_safe(escape(_('Best solutions for %(problem)s in %(contest)s')) % {
                 'problem': format_html('<a href="{1}">{0}</a>', self.problem_name,
                                        reverse('contest_problem_detail', args=[self.contest.key, self.problem_order])),
