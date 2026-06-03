@@ -957,11 +957,11 @@ class ContestProblemIsAccessibleByTestCase(CommonDataMixin, TestCase):
     def test_pub_contest_pub_problem_methods(self):
         # Public problem -> always accessible regardless of contest or participation
         data = {
-            'anonymous':      {'is_accessible_by': self.assertTrue},
-            'normal':         {'is_accessible_by': self.assertTrue},
-            'participant':    {'is_accessible_by': self.assertTrue},
+            'anonymous': {'is_accessible_by': self.assertTrue},
+            'normal': {'is_accessible_by': self.assertTrue},
+            'participant': {'is_accessible_by': self.assertTrue},
             'contest_editor': {'is_accessible_by': self.assertTrue},
-            'superuser':      {'is_accessible_by': self.assertTrue},
+            'superuser': {'is_accessible_by': self.assertTrue},
         }
         self._test_object_methods_with_users(self.pub_contest_pub_cp, data)
 
@@ -970,25 +970,25 @@ class ContestProblemIsAccessibleByTestCase(CommonDataMixin, TestCase):
         #   - participant/problem_author/see_private_problem/superuser -> True
         #   - all others -> False
         data = {
-            'anonymous':          {'is_accessible_by': self.assertFalse},
-            'normal':             {'is_accessible_by': self.assertFalse},
-            'participant':        {'is_accessible_by': self.assertTrue},
-            'problem_author':     {'is_accessible_by': self.assertTrue},
-            'see_private_problem':{'is_accessible_by': self.assertTrue},
-            'see_private_contest':{'is_accessible_by': self.assertFalse},
-            'contest_editor':     {'is_accessible_by': self.assertFalse},
-            'superuser':          {'is_accessible_by': self.assertTrue},
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertTrue},
+            'problem_author': {'is_accessible_by': self.assertTrue},
+            'see_private_problem': {'is_accessible_by': self.assertTrue},
+            'see_private_contest': {'is_accessible_by': self.assertFalse},
+            'contest_editor': {'is_accessible_by': self.assertFalse},
+            'superuser': {'is_accessible_by': self.assertTrue},
         }
         self._test_object_methods_with_users(self.pub_contest_priv_cp, data)
 
     def test_priv_contest_pub_problem_methods(self):
         # Public problem -> problem.is_accessible_by() returns True before contest check
         data = {
-            'anonymous':           {'is_accessible_by': self.assertTrue},
+            'anonymous': {'is_accessible_by': self.assertTrue},
             'private_not_allowed': {'is_accessible_by': self.assertTrue},
-            'private_allowed':     {'is_accessible_by': self.assertTrue},
+            'private_allowed': {'is_accessible_by': self.assertTrue},
             'see_private_contest': {'is_accessible_by': self.assertTrue},
-            'superuser':           {'is_accessible_by': self.assertTrue},
+            'superuser': {'is_accessible_by': self.assertTrue},
         }
         self._test_object_methods_with_users(self.priv_contest_pub_cp, data)
 
@@ -997,13 +997,13 @@ class ContestProblemIsAccessibleByTestCase(CommonDataMixin, TestCase):
         #   - allowed+participation / problem_author / see_private_problem / superuser -> True
         #   - see_private_contest has contest access but no participation -> False
         data = {
-            'anonymous':           {'is_accessible_by': self.assertFalse},
+            'anonymous': {'is_accessible_by': self.assertFalse},
             'private_not_allowed': {'is_accessible_by': self.assertFalse},
-            'private_allowed':     {'is_accessible_by': self.assertTrue},
-            'problem_author':      {'is_accessible_by': self.assertTrue},
+            'private_allowed': {'is_accessible_by': self.assertTrue},
+            'problem_author': {'is_accessible_by': self.assertTrue},
             'see_private_problem': {'is_accessible_by': self.assertTrue},
             'see_private_contest': {'is_accessible_by': self.assertFalse},
-            'superuser':           {'is_accessible_by': self.assertTrue},
+            'superuser': {'is_accessible_by': self.assertTrue},
         }
         self._test_object_methods_with_users(self.priv_contest_priv_cp, data)
 
@@ -1050,8 +1050,8 @@ class ProblemIsAccessibleByNoContestCheckTestCase(CommonDataMixin, TestCase):
         # and has no see_private_problem perm -> must be False.
         data = {
             'in_contest': {'is_accessible_by': self.assertFalse},
-            'normal':     {'is_accessible_by': self.assertFalse},
-            'anonymous':  {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'anonymous': {'is_accessible_by': self.assertFalse},
         }
         self._test_object_methods_with_users(self.private_problem, data)
 
@@ -1059,7 +1059,7 @@ class ProblemIsAccessibleByNoContestCheckTestCase(CommonDataMixin, TestCase):
         # ContestProblem.is_accessible_by() correctly grants access for participants.
         data = {
             'in_contest': {'is_accessible_by': self.assertTrue},
-            'normal':     {'is_accessible_by': self.assertFalse},
-            'anonymous':  {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'anonymous': {'is_accessible_by': self.assertFalse},
         }
         self._test_object_methods_with_users(self.contest_problem, data)

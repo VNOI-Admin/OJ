@@ -304,7 +304,6 @@ class ContestProblemDetailContextTest(ContestScopeTestBase):
             self.active_contest.testers.remove(tester.profile)
 
 
-
 # ---------------------------------------------------------------------------
 # ContestProblemSubmit — content title
 # ---------------------------------------------------------------------------

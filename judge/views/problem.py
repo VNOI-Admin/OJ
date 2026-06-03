@@ -43,7 +43,7 @@ from judge.utils.problems import (
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
 from judge.utils.tickets import own_ticket_filter
 from judge.utils.views import QueryStringSortMixin, SingleObjectFormView, TitleMixin, add_file_response, generic_message
-from judge.views.submission import ProblemSubmissions, UserContestSubmissions
+from judge.views.submission import ProblemSubmissions
 from judge.views.widgets import pdf_statement_uploader, submission_uploader
 
 recjk = re.compile(r'[\u2E80-\u2E99\u2E9B-\u2EF3\u2F00-\u2FD5\u3005\u3007\u3021-\u3029\u3038-\u303A\u303B\u3400-\u4DB5'
