@@ -38,7 +38,7 @@ from judge.models.tests.util import (
     create_problem,
     create_user,
 )
-from judge.views.problem import ContestProblemDetail, ContestProblemSubmissions, ContestProblemSubmit
+from judge.views.problem import ContestProblemDetail, ContestProblemRaw, ContestProblemSubmissions, ContestProblemSubmit
 from judge.views.ranked_submission import ContestRankedSubmission
 from judge.views.submission import SubmissionDetailBase, UserContestSubmissions, submission_problem_redirect
 from judge.views.ticket import NewContestProblemTicketView
@@ -899,3 +899,131 @@ class ContestScopeHttpIntegrationTest(ContestScopeTestBase):
         redirect_url = reverse('submission_problem_redirect', args=[self.contest_submission.id])
         self.assertIn(redirect_url, content)
         self.assertNotIn(f'/problem/{self.problem.code}/submit', content)
+
+
+# ---------------------------------------------------------------------------
+# Before-contest-start access control
+# ---------------------------------------------------------------------------
+
+class ContestProblemBeforeStartTest(ContestScopeTestBase):
+    """
+    Regression tests: no user (including pre-registered participants) may access
+    a private contest problem before the contest starts (can_join = False).
+
+    The old Problem.is_accessible_by() had an explicit `if not can_join: return False`
+    guard. ContestProblem.is_accessible_by() must preserve that behaviour.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        _now = timezone.now()
+
+        cls.users.update({
+            'pre_registered': create_user(username='pre_reg_user'),
+        })
+
+        cls.future_public_problem = create_problem(code='future_pub', is_public=True)
+        cls.future_private_problem = create_problem(code='future_priv', is_public=False)
+
+        cls.future_contest = create_contest(
+            key='future_contest',
+            start_time=_now + timezone.timedelta(hours=1),
+            end_time=_now + timezone.timedelta(hours=5),
+            is_visible=True,
+        )
+        cls.future_pub_cp = create_contest_problem(
+            contest=cls.future_contest, problem=cls.future_public_problem, order=1,
+        )
+        cls.future_priv_cp = create_contest_problem(
+            contest=cls.future_contest, problem=cls.future_private_problem, order=2,
+        )
+        # Simulate pre-registration: participation exists before contest start.
+        create_contest_participation(contest=cls.future_contest, user='pre_reg_user')
+
+    # --- view unit tests (ContestProblemDetail.get_object) ---
+
+    def _make_detail_view(self, user, contest, order):
+        view = ContestProblemDetail()
+        view.request = self._make_request(user)
+        view.kwargs = {'contest': contest.key, 'order': order}
+        view.contest_key = contest.key
+        view.problem_order = order
+        return view
+
+    def test_pre_registered_cannot_access_private_problem_view_before_start(self):
+        view = self._make_detail_view(self.users['pre_registered'], self.future_contest, 2)
+        with self.assertRaises(Http404):
+            view.get_object()
+
+    def test_anonymous_cannot_access_private_problem_view_before_start(self):
+        from django.contrib.auth.models import AnonymousUser
+        view = self._make_detail_view(self.users['pre_registered'], self.future_contest, 2)
+        view.request.user = AnonymousUser()
+        with self.assertRaises(Http404):
+            view.get_object()
+
+    def test_authenticated_non_participant_cannot_access_private_problem_before_start(self):
+        view = self._make_detail_view(self.users['non_participant'], self.future_contest, 2)
+        with self.assertRaises(Http404):
+            view.get_object()
+
+    def test_public_problem_accessible_before_start_for_any_user(self):
+        # Public problems are always accessible — this must not regress.
+        for key in ('pre_registered', 'non_participant'):
+            with self.subTest(user=key):
+                view = self._make_detail_view(self.users[key], self.future_contest, 1)
+                problem = view.get_object()
+                self.assertEqual(problem.code, 'future_pub')
+
+    # --- ContestProblemRaw access control ---
+
+    def test_contest_problem_raw_blocks_non_participant_on_private_problem(self):
+        view = ContestProblemRaw()
+        view.request = self._make_request(self.users['non_participant'])
+        view.kwargs = {'contest': self.active_contest.key, 'order': 2}
+        view.contest_key = self.active_contest.key
+        view.problem_order = 2
+        with self.assertRaises(Http404):
+            view.get_object()
+
+    def test_contest_problem_raw_allows_participant_on_private_problem(self):
+        view = ContestProblemRaw()
+        view.request = self._make_request(self.users['participant'])
+        view.kwargs = {'contest': self.active_contest.key, 'order': 2}
+        view.contest_key = self.active_contest.key
+        view.problem_order = 2
+        problem = view.get_object()
+        self.assertEqual(problem.code, 'scope_private')
+
+    def test_contest_problem_raw_blocks_pre_registered_before_start(self):
+        view = ContestProblemRaw()
+        view.request = self._make_request(self.users['pre_registered'])
+        view.kwargs = {'contest': self.future_contest.key, 'order': 2}
+        view.contest_key = self.future_contest.key
+        view.problem_order = 2
+        with self.assertRaises(Http404):
+            view.get_object()
+
+    # --- HTTP integration ---
+
+    @override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
+    def test_http_pre_registered_gets_404_on_private_problem_before_start(self):
+        self.client.force_login(self.users['pre_registered'])
+        url = reverse('contest_problem_detail', args=[self.future_contest.key, 2])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    @override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
+    def test_http_anonymous_gets_404_on_private_problem_before_start(self):
+        self.client.logout()
+        url = reverse('contest_problem_detail', args=[self.future_contest.key, 2])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 404)
+
+    @override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
+    def test_http_public_problem_accessible_before_start(self):
+        self.client.force_login(self.users['pre_registered'])
+        url = reverse('contest_problem_detail', args=[self.future_contest.key, 1])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
