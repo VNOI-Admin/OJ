@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.core.files.storage import default_storage
-from django.db.models import Prefetch, Q
+from django.db.models import F, Prefetch, Q
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseRedirect, \
     JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -716,11 +716,25 @@ def single_submission(request):
     if not submission.problem.is_accessible_by(request.user):
         raise Http404()
 
+    if authenticated:
+        problem_id = submission.problem_id
+        profile = request.profile
+        completed_problem_ids = [problem_id] if Submission.objects.filter(
+            user=profile, problem_id=problem_id, result='AC', case_points__gte=F('case_total'),
+        ).exists() else []
+        editable_problem_ids = []
+        editable_problem_ids = [problem_id] if submission.problem.is_editable_by(request.user) else []
+        tester_problem_ids = [problem_id] if Problem.testers.through.objects.filter(
+            profile=profile, problem_id=problem_id,
+        ).exists() else []
+    else:
+        completed_problem_ids = editable_problem_ids = tester_problem_ids = []
+
     return render(request, 'submission/row.html', {
         'submission': submission,
-        'completed_problem_ids': user_completed_ids(request.profile) if authenticated else [],
-        'editable_problem_ids': user_editable_ids(request.profile) if authenticated else [],
-        'tester_problem_ids': user_tester_ids(request.profile) if authenticated else [],
+        'completed_problem_ids': completed_problem_ids,
+        'editable_problem_ids': editable_problem_ids,
+        'tester_problem_ids': tester_problem_ids,
         'show_problem': show_problem,
         'problem_name': show_problem and submission.problem.translated_name(request.LANGUAGE_CODE),
         'profile_id': request.profile.id if authenticated else 0,
