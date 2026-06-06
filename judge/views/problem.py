@@ -343,6 +343,7 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, Commen
         authed = user.is_authenticated
         context['has_submissions'] = authed and Submission.objects.filter(user=user.profile,
                                                                           problem=self.object).exists()
+        context['problem_raw_url'] = reverse('problem_raw', args=[self.object.code])
 
         context['available_judges'] = Judge.objects.filter(online=True, problems=self.object)
         context['show_languages'] = self.object.allowed_languages.count() != Language.objects.count()
@@ -1174,6 +1175,8 @@ class ContestProblemMixin:
         context['contest_key'] = self.contest_key
         context['problem_order'] = self.problem_order
         context['hide_problem_code'] = True
+        context['problem_raw_url'] = reverse('contest_problem_raw',
+                                             args=[self.contest_key, self.problem_order])
         return context
 
 
@@ -1184,7 +1187,7 @@ class ContestProblemSubmitMixin(ContestProblemMixin, ProblemSubmitMixin):
             return None
         if hasattr(self, 'explicit_participation') and self.explicit_participation:
             return self.explicit_participation
-        return self.request.profile.current_contest
+        return None
 
     @cached_property
     def remaining_submission_count(self):
@@ -1293,3 +1296,7 @@ class ContestProblemSubmissions(ContestProblemMixin, ProblemSubmissions):
                                                    kwargs={'order': self.problem_order,
                                                            'contest': self.contest_key})
         return context
+
+
+class ContestProblemRaw(ContestProblemMixin, ProblemRaw):
+    pass
