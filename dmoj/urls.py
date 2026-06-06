@@ -280,6 +280,8 @@ urlpatterns = [
         path('/<int:order>/submissions/',
              paged_list_view(problem.ContestProblemSubmissions, 'contest_problem_submissions')),
         path('/<int:order>/', problem.ContestProblemDetail.as_view(), name='contest_problem_detail'),
+        path('/<int:order>/raw', xframe_options_sameorigin(problem.ContestProblemRaw.as_view()),
+             name='contest_problem_raw'),
         path('/<int:order>/submit', problem.ContestProblemSubmit.as_view(), name='contest_problem_submit'),
         path('/<int:order>/resubmit/<int:submission>', problem.ContestProblemSubmit.as_view(),
              name='contest_problem_submit'),
