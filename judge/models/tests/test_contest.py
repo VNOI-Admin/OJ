@@ -1063,3 +1063,70 @@ class ProblemIsAccessibleByNoContestCheckTestCase(CommonDataMixin, TestCase):
             'anonymous': {'is_accessible_by': self.assertFalse},
         }
         self._test_object_methods_with_users(self.contest_problem, data)
+
+
+class ContestProblemPreStartAccessTestCase(CommonDataMixin, TestCase):
+    """
+    ContestProblem.is_accessible_by() must block access before the contest starts
+    (can_join = False), even for pre-registered participants.
+
+    Regression guard: the old Problem.is_accessible_by() had an explicit
+    `if not current.contest.can_join: return False` check. The new
+    ContestProblem.is_accessible_by() must preserve that behaviour.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        _now = timezone.now()
+
+        cls.users.update({
+            'pre_registered': create_user(username='pre_start_participant'),
+            'see_private_problem': create_user(
+                username='pre_start_see_priv',
+                user_permissions=('see_private_problem',),
+            ),
+        })
+
+        cls.public_problem = create_problem(code='pre_start_pub', is_public=True)
+        cls.private_problem = create_problem(code='pre_start_priv', is_public=False)
+
+        cls.future_contest = create_contest(
+            key='pre_start_contest',
+            start_time=_now + timezone.timedelta(hours=1),
+            end_time=_now + timezone.timedelta(hours=5),
+            is_visible=True,
+        )
+        cls.pub_cp = create_contest_problem(
+            contest=cls.future_contest, problem=cls.public_problem, order=1,
+        )
+        cls.priv_cp = create_contest_problem(
+            contest=cls.future_contest, problem=cls.private_problem, order=2,
+        )
+        # Pre-register the participant before the contest starts.
+        create_contest_participation(contest=cls.future_contest, user='pre_start_participant')
+
+    def test_public_problem_accessible_before_start(self):
+        # Public problems are always accessible regardless of contest timing.
+        for key in ('anonymous', 'normal', 'pre_registered', 'superuser'):
+            with self.subTest(user=key):
+                user = self.users[key]
+                self.assertTrue(self.pub_cp.is_accessible_by(user))
+
+    def test_private_problem_blocked_for_pre_registered_before_start(self):
+        # Pre-registered participant must NOT access a private problem before start.
+        self.assertFalse(self.priv_cp.is_accessible_by(self.users['pre_registered']))
+
+    def test_private_problem_blocked_for_anonymous_before_start(self):
+        self.assertFalse(self.priv_cp.is_accessible_by(self.users['anonymous']))
+
+    def test_private_problem_blocked_for_normal_user_before_start(self):
+        self.assertFalse(self.priv_cp.is_accessible_by(self.users['normal']))
+
+    def test_private_problem_accessible_for_see_private_problem_perm_before_start(self):
+        # Users with see_private_problem bypass via Problem.is_accessible_by(), not via
+        # contest participation, so they should still see the problem before start.
+        self.assertTrue(self.priv_cp.is_accessible_by(self.users['see_private_problem']))
+
+    def test_private_problem_accessible_for_superuser_before_start(self):
+        self.assertTrue(self.priv_cp.is_accessible_by(self.users['superuser']))
