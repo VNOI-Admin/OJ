@@ -1119,6 +1119,8 @@ class ProblemDelete(ProblemMixin, TitleMixin, DetailView):
 
 
 class ContestProblemMixin:
+    explicit_participation = None
+
     def dispatch(self, request, *args, **kwargs):
         self.contest_key = kwargs.get('contest')
         self.problem_order = kwargs.get('order')
@@ -1128,24 +1130,22 @@ class ContestProblemMixin:
         return super().dispatch(request, *args, **kwargs)
 
     def get_object(self, queryset=None):
-        cp = get_object_or_404(
+        contest_problem = get_object_or_404(
             ContestProblem.objects.select_related('problem', 'contest'),
             contest__key=self.contest_key,
             order=self.problem_order,
         )
-        self.contest_problem = cp
-        problem = cp.problem
+        self.contest_problem = contest_problem
+        problem = contest_problem.problem
 
         user = self.request.user
         if user.is_authenticated:
             self.explicit_participation = ContestParticipation.objects.filter(
                 user=user.profile,
-                contest=cp.contest,
+                contest=contest_problem.contest,
             ).order_by('-virtual').first()  # get the last participation
-        else:
-            self.explicit_participation = None
 
-        if not cp.is_accessible_by(user):
+        if not contest_problem.is_accessible_by(user):
             raise Http404()
 
         return problem
@@ -1185,9 +1185,7 @@ class ContestProblemSubmitMixin(ContestProblemMixin, ProblemSubmitMixin):
     def participation(self) -> ContestParticipation | None:
         if not self.request.user.is_authenticated:
             return None
-        if hasattr(self, 'explicit_participation') and self.explicit_participation:
-            return self.explicit_participation
-        return None
+        return self.explicit_participation
 
     @cached_property
     def remaining_submission_count(self):
