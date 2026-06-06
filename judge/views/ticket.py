@@ -174,7 +174,7 @@ class NewContestProblemTicketView(ContestProblemMixin, TitleMixin, NewTicketView
                                      self.object.translated_name(self.request.LANGUAGE_CODE)))
 
     def form_valid(self, form):
-        if not self.object.is_accessible_by(self.request.user):
+        if not self.contest_problem.is_accessible_by(self.request.user):
             raise Http404()
         return super().form_valid(form)
 
