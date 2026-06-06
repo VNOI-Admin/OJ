@@ -1130,3 +1130,50 @@ class ContestProblemPreStartAccessTestCase(CommonDataMixin, TestCase):
 
     def test_private_problem_accessible_for_superuser_before_start(self):
         self.assertTrue(self.priv_cp.is_accessible_by(self.users['superuser']))
+
+
+class ContestProblemVirtualSpectateAccessTestCase(CommonDataMixin, TestCase):
+    """
+    Virtual and spectate participants must pass ContestProblem.is_accessible_by()
+    the same way LIVE participants do.
+
+    contest.users.filter(user=...).exists() matches any participation type
+    (virtual > 0 or virtual = -1) — this test documents that behaviour (spec §10G).
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+        _now = timezone.now()
+
+        cls.users.update({
+            'virtual_participant': create_user(username='vs_virtual'),
+            'spectate_participant': create_user(username='vs_spectate'),
+        })
+
+        cls.private_problem = create_problem(code='vs_priv_prob', is_public=False)
+        cls.contest = create_contest(
+            key='vs_contest',
+            start_time=_now - timezone.timedelta(hours=1),
+            end_time=_now + timezone.timedelta(days=1),
+            is_visible=True,
+        )
+        cls.cp = create_contest_problem(
+            contest=cls.contest, problem=cls.private_problem, order=1,
+        )
+        ContestParticipation.objects.create(
+            contest=cls.contest,
+            user=cls.users['virtual_participant'].profile,
+            virtual=1,
+        )
+        ContestParticipation.objects.create(
+            contest=cls.contest,
+            user=cls.users['spectate_participant'].profile,
+            virtual=ContestParticipation.SPECTATE,
+        )
+
+    def test_virtual_participant_can_access_private_problem(self):
+        self.assertTrue(self.cp.is_accessible_by(self.users['virtual_participant']))
+
+    def test_spectate_participant_can_access_private_problem(self):
+        self.assertTrue(self.cp.is_accessible_by(self.users['spectate_participant']))

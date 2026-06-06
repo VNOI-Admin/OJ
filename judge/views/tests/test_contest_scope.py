@@ -38,7 +38,7 @@ from judge.models.tests.util import (
     create_problem,
     create_user,
 )
-from judge.views.problem import ContestProblemDetail, ContestProblemRaw, ContestProblemSubmissions, ContestProblemSubmit
+from judge.views.problem import ContestProblemDetail, ContestProblemRaw, ContestProblemSubmissions, ContestProblemSubmit, ProblemDetail
 from judge.views.ranked_submission import ContestRankedSubmission
 from judge.views.submission import SubmissionDetailBase, UserContestSubmissions, submission_problem_redirect
 from judge.views.ticket import NewContestProblemTicketView
@@ -1027,3 +1027,69 @@ class ContestProblemBeforeStartTest(ContestScopeTestBase):
         url = reverse('contest_problem_detail', args=[self.future_contest.key, 1])
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
+
+
+# ---------------------------------------------------------------------------
+# ProblemDetail view — global /problem/<code>/ URL during contest
+# ---------------------------------------------------------------------------
+
+class ProblemGlobalUrlDuringContestTest(ContestScopeTestBase):
+    """
+    After the refactor, Problem.is_accessible_by() no longer grants access based
+    on contest membership. A participant navigating directly to /problem/<code>/
+    for a private contest problem must receive 404.
+
+    This is the primary behavioral change for participants: they must use the
+    contest-scoped URL (/contest/<key>/<order>/) to access private problems.
+    """
+
+    def _make_problem_view(self, user, problem_code):
+        view = ProblemDetail()
+        view.request = self._make_request(user)
+        view.kwargs = {'problem': problem_code}
+        view.args = ()
+        return view
+
+    def test_participant_gets_404_on_private_problem_via_global_url(self):
+        view = self._make_problem_view(self.users['participant'], self.private_problem.code)
+        with self.assertRaises(Http404):
+            view.get_object()
+
+    def test_participant_can_access_public_problem_via_global_url(self):
+        # Public problems remain accessible via /problem/<code>/ — no regression.
+        view = self._make_problem_view(self.users['participant'], self.problem.code)
+        problem = view.get_object()
+        self.assertEqual(problem.code, self.problem.code)
+
+    def test_non_participant_gets_404_on_private_problem_via_global_url(self):
+        view = self._make_problem_view(self.users['non_participant'], self.private_problem.code)
+        with self.assertRaises(Http404):
+            view.get_object()
+
+
+# ---------------------------------------------------------------------------
+# Ended contest — HTML links revert to /problem/<code>/
+# ---------------------------------------------------------------------------
+
+@override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
+class ContestEndedHtmlTest(ContestScopeTestBase):
+    """
+    After a contest ends, hide_problem_code = False, and the contest detail page
+    must render /problem/<code>/ links. Validates that the template switch
+    (hide_problem_code ? contest URL : problem URL) actually changes the HTML.
+    """
+
+    def test_ended_contest_detail_renders_problem_code_links(self):
+        url = reverse('contest_view', args=[self.ended_contest.key])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertIn(f'/problem/{self.problem.code}/', content)
+
+    def test_active_contest_detail_does_not_render_problem_code_links(self):
+        # Sanity/regression check: same problem in active contest must NOT expose the code.
+        url = reverse('contest_view', args=[self.active_contest.key])
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, 200)
+        content = response.content.decode()
+        self.assertNotIn(f'href="/problem/{self.problem.code}/"', content)
