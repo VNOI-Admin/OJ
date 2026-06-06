@@ -766,6 +766,9 @@ class ContestProblem(models.Model):
             return False
         if not self.contest.is_accessible_by(user):
             return False
+        # Block access before the contest starts, even for pre-registered participants.
+        if not self.contest.can_join:
+            return False
         return self.contest.users.filter(user=user.profile).exists()
 
     class Meta:
