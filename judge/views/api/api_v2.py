@@ -329,7 +329,7 @@ class APIContestDetail(APIDetailView):
                     'max_submissions': problem.max_submissions or None,
                     'label': contest.get_label_for_problem(index),
                     'name': problem.problem.name,
-                    'code': problem.problem.code,
+                    **({'code': problem.problem.code} if contest.ended or in_contest else {}),
                 } for index, problem in enumerate(problems)
             ] if can_see_problems else [],
             'rankings': [
