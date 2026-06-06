@@ -129,7 +129,7 @@
             $('#pdf_button').click(async function(e) {
                 e.preventDefault();
                 if (!$('#raw_problem').attr("src"))
-                    $('#raw_problem').attr("src", "{{problem.code}}/raw");
+                    $('#raw_problem').attr("src", "{{problem_raw_url}}");
 
                 while(!$('.math-loaded', frames['raw_problem'].document).length) {
                     await new Promise(r => setTimeout(r, 200));
@@ -185,7 +185,7 @@
                     {% endif %}
                 </a>
             {% elif problem.id in attempted_problems %}
-                <a 
+                <a
                     {% if hide_problem_code %}
                         href="{{ url('contest_user_problem_submissions', contest_key, problem_order, request.user.username) }}"
                     {% else %}
@@ -211,7 +211,7 @@
             </span>
         {% endif %}
         <span class="spacer"></span>
-        {% if has_pdf_render %}
+        {% if has_pdf_render and not hide_problem_code %}
             <a href="{{ url('problem_pdf', problem.code) }}" class="view-pdf">
         {% else %}
         <a id="pdf_button" class="view-pdf" href='#'>
