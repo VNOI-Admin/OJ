@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {{ form.media.js }}
+    <script>
+        $(function () {
+            var profileCountUrl = '{{ url("contest_helper_profile_count") }}';
+            var profileDebounce = null;
+
+            function updateProfileCounts() {
+                var textarea = document.getElementById('id_profile_prefixes');
+                var container = document.getElementById('profile-prefix-counts');
+                if (!textarea || !container) return;
+
+                var lines = textarea.value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean);
+                if (lines.length === 0) { container.innerHTML = ''; return; }
+
+                container.innerHTML = '<em>Loading...</em>';
+                var promises = lines.map(function (prefix) {
+                    return fetch(profileCountUrl + '?prefix=' + encodeURIComponent(prefix))
+                        .then(function (r) { return r.json(); });
+                });
+                Promise.all(promises).then(function (results) {
+                    var total = 0;
+                    var rows = results.map(function (r) {
+                        total += r.count;
+                        return '<tr><td><code>' + r.prefix + '</code></td><td><strong>' + r.count + '</strong></td></tr>';
+                    });
+                    container.innerHTML =
+                        '<table class="prefix-count-table"><thead><tr><th>Prefix</th><th>Profiles</th></tr></thead>' +
+                        '<tbody>' + rows.join('') + '</tbody>' +
+                        '<tfoot><tr><td><strong>Total</strong></td><td><strong>' + total + '</strong></td></tr></tfoot>' +
+                        '</table>';
+                });
+            }
+
+            var textarea = document.getElementById('id_profile_prefixes');
+            if (textarea) {
+                textarea.addEventListener('input', function () {
+                    clearTimeout(profileDebounce);
+                    profileDebounce = setTimeout(updateProfileCounts, 400);
+                });
+                if (textarea.value.trim()) updateProfileCounts();
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+    <style>
+        .prefix-count-table {
+            margin-top: 6px;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        .prefix-count-table th,
+        .prefix-count-table td {
+            padding: 4px 12px;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        .prefix-count-table thead th { background: #f5f5f5; }
+        .prefix-count-table tfoot td { font-weight: bold; background: #f9f9f9; }
+        .result-box {
+            margin-top: 14px;
+            padding: 10px 14px;
+            border-left: 4px solid #5cb85c;
+            background: #f4fff4;
+        }
+        .result-box.has-skipped { border-left-color: #f0ad4e; }
+        .result-box ul { margin: 6px 0 0 0; padding-left: 20px; }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div>
+    <p><a href="{{ url('contest_helper') }}">&larr; Contest Helper</a></p>
+    <form action="" method="post" class="form-area" style="display:flex;flex-direction:column;">
+        {% if form.errors %}
+            <p class="errornote">Please correct the error below.</p>
+        {% endif %}
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <div id="profile-prefix-counts"></div>
+        <table><tr><td style="float:right;padding-top:10px;">
+            <input type="submit" value="Add profiles" class="button">
+        </td></tr></table>
+    </form>
+    {% if results %}
+        <div class="result-box {% if results.skipped %}has-skipped{% endif %}">
+            <strong>Added {{ results.added|length }} of {{ results.total }} profile(s) to <a href="{{ url('contest_view', results.contest_key) }}" target="_blank">{{ results.contest_name }}</a></strong>
+            {% if results.skipped %}
+                <p>Skipped (already in contest):</p>
+                <ul>{% for u in results.skipped %}<li><code>{{ u }}</code></li>{% endfor %}</ul>
+            {% endif %}
+            {% if results.added %}
+                <p>Successfully added:</p>
+                <ul>{% for u in results.added %}<li><code>{{ u }}</code></li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

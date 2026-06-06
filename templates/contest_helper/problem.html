@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {{ form.media.js }}
+    <script>
+        $(function () {
+            var problemCountUrl = '{{ url("contest_helper_problem_count") }}';
+            var problemDebounce = null;
+
+            function updateProblemCount() {
+                var input = document.getElementById('id_problem_prefix');
+                var container = document.getElementById('problem-prefix-count');
+                if (!input || !container) return;
+
+                var prefix = input.value.trim();
+                if (!prefix) { container.innerHTML = ''; return; }
+
+                fetch(problemCountUrl + '?prefix=' + encodeURIComponent(prefix))
+                    .then(function (r) { return r.json(); })
+                    .then(function (data) {
+                        container.innerHTML = '<span style="font-size:0.9em;color:#555;"><strong>' + data.count + '</strong> problem(s) found</span>';
+                    });
+            }
+
+            var input = document.getElementById('id_problem_prefix');
+            if (input) {
+                input.addEventListener('input', function () {
+                    clearTimeout(problemDebounce);
+                    problemDebounce = setTimeout(updateProblemCount, 400);
+                });
+                if (input.value.trim()) updateProblemCount();
+            }
+        });
+    </script>
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+    <style>
+        .result-box {
+            margin-top: 14px;
+            padding: 10px 14px;
+            border-left: 4px solid #5cb85c;
+            background: #f4fff4;
+        }
+        .result-box.has-skipped { border-left-color: #f0ad4e; }
+        .result-box ul { margin: 6px 0 0 0; padding-left: 20px; }
+        .warning-note {
+            font-size: 0.85em;
+            color: #a05000;
+            margin-bottom: 8px;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+<div>
+    <p><a href="{{ url('contest_helper') }}">&larr; Contest Helper</a></p>
+    <p class="warning-note">Warning: this will delete all existing problems in the contest before adding new ones.</p>
+    <form action="" method="post" class="form-area" style="display:flex;flex-direction:column;">
+        {% if form.errors %}
+            <p class="errornote">Please correct the error below.</p>
+        {% endif %}
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <div id="problem-prefix-count"></div>
+        <table><tr><td style="float:right;padding-top:10px;">
+            <input type="submit" value="Add problems" class="button">
+        </td></tr></table>
+    </form>
+    {% if results %}
+        <div class="result-box {% if results.skipped %}has-skipped{% endif %}">
+            <strong>Added {{ results.added|length }} of {{ results.total }} problem(s) to <a href="{{ url('contest_view', results.contest_key) }}" target="_blank">{{ results.contest_name }}</a></strong>
+            {% if results.skipped %}
+                <p>Skipped (errors):</p>
+                <ul>{% for c in results.skipped %}<li><code>{{ c }}</code></li>{% endfor %}</ul>
+            {% endif %}
+            {% if results.added %}
+                <p>Successfully added:</p>
+                <ul>{% for c in results.added %}<li><code>{{ c }}</code></li>{% endfor %}</ul>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

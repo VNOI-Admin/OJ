@@ -26,6 +26,10 @@ from judge.views.select2 import AssigneeSelect2View, CommentSelect2View, Contest
 from judge.views.widgets import martor_image_uploader
 from martor.views import markdown_search_user
 
+from judge.views.contest_helper import (AddProblemToContestView, AddProfileToContestView,
+                                         ContestHelperIndexView, ContestKeySelect2View,
+                                         ProfilePrefixCountView, ProblemPrefixCountView)
+
 admin.autodiscover()
 
 SEND_ACTIVATION_EMAIL = getattr(settings, 'SEND_ACTIVATION_EMAIL', True)
@@ -428,6 +432,12 @@ urlpatterns = [
         path('tag/', TagSelect2View.as_view(), name='tag_select2'),
         path('taggroup/', TagGroupSelect2View.as_view(), name='taggroup_select2'),
     ])),
+    path('contest_helper/', ContestHelperIndexView.as_view(), name='contest_helper'),
+    path('contest_helper/profile/', AddProfileToContestView.as_view(), name='contest_helper_profile'),
+    path('contest_helper/problem/', AddProblemToContestView.as_view(), name='contest_helper_problem'),
+    path('contest_helper/contest_select2/', ContestKeySelect2View.as_view(), name='contest_helper_contest_select2'),
+    path('contest_helper/profile_count/', ProfilePrefixCountView.as_view(), name='contest_helper_profile_count'),
+    path('contest_helper/problem_count/', ProblemPrefixCountView.as_view(), name='contest_helper_problem_count'),
 
     path('tasks/', include([
         path('status/<slug:task_id>', tasks.task_status, name='task_status'),

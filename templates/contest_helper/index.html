@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+
+{% block body %}
+<div>
+    <h3>Contest Helper</h3>
+    <ul>
+        <li><a href="{{ url('contest_helper_profile') }}">Add profiles to contest</a></li>
+        <li><a href="{{ url('contest_helper_problem') }}">Add problems to contest</a></li>
+    </ul>
+</div>
+{% endblock %}
