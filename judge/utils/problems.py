@@ -35,7 +35,7 @@ def user_completed_ids(profile):
     key = 'user_complete:%d' % profile.id
     result = cache.get(key)
     if result is None:
-        result = set(Submission.objects.filter(user=profile, result='AC', case_points__gte=F('case_total'))
+        result = set(Submission.objects.filter(user=profile, result='AC')
                      .values_list('problem_id', flat=True).distinct())
         cache.set(key, result, 86400)
     return result
@@ -65,6 +65,7 @@ def _get_result_data(results):
             # Using gettext_noop here since this will be tacked into the cache, so it must be language neutral.
             # The caller, SubmissionList.get_result_data will run gettext on the name.
             {'code': 'AC', 'name': gettext_noop('Accepted'), 'count': results['AC']},
+            {'code': 'PAC', 'name': gettext_noop('Partial'), 'count': results['PAC']},
             {'code': 'WA', 'name': gettext_noop('Wrong'), 'count': results['WA']},
             {'code': 'CE', 'name': gettext_noop('Compile Error'), 'count': results['CE']},
             {'code': 'TLE', 'name': gettext_noop('Timeout'), 'count': results['TLE']},
@@ -103,6 +104,7 @@ def hot_problems(duration, limit):
         # fix braindamage in excluding CE
         qs = qs.annotate(submission_volume=Count(Case(
             When(submission__result='AC', then=1),
+            When(submission__result='PAC', then=1),
             When(submission__result='WA', then=1),
             When(submission__result='IR', then=1),
             When(submission__result='RTE', then=1),

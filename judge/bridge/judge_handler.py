@@ -412,7 +412,7 @@ class JudgeHandler(ZlibPacketHandler):
         points = 0.0
         total = 0
         status = 0
-        status_codes = ['SC', 'AC', 'WA', 'MLE', 'TLE', 'IR', 'RTE', 'OLE']
+        status_codes = ['SC', 'AC', 'PAC', 'WA', 'MLE', 'TLE', 'IR', 'RTE', 'OLE']
         batches = {}  # batch number: (points, total)
 
         for case in SubmissionTestCase.objects.filter(submission=submission):
@@ -579,7 +579,10 @@ class JudgeHandler(ZlibPacketHandler):
             elif status & 32:
                 test_case.status = 'SC'
             else:
-                test_case.status = 'AC'
+                if result['points'] < result['total-points']:
+                    test_case.status = 'PAC'
+                else:
+                    test_case.status = 'AC'
             test_case.time = result['time']
             test_case.memory = result['memory']
             test_case.points = result['points']
