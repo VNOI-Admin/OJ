@@ -2,55 +2,77 @@
 
 from django.db import migrations, models
 
-BATCH_SIZE = 2000
+
+BATCH_SIZE = 5_000
+
+
+def paginate_update(schema_editor, table, set_sql, where_sql, label):
+    last_id = 0
+    total = 0
+    while True:
+        with schema_editor.connection.cursor() as cursor:
+            cursor.execute(
+                f'SELECT id FROM {table} WHERE {where_sql} AND id > %s ORDER BY id LIMIT %s',
+                [last_id, BATCH_SIZE],
+            )
+            ids = [row[0] for row in cursor.fetchall()]
+
+        if not ids:
+            break
+
+        with schema_editor.connection.cursor() as cursor:
+            placeholders = ','.join(['%s'] * len(ids))
+            cursor.execute(
+                f'UPDATE {table} SET {set_sql} WHERE id IN ({placeholders})',
+                ids,
+            )
+            count = cursor.rowcount
+        schema_editor.connection.commit()
+        total += count
+        last_id = ids[-1]
+        print(f'{label}: {total} updated so far (last id={last_id})', flush=True)
+
+    print(f'{label}: done, {total} total', flush=True)
 
 
 def migrate_partial_ac(_, schema_editor):
-    with schema_editor.connection.cursor() as cursor:
-        while True:
-            cursor.execute(
-                "UPDATE judge_submission SET result = 'PAC' "
-                "WHERE result = 'AC' AND case_points < case_total LIMIT %s",
-                [BATCH_SIZE],
-            )
-            if cursor.rowcount < BATCH_SIZE:
-                break
+    paginate_update(
+        schema_editor,
+        table='judge_submission',
+        set_sql="result = 'PAC'",
+        where_sql="result = 'AC' AND case_points < case_total",
+        label='judge_submission AC->PAC',
+    )
 
 
-def reverse_migrate_partial_ac(apps, schema_editor):
-    with schema_editor.connection.cursor() as cursor:
-        while True:
-            cursor.execute(
-                "UPDATE judge_submission SET result = 'AC' "
-                "WHERE result = 'PAC' LIMIT %s",
-                [BATCH_SIZE],
-            )
-            if cursor.rowcount < BATCH_SIZE:
-                break
+def reverse_migrate_partial_ac(_, schema_editor):
+    paginate_update(
+        schema_editor,
+        table='judge_submission',
+        set_sql="result = 'AC'",
+        where_sql="result = 'PAC'",
+        label='judge_submission PAC->AC',
+    )
 
 
-def migrate_partial_ac_testcase(apps, schema_editor):
-    with schema_editor.connection.cursor() as cursor:
-        while True:
-            cursor.execute(
-                "UPDATE judge_submissiontestcase SET status = 'PAC' "
-                "WHERE status = 'AC' AND points < total LIMIT %s",
-                [BATCH_SIZE],
-            )
-            if cursor.rowcount < BATCH_SIZE:
-                break
+def migrate_partial_ac_testcase(_, schema_editor):
+    paginate_update(
+        schema_editor,
+        table='judge_submissiontestcase',
+        set_sql="status = 'PAC'",
+        where_sql="status = 'AC' AND points < total",
+        label='judge_submissiontestcase AC->PAC',
+    )
 
 
-def reverse_migrate_partial_ac_testcase(apps, schema_editor):
-    with schema_editor.connection.cursor() as cursor:
-        while True:
-            cursor.execute(
-                "UPDATE judge_submissiontestcase SET status = 'AC' "
-                "WHERE status = 'PAC' LIMIT %s",
-                [BATCH_SIZE],
-            )
-            if cursor.rowcount < BATCH_SIZE:
-                break
+def reverse_migrate_partial_ac_testcase(_, schema_editor):
+    paginate_update(
+        schema_editor,
+        table='judge_submissiontestcase',
+        set_sql="status = 'AC'",
+        where_sql="status = 'PAC'",
+        label='judge_submissiontestcase PAC->AC',
+    )
 
 
 class Migration(migrations.Migration):
