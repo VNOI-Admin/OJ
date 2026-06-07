@@ -206,6 +206,11 @@
             $("#set_theme").submit();
         }
     </script>
+    <style>
+        .nav-toggle-btn { cursor: pointer; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 26px; border-radius: 5px; font-size: 0.88em; background: rgba(255,255,255,0.09); color: #aaa; }
+        .nav-toggle-btn:hover { background: rgba(255,255,255,0.18); color: #fff; }
+        .nav-toggle-btn.active { background: rgba(255,255,255,0.28); color: #fff; }
+    </style>
     <noscript>
         <style>
             #content {
@@ -264,13 +269,41 @@
         </ul>
 
         <span id="user-links">
-            {% if request.user.is_superuser %}
-                <a href="{{ url('misc_config') }}" style="margin-right: 5px;">
-                    <span title="{{ _('Site settings') }}">
-                        <i class="fa fa-gear" style="color: rgb(200,200,200) ; font-size: 1.15em"></i>
-                    </span>
-                </a>
-            {% endif %}
+            <ul>
+                <li>
+                    {% if request.user.is_superuser %}
+                        <a href="{{ url('misc_config') }}" style="margin-right: 5px;">
+                    {% else %}
+                        <a href="javascript:void(0)" style="margin-right: 5px;">
+                    {% endif %}
+                        <span title="{{ _('Settings') }}">
+                            <i class="fa fa-gear" style="color: rgb(200,200,200); font-size: 1.15em"></i>
+                        </span>
+                    </a>
+                    <ul style="width: 200px; right: 0; left: auto;">
+                        {% if request.user.is_authenticated %}
+                            <li>
+                                <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;">
+                                    <span style="color:#ccc;font-size:0.85em;text-transform:none;">{{ _('Theme') }}</span>
+                                    <span style="display:flex;gap:3px;">
+                                        <span onclick="set_theme('light')" title="{{ _('Light') }}" class="nav-toggle-btn{% if SITE_THEME_NAME != 'dark' %} active{% endif %}"><i class="fa fa-sun-o"></i></span>
+                                        <span onclick="set_theme('dark')" title="{{ _('Dark') }}" class="nav-toggle-btn{% if SITE_THEME_NAME == 'dark' %} active{% endif %}"><i class="fa fa-moon-o"></i></span>
+                                    </span>
+                                </div>
+                            </li>
+                        {% endif %}
+                        <li>
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 12px;">
+                                <span style="color:#ccc;font-size:0.85em;text-transform:none;">{{ _('Language') }}</span>
+                                <span style="display:flex;gap:3px;">
+                                    <span onclick="submmit_language('vi')" class="nav-toggle-btn{% if LANGUAGE_CODE == 'vi' %} active{% endif %}">VI</span>
+                                    <span onclick="submmit_language('en')" class="nav-toggle-btn{% if LANGUAGE_CODE == 'en' %} active{% endif %}">EN</span>
+                                </span>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
             <a href=
                 {% if request.resolver_match.view_name == "problem_detail" and problem %}
                     "{{ url('new_problem_ticket', problem.code) }}"
@@ -283,19 +316,6 @@
                 </span>
             </a>
             {% if request.user.is_authenticated %}
-                <a href="#" onclick="set_theme('{% if SITE_THEME_NAME == 'dark' %}light{% else %}dark{% endif %}')"
-                   style="margin-right: 5px; margin-top: 4px;" title="{{ _('Toggle theme') }}">
-                    <i class="fa {% if SITE_THEME_NAME == 'dark' %}fa-sun-o{% else %}fa-moon-o{% endif %}"
-                       style="color: white; font-size: 1.3em; vertical-align: middle;"></i>
-                </a>
-            {% endif %}
-            <a id="flag_vi" href="#" onclick="submmit_language('vi')" style="margin-right: 5px; margin-top: 4px;">
-                <img src="{{ static('icons/vi_flag.svg') }}" alt="VI" height="24">
-            </a>
-            <a id="flag_en" href="#" onclick="submmit_language('en')" style="margin-right: 5px; margin-top: 4px;">
-                <img src="{{ static('icons/gb_flag.svg') }}" alt="EN" height="24">
-            </a>
-            {% if request.user.is_authenticated %}
                 <ul>
                     <li>
                         <a href="{{ url('user_page') }}">
@@ -304,7 +324,7 @@
                                 <span>{{ _('Hello, %(username)s.', username=bold(request.user.first_name or request.profile.display_name)) }}</span>
                             </span>
                         </a>
-                        <ul style="width: 150px">
+                        <ul style="width: 150px; right: 0; left: auto;">
                             {% if request.user.is_staff or request.user.is_superuser %}
                                 <li><a href="{{ url('admin:index') }}">{{ _('Admin') }}</a></li>
                             {% endif %}
