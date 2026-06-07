@@ -206,16 +206,6 @@
             $("#set_theme").submit();
         }
     </script>
-    <style>
-        nav .settings-popup { background: #fff !important; border-radius: 12px !important; box-shadow: 0 10px 30px -8px rgba(0,0,0,.35), 0 2px 8px rgba(0,0,0,.12) !important; padding: 4px !important; border: 1px solid #ececf0; color: #1b1d21; margin-top: 2px; }
-        .nav-settings-grp { display: block; font: 600 10px/1 ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; color: #9aa0a8; padding: 10px 12px 6px; }
-        .nav-settings-row { display: flex; align-items: center; justify-content: space-between; padding: 7px 12px 9px; gap: 16px; }
-        .nav-settings-lbl { font-size: 13px; font-weight: 600; color: #1b1d21; text-transform: none; letter-spacing: 0; }
-        .nav-seg { display: inline-flex; background: #f0f1f4; border-radius: 7px; padding: 2px; gap: 2px; flex-shrink: 0; }
-        .nav-seg-btn { cursor: pointer; display: inline-flex !important; align-items: center; gap: 5px; padding: 5px 9px !important; border-radius: 5px; font-size: 11.5px !important; font-weight: 600; font-family: inherit; color: #6b7280; white-space: nowrap; text-transform: none; background: transparent; border: none; height: auto !important; border-left: none !important; line-height: 1 !important; letter-spacing: 0; }
-        .nav-seg-btn:hover { color: #15171b !important; background: rgba(0,0,0,.04) !important; margin: 0 !important; border-left: none !important; }
-        .nav-seg-btn.active { background: #fff !important; color: #15171b !important; box-shadow: 0 1px 2px rgba(0,0,0,.12); border-left: none !important; }
-    </style>
     <noscript>
         <style>
             #content {
@@ -286,14 +276,13 @@
                         </span>
                     </a>
                     <ul class="settings-popup" style="min-width: 210px; right: 0; left: auto;">
-                        <li><span class="nav-settings-grp">{{ _('Preferences') }}</span></li>
                         {% if request.user.is_authenticated %}
                             <li>
                                 <div class="nav-settings-row">
                                     <span class="nav-settings-lbl">{{ _('Theme') }}</span>
                                     <span class="nav-seg">
-                                        <span onclick="set_theme('light')" class="nav-seg-btn{% if SITE_THEME_NAME != 'dark' %} active{% endif %}"><i class="fa fa-sun-o"></i> {{ _('Light') }}</span>
-                                        <span onclick="set_theme('dark')" class="nav-seg-btn{% if SITE_THEME_NAME == 'dark' %} active{% endif %}"><i class="fa fa-moon-o"></i> {{ _('Dark') }}</span>
+                                        <span onclick="set_theme('light')" class="nav-seg-btn{% if SITE_THEME_NAME != 'dark' %} active{% endif %}"><i class="fa fa-sun-o"></i></span>
+                                        <span onclick="set_theme('dark')" class="nav-seg-btn{% if SITE_THEME_NAME == 'dark' %} active{% endif %}"><i class="fa fa-moon-o"></i></span>
                                     </span>
                                 </div>
                             </li>
