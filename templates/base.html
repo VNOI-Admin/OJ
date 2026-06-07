@@ -46,16 +46,11 @@
         <link rel="stylesheet" href="{{ FONTAWESOME_CSS }}">
     {% endif %}
     {% compress css %}
-        {# TODO: once dark mode support is better, enable for all users by deleting the else branch #}
-        {% if perms.judge.test_site %}
-            {% if PREFERRED_STYLE_CSS is not none %}
-                <link rel="stylesheet" href="{{ static(PREFERRED_STYLE_CSS) }}">
-            {% else %}
-                <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}">
-                <link rel="stylesheet" href="{{ static(DARK_STYLE_CSS) }}" media="(prefers-color-scheme: dark)">
-            {% endif %}
+        {% if PREFERRED_STYLE_CSS is not none %}
+            <link rel="stylesheet" href="{{ static(PREFERRED_STYLE_CSS) }}">
         {% else %}
             <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}">
+            <link rel="stylesheet" href="{{ static(DARK_STYLE_CSS) }}" media="(prefers-color-scheme: dark)">
         {% endif %}
         {% if INLINE_FONTAWESOME %}<link rel="stylesheet" href="{{ static('libs/fontawesome/font-awesome.css') }}">{% endif %}
         <link rel="stylesheet" href="{{ static('source_sans_pro.css') }}">
@@ -206,6 +201,10 @@
                 $("#set_language").submit()
             }
         }
+        function set_theme(theme) {
+            $("input[name=theme]").val(theme);
+            $("#set_theme").submit();
+        }
     </script>
     <noscript>
         <style>
@@ -219,7 +218,7 @@
         </style>
     </noscript>
 </head>
-<body{% if perms.judge.test_site %} data-theme="{{ SITE_THEME_NAME }}"{% endif %}>
+<body data-theme="{{ SITE_THEME_NAME }}">
 <svg width="0" height="0" style="display: block">
     <defs>
         <clipPath id="rating-clip"><circle cx="8" cy="8" r="7"/></clipPath>
@@ -283,6 +282,13 @@
                     <i class="fa fa-exclamation-triangle" style="color: yellow;"></i>
                 </span>
             </a>
+            {% if request.user.is_authenticated %}
+                <a href="#" onclick="set_theme('{% if SITE_THEME_NAME == 'dark' %}light{% else %}dark{% endif %}')"
+                   style="margin-right: 5px; margin-top: 4px;" title="{{ _('Toggle theme') }}">
+                    <i class="fa {% if SITE_THEME_NAME == 'dark' %}fa-sun-o{% else %}fa-moon-o{% endif %}"
+                       style="color: white; font-size: 1.3em; vertical-align: middle;"></i>
+                </a>
+            {% endif %}
             <a id="flag_vi" href="#" onclick="submmit_language('vi')" style="margin-right: 5px; margin-top: 4px;">
                 <img src="{{ static('icons/vi_flag.svg') }}" alt="VI" height="24">
             </a>
@@ -393,6 +399,13 @@
             <input name="next" type="hidden" value="{{ request.get_full_path() }}">
             <input name="language" type="hidden" value="{{LANGUAGE_CODE}}">
           </form>
+            {% if request.user.is_authenticated %}
+                <form id="set_theme" action="{{ url('set_theme') }}" method="post" style="display: inline">
+                    {% csrf_token %}
+                    <input name="next" type="hidden" value="{{ request.get_full_path() }}">
+                    <input name="theme" type="hidden" value="{{ SITE_THEME_NAME }}">
+                </form>
+            {% endif %}
         </span>
     </footer>
 </div>
