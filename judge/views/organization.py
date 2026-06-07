@@ -218,7 +218,16 @@ class LeaveOrganization(OrganizationMembershipChange):
 
 
 class OrganizationRequestForm(Form):
-    reason = forms.CharField(widget=forms.Textarea)
+    reason = forms.CharField(widget=forms.Textarea())
+    name = forms.CharField(
+        widget=forms.TextInput(attrs={'placeholder': gettext_lazy('e.g., Nguyễn Đăng Quân')})
+    )
+    school = forms.CharField(
+        widget=forms.TextInput(attrs={'placeholder': gettext_lazy('e.g., THPT Chuyên Sư Phạm')})
+    )
+    class_field = forms.CharField(
+        widget=forms.TextInput(attrs={'placeholder': gettext_lazy('e.g., 10Tin')})
+    )
 
 
 class RequestJoinOrganization(LoginRequiredMixin, SingleObjectMixin, FormView):
@@ -245,6 +254,9 @@ class RequestJoinOrganization(LoginRequiredMixin, SingleObjectMixin, FormView):
         request.organization = self.get_object()
         request.user = self.request.profile
         request.reason = form.cleaned_data['reason']
+        request.name = form.cleaned_data['name']
+        request.school = form.cleaned_data['school']
+        request.class_field = form.cleaned_data['class_field']
         request.state = 'P'
         request.save()
         return HttpResponseRedirect(reverse('request_organization_detail', args=(

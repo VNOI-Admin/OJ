@@ -1,22 +1,50 @@
 {% extends "base.html" %}
 
 {% block js_media %}
-    <script type="text/javascript">
-        $(function () {
-            $('#id_reason').keydown(function (e) {
-                if (e.ctrlKey && (e.keyCode === 13 || e.keyCode === 10)) {
-                    $(this).closest('form').submit();
-                }
-            });
+<script type="text/javascript">
+    $(function () {
+        $('#id_reason').keydown(function (e) {
+            if (e.ctrlKey && (e.keyCode === 13 || e.keyCode === 10)) {
+                $(this).closest('form').submit();
+            }
         });
-    </script>
+    });
+</script>
+<style>
+    .request-form-container {
+        max-width: 500px;
+        margin: 0 auto;
+        padding-top: 5%;
+    }
+
+    .request-form-container input[type="text"],
+    .request-form-container textarea {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .request-form-container .form-area p {
+        margin-bottom: 10px;
+    }
+</style>
 {% endblock %}
 
 {% block body %}
+<div class="request-form-container">
     <form action="" method="post" class="form-area">
         {% csrf_token %}
+        <h2 style="text-align: center;">{{ _('Request to join organization') }}</h2>
+        <br>
+        <p><label for="{{ form.name.id_for_label }}"><b>{{ _('Your name:') }}</b></label></p>
+        <p>{{ form.name }}</p>
+        <p><label for="{{ form.school.id_for_label }}"><b>{{ _('Your school:') }}</b></label></p>
+        <p>{{ form.school }}</p>
+        <p><label for="{{ form.class_field.id_for_label }}"><b>{{ _('Your class:') }}</b></label></p>
+        <p>{{ form.class_field }}</p>
         <p><label for="{{ form.reason.id_for_label }}"><b>{{ _('Your reason for joining:') }}</b></label></p>
         <p>{{ form.reason }}</p>
-        <button type="submit">{{ _('Request!') }}</button>
+        <br>
+        <button type="submit" style="width: 100%;">{{ _('Request!') }}</button>
     </form>
+</div>
 {% endblock %}

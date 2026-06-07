@@ -31,6 +31,9 @@
                     <th>{{ _('User') }}</th>
                     <th>{{ _('Time') }}</th>
                     <th>{{ _('State') }}</th>
+                    <th class="name">{{ _('Name') }}</th>
+                    <th class="school">{{ _('School') }}</th>
+                    <th class="class">{{ _('Class') }}</th>
                     <th class="reason">{{ _('Reason') }}</th>
                     {% if formset.can_delete %}
                         <th>{{ _('Delete?') }}</th>
@@ -43,6 +46,9 @@
                             {{ form.instance.time|date(_("N j, Y, H:i")) }}
                         </a></td>
                         <td>{{ form.state }}</td>
+                        <td class="name">{{ form.instance.name }}</td>
+                        <td class="school">{{ form.instance.school }}</td>
+                        <td class="class">{{ form.instance.class_field }}</td>
                         <td class="reason">{{ form.instance.reason }}</td>
                         {% if formset.can_delete %}
                             <td>{{ form.DELETE }}</td>

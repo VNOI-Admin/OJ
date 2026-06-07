@@ -465,7 +465,10 @@ class OrganizationRequest(models.Model):
         ('A', _('Approved')),
         ('R', _('Rejected')),
     ))
-    reason = models.TextField(verbose_name=_('reason'))
+    reason = models.TextField(verbose_name=_('reason'), blank=True)
+    name = models.CharField(verbose_name=_('name'), max_length=50, blank=True)
+    school = models.CharField(verbose_name=_('school'), max_length=50, blank=True)
+    class_field = models.CharField(verbose_name=_('class_field'), max_length=20, blank=True)
 
     class Meta:
         verbose_name = _('organization join request')
