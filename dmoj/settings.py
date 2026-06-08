@@ -306,6 +306,7 @@ DMOJ_STATS_LANGUAGE_THRESHOLD = 10
 DMOJ_STATS_SUBMISSION_RESULT_COLORS = {
     'TLE': '#a3bcbd',
     'AC': '#00a92a',
+    'PAC': '#c0e000',
     'WA': '#ed4420',
     'CE': '#42586d',
     'ERR': '#ffa71c',

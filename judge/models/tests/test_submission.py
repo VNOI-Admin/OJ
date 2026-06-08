@@ -24,7 +24,7 @@ class SubmissionTestCase(CommonDataMixin, TestCase):
             user=self.users['normal'].profile,
             problem=create_problem(code='basic'),
             language=Language.get_python3(),
-            result='AC',
+            result='PAC',
             status='D',
             case_points=99,
             case_total=100,
@@ -100,8 +100,8 @@ class SubmissionTestCase(CommonDataMixin, TestCase):
     def test_basic_submission(self):
         self.assertEqual(self.basic_submission.result_class, '_AC')
         self.assertEqual(self.basic_submission.memory_bytes, 20 * 1024)
-        self.assertEqual(self.basic_submission.short_status, _('AC'))
-        self.assertEqual(self.basic_submission.long_status, _('Accepted'))
+        self.assertEqual(self.basic_submission.short_status, 'PAC')
+        self.assertEqual(self.basic_submission.long_status, _('Partially Accepted'))
         self.assertTrue(self.basic_submission.is_graded)
         self.assertIsNone(self.basic_submission.contest_key)
         self.assertIsNone(self.basic_submission.contest_or_none)
