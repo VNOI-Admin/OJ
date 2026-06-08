@@ -51,7 +51,7 @@ def submission_data(start_date, end_date, utc_offset):
 
     days_labels = generate_day_labels(start_date, end_date, utc_offset)
     num_days = len(days_labels)
-    result_order = ['AC', 'WA', 'TLE', 'CE', 'ERR']
+    result_order = ['AC', 'PAC', 'WA', 'TLE', 'CE', 'ERR']
     result_data = {result: [0] * num_days for result in result_order}
 
     for date, result, count in submissions:
@@ -99,7 +99,7 @@ def organization_data(start_date, end_date, utc_offset):
 
     days_labels = generate_day_labels(start_date, end_date, utc_offset)
     num_days = len(days_labels)
-    result_order = ['AC', 'WA', 'TLE', 'CE', 'ERR']
+    result_order = ['AC', 'PAC', 'WA', 'TLE', 'CE', 'ERR']
     result_data = {result: [0] * num_days for result in result_order}
 
     for date, result, count in submissions:

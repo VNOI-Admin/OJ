@@ -60,7 +60,7 @@ def get_pp_breakdown(user, start=0, end=settings.DMOJ_PP_ENTRIES):
 
         # Replicates a lot of the logic usually done on Submission objects
         lang_short_display_name = lang_short_name or lang_key
-        result_class = Submission.result_class_from_code(result, case_points, case_total)
+        result_class = Submission.result_class_from_code(result)
         long_status = Submission.USER_DISPLAY_CODES.get(result, '')
 
         breakdown.append(PPBreakdown(

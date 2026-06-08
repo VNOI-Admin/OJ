@@ -1,7 +1,6 @@
 {% macro make_status(case) %}
-    {% set partial = (case.status == 'AC' and  case.points < case.total) %}
-    <span title="{{ case.long_status }}" class="case-{%- if partial -%}_AC{% else %}{{- case.result_class -}}{%- endif -%}">
-        {%- if case.status == 'SC' %}&mdash;{% elif partial %}{{_("Partial Accepted")}}{% else %}{{ case.long_status }}{% endif -%}
+    <span title="{{ case.long_status }}" class="case-{{- case.result_class -}}">
+        {%- if case.status == 'SC' %}&mdash;{% else %}{{ case.long_status }}{% endif -%}
     </span>
 {% endmacro %}
 
@@ -48,8 +47,8 @@
         {% if can_view_testcase_status or can_view_batch_status %}
         {% if statuses or not submission.is_graded %}
             {% for case in statuses %}
-                {% if case.status == "AC" %}
-                    <span class="fa fa-check case-AC"></span>
+                {% if case.status in ("AC", "PAC") %}
+                    <span class="fa fa-check case-{{ case.result_class }}"></span>
                 {% elif case.status == "SC" %}
                     <span class="case-SC">&ndash;</span>
                 {% else %}
@@ -191,7 +190,7 @@
                         ({{ _('%(points)s/%(total)s points', points=points, total=total) }})
                     {% endwith %}
                 {% endif %}
-                {% if is_pretest and submission.result == "AC" %}
+                {% if is_pretest and submission.result in ("AC", "PAC") %}
                     <br>
                     <i>{{ _('Passing pretests does not guarantee a full score on system tests.') }}</i>
                 {% endif %}
