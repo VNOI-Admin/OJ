@@ -132,6 +132,9 @@
                         <div>
                             <a href="{{ url('admin:judge_organization_change', organization.id) }}">{{ _('Admin organization') }}</a>
                         </div>
+                        <div>
+                            {{ link_users(organization.admins.all()) }}
+                        </div>
                     {% endif %}
                 </div>
             </div>
