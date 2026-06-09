@@ -5,13 +5,13 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db.models import Q
-from django.http import FileResponse, JsonResponse, Http404
+from django.http import FileResponse, Http404, JsonResponse
 from django.views import View
 from django.views.generic.detail import BaseDetailView
 
 from judge.models import UserFile
 from judge.utils.user_file_access import UserFileAccessChain
-from judge.views.api.api_v2 import APIMixin, APILoginRequiredMixin, APIListView
+from judge.views.api.api_v2 import APIListView, APILoginRequiredMixin, APIMixin
 
 __all__ = [
     'UserFileListView',

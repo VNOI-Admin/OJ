@@ -45,9 +45,9 @@
         </tr>
     </table>
 
-    <div class="block-buttons">
-        <button type="submit" class="button"><i class="fa fa-upload"></i> {{ _('Upload') }}</button>
-        <a href="{{ url('user_file_list') }}" class="button">{{ _('Cancel') }}</a>
+    <div style="display:flex;gap:0.5em;flex-wrap:wrap;margin-top:1em;">
+        <button type="submit" class="button inline-button"><i class="fa fa-upload"></i> {{ _('Upload') }}</button>
+        <a href="{{ url('user_file_list') }}" class="button inline-button">{{ _('Cancel') }}</a>
     </div>
 </form>
 {% endblock %}

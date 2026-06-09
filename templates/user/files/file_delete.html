@@ -37,10 +37,10 @@
             </p>
         {% endif %}
 
-        <form method="post">
+        <form method="post" style="display:flex;gap:0.5em;flex-wrap:wrap;margin-top:0.8em;">
             {% csrf_token %}
-            <button type="submit" class="button"><i class="fa fa-trash"></i> {{ _('Yes, delete permanently') }}</button>
-            <a href="{{ url('user_file_detail', file.uuid) }}" class="button">{{ _('Cancel') }}</a>
+            <button type="submit" class="button inline-button"><i class="fa fa-trash"></i> {{ _('Yes, delete permanently') }}</button>
+            <a href="{{ url('user_file_detail', file.uuid) }}" class="button inline-button">{{ _('Cancel') }}</a>
         </form>
     </div>
 </div>
