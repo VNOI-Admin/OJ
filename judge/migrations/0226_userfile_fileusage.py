@@ -1,7 +1,9 @@
-from django.db import migrations, models
-import django.db.models.deletion
-import judge.models.user_file
 import uuid
+
+import django.db.models.deletion
+from django.db import migrations, models
+
+import judge.models.user_file
 
 
 class Migration(migrations.Migration):
