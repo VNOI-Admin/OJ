@@ -207,6 +207,7 @@ urlpatterns = [
     path('files/<uuid:uuid>', user_files.UserFileDetailView.as_view(), name='user_file_detail'),
     path('files/<uuid:uuid>/edit', user_files.UserFileEditView.as_view(), name='user_file_edit'),
     path('files/<uuid:uuid>/delete', user_files.UserFileDeleteView.as_view(), name='user_file_delete'),
+    path('files/bulk-delete', user_files.UserFileBulkDeleteView.as_view(), name='user_file_bulk_delete'),
     path('files/<uuid:uuid>/view', user_files.UserFileAccessView.as_view(), name='user_file_access'),
     path('files/<uuid:uuid>/download', user_files.UserFileDownloadView.as_view(), name='user_file_download'),
     path('user/<str:user>', include([

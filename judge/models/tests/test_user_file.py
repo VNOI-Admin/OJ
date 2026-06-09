@@ -54,14 +54,12 @@ class UserFilePermissionTest(TestCase):
             user=cls.owner.profile,
             file='user_files/private.txt',
             filename='private.txt',
-            file_type='document',
             is_public=False,
         )
         cls.public_file = UserFile.objects.create(
             user=cls.owner.profile,
             file='user_files/public.txt',
             filename='public.txt',
-            file_type='document',
             is_public=True,
         )
 
@@ -69,7 +67,6 @@ class UserFilePermissionTest(TestCase):
             user=cls.owner.profile,
             file='user_files/problem-scoped.png',
             filename='problem-scoped.png',
-            file_type='image',
             storage_scope=UserFile.STORAGE_SCOPE_PROBLEM,
             is_public=False,
         )
@@ -83,7 +80,6 @@ class UserFilePermissionTest(TestCase):
             user=cls.owner.profile,
             file='user_files/contest-scoped.png',
             filename='contest-scoped.png',
-            file_type='image',
             storage_scope=UserFile.STORAGE_SCOPE_CONTEST,
             is_public=False,
         )

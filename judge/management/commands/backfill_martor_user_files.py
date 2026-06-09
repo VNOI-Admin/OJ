@@ -78,7 +78,6 @@ class Command(BaseCommand):
                         user=user_profile,
                         file=content_file,
                         filename=filename,
-                        file_type='image',
                         storage_scope=UserFile.STORAGE_SCOPE_PROBLEM,
                         is_public=problem.is_public,
                     )
@@ -133,7 +132,6 @@ class Command(BaseCommand):
                         user=user_profile,
                         file=content_file,
                         filename=filename,
-                        file_type='image',
                         storage_scope=UserFile.STORAGE_SCOPE_CONTEST,
                         is_public=contest.is_visible and not contest.is_private,
                     )
