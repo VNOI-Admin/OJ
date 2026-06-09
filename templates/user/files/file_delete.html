@@ -1,79 +1,47 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('Delete File') }} - {{ file.filename }}{% endblock %}
+{% block title %}{{ _('Delete File') }} — {{ file.filename }}{% endblock %}
 
 {% block body %}
-<style>
-    .file-delete-wrap {
-        max-width: 560px;
-    }
+<p><a href="{{ url('user_file_detail', file.uuid) }}"><i class="fa fa-arrow-left"></i> {{ _('Back to file details') }}</a></p>
 
-    .file-delete-meta td:first-child {
-        font-weight: 600;
-        width: 120px;
-        padding-right: 1em;
-    }
+<div class="sidebox">
+    <h3><i class="fa fa-warning"></i> {{ _('Confirm deletion') }}</h3>
+    <div class="sidebox-content sidebox-table">
+        <table class="table">
+            <tr>
+                <th>{{ _('Filename') }}</th>
+                <td>{{ file.filename }}</td>
+            </tr>
+            <tr>
+                <th>{{ _('Size') }}</th>
+                <td>{{ file.size|filesizeformat }}</td>
+            </tr>
+            <tr>
+                <th>{{ _('Uploaded') }}</th>
+                <td>{{ file.uploaded_at|date('DATETIME_FORMAT') }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
 
-    .delete-actions {
-        display: flex;
-        gap: 0.5em;
-        margin-top: 1em;
-    }
+<div class="sidebox">
+    <h3>{{ _('Are you sure?') }}</h3>
+    <div class="sidebox-content">
+        <p>{{ _('This action permanently deletes the file and cannot be undone.') }}</p>
 
-    .back-link {
-        margin-bottom: 1em;
-        display: block;
-    }
-</style>
+        {% if file.usages.exists() %}
+            <p>
+                <strong>{{ _('Note:') }}</strong>
+                {{ _('This file is referenced in') }} <strong>{{ file.usages.count() }}</strong> {{ _('place(s).') }}
+            </p>
+        {% endif %}
 
-<div class="file-delete-wrap">
-    <a class="back-link" href="{{ url('user_file_detail', file.uuid) }}">
-        <i class="fa fa-arrow-left"></i> {{ _('Back to file details') }}
-    </a>
-
-    <div class="sidebox">
-        <h3><i class="fa fa-warning"></i> {{ _('Confirm deletion') }}</h3>
-        <div class="sidebox-content">
-            <p>{{ _('Are you sure you want to permanently delete this file? This action cannot be undone.') }}</p>
-
-            <table class="file-delete-meta">
-                <tr>
-                    <td>{{ _('Filename') }}</td>
-                    <td>{{ file.filename }}</td>
-                </tr>
-                <tr>
-                    <td>{{ _('Type') }}</td>
-                    <td>{{ file.get_file_type_display() }}</td>
-                </tr>
-                <tr>
-                    <td>{{ _('Size') }}</td>
-                    <td>{{ file.size|filesizeformat }}</td>
-                </tr>
-                <tr>
-                    <td>{{ _('Uploaded') }}</td>
-                    <td>{{ file.uploaded_at|date('DATETIME_FORMAT') }}</td>
-                </tr>
-            </table>
-
-            {% if file.usages.exists() %}
-                <p style="margin-top: 0.8em;">
-                    <strong>{{ _('Note:') }}</strong>
-                    {{ _('This file is referenced in') }} <strong>{{ file.usages.count() }}</strong> {{ _('place(s).') }}
-                </p>
-            {% endif %}
-
-            <form method="post">
-                {% csrf_token %}
-                <div class="delete-actions">
-                    <button type="submit" class="button">
-                        <i class="fa fa-trash"></i> {{ _('Yes, delete permanently') }}
-                    </button>
-                    <a href="{{ url('user_file_detail', file.uuid) }}" class="button">
-                        {{ _('Cancel') }}
-                    </a>
-                </div>
-            </form>
-        </div>
+        <form method="post">
+            {% csrf_token %}
+            <button type="submit" class="button"><i class="fa fa-trash"></i> {{ _('Yes, delete permanently') }}</button>
+            <a href="{{ url('user_file_detail', file.uuid) }}" class="button">{{ _('Cancel') }}</a>
+        </form>
     </div>
 </div>
 {% endblock %}

@@ -3,7 +3,6 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import judge.models.user_file
-import judge.utils.problem_data
 import uuid
 
 
@@ -49,11 +48,9 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('uuid', models.UUIDField(db_index=True, default=uuid.uuid4, editable=False, unique=True)),
-                ('file', models.FileField(storage=judge.utils.problem_data.ProblemDataStorage(), upload_to=judge.models.user_file.user_file_directory, verbose_name='file')),
+                ('file', models.FileField(storage=judge.models.user_file.UserFileStorage(), upload_to=judge.models.user_file.user_file_directory, verbose_name='file')),
                 ('filename', models.CharField(max_length=255, verbose_name='original filename')),
-                ('file_type', models.CharField(choices=[('checker', 'Custom Checker'), ('grader', 'Custom Grader'), ('header', 'Header File'), ('image', 'Image'), ('document', 'Document'), ('code', 'Code'), ('data', 'Test Data'), ('other', 'Other')], default='other', max_length=20, verbose_name='file type')),
                 ('size', models.BigIntegerField(default=0, verbose_name='file size in bytes')),
-                ('description', models.TextField(blank=True, verbose_name='description')),
                 ('is_public', models.BooleanField(default=False, verbose_name='is public')),
                 ('uploaded_at', models.DateTimeField(auto_now_add=True, verbose_name='uploaded at')),
                 ('last_accessed', models.DateTimeField(auto_now_add=True, verbose_name='last accessed')),
@@ -86,10 +83,6 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='userfile',
             index=models.Index(fields=['user', '-uploaded_at'], name='judge_userf_user_id_bcab28_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='userfile',
-            index=models.Index(fields=['user', 'file_type'], name='judge_userf_user_id_6dcf54_idx'),
         ),
         migrations.AddIndex(
             model_name='fileusage',

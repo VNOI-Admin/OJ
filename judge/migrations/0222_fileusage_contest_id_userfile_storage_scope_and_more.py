@@ -24,7 +24,7 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='userfile',
             name='file',
-            field=models.FileField(upload_to=judge.models.user_file.user_file_directory, verbose_name='file'),
+            field=models.FileField(storage=judge.models.user_file.UserFileStorage(), upload_to=judge.models.user_file.user_file_directory, verbose_name='file'),
         ),
         migrations.AddIndex(
             model_name='fileusage',
