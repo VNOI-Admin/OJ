@@ -10,7 +10,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.core.files.storage import default_storage
-from django.db.models import F, Prefetch, Q
+from django.db.models import Prefetch, Q
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseNotFound, HttpResponseRedirect, \
     JsonResponse
 from django.shortcuts import get_object_or_404, render
@@ -720,7 +720,7 @@ def single_submission(request):
         problem_id = submission.problem_id
         profile = request.profile
         completed_problem_ids = [problem_id] if Submission.objects.filter(
-            user=profile, problem_id=problem_id, result='AC'
+            user=profile, problem_id=problem_id, result='AC',
         ).exists() else []
         editable_problem_ids = [problem_id] if submission.problem.is_editable_by(request.user) else []
         tester_problem_ids = [problem_id] if Problem.testers.through.objects.filter(
