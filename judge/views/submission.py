@@ -720,9 +720,8 @@ def single_submission(request):
         problem_id = submission.problem_id
         profile = request.profile
         completed_problem_ids = [problem_id] if Submission.objects.filter(
-            user=profile, problem_id=problem_id, result='AC', case_points__gte=F('case_total'),
+            user=profile, problem_id=problem_id, result='AC'
         ).exists() else []
-        editable_problem_ids = []
         editable_problem_ids = [problem_id] if submission.problem.is_editable_by(request.user) else []
         tester_problem_ids = [problem_id] if Problem.testers.through.objects.filter(
             profile=profile, problem_id=problem_id,
