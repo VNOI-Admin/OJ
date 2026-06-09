@@ -853,36 +853,25 @@ class CompareSubmissionsForm(Form):
 # ============================================================================
 
 class UserFileUploadForm(ModelForm):
-    """Form for uploading new user files."""
-    
+    MAX_UPLOAD_SIZE = 500 * 1024 * 1024
+
     class Meta:
         model = UserFile
-        fields = ['file', 'file_type', 'description', 'is_public']
+        fields = ['file', 'is_public']
         widgets = {
             'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
-            'file_type': forms.Select(attrs={'class': 'form-control'}),
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
-    
+
     def clean_file(self):
-        """Validate uploaded file."""
         file_obj = self.cleaned_data.get('file')
-        if file_obj:
-            # Check file size (e.g., max 500 MB)
-            max_size = 500 * 1024 * 1024  # 500 MB
-            if file_obj.size > max_size:
-                raise ValidationError(
-                    _('File size exceeds maximum allowed size of 500 MB.')
-                )
+        if file_obj and file_obj.size > self.MAX_UPLOAD_SIZE:
+            raise ValidationError(_('File size exceeds maximum allowed size of 500 MB.'))
         return file_obj
-    
+
     def save(self, commit=True):
-        """Save and ensure filename is captured from file."""
         instance = super().save(commit=False)
-        # Ensure filename is set from the uploaded file if not provided
         if instance.file and not instance.filename:
-            import os
             instance.filename = os.path.basename(instance.file.name)
         if commit:
             instance.save()
@@ -890,12 +879,9 @@ class UserFileUploadForm(ModelForm):
 
 
 class UserFileEditForm(ModelForm):
-    """Form for editing user file metadata."""
-    
     class Meta:
         model = UserFile
-        fields = ['description', 'is_public']
+        fields = ['is_public']
         widgets = {
-            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
             'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }

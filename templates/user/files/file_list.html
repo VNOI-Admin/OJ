@@ -3,119 +3,137 @@
 {% block title %}{{ _('My Files') }}{% endblock %}
 
 {% block header %}
-    <a href="{{ url('user_file_upload') }}" class="button">{{ _('Upload new file') }}</a>
+    {% if can_upload %}
+        <div class="title-line-action">
+            [<a href="{{ url('user_file_upload') }}"><i class="fa fa-upload"></i> {{ _('Upload new file') }}</a>]
+        </div>
+    {% endif %}
 {% endblock %}
 
 {% block body %}
-<style>
-    .file-list-actions {
-        display: flex;
-        gap: 0.4em;
-        justify-content: center;
-        flex-wrap: wrap;
-    }
-
-    .file-empty {
-        padding: 0.8em 0;
-        color: #666;
-    }
-
-    ul.messages {
-        list-style: none;
-        padding: 0;
-        margin-bottom: 1em;
-    }
-
-    ul.messages li {
-        padding: 0.6em 1em;
-        border-left: 3px solid #4caf50;
-        background: #f6fff6;
-        margin-bottom: 0.4em;
-    }
-
-    ul.messages li.error {
-        border-color: #c00;
-        background: #fff6f6;
-    }
-</style>
-
 {% include "messages.html" %}
 
 {% if files %}
-    <div class="h-scrollable-table">
-        <table class="table striped">
-            <thead>
-                <tr>
-                    <th>{{ _('Filename') }}</th>
-                    <th>{{ _('Source') }}</th>
-                    <th>{{ _('Size') }}</th>
-                    <th>{{ _('Uploaded') }}</th>
-                    <th>{{ _('Visibility') }}</th>
-                    <th>{{ _('Actions') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for file in files %}
+    <form id="bulk-delete-form" method="post" action="{{ url('user_file_bulk_delete') }}">
+        {% csrf_token %}
+
+        <div style="display:flex;align-items:center;gap:0.8em;margin-bottom:0.6em;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:0.4em;cursor:pointer;">
+                <input type="checkbox" id="select-all-cb"> {{ _('Select all') }}
+            </label>
+            <span id="selected-count" style="font-size:0.9em;color:#666;"></span>
+            <button type="button" id="bulk-delete-btn" class="button" style="display:none;"
+                    onclick="confirmBulkDelete()">
+                <i class="fa fa-trash"></i> {{ _('Delete selected') }}
+            </button>
+        </div>
+
+        <div class="h-scrollable-table">
+            <table class="table striped">
+                <thead>
                     <tr>
-                        <td>
-                            <a href="{{ url('user_file_detail', file.uuid) }}">{{ file.filename }}</a>
-                        </td>
-                        <td>
-                            {% if file.storage_scope == 'problem' %}
-                                {{ _('Problem') }}
-                            {% elif file.storage_scope == 'contest' %}
-                                {{ _('Contest') }}
-                            {% else %}
-                                {{ _('User') }}
-                            {% endif %}
-                        </td>
-                        <td>{{ file.size|filesizeformat }}</td>
-                        <td>{{ file.uploaded_at|date('SHORT_DATE_FORMAT') }}</td>
-                        <td>
-                            {% if file.is_public %}
-                                {{ _('Public') }}
-                            {% else %}
-                                {{ _('Private') }}
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="file-list-actions">
-                                <a href="{{ url('user_file_detail', file.uuid) }}" class="button inline-button">{{ _('View') }}</a>
-                                <a href="{{ url('user_file_edit', file.uuid) }}" class="button inline-button">{{ _('Edit') }}</a>
-                                <a href="{{ url('user_file_download', file.uuid) }}" class="button inline-button">{{ _('Download') }}</a>
-                                <a href="{{ url('user_file_delete', file.uuid) }}" class="button inline-button">{{ _('Delete') }}</a>
-                            </div>
-                        </td>
+                        <th style="width:1em;"></th>
+                        <th>{{ _('Filename') }}</th>
+                        <th>{{ _('Scope') }}</th>
+                        <th>{{ _('Size') }}</th>
+                        <th>{{ _('Uploaded') }}</th>
+                        <th>{{ _('Visibility') }}</th>
+                        <th>{{ _('Actions') }}</th>
                     </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    </div>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                        <tr>
+                            <td style="text-align:center;">
+                                <input type="checkbox" name="uuids" value="{{ file.uuid }}"
+                                       class="file-cb" aria-label="{{ file.filename }}">
+                            </td>
+                            <td>
+                                <a href="{{ url('user_file_detail', file.uuid) }}">{{ file.filename }}</a>
+                            </td>
+                            <td>
+                                {% if file.storage_scope == 'problem' %}
+                                    {{ _('Problem') }}
+                                {% elif file.storage_scope == 'contest' %}
+                                    {{ _('Contest') }}
+                                {% else %}
+                                    {{ _('User') }}
+                                {% endif %}
+                            </td>
+                            <td>{{ file.size|filesizeformat }}</td>
+                            <td>{{ file.uploaded_at|date('SHORT_DATE_FORMAT') }}</td>
+                            <td>
+                                {% if file.is_public %}
+                                    {{ _('Public') }}
+                                {% else %}
+                                    {{ _('Private') }}
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href="{{ url('user_file_detail', file.uuid) }}" class="button inline-button" title="{{ _('View') }}"><i class="fa fa-eye"></i></a>
+                                <a href="{{ url('user_file_download', file.uuid) }}" class="button inline-button" title="{{ _('Download') }}"><i class="fa fa-download"></i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
 
     {% if is_paginated %}
-        <div class="bottom-pagination-bar">
-            <ul class="pagination">
-                {% if page_obj.has_previous() %}
-                    <li><a href="?page=1">«</a></li>
-                    <li><a href="?page={{ page_obj.previous_page_number() }}">{{ _('Previous') }}</a></li>
-                {% else %}
-                    <li class="disabled-page"><span>«</span></li>
-                    <li class="disabled-page"><span>{{ _('Previous') }}</span></li>
-                {% endif %}
-
-                <li class="active-page"><span>{{ _('Page') }} {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span></li>
-
-                {% if page_obj.has_next() %}
-                    <li><a href="?page={{ page_obj.next_page_number() }}">{{ _('Next') }}</a></li>
-                    <li><a href="?page={{ page_obj.paginator.num_pages }}">»</a></li>
-                {% else %}
-                    <li class="disabled-page"><span>{{ _('Next') }}</span></li>
-                    <li class="disabled-page"><span>»</span></li>
-                {% endif %}
-            </ul>
-        </div>
+        {% set page_prefix = '?page=' %}
+        <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
     {% endif %}
 {% else %}
-    <p class="file-empty">{{ _('No files yet. Click "Upload new file" to add your first file.') }}</p>
+    {% if can_upload %}
+        <p>{{ _('No files yet. Click "Upload new file" to add your first file.') }}</p>
+    {% else %}
+        <p>{{ _('No files yet. Files you attach in problems, contests, or the editor will appear here.') }}</p>
+    {% endif %}
 {% endif %}
+
+<script>
+(function () {
+    var selectAll = document.getElementById('select-all-cb');
+    var bulkBtn   = document.getElementById('bulk-delete-btn');
+    var countEl   = document.getElementById('selected-count');
+
+    function getCheckboxes() {
+        return Array.from(document.querySelectorAll('.file-cb'));
+    }
+
+    function updateToolbar() {
+        var checked = getCheckboxes().filter(function (cb) { return cb.checked; });
+        var n = checked.length;
+        bulkBtn.style.display = n > 0 ? 'inline-block' : 'none';
+        countEl.textContent = n > 0 ? (n + ' {{ _("selected") }}') : '';
+        var all = getCheckboxes();
+        selectAll.indeterminate = n > 0 && n < all.length;
+        selectAll.checked = all.length > 0 && n === all.length;
+    }
+
+    getCheckboxes().forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            cb.closest('tr').classList.toggle('selected-row', cb.checked);
+            updateToolbar();
+        });
+    });
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            getCheckboxes().forEach(function (cb) {
+                cb.checked = selectAll.checked;
+                cb.closest('tr').classList.toggle('selected-row', cb.checked);
+            });
+            updateToolbar();
+        });
+    }
+
+    window.confirmBulkDelete = function () {
+        var n = getCheckboxes().filter(function (cb) { return cb.checked; }).length;
+        if (n && confirm('{{ _("Delete") }} ' + n + ' {{ _("file(s)? This cannot be undone.") }}'))
+            document.getElementById('bulk-delete-form').submit();
+    };
+}());
+</script>
 {% endblock %}

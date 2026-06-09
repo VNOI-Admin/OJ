@@ -138,7 +138,6 @@ def django_uploader(request, image):
             user=request.profile,
             file=image,
             filename=original_name,
-            file_type='image',
             storage_scope=storage_scope,
             is_public=is_public,
         )
