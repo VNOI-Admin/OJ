@@ -1,6 +1,6 @@
+import mimetypes
 import os
 import uuid
-import mimetypes
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
@@ -110,7 +110,7 @@ class UserFile(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.filename} ({self.user.user.username})"
+        return f'{self.filename} ({self.user.user.username})'
 
     @classmethod
     def can_list_by(cls, user):
@@ -304,24 +304,24 @@ class FileUsage(models.Model):
         ]
 
     def __str__(self):
-        return f"{self.file.filename} - {self.get_usage_type_display()}"
+        return f'{self.file.filename} - {self.get_usage_type_display()}'
 
     def get_context_label(self):
         if self.problem_id:
             try:
                 from judge.models import Problem
                 problem = Problem.objects.get(id=self.problem_id)
-                return f"Problem {problem.code}"
+                return f'Problem {problem.code}'
             except Exception:
-                return f"Problem #{self.problem_id}"
+                return f'Problem #{self.problem_id}'
         elif self.contest_id:
             try:
                 from judge.models import Contest
                 contest = Contest.objects.get(id=self.contest_id)
-                return f"Contest {contest.key}"
+                return f'Contest {contest.key}'
             except Exception:
-                return f"Contest #{self.contest_id}"
+                return f'Contest #{self.contest_id}'
         elif self.submission_id:
-            return f"Submission #{self.submission_id}"
+            return f'Submission #{self.submission_id}'
         else:
             return self.context_description or self.get_usage_type_display()

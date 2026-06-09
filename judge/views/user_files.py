@@ -16,7 +16,7 @@ from judge.utils.views import TitleMixin, generic_message
 __all__ = [
     'UserFileListView', 'UserFileUploadView', 'UserFileDetailView',
     'UserFileEditView', 'UserFileDeleteView', 'UserFileBulkDeleteView',
-    'UserFileDownloadView', 'UserFileAccessView'
+    'UserFileDownloadView', 'UserFileAccessView',
 ]
 
 
