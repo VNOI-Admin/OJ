@@ -114,6 +114,34 @@
             margin-top: 10px;
         }
         {% endif %}
+
+        body[data-theme="dark"] .problem-tabs {
+            border-bottom-color: #444;
+        }
+
+        body[data-theme="dark"] .problem-tabs a {
+            background: #2a2a2a;
+            color: #ccc;
+            border-color: #444;
+        }
+
+        body[data-theme="dark"] .problem-tabs a:hover {
+            background: #3a3a3a;
+        }
+
+        body[data-theme="dark"] .problem-tabs a.active {
+            background: #1e1e1e;
+            color: #4da3ff;
+            border-color: #444;
+            border-bottom-color: #1e1e1e;
+        }
+
+        {% if request.user.is_authenticated %}
+        body[data-theme="dark"] .submit-tab-content {
+            background: #1e1e1e;
+            border: 1px solid #444;
+        }
+        {% endif %}
     </style>
 {% endblock %}
 
@@ -418,6 +446,7 @@
             </div>
         </div>
     {% endif %}
+
     {% if problem.is_editable_by(request.user) %}
         <div id="available-judges">
             <i class="fa fa-database fa-fw"></i><span
