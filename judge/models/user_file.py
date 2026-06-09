@@ -10,7 +10,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-__all__ = ['user_file_storage', 'UserFile', 'FileUsage']
+__all__ = ['user_file_storage', 'UserFileStorage', 'UserFile', 'FileUsage']
 
 USER_FILE_STORAGE_SCOPE_PROBLEM = 'problem'
 USER_FILE_STORAGE_SCOPE_CONTEST = 'contest'
@@ -30,19 +30,27 @@ USER_FILE_CONTEXT_SCOPES = frozenset((
 USER_FILE_STORAGE_PREFIX = 'user_files'
 
 
-def _build_user_file_storage():
-    root = getattr(settings, 'USER_FILE_STORAGE_ROOT', settings.MEDIA_ROOT)
-    base_url = getattr(settings, 'USER_FILE_STORAGE_URL_PREFIX', settings.MEDIA_URL)
-    if not base_url.endswith('/'):
-        base_url += '/'
-    return FileSystemStorage(location=root, base_url=base_url)
+class UserFileStorage(FileSystemStorage):
+    """Storage for user files.
+
+    Reads its location/URL from settings at construction time and deconstructs
+    with no arguments so migrations stay stable across environments.
+    """
+
+    def __init__(self):
+        root = getattr(settings, 'USER_FILE_STORAGE_ROOT', settings.MEDIA_ROOT)
+        base_url = getattr(settings, 'USER_FILE_STORAGE_URL_PREFIX', settings.MEDIA_URL)
+        if not base_url.endswith('/'):
+            base_url += '/'
+        super().__init__(location=root, base_url=base_url)
 
 
-user_file_storage = _build_user_file_storage()
+user_file_storage = UserFileStorage()
 
 
 def user_file_directory(instance, filename):
-    """Generate storage path for uploaded user files with UUID-based names."""
+    # Files live under a per-scope subfolder so the on-disk location reflects
+    # where the file originated (martor/problem/contest).
     original_name = os.path.basename(filename)
     display_name = os.path.basename(getattr(instance, 'filename', '') or original_name)
 
@@ -54,47 +62,30 @@ def user_file_directory(instance, filename):
     if not display_base:
         display_base = os.path.splitext(original_name)[0] or 'file'
 
+    scope = getattr(instance, 'storage_scope', None) or USER_FILE_STORAGE_SCOPE_MARTOR
+    if scope not in USER_FILE_STORAGE_SCOPE_VALUES:
+        scope = USER_FILE_STORAGE_SCOPE_MARTOR
+
     file_uuid = getattr(instance, 'uuid', None) or uuid.uuid4()
-    return f'{file_uuid}_{display_base}{safe_ext}'
+    return os.path.join(USER_FILE_STORAGE_PREFIX, scope, f'{file_uuid}_{display_base}{safe_ext}')
 
 
 class UserFile(models.Model):
-    """Model for storing user-uploaded files with metadata and usage tracking."""
-
     STORAGE_SCOPE_PROBLEM = USER_FILE_STORAGE_SCOPE_PROBLEM
     STORAGE_SCOPE_CONTEST = USER_FILE_STORAGE_SCOPE_CONTEST
     STORAGE_SCOPE_MARTOR = USER_FILE_STORAGE_SCOPE_MARTOR
 
-    FILE_TYPE_CHOICES = (
-        ('checker', _('Custom Checker')),
-        ('grader', _('Custom Grader')),
-        ('header', _('Header File')),
-        ('image', _('Image')),
-        ('document', _('Document')),
-        ('code', _('Code')),
-        ('data', _('Test Data')),
-        ('other', _('Other')),
-    )
-
-    # Core identifiers
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     user = models.ForeignKey(
         'Profile', verbose_name=_('owner'), related_name='uploaded_files', on_delete=models.CASCADE,
     )
 
-    # File storage
     file = models.FileField(
         verbose_name=_('file'),
         storage=user_file_storage,
         upload_to=user_file_directory,
     )
     filename = models.CharField(max_length=255, verbose_name=_('original filename'))
-    file_type = models.CharField(
-        max_length=20,
-        verbose_name=_('file type'),
-        choices=FILE_TYPE_CHOICES,
-        default='other',
-    )
     storage_scope = models.CharField(
         max_length=20,
         verbose_name=_('storage scope'),
@@ -103,12 +94,8 @@ class UserFile(models.Model):
         db_index=True,
     )
     size = models.BigIntegerField(verbose_name=_('file size in bytes'), default=0)
-
-    # Metadata
-    description = models.TextField(verbose_name=_('description'), blank=True)
     is_public = models.BooleanField(verbose_name=_('is public'), default=False)
 
-    # Timestamps and access tracking
     uploaded_at = models.DateTimeField(verbose_name=_('uploaded at'), auto_now_add=True)
     last_accessed = models.DateTimeField(verbose_name=_('last accessed'), auto_now_add=True)
     access_count = models.IntegerField(verbose_name=_('access count'), default=0)
@@ -119,12 +106,21 @@ class UserFile(models.Model):
         ordering = ['-uploaded_at']
         indexes = [
             models.Index(fields=['user', '-uploaded_at']),
-            models.Index(fields=['user', 'file_type']),
             models.Index(fields=['storage_scope', '-uploaded_at']),
         ]
 
     def __str__(self):
         return f"{self.filename} ({self.user.user.username})"
+
+    @classmethod
+    def can_list_by(cls, user):
+        """Whether the user may browse the file management list at /files."""
+        return user.is_authenticated and user.has_perm('judge.view_userfile')
+
+    @classmethod
+    def can_upload_by(cls, user):
+        """Whether the user may upload files directly on the /files page."""
+        return user.is_authenticated and user.has_perm('judge.add_userfile')
 
     @staticmethod
     def _profile_id(user):
@@ -132,14 +128,6 @@ class UserFile(models.Model):
             return None
         profile = getattr(user, 'profile', None)
         return getattr(profile, 'id', None)
-
-    @classmethod
-    def can_list_by(cls, user):
-        return user.is_authenticated
-
-    @classmethod
-    def can_upload_by(cls, user):
-        return user.is_authenticated
 
     def is_owned_by(self, user):
         return self.user_id == self._profile_id(user)
@@ -210,8 +198,8 @@ class UserFile(models.Model):
         return self.is_owned_by(user)
 
     def save(self, *args, **kwargs):
-        """Update file size and ensure filename is set before saving."""
-        # Revoke previously shared links when transitioning from public to private.
+        # Rotate the UUID when a file goes public -> private so previously
+        # shared links stop resolving.
         if self.pk:
             try:
                 previous = UserFile.objects.only('is_public').get(pk=self.pk)
@@ -222,17 +210,13 @@ class UserFile(models.Model):
 
         if self.file:
             file_basename = os.path.basename(self.file.name)
-
-            # If filename is missing, derive it from the stored file name.
             if not self.filename:
                 self.filename = file_basename
-            # If filename was manually set without extension, append extension from file.
             elif '.' not in os.path.basename(self.filename) and '.' in file_basename:
                 _, ext = os.path.splitext(file_basename)
                 if ext:
                     self.filename = f'{self.filename}{ext}'
 
-        # Update file size if not already set
         if not self.size and self.file:
             try:
                 self.size = self.file.size
@@ -241,25 +225,20 @@ class UserFile(models.Model):
         super().save(*args, **kwargs)
 
     def update_last_accessed(self):
-        """Update last_accessed timestamp and increment access count."""
         self.last_accessed = timezone.now()
         self.access_count += 1
         self.save(update_fields=['last_accessed', 'access_count'])
 
     def get_absolute_url(self):
-        """Return the absolute URL for this file."""
         return reverse('user_file_detail', kwargs={'uuid': self.uuid})
 
     def get_download_url(self):
-        """Return the safe download URL for this file."""
         return reverse('user_file_download', kwargs={'uuid': self.uuid})
 
     def get_access_url(self):
-        """Return the safe inline view URL for this file."""
         return reverse('user_file_access', kwargs={'uuid': self.uuid})
 
     def get_resolved_filename(self):
-        """Return filename with extension recovered from storage path when needed."""
         stored_basename = os.path.basename(self.file.name or '')
         download_name = (self.filename or '').strip()
 
@@ -274,7 +253,6 @@ class UserFile(models.Model):
         return download_name
 
     def get_resolved_mime_type(self):
-        """Return best-effort MIME type for serving this file."""
         download_name = self.get_resolved_filename()
         mime_type, _ = mimetypes.guess_type(download_name)
         if mime_type:
@@ -286,8 +264,6 @@ class UserFile(models.Model):
 
 
 class FileUsage(models.Model):
-    """Model tracking where a file is used in the system."""
-
     USAGE_TYPE_CHOICES = (
         ('problem_checker', _('Problem - Checker')),
         ('problem_grader', _('Problem - Grader')),
@@ -309,7 +285,6 @@ class FileUsage(models.Model):
         default='other',
     )
 
-    # Generic reference fields - can reference problems, submissions, etc.
     problem_id = models.IntegerField(verbose_name=_('problem ID'), null=True, blank=True, db_index=True)
     contest_id = models.IntegerField(verbose_name=_('contest ID'), null=True, blank=True, db_index=True)
     submission_id = models.IntegerField(verbose_name=_('submission ID'), null=True, blank=True, db_index=True)
@@ -332,7 +307,6 @@ class FileUsage(models.Model):
         return f"{self.file.filename} - {self.get_usage_type_display()}"
 
     def get_context_label(self):
-        """Return a human-readable label for the usage context."""
         if self.problem_id:
             try:
                 from judge.models import Problem

@@ -6,6 +6,7 @@ from django.core.exceptions import PermissionDenied
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db.models import Q
 from django.http import FileResponse, JsonResponse, Http404
+from django.views import View
 from django.views.generic.detail import BaseDetailView
 
 from judge.models import UserFile
@@ -30,11 +31,8 @@ def serialize_user_file(user_file):
     return {
         'id': str(user_file.uuid),
         'filename': user_file.filename,
-        'file_type': user_file.file_type,
-        'file_type_display': user_file.get_file_type_display(),
         'storage_scope': user_file.storage_scope,
         'size': user_file.size,
-        'description': user_file.description,
         'is_public': user_file.is_public,
         'uploaded_at': user_file.uploaded_at.isoformat(),
         'last_accessed': user_file.last_accessed.isoformat(),
@@ -45,21 +43,9 @@ def serialize_user_file(user_file):
     }
 
 
-class UserFilePermissionMixin(APILoginRequiredMixin):
-    required_permission = None
-
-    def setup_api(self, request, *args, **kwargs):
-        super().setup_api(request, *args, **kwargs)
-        if self.required_permission and not request.user.has_perm(self.required_permission):
-            raise PermissionDenied()
-
-
-class UserFileListView(UserFilePermissionMixin, APIListView):
-    """API endpoint for listing user files with filtering support."""
-
+class UserFileListView(APILoginRequiredMixin, APIListView):
     queryset = UserFile.objects.all()
     paginate_by = settings.DMOJ_API_PAGE_SIZE
-    required_permission = 'judge.view_userfile'
 
     def get_unfiltered_queryset(self):
         if self.request.user.is_superuser:
@@ -71,13 +57,7 @@ class UserFileListView(UserFilePermissionMixin, APIListView):
 
         search = self.request.GET.get('search', '').strip()
         if search:
-            queryset = queryset.filter(
-                Q(filename__icontains=search) | Q(description__icontains=search)
-            )
-
-        file_type = self.request.GET.get('file_type', '').strip()
-        if file_type and file_type in dict(UserFile.FILE_TYPE_CHOICES):
-            queryset = queryset.filter(file_type=file_type)
+            queryset = queryset.filter(filename__icontains=search)
 
         storage_scope = self.request.GET.get('storage_scope', '').strip()
         if storage_scope and storage_scope in {
@@ -107,13 +87,10 @@ class UserFileListView(UserFilePermissionMixin, APIListView):
         return serialize_user_file(obj)
 
 
-class UserFileDetailView(UserFilePermissionMixin, APIMixin, BaseDetailView):
-    """API endpoint for retrieving one user file."""
-
+class UserFileDetailView(APILoginRequiredMixin, APIMixin, BaseDetailView):
     queryset = UserFile.objects.all()
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
-    required_permission = 'judge.view_userfile'
 
     def get_queryset(self):
         if self.request.user.is_superuser:
@@ -129,13 +106,10 @@ class UserFileDetailView(UserFilePermissionMixin, APIMixin, BaseDetailView):
         }
 
 
-class UserFileDownloadView(UserFilePermissionMixin, APIMixin, BaseDetailView):
-    """API endpoint for downloading a user file."""
-
+class UserFileDownloadView(APILoginRequiredMixin, APIMixin, BaseDetailView):
     queryset = UserFile.objects.all()
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
-    required_permission = 'judge.view_userfile'
 
     def get_queryset(self):
         if self.request.user.is_superuser:
@@ -175,12 +149,7 @@ class UserFileDownloadView(UserFilePermissionMixin, APIMixin, BaseDetailView):
         return {}
 
 
-class UserFileUploadView(UserFilePermissionMixin, APIMixin, BaseDetailView):
-    """API endpoint for uploading a new user file."""
-
-    queryset = UserFile.objects.all()
-    required_permission = 'judge.add_userfile'
-
+class UserFileUploadView(APILoginRequiredMixin, APIMixin, View):
     def post(self, request):
         try:
             if request.content_type and 'multipart/form-data' in request.content_type:
@@ -188,9 +157,7 @@ class UserFileUploadView(UserFilePermissionMixin, APIMixin, BaseDetailView):
                     return self._error_response('file', 'No file provided', 400)
 
                 uploaded_file = request.FILES['file']
-                file_type = request.POST.get('file_type', 'other')
                 storage_scope = request.POST.get('storage_scope', UserFile.STORAGE_SCOPE_MARTOR)
-                description = request.POST.get('description', '')
                 is_public = request.POST.get('is_public', 'false').lower() == 'true'
             else:
                 try:
@@ -207,9 +174,7 @@ class UserFileUploadView(UserFilePermissionMixin, APIMixin, BaseDetailView):
                     return self._error_response('file', 'Invalid file encoding', 400)
 
                 filename = data['filename']
-                file_type = data.get('file_type', 'other')
                 storage_scope = data.get('storage_scope', UserFile.STORAGE_SCOPE_MARTOR)
-                description = data.get('description', '')
                 is_public = data.get('is_public', False)
 
                 uploaded_file = InMemoryUploadedFile(
@@ -220,9 +185,6 @@ class UserFileUploadView(UserFilePermissionMixin, APIMixin, BaseDetailView):
                     size=len(file_data),
                     charset=None,
                 )
-
-            if file_type not in dict(UserFile.FILE_TYPE_CHOICES):
-                return self._error_response('file_type', 'Invalid file type', 400)
 
             valid_scopes = {
                 UserFile.STORAGE_SCOPE_PROBLEM,
@@ -236,9 +198,7 @@ class UserFileUploadView(UserFilePermissionMixin, APIMixin, BaseDetailView):
                 user=request.profile,
                 file=uploaded_file,
                 filename=uploaded_file.name,
-                file_type=file_type,
                 storage_scope=storage_scope,
-                description=description,
                 is_public=is_public,
             )
             user_file.save()
@@ -265,13 +225,10 @@ class UserFileUploadView(UserFilePermissionMixin, APIMixin, BaseDetailView):
         return {}
 
 
-class UserFileDeleteView(UserFilePermissionMixin, APIMixin, BaseDetailView):
-    """API endpoint for deleting a user file."""
-
+class UserFileDeleteView(APILoginRequiredMixin, APIMixin, BaseDetailView):
     queryset = UserFile.objects.all()
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
-    required_permission = 'judge.delete_userfile'
 
     def get_queryset(self):
         if self.request.user.is_superuser:
