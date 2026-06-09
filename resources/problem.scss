@@ -452,3 +452,61 @@ ul.problem-list {
         font-size: 13px;
     }
 }
+
+.problem-tabs {
+    margin-top: 2em;
+    border-bottom: 2px solid $color_problem_tab_border;
+
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        display: flex;
+    }
+
+    li {
+        margin-right: 5px;
+    }
+
+    a {
+        display: block;
+        padding: 12px 24px;
+        text-decoration: none;
+        color: $color_problem_tab_text;
+        background: $color_problem_tab_bg;
+        border: 1px solid $color_problem_tab_border;
+        border-bottom: none;
+        border-radius: 5px 5px 0 0;
+        transition: all 0.3s ease;
+
+        &:hover {
+            background: $color_problem_tab_hover_bg;
+        }
+
+        &.active {
+            background: $color_problem_tab_active_bg;
+            color: $color_problem_tab_active_text;
+            font-weight: bold;
+            border-color: $color_problem_tab_border;
+            border-bottom: 2px solid $color_problem_tab_active_bg;
+            margin-bottom: -2px;
+        }
+    }
+}
+
+.tab-content {
+    display: none;
+    padding: 20px 0;
+
+    &.active {
+        display: block;
+    }
+}
+
+.submit-tab-content {
+    background: $color_problem_submit_bg;
+    padding: 20px;
+    border-radius: 5px;
+    margin-top: 10px;
+    border: 1px solid $color_problem_tab_border;
+}
