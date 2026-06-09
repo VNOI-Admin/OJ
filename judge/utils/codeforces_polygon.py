@@ -130,6 +130,50 @@ function Str(el)
     return res
 end
 
+-- Footnote handling. VNOJ's markdown engine (markdown2) does not understand
+-- GFM footnote syntax, so we can't let pandoc's default [^N]/[^N]: output
+-- through. Instead, replace each \footnote{...} call site with an inline
+-- marker, capture the body, and at document level append the bodies as
+-- regular blocks separated from the main content by a horizontal rule.
+-- The Lua filter module state resets per pandoc invocation, so numbering is
+-- naturally per-section and never collides when section outputs are merged.
+-- Labels follow the academic \fnsymbol sequence used by Codeforces:
+-- ∗ † ‡ § ¶, doubled on overflow (∗∗, ††, ...), then tripled, etc.
+local FOOTNOTE_SYMBOLS = {'\u{2217}', '\u{2020}', '\u{2021}', '\u{00A7}', '\u{00B6}'}
+local footnote_counter = 0
+local footnotes = {}
+
+local function footnote_label(n)
+    local idx = ((n - 1) % #FOOTNOTE_SYMBOLS) + 1
+    local rep = math.floor((n - 1) / #FOOTNOTE_SYMBOLS) + 1
+    return string.rep(FOOTNOTE_SYMBOLS[idx], rep)
+end
+
+function Note(el)
+    footnote_counter = footnote_counter + 1
+    local sym = footnote_label(footnote_counter)
+    local content = el.content
+    local label = pandoc.RawInline('html', '<strong>' .. sym .. '</strong> ')
+    if #content > 0 and content[1].t == 'Para' then
+        table.insert(content[1].content, 1, label)
+    else
+        table.insert(content, 1, pandoc.Para({label}))
+    end
+    table.insert(footnotes, content)
+    return pandoc.RawInline('html', '<sup>' .. sym .. '</sup>')
+end
+
+function Pandoc(doc)
+    if #footnotes == 0 then return doc end
+    table.insert(doc.blocks, pandoc.RawBlock('html', '<hr style="width: 25%;">'))
+    for _, content in ipairs(footnotes) do
+        for _, block in ipairs(content) do
+            table.insert(doc.blocks, block)
+        end
+    end
+    return doc
+end
+
 function Div(el)
     if el.classes[1] == 'center' then
         local res = {}

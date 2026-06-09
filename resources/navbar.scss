@@ -1,5 +1,4 @@
-// Navbar should look the same in every theme, so vars-common should be enough.
-@use "vars-common" as *;
+@use "vars" as *;
 
 #user-links {
     top: 0;
@@ -295,5 +294,56 @@ nav {
                 left: 0 !important;
             }
         }
+    }
+}
+
+nav .settings-popup {
+    background: $color_pageBg;
+    border-radius: 12px;
+    padding: 4px;
+    border: 1px solid $color_primary25;
+    color: $color_primary90;
+    margin-top: 2px;
+}
+
+.nav-settings-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 7px 12px;
+}
+
+.nav-settings-lbl {
+    font-size: 13px;
+    color: $color_primary90;
+}
+
+.nav-seg {
+    display: inline-flex;
+    background: $color_primary10;
+    border-radius: 7px;
+    padding: 2px;
+}
+
+.nav-seg-btn {
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 9px;
+    border-radius: 5px;
+    font-size: 0.8em;
+    font-weight: 600;
+    font-family: inherit;
+    color: $color_primary66;
+    line-height: 1;
+
+    &:hover {
+        color: $color_primary90;
+        margin: 0;
+    }
+
+    &.active {
+        background: $color_primary0;
+        color: $color_primary90;
     }
 }

@@ -326,12 +326,28 @@ class JudgeHandler(ZlibPacketHandler):
         if not Submission.objects.filter(id=id).update(batch=True):
             logger.warning('Unknown submission: %s', id)
 
-    def update_problems(self, problems, problem_ids):
-        logger.info('%s: Updating problem list', self.name)
+    def replace_problems(self, problems, problem_ids):
+        logger.info('%s: Replacing problem list', self.name)
         self.problems = problems
         self.judge.problems.set(problem_ids)
-        logger.info('%s: Updated %d problems', self.name, len(problem_ids))
-        json_log.info(self._make_json_log(action='update-problems', count=len(problem_ids)))
+        logger.info('%s: Replaced %d problems', self.name, len(self.problems))
+        json_log.info(self._make_json_log(action='update-problems', count=len(self.problems)))
+
+    def update_problems(
+        self,
+        new_problems,
+        new_problem_ids,
+        deleted_problems,
+        deleted_problem_ids,
+    ):
+        logger.info('%s: Updating problem list', self.name)
+        self.problems = (new_problems | self.problems) - deleted_problems
+        if new_problem_ids:
+            self.judge.problems.add(*new_problem_ids)
+        if deleted_problem_ids:
+            self.judge.problems.remove(*deleted_problem_ids)
+        logger.info('%s: Updated %d problems', self.name, len(self.problems))
+        json_log.info(self._make_json_log(action='update-problems', count=len(self.problems)))
 
     def on_supported_problems(self, packet):
         if self.ignore_problems_packet:
@@ -396,7 +412,7 @@ class JudgeHandler(ZlibPacketHandler):
         points = 0.0
         total = 0
         status = 0
-        status_codes = ['SC', 'AC', 'WA', 'MLE', 'TLE', 'IR', 'RTE', 'OLE']
+        status_codes = ['SC', 'AC', 'PAC', 'WA', 'MLE', 'TLE', 'IR', 'RTE', 'OLE']
         batches = {}  # batch number: (points, total)
 
         for case in SubmissionTestCase.objects.filter(submission=submission):
@@ -420,8 +436,8 @@ class JudgeHandler(ZlibPacketHandler):
             points += batches[i][0]
             total += batches[i][1]
 
-        points = round(points, 1)
-        total = round(total, 1)
+        points = round(points, 3)
+        total = round(total, 3)
         submission.case_points = points
         submission.case_total = total
 
@@ -563,7 +579,10 @@ class JudgeHandler(ZlibPacketHandler):
             elif status & 32:
                 test_case.status = 'SC'
             else:
-                test_case.status = 'AC'
+                if result['points'] < result['total-points']:
+                    test_case.status = 'PAC'
+                else:
+                    test_case.status = 'AC'
             test_case.time = result['time']
             test_case.memory = result['memory']
             test_case.points = result['points']

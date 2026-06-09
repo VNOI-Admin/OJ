@@ -11,28 +11,30 @@
     {% endif %}
     <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1">
     <!-- Favicons-->
-    <link rel="apple-touch-icon" sizes="57x57" href="/apple-touch-icon-57x57.png">
-    <link rel="apple-touch-icon" sizes="60x60" href="/apple-touch-icon-60x60.png">
-    <link rel="apple-touch-icon" sizes="72x72" href="/apple-touch-icon-72x72.png">
-    <link rel="apple-touch-icon" sizes="76x76" href="/apple-touch-icon-76x76.png">
-    <link rel="apple-touch-icon" sizes="114x114" href="/apple-touch-icon-114x114.png">
-    <link rel="apple-touch-icon" sizes="120x120" href="/apple-touch-icon-120x120.png">
-    <link rel="apple-touch-icon" sizes="144x144" href="/apple-touch-icon-144x144.png">
-    <link rel="apple-touch-icon" sizes="152x152" href="/apple-touch-icon-152x152.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-180x180.png">
-    <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
-    <link rel="icon" type="image/png" href="/android-chrome-192x192.png" sizes="192x192">
-    <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96">
-    <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
-    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" sizes="57x57" href="{{ static('icons/apple-touch-icon-57x57.png') }}">
+    <link rel="apple-touch-icon" sizes="60x60" href="{{ static('icons/apple-touch-icon-60x60.png') }}">
+    <link rel="apple-touch-icon" sizes="72x72" href="{{ static('icons/apple-touch-icon-72x72.png') }}">
+    <link rel="apple-touch-icon" sizes="76x76" href="{{ static('icons/apple-touch-icon-76x76.png') }}">
+    <link rel="apple-touch-icon" sizes="114x114" href="{{ static('icons/apple-touch-icon-114x114.png') }}">
+    <link rel="apple-touch-icon" sizes="120x120" href="{{ static('icons/apple-touch-icon-120x120.png') }}">
+    <link rel="apple-touch-icon" sizes="144x144" href="{{ static('icons/apple-touch-icon-144x144.png') }}">
+    <link rel="apple-touch-icon" sizes="152x152" href="{{ static('icons/apple-touch-icon-152x152.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ static('icons/apple-touch-icon-180x180.png') }}">
+    <link rel="icon" type="image/png" href="{{ static('icons/favicon-32x32.png') }}" sizes="32x32">
+    <link rel="icon" type="image/png" href="{{ static('icons/android-chrome-192x192.png') }}" sizes="192x192">
+    <link rel="icon" type="image/png" href="{{ static('icons/favicon-96x96.png') }}" sizes="96x96">
+    <link rel="icon" type="image/png" href="{{ static('icons/favicon-16x16.png') }}" sizes="16x16">
+    <link rel="manifest" href="{{ static('icons/manifest.json') }}">
     <meta name="msapplication-TileColor" content="#231F20">
-    <meta name="msapplication-TileImage" content="/mstile-144x144.png">
+    <meta name="msapplication-TileImage" content="{{ static('icons/mstile-144x144.png') }}">
     {# Chrome 39 for Android colour #}
     <meta name="theme-color" content="#231F20">
     {% if og_image %}
         <meta property="og:image" content="{{ request.build_absolute_uri(og_image) }}">
     {% else %}
-        <meta property="og:image" content="{{ request.build_absolute_uri("/logo.png") }}">
+        {% with logo_url=misc_config.site_logo|default(static('icons/og_logo.png'), true) %}
+        <meta property="og:image" content="{{ logo_url }}">
+        {% endwith %}
     {% endif %}
     {% block og_title %}{% endblock %}
     <meta property="og:site_name" content="{{ SITE_LONG_NAME }}">
@@ -44,16 +46,11 @@
         <link rel="stylesheet" href="{{ FONTAWESOME_CSS }}">
     {% endif %}
     {% compress css %}
-        {# TODO: once dark mode support is better, enable for all users by deleting the else branch #}
-        {% if perms.judge.test_site %}
-            {% if PREFERRED_STYLE_CSS is not none %}
-                <link rel="stylesheet" href="{{ static(PREFERRED_STYLE_CSS) }}">
-            {% else %}
-                <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}">
-                <link rel="stylesheet" href="{{ static(DARK_STYLE_CSS) }}" media="(prefers-color-scheme: dark)">
-            {% endif %}
+        {% if PREFERRED_STYLE_CSS is not none %}
+            <link rel="stylesheet" href="{{ static(PREFERRED_STYLE_CSS) }}">
         {% else %}
             <link rel="stylesheet" href="{{ static(LIGHT_STYLE_CSS) }}">
+            <link rel="stylesheet" href="{{ static(DARK_STYLE_CSS) }}" media="(prefers-color-scheme: dark)">
         {% endif %}
         {% if INLINE_FONTAWESOME %}<link rel="stylesheet" href="{{ static('libs/fontawesome/font-awesome.css') }}">{% endif %}
         <link rel="stylesheet" href="{{ static('source_sans_pro.css') }}">
@@ -103,6 +100,18 @@
                 {{ EVENT_LAST_MSG }}
             );
         </script>
+        {% if request.user.is_authenticated %}
+            <script>
+                window.ticketNotify = {
+                    channel: 'tickets_{{ request.profile.ticket_secret }}',
+                    newTicket: '{{ _("You have a new ticket: ") }}',
+                    newReply: '{{ _("You have a new reply on ticket ") }}',
+                    access: '{{ _("Access ticket") }}',
+                    close: '{{ _("Close") }}',
+                };
+            </script>
+            <script src="{{ static('ticket_notification.js') }}"></script>
+        {% endif %}
     {% endif %}
     {% if request.in_contest %}
         <script>$(function () {
@@ -192,6 +201,10 @@
                 $("#set_language").submit()
             }
         }
+        function set_theme(theme) {
+            $("input[name=theme]").val(theme);
+            $("#set_theme").submit();
+        }
     </script>
     <noscript>
         <style>
@@ -205,7 +218,7 @@
         </style>
     </noscript>
 </head>
-<body{% if perms.judge.test_site %} data-theme="{{ SITE_THEME_NAME }}"{% endif %}>
+<body data-theme="{{ SITE_THEME_NAME }}">
 <svg width="0" height="0" style="display: block">
     <defs>
         <clipPath id="rating-clip"><circle cx="8" cy="8" r="7"/></clipPath>
@@ -251,13 +264,41 @@
         </ul>
 
         <span id="user-links">
-            {% if request.user.is_superuser %}
-                <a href="{{ url('misc_config') }}" style="margin-right: 5px;">
-                    <span title="{{ _('Site settings') }}">
-                        <i class="fa fa-gear" style="color: rgb(200,200,200) ; font-size: 1.15em"></i>
-                    </span>
-                </a>
-            {% endif %}
+            <ul>
+                <li>
+                    {% if request.user.is_superuser %}
+                        <a href="{{ url('misc_config') }}" style="margin-right: 5px;">
+                    {% else %}
+                        <a href="javascript:void(0)" style="margin-right: 5px;">
+                    {% endif %}
+                        <span title="{{ _('Settings') }}">
+                            <i class="fa fa-gear" style="color: rgb(200,200,200); font-size: 1.15em"></i>
+                        </span>
+                    </a>
+                    <ul class="settings-popup" style="min-width: 210px; right: 0; left: auto;">
+                        {% if request.user.is_authenticated %}
+                            <li>
+                                <div class="nav-settings-row">
+                                    <span class="nav-settings-lbl">{{ _('Theme') }}</span>
+                                    <span class="nav-seg">
+                                        <span onclick="set_theme('light')" class="nav-seg-btn{% if SITE_THEME_NAME != 'dark' %} active{% endif %}"><i class="fa fa-sun-o"></i></span>
+                                        <span onclick="set_theme('dark')" class="nav-seg-btn{% if SITE_THEME_NAME == 'dark' %} active{% endif %}"><i class="fa fa-moon-o"></i></span>
+                                    </span>
+                                </div>
+                            </li>
+                        {% endif %}
+                        <li>
+                            <div class="nav-settings-row">
+                                <span class="nav-settings-lbl">{{ _('Language') }}</span>
+                                <span class="nav-seg">
+                                    <span onclick="submmit_language('vi')" class="nav-seg-btn{% if LANGUAGE_CODE == 'vi' %} active{% endif %}">VI</span>
+                                    <span onclick="submmit_language('en')" class="nav-seg-btn{% if LANGUAGE_CODE == 'en' %} active{% endif %}">EN</span>
+                                </span>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
             <a href=
                 {% if request.resolver_match.view_name == "problem_detail" and problem %}
                     "{{ url('new_problem_ticket', problem.code) }}"
@@ -269,12 +310,6 @@
                     <i class="fa fa-exclamation-triangle" style="color: yellow;"></i>
                 </span>
             </a>
-            <a id="flag_vi" href="#" onclick="submmit_language('vi')" style="margin-right: 5px; margin-top: 4px;">
-                <img src="{{ static('icons/vi_flag.svg') }}" alt="VI" height="24">
-            </a>
-            <a id="flag_en" href="#" onclick="submmit_language('en')" style="margin-right: 5px; margin-top: 4px;">
-                <img src="{{ static('icons/gb_flag.svg') }}" alt="EN" height="24">
-            </a>
             {% if request.user.is_authenticated %}
                 <ul>
                     <li>
@@ -284,7 +319,7 @@
                                 <span>{{ _('Hello, %(username)s.', username=bold(request.user.first_name or request.profile.display_name)) }}</span>
                             </span>
                         </a>
-                        <ul style="width: 150px">
+                        <ul style="width: 150px; right: 0; left: auto;">
                             {% if request.user.is_staff or request.user.is_superuser %}
                                 <li><a href="{{ url('admin:index') }}">{{ _('Admin') }}</a></li>
                             {% endif %}
@@ -379,6 +414,13 @@
             <input name="next" type="hidden" value="{{ request.get_full_path() }}">
             <input name="language" type="hidden" value="{{LANGUAGE_CODE}}">
           </form>
+            {% if request.user.is_authenticated %}
+                <form id="set_theme" action="{{ url('set_theme') }}" method="post" style="display: inline">
+                    {% csrf_token %}
+                    <input name="next" type="hidden" value="{{ request.get_full_path() }}">
+                    <input name="theme" type="hidden" value="{{ SITE_THEME_NAME }}">
+                </form>
+            {% endif %}
         </span>
     </footer>
 </div>

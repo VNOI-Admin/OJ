@@ -20,11 +20,83 @@
     </script>
 
     <script src="{{ static('vnoj/jquery.formset.js') }}"></script>
+    <script type="text/javascript" src="{{ static('vnoj/jquery-ui/jquery-ui.min.js') }}"></script>
     <script src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
     <script type="text/javascript">
         $(function() {
+            function _initRowOrder(row) {
+                var $order = row.find('input[id$="-order"]').attr('type', 'hidden');
+                if (!row.find('span.order').length) {
+                    $order.after($('<span>', {'class': 'order'}).text($order.val()))
+                          .after($('<i>', {'class': 'fa fa-fw fa-lg fa-ellipsis-v'}));
+                }
+
+                _renumberOrders();
+            }
+
+            function _renumberOrders() {
+                var idx = 1;
+                $('#form_set tr.dynamic-form:visible').each(function() {
+                    $(this).find('input[id$="-order"]').val(idx);
+                    $(this).find('span.order').text(idx);
+                    idx++;
+                });
+            }
+
+            function _autoFillOrder(row) {
+                var maxOrder = 0;
+                $('#form_set tr.dynamic-form:visible').not(row).find('input[id$="-order"]').each(function() {
+                    var val = parseInt($(this).val()) || 0;
+                    if (val > maxOrder) maxOrder = val;
+                });
+                var newOrder = maxOrder + 1;
+                var $order = row.find('input[id$="-order"]').attr('type', 'hidden').val(newOrder);
+                if (!row.find('span.order').length) {
+                    $order.after($('<span>', {'class': 'order'}).text(newOrder))
+                          .after($('<i>', {'class': 'fa fa-fw fa-lg fa-ellipsis-v'}));
+                } else {
+                    row.find('span.order').text(newOrder);
+                }
+            }
+
             $('#form_set tr').formset({
-                prefix: '{{ contest_problem_formset.prefix }}'
+                prefix: '{{ contest_problem_formset.prefix }}',
+                added: function(row) {
+                    row.find('select[id$="-problem"]').val(null).trigger('change');
+                    _autoFillOrder(row);
+                },
+            });
+
+            $('#form_set tr.dynamic-form').each(function() { _initRowOrder($(this)); });
+
+            var oldSortIndex;
+            $('#form_set').sortable({
+                handle: 'i.fa-ellipsis-v',
+                placeholder: 'placeholder',
+                cancel: '.dynamic-form-add',
+                start: function(event, ui) {
+                    ui.placeholder.empty();
+                    oldSortIndex = ui.item.index();
+                },
+                stop: function(event, ui) {
+                    _renumberOrders();
+                },
+            });
+
+            $('form').submit(function() {
+                $('#form_set tr.dynamic-form').each(function() {
+                    var filled = false;
+                    $(this).find('input, select').each(function() {
+                        var $this = $(this);
+                        if (!$this.attr('name')) return;
+                        if ($this.attr('type') === 'checkbox')
+                            filled |= $this.is(':checked');
+                        else if (!$this.attr('name').endsWith('order'))
+                            filled |= !!$this.val();
+                    });
+                    if (!filled)
+                        $(this).find('input[id$="-order"]').val('');
+                });
             });
 
             var noResults = function () {
@@ -67,8 +139,57 @@
 
 {% block media %}
     <link rel="stylesheet" href="/static/vnoj/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" href="{{ static('vnoj/jquery-ui/jquery-ui.min.css') }}">
     {{ form.media.css }}
     <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+    <style>
+        body.dragging, body.dragging * {
+            cursor: move !important;
+        }
+
+        .dragged {
+            position: absolute;
+            opacity: 0.5;
+            z-index: 2000;
+        }
+
+        tr.placeholder {
+            display: block;
+            background: red;
+            position: relative;
+            margin: 0;
+            padding: 0;
+            border: none;
+        }
+
+        tr.placeholder:before {
+            content: "";
+            position: absolute;
+            width: 0;
+            height: 0;
+            border: 5px solid transparent;
+            border-left-color: red;
+            margin-top: -5px;
+            left: -5px;
+            border-right: none;
+        }
+
+        i.fa-ellipsis-v {
+            cursor: move;
+        }
+
+        .order-column {
+            width: 1em;
+        }
+
+        span.order {
+            padding-right: 0.5em;
+        }
+
+        tbody td {
+            white-space: nowrap;
+        }
+    </style>
 {% endblock %}
 
 {% block body %}
@@ -76,13 +197,13 @@
 {% macro form_as_row(form) -%}
     {% if form.non_field_errors() %}
     <tr>
-        <td colspan="6">{{ form.non_field_errors() }}</td>
+        <td colspan="5">{{ form.non_field_errors() }}</td>
     </tr>
     {% endif %}
     <tr>
+        <td>{{ form.order.errors }}{{ form.order }}</td>
         <td>{{ form.id }} {{ form.problem.errors }}{{ form.problem }}</td>
         <td class="points-column">{{ form.points.errors }}{{ form.points }}</td>
-        <td>{{ form.order.errors }}{{ form.order }}</td>
         <td>{{ form.max_submissions.errors }}{{ form.max_submissions }}</td>
         <td>
         {% if contest_problem_formset.can_delete and form.instance.pk %}
@@ -104,18 +225,18 @@
     <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
         {{ contest_problem_formset.management_form }}
-        <table class="django-as-table">{{ form.as_table() }}</table>
-        <hr>
-        <center><h3> {{ _('Problems') }} </h3></center>
         {% if contest_problem_formset.non_form_errors() %}
             {{ contest_problem_formset.non_form_errors() }}
         {% endif %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <hr>
+        <center><h3> {{ _('Problems') }} </h3></center>
         <table class="table">
             <thead>
                 <tr>
+                    <th class="order-column"></th>
                     <th class="problem-column" style="width: 20em;"> {{ _('Problems') }} </th>
                     <th class="points-column"> {{ _('Points') }} </th>
-                    <th> {{ _('Order in contest') }} </th>
                     <th>
                         {{ _('Max submission') }}
                         <br>

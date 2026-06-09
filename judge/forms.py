@@ -20,8 +20,8 @@ from django.urls import reverse, reverse_lazy
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
-from judge.models import BlogPost, Contest, ContestAnnouncement, ContestProblem, Language, LanguageLimit, \
-    Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential, UserFile
+from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, Language, \
+    LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential, UserFile
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -537,6 +537,12 @@ class CustomAuthenticationForm(AuthenticationForm, SocialAuthMixin):
 
     def confirm_login_allowed(self, user):
         if user.profile.is_banned:
+            if user.profile.ban_reason == settings.VNOJ_CONTEST_CHEATING_BAN_MESSAGE:
+                self.cheating_contests = ContestParticipation.objects.filter(
+                    user=user.profile,
+                    contest__is_organization_private=False,
+                    is_disqualified=True,
+                ).select_related('contest').order_by('contest__end_time')
             raise forms.ValidationError(
                 _('This account has been banned. Reason: %s') % user.profile.ban_reason,
                 code='banned',
@@ -705,7 +711,19 @@ class ProposeContestProblemFormSet(
             ContestProblem,
             form=ProposeContestProblemForm,
             can_delete=True,
+            max_num=settings.MAX_CONTEST_PROBLEMS_COUNT,
+            validate_max=True,
         )):
+
+    def full_clean(self):
+        # Django < 5.0 doesn't support override the too_many_forms message in the constructor.
+        # So we have to do it ourselves
+        super().full_clean()
+
+        for error in self._non_form_errors.as_data():
+            if error.code == 'too_many_forms':
+                error.message = _('Contest cannot have more than %(limit)d problems.') % \
+                    {'limit': self.max_num}
 
     def clean(self) -> None:
         """Checks that no Contest problems have the same order."""
