@@ -109,8 +109,7 @@ class ECOOContestFormat(DefaultContestFormat):
                 state=(('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
                        ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
                        self.best_solution_state(format_data['points'], contest_problem.points)),
-                url=reverse('contest_user_submissions',
-                            args=[self.contest.key, participation.user.user.username, contest_problem.problem.code]),
+                url=self.get_user_problem_submissions_url(contest_problem, participation),
                 points=floatformat(format_data['points'], -self.contest.points_precision),
                 bonus=bonus,
                 time=nice_repr(timedelta(seconds=format_data['time']), 'noday'),

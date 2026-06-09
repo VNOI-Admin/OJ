@@ -25,6 +25,7 @@ from django.views.generic import DetailView, ListView
 
 from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
+from judge.models.contest import ContestProblem
 from judge.models.problem import ProblemTestcaseResultAccess, SubmissionSourceAccess
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.lazy import memo_lazy
@@ -98,14 +99,26 @@ class SubmissionDetailBase(LoginRequiredMixin, TitleMixin, SubmissionMixin, Deta
 
     def get_content_title(self):
         submission = self.object
+        if self.object.contest_object:
+            problem_url = reverse('submission_problem_redirect', args=[self.object.id])
+        else:
+            problem_url = reverse('problem_detail', args=[submission.problem.code])
         return mark_safe(escape(_('Submission of %(problem)s by %(user)s')) % {
             'problem': format_html('<a href="{0}">{1}</a>',
-                                   reverse('problem_detail', args=[submission.problem.code]),
+                                   problem_url,
                                    submission.problem.translated_name(self.request.LANGUAGE_CODE)),
             'user': format_html('<a href="{0}">{1}</a>',
                                 reverse('user_page', args=[submission.user.user.username]),
                                 submission.user.display_name),
         })
+
+    def get_context_data(self, **kwargs):
+        context = super(SubmissionDetailBase, self).get_context_data(**kwargs)
+        if self.object.contest_object:
+            context['resubmit_url'] = reverse('submission_problem_redirect', args=[self.object.id]) + '?resubmit=1'
+        else:
+            context['resubmit_url'] = reverse('problem_submit', args=[self.object.problem.code, self.object.id])
+        return context
 
 
 class SubmissionSource(SubmissionDetailBase):
@@ -132,6 +145,56 @@ class SubmissionSource(SubmissionDetailBase):
             return super().get(request, *args, **kwargs)
         except SubmissionSourcePermissionDenied:
             return generic_message(request, 'Access denied', 'This source cannot be viewed by normal users.', 404)
+
+
+@require_GET
+def submission_problem_redirect(request, submission):
+    """
+    Redirects to the problem page of a submission. This is used for the "View problem"/"Resubmit" link on the
+    submission status page.
+
+    - Why do we need this? Because a submission can be associated with a contest problem,
+    and we want to redirect to the contest problem page in that case, instead of the global problem page.
+
+    - Then why do we need a separate view for this? Why not just look up the problem in the submission status view and
+    redirect from there?
+
+    It's optimization thing, this view only needed when the user clicks the "View problem" link, which is much less
+    frequent than viewing the submission status page.
+
+    By doing the redirection in a separate view, we can avoid doing extra database queries for every submission status
+    page view, and only do it when necessary.
+
+    This view doesn't check any permissions since the target page should handle it already
+    """
+    submission_id = submission
+    is_resubmit = request.GET.get('resubmit') == '1'
+
+    submission = Submission.objects.filter(id=submission_id).values(
+        'problem_id', 'contest_object_id', 'contest_object__key',
+    ).first()
+
+    if submission is None or submission['contest_object_id'] is None:
+        raise Http404()
+
+    problem_contest = ContestProblem.objects.filter(
+        contest_id=submission['contest_object_id'],
+        problem_id=submission['problem_id'],
+    ).only('order').first()
+    if problem_contest is None:
+        raise Http404()
+
+    if is_resubmit:
+        return HttpResponseRedirect(reverse('contest_problem_submit',
+                                            kwargs={
+                                                'contest': submission['contest_object__key'],
+                                                'order': problem_contest.order, 'submission': submission_id,
+                                            }))
+    return HttpResponseRedirect(reverse('contest_problem_detail',
+                                        kwargs={
+                                            'contest': submission['contest_object__key'],
+                                            'order': problem_contest.order,
+                                        }))
 
 
 @require_GET
@@ -380,7 +443,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
 
     @cached_property
     def contest(self):
-        return self.request.profile.current_contest.contest
+        return None
 
     def _get_queryset(self):
         queryset = Submission.objects.all()
@@ -590,7 +653,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
     def is_contest_scoped(self):
         if super(ProblemSubmissionsBase, self).is_contest_scoped:
             return True
-        if not hasattr(self, 'contest'):
+        if not hasattr(self, 'contest') or self.contest is None:
             return False
         # return true if user is accessing a problem inside a contest
         return self.contest.problems.filter(id=self.problem.id).exists()
@@ -624,16 +687,17 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         if self.check_contest_in_access_check:
             self.access_check_contest(request)
 
-    def get(self, request, *args, **kwargs):
+    def _setup_problem(self, request, *args, **kwargs):
         if 'problem' not in kwargs:
-            raise ImproperlyConfigured('Must pass a problem')
+            raise ImproperlyConfigured('Must pass a problem argument')
         self.problem = get_object_or_404(Problem, code=kwargs['problem'])
         self.problem_name = self.problem.translated_name(self.request.LANGUAGE_CODE)
+
+    def get(self, request, *args, **kwargs):
+        self._setup_problem(request, *args, **kwargs)
         return super(ProblemSubmissionsBase, self).get(request, *args, **kwargs)
 
     def get_all_submissions_page(self):
-        if hasattr(self, 'contest'):
-            return reverse('contest_all_submissions', kwargs={'contest': self.contest.key})
         return reverse('chronological_submissions', kwargs={'problem': self.problem.code})
 
     def get_context_data(self, **kwargs):
@@ -641,22 +705,13 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         if self.dynamic_update:
             context['dynamic_update'] = context['page_obj'].number == 1
             context['dynamic_problem_id'] = self.problem.id
-        if hasattr(self, 'contest'):
-            context['best_submissions_link'] = reverse('contest_ranked_submissions',
-                                                       kwargs={'problem': self.problem.code,
-                                                               'contest': self.contest.key})
-        else:
-            context['best_submissions_link'] = reverse('ranked_submissions', kwargs={'problem': self.problem.code})
+        context['best_submissions_link'] = reverse('ranked_submissions', kwargs={'problem': self.problem.code})
         return context
 
 
 class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
-            if hasattr(self, 'contest'):
-                return reverse('contest_user_submissions', kwargs={'problem': self.problem.code,
-                                                                   'user': self.request.user.username,
-                                                                   'contest': self.contest.key})
             return reverse('user_submissions', kwargs={'problem': self.problem.code,
                                                        'user': self.request.user.username})
 
@@ -783,11 +838,49 @@ class ForceContestMixin(object):
     def get_problem_label(self, problem):
         return self.contest.get_label_for_problem(self.get_problem_number(problem) - 1)
 
-    def get(self, request, *args, **kwargs):
-        if 'contest' not in kwargs:
+    def dispatch(self, request, *args, **kwargs):
+        self.contest_key = kwargs.get('contest')
+        if self.contest_key is None:
             raise ImproperlyConfigured('Must pass a contest')
+        return super().dispatch(request, *args, **kwargs)
+
+    def get(self, request, *args, **kwargs):
         self._contest = get_object_or_404(Contest, key=kwargs['contest'])
         return super(ForceContestMixin, self).get(request, *args, **kwargs)
+
+
+class ForceContestProblemOrderMixin(ForceContestMixin):
+    def dispatch(self, request, *args, **kwargs):
+        self.problem_order = kwargs.get('order')
+        if self.problem_order is None:
+            raise ImproperlyConfigured('Must pass a problem order')
+        return super().dispatch(request, *args, **kwargs)
+
+    def _setup_problem(self, request, *args, **kwargs):
+        try:
+            self.problem = Problem.objects.get(
+                contests__contest__key=self.contest_key, contests__order=self.problem_order)
+        except Problem.DoesNotExist:
+            raise Http404()
+        self.problem_name = self.problem.translated_name(request.LANGUAGE_CODE)
+
+    def get_all_submissions_page(self):
+        return reverse('contest_problem_submissions',
+                       kwargs={'contest': self.contest_key, 'order': self.problem_order})
+
+    def get_my_submissions_page(self):
+        if self.request.user.is_authenticated:
+            return reverse('contest_user_problem_submissions',
+                           kwargs={'order': self.problem_order,
+                                   'user': self.request.user.username,
+                                   'contest': self.contest_key})
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['best_submissions_link'] = reverse('contest_ranked_submissions',
+                                                   kwargs={'order': self.problem_order,
+                                                           'contest': self.contest_key})
+        return context
 
 
 class AllContestSubmissions(ForceContestMixin, AllSubmissions):
@@ -840,9 +933,14 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
         })
 
 
-class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
+class UserContestSubmissions(ForceContestProblemOrderMixin, UserProblemSubmissions):
+    @cached_property
+    def _contest_problem(self):
+        from judge.models.contest import ContestProblem
+        return ContestProblem.objects.get(contest=self.contest, order=self.problem_order)
+
     def get_title(self):
-        if self.problem.is_accessible_by(self.request.user):
+        if self._contest_problem.is_accessible_by(self.request.user):
             return _("{user}'s submissions for {problem} in {contest}").format(
                 user=self.profile.display_name,
                 problem=self.problem_name,
@@ -860,12 +958,12 @@ class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
             raise Http404()
 
     def get_content_title(self):
-        if self.problem.is_accessible_by(self.request.user):
+        if self._contest_problem.is_accessible_by(self.request.user):
             return mark_safe(escape(_("{user}'s submissions for {problem} in {contest}")).format(
                 user=format_html('<a href="{1}">{0}</a>', self.profile.display_name,
                                  reverse('user_page', args=[self.username])),
                 problem=format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                    reverse('problem_detail', args=[self.problem.code])),
+                                    reverse('contest_problem_detail', args=[self.contest_key, self.problem_order])),
                 contest=format_html('<a href="{1}">{0}</a>', self.contest.name,
                                     reverse('contest_view', args=[self.contest.key])),
             ))

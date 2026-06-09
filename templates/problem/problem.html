@@ -129,7 +129,7 @@
             $('#pdf_button').click(async function(e) {
                 e.preventDefault();
                 if (!$('#raw_problem').attr("src"))
-                    $('#raw_problem').attr("src", "{{problem.code}}/raw");
+                    $('#raw_problem').attr("src", "{{problem_raw_url}}");
 
                 while(!$('.math-loaded', frames['raw_problem'].document).length) {
                     await new Promise(r => setTimeout(r, 200));
@@ -171,7 +171,13 @@
     <div class="problem-title">
         {% if request.user.is_authenticated %}
             {% if problem.id in completed_problem_ids %}
-                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                <a 
+                    {% if hide_problem_code %}
+                        href="{{ url('contest_user_problem_submissions', contest_key, problem_order, request.user.username) }}"
+                    {% else %}
+                        href="{{ url('user_submissions', problem.code, request.user.username) }}"
+                    {% endif %}
+                >
                     {% if problem.is_public or request.in_contest %}
                         <i class="solved-problem-color title-state fa fa-check-circle"></i>
                     {% else %}
@@ -179,7 +185,13 @@
                     {% endif %}
                 </a>
             {% elif problem.id in attempted_problems %}
-                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                <a
+                    {% if hide_problem_code %}
+                        href="{{ url('contest_user_problem_submissions', contest_key, problem_order, request.user.username) }}"
+                    {% else %}
+                        href="{{ url('user_submissions', problem.code, request.user.username) }}"
+                    {% endif %}
+                >
                     {% if problem.is_public or request.in_contest %}
                         <i class="attempted-problem-color title-state fa fa-frown-o"></i>
                     {% else %}
@@ -199,7 +211,7 @@
             </span>
         {% endif %}
         <span class="spacer"></span>
-        {% if has_pdf_render %}
+        {% if has_pdf_render and not hide_problem_code %}
             <a href="{{ url('problem_pdf', problem.code) }}" class="view-pdf">
         {% else %}
         <a id="pdf_button" class="view-pdf" href='#'>
@@ -216,7 +228,11 @@
 {% block info_float %}
     {% if request.user.is_authenticated and request.in_contest and submission_limit %}
         {% if submissions_left > 0 %}
-            <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+            {% if contest_problem %}
+                <a href="{{ url('contest_problem_submit', contest_problem.contest.key, contest_problem.order) }}" class="unselectable button full">
+            {% else %}
+                <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+            {% endif %}
                 {{ _('Submit solution') }}
             </a>
             <div class="submissions-left">
@@ -231,18 +247,24 @@
             <div class="no-submissions-left submissions-left">{{ _('0 submissions left') }}</div>
         {% endif %}
     {% else %}
-        <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+        {% if contest_problem %}
+            <a href="{{ url('contest_problem_submit', contest_problem.contest.key, contest_problem.order) }}" class="unselectable button full">
+        {% else %}
+            <a href="{{ url('problem_submit', problem.code) }}" class="unselectable button full">
+        {% endif %}
             {{ _('Submit solution') }}
         </a>
     {% endif %}
 
     <hr style="padding-bottom: 0.3em">
-    {% if request.in_contest and contest_problem %}
+    {% if contest_problem %}
         {% set contest = contest_problem.contest %}
-        <div><a href="{{ url('contest_user_submissions', contest.key, request.user.username, problem.code) }}">{{ _('My submissions') }}</a></div>
+        {% if request.user.is_authenticated and has_submissions %}
+            <div><a href="{{ url('contest_user_problem_submissions', contest.key, contest_problem.order, request.user.username) }}">{{ _('My submissions') }}</a></div>
+        {% endif %}
         {% if contest.can_see_full_submission_list(request.user) %}
-            <div><a href="{{ url('chronological_submissions', problem.code) }}">{{ _('All submissions') }}</a></div>
-            <div><a href="{{ url('contest_ranked_submissions', contest.key, problem.code) }}">{{ _('Best submissions') }}</a></div>
+            <div><a href="{{ url('contest_problem_submissions', contest.key, contest_problem.order) }}">{{ _('All submissions') }}</a></div>
+            <div><a href="{{ url('contest_ranked_submissions', contest.key, contest_problem.order) }}">{{ _('Best submissions') }}</a></div>
         {% endif %}
     {% else %}
         {% if request.user.is_authenticated and has_submissions %}
@@ -460,7 +482,11 @@
 
 {% block post_description_end %}
     {% if request.user.is_authenticated and not request.profile.mute %}
-        <a href="{{ url('new_problem_ticket', problem.code) }}" class="button clarify">
+        {% if contest_problem %}
+            <a href="{{ url('new_contest_problem_ticket', contest_problem.contest.key, contest_problem.order) }}" class="button clarify">
+        {% else %}
+            <a href="{{ url('new_problem_ticket', problem.code) }}" class="button clarify">
+        {% endif %}
             {%- if comment_lock and request.profile.current_contest.live -%}
                 {{ _('Request clarification') }}
             {%- else -%}
