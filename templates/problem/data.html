@@ -605,6 +605,66 @@
                 };
                 reader.readAsArrayBuffer(fileInput);
             });
+            // === Zip file row: two-card layout ===
+            (function () {
+                var $td = $file_test.closest('td');
+                var $clearCheckbox = $('#problem-data-zipfile-clear_id');
+                var $currentLink = $td.find('a[href]').first();
+                var hasCurrentFile = $currentLink.length > 0;
+
+                // Current data slim row (pill badge with × to clear)
+                var $currentRow = $('<div>', {'class': 'zip-current-row'}).toggle(hasCurrentFile);
+                $('<span>', {'class': 'zip-current-label', text: {{ _('Current data')|htmltojs }}}).appendTo($currentRow);
+                if (hasCurrentFile) {
+                    var $badge = $('<span>', {'class': 'zip-current-badge'}).appendTo($currentRow);
+                    $('<a>', {href: $currentLink.attr('href'), text: $currentLink.text(), target: '_blank'}).appendTo($badge);
+                    $('<a>', {href: '#', 'class': 'zip-clear-x', text: '×'}).on('click', function (e) {
+                        e.preventDefault();
+                        $clearCheckbox.prop('checked', true).trigger('change');
+                        $currentRow.hide();
+                    }).appendTo($badge);
+                }
+
+                // Top card: Upload a .zip
+                var $cards = $('<div>', {'class': 'zip-cards'});
+                var $card1 = $('<div>', {'class': 'zip-card'}).appendTo($cards);
+                $('<div>', {'class': 'zip-card-head'})
+                    .append($('<i>', {'class': 'fa fa-upload'})).append(' ')
+                    .append($('<strong>').text({{ _('Upload a .zip')|htmltojs }}))
+                    .appendTo($card1);
+                $('<p>', {'class': 'zip-card-desc', text: {{ _('Already have your tests packed? Upload the archive, then save.')|htmltojs }}}).appendTo($card1);
+                var $card1Actions = $('<div>', {'class': 'zip-card-actions'}).appendTo($card1);
+                $('<button>', {type: 'button', 'class': 'button', text: {{ _('Choose file...')|htmltojs }}})
+                    .on('click', function () { $file_test.trigger('click'); })
+                    .appendTo($card1Actions);
+
+                // Divider
+                $('<div>', {'class': 'zip-or-divider'}).text({{ _('OR')|htmltojs }}).appendTo($cards);
+
+                // Bottom card: Build online
+                var $card2 = $('<div>', {'class': 'zip-card'}).appendTo($cards);
+                $('<div>', {'class': 'zip-card-head'})
+                    .append($('<i>', {'class': 'fa fa-bars'})).append(' ')
+                    .append($('<strong>').text({{ _('Build online')|htmltojs }}))
+                    .appendTo($card2);
+                $('<p>', {'class': 'zip-card-desc', text: {{ _('No file yet? Create and edit test cases right in the browser.')|htmltojs }}}).appendTo($card2);
+                var $card2Actions = $('<div>', {'class': 'zip-card-actions'}).appendTo($card2);
+                $('#btn-build-test-data').css({'margin-left': '', 'background': ''}).addClass('zip-build-btn').appendTo($card2Actions);
+
+                // Detach before emptying so they survive
+                $file_test.detach().hide();
+                $clearCheckbox.detach().hide();
+                var $saveBtn = $('#submit-button').detach().val({{ _('Save data')|htmltojs }}).css('display', '');
+
+                $td.empty()
+                    .append($currentRow)
+                    .append($cards)
+                    .append($file_test)
+                    .append($clearCheckbox);
+
+                // Place Save data button below the data form table
+                $td.closest('table').after($saveBtn.addClass('zip-save-outer'));
+            })();
             // === Build Test Data Modal ===
             (function () {
                 // selectedFiles: [{file: File, path: string}]
@@ -871,6 +931,117 @@
             padding-top: 1em;
             padding-bottom: 1em;
             background: #e99;
+        }
+
+        .zip-current-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            margin-bottom: 0.75em;
+            font-size: 0.9em;
+        }
+
+        .zip-current-label {
+            color: var(--body-fg, #666);
+        }
+
+        .zip-current-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4em;
+            background: var(--input-bg, #f0f0f0);
+            border: 1px solid var(--border-color, #ccc);
+            border-radius: 99px;
+            padding: 0.15em 0.6em 0.15em 0.8em;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .zip-clear-x {
+            color: var(--body-fg, #999);
+            text-decoration: none;
+            font-size: 1.1em;
+            line-height: 1;
+        }
+
+        .zip-clear-x:hover { color: red; }
+
+        .zip-cards {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+
+        .zip-card {
+            border: 1px solid var(--border-color, #ddd);
+            border-radius: 8px;
+            padding: 1.2em;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .zip-or-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: var(--body-fg, #999);
+            font-size: 0.85em;
+            margin: 0.75em 0;
+        }
+
+        .zip-or-divider::before,
+        .zip-or-divider::after {
+            content: '';
+            flex: 1;
+            border-top: 1px solid var(--border-color, #ddd);
+        }
+
+        .zip-or-divider::before { margin-right: 0.75em; }
+        .zip-or-divider::after  { margin-left:  0.75em; }
+
+        .zip-card-head {
+            display: flex;
+            align-items: center;
+            gap: 0.5em;
+            margin-bottom: 0.5em;
+            font-size: 1.05em;
+        }
+
+        .zip-card-head i {
+            background: var(--input-bg, #e8edf7);
+            color: var(--link-color, #4a7aba);
+            padding: 0.35em 0.4em;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .zip-card-desc {
+            font-size: 0.9em;
+            color: var(--body-fg, #666);
+            flex: 1;
+            margin: 0 0 1em;
+        }
+
+        .zip-card-actions {
+            display: flex;
+            gap: 0.5em;
+            align-items: center;
+        }
+
+        #submit-button.zip-save-outer {
+            display: block;
+            margin: 0.75em 0;
+        }
+
+        .zip-build-btn {
+            background: transparent !important;
+            color: var(--link-color, #4a7aba) !important;
+            border: 2px solid var(--link-color, #4a7aba) !important;
+        }
+
+        .zip-build-btn:hover {
+            background: var(--link-color, #4a7aba) !important;
+            color: #fff !important;
         }
 
         #build-test-data-modal {
