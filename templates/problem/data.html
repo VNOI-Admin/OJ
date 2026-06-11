@@ -252,22 +252,20 @@
             }).appendTo($checker.parent());
 
             var $file_test = $('#id_problem-data-zipfile');
-            $("<br>").appendTo($file_test.parent());
-
 
             $("<input/>", {
                 type: "submit",
                 value: {{ _('Save')|htmltojs }},
                 class: "button zip-submit-full",
-                style: "display: inherit",
-                id: "submit-button",
+                id: "zip-save-btn",
             }).insertAfter($file_test.closest('table'));
 
-            $('<button>', {
-                type: 'button',
-                class: 'button',
-                style: 'margin-left: 0.5em;',
+            $('<br>').appendTo($file_test.parent());
+            $('<a>', {
+                href: '#',
                 id: 'btn-build-test-data',
+                style: 'margin-left: 1em;',
+                text: {{ _('or click here to build zip file')|htmltojs }},
             }).appendTo($file_test.parent());
 
             function swap_row($a, $b) {
@@ -607,10 +605,6 @@
                 };
                 reader.readAsArrayBuffer(fileInput);
             });
-            $('#btn-build-test-data').replaceWith(
-                $('<a>', {id: 'btn-build-test-data', href: '#', style: 'margin-left: 1em;'})
-                    .text({{ _('or click here to build zip file')|htmltojs }})
-            );
             (function () {
                 var selectedFiles = [];
                 var $modal = $('#build-test-data-modal');
