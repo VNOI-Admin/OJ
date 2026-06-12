@@ -61,46 +61,6 @@ class BaseContestFormat(metaclass=ABCMeta):
         return entry
 
     @abstractmethod
-    def get_first_solves_and_total_ac(self, problems, participations, frozen=False):
-        """
-        Returns two dictionaries mapping ContestProblem to the first ContestParticipation that solves it
-        and the total number of accepted submissions.
-
-        :param problems: A list of ContestProblem objects.
-        :param participations: A list of ContestParticipation objects.
-        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC/VNOJ format.
-        :return: A tuple of two dictionaries. First one maps ContestProblem's ID to ContestParticipation's ID,
-        or None if no solves yet. Second one maps ContestProblem's ID to total number of accepted submissions.
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def display_user_problem(self, participation, contest_problem, first_solves, frozen=False):
-        """
-        Returns the HTML fragment to show a user's performance on an individual problem. This is expected to use
-        information from the format_data field instead of computing it from scratch.
-
-        :param participation: The ContestParticipation object linking the user to the contest.
-        :param contest_problem: The ContestProblem object representing the problem in question.
-        :param first_solves: The first dictionary returned by get_first_solves_and_total_ac.
-        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC/VNOJ format.
-        :return: An HTML fragment, marked as safe for Jinja2.
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
-    def display_participation_result(self, participation, frozen=False):
-        """
-        Returns the HTML fragment to show a user's performance on the whole contest. This is expected to use
-        information from the format_data field instead of computing it from scratch.
-
-        :param participation: The ContestParticipation object.
-        :param frozen: Whether the ranking is frozen or not. Only useful for ICPC/VNOJ format.
-        :return: An HTML fragment, marked as safe for Jinja2.
-        """
-        raise NotImplementedError()
-
-    @abstractmethod
     def get_problem_breakdown(self, participation, contest_problems):
         """
         Returns a machine-readable breakdown for the user's performance on every problem.
@@ -130,10 +90,3 @@ class BaseContestFormat(metaclass=ABCMeta):
         """
         raise NotImplementedError()
 
-    @classmethod
-    def best_solution_state(cls, points, total):
-        if not points:
-            return 'failed-score'
-        if points == total:
-            return 'full-score'
-        return 'partial-score'

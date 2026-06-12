@@ -1,18 +1,11 @@
-from datetime import timedelta
-
 from django.core.exceptions import ValidationError
 from django.db import connection
 from django.db.models import Max
-from django.template.defaultfilters import floatformat, pluralize
-from django.urls import reverse
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 
 from judge.contest_format.default import DefaultContestFormat
 from judge.contest_format.registry import register_contest_format
 from judge.timezone import from_database_time
-from judge.utils.timedelta import nice_repr
 
 
 @register_contest_format('icpc')
@@ -144,33 +137,6 @@ class ICPCContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def get_first_solves_and_total_ac(self, problems, participations, frozen=False):
-        first_solves = {}
-        total_ac = {}
-
-        prefix = 'frozen_' if frozen else ''
-        for problem in problems:
-            problem_id = str(problem.id)
-            min_time = None
-            first_solves[problem_id] = None
-            total_ac[problem_id] = 0
-
-            for participation in participations:
-                format_data = (participation.format_data or {}).get(problem_id)
-                if format_data:
-                    points = format_data[prefix + 'points']
-                    time = format_data['time']
-
-                    if points == problem.points:
-                        total_ac[problem_id] += 1
-
-                        # Only acknowledge first solves for live participations
-                        if participation.virtual == 0 and (min_time is None or min_time > time):
-                            min_time = time
-                            first_solves[problem_id] = participation.id
-
-        return first_solves, total_ac
-
     def get_format_data_for_api(self, entry, problem_points, frozen=False):
         if not frozen or not entry or not entry.get('is_frozen'):
             return entry
@@ -180,67 +146,6 @@ class ICPCContestFormat(DefaultContestFormat):
             'time': entry.get('time', 0),
             'is_frozen': True,
         }
-
-    def display_user_problem(self, participation, contest_problem, first_solves, frozen=False):
-        format_data = (participation.format_data or {}).get(str(contest_problem.id))
-        if format_data:
-            # This prefix is used to help get the correct data from the format_data dictionary
-            prefix = 'frozen_' if frozen else ''
-            submissions_count = format_data[prefix + 'tries']
-
-            if submissions_count == 0:
-                return mark_safe('<td></td>')
-
-            tries = format_html(
-                '{tries} {msg}',
-                tries=submissions_count,
-                msg=pluralize(submissions_count, 'try,tries'),
-            )
-
-            # The cell will have `pending` css class if there is a new score-changing submission after the frozen time
-            state = (('pending ' if frozen and format_data['is_frozen'] else '') +
-                     ('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
-                     ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
-                     self.best_solution_state(format_data[prefix + 'points'], contest_problem.points))
-            url = reverse('contest_user_submissions',
-                          args=[self.contest.key, participation.user.user.username, contest_problem.problem.code])
-
-            if not format_data[prefix + 'points']:
-                return format_html(
-                    '<td class="{state}"><a href="{url}">{tries}</a></td>',
-                    state=state,
-                    url=url,
-                    tries=tries,
-                )
-
-            return format_html(
-                ('<td class="{state}">'
-                 '<a href="{url}"><div class="solving-time-minute">{minute}</div>'
-                 '<div class="solving-time">{time}</div>{tries}</a></td>'),
-                state=state,
-                url=url,
-                tries=tries,
-                minute=int(format_data['time'] // 60),
-                time=nice_repr(timedelta(seconds=format_data['time']), 'noday'),
-            )
-        else:
-            return mark_safe('<td></td>')
-
-    def display_participation_result(self, participation, frozen=False):
-        if frozen:
-            points = participation.frozen_score
-            cumtime = participation.frozen_cumtime
-        else:
-            points = participation.score
-            cumtime = participation.cumtime
-        return format_html(
-            ('<td class="user-points"><a href="{url}">{points}</a></td>'
-             '<td class="user-penalty">{cumtime}</td>'),
-            url=reverse('contest_all_user_submissions',
-                        args=[self.contest.key, participation.user.user.username]),
-            points=floatformat(points, -self.contest.points_precision),
-            cumtime=floatformat(cumtime, 0),
-        )
 
     def get_label_for_problem(self, index):
         index += 1

@@ -1,18 +1,12 @@
 from collections import namedtuple
-from datetime import timedelta
 
 from django.core.exceptions import ValidationError
 from django.db import connection
-from django.template.defaultfilters import floatformat
-from django.urls import reverse
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 
 from judge.contest_format.default import DefaultContestFormat
 from judge.contest_format.registry import register_contest_format
 from judge.timezone import from_database_time, to_database_time
-from judge.utils.timedelta import nice_repr
 
 ParticipationInfo = namedtuple('ParticipationInfo', 'cumtime score tiebreaker format_data')
 
@@ -163,34 +157,6 @@ class VNOJContestFormat(DefaultContestFormat):
         participation.format_data = format_data
         participation.save()
 
-    def get_first_solves_and_total_ac(self, problems, participations, frozen=False):
-        first_solves = {}
-        total_ac = {}
-
-        for problem in problems:
-            problem_id = str(problem.id)
-            min_time = None
-            first_solves[problem_id] = None
-            total_ac[problem_id] = 0
-
-            for participation in participations:
-                format_data = (participation.format_data or {}).get(problem_id)
-                if format_data:
-                    has_pending = bool(format_data.get('pending', 0))
-                    prefix = 'frozen_' if frozen and has_pending else ''
-                    points = format_data[prefix + 'points']
-                    time = format_data[prefix + 'time']
-
-                    if points == problem.points:
-                        total_ac[problem_id] += 1
-
-                        # Only acknowledge first solves for live participations
-                        if participation.virtual == 0 and (min_time is None or min_time > time):
-                            min_time = time
-                            first_solves[problem_id] = participation.id
-
-        return first_solves, total_ac
-
     def get_format_data_for_api(self, entry, problem_points, frozen=False):
         if not frozen or not entry:
             return entry
@@ -207,102 +173,6 @@ class VNOJContestFormat(DefaultContestFormat):
             'penalty': entry.get('frozen_penalty', 0),
             'pending': pending,
         }
-
-    def display_user_problem(self, participation, contest_problem, first_solves, frozen=False):
-        format_data = (participation.format_data or {}).get(str(contest_problem.id))
-
-        if format_data:
-            first_solved = first_solves.get(str(contest_problem.id), None) == participation.id
-            url = reverse('contest_user_submissions',
-                          args=[self.contest.key, participation.user.user.username, contest_problem.problem.code])
-
-            if not frozen:
-                # Fast path for non-frozen contests
-                penalty = format_html(
-                    '<small style="color:red"> ({penalty})</small>',
-                    penalty=floatformat(format_data['penalty']),
-                ) if format_data['penalty'] else ''
-
-                state = (('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
-                         ('first-solve ' if first_solved else '') +
-                         self.best_solution_state(format_data['points'], contest_problem.points))
-
-                points = floatformat(format_data['points'], -self.contest.points_precision)
-                time = nice_repr(timedelta(seconds=format_data['time']), 'noday')
-
-                return format_html(
-                    '<td class="{state}"><a href="{url}"><div>{points}{penalty}</div>'
-                    '<div class="solving-time">{time}</div></a></td>',
-                    state=state,
-                    url=url,
-                    points=points,
-                    penalty=penalty,
-                    time=time,
-                )
-
-            # This prefix is used to help get the correct data from the format_data dictionary
-            has_pending = bool(format_data.get('pending', 0))
-            prefix = 'frozen_' if has_pending else ''
-
-            # AC before frozen_time
-            if has_pending and format_data[prefix + 'points'] == contest_problem.points:
-                has_pending = False
-                prefix = ''
-
-            penalty = format_html(
-                '<small style="color:red"> ({penalty})</small>',
-                penalty=floatformat(format_data[prefix + 'penalty']),
-            ) if format_data[prefix + 'penalty'] else ''
-
-            state = (('pending ' if has_pending else '') +
-                     ('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
-                     ('first-solve ' if first_solved else '') +
-                     self.best_solution_state(format_data[prefix + 'points'], contest_problem.points))
-
-            points = floatformat(format_data[prefix + 'points'], -self.contest.points_precision)
-            time = nice_repr(timedelta(seconds=format_data[prefix + 'time']), 'noday')
-            pending = format_html(' <small style="color:black;">[{pending}]</small>',
-                                  pending=floatformat(format_data['pending'])) if has_pending else ''
-
-            if has_pending:
-                time = '?'
-                # hide penalty if there are pending submissions
-                penalty = ''
-
-                # if user have no submission before the frozen time, we display points as '?'
-                if format_data.get('frozen_points', 0) == 0 and format_data.get('frozen_penalty', 0) == 0:
-                    points = '?'
-                else:
-                    # if user have submissions before the frozen time, we display points as points + '?'
-                    points = points + '?'
-
-            return format_html(
-                '<td class="{state}"><a href="{url}"><div>{points}{penalty}{pending}</div>'
-                '<div class="solving-time">{time}</div></a></td>',
-                state=state,
-                url=url,
-                points=points,
-                penalty=penalty,
-                time=time,
-                pending=pending,
-            )
-        else:
-            return mark_safe('<td></td>')
-
-    def display_participation_result(self, participation, frozen=False):
-        if frozen:
-            points = participation.frozen_score
-            cumtime = participation.frozen_cumtime
-        else:
-            points = participation.score
-            cumtime = participation.cumtime
-        return format_html(
-            '<td class="user-points"><a href="{url}">{points}<div class="solving-time">{cumtime}</div></a></td>',
-            url=reverse('contest_all_user_submissions',
-                        args=[self.contest.key, participation.user.user.username]),
-            points=floatformat(points, -self.contest.points_precision),
-            cumtime=nice_repr(timedelta(seconds=cumtime), 'noday'),
-        )
 
     def get_short_form_display(self):
         yield _('The maximum score submission for each problem will be used.')
