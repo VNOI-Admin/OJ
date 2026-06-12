@@ -379,17 +379,36 @@
 
             window.restoreChecklistOptions();
 
+            function submitDisqualifyForm($a) {
+                var form = document.createElement('form');
+                form.method = 'post';
+                form.action = $a.data('action-url');
+                form.style.display = 'none';
+                var csrf = document.createElement('input');
+                csrf.type = 'hidden';
+                csrf.name = 'csrfmiddlewaretoken';
+                csrf.value = (document.cookie.match(/csrftoken=([^;]+)/) || [])[1] || '';
+                form.appendChild(csrf);
+                var pid = document.createElement('input');
+                pid.type = 'hidden';
+                pid.name = 'participation';
+                pid.value = $a.data('participation-id');
+                form.appendChild(pid);
+                document.body.appendChild(form);
+                form.submit();
+            }
+
             window.enableAdminOperations = function () {
                 $('a.disqualify-participation').click(function (e) {
                     e.preventDefault();
                     if (e.ctrlKey || e.metaKey || confirm({{ _('Are you sure you want to disqualify this participation?')|htmltojs }}))
-                        $(this).closest('form').submit();
-                })
+                        submitDisqualifyForm($(this));
+                });
                 $('a.un-disqualify-participation').click(function (e) {
                     e.preventDefault();
                     if (e.ctrlKey || e.metaKey || confirm({{ _('Are you sure you want to un-disqualify this participation?')|htmltojs }}))
-                        $(this).closest('form').submit();
-                })
+                        submitDisqualifyForm($(this));
+                });
             };
 
             window.enableAdminOperations();

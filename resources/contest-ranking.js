@@ -418,15 +418,14 @@
         var disqLabel = p.is_disqualified ? 'Un-Disqualify' : 'Disqualify';
         var disqClass = p.is_disqualified ? 'un-disqualify-participation' : 'disqualify-participation';
         var disqIcon  = p.is_disqualified ? 'fa-undo' : 'fa-trash';
-        var csrf = getCsrfToken();
 
+        // No <form> in the DOM — avoids autofill extensions scanning hidden inputs.
+        // The form is created and submitted on-demand in enableAdminOperations.
         var html = '<span class="contest-participation-operation">' +
-            '<form action="' + escapeHtml(contest.disqualify_url) + '" method="post">' +
-            '<input type="hidden" name="csrfmiddlewaretoken" value="' + escapeHtml(csrf) + '">' +
-            '<input type="hidden" name="participation" value="' + p.id + '">' +
-            '<a href="#" title="' + escapeHtml(disqLabel) + '" class="' + disqClass + '">' +
-            '<i class="fa ' + disqIcon + ' fa-fw"></i></a>' +
-            '</form>';
+            '<a href="#" title="' + escapeHtml(disqLabel) + '" class="' + disqClass + '"' +
+            ' data-participation-id="' + p.id + '"' +
+            ' data-action-url="' + escapeHtml(contest.disqualify_url) + '">' +
+            '<i class="fa ' + disqIcon + ' fa-fw"></i></a>';
 
         if (contest.can_change_participation) {
             html += '<a href="' + escapeHtml(p.admin_url) + '" title="Admin" class="edit-participation">' +
