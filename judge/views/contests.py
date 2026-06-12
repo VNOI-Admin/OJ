@@ -13,7 +13,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMix
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
 from django.db import IntegrityError
-from django.db.models import BooleanField, Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
+from django.db.models import BooleanField, Case, Count, F, FloatField, IntegerField, Max, Min, OuterRef, Q, Subquery, \
+    Sum, Value, When
 from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
@@ -821,39 +822,69 @@ def base_contest_frozen_ranking_queryset(contest):
 
 
 def make_contest_ranking_json(contest, problems, queryset, frozen=False):
-    queryset = queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')
+    # Pre-compute URL templates once to avoid per-row reverse() overhead.
+    _user_url_prefix = reverse('user_page', args=['__U__']).split('__U__')[0]
+    _admin_url_base = reverse('admin:judge_contestparticipation_change', args=[0])
+    _admin_url_prefix = _admin_url_base[:_admin_url_base.index('/0/') + 1]
+    _org_url_prefix = reverse('organization_home', args=['__S__']).split('__S__')[0]
+
+    # Subqueries for the user's first organisation (replicates Profile.organization).
+    _org_qs = Organization.objects.filter(
+        member=OuterRef('user'), is_unlisted=False,
+    ).order_by('name')
+
+    queryset = queryset.annotate(
+        _org_short_name=Subquery(_org_qs.values('short_name')[:1]),
+        _org_slug=Subquery(_org_qs.values('slug')[:1]),
+    ).values(
+        'id', 'score', 'frozen_score', 'cumtime', 'frozen_cumtime',
+        'tiebreaker', 'frozen_tiebreaker', 'is_disqualified', 'virtual',
+        'format_data', 'real_start',
+        'user_id', 'user__id', 'user__display_rank', 'user__rating',
+        'user__username_display_override',
+        'user__user__username', 'user__user__first_name',
+        'rating__rating',
+        '_org_short_name', '_org_slug',
+    )
+
     participations_data = []
-    for p in queryset:
-        profile = p.user
+    for row in queryset:
+        virtual   = row['virtual']
+
+        username     = row['user__user__username']
+        display_name = row['user__username_display_override'] or username
+        css_class    = Profile.get_user_css_class(row['user__display_rank'], row['user__rating'])
+
         format_data = {}
         for prob in problems:
             pid = str(prob.id)
-            raw = (p.format_data or {}).get(pid)
+            raw = (row['format_data'] or {}).get(pid)
             if raw is not None:
                 format_data[pid] = contest.format.get_format_data_for_api(raw, prob.points, frozen)
-        org = profile.organization
+
+        org_short_name = row['_org_short_name']
+        org_slug       = row['_org_slug']
+
         participations_data.append({
-            'id': p.id,
-            'score': float(p.frozen_score if frozen else p.score),
-            'cumtime': float(p.frozen_cumtime if frozen else p.cumtime),
-            'tiebreaker': float(p.frozen_tiebreaker if frozen else p.tiebreaker),
-            'is_disqualified': p.is_disqualified,
-            'virtual': p.virtual,
-            'start': p.start.isoformat(),
-            'participation_ended': p.ended,
-            'rating': p.rating.rating if hasattr(p, 'rating') else None,
-            'admin_url': reverse('admin:judge_contestparticipation_change', args=[p.id]),
+            'id': row['id'],
+            'score': float(row['frozen_score'] if frozen else row['score']),
+            'cumtime': float(row['frozen_cumtime'] if frozen else row['cumtime']),
+            'tiebreaker': float(row['frozen_tiebreaker'] if frozen else row['tiebreaker']),
+            'is_disqualified': row['is_disqualified'],
+            'virtual': virtual,
+            'rating': row['rating__rating'],
+            'admin_url': f'{_admin_url_prefix}{row["id"]}/change/',
             'user': {
-                'id': profile.id,
-                'username': profile.username,
-                'display_name': profile.display_name,
-                'name': profile.user.first_name,
-                'css_class': profile.css_class,
-                'url': reverse('user_page', args=[profile.user.username]),
+                'id': row['user__id'],
+                'username': username,
+                'display_name': display_name,
+                'name': row['user__user__first_name'],
+                'css_class': css_class,
+                'url': _user_url_prefix + username,
                 'organization': {
-                    'short_name': org.short_name,
-                    'url': org.get_absolute_url(),
-                } if org else None,
+                    'short_name': org_short_name,
+                    'url': _org_url_prefix + org_slug,
+                } if org_short_name else None,
             },
             'format_data': format_data,
         })

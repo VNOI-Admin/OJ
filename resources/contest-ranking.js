@@ -485,14 +485,6 @@
         // Right float (start time, admin ops, org)
         html += '<div style="float:right">';
 
-        if (!contest.ended) {
-            if (!p.participation_ended) {
-                html += '<div class="start-time active">Started ' + escapeHtml(moment(p.start).fromNow()) + '</div>';
-            } else {
-                html += '<div class="start-time">Participation ended.</div>';
-            }
-        }
-
         html += buildAdminOps(p, contest);
 
         html += '<div class="personal-info" style="text-align: right;">';
