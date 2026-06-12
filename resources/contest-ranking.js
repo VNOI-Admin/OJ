@@ -390,7 +390,7 @@
     function buildHeader(contest, problems, renderer) {
         var isICPC = contest.format === 'icpc';
         var html = '<thead><tr>';
-        html += '<th class="header rank">Rank</th>';
+        html += '<th class="header rank">' + escapeHtml(contest.rank_header || 'Rank') + '</th>';
         html += '<th class="header username">Username</th>';
         html += '<th class="header points">Points</th>';
         html += renderer.extraHeaderCols({ contest: contest, penaltyLabel: 'Penalty' });
@@ -446,7 +446,18 @@
         var html = '<tr id="user-' + escapeHtml(u.username) + '"' + rowClass + '>';
 
         // Rank cell
-        html += '<td>' + escapeHtml(String(rank)) + '</td>';
+        var rankDisplay;
+        if (contest.mode === 'participation') {
+            if (p.virtual === 0) {
+                var liveUrl = escapeHtml(contest.ranking_url + '#!' + u.username);
+                rankDisplay = '<a href="' + liveUrl + '">Live</a>';
+            } else {
+                rankDisplay = escapeHtml(String(p.virtual));
+            }
+        } else {
+            rankDisplay = escapeHtml(String(rank));
+        }
+        html += '<td>' + rankDisplay + '</td>';
 
         // ICPC: extra rank/penalty col is in extraHeaderCols – no extra td per row
         // (ICPC has the penalty in the result cell instead)

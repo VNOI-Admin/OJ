@@ -43,15 +43,13 @@
 {% endblock %}
 
 {% block users_js_media %}
-    {% if ranking_json is defined %}
-        {% compress js %}
-            <script type="text/javascript" src="{{ static('contest-ranking.js') }}"></script>
-        {% endcompress %}
-        <script type="text/javascript">
-            window.RANKING_DATA = {{ ranking_json|safe }};
-        </script>
-    {% endif %}
-    {% if not contest.ended %}
+    {% compress js %}
+        <script type="text/javascript" src="{{ static('contest-ranking.js') }}"></script>
+    {% endcompress %}
+    <script type="text/javascript">
+        window.RANKING_DATA = {{ ranking_json|safe }};
+    </script>
+    {% if not contest.ended and tab != 'participation' %}
         <script type="text/javascript">
             $(function () {
                 window.install_tooltips = function () {
@@ -75,7 +73,6 @@
                         return ranking_outdated = true;
                     }
                     var queryParam = window.location.search;
-                    {% if ranking_json is defined %}
                     $.ajax({
                         url: queryParam ? queryParam + '&data' : '?data',
                         dataType: 'json',
@@ -95,24 +92,6 @@
                         ranking_outdated = false;
                         setTimeout(update_ranking, 10000);
                     });
-                    {% else %}
-                    $.ajax({
-                        url: queryParam ? queryParam + '&raw' : '?raw',
-                    }).done(function (data) {
-                        $('#ranking-table').html(data);
-                        if (localStorage.getItem('show-personal-info') == 'true') {
-                            $('.personal-info').show();
-                            $('#show-personal-info-checkbox').prop('checked', true);
-                        }
-                        {% if tab == 'ranking' %}
-                            window.applyRankingFilter();
-                        {% endif %}
-                        window.enableAdminOperations();
-                    }).always(function () {
-                        ranking_outdated = false;
-                        setTimeout(update_ranking, 10000);
-                    });
-                    {% endif %}
                 }
                 $(window).on('dmoj:window-visible', function () {
                     if (ranking_outdated) {
@@ -539,11 +518,7 @@
 {% endblock %}
 
 {% block users_table %}
-    {% if ranking_json is defined %}
-        <div id="ranking-container"></div>
-    {% else %}
-        {{ rendered_ranking_table }}
-    {% endif %}
+    <div id="ranking-container"></div>
 {% endblock %}
 
 {% block body %}

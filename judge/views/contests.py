@@ -54,8 +54,8 @@ from judge.utils.views import SingleObjectFormView, TitleMixin, \
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
-           'ContestParticipationList', 'ContestParticipationDisqualify', 'get_contest_ranking_list',
-           'base_contest_ranking_list', 'ContestProblemMakePublic']
+           'ContestParticipationList', 'ContestParticipationDisqualify',
+           'ContestProblemMakePublic']
 
 
 def _find_contest(request, key, private_check=True):
@@ -804,51 +804,6 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
         return super().dispatch(request, *args, **kwargs)
 
 
-ContestRankingProfile = namedtuple(
-    'ContestRankingProfile',
-    'id user css_class username points cumtime tiebreaker organization participation '
-    'participation_rating problem_cells result_cell virtual display_name',
-)
-
-BestSolutionData = namedtuple('BestSolutionData', 'code points time state is_pretested')
-
-
-def make_contest_ranking_profile(contest, participation, contest_problems, first_solves, frozen=False):
-    def display_user_problem(contest_problem):
-        # When the contest format is changed, `format_data` might be invalid.
-        # This will cause `display_user_problem` to error, so we display '???' instead.
-        try:
-            return contest.format.display_user_problem(participation, contest_problem, first_solves, frozen)
-        except (KeyError, TypeError, ValueError):
-            return mark_safe('<td>???</td>')
-
-    user = participation.user
-    return ContestRankingProfile(
-        id=user.id,
-        user=user.user,
-        css_class=user.css_class,
-        username=user.username,
-        points=participation.score if not frozen else participation.frozen_score,
-        cumtime=participation.cumtime if not frozen else participation.frozen_cumtime,
-        tiebreaker=participation.tiebreaker if not frozen else participation.frozen_tiebreaker,
-        organization=user.organization,
-        participation_rating=participation.rating.rating if hasattr(participation, 'rating') else None,
-        problem_cells=[display_user_problem(contest_problem) for contest_problem in contest_problems],
-        result_cell=contest.format.display_participation_result(participation, frozen),
-        participation=participation,
-        virtual=participation.virtual,
-        display_name=user.display_name,
-    )
-
-
-def base_contest_ranking_list(contest, problems, queryset, frozen=False):
-    queryset = queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')
-    first_solves, total_ac = contest.format.get_first_solves_and_total_ac(problems, queryset, frozen)
-    users = [make_contest_ranking_profile(contest, participation, problems, first_solves, frozen) for participation
-             in queryset]
-    return users, total_ac
-
-
 def base_contest_ranking_queryset(contest):
     return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
         .prefetch_related(Prefetch('user__organizations',
@@ -863,10 +818,6 @@ def base_contest_frozen_ranking_queryset(contest):
                                    queryset=Organization.objects.filter(is_unlisted=False))) \
         .annotate(submission_count=Count('submission')) \
         .order_by('is_disqualified', '-frozen_score', 'frozen_cumtime', 'frozen_tiebreaker', '-submission_count')
-
-
-def contest_ranking_list(contest, problems, frozen=False):
-    return base_contest_ranking_list(contest, problems, base_contest_ranking_queryset(contest), frozen=frozen)
 
 
 def make_contest_ranking_json(contest, problems, queryset, frozen=False):
@@ -923,17 +874,8 @@ def _add_ranks_to_participation_json(participations):
         last_key = key
 
 
-def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list, ranker=ranker):
-    problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
-    users, total_ac = ranking_list(contest, problems)
-    users = ranker(users, key=attrgetter('points', 'cumtime', 'tiebreaker'))
-
-    return users, problems, total_ac
-
-
 class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/ranking.html'
-    ranking_table_template = get_template('contest/ranking-table.html')
     tab = None
 
     def get_title(self):
@@ -941,9 +883,6 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
 
     def get_content_title(self):
         return self.object.name
-
-    def get_ranking_list(self):
-        raise NotImplementedError()
 
     @property
     def is_frozen(self):
@@ -953,9 +892,22 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         if not self.object.can_see_own_scoreboard(self.request.user):
             raise Http404()
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        self.check_can_see_own_scoreboard()
+        context['tab'] = self.tab
+        return context
+
+
+class ContestHtmlRankingMixin:
+    """Mixin for ranking views that render the scoreboard table server-side."""
+    ranking_table_template = get_template('contest/ranking-table.html')
+
+    def get_ranking_list(self):
+        raise NotImplementedError()
+
     def get_rendered_ranking_table(self):
         users, problems, total_ac = self.get_ranking_list()
-
         return self.ranking_table_template.render(request=self.request, context={
             'table_id': 'ranking-table',
             'users': users,
@@ -971,21 +923,15 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-
-        self.check_can_see_own_scoreboard()
-
         context['rendered_ranking_table'] = self.get_rendered_ranking_table()
-        context['tab'] = self.tab
+        context['has_rating'] = self.object.ratings.exists()
         return context
 
     def get(self, request, *args, **kwargs):
         if 'raw' in request.GET:
             self.object = self.get_object()
-
             self.check_can_see_own_scoreboard()
-
             return HttpResponse(self.get_rendered_ranking_table(), content_type='text/plain')
-
         return super().get(request, *args, **kwargs)
 
 
@@ -1001,11 +947,6 @@ class ContestRanking(ContestRankingBase):
         return self.object.is_frozen and not self.can_edit
 
     @property
-    def cache_key(self):
-        return f'contest_ranking_cache_{self.object.key}_{self.show_virtual}_{self.is_frozen}_' \
-               f'{self.request.LANGUAGE_CODE}'
-
-    @property
     def bypass_cache_ranking(self):
         return self.object.scoreboard_cache_timeout == 0 or self.can_edit or \
             (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user))
@@ -1019,44 +960,9 @@ class ContestRanking(ContestRankingBase):
             queryset = queryset.filter(virtual=ContestParticipation.LIVE)
         return queryset
 
-    def get_full_ranking_list(self):
-        if 'show_virtual' in self.request.GET:
-            self.show_virtual = self.request.session['show_virtual'] \
-                              = self.request.GET.get('show_virtual').lower() == 'true'
-        else:
-            self.show_virtual = self.request.session.get('show_virtual', False)
-
-        queryset = self.get_ranking_queryset()
-        return get_contest_ranking_list(
-            self.request, self.object,
-            ranking_list=partial(base_contest_ranking_list, queryset=queryset, frozen=self.is_frozen),
-        )
-
-    def get_ranking_list(self):
-        if not self.object.can_see_full_scoreboard(self.request.user):
-            queryset = self.object.users.filter(user=self.request.profile, virtual=ContestParticipation.LIVE)
-            return get_contest_ranking_list(
-                self.request, self.object,
-                ranking_list=partial(base_contest_ranking_list, queryset=queryset),
-                ranker=lambda users, key: ((_('???'), user) for user in users),
-            )
-
-        return self.get_full_ranking_list()
-
     @property
     def _show_full_ranking(self):
         return self.object.can_see_full_scoreboard(self.request.user)
-
-    def get_rendered_ranking_table(self):
-        if self.bypass_cache_ranking:
-            return super().get_rendered_ranking_table()
-
-        rendered_ranking_table = cache.get(self.cache_key, None)
-        if rendered_ranking_table is None:
-            rendered_ranking_table = super().get_rendered_ranking_table()
-            cache.set(self.cache_key, rendered_ranking_table, self.object.scoreboard_cache_timeout)
-
-        return rendered_ranking_table
 
     @property
     def json_cache_key(self):
@@ -1138,18 +1044,12 @@ class ContestRanking(ContestRankingBase):
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        # Initialize show_virtual from session/GET params.
         if 'show_virtual' in self.request.GET:
             self.show_virtual = self.request.session['show_virtual'] = \
                 self.request.GET.get('show_virtual').lower() == 'true'
         else:
             self.show_virtual = self.request.session.get('show_virtual', False)
-
-        # Skip ContestRankingBase.get_context_data to avoid the now-redundant
-        # server-side rendered_ranking_table (replaced by JSON + JS rendering).
-        context = super(ContestRankingBase, self).get_context_data(**kwargs)
-        self.check_can_see_own_scoreboard()
-        context['tab'] = self.tab
+        context = super().get_context_data(**kwargs)
         context['has_rating'] = self.object.ratings.exists()
         context['show_virtual'] = self.show_virtual
         context['is_frozen'] = self.is_frozen
@@ -1167,10 +1067,6 @@ class ContestPublicRanking(ContestRanking):
     def _show_full_ranking(self):
         return True
 
-    def get_ranking_list(self):
-        # ignore the `can_see_full_scoreboard` check
-        return self.get_full_ranking_list()
-
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
         ranking_access_code = self.object.ranking_access_code
@@ -1181,7 +1077,7 @@ class ContestPublicRanking(ContestRanking):
         return super().get(request, *args, **kwargs)
 
 
-class ContestOfficialRanking(ContestRankingBase):
+class ContestOfficialRanking(ContestHtmlRankingMixin, ContestRankingBase):
     template_name = 'contest/official-ranking.html'
     ranking_table_template = get_template('contest/official-ranking-table.html')
     tab = 'official_ranking'
@@ -1234,23 +1130,61 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
             'user': self.profile.username, 'contest': self.object.name,
         }
 
-    def get_ranking_list(self):
-        if not self.object.can_see_full_scoreboard(self.request.user) and self.profile != self.request.profile:
+    def _build_participation_json_data(self):
+        contest = self.object
+        if not contest.can_see_full_scoreboard(self.request.user) and self.profile != self.request.profile:
             raise Http404()
 
-        queryset = self.object.users.filter(user=self.profile, virtual__gte=0).order_by('-virtual')
-        live_link = format_html('<a href="{2}#!{1}">{0}</a>', _('Live'), self.profile.username,
-                                reverse('contest_ranking', args=[self.object.key]))
+        problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
+        queryset = contest.users.filter(user=self.profile, virtual__gte=0).order_by('-virtual')
+        participations = make_contest_ranking_json(contest, problems, queryset)
+        for p in participations:
+            p['rank'] = p['virtual']  # 0 = live, N = Nth virtual
 
-        return get_contest_ranking_list(
-            self.request, self.object,
-            ranking_list=partial(base_contest_ranking_list, queryset=queryset),
-            ranker=lambda users, key: ((user.participation.virtual or live_link, user) for user in users))
+        problems_data = [
+            {
+                'id': prob.id,
+                'code': prob.problem.code,
+                'label': contest.get_label_for_problem(i),
+                'name': prob.problem.name,
+                'points': float(prob.points),
+                'is_pretested': prob.is_pretested,
+                'url': reverse('problem_detail', args=[prob.problem.code]),
+            }
+            for i, prob in enumerate(problems)
+        ]
+
+        all_sub_url = reverse('contest_all_user_submissions', args=[contest.key, 'UNAME'])
+        prob_sub_url = reverse('contest_user_submissions', args=[contest.key, 'UNAME', 'PROB'])
+
+        return {
+            'contest': {
+                'key': contest.key,
+                'format': contest.format_name,
+                'format_config': contest.format.config,
+                'is_frozen': False,
+                'can_edit': self.can_edit,
+                'can_change_participation': self.request.user.has_perm('judge.change_contestparticipation'),
+                'has_rating': False,
+                'points_precision': contest.points_precision,
+                'run_pretests_only': contest.run_pretests_only,
+                'ended': contest.ended,
+                'disqualify_url': reverse('contest_participation_disqualify', args=[contest.key]),
+                'url_templates': {
+                    'all_submissions': all_sub_url.replace('UNAME', '__USERNAME__'),
+                    'problem_submissions': prob_sub_url.replace('UNAME', '__USERNAME__').replace('PROB', '__PROBLEM__'),
+                },
+                'mode': 'participation',
+                'rank_header': str(_('Participation')),
+                'ranking_url': reverse('contest_ranking', args=[contest.key]),
+            },
+            'problems': problems_data,
+            'participations': participations,
+        }
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['has_rating'] = False
-        context['rank_header'] = _('Participation')
+        context['ranking_json'] = json.dumps(self._build_participation_json_data()).translate(_json_script_escapes)
         return context
 
     def get(self, request, *args, **kwargs):
