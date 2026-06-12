@@ -16,14 +16,14 @@ from django.db import IntegrityError
 from django.db.models import BooleanField, Case, Count, F, FloatField, IntegerField, Max, Min, Q, Sum, Value, When
 from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
-from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
+from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.template.defaultfilters import date as date_filter, floatformat
 from django.template.loader import get_template
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
-from django.utils.html import escape, format_html
+from django.utils.html import _json_script_escapes, escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.timezone import make_aware
 from django.utils.translation import gettext as _, gettext_lazy
@@ -869,6 +869,60 @@ def contest_ranking_list(contest, problems, frozen=False):
     return base_contest_ranking_list(contest, problems, base_contest_ranking_queryset(contest), frozen=frozen)
 
 
+def make_contest_ranking_json(contest, problems, queryset, frozen=False):
+    queryset = queryset.select_related('user__user', 'rating').defer('user__about', 'user__organizations__about')
+    participations_data = []
+    for p in queryset:
+        profile = p.user
+        format_data = {}
+        for prob in problems:
+            pid = str(prob.id)
+            raw = (p.format_data or {}).get(pid)
+            if raw is not None:
+                format_data[pid] = contest.format.get_format_data_for_api(raw, prob.points, frozen)
+        org = profile.organization
+        participations_data.append({
+            'id': p.id,
+            'score': float(p.frozen_score if frozen else p.score),
+            'cumtime': float(p.frozen_cumtime if frozen else p.cumtime),
+            'tiebreaker': float(p.frozen_tiebreaker if frozen else p.tiebreaker),
+            'is_disqualified': p.is_disqualified,
+            'virtual': p.virtual,
+            'start': p.start.isoformat(),
+            'participation_ended': p.ended,
+            'rating': p.rating.rating if hasattr(p, 'rating') else None,
+            'admin_url': reverse('admin:judge_contestparticipation_change', args=[p.id]),
+            'user': {
+                'id': profile.id,
+                'username': profile.username,
+                'display_name': profile.display_name,
+                'name': profile.user.first_name,
+                'css_class': profile.css_class,
+                'url': reverse('user_page', args=[profile.user.username]),
+                'organization': {
+                    'short_name': org.short_name,
+                    'url': org.get_absolute_url(),
+                } if org else None,
+            },
+            'format_data': format_data,
+        })
+    return participations_data
+
+
+def _add_ranks_to_participation_json(participations):
+    rank = 0
+    delta = 1
+    last_key = None
+    for p in participations:
+        key = (p['score'], p['cumtime'], p['tiebreaker'])
+        if key != last_key:
+            rank += delta
+            delta = 0
+        delta += 1
+        p['rank'] = rank
+        last_key = key
+
+
 def get_contest_ranking_list(request, contest, participation=None, ranking_list=contest_ranking_list, ranker=ranker):
     problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
     users, total_ac = ranking_list(contest, problems)
@@ -989,6 +1043,10 @@ class ContestRanking(ContestRankingBase):
 
         return self.get_full_ranking_list()
 
+    @property
+    def _show_full_ranking(self):
+        return self.object.can_see_full_scoreboard(self.request.user)
+
     def get_rendered_ranking_table(self):
         if self.bypass_cache_ranking:
             return super().get_rendered_ranking_table()
@@ -1000,12 +1058,103 @@ class ContestRanking(ContestRankingBase):
 
         return rendered_ranking_table
 
+    @property
+    def json_cache_key(self):
+        return f'contest_ranking_json_{self.object.key}_{self.show_virtual}_{self.is_frozen}_' \
+               f'{self.request.LANGUAGE_CODE}'
+
+    def _build_ranking_json_data(self):
+        contest = self.object
+        problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
+
+        if not self._show_full_ranking:
+            queryset = contest.users.filter(user=self.request.profile, virtual=ContestParticipation.LIVE)
+            participations = make_contest_ranking_json(contest, problems, queryset)
+            for p in participations:
+                p['rank'] = '???'
+        else:
+            queryset = self.get_ranking_queryset()
+            participations = make_contest_ranking_json(contest, problems, queryset, frozen=self.is_frozen)
+            _add_ranks_to_participation_json(participations)
+
+        problems_data = [
+            {
+                'id': prob.id,
+                'code': prob.problem.code,
+                'label': contest.get_label_for_problem(i),
+                'name': prob.problem.name,
+                'points': float(prob.points),
+                'is_pretested': prob.is_pretested,
+                'url': reverse('problem_detail', args=[prob.problem.code]),
+            }
+            for i, prob in enumerate(problems)
+        ]
+
+        all_sub_url = reverse('contest_all_user_submissions', args=[contest.key, 'UNAME'])
+        prob_sub_url = reverse('contest_user_submissions', args=[contest.key, 'UNAME', 'PROB'])
+        has_rating = contest.ratings.exists()
+
+        return {
+            'contest': {
+                'key': contest.key,
+                'format': contest.format_name,
+                'format_config': contest.format.config,
+                'is_frozen': self.is_frozen,
+                'can_edit': self.can_edit,
+                'can_change_participation': self.request.user.has_perm('judge.change_contestparticipation'),
+                'has_rating': has_rating,
+                'points_precision': contest.points_precision,
+                'run_pretests_only': contest.run_pretests_only,
+                'ended': contest.ended,
+                'disqualify_url': reverse('contest_participation_disqualify', args=[contest.key]),
+                'url_templates': {
+                    'all_submissions': all_sub_url.replace('UNAME', '__USERNAME__'),
+                    'problem_submissions': prob_sub_url.replace('UNAME', '__USERNAME__').replace('PROB', '__PROBLEM__'),
+                },
+            },
+            'problems': problems_data,
+            'participations': participations,
+        }
+
+    def get_cached_json_ranking_data(self):
+        if self.bypass_cache_ranking:
+            return self._build_ranking_json_data()
+        cached = cache.get(self.json_cache_key)
+        if cached is None:
+            cached = self._build_ranking_json_data()
+            cache.set(self.json_cache_key, cached, self.object.scoreboard_cache_timeout)
+        return cached
+
+    def get(self, request, *args, **kwargs):
+        if 'data' in request.GET:
+            self.object = self.get_object()
+            if 'show_virtual' in request.GET:
+                self.show_virtual = request.session['show_virtual'] = \
+                    request.GET.get('show_virtual').lower() == 'true'
+            else:
+                self.show_virtual = request.session.get('show_virtual', False)
+            self.check_can_see_own_scoreboard()
+            return JsonResponse(self.get_cached_json_ranking_data())
+        return super().get(request, *args, **kwargs)
+
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+        # Initialize show_virtual from session/GET params.
+        if 'show_virtual' in self.request.GET:
+            self.show_virtual = self.request.session['show_virtual'] = \
+                self.request.GET.get('show_virtual').lower() == 'true'
+        else:
+            self.show_virtual = self.request.session.get('show_virtual', False)
+
+        # Skip ContestRankingBase.get_context_data to avoid the now-redundant
+        # server-side rendered_ranking_table (replaced by JSON + JS rendering).
+        context = super(ContestRankingBase, self).get_context_data(**kwargs)
+        self.check_can_see_own_scoreboard()
+        context['tab'] = self.tab
         context['has_rating'] = self.object.ratings.exists()
         context['show_virtual'] = self.show_virtual
         context['is_frozen'] = self.is_frozen
         context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
+        context['ranking_json'] = json.dumps(self.get_cached_json_ranking_data()).translate(_json_script_escapes)
         return context
 
 
@@ -1013,6 +1162,10 @@ class ContestPublicRanking(ContestRanking):
     def check_can_see_own_scoreboard(self):
         # ignore this check, we want to show the scoreboard to everyone
         pass
+
+    @property
+    def _show_full_ranking(self):
+        return True
 
     def get_ranking_list(self):
         # ignore the `can_see_full_scoreboard` check

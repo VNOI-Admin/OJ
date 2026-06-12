@@ -171,6 +171,16 @@ class ICPCContestFormat(DefaultContestFormat):
 
         return first_solves, total_ac
 
+    def get_format_data_for_api(self, entry, problem_points, frozen=False):
+        if not frozen or not entry or not entry.get('is_frozen'):
+            return entry
+        return {
+            'points': entry.get('frozen_points', 0),
+            'tries': entry.get('frozen_tries', 0),
+            'time': entry.get('time', 0),
+            'is_frozen': True,
+        }
+
     def display_user_problem(self, participation, contest_problem, first_solves, frozen=False):
         format_data = (participation.format_data or {}).get(str(contest_problem.id))
         if format_data:
