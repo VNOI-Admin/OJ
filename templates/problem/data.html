@@ -760,9 +760,7 @@
                             $btn.text({{ _('Compressing...')|htmltojs }} + ' ' + Math.round(meta.percent) + '%');
                         }
                     ).then(function (blob) {
-                        var firstPath = selectedFiles[0].path;
-                        var folderName = firstPath.split('/')[0].replace(/\.[^.]*$/, '') || 'testcases';
-                        var zipName = folderName.replace(/\s+/g, '_') + '.zip';
+                        var zipName = 'tests.zip';
                         var zipFile = new File([blob], zipName, {type: 'application/zip'});
 
                         if (typeof DataTransfer === 'undefined') {
