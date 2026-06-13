@@ -22,9 +22,9 @@
     // Replicates nice_repr(timedelta(seconds=X), 'noday') from Python.
     function fmtTime(seconds) {
         seconds = Math.max(0, Math.floor(seconds));
-        const h = Math.floor(seconds / 3600);
-        const m = Math.floor((seconds % 3600) / 60);
-        const s = seconds % 60;
+        var h = Math.floor(seconds / 3600);
+        var m = Math.floor((seconds % 3600) / 60);
+        var s = seconds % 60;
         return pad2(h) + ':' + pad2(m) + ':' + pad2(s);
     }
 
@@ -39,11 +39,6 @@
         return parseFloat(parseFloat(pts).toFixed(precision)).toString();
     }
 
-    function getCsrfToken() {
-        const m = document.cookie.match(/csrftoken=([^;]+)/);
-        return m ? m[1] : '';
-    }
-
     // Returns the base CSS state class for a score.
     function baseStateClass(pts, maxPts) {
         if (!pts) return 'failed-score';
@@ -52,35 +47,36 @@
     }
 
     // ─── Rating helpers ───────────────────────────────────────────────────────
-    // Mirrors judge/ratings.py
+    // Constants are loaded from backend via contest.rating_config to stay in sync
+    // with judge/ratings.py.
 
-    var RATING_VALUES  = [1200, 1400, 1600, 1900, 2200, 2300, 2400, 2600, 2900];
-    var RATING_CLASSES = ['rate-newbie','rate-pupil','rate-specialist','rate-expert',
-        'rate-candidate-master','rate-master','rate-international-master',
-        'rate-grandmaster','rate-international-grandmaster','rate-legendary-grandmaster'];
-    var RATING_NAMES   = ['Newbie','Pupil','Specialist','Expert','Candidate Master',
-        'Master','International Master','Grandmaster','International Grandmaster',
-        'Legendary Grandmaster'];
+    var _ratingConfig = null;
+
+    function initRatingConfig(config) {
+        _ratingConfig = config;
+    }
 
     function ratingLevel(r) {
-        for (var i = 0; i < RATING_VALUES.length; i++) {
-            if (r < RATING_VALUES[i]) return i;
+        var values = _ratingConfig.values;
+        for (var i = 0; i < values.length; i++) {
+            if (r < values[i]) return i;
         }
-        return RATING_VALUES.length;
+        return values.length;
     }
 
     function ratingProgress(r) {
+        var values = _ratingConfig.values;
         var lvl = ratingLevel(r);
-        if (lvl >= RATING_VALUES.length) return 1.0;
-        var prev = lvl === 0 ? 0 : RATING_VALUES[lvl - 1];
-        return (r - prev) / (RATING_VALUES[lvl] - prev);
+        if (lvl >= values.length) return 1.0;
+        var prev = lvl === 0 ? 0 : values[lvl - 1];
+        return (r - prev) / (values[lvl] - prev);
     }
 
     function ratingHtml(r) {
-        if (r === null || r === undefined) return '';
+        if (r === null || r === undefined || !_ratingConfig) return '';
         var lvl = ratingLevel(r);
-        var cls = RATING_CLASSES[lvl];
-        var name = RATING_NAMES[lvl];
+        var cls = _ratingConfig.classes[lvl];
+        var name = _ratingConfig.names[lvl];
         var height = Math.round(ratingProgress(r) * 16 * 100) / 100;
         return '<span class="rate-group" title="' + escapeHtml(name) + '">' +
             '<svg class="rate-box ' + cls + '" viewBox="0 0 16 16">' +
@@ -93,9 +89,14 @@
 
     // ─── First-solve / Total-AC computation ──────────────────────────────────
 
-    function computeFirstSolvesAndTotalAC(participations, problems) {
+    function computeFirstSolvesAndTotalAC(participations, problems, contest) {
         var firstSolves = {};
         var totalAC = {};
+        var cfg = contest.format_config || {};
+
+        // Legacy IOI suppresses first-solve when time display is off.
+        var suppressFirstSolve = (contest.format === 'ioi' || contest.format === 'ioi16') &&
+                                 !cfg.cumtime && !cfg.last_score_altering;
 
         for (var pi = 0; pi < problems.length; pi++) {
             var problem = problems[pi];
@@ -114,7 +115,7 @@
 
                 if (pts === problem.points) {
                     totalAC[pid]++;
-                    if (p.virtual === 0 && (minTime === null || t < minTime)) {
+                    if (!suppressFirstSolve && p.virtual === 0 && (minTime === null || t < minTime)) {
                         minTime = t;
                         firstSolves[pid] = p.id;
                     }
@@ -125,57 +126,91 @@
         return { firstSolves: firstSolves, totalAC: totalAC };
     }
 
-    // ─── Format renderers ─────────────────────────────────────────────────────
-    // Each renderer provides:
-    //   renderProblemCell(entry, problem, participationId, firstSolves, meta) → HTML string for one <td>
-    //   renderResultCell(participation, meta) → HTML string for one or more <td>s
-    //   extraHeaderCols(meta) → HTML string for extra <th>s after the Points column (before problem columns)
-    //   colspanTotalAC → integer colspan for the "Total AC" label cell
+    // ─── Shared rendering helpers ────────────────────────────────────────────
+
+    function makeSubmissionUrl(meta, problemCode) {
+        return meta.contest.url_templates.problem_submissions
+            .replace('__USERNAME__', meta.username)
+            .replace('__PROBLEM__', problemCode);
+    }
+
+    function makeAllSubmissionsUrl(meta) {
+        return meta.contest.url_templates.all_submissions
+            .replace('__USERNAME__', meta.username);
+    }
 
     // Returns the pretest CSS prefix for a problem cell.
     function pretestPrefix(meta, problem) {
         return (meta.contest.run_pretests_only && problem.is_pretested) ? 'pretest-' : '';
     }
 
-    // meta = { contest, urlTemplates, urls }
-    function makeSubmissionUrl(meta, username, problemCode) {
-        return meta.contest.url_templates.problem_submissions
-            .replace('__USERNAME__', username)
-            .replace('__PROBLEM__', problemCode);
+    // Builds the state CSS class string common to all problem cells.
+    function problemStateClass(entry, problem, isFirst, meta, extraPrefix) {
+        return (extraPrefix || '') +
+               pretestPrefix(meta, problem) +
+               (isFirst ? 'first-solve ' : '') +
+               baseStateClass(entry.points, problem.points);
     }
 
-    function makeAllSubmissionsUrl(meta, username) {
-        return meta.contest.url_templates.all_submissions
-            .replace('__USERNAME__', username);
+    // Wraps inner HTML in a standard problem <td><a>...</a></td>.
+    function wrapProblemCell(state, url, innerHtml) {
+        return '<td class="' + state + '"><a href="' + escapeHtml(url) + '">' +
+               innerHtml + '</a></td>';
     }
+
+    // Standard result cell: score with optional cumtime.
+    function standardResultCell(participation, meta, showTime) {
+        var url = makeAllSubmissionsUrl(meta);
+        return '<td class="user-points"><a href="' + escapeHtml(url) + '">' +
+            escapeHtml(fmtPoints(participation.score, meta.contest.points_precision)) +
+            '<div class="solving-time">' +
+            (showTime !== false ? escapeHtml(fmtTime(participation.cumtime)) : '') +
+            '</div></a></td>';
+    }
+
+    // Standard problem cell: points + optional extra HTML + time.
+    // Used by default, atcoder, ecoo, legacy-ioi, and vnoj (non-pending).
+    function standardProblemCell(entry, problem, participationId, firstSolves, meta, opts) {
+        if (!entry) return '<td></td>';
+        var pid = String(problem.id);
+        var isFirst = firstSolves[pid] === participationId;
+        var url = makeSubmissionUrl(meta, problem.code);
+
+        var pointsHtml = escapeHtml(fmtPoints(entry.points, meta.contest.points_precision));
+        var extraHtml = opts && opts.extraHtml ? opts.extraHtml : '';
+        var showTime = !(opts && opts.showTime === false);
+        var timeHtml = showTime ? escapeHtml(fmtTime(entry.time)) : '';
+        var wrapDiv = opts && opts.wrapDiv;
+
+        var inner = wrapDiv
+            ? '<div>' + pointsHtml + extraHtml + '</div>'
+            : pointsHtml + extraHtml;
+        inner += '<div class="solving-time">' + timeHtml + '</div>';
+
+        var state = problemStateClass(entry, problem, isFirst, meta);
+        return wrapProblemCell(state, url, inner);
+    }
+
+    // Builds a red penalty annotation: " (N)"
+    function penaltyHtml(value) {
+        if (!value) return '';
+        return '<small style="color:red"> (' + escapeHtml(fmtPoints(value, 0)) + ')</small>';
+    }
+
+    // ─── Format renderers ─────────────────────────────────────────────────────
+    // Each renderer provides:
+    //   renderProblemCell(entry, problem, participationId, firstSolves, meta)
+    //   renderResultCell(participation, meta)
+    //   extraHeaderCols(meta)   — extra <th>s after Points (default: '')
+    //   colspanTotalAC          — colspan for "Total AC" label (default: 3)
 
     // ── Default ──────────────────────────────────────────────────────────────
     var defaultRenderer = {
-        extraHeaderCols: function () { return ''; },
-        colspanTotalAC: 3,
-
         renderProblemCell: function (entry, problem, participationId, firstSolves, meta) {
-            if (!entry) return '<td></td>';
-            var pid = String(problem.id);
-            var isFirst = firstSolves[pid] === participationId;
-            var url = makeSubmissionUrl(meta, meta.username, problem.code);
-            var state = pretestPrefix(meta, problem) +
-                        (isFirst ? 'first-solve ' : '') +
-                        baseStateClass(entry.points, problem.points);
-            return '<td class="' + state + '">' +
-                '<a href="' + escapeHtml(url) + '">' +
-                escapeHtml(fmtPoints(entry.points, meta.contest.points_precision)) +
-                '<div class="solving-time">' + escapeHtml(fmtTime(entry.time)) + '</div>' +
-                '</a></td>';
+            return standardProblemCell(entry, problem, participationId, firstSolves, meta);
         },
-
         renderResultCell: function (participation, meta) {
-            var url = makeAllSubmissionsUrl(meta, participation.user.username);
-            return '<td class="user-points">' +
-                '<a href="' + escapeHtml(url) + '">' +
-                escapeHtml(fmtPoints(participation.score, meta.contest.points_precision)) +
-                '<div class="solving-time">' + escapeHtml(fmtTime(participation.cumtime)) + '</div>' +
-                '</a></td>';
+            return standardResultCell(participation, meta);
         },
     };
 
@@ -193,30 +228,24 @@
 
             var pid = String(problem.id);
             var isFirst = firstSolves[pid] === participationId;
-            var isFrozen = !!entry.is_frozen;
-            var url = makeSubmissionUrl(meta, meta.username, problem.code);
+            var url = makeSubmissionUrl(meta, problem.code);
 
             var triesText = tries + ' ' + (tries === 1 ? 'try' : 'tries');
-            var state = (isFrozen ? 'pending ' : '') +
-                        pretestPrefix(meta, problem) +
-                        (isFirst ? 'first-solve ' : '') +
-                        baseStateClass(entry.points, problem.points);
+            var extraPrefix = entry.is_frozen ? 'pending ' : '';
+            var state = problemStateClass(entry, problem, isFirst, meta, extraPrefix);
 
             if (!entry.points) {
-                return '<td class="' + state + '">' +
-                    '<a href="' + escapeHtml(url) + '">' + escapeHtml(triesText) + '</a></td>';
+                return wrapProblemCell(state, url, escapeHtml(triesText));
             }
 
-            return '<td class="' + state + '">' +
-                '<a href="' + escapeHtml(url) + '">' +
+            return wrapProblemCell(state, url,
                 '<div class="solving-time-minute">' + Math.floor(entry.time / 60) + '</div>' +
                 '<div class="solving-time">' + escapeHtml(fmtTime(entry.time)) + '</div>' +
-                escapeHtml(triesText) +
-                '</a></td>';
+                escapeHtml(triesText));
         },
 
         renderResultCell: function (participation, meta) {
-            var url = makeAllSubmissionsUrl(meta, participation.user.username);
+            var url = makeAllSubmissionsUrl(meta);
             return '<td class="user-points">' +
                 '<a href="' + escapeHtml(url) + '">' +
                 escapeHtml(fmtPoints(participation.score, meta.contest.points_precision)) +
@@ -229,154 +258,77 @@
 
     // ── Legacy IOI (ioi) ─────────────────────────────────────────────────────
     var legacyIoiRenderer = {
-        extraHeaderCols: function () { return ''; },
-        colspanTotalAC: 3,
-
         renderProblemCell: function (entry, problem, participationId, firstSolves, meta) {
-            if (!entry) return '<td></td>';
-            var pid = String(problem.id);
-            var url = makeSubmissionUrl(meta, meta.username, problem.code);
             var cfg = meta.contest.format_config || {};
             var showTime = cfg.cumtime || cfg.last_score_altering;
-            var isFirst = showTime && firstSolves[pid] === participationId;
-            var state = pretestPrefix(meta, problem) +
-                        (isFirst ? 'first-solve ' : '') +
-                        baseStateClass(entry.points, problem.points);
-            return '<td class="' + state + '">' +
-                '<a href="' + escapeHtml(url) + '">' +
-                escapeHtml(fmtPoints(entry.points, meta.contest.points_precision)) +
-                '<div class="solving-time">' + (showTime ? escapeHtml(fmtTime(entry.time)) : '') + '</div>' +
-                '</a></td>';
+            return standardProblemCell(entry, problem, participationId, firstSolves, meta, {
+                showTime: !!showTime,
+            });
         },
-
         renderResultCell: function (participation, meta) {
-            var url = makeAllSubmissionsUrl(meta, participation.user.username);
             var cfg = meta.contest.format_config || {};
             var showTime = cfg.cumtime || cfg.last_score_altering;
-            return '<td class="user-points">' +
-                '<a href="' + escapeHtml(url) + '">' +
-                escapeHtml(fmtPoints(participation.score, meta.contest.points_precision)) +
-                '<div class="solving-time">' + (showTime ? escapeHtml(fmtTime(participation.cumtime)) : '') + '</div>' +
-                '</a></td>';
+            return standardResultCell(participation, meta, !!showTime);
         },
     };
 
     // ── IOI 2016+ (ioi16) ────────────────────────────────────────────────────
-    // Inherits legacyIoiRenderer, but format_config only has 'cumtime' (no 'last_score_altering').
     var ioiRenderer = $.extend({}, legacyIoiRenderer);
 
     // ── AtCoder ───────────────────────────────────────────────────────────────
     var atcoderRenderer = {
-        extraHeaderCols: function () { return ''; },
-        colspanTotalAC: 3,
-
         renderProblemCell: function (entry, problem, participationId, firstSolves, meta) {
-            if (!entry) return '<td></td>';
-            var pid = String(problem.id);
-            var isFirst = firstSolves[pid] === participationId;
-            var url = makeSubmissionUrl(meta, meta.username, problem.code);
-            var penaltyHtml = entry.penalty
-                ? '<small style="color:red"> (' + escapeHtml(fmtPoints(entry.penalty, 0)) + ')</small>'
-                : '';
-            var state = pretestPrefix(meta, problem) +
-                        (isFirst ? 'first-solve ' : '') +
-                        baseStateClass(entry.points, problem.points);
-            return '<td class="' + state + '">' +
-                '<a href="' + escapeHtml(url) + '">' +
-                escapeHtml(fmtPoints(entry.points, meta.contest.points_precision)) +
-                penaltyHtml +
-                '<div class="solving-time">' + escapeHtml(fmtTime(entry.time)) + '</div>' +
-                '</a></td>';
+            return standardProblemCell(entry, problem, participationId, firstSolves, meta, {
+                extraHtml: penaltyHtml(entry && entry.penalty),
+            });
         },
-
         renderResultCell: defaultRenderer.renderResultCell,
     };
 
     // ── VNOJ ──────────────────────────────────────────────────────────────────
     var vnojRenderer = {
-        extraHeaderCols: function () { return ''; },
-        colspanTotalAC: 3,
-
         renderProblemCell: function (entry, problem, participationId, firstSolves, meta) {
             if (!entry) return '<td></td>';
-            var pid = String(problem.id);
-            var isFirst = firstSolves[pid] === participationId;
-            var url = makeSubmissionUrl(meta, meta.username, problem.code);
             var pending = entry.pending || 0;
 
             if (!pending) {
-                // Normal (non-pending) path
-                var penaltyHtml = entry.penalty
-                    ? '<small style="color:red"> (' + escapeHtml(fmtPoints(entry.penalty, 0)) + ')</small>'
-                    : '';
-                var state = pretestPrefix(meta, problem) +
-                            (isFirst ? 'first-solve ' : '') +
-                            baseStateClass(entry.points, problem.points);
-                return '<td class="' + state + '">' +
-                    '<a href="' + escapeHtml(url) + '">' +
-                    '<div>' + escapeHtml(fmtPoints(entry.points, meta.contest.points_precision)) + penaltyHtml + '</div>' +
-                    '<div class="solving-time">' + escapeHtml(fmtTime(entry.time)) + '</div>' +
-                    '</a></td>';
+                return standardProblemCell(entry, problem, participationId, firstSolves, meta, {
+                    extraHtml: penaltyHtml(entry.penalty),
+                    wrapDiv: true,
+                });
             }
 
             // Pending path: post-freeze submissions hidden
-            var state2 = 'pending ' +
-                         pretestPrefix(meta, problem) +
-                         (isFirst ? 'first-solve ' : '') +
-                         baseStateClass(entry.points, problem.points);
+            var pid = String(problem.id);
+            var isFirst = firstSolves[pid] === participationId;
+            var url = makeSubmissionUrl(meta, problem.code);
+            var state = problemStateClass(entry, problem, isFirst, meta, 'pending ');
+
             var pendingBadge = '<small style="color:black;"> [' + escapeHtml(String(pending)) + ']</small>';
+            var ptsStr = (!entry.points && !entry.penalty)
+                ? '?'
+                : escapeHtml(fmtPoints(entry.points, meta.contest.points_precision)) + '?';
 
-            // Determine displayed points string
-            var ptsStr;
-            if (!entry.points && !entry.penalty) {
-                ptsStr = '?';
-            } else {
-                ptsStr = escapeHtml(fmtPoints(entry.points, meta.contest.points_precision)) + '?';
-            }
-
-            return '<td class="' + state2 + '">' +
-                '<a href="' + escapeHtml(url) + '">' +
+            return wrapProblemCell(state, url,
                 '<div>' + ptsStr + pendingBadge + '</div>' +
-                '<div class="solving-time">?</div>' +
-                '</a></td>';
+                '<div class="solving-time">?</div>');
         },
-
         renderResultCell: defaultRenderer.renderResultCell,
     };
 
     // ── ECOO ──────────────────────────────────────────────────────────────────
     var ecooRenderer = {
-        extraHeaderCols: function () { return ''; },
-        colspanTotalAC: 3,
-
         renderProblemCell: function (entry, problem, participationId, firstSolves, meta) {
-            if (!entry) return '<td></td>';
-            var pid = String(problem.id);
-            var isFirst = firstSolves[pid] === participationId;
-            var url = makeSubmissionUrl(meta, meta.username, problem.code);
-            var bonusHtml = entry.bonus
+            var bonusHtml = (entry && entry.bonus)
                 ? '<small> +' + escapeHtml(fmtPoints(entry.bonus, 0)) + '</small>'
                 : '';
-            var state = pretestPrefix(meta, problem) +
-                        (isFirst ? 'first-solve ' : '') +
-                        baseStateClass(entry.points, problem.points);
-            return '<td class="' + state + '">' +
-                '<a href="' + escapeHtml(url) + '">' +
-                escapeHtml(fmtPoints(entry.points, meta.contest.points_precision)) +
-                bonusHtml +
-                '<div class="solving-time">' + escapeHtml(fmtTime(entry.time)) + '</div>' +
-                '</a></td>';
+            return standardProblemCell(entry, problem, participationId, firstSolves, meta, {
+                extraHtml: bonusHtml,
+            });
         },
-
         renderResultCell: function (participation, meta) {
-            var url = makeAllSubmissionsUrl(meta, participation.user.username);
             var cfg = meta.contest.format_config || {};
-            var showTime = !!cfg.cumtime;
-            return '<td class="user-points">' +
-                '<a href="' + escapeHtml(url) + '">' +
-                escapeHtml(fmtPoints(participation.score, meta.contest.points_precision)) +
-                '<div class="solving-time">' + (showTime ? escapeHtml(fmtTime(participation.cumtime)) : '') + '</div>' +
-                '</a></td>';
+            return standardResultCell(participation, meta, !!cfg.cumtime);
         },
     };
 
@@ -391,6 +343,17 @@
     };
 
     // ─── Table builder ────────────────────────────────────────────────────────
+
+    function getRenderer(formatName) {
+        var renderer = RENDERERS[formatName] || RENDERERS['default'];
+        // Fill in defaults for optional properties.
+        return {
+            extraHeaderCols: renderer.extraHeaderCols || function () { return ''; },
+            colspanTotalAC: renderer.colspanTotalAC || 3,
+            renderProblemCell: renderer.renderProblemCell,
+            renderResultCell: renderer.renderResultCell,
+        };
+    }
 
     function buildHeader(contest, problems, renderer) {
         var isICPC = contest.format === 'icpc';
@@ -424,8 +387,6 @@
         var disqClass = p.is_disqualified ? 'un-disqualify-participation' : 'disqualify-participation';
         var disqIcon  = p.is_disqualified ? 'fa-undo' : 'fa-trash';
 
-        // No <form> in the DOM — avoids autofill extensions scanning hidden inputs.
-        // The form is created and submitted on-demand in enableAdminOperations.
         var html = '<span class="contest-participation-operation">' +
             '<a href="#" title="' + escapeHtml(disqLabel) + '" class="' + disqClass + '"' +
             ' data-participation-id="' + p.id + '"' +
@@ -441,11 +402,22 @@
         return html;
     }
 
+    function buildUserLink(u) {
+        var html = '<span class="' + escapeHtml(u.css_class) + '">' +
+            '<a href="' + escapeHtml(u.url) + '" style="display: inline-block;">' +
+            escapeHtml(u.display_name) + '</a>';
+        if (u.badge) {
+            html += '<img src="' + escapeHtml(u.badge.mini) + '"' +
+                ' title="' + escapeHtml(u.badge.name) + '"' +
+                ' style="height: 1em; width: auto; margin-left: 0.25em;" />';
+        }
+        html += '</span>';
+        return html;
+    }
+
     function buildUserRow(participation, problems, firstSolves, contest, renderer) {
         var p = participation;
         var u = p.user;
-        var isICPC = contest.format === 'icpc';
-        var rank = p.rank;
 
         var rowClass = p.is_disqualified ? ' class="disqualified"' : '';
         var html = '<tr id="user-' + escapeHtml(u.username) + '"' + rowClass + '>';
@@ -460,47 +432,35 @@
                 rankDisplay = escapeHtml(String(p.virtual));
             }
         } else {
-            rankDisplay = escapeHtml(String(rank));
+            rankDisplay = escapeHtml(String(p.rank));
         }
         html += '<td>' + rankDisplay + '</td>';
-
-        // ICPC: extra rank/penalty col is in extraHeaderCols – no extra td per row
-        // (ICPC has the penalty in the result cell instead)
 
         // Username cell
         html += '<td class="user-name"><div>';
         html += '<div style="float:left">';
-
-        // User link
-        var userLink = '<span class="' + escapeHtml(u.css_class) + '">' +
-            '<a href="' + escapeHtml(u.url) + '" style="display: inline-block;">' +
-            escapeHtml(u.display_name) + '</a></span>';
+        html += buildUserLink(u);
 
         if (p.virtual > 0) {
             var virtualTitle = p.virtual + ' virtual participation' + (p.virtual > 1 ? 's' : '') + ' of this user';
-            userLink += '<sup class="virtual-participation" title="' + escapeHtml(virtualTitle) + '">' +
+            html += '<sup class="virtual-participation" title="' + escapeHtml(virtualTitle) + '">' +
                 '[' + p.virtual + ']</sup>';
         }
-        html += userLink;
 
-        // Personal info (full name) – hidden by default
         html += '<div class="personal-info"><span>' + escapeHtml(u.name || '') + '</span></div>';
         html += '</div>';
 
-        // Right float (start time, admin ops, org)
+        // Right float (admin ops, org)
         html += '<div style="float:right">';
-
         html += buildAdminOps(p, contest);
-
         html += '<div class="personal-info" style="text-align: right;">';
         if (u.organization) {
             html += '<span class="organization">' +
                 '<a href="' + escapeHtml(u.organization.url) + '">' +
                 escapeHtml(u.organization.short_name) + '</a></span>';
         }
-        html += '</div>';
-        html += '</div>';
-        html += '</div></td>'; // close user-name td
+        html += '</div></div>';
+        html += '</div></td>';
 
         // Build meta for renderer
         var meta = {
@@ -549,13 +509,14 @@
         var problems = data.problems;
         var participations = data.participations;
 
-        var renderer = RENDERERS[contest.format] || RENDERERS['default'];
-        var result = computeFirstSolvesAndTotalAC(participations, problems);
+        if (contest.rating_config) {
+            initRatingConfig(contest.rating_config);
+        }
+
+        var renderer = getRenderer(contest.format);
+        var result = computeFirstSolvesAndTotalAC(participations, problems, contest);
         var firstSolves = result.firstSolves;
         var totalAC = result.totalAC;
-
-        var isICPC = contest.format === 'icpc';
-        var colspan = renderer.colspanTotalAC;
 
         var html = '<table id="ranking-table" class="users-table table striped">';
         html += buildHeader(contest, problems, renderer);
@@ -565,7 +526,7 @@
             html += buildUserRow(participations[i], problems, firstSolves, contest, renderer);
         }
 
-        html += buildTotalACRow(problems, totalAC, colspan, contest.has_rating);
+        html += buildTotalACRow(problems, totalAC, renderer.colspanTotalAC, contest.has_rating);
         html += '</tbody></table>';
 
         var container = document.getElementById('ranking-container');

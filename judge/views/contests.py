@@ -38,6 +38,7 @@ from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
+from judge.ratings import RATING_CLASS, RATING_LEVELS, RATING_VALUES
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
@@ -821,6 +822,43 @@ def base_contest_frozen_ranking_queryset(contest):
         .order_by('is_disqualified', '-frozen_score', 'frozen_cumtime', 'frozen_tiebreaker', '-submission_count')
 
 
+def _serialize_user(row, user_url_prefix, org_url_prefix):
+    """Serialize the user/profile portion of a participation row into a JSON-safe dict."""
+    username = row['user__user__username']
+    display_name = row['user__username_display_override'] or username
+    org_short_name = row['_org_short_name']
+    org_slug = row['_org_slug']
+    badge_mini = row['_badge_mini']
+    badge_name = row['_badge_name']
+
+    return {
+        'username': username,
+        'display_name': display_name,
+        'name': row['user__user__first_name'],
+        'css_class': Profile.get_user_css_class(row['user__display_rank'], row['user__rating']),
+        'url': user_url_prefix + username,
+        'organization': {
+            'short_name': org_short_name,
+            'url': org_url_prefix + org_slug,
+        } if org_short_name else None,
+        'badge': {
+            'mini': badge_mini,
+            'name': badge_name,
+        } if badge_mini else None,
+    }
+
+
+def _serialize_format_data(contest, problems, raw_format_data, frozen):
+    """Transform raw format_data into an API-safe dict keyed by problem id."""
+    result = {}
+    for prob in problems:
+        pid = str(prob.id)
+        raw = (raw_format_data or {}).get(pid)
+        if raw is not None:
+            result[pid] = contest.format.get_format_data_for_api(raw, prob.points, frozen)
+    return result
+
+
 def make_contest_ranking_json(contest, problems, queryset, frozen=False):
     # Pre-compute URL templates once to avoid per-row reverse() overhead.
     _user_url_prefix = reverse('user_page', args=['__U__']).split('__U__')[0]
@@ -834,55 +872,31 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
     queryset = queryset.annotate(
         _org_short_name=Subquery(_org_qs.values('short_name')[:1]),
         _org_slug=Subquery(_org_qs.values('slug')[:1]),
+        _badge_mini=F('user__display_badge__mini'),
+        _badge_name=F('user__display_badge__name'),
     ).values(
         'id', 'score', 'frozen_score', 'cumtime', 'frozen_cumtime',
         'tiebreaker', 'frozen_tiebreaker', 'is_disqualified', 'virtual',
-        'format_data', 'real_start',
-        'user_id', 'user__id', 'user__display_rank', 'user__rating',
+        'format_data',
+        'user_id', 'user__display_rank', 'user__rating',
         'user__username_display_override',
         'user__user__username', 'user__user__first_name',
         'rating__rating',
-        '_org_short_name', '_org_slug',
+        '_org_short_name', '_org_slug', '_badge_mini', '_badge_name',
     )
 
     participations_data = []
     for row in queryset:
-        virtual   = row['virtual']
-
-        username     = row['user__user__username']
-        display_name = row['user__username_display_override'] or username
-        css_class    = Profile.get_user_css_class(row['user__display_rank'], row['user__rating'])
-
-        format_data = {}
-        for prob in problems:
-            pid = str(prob.id)
-            raw = (row['format_data'] or {}).get(pid)
-            if raw is not None:
-                format_data[pid] = contest.format.get_format_data_for_api(raw, prob.points, frozen)
-
-        org_short_name = row['_org_short_name']
-        org_slug       = row['_org_slug']
-
         participations_data.append({
             'id': row['id'],
             'score': float(row['frozen_score'] if frozen else row['score']),
             'cumtime': float(row['frozen_cumtime'] if frozen else row['cumtime']),
             'tiebreaker': float(row['frozen_tiebreaker'] if frozen else row['tiebreaker']),
             'is_disqualified': row['is_disqualified'],
-            'virtual': virtual,
+            'virtual': row['virtual'],
             'rating': row['rating__rating'],
-            'user': {
-                'username': username,
-                'display_name': display_name,
-                'name': row['user__user__first_name'],
-                'css_class': css_class,
-                'url': _user_url_prefix + username,
-                'organization': {
-                    'short_name': org_short_name,
-                    'url': _org_url_prefix + org_slug,
-                } if org_short_name else None,
-            },
-            'format_data': format_data,
+            'user': _serialize_user(row, _user_url_prefix, _org_url_prefix),
+            'format_data': _serialize_format_data(contest, problems, row['format_data'], frozen),
         })
     return participations_data
 
@@ -956,6 +970,11 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
                 'all_submissions': all_sub_url.replace('UNAME', '__USERNAME__'),
                 'problem_submissions': prob_sub_url.replace('UNAME', '__USERNAME__').replace('PROB', '__PROBLEM__'),
             },
+            'rating_config': {
+                'values': RATING_VALUES,
+                'classes': RATING_CLASS,
+                'names': RATING_LEVELS,
+            },
         }
         return problems, problems_data, contest_data
 
@@ -1018,6 +1037,13 @@ class ContestRanking(ContestRankingBase):
         return self.object.scoreboard_cache_timeout == 0 or self.can_edit or \
             (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user))
 
+    def _resolve_show_virtual(self):
+        if 'show_virtual' in self.request.GET:
+            self.show_virtual = self.request.session['show_virtual'] = \
+                self.request.GET.get('show_virtual').lower() == 'true'
+        else:
+            self.show_virtual = self.request.session.get('show_virtual', False)
+
     def get_ranking_queryset(self):
         if self.is_frozen:
             queryset = base_contest_frozen_ranking_queryset(self.object)
@@ -1066,21 +1092,13 @@ class ContestRanking(ContestRankingBase):
     def get(self, request, *args, **kwargs):
         if 'data' in request.GET:
             self.object = self.get_object()
-            if 'show_virtual' in request.GET:
-                self.show_virtual = request.session['show_virtual'] = \
-                    request.GET.get('show_virtual').lower() == 'true'
-            else:
-                self.show_virtual = request.session.get('show_virtual', False)
+            self._resolve_show_virtual()
             self.check_can_see_own_scoreboard()
             return JsonResponse(self.get_cached_json_ranking_data())
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
-        if 'show_virtual' in self.request.GET:
-            self.show_virtual = self.request.session['show_virtual'] = \
-                self.request.GET.get('show_virtual').lower() == 'true'
-        else:
-            self.show_virtual = self.request.session.get('show_virtual', False)
+        self._resolve_show_virtual()
         context = super().get_context_data(**kwargs)
         context['has_rating'] = self.object.ratings.exists()
         context['show_virtual'] = self.show_virtual
