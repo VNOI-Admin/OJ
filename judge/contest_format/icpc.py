@@ -138,8 +138,10 @@ class ICPCContestFormat(DefaultContestFormat):
         participation.save()
 
     def get_format_data_for_api(self, entry, problem_points, frozen=False):
-        if not frozen or not entry or not entry.get('is_frozen'):
+        if not entry:
             return entry
+        if not frozen or not entry.get('is_frozen'):
+            return {'points': entry.get('points', 0), 'tries': entry.get('tries', 0), 'time': entry.get('time', 0)}
         return {
             'points': entry.get('frozen_points', 0),
             'tries': entry.get('frozen_tries', 0),

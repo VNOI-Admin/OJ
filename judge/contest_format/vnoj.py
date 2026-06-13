@@ -158,15 +158,18 @@ class VNOJContestFormat(DefaultContestFormat):
         participation.save()
 
     def get_format_data_for_api(self, entry, problem_points, frozen=False):
-        if not frozen or not entry:
+        if not entry:
             return entry
+        clean = {'points': entry['points'], 'time': entry['time'], 'penalty': entry['penalty']}
+        if not frozen:
+            return clean
         pending = entry.get('pending', 0)
         if not pending:
-            return entry
+            return clean
         frozen_points = entry.get('frozen_points', 0)
         # If the user had a full AC before the freeze, show the actual (non-frozen) data without the pending badge.
         if frozen_points == problem_points:
-            return {'points': entry['points'], 'time': entry['time'], 'penalty': entry['penalty']}
+            return clean
         return {
             'points': frozen_points,
             'time': entry.get('frozen_time', 0),
