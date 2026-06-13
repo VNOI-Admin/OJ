@@ -824,8 +824,6 @@ def base_contest_frozen_ranking_queryset(contest):
 def make_contest_ranking_json(contest, problems, queryset, frozen=False):
     # Pre-compute URL templates once to avoid per-row reverse() overhead.
     _user_url_prefix = reverse('user_page', args=['__U__']).split('__U__')[0]
-    _admin_url_base = reverse('admin:judge_contestparticipation_change', args=[0])
-    _admin_url_prefix = _admin_url_base[:_admin_url_base.index('/0/') + 1]
     _org_url_prefix = reverse('organization_home', args=['__S__']).split('__S__')[0]
 
     # Subqueries for the user's first organisation (replicates Profile.organization).
@@ -873,7 +871,6 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
             'is_disqualified': row['is_disqualified'],
             'virtual': virtual,
             'rating': row['rating__rating'],
-            'admin_url': f'{_admin_url_prefix}{row["id"]}/change/',
             'user': {
                 'id': row['user__id'],
                 'username': username,
@@ -922,6 +919,46 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     def check_can_see_own_scoreboard(self):
         if not self.object.can_see_own_scoreboard(self.request.user):
             raise Http404()
+
+    def _build_json_base(self):
+        """Returns (problems, problems_data, contest_dict) with fields shared by all ranking JSON views."""
+        contest = self.object
+        problems = list(
+            contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'),
+        )
+        problems_data = [
+            {
+                'id': prob.id,
+                'code': prob.problem.code,
+                'label': contest.get_label_for_problem(i),
+                'name': prob.problem.name,
+                'points': float(prob.points),
+                'is_pretested': prob.is_pretested,
+                'url': reverse('problem_detail', args=[prob.problem.code]),
+            }
+            for i, prob in enumerate(problems)
+        ]
+        all_sub_url = reverse('contest_all_user_submissions', args=[contest.key, 'UNAME'])
+        prob_sub_url = reverse('contest_user_submissions', args=[contest.key, 'UNAME', 'PROB'])
+        contest_data = {
+            'key': contest.key,
+            'format': contest.format_name,
+            'format_config': contest.format.config,
+            'can_edit': self.can_edit,
+            **({
+                'admin_url_template': reverse('admin:judge_contestparticipation_change', args=[0]).replace('/0/', '/__ID__/'),
+                'can_change_participation': self.request.user.has_perm('judge.change_contestparticipation'),
+                'disqualify_url': reverse('contest_participation_disqualify', args=[contest.key]),
+            } if self.can_edit else {}),
+            'points_precision': contest.points_precision,
+            'run_pretests_only': contest.run_pretests_only,
+            'ended': contest.ended,
+            'url_templates': {
+                'all_submissions': all_sub_url.replace('UNAME', '__USERNAME__'),
+                'problem_submissions': prob_sub_url.replace('UNAME', '__USERNAME__').replace('PROB', '__PROBLEM__'),
+            },
+        }
+        return problems, problems_data, contest_data
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -1002,7 +1039,7 @@ class ContestRanking(ContestRankingBase):
 
     def _build_ranking_json_data(self):
         contest = self.object
-        problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
+        problems, problems_data, contest_data = self._build_json_base()
 
         if not self._show_full_ranking:
             queryset = contest.users.filter(user=self.request.profile, virtual=ContestParticipation.LIVE)
@@ -1014,44 +1051,9 @@ class ContestRanking(ContestRankingBase):
             participations = make_contest_ranking_json(contest, problems, queryset, frozen=self.is_frozen)
             _add_ranks_to_participation_json(participations)
 
-        problems_data = [
-            {
-                'id': prob.id,
-                'code': prob.problem.code,
-                'label': contest.get_label_for_problem(i),
-                'name': prob.problem.name,
-                'points': float(prob.points),
-                'is_pretested': prob.is_pretested,
-                'url': reverse('problem_detail', args=[prob.problem.code]),
-            }
-            for i, prob in enumerate(problems)
-        ]
-
-        all_sub_url = reverse('contest_all_user_submissions', args=[contest.key, 'UNAME'])
-        prob_sub_url = reverse('contest_user_submissions', args=[contest.key, 'UNAME', 'PROB'])
-        has_rating = contest.ratings.exists()
-
-        return {
-            'contest': {
-                'key': contest.key,
-                'format': contest.format_name,
-                'format_config': contest.format.config,
-                'is_frozen': self.is_frozen,
-                'can_edit': self.can_edit,
-                'can_change_participation': self.request.user.has_perm('judge.change_contestparticipation'),
-                'has_rating': has_rating,
-                'points_precision': contest.points_precision,
-                'run_pretests_only': contest.run_pretests_only,
-                'ended': contest.ended,
-                'disqualify_url': reverse('contest_participation_disqualify', args=[contest.key]),
-                'url_templates': {
-                    'all_submissions': all_sub_url.replace('UNAME', '__USERNAME__'),
-                    'problem_submissions': prob_sub_url.replace('UNAME', '__USERNAME__').replace('PROB', '__PROBLEM__'),
-                },
-            },
-            'problems': problems_data,
-            'participations': participations,
-        }
+        contest_data['is_frozen'] = self.is_frozen
+        contest_data['has_rating'] = contest.ratings.exists()
+        return {'contest': contest_data, 'problems': problems_data, 'participations': participations}
 
     def get_cached_json_ranking_data(self):
         if self.bypass_cache_ranking:
@@ -1166,52 +1168,20 @@ class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
         if not contest.can_see_full_scoreboard(self.request.user) and self.profile != self.request.profile:
             raise Http404()
 
-        problems = list(contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'))
+        problems, problems_data, contest_data = self._build_json_base()
         queryset = contest.users.filter(user=self.profile, virtual__gte=0).order_by('-virtual')
         participations = make_contest_ranking_json(contest, problems, queryset)
         for p in participations:
             p['rank'] = p['virtual']  # 0 = live, N = Nth virtual
 
-        problems_data = [
-            {
-                'id': prob.id,
-                'code': prob.problem.code,
-                'label': contest.get_label_for_problem(i),
-                'name': prob.problem.name,
-                'points': float(prob.points),
-                'is_pretested': prob.is_pretested,
-                'url': reverse('problem_detail', args=[prob.problem.code]),
-            }
-            for i, prob in enumerate(problems)
-        ]
-
-        all_sub_url = reverse('contest_all_user_submissions', args=[contest.key, 'UNAME'])
-        prob_sub_url = reverse('contest_user_submissions', args=[contest.key, 'UNAME', 'PROB'])
-
-        return {
-            'contest': {
-                'key': contest.key,
-                'format': contest.format_name,
-                'format_config': contest.format.config,
-                'is_frozen': False,
-                'can_edit': self.can_edit,
-                'can_change_participation': self.request.user.has_perm('judge.change_contestparticipation'),
-                'has_rating': False,
-                'points_precision': contest.points_precision,
-                'run_pretests_only': contest.run_pretests_only,
-                'ended': contest.ended,
-                'disqualify_url': reverse('contest_participation_disqualify', args=[contest.key]),
-                'url_templates': {
-                    'all_submissions': all_sub_url.replace('UNAME', '__USERNAME__'),
-                    'problem_submissions': prob_sub_url.replace('UNAME', '__USERNAME__').replace('PROB', '__PROBLEM__'),
-                },
-                'mode': 'participation',
-                'rank_header': str(_('Participation')),
-                'ranking_url': reverse('contest_ranking', args=[contest.key]),
-            },
-            'problems': problems_data,
-            'participations': participations,
-        }
+        contest_data.update({
+            'is_frozen': False,
+            'has_rating': False,
+            'mode': 'participation',
+            'rank_header': str(_('Participation')),
+            'ranking_url': reverse('contest_ranking', args=[contest.key]),
+        })
+        return {'contest': contest_data, 'problems': problems_data, 'participations': participations}
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

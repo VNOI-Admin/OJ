@@ -428,7 +428,8 @@
             '<i class="fa ' + disqIcon + ' fa-fw"></i></a>';
 
         if (contest.can_change_participation) {
-            html += '<a href="' + escapeHtml(p.admin_url) + '" title="Admin" class="edit-participation">' +
+            var adminUrl = contest.admin_url_template.replace('__ID__', p.id);
+            html += '<a href="' + escapeHtml(adminUrl) + '" title="Admin" class="edit-participation">' +
                 '<i class="fa fa-cog fa-fw"></i></a>';
         }
         html += '</span>';
