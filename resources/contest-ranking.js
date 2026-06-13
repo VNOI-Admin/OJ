@@ -132,6 +132,11 @@
     //   extraHeaderCols(meta) → HTML string for extra <th>s after the Points column (before problem columns)
     //   colspanTotalAC → integer colspan for the "Total AC" label cell
 
+    // Returns the pretest CSS prefix for a problem cell.
+    function pretestPrefix(meta, problem) {
+        return (meta.contest.run_pretests_only && problem.is_pretested) ? 'pretest-' : '';
+    }
+
     // meta = { contest, urlTemplates, urls }
     function makeSubmissionUrl(meta, username, problemCode) {
         return meta.contest.url_templates.problem_submissions
@@ -154,7 +159,7 @@
             var pid = String(problem.id);
             var isFirst = firstSolves[pid] === participationId;
             var url = makeSubmissionUrl(meta, meta.username, problem.code);
-            var state = (meta.pretest ? 'pretest-' : '') +
+            var state = pretestPrefix(meta, problem) +
                         (isFirst ? 'first-solve ' : '') +
                         baseStateClass(entry.points, problem.points);
             return '<td class="' + state + '">' +
@@ -193,7 +198,7 @@
 
             var triesText = tries + ' ' + (tries === 1 ? 'try' : 'tries');
             var state = (isFrozen ? 'pending ' : '') +
-                        (meta.pretest ? 'pretest-' : '') +
+                        pretestPrefix(meta, problem) +
                         (isFirst ? 'first-solve ' : '') +
                         baseStateClass(entry.points, problem.points);
 
@@ -230,11 +235,11 @@
         renderProblemCell: function (entry, problem, participationId, firstSolves, meta) {
             if (!entry) return '<td></td>';
             var pid = String(problem.id);
-            var isFirst = firstSolves[pid] === participationId;
             var url = makeSubmissionUrl(meta, meta.username, problem.code);
             var cfg = meta.contest.format_config || {};
             var showTime = cfg.cumtime || cfg.last_score_altering;
-            var state = (meta.pretest ? 'pretest-' : '') +
+            var isFirst = showTime && firstSolves[pid] === participationId;
+            var state = pretestPrefix(meta, problem) +
                         (isFirst ? 'first-solve ' : '') +
                         baseStateClass(entry.points, problem.points);
             return '<td class="' + state + '">' +
@@ -273,7 +278,7 @@
             var penaltyHtml = entry.penalty
                 ? '<small style="color:red"> (' + escapeHtml(fmtPoints(entry.penalty, 0)) + ')</small>'
                 : '';
-            var state = (meta.pretest ? 'pretest-' : '') +
+            var state = pretestPrefix(meta, problem) +
                         (isFirst ? 'first-solve ' : '') +
                         baseStateClass(entry.points, problem.points);
             return '<td class="' + state + '">' +
@@ -304,7 +309,7 @@
                 var penaltyHtml = entry.penalty
                     ? '<small style="color:red"> (' + escapeHtml(fmtPoints(entry.penalty, 0)) + ')</small>'
                     : '';
-                var state = (meta.pretest ? 'pretest-' : '') +
+                var state = pretestPrefix(meta, problem) +
                             (isFirst ? 'first-solve ' : '') +
                             baseStateClass(entry.points, problem.points);
                 return '<td class="' + state + '">' +
@@ -316,7 +321,7 @@
 
             // Pending path: post-freeze submissions hidden
             var state2 = 'pending ' +
-                         (meta.pretest ? 'pretest-' : '') +
+                         pretestPrefix(meta, problem) +
                          (isFirst ? 'first-solve ' : '') +
                          baseStateClass(entry.points, problem.points);
             var pendingBadge = '<small style="color:black;"> [' + escapeHtml(String(pending)) + ']</small>';
@@ -352,7 +357,7 @@
             var bonusHtml = entry.bonus
                 ? '<small> +' + escapeHtml(fmtPoints(entry.bonus, 0)) + '</small>'
                 : '';
-            var state = (meta.pretest ? 'pretest-' : '') +
+            var state = pretestPrefix(meta, problem) +
                         (isFirst ? 'first-solve ' : '') +
                         baseStateClass(entry.points, problem.points);
             return '<td class="' + state + '">' +
@@ -501,7 +506,6 @@
         var meta = {
             contest: contest,
             username: u.username,
-            pretest: contest.run_pretests_only,
         };
 
         // Result cell(s)

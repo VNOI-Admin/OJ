@@ -872,7 +872,6 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
             'virtual': virtual,
             'rating': row['rating__rating'],
             'user': {
-                'id': row['user__id'],
                 'username': username,
                 'display_name': display_name,
                 'name': row['user__user__first_name'],
