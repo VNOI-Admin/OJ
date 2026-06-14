@@ -989,41 +989,6 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         return context
 
 
-class ContestHtmlRankingMixin:
-    """Mixin for ranking views that render the scoreboard table server-side."""
-    ranking_table_template = get_template('contest/ranking-table.html')
-
-    def get_ranking_list(self):
-        raise NotImplementedError()
-
-    def get_rendered_ranking_table(self):
-        users, problems, total_ac = self.get_ranking_list()
-        return self.ranking_table_template.render(request=self.request, context={
-            'table_id': 'ranking-table',
-            'users': users,
-            'problems': problems,
-            'total_ac': total_ac,
-            'contest': self.object,
-            'has_rating': self.object.ratings.exists(),
-            'is_frozen': self.is_frozen,
-            'perms': PermWrapper(self.request.user),
-            'can_edit': self.can_edit,
-            'is_ICPC_format': (self.object.format.name == ICPCContestFormat.name),
-        })
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['rendered_ranking_table'] = self.get_rendered_ranking_table()
-        context['has_rating'] = self.object.ratings.exists()
-        return context
-
-    def get(self, request, *args, **kwargs):
-        if 'raw' in request.GET:
-            self.object = self.get_object()
-            self.check_can_see_own_scoreboard()
-            return HttpResponse(self.get_rendered_ranking_table(), content_type='text/plain')
-        return super().get(request, *args, **kwargs)
-
 
 class ContestRanking(ContestRankingBase):
     tab = 'ranking'
@@ -1131,13 +1096,28 @@ class ContestPublicRanking(ContestRanking):
         return super().get(request, *args, **kwargs)
 
 
-class ContestOfficialRanking(ContestHtmlRankingMixin, ContestRankingBase):
+class ContestOfficialRanking(ContestRankingBase):
     template_name = 'contest/official-ranking.html'
     ranking_table_template = get_template('contest/official-ranking-table.html')
     tab = 'official_ranking'
 
     def get_title(self):
         return _('%s Official Rankings') % self.object.name
+
+    def get_rendered_ranking_table(self):
+        users, problems, total_ac = self.get_ranking_list()
+        return self.ranking_table_template.render(request=self.request, context={
+            'table_id': 'ranking-table',
+            'users': users,
+            'problems': problems,
+            'total_ac': total_ac,
+            'contest': self.object,
+            'has_rating': self.object.ratings.exists(),
+            'is_frozen': self.is_frozen,
+            'perms': PermWrapper(self.request.user),
+            'can_edit': self.can_edit,
+            'is_ICPC_format': (self.object.format.name == ICPCContestFormat.name),
+        })
 
     def get_ranking_list(self):
         def display_points(points):
@@ -1158,6 +1138,7 @@ class ContestOfficialRanking(ContestHtmlRankingMixin, ContestRankingBase):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context['rendered_ranking_table'] = self.get_rendered_ranking_table()
         context['has_rating'] = False
         return context
 
