@@ -29,7 +29,8 @@ from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
 from judge.utils.unicode import utf8bytes
 
-__all__ = ['Organization', 'OrganizationMonthlyUsage', 'Profile', 'OrganizationRequest', 'WebAuthnCredential']
+__all__ = ['Organization', 'OrganizationQuota', 'OrganizationMonthlyUsage', 'Profile', 'OrganizationRequest',
+           'WebAuthnCredential']
 
 
 class EncryptedNullCharField(EncryptedCharField):
@@ -78,24 +79,6 @@ class Organization(models.Model):
         default=settings.VNOJ_MONTHLY_FREE_CREDIT,
         help_text=_('Amount of free credits allocated each month'),
     )
-    max_problems = models.IntegerField(
-        default=None, null=True, blank=True,
-        verbose_name=_('maximum problems'),
-        help_text=_('Maximum number of problems this org can create. '
-                    'Leave blank to use default from settings.'),
-    )
-    max_storage = models.BigIntegerField(
-        default=None, null=True, blank=True,
-        verbose_name=_('maximum storage (bytes)'),
-        help_text=_('Maximum storage for test data in bytes. '
-                    'Leave blank to use default from settings.'),
-    )
-    storage_expiration = models.DateField(
-        default=None, null=True, blank=True,
-        verbose_name=_('storage expiration date'),
-        help_text=_('Expiry date of the paid storage plan. Leave blank for no expiration.'),
-    )
-
     _pp_table = [pow(settings.VNOJ_ORG_PP_STEP, i) for i in range(settings.VNOJ_ORG_PP_ENTRIES)]
 
     def calculate_points(self, table=_pp_table):
@@ -157,35 +140,28 @@ class Organization(models.Model):
         self.current_consumed_credit += consumed
         self.save(update_fields=['free_credit', 'paid_credit', 'current_consumed_credit'])
 
-    def get_max_problems(self):
-        if self.is_storage_expired():
-            return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS
-        if self.max_problems is not None:
-            return self.max_problems
-        return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS
+    @cached_property
+    def _active_quota_agg(self):
+        today = timezone.now().date()
+        return self.quotas.filter(
+            start_date__lte=today,
+            end_date__gte=today,
+        ).aggregate(total_problems=Sum('added_problems'), total_storage=Sum('added_storage'))
 
-    def get_max_storage(self):
-        if self.is_storage_expired():
-            return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE
-        if self.max_storage is not None:
-            return self.max_storage
-        return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE
+    @cached_property
+    def max_problems(self):
+        return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS + (self._active_quota_agg['total_problems'] or 0)
 
-    def is_storage_expired(self):
-        if self.storage_expiration is None:
-            return False
-        return self.storage_expiration < timezone.now().date()
+    @cached_property
+    def max_storage(self):
+        return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE + (self._active_quota_agg['total_storage'] or 0)
 
-    def get_days_remaining(self):
-        if self.storage_expiration is None:
-            return None
-        remaining = (self.storage_expiration - timezone.now().date()).days
-        return max(remaining, 0)
-
-    def get_current_problem_count(self):
+    @cached_property
+    def current_problem_count(self):
         return self.problem_set.count()
 
-    def get_current_storage(self):
+    @cached_property
+    def current_storage(self):
         from django.apps import apps
         ProblemData = apps.get_model('judge', 'ProblemData')
         result = ProblemData.objects.filter(
@@ -194,14 +170,10 @@ class Organization(models.Model):
         return result['total'] or 0
 
     def can_create_problem(self):
-        if self.is_storage_expired():
-            return False
-        return self.get_current_problem_count() < self.get_max_problems()
+        return self.current_problem_count < self.max_problems
 
     def can_upload_data(self):
-        if self.is_storage_expired():
-            return False
-        return self.get_current_storage() < self.get_max_storage()
+        return self.current_storage < self.max_storage
 
     class Meta:
         ordering = ['name']
@@ -213,6 +185,35 @@ class Organization(models.Model):
         )
         verbose_name = _('organization')
         verbose_name_plural = _('organizations')
+
+
+class OrganizationQuota(models.Model):
+    organization = models.ForeignKey(
+        Organization,
+        verbose_name=_('organization'),
+        related_name='quotas',
+        on_delete=models.CASCADE,
+    )
+    start_date = models.DateField(verbose_name=_('start date'))
+    end_date = models.DateField(verbose_name=_('end date'))
+    added_problems = models.IntegerField(
+        verbose_name=_('additional problems'),
+        default=0,
+        help_text=_('Number of additional problems allowed above the default limit.'),
+    )
+    added_storage = models.BigIntegerField(
+        verbose_name=_('additional storage (bytes)'),
+        default=0,
+        help_text=_('Additional storage allowed above the default limit, in bytes.'),
+    )
+
+    class Meta:
+        verbose_name = _('organization quota')
+        verbose_name_plural = _('organization quotas')
+        ordering = ['start_date']
+
+    def __str__(self):
+        return '%s [%s – %s]' % (self.organization, self.start_date, self.end_date)
 
 
 class OrganizationMonthlyUsage(models.Model):

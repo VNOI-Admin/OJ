@@ -5,7 +5,7 @@ from django.utils.html import format_html
 from django.utils.translation import gettext, gettext_lazy as _, ngettext
 from reversion.admin import VersionAdmin
 
-from judge.models import Organization
+from judge.models import Organization, OrganizationQuota
 from judge.widgets import AdminHeavySelect2MultipleWidget, AdminMartorWidget
 
 
@@ -17,17 +17,25 @@ class OrganizationForm(ModelForm):
         }
 
 
+class OrganizationQuotaInline(admin.TabularInline):
+    model = OrganizationQuota
+    fields = ('start_date', 'end_date', 'added_problems', 'added_storage')
+    extra = 0
+    verbose_name = _('Quota Grant')
+    verbose_name_plural = _('Quota Grants')
+
+
 class OrganizationAdmin(VersionAdmin):
     readonly_fields = ('creation_date', 'current_consumed_credit')
     fields = ('name', 'slug', 'short_name', 'is_open', 'is_unlisted', 'paid_credit', 'current_consumed_credit',
-              'about', 'logo_override_image', 'slots', 'max_problems', 'max_storage', 'storage_expiration',
-              'creation_date', 'admins')
+              'about', 'logo_override_image', 'slots', 'creation_date', 'admins')
     list_display = ('name', 'short_name', 'is_open', 'is_unlisted', 'slots', 'show_public')
     prepopulated_fields = {'slug': ('name',)}
     actions = ('recalculate_points',)
     actions_on_top = True
     actions_on_bottom = True
     form = OrganizationForm
+    inlines = (OrganizationQuotaInline,)
 
     @admin.display(description='')
     def show_public(self, obj):

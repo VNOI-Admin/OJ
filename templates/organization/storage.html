@@ -45,20 +45,29 @@
             </p>
         </div>
 
-        {% if storage_expiration %}
-            <p style="margin: 0.25em 0; margin-left: 2em; color: #666;">
-                {{ _('Plan expires:') }} {{ storage_expiration }}
-                {% if storage_expired %}
-                    — <strong style="color: #dc3545;">{{ _('Expired') }}</strong>
-                {% elif days_remaining_display %}
-                    ({{ days_remaining_display }})
-                {% endif %}
-            </p>
-        {% endif %}
-
-        {% if storage_expired %}
-        <div class="quota-warning">
-            {{ _('Storage plan has expired! Please contact an administrator to renew.') }}
+        {% if active_quotas %}
+        <div style="margin-left: 2em; margin-top: 0.75em;">
+            <h4 style="margin-bottom: 0.4em;">{{ _('Active Quota Grants') }}</h4>
+            <table class="table" style="width: auto;">
+                <thead>
+                    <tr>
+                        <th>{{ _('Start') }}</th>
+                        <th>{{ _('Expires') }}</th>
+                        <th>{{ _('+ Problems') }}</th>
+                        <th>{{ _('+ Storage') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for q in active_quotas %}
+                    <tr>
+                        <td>{{ q.start_date }}</td>
+                        <td>{{ q.end_date }}</td>
+                        <td>+{{ q.added_problems }}</td>
+                        <td>+{{ q.added_storage|filesizeformat }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
         </div>
         {% endif %}
 
