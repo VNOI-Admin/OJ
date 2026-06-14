@@ -89,4 +89,3 @@ class BaseContestFormat(metaclass=ABCMeta):
         :return: A generator, where each item is an individual line.
         """
         raise NotImplementedError()
-

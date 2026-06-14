@@ -38,18 +38,17 @@ from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
-from judge.ratings import RATING_CLASS, RATING_LEVELS, RATING_VALUES
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
+from judge.ratings import RATING_CLASS, RATING_LEVELS, RATING_VALUES
 from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
-from judge.utils.ranker import ranker
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 from judge.utils.views import SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message, paginate_query_context
@@ -959,8 +958,13 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             'format_config': contest.format.config,
             'can_edit': self.can_edit,
             **({
-                'admin_url_template': reverse('admin:judge_contestparticipation_change', args=[0]).replace('/0/', '/__ID__/'),
-                'can_change_participation': self.request.user.has_perm('judge.change_contestparticipation'),
+                'admin_url_template': reverse(
+                    'admin:judge_contestparticipation_change',
+                    args=[0],
+                ).replace('/0/', '/__ID__/'),
+                'can_change_participation': self.request.user.has_perm(
+                    'judge.change_contestparticipation',
+                ),
                 'disqualify_url': reverse('contest_participation_disqualify', args=[contest.key]),
             } if self.can_edit else {}),
             'points_precision': contest.points_precision,
