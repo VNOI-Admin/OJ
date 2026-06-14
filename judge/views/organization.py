@@ -682,17 +682,19 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
 class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
     permission_required = 'judge.create_organization_problem'
 
-    def dispatch(self, request, *args, **kwargs):
-        result = super().dispatch(request, *args, **kwargs)
-        if hasattr(self, 'organization') and not self.organization.can_create_problem():
-            return generic_message(
-                request,
-                _('Problem limit reached'),
-                _('This organization has reached its maximum number of problems (%d). '
-                  'Please delete some problems before creating new ones.')
-                % self.organization.get_max_problems(),
-            )
-        return result
+    def _quota_error_response(self):
+        return generic_message(
+            self.request,
+            _('Problem limit reached'),
+            _('This organization has reached its maximum number of problems (%d). '
+              'Please delete some problems before creating new ones.')
+            % self.organization.get_max_problems(),
+        )
+
+    def get(self, request, *args, **kwargs):
+        if not self.organization.can_create_problem():
+            return self._quota_error_response()
+        return super().get(request, *args, **kwargs)
 
     def get_initial(self):
         initial = super(ProblemCreateOrganization, self).get_initial()
@@ -706,6 +708,8 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
         return kwargs
 
     def form_valid(self, form):
+        if not self.organization.can_create_problem():
+            return self._quota_error_response()
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()
             problem.authors.add(self.request.user.profile)
@@ -818,7 +822,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
         context['max_storage'] = org.get_max_storage()
         context['max_problems'] = org.get_max_problems()
         context['problem_count'] = org.get_current_problem_count()
-        context['storage_exceeded'] = context['total_storage'] > org.get_max_storage()
+        context['storage_exceeded'] = context['total_storage'] >= context['max_storage']
         context['problem_limit_reached'] = context['problem_count'] >= org.get_max_problems()
         context['storage_expiration'] = org.storage_expiration
         context['storage_expired'] = org.is_storage_expired()
