@@ -104,7 +104,9 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
         return timezone.now()
 
     def _get_queryset(self):
-        return super().get_queryset().prefetch_related('tags', 'organization', 'authors', 'curators', 'testers')
+        return super().get_queryset().prefetch_related(
+            'tags', 'organization', 'authors', 'curators', 'testers', 'view_contest_scoreboard',
+        )
 
     def get_queryset(self):
         self.search_query = None
@@ -133,7 +135,8 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
             for participation in ContestParticipation.objects.filter(virtual=0, user=self.request.profile,
                                                                      contest_id__in=present) \
                     .select_related('contest') \
-                    .prefetch_related('contest__authors', 'contest__curators', 'contest__testers') \
+                    .prefetch_related('contest__authors', 'contest__curators', 'contest__testers',
+                                      'contest__view_contest_scoreboard') \
                     .annotate(key=F('contest__key')):
                 if participation.ended:
                     finished.add(participation.contest.key)
