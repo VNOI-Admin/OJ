@@ -20,6 +20,7 @@ from judge.models import Badge, BlogPost, BlogPostTag, Comment, CommentLock, Con
     OrganizationRequest, Problem, ProblemGroup, ProblemType, Profile, Submission, Tag, \
     TagGroup, TagProblem, Ticket
 
+
 admin.site.register(BlogPost, BlogPostAdmin)
 admin.site.register(BlogPostTag, BlogPostTagAdmin)
 admin.site.register(Comment, CommentAdmin)

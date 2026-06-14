@@ -13,7 +13,7 @@ from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed,
 from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
     preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, submission, tag, \
-    tasks, ticket, two_factor, user, widgets
+    tasks, ticket, two_factor, user, user_files, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -203,6 +203,14 @@ urlpatterns = [
     path('set-theme/', user.set_theme, name='set_theme'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
+    path('files/', user_files.UserFileListView.as_view(), name='user_file_list'),
+    path('files/upload', user_files.UserFileUploadView.as_view(), name='user_file_upload'),
+    path('files/<uuid:uuid>', user_files.UserFileDetailView.as_view(), name='user_file_detail'),
+    path('files/<uuid:uuid>/edit', user_files.UserFileEditView.as_view(), name='user_file_edit'),
+    path('files/<uuid:uuid>/delete', user_files.UserFileDeleteView.as_view(), name='user_file_delete'),
+    path('files/bulk-delete', user_files.UserFileBulkDeleteView.as_view(), name='user_file_bulk_delete'),
+    path('files/<uuid:uuid>/view', user_files.UserFileAccessView.as_view(), name='user_file_access'),
+    path('files/<uuid:uuid>/download', user_files.UserFileDownloadView.as_view(), name='user_file_download'),
     path('user/<str:user>', include([
         path('', user.UserAboutPage.as_view(), name='user_page'),
         path('/ban', user.UserBan.as_view(), name='user_ban'),
@@ -468,6 +476,11 @@ if settings.VNOJ_ENABLE_API:
             path('participations', api.api_v2.APIContestParticipationList.as_view()),
             path('languages', api.api_v2.APILanguageList.as_view()),
             path('judges', api.api_v2.APIJudgeList.as_view()),
+            path('user/files', api.user_files.UserFileListView.as_view()),
+            path('user/files/upload', api.user_files.UserFileUploadView.as_view()),
+            path('user/files/<uuid:uuid>', api.user_files.UserFileDetailView.as_view()),
+            path('user/files/<uuid:uuid>/download', api.user_files.UserFileDownloadView.as_view()),
+            path('user/files/<uuid:uuid>/delete', api.user_files.UserFileDeleteView.as_view()),
         ])),
     )
 
@@ -502,3 +515,8 @@ try:
         exec(f.read(), globals())
 except IOError:
     pass
+
+# Serve media files in development
+if settings.DEBUG:
+    from django.conf.urls.static import static
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

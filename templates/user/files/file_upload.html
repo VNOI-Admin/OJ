@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}{{ _('Upload File') }}{% endblock %}
+
+{% block header %}
+    <div class="title-line-action">
+        [<a href="{{ url('user_file_list') }}"><i class="fa fa-arrow-left"></i> {{ _('My Files') }}</a>]
+    </div>
+{% endblock %}
+
+{% block media %}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+{% endblock %}
+
+{% block body %}
+<form method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
+
+    {% if form.non_field_errors() %}
+        <div class="errorlist">
+            {% for error in form.non_field_errors() %}<p>{{ error }}</p>{% endfor %}
+        </div>
+    {% endif %}
+
+    <table class="table django-as-table">
+        <tr>
+            <th><label for="{{ form.file.id_for_label }}">{{ form.file.label }}</label></th>
+            <td>
+                {{ form.file }}
+                {% if form.file.errors %}
+                    <div class="errorlist">{% for e in form.file.errors %}{{ e }}{% endfor %}</div>
+                {% endif %}
+                <div class="helptext">{{ _('Maximum file size: 500 MB') }}</div>
+            </td>
+        </tr>
+        <tr>
+            <th><label for="{{ form.is_public.id_for_label }}">{{ form.is_public.label }}</label></th>
+            <td>
+                {{ form.is_public }}
+                {% if form.is_public.errors %}
+                    <div class="errorlist">{% for e in form.is_public.errors %}{{ e }}{% endfor %}</div>
+                {% endif %}
+                <div class="helptext">{{ _('If checked, anyone with the link can access this file.') }}</div>
+            </td>
+        </tr>
+    </table>
+
+    <div style="display:flex;gap:0.5em;flex-wrap:wrap;margin-top:1em;">
+        <button type="submit" class="button inline-button"><i class="fa fa-upload"></i> {{ _('Upload') }}</button>
+        <a href="{{ url('user_file_list') }}" class="button inline-button">{{ _('Cancel') }}</a>
+    </div>
+</form>
+{% endblock %}

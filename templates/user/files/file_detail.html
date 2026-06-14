@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block title %}{{ file.filename }} — {{ _('My Files') }}{% endblock %}
+
+{% block body %}
+<p><a href="{{ url('user_file_list') }}"><i class="fa fa-arrow-left"></i> {{ _('Back to My Files') }}</a></p>
+
+<div class="sidebox">
+    <h3>{{ _('File information') }}</h3>
+    <div class="sidebox-content sidebox-table">
+        <table class="table">
+            <tr>
+                <th>{{ _('Filename') }}</th>
+                <td>{{ file.filename }}</td>
+            </tr>
+            <tr>
+                <th>{{ _('Size') }}</th>
+                <td>{{ file.size|filesizeformat }}</td>
+            </tr>
+            <tr>
+                <th>{{ _('Uploaded') }}</th>
+                <td>{{ file.uploaded_at|date('DATETIME_FORMAT') }}</td>
+            </tr>
+            <tr>
+                <th>{{ _('Last accessed') }}</th>
+                <td>
+                    {% if file.last_accessed %}
+                        {{ file.last_accessed|date('DATETIME_FORMAT') }}
+                    {% else %}
+                        <em>{{ _('Never') }}</em>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>{{ _('Access count') }}</th>
+                <td>{{ file.access_count }}</td>
+            </tr>
+            <tr>
+                <th>{{ _('Visibility') }}</th>
+                <td>
+                    {% if file.is_public %}
+                        {{ _('Public') }}
+                    {% else %}
+                        {{ _('Private') }}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <th>{{ _('UUID') }}</th>
+                <td style="font-family:monospace;font-size:0.85em;word-break:break-all;-webkit-user-select:all;user-select:all;">{{ file.uuid }}</td>
+            </tr>
+            {% if file.is_public %}
+                <tr>
+                    <th>{{ _('Public URL') }}</th>
+                    <td>
+                        <input id="public-url-field" type="text" readonly
+                               value="{{ request.build_absolute_uri(url('user_file_access', file.uuid)) }}"
+                               style="font-family:monospace;font-size:0.85em;width:100%;">
+                        <button type="button" class="button inline-button" style="margin-top:0.4em;" onclick="copyPublicUrl()">{{ _('Copy') }}</button>
+                    </td>
+                </tr>
+            {% endif %}
+        </table>
+    </div>
+</div>
+
+<div class="sidebox">
+    <h3>{{ _('Actions') }}</h3>
+    <div class="sidebox-content">
+        <div style="display:flex;gap:0.5em;flex-wrap:wrap;">
+            <a href="{{ url('user_file_download', file.uuid) }}" class="button inline-button"><i class="fa fa-download"></i> {{ _('Download') }}</a>
+            {% if can_delete %}
+                <a href="{{ url('user_file_delete', file.uuid) }}" class="button inline-button"><i class="fa fa-trash"></i> {{ _('Delete') }}</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if file.usages.exists() %}
+    <div class="sidebox">
+        <h3>{{ _('Used in') }}</h3>
+        <div class="sidebox-content sidebox-table">
+            <table class="table">
+                {% for usage in file.usages.all() %}
+                    <tr>
+                        <td><strong>{{ usage.get_usage_type_display() }}</strong></td>
+                        <td>
+                            {% if usage.context_description %}
+                                {{ usage.context_description }}
+                            {% elif usage.problem_id %}
+                                {{ _('Problem ID:') }} {{ usage.problem_id }}
+                            {% elif usage.contest_id %}
+                                {{ _('Contest ID:') }} {{ usage.contest_id }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+{% if can_edit %}
+    <div class="sidebox">
+        <h3>{{ _('Edit metadata') }} <i class="fa fa-edit"></i></h3>
+        <div class="sidebox-content">
+            <form method="post" action="{{ url('user_file_edit', file.uuid) }}" novalidate>
+                {% csrf_token %}
+
+                {% if form.non_field_errors() %}
+                    <div class="errorlist">
+                        {% for error in form.non_field_errors() %}<p>{{ error }}</p>{% endfor %}
+                    </div>
+                {% endif %}
+
+                <div style="margin-top:0.5em;">
+                    {{ form.is_public }}
+                    <label for="{{ form.is_public.id_for_label }}" style="float:unset;display:inline;">
+                        {{ form.is_public.label }}
+                    </label>
+                    {% if form.is_public.errors %}
+                        <div class="errorlist">{{ form.is_public.errors }}</div>
+                    {% endif %}
+                    <small class="helptext">{{ _('If checked, this file is accessible to all users.') }}</small>
+                </div>
+
+                <div style="margin-top:0.8em;">
+                    <button type="submit" class="button inline-button"><i class="fa fa-save"></i> {{ _('Save changes') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+{% if file.is_public %}
+<script>
+function copyPublicUrl() {
+    var field = document.getElementById('public-url-field');
+    field.select();
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(field.value);
+    } else {
+        document.execCommand('copy');
+    }
+}
+</script>
+{% endif %}
+{% endblock %}

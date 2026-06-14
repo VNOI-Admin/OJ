@@ -21,7 +21,7 @@ from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, Language, \
-    LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
+    LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, UserFile, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -864,3 +864,42 @@ class CompareSubmissionsForm(Form):
     user = forms.ChoiceField(
         widget=HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
     )
+
+
+# ============================================================================
+# User File Upload Forms
+# ============================================================================
+
+class UserFileUploadForm(ModelForm):
+    MAX_UPLOAD_SIZE = 500 * 1024 * 1024
+
+    class Meta:
+        model = UserFile
+        fields = ['file', 'is_public']
+        widgets = {
+            'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
+            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
+
+    def clean_file(self):
+        file_obj = self.cleaned_data.get('file')
+        if file_obj and file_obj.size > self.MAX_UPLOAD_SIZE:
+            raise ValidationError(_('File size exceeds maximum allowed size of 500 MB.'))
+        return file_obj
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if instance.file and not instance.filename:
+            instance.filename = os.path.basename(instance.file.name)
+        if commit:
+            instance.save()
+        return instance
+
+
+class UserFileEditForm(ModelForm):
+    class Meta:
+        model = UserFile
+        fields = ['is_public']
+        widgets = {
+            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+        }
