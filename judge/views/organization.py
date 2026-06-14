@@ -593,52 +593,6 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         return _filter & Q(organization=self.organization)
 
 
-class MonthlyCreditUsageOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, ListView):
-    template_name = 'organization/usage.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = self.organization.name
-        context['usages'] = OrganizationMonthlyUsage.objects.filter(organization=self.organization)\
-            .order_by('time').values('time', 'consumed_credit')
-
-        usages = context['usages']
-        days = [usage['time'].isoformat() for usage in usages] + [_('Current month')]
-        used_credits = [usage['consumed_credit'] for usage in usages] + [self.organization.current_consumed_credit]
-        sec_per_hour = 60 * 60
-        chart = get_lines_chart(days, {
-            _('Credit usage (hour)'): [
-                round(credit / sec_per_hour, 2) for credit in used_credits
-            ],
-        })
-
-        cost_chart = get_lines_chart(days, {
-            _('Cost (thousand vnd)'): [
-                round(
-                    max(0, credit - settings.VNOJ_MONTHLY_FREE_CREDIT) / sec_per_hour * settings.VNOJ_PRICE_PER_HOUR, 3,
-                ) for credit in used_credits
-            ],
-        })
-
-        free_credit = int(self.organization.free_credit)
-
-        context['free_credit'] = {
-            'hour': free_credit // sec_per_hour,
-            'minute': (free_credit % sec_per_hour) // 60,
-            'second': free_credit % 60,
-        }
-
-        paid_credit = int(self.organization.paid_credit)
-
-        context['paid_credit'] = {
-            'hour': paid_credit // sec_per_hour,
-            'minute': (paid_credit % sec_per_hour) // 60,
-            'second': paid_credit % 60,
-        }
-
-        context['credit_chart'] = chart
-        context['cost_chart'] = cost_chart
-        return context
 
 
 class ContestListOrganization(PrivateOrganizationMixin, ContestList):
@@ -772,7 +726,7 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
 class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
                                    InfinitePaginationMixin, ListView):
     """Dashboard showing storage usage for organization admins."""
-    template_name = 'organization/storage.html'
+    template_name = 'organization/usage.html'
     context_object_name = 'problems'
     paginate_by = 100
 
@@ -826,6 +780,35 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             org.quotas.filter(start_date__lte=today, end_date__gte=today).order_by('end_date'),
         )
         context['quota_warning_suffix'] = settings.VNOJ_QUOTA_WARNING_SUFFIX
+
+        # Credit/cost chart context (merged from usage page)
+        usages = OrganizationMonthlyUsage.objects.filter(organization=org) \
+            .order_by('time').values('time', 'consumed_credit')
+        context['usages'] = usages
+        days = [usage['time'].isoformat() for usage in usages] + [_('Current month')]
+        used_credits = [usage['consumed_credit'] for usage in usages] + [org.current_consumed_credit]
+        sec_per_hour = 60 * 60
+        context['credit_chart'] = get_lines_chart(days, {
+            _('Credit usage (hour)'): [round(c / sec_per_hour, 2) for c in used_credits],
+        })
+        context['cost_chart'] = get_lines_chart(days, {
+            _('Cost (thousand vnd)'): [
+                round(max(0, c - settings.VNOJ_MONTHLY_FREE_CREDIT) / sec_per_hour * settings.VNOJ_PRICE_PER_HOUR, 3)
+                for c in used_credits
+            ],
+        })
+        free_credit = int(org.free_credit)
+        context['free_credit'] = {
+            'hour': free_credit // sec_per_hour,
+            'minute': (free_credit % sec_per_hour) // 60,
+            'second': free_credit % 60,
+        }
+        paid_credit = int(org.paid_credit)
+        context['paid_credit'] = {
+            'hour': paid_credit // sec_per_hour,
+            'minute': (paid_credit % sec_per_hour) // 60,
+            'second': paid_credit % 60,
+        }
 
         context.update(paginate_query_context(self.request))
 
