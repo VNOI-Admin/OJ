@@ -74,12 +74,14 @@
         {% if storage_exceeded %}
         <div class="quota-warning">
             {{ _('Storage limit reached! Please delete some files or test data to free up space.') }}
+            {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
         </div>
         {% endif %}
 
         {% if problem_limit_reached %}
         <div class="quota-warning">
             {{ _('Problem limit reached! Please delete some problems before creating new ones.') }}
+            {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
         </div>
         {% endif %}
     </div>

@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+
+{% block body %}
+    <pre style="font-weight: 400; font-size: 1.4em;">{{ message }}</pre>
+    {% if quota_warning_suffix %}
+        <p>{{ quota_warning_suffix|safe }}</p>
+    {% endif %}
+    <a href="javascript:history.back()">{{ _('Go back') }}</a>
+{% endblock %}

@@ -679,13 +679,13 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
     permission_required = 'judge.create_organization_problem'
 
     def _quota_error_response(self):
-        return generic_message(
-            self.request,
-            _('Problem limit reached'),
-            _('This organization has reached its maximum number of problems (%d). '
-              'Please delete some problems before creating new ones.')
+        return render(self.request, 'organization/quota-error.html', {
+            'title': _('Problem limit reached'),
+            'message': _('This organization has reached its maximum number of problems (%d). '
+                         'Please delete some problems before creating new ones.')
             % self.organization.max_problems,
-        )
+            'quota_warning_suffix': settings.VNOJ_QUOTA_WARNING_SUFFIX,
+        })
 
     def get(self, request, *args, **kwargs):
         if not self.organization.can_create_problem():
@@ -825,6 +825,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
         context['active_quotas'] = list(
             org.quotas.filter(start_date__lte=today, end_date__gte=today).order_by('end_date'),
         )
+        context['quota_warning_suffix'] = settings.VNOJ_QUOTA_WARNING_SUFFIX
 
         context.update(paginate_query_context(self.request))
 

@@ -1007,6 +1007,7 @@
                 padding: 1em; margin-bottom: 1em; border-radius: 4px;">
             <strong>{{ _('Storage limit exceeded!') }}</strong>
             {{ _('This organization has reached its storage quota. Please delete some test data before uploading more.') }}
+            {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
         </div>
     {% endif %}
     <form action="" method="POST" enctype="multipart/form-data">
