@@ -57,6 +57,7 @@
     }
 
     function ratingLevel(r) {
+        if (!_ratingConfig) return 0;
         var values = _ratingConfig.values;
         for (var i = 0; i < values.length; i++) {
             if (r < values[i]) return i;
@@ -65,6 +66,7 @@
     }
 
     function ratingProgress(r) {
+        if (!_ratingConfig) return 0;
         var values = _ratingConfig.values;
         var lvl = ratingLevel(r);
         if (lvl >= values.length) return 1.0;

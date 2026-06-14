@@ -821,7 +821,7 @@ def base_contest_frozen_ranking_queryset(contest):
         .order_by('is_disqualified', '-frozen_score', 'frozen_cumtime', 'frozen_tiebreaker', '-submission_count')
 
 
-def _serialize_user(row, user_url_prefix, org_url_prefix):
+def _serialize_user(row, user_url_tpl, org_url_tpl):
     """Serialize the user/profile portion of a participation row into a JSON-safe dict."""
     username = row['user__user__username']
     display_name = row['user__username_display_override'] or username
@@ -835,10 +835,10 @@ def _serialize_user(row, user_url_prefix, org_url_prefix):
         'display_name': display_name,
         'name': row['user__user__first_name'],
         'css_class': Profile.get_user_css_class(row['user__display_rank'], row['user__rating']),
-        'url': user_url_prefix + username,
+        'url': user_url_tpl.replace('__USERNAME__', username),
         'organization': {
             'short_name': org_short_name,
-            'url': org_url_prefix + org_slug,
+            'url': org_url_tpl.replace('__SLUG__', org_slug),
         } if org_short_name else None,
         'badge': {
             'mini': badge_mini,
@@ -860,8 +860,8 @@ def _serialize_format_data(contest, problems, raw_format_data, frozen):
 
 def make_contest_ranking_json(contest, problems, queryset, frozen=False):
     # Pre-compute URL templates once to avoid per-row reverse() overhead.
-    _user_url_prefix = reverse('user_page', args=['__U__']).split('__U__')[0]
-    _org_url_prefix = reverse('organization_home', args=['__S__']).split('__S__')[0]
+    _user_url_tpl = reverse('user_page', args=['__USERNAME__'])
+    _org_url_tpl = reverse('organization_home', args=['__SLUG__'])
 
     # Subqueries for the user's first organisation (replicates Profile.organization).
     _org_qs = Organization.objects.filter(
@@ -894,7 +894,7 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
             'is_disqualified': row['is_disqualified'],
             'virtual': row['virtual'],
             'rating': row['rating__rating'],
-            'user': _serialize_user(row, _user_url_prefix, _org_url_prefix),
+            'user': _serialize_user(row, _user_url_tpl, _org_url_tpl),
             'format_data': _serialize_format_data(contest, problems, row['format_data'], frozen),
         })
     return participations_data
@@ -905,7 +905,7 @@ def _add_ranks_to_participation_json(participations):
     delta = 1
     last_key = None
     for p in participations:
-        key = (p['score'], p['cumtime'], p['tiebreaker'])
+        key = (p['is_disqualified'], p['score'], p['cumtime'], p['tiebreaker'])
         if key != last_key:
             rank += delta
             delta = 0
@@ -950,8 +950,6 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             }
             for i, prob in enumerate(problems)
         ]
-        all_sub_url = reverse('contest_all_user_submissions', args=[contest.key, 'UNAME'])
-        prob_sub_url = reverse('contest_user_submissions', args=[contest.key, 'UNAME', 'PROB'])
         contest_data = {
             'key': contest.key,
             'format': contest.format_name,
@@ -971,8 +969,11 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             'run_pretests_only': contest.run_pretests_only,
             'ended': contest.ended,
             'url_templates': {
-                'all_submissions': all_sub_url.replace('UNAME', '__USERNAME__'),
-                'problem_submissions': prob_sub_url.replace('UNAME', '__USERNAME__').replace('PROB', '__PROBLEM__'),
+                'all_submissions': reverse('contest_all_user_submissions', args=[contest.key, '__USERNAME__']),
+                'problem_submissions': reverse(
+                    'contest_user_submissions',
+                    args=[contest.key, '__USERNAME__', '__PROBLEM__'],
+                ),
             },
             'rating_config': {
                 'values': RATING_VALUES,
@@ -987,7 +988,6 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         self.check_can_see_own_scoreboard()
         context['tab'] = self.tab
         return context
-
 
 
 class ContestRanking(ContestRankingBase):
