@@ -158,6 +158,8 @@ class Organization(models.Model):
         self.save(update_fields=['free_credit', 'paid_credit', 'current_consumed_credit'])
 
     def get_max_problems(self):
+        if self.is_storage_expired():
+            return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS
         if self.max_problems is not None:
             return self.max_problems
         return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS
@@ -199,7 +201,7 @@ class Organization(models.Model):
     def can_upload_data(self):
         if self.is_storage_expired():
             return False
-        return self.get_current_storage() <= self.get_max_storage()
+        return self.get_current_storage() < self.get_max_storage()
 
     class Meta:
         ordering = ['name']

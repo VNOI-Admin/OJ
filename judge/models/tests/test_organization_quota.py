@@ -80,12 +80,12 @@ class OrganizationQuotaTestCase(CommonDataMixin, TestCase):
         self.assertFalse(self.org.can_upload_data())
 
     def test_can_upload_data_exactly_at_limit(self):
-        """Org exactly at storage limit should still allow (<=)."""
+        """Org exactly at storage limit should block further uploads (<)."""
         self.org.max_storage = 100
         problem = create_problem(code='storage_test_2', organization=self.org, is_organization_private=True)
         ProblemData.objects.get_or_create(problem=problem)
         ProblemData.objects.filter(problem=problem).update(zipfile_size=100)
-        self.assertTrue(self.org.can_upload_data())
+        self.assertFalse(self.org.can_upload_data())
 
     def test_get_current_problem_count(self):
         """Should count only problems belonging to this org."""
@@ -174,10 +174,17 @@ class StorageExpirationTestCase(CommonDataMixin, TestCase):
 
     @override_settings(VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE=5 * 1024 * 1024 * 1024)
     def test_get_max_storage_resets_when_expired(self):
-        """Expired org should return default max_storage, ignoring custom override."""
+        """Expired org returns default max_storage; custom plan limit is no longer active."""
         self.org.max_storage = 50 * 1024 * 1024 * 1024  # 50GB custom
         self.org.storage_expiration = self._today() - datetime.timedelta(days=1)
         self.assertEqual(self.org.get_max_storage(), settings.VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE)
+
+    @override_settings(VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS=1000)
+    def test_get_max_problems_resets_when_expired(self):
+        """Expired org returns default max_problems; custom plan limit is no longer active."""
+        self.org.max_problems = 5000
+        self.org.storage_expiration = self._today() - datetime.timedelta(days=1)
+        self.assertEqual(self.org.get_max_problems(), settings.VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS)
 
     def test_get_max_storage_keeps_override_when_not_expired(self):
         """Non-expired org should keep its custom max_storage."""
