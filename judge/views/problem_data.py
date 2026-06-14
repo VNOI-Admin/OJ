@@ -257,9 +257,9 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
             if not org.can_upload_data():
                 error = ValidationError(
                     _('Storage limit exceeded for organization "%(org)s". '
-                      'Please delete some test data before uploading more.')
-                    % {'org': org.name},
+                      'Please delete some test data before uploading more.'),
                     code='storage_exceeded',
+                    params={'org': org.name},
                 )
                 data_form.add_error(None, error)
                 return False
