@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-15 06:42+0000\n"
+"POT-Creation-Date: 2026-06-15 07:42+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -1078,7 +1078,7 @@ msgstr "j, M, Y, G:i"
 msgid "{time}"
 msgstr "{time}"
 
-#: judge/jinja2/datetime.py:32 templates/blog/modern-list.html:94
+#: judge/jinja2/datetime.py:32 templates/blog/modern-list.html:91
 #, python-brace-format
 msgid "on {time}"
 msgstr "vào lúc {time}"
@@ -1220,8 +1220,8 @@ msgstr "Xem tất cả bình luận của người dùng"
 msgid "comment"
 msgstr "bình luận"
 
-#: judge/models/comment.py:45 templates/blog/modern-list.html:161
-#: templates/blog/modern-list.html:164
+#: judge/models/comment.py:45 templates/blog/modern-list.html:155
+#: templates/blog/modern-list.html:158
 msgid "comments"
 msgstr "nhận xét"
 
@@ -3819,23 +3819,23 @@ msgstr "Blog - Trang %d"
 msgid "Blog"
 msgstr "Blog"
 
-#: judge/views/blog.py:373 judge/views/blog.py:376
+#: judge/views/blog.py:341 judge/views/blog.py:344
 msgid "Creating new blog post"
 msgstr "Tạo blog mới"
 
-#: judge/views/blog.py:394 judge/views/contests.py:1242
+#: judge/views/blog.py:362 judge/views/contests.py:1242
 #: judge/views/organization.py:400 judge/views/organization.py:677
 #: judge/views/organization.py:701 judge/views/problem.py:925
 #: judge/views/problem.py:965 judge/views/tag.py:182
 msgid "Created on site"
 msgstr "Tạo trên trang web"
 
-#: judge/views/blog.py:408 judge/views/blog.py:447 judge/views/contests.py:270
+#: judge/views/blog.py:376 judge/views/blog.py:415 judge/views/contests.py:270
 #: judge/views/contests.py:1253
 msgid "Permission denied"
 msgstr "Từ chối quyền"
 
-#: judge/views/blog.py:409
+#: judge/views/blog.py:377
 #, python-format
 msgid ""
 "You cannot create blog post.\n"
@@ -3844,17 +3844,17 @@ msgstr ""
 "Không thể tạo blog.\n"
 "Lưu ý: Bạn cần giải ít nhất %d bài để có thể tạo blog."
 
-#: judge/views/blog.py:423 judge/views/blog.py:426
+#: judge/views/blog.py:391 judge/views/blog.py:394
 msgid "Updating blog post"
 msgstr "Cập nhật blog"
 
-#: judge/views/blog.py:441 judge/views/comment.py:142
+#: judge/views/blog.py:409 judge/views/comment.py:142
 #: judge/views/contests.py:1311 judge/views/organization.py:443
 #: judge/views/problem.py:1116
 msgid "Edited from site"
 msgstr "Chỉnh sửa từ trang web"
 
-#: judge/views/blog.py:448
+#: judge/views/blog.py:416
 msgid "You cannot edit blog post."
 msgstr "Bạn không thể chỉnh sửa blog."
 
@@ -5222,8 +5222,9 @@ msgid "Change"
 msgstr "Thay đổi"
 
 #: templates/admin/judge/app_index.html:23 templates/blog/edit.html:55
-#: templates/contest/edit.html:249 templates/problem/confirm_delete.html:43
-#: templates/problem/editor.html:122
+#: templates/contest/edit.html:249 templates/organization/usage.html:164
+#: templates/organization/usage.html:195
+#: templates/problem/confirm_delete.html:43 templates/problem/editor.html:122
 #: templates/urlshortener/confirm_delete.html:91
 #: templates/urlshortener/detail.html:101 templates/urlshortener/list.html:73
 #: templates/user/edit-profile.html:437
@@ -5392,7 +5393,7 @@ msgstr "Hãy đăng nhập để bình chọn"
 msgid "posted on {time}"
 msgstr "đã đăng vào {time}"
 
-#: templates/blog/blog-post.html:45 templates/blog/modern-list.html:106
+#: templates/blog/blog-post.html:45 templates/blog/modern-list.html:103
 msgid "Continue reading..."
 msgstr "Đọc tiếp..."
 
@@ -5524,43 +5525,27 @@ msgstr "Mới nhất"
 msgid "Top"
 msgstr "Nổi bật"
 
-#: templates/blog/modern-list.html:57
-msgid "Discussed"
-msgstr "Đã thảo luận"
-
-#: templates/blog/modern-list.html:65
+#: templates/blog/modern-list.html:62
 msgid "My Posts"
 msgstr "Bài viết của tôi"
 
-#: templates/blog/modern-list.html:68
+#: templates/blog/modern-list.html:65
 msgid "Write"
 msgstr "Viết"
 
-#: templates/blog/modern-list.html:73
+#: templates/blog/modern-list.html:70
 msgid "Manage"
 msgstr "Quản lý"
 
-#: templates/blog/modern-list.html:132
-msgid "Total score:"
-msgstr "Tổng điểm:"
-
-#: templates/blog/modern-list.html:132
-msgid "up"
-msgstr "lên"
-
-#: templates/blog/modern-list.html:132
-msgid "down"
-msgstr "xuống"
-
-#: templates/blog/modern-list.html:144 templates/ticket/ticket.html:353
+#: templates/blog/modern-list.html:138 templates/ticket/ticket.html:353
 msgid "Upvote"
 msgstr "Bình chọn"
 
-#: templates/blog/modern-list.html:153
+#: templates/blog/modern-list.html:147
 msgid "Downvote"
 msgstr "Phản đối"
 
-#: templates/blog/modern-list.html:161 templates/urlshortener/list.html:67
+#: templates/blog/modern-list.html:155 templates/urlshortener/list.html:67
 msgid "View"
 msgstr "Xem"
 
@@ -6777,129 +6762,122 @@ msgstr "Danh sách kỳ thi"
 msgid "Create new problem"
 msgstr "Tạo bài mới"
 
-#: templates/organization/usage.html:71
+#: templates/organization/usage.html:81
 msgid "Storage usage"
 msgstr "Mức sử dụng dung lượng"
 
-#: templates/organization/usage.html:76
+#: templates/organization/usage.html:86
 msgid "Credit usage"
 msgstr "Chi phí chấm bài"
 
-#: templates/organization/usage.html:85
+#: templates/organization/usage.html:95
 msgid "Total used storage: "
 msgstr "Tổng dung lượng đã dùng: "
 
-#: templates/organization/usage.html:88
+#: templates/organization/usage.html:98
 msgid "Number of problems: "
 msgstr "Số lượng bài tập: "
 
-#: templates/organization/usage.html:95
+#: templates/organization/usage.html:105
 msgid "Active Quota Grants"
 msgstr "Các hạn mức"
 
-#: templates/organization/usage.html:99
+#: templates/organization/usage.html:109
 msgid "Start"
 msgstr "Bắt đầu"
 
-#: templates/organization/usage.html:100
+#: templates/organization/usage.html:110
 msgid "Expires"
 msgstr "Hết hạn"
 
-#: templates/organization/usage.html:101
+#: templates/organization/usage.html:111
 msgid "+ Problems"
 msgstr "+ Bài tập"
 
-#: templates/organization/usage.html:102
+#: templates/organization/usage.html:112
 msgid "+ Storage"
 msgstr "+ Dung lượng"
 
-#: templates/organization/usage.html:121
+#: templates/organization/usage.html:131
 msgid "Storage limit reached! Please delete some problems to free up space."
 msgstr ""
 "Đã đạt giới hạn lưu trữ! Vui lòng xóa một số bài tập để giải phóng dung "
 "lượng."
 
-#: templates/organization/usage.html:126 templates/problem/data.html:1013
-#, fuzzy
-#| msgid "You are already in the organization."
+#: templates/organization/usage.html:136 templates/problem/data.html:1013
 msgid "You are approaching the storage limit"
-msgstr "Bạn đã trong tổ chức."
+msgstr "Bạn đang sắp đạt giới hạn dung lượng lưu trữ"
 
-#: templates/organization/usage.html:127 templates/problem/data.html:1014
+#: templates/organization/usage.html:137 templates/problem/data.html:1014
 msgid "You will not be able to upload test if the limit is exceeded."
-msgstr ""
+msgstr "Bạn sẽ không thể tải lên dữ liệu test nếu vượt quá giới hạn."
 
-#: templates/organization/usage.html:134 templates/problem/suggest.html:7
+#: templates/organization/usage.html:144 templates/problem/suggest.html:7
 msgid ""
 "Problem limit reached! Please delete some problems before creating new ones."
 msgstr "Đã đạt giới hạn số bài tập! Vui lòng xóa một số bài trước khi tạo mới."
 
-#: templates/organization/usage.html:139 templates/problem/suggest.html:12
-#, fuzzy
-#| msgid "Can set high problem timelimit"
+#: templates/organization/usage.html:149 templates/problem/suggest.html:12
 msgid "You are approaching the problem limit"
-msgstr "Có thể đặt giới hạn thời gian cao cho bài"
+msgstr "Bạn đang sắp đạt giới hạn số lượng bài tập"
 
-#: templates/organization/usage.html:140 templates/problem/suggest.html:13
-#, fuzzy
-#| msgid ""
-#| "You will not be able to view your scratch codes after you leave this page!"
+#: templates/organization/usage.html:150 templates/problem/suggest.html:13
 msgid "You will not be able to create more problems if the limit is exceeded."
-msgstr "Bạn sẽ không thể xem mã dự phòng sau khi rời khỏi trang này!"
+msgstr "Bạn sẽ không thể tạo thêm bài tập nếu vượt quá giới hạn."
 
-#: templates/organization/usage.html:149
+#: templates/organization/usage.html:159
 msgid "Problem Code"
 msgstr "Mã bài tập"
 
-#: templates/organization/usage.html:150
+#: templates/organization/usage.html:160
 msgid "Problem Name"
 msgstr "Tên bài"
 
-#: templates/organization/usage.html:151
+#: templates/organization/usage.html:161
 msgid "Authors"
 msgstr "Tác giả"
 
-#: templates/organization/usage.html:152
+#: templates/organization/usage.html:162
 msgid "Total Size"
 msgstr "Tổng kích thước"
 
-#: templates/organization/usage.html:153 templates/submission/status.html:74
+#: templates/organization/usage.html:163 templates/submission/status.html:74
 msgid "Download"
 msgstr "Tải về"
 
-#: templates/organization/usage.html:173
+#: templates/organization/usage.html:187
 msgid "Test data"
 msgstr "Dữ liệu test"
 
-#: templates/organization/usage.html:180
+#: templates/organization/usage.html:202
 msgid "No problems found for this organization."
 msgstr "Không tìm thấy bài nào cho tổ chức này."
 
-#: templates/organization/usage.html:194
+#: templates/organization/usage.html:216
 msgid "Available free credits (reset each month): "
 msgstr "Số giờ chấm bài miễn phí còn lại trong tháng: "
 
-#: templates/organization/usage.html:195 templates/organization/usage.html:198
+#: templates/organization/usage.html:217 templates/organization/usage.html:220
 msgid "hours"
 msgstr "giờ"
 
-#: templates/organization/usage.html:195 templates/organization/usage.html:198
+#: templates/organization/usage.html:217 templates/organization/usage.html:220
 msgid "minutes"
 msgstr "phút"
 
-#: templates/organization/usage.html:195 templates/organization/usage.html:198
+#: templates/organization/usage.html:217 templates/organization/usage.html:220
 msgid "seconds"
 msgstr "giây"
 
-#: templates/organization/usage.html:197
+#: templates/organization/usage.html:219
 msgid "Available paid credits: "
 msgstr "Số giờ chấm bài trả phí còn lại: "
 
-#: templates/organization/usage.html:204
+#: templates/organization/usage.html:226
 msgid "Organization Monthly cost"
 msgstr "Chi phí chấm bài hàng tháng"
 
-#: templates/organization/usage.html:214
+#: templates/organization/usage.html:236
 msgid "Organization Monthly Credit usage"
 msgstr "Số giờ chấm bài hàng tháng"
 
@@ -8989,6 +8967,18 @@ msgstr "Không tìm thấy URL rút gọn."
 #: urlshortener/views.py:97
 msgid "This shortened URL is not active."
 msgstr "URL rút gọn này không hoạt động."
+
+#~ msgid "Discussed"
+#~ msgstr "Đã thảo luận"
+
+#~ msgid "Total score:"
+#~ msgstr "Tổng điểm:"
+
+#~ msgid "up"
+#~ msgstr "lên"
+
+#~ msgid "down"
+#~ msgstr "xuống"
 
 #~ msgid "Test Data"
 #~ msgstr "Dữ liệu test"
