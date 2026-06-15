@@ -170,10 +170,6 @@ def link_user(user):
 @registry.function
 @registry.render_with('user/link-list.html')
 def link_users(users):
-    if isinstance(users, QuerySet) and users.model == Profile:
-        if not users.query.select_related:
-            users = users.select_related('user', 'display_badge')
-
     return {'users': users}
 
 
