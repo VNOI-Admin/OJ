@@ -54,7 +54,7 @@ class OrganizationMixin(object):
 
     @cached_property
     def organization(self):
-        return get_object_or_404(Organization, slug=self.kwargs['slug'])
+        return get_object_or_404(Organization.objects.prefetch_related('admins__user'), slug=self.kwargs['slug'])
 
     def dispatch(self, request, *args, **kwargs):
         if 'slug' not in kwargs:

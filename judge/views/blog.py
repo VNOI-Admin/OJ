@@ -154,7 +154,7 @@ class ModernBlogList(PostListBase):
 
     def get_queryset(self):
         queryset = super(ModernBlogList, self).get_queryset()
-        queryset = queryset.filter(global_post=True)
+        queryset = queryset.prefetch_related('tags').filter(global_post=True)
 
         # Search functionality
         search_query = self.request.GET.get('q', '').strip()
@@ -169,29 +169,12 @@ class ModernBlogList(PostListBase):
         tag_slug = self.request.GET.get('tag', '').strip()
         if not tag_slug and settings.VNOJ_MAGAZINE_TAG_SLUG:
             tag_slug = settings.VNOJ_MAGAZINE_TAG_SLUG
-        queryset = queryset.filter(tags__slug=tag_slug).distinct()
+        queryset = queryset.filter(tags__slug=tag_slug)
 
         # Sort functionality
         sort_by = self.request.GET.get('sort', 'latest').strip()
         if sort_by == 'top':
             queryset = queryset.order_by('-score', '-publish_on')
-        elif sort_by == 'discussed':
-            comment_counts = dict(
-                Comment.objects
-                .filter(page__startswith='b:', hidden=False)
-                .values_list('page')
-                .annotate(count=Count('page')),
-            )
-
-            post_comment_map = {}
-            for page, count in comment_counts.items():
-                post_id = int(page[2:])
-                post_comment_map[post_id] = count
-
-            posts = list(queryset)
-            posts.sort(key=lambda p: post_comment_map.get(p.id, 0), reverse=True)
-
-            return posts
         else:
             queryset = queryset.order_by('-sticky', '-publish_on')
 
@@ -211,21 +194,6 @@ class ModernBlogList(PostListBase):
             context['tags'] = BlogPostTag.objects.exclude(slug=settings.VNOJ_MAGAZINE_TAG_SLUG)
         else:
             context['tags'] = []
-
-        # Get vote information for each post
-        post_ids = [post.id for post in context['posts']]
-        post_votes = {}
-        for post_id in post_ids:
-            upvotes = BlogVote.objects.filter(blog_id=post_id, score=1).select_related('voter__user')
-            downvotes = BlogVote.objects.filter(blog_id=post_id, score=-1).select_related('voter__user')
-            post_votes[post_id] = {
-                'upvoters': list(upvotes.values_list('voter__user__username', flat=True)[:10]),
-                'downvoters': list(downvotes.values_list('voter__user__username', flat=True)[:10]),
-                'upvote_count': upvotes.count(),
-                'downvote_count': downvotes.count(),
-            }
-        context['post_votes'] = post_votes
-
         return context
 
 

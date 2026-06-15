@@ -54,11 +54,8 @@
           <select id="sort-select" class="select">
             <option value="latest" {% if request.GET.sort == 'latest' or not request.GET.sort %}selected{% endif %}>{{ _('Latest') }}</option>
             <option value="top" {% if request.GET.sort == 'top' %}selected{% endif %}>{{ _('Top') }}</option>
-            <option value="discussed" {% if request.GET.sort == 'discussed' %}selected{% endif %}>{{ _('Discussed') }}</option>
           </select>
         </div>
-
-  
 
         {% if request.user.is_authenticated and perms.judge.manage_magazine_post %}
           <a href="{{ url('user_blog', request.user.username) }}" class="btn-top-bar">
@@ -112,7 +109,7 @@
               {% set authors = post.authors.all() %}
               {% if authors %}<i class="fa fa-user"></i>{{ link_users(authors) }}{% endif %}
             </div>
-            
+
             {# Card tags #}
             {% if post.tags.exists() %}
             <div class="card-tags">
@@ -121,16 +118,13 @@
               {% endfor %}
             </div>
             {% endif %}
-            
+
             <div class="card-actions">
               {% set logged_in = request.user.is_authenticated %}
-              {% set vote_info = post_votes[post.id] %}
-              
+
               <div class="stat-item vote-stat" data-post-id="{{ post.id }}">
                 <i class="fa fa-thumbs-up"></i>
-                <span id="post-score-{{ post.id }}" 
-                      title="{{ _('Total score:') }} {{ post.score }} ({{ vote_info.upvote_count }} {{ _('up') }}, {{ vote_info.downvote_count }} {{ _('down') }})"
-                      data-toggle="tooltip">
+                <span id="post-score-{{ post.id }}">
                   {{ post.score }}
                 </span>
                 {% if logged_in %}
@@ -156,7 +150,7 @@
                   </div>
                 {% endif %}
               </div>
-              
+
               <span class="stat-item"
                     title="{{ _('View') }} {{ post_comment_counts[post.id] | default(0) }} {{ _('comments') }}">
                 <i class="fa fa-comments"></i>
