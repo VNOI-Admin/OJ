@@ -4,7 +4,6 @@ from urllib.parse import urljoin
 
 from ansi2html import Ansi2HTMLConverter
 from django.contrib.auth.models import AbstractUser
-from django.db.models import QuerySet
 from django.urls import reverse
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
