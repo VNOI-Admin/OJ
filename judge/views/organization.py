@@ -743,7 +743,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
         ).only(
             'code', 'name',
-        ).order_by('-data_size')
+        ).prefetch_related('authors__user').order_by('-data_size')
 
         return queryset
 

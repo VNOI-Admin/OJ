@@ -148,6 +148,7 @@
                 <tr>
                     <th>{{ _('Problem Code') }}</th>
                     <th>{{ _('Problem Name') }}</th>
+                    <th>{{ _('Authors') }}</th>
                     <th>{{ _('Total Size') }}</th>
                     <th>{{ _('Download') }}</th>
                 </tr>
@@ -161,6 +162,9 @@
                     <td class="problem-name">
                         <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
                     </td>
+                    <td>
+                        {{ link_users(problem.authors.all()) }}
+                    </td>
                     <td class="size-cell">
                         {{ problem.data_size|filesizeformat }}
                     </td>
@@ -172,7 +176,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 2em; color: #999;">
+                    <td colspan="5" style="text-align: center; padding: 2em; color: #999;">
                         {{ _('No problems found for this organization.') }}
                     </td>
                 </tr>
