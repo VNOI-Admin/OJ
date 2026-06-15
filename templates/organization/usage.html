@@ -15,15 +15,6 @@
             }
         }
 
-        .quota-warning {
-            background-color: #fff3cd;
-            border: 1px solid #ffc107;
-            color: #856404;
-            padding: 0.75em 1em;
-            margin: 0.5em 0;
-            border-radius: 4px;
-        }
-
         .page-tab-content {
             display: none;
         }
@@ -126,15 +117,27 @@
             {% endif %}
 
             {% if storage_exceeded %}
-            <div class="quota-warning">
+            <div class="alert alert-danger">
                 {{ _('Storage limit reached! Please delete some problems to free up space.') }}
+                {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+            </div>
+            {% elif storage_warning %}
+            <div class="alert alert-warning">
+                {{ _('You are approaching the storage limit') }} ({{ total_storage|filesizeformat }} / {{ max_storage|filesizeformat }}).
+                {{ _('You will not be able to upload test if the limit is exceeded.') }}
                 {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
             </div>
             {% endif %}
 
             {% if problem_limit_reached %}
-            <div class="quota-warning">
+            <div class="alert alert-danger">
                 {{ _('Problem limit reached! Please delete some problems before creating new ones.') }}
+                {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+            </div>
+            {% elif problem_warning %}
+            <div class="alert alert-warning">
+                {{ _('You are approaching the problem limit') }} ({{ problem_count }} / {{ max_problems }}).
+                {{ _('You will not be able to create more problems if the limit is exceeded.') }}
                 {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
             </div>
             {% endif %}

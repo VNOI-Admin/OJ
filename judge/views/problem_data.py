@@ -23,6 +23,7 @@ from judge.models import Problem, ProblemData, ProblemTestCase, Submission, prob
 from judge.models.problem_data import CUSTOM_CHECKERS, IO_METHODS
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.utils.unicode import utf8text
+from judge.utils.organization import add_quota_context
 from judge.utils.views import TitleMixin, add_file_response, generic_message
 from judge.views.problem import ProblemMixin
 from judge.widgets import Select2Widget
@@ -233,7 +234,7 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
 
         problem = self.object
         if problem.is_organization_private and problem.organization:
-            context['storage_quota_exceeded'] = not problem.organization.can_upload_data()
+            add_quota_context(problem.organization, context)
 
         context['quota_warning_suffix'] = settings.VNOJ_QUOTA_WARNING_SUFFIX
         return context

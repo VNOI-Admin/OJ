@@ -26,7 +26,7 @@ from judge.models.profile import OrganizationMonthlyUsage
 from judge.tasks import on_new_problem
 from judge.utils import cache_helper
 from judge.utils.infinite_paginator import InfinitePaginationMixin
-from judge.utils.organization import add_admin_to_group
+from judge.utils.organization import add_admin_to_group, add_quota_context
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message, \
@@ -593,8 +593,6 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         return _filter & Q(organization=self.organization)
 
 
-
-
 class ContestListOrganization(PrivateOrganizationMixin, ContestList):
     template_name = 'organization/contest-list.html'
     permission_bypass = ['judge.see_private_contest', 'judge.edit_all_contest']
@@ -640,6 +638,11 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
             % self.organization.max_problems,
             'quota_warning_suffix': settings.VNOJ_QUOTA_WARNING_SUFFIX,
         })
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        add_quota_context(self.organization, context)
+        return context
 
     def get(self, request, *args, **kwargs):
         if not self.organization.can_create_problem():
@@ -731,7 +734,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
     paginate_by = 100
 
     def get_title(self):
-        return _('Storage Dashboard - %s') % self.organization.name
+        return _('Organization cost - %s') % self.organization.name
 
     def get_queryset(self):
         queryset = Problem.available.filter(
@@ -769,17 +772,12 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
 
         # Quota information — cached_property on org handles DB queries
         org = self.organization
-        context['max_storage'] = org.max_storage
-        context['max_problems'] = org.max_problems
-        context['problem_count'] = org.current_problem_count
-        context['storage_exceeded'] = context['total_storage'] >= org.max_storage
-        context['problem_limit_reached'] = org.current_problem_count >= org.max_problems
+        add_quota_context(org, context, total_storage=context['total_storage'])
 
         today = timezone.now().date()
         context['active_quotas'] = list(
             org.quotas.filter(start_date__lte=today, end_date__gte=today).order_by('end_date'),
         )
-        context['quota_warning_suffix'] = settings.VNOJ_QUOTA_WARNING_SUFFIX
 
         # Credit/cost chart context (merged from usage page)
         usages = OrganizationMonthlyUsage.objects.filter(organization=org) \

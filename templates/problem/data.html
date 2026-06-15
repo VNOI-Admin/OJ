@@ -1002,11 +1002,16 @@
             <li>{{ data_form.instance.feedback }}</li>
         </ul>
     {% endif %}
-    {% if storage_quota_exceeded %}
-        <div class="alert alert-warning" style="border: 2px solid #dc3545; background: #f8d7da; color: #721c24;
-                padding: 1em; margin-bottom: 1em; border-radius: 4px;">
+    {% if storage_exceeded %}
+        <div class="alert alert-danger">
             <strong>{{ _('Storage limit exceeded!') }}</strong>
             {{ _('This organization has reached its storage quota. Please delete some test data before uploading more.') }}
+            {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+        </div>
+    {% elif storage_warning %}
+        <div class="alert alert-warning">
+            {{ _('You are approaching the storage limit') }} ({{ current_storage|filesizeformat }} / {{ max_storage|filesizeformat }}).
+            {{ _('You will not be able to upload test if the limit is exceeded.') }}
             {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
         </div>
     {% endif %}

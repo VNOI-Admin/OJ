@@ -160,6 +160,7 @@ VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE = 5 * 1024 * 1024 * 1024  # 5GB
 # Suffix appended to every inline quota-warning message. May contain HTML (e.g. a link to a guide).
 # Example: ' <a href="https://example.com/quota-guide">Read our guide</a>.'
 VNOJ_QUOTA_WARNING_SUFFIX = ''
+VNOJ_QUOTA_WARNING_THRESHOLD = 0.8
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
 # Low power mode: Optimize queries by limiting data scope for performance
