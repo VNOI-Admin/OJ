@@ -645,7 +645,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
         return context
 
     def get(self, request, *args, **kwargs):
-        if not self.organization.can_create_problem():
+        if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
             return self._quota_error_response()
         return super().get(request, *args, **kwargs)
 
@@ -661,7 +661,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
         return kwargs
 
     def form_valid(self, form):
-        if not self.organization.can_create_problem():
+        if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
             return self._quota_error_response()
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()

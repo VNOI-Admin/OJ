@@ -161,6 +161,9 @@ VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE = 5 * 1024 * 1024 * 1024  # 5GB
 # Example: ' <a href="https://example.com/quota-guide">Read our guide</a>.'
 VNOJ_QUOTA_WARNING_SUFFIX = ''
 VNOJ_QUOTA_WARNING_THRESHOLD = 0.8
+# When False, quota warnings are shown but users are NOT blocked from creating problems
+# or uploading test data. Set to True to enforce hard limits.
+VNOJ_QUOTA_ENFORCEMENT_ENABLED = False
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
 # Low power mode: Optimize queries by limiting data scope for performance

@@ -256,7 +256,7 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         problem = self.object
         if problem.is_organization_private and problem.organization:
             org = problem.organization
-            if not org.can_upload_data():
+            if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not org.can_upload_data():
                 error = ValidationError(
                     _('Storage limit exceeded for organization "%(org)s". '
                       'Please delete some test data before uploading more.'),
