@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-06-14 16:48+0000\n"
+"POT-Creation-Date: 2026-06-15 06:42+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -52,11 +52,11 @@ msgstr "Quản trị"
 msgid "Teacher"
 msgstr "Giáo viên"
 
-#: dmoj/settings.py:613
+#: dmoj/settings.py:617
 msgid "English"
 msgstr "Tiếng Anh"
 
-#: dmoj/settings.py:614
+#: dmoj/settings.py:618
 msgid "Vietnamese"
 msgstr "Tiếng Việt"
 
@@ -284,7 +284,8 @@ msgstr "Dung lượng lưu trữ thêm (GB)"
 #: judge/admin/organization.py:27
 msgid ""
 "Decimal values allowed, e.g. 1.5. Leave blank for no additional storage."
-msgstr "Cho phép số thập phân, ví dụ 1.5. Để trống nếu không có dung lượng thêm."
+msgstr ""
+"Cho phép số thập phân, ví dụ 1.5. Để trống nếu không có dung lượng thêm."
 
 #: judge/admin/organization.py:55
 msgid "Quota Grant"
@@ -324,7 +325,7 @@ msgstr "Phân loại"
 #: judge/admin/problem.py:133 templates/contest/contest.html:208
 #: templates/contest/edit.html:239
 #: templates/contest/official-ranking-table.html:12
-#: templates/organization/list.html:24 templates/problem/data.html:1038
+#: templates/organization/list.html:24 templates/problem/data.html:1043
 #: templates/problem/list.html:173 templates/user/base-users-table.html:12
 #: templates/user/user-problems.html:60
 msgid "Points"
@@ -3823,8 +3824,8 @@ msgid "Creating new blog post"
 msgstr "Tạo blog mới"
 
 #: judge/views/blog.py:394 judge/views/contests.py:1242
-#: judge/views/organization.py:400 judge/views/organization.py:674
-#: judge/views/organization.py:698 judge/views/problem.py:925
+#: judge/views/organization.py:400 judge/views/organization.py:677
+#: judge/views/organization.py:701 judge/views/problem.py:925
 #: judge/views/problem.py:965 judge/views/tag.py:182
 msgid "Created on site"
 msgstr "Tạo trên trang web"
@@ -4148,7 +4149,8 @@ msgstr "Logo trang web"
 
 #: judge/views/misc_config.py:23
 msgid "The site logo (top left corner). Leave empty to keep current."
-msgstr "Logo trang web (góc trên bên trái). Để trống để giữ nguyên logo hiện tại."
+msgstr ""
+"Logo trang web (góc trên bên trái). Để trống để giữ nguyên logo hiện tại."
 
 #: judge/views/misc_config.py:27
 msgid "Site favicon"
@@ -4190,7 +4192,8 @@ msgstr "Thông báo đầu trang"
 msgid ""
 "Notification banner shown at the top of every page. Supports Django template "
 "syntax."
-msgstr "Thông báo banner hiển thị ở đầu mọi trang. Hỗ trợ cú pháp template Django."
+msgstr ""
+"Thông báo banner hiển thị ở đầu mọi trang. Hỗ trợ cú pháp template Django."
 
 #: judge/views/misc_config.py:54
 msgid "Announcement"
@@ -4401,31 +4404,33 @@ msgstr "Thành viên mà bạn muốn loại không thuộc tổ chức: %s."
 msgid "The user you are trying to kick is an admin of organization: %s."
 msgstr "Thành viên mà bạn muốn loại là admin của tổ chức: %s."
 
-#: judge/views/organization.py:637
+#: judge/views/organization.py:635
 msgid "Problem limit reached"
 msgstr "Đã đạt giới hạn bài tập"
 
-#: judge/views/organization.py:638
+#: judge/views/organization.py:636
 #, python-format
 msgid ""
 "This organization has reached its maximum number of problems (%d). Please "
 "delete some problems before creating new ones."
-msgstr "Tổ chức đã đạt giới hạn số bài tập tối đa (%d). Vui lòng xóa một số bài trước khi tạo thêm."
+msgstr ""
+"Tổ chức đã đạt giới hạn số bài tập tối đa (%d). Vui lòng xóa một số bài "
+"trước khi tạo thêm."
 
-#: judge/views/organization.py:734
+#: judge/views/organization.py:737
 #, python-format
-msgid "Storage Dashboard - %s"
-msgstr "Bảng điều khiển lưu trữ - %s"
+msgid "Organization cost - %s"
+msgstr "Chi phí của tổ chức - %s"
 
-#: judge/views/organization.py:788
+#: judge/views/organization.py:786
 msgid "Current month"
 msgstr "Tháng hiện tại"
 
-#: judge/views/organization.py:792
+#: judge/views/organization.py:790
 msgid "Credit usage (hour)"
 msgstr "Số giờ chấm bài"
 
-#: judge/views/organization.py:795
+#: judge/views/organization.py:793
 msgid "Cost (thousand vnd)"
 msgstr "chi phí (nghìn đồng)"
 
@@ -4523,7 +4528,7 @@ msgstr "Tạo bài tập mới"
 msgid "Suggesting new problem"
 msgstr "Đề xuất bài tập"
 
-#: judge/views/problem.py:973 templates/problem/suggest.html:18
+#: judge/views/problem.py:973 templates/problem/suggest.html:30
 msgid "Import problem from Codeforces Polygon package"
 msgstr "Nhập bài từ gói Codeforces Polygon"
 
@@ -4574,81 +4579,83 @@ msgstr "Không thể xoá bài"
 msgid "You are not allowed to delete this problem."
 msgstr "Bạn không được phép xoá bài tập này."
 
-#: judge/views/problem_data.py:40
+#: judge/views/problem_data.py:41
 msgid "Checker arguments must be a JSON object."
 msgstr "Tham số trình chấm phải là một JSON"
 
-#: judge/views/problem_data.py:42
+#: judge/views/problem_data.py:43
 msgid "Checker arguments is invalid JSON."
 msgstr "Tham số trình chấm không hợp lệ (không phải JSON)"
 
-#: judge/views/problem_data.py:52
+#: judge/views/problem_data.py:53
 msgid "Grader arguments must be a JSON object"
 msgstr "Tham số grader phải là một JSON"
 
-#: judge/views/problem_data.py:54
+#: judge/views/problem_data.py:55
 msgid "Grader arguments is invalid JSON"
 msgstr "Tham số grader không hợp lệ (không phải JSON)"
 
-#: judge/views/problem_data.py:59
+#: judge/views/problem_data.py:60
 msgid "IO Method"
 msgstr "Phương thức IO"
 
-#: judge/views/problem_data.py:61
+#: judge/views/problem_data.py:62
 msgid "Input from file"
 msgstr "Tập tin đầu vào"
 
-#: judge/views/problem_data.py:62
+#: judge/views/problem_data.py:63
 msgid "Output to file"
 msgstr "Tập tin đầu ra"
 
-#: judge/views/problem_data.py:67
+#: judge/views/problem_data.py:68
 msgid "Your zip file is invalid!"
 msgstr "File nén bị lỗi!"
 
-#: judge/views/problem_data.py:88
+#: judge/views/problem_data.py:89
 msgid ""
 "Can be left blank. In case the output can be too long (over 20MB), please "
 "set this."
 msgstr ""
 "Có thể bỏ trống. Chỉ thay đổi nếu độ dài của output quá dài (hơn 20Mb)."
 
-#: judge/views/problem_data.py:138 judge/views/problem_data.py:141
+#: judge/views/problem_data.py:139 judge/views/problem_data.py:142
 #, python-brace-format
 msgid "Comparing submissions for {0}"
 msgstr "So sánh các bài nộp cho {0}"
 
-#: judge/views/problem_data.py:181
+#: judge/views/problem_data.py:182
 msgid "No such submissions"
 msgstr "Không thấy bài nộp"
 
-#: judge/views/problem_data.py:181
+#: judge/views/problem_data.py:182
 msgid "Could not find any submissions."
 msgstr "Không tìm thấy bài nộp nào."
 
-#: judge/views/problem_data.py:188
+#: judge/views/problem_data.py:189
 #, python-brace-format
 msgid "Editing data for {0}"
 msgstr "Sửa dữ liệu cho {0}"
 
-#: judge/views/problem_data.py:191
+#: judge/views/problem_data.py:192
 #, python-format
 msgid "Editing data for %s"
 msgstr "Chỉnh sửa các dữ liệu cho %s"
 
-#: judge/views/problem_data.py:248
+#: judge/views/problem_data.py:249
 #, python-format
 msgid "Too many testcases, number of testcases must not exceed %s"
 msgstr "Quá nhiều testcase, số lượng testcase không được vượt quá %s"
 
-#: judge/views/problem_data.py:260
+#: judge/views/problem_data.py:261
 #, python-format
 msgid ""
 "Storage limit exceeded for organization \"%(org)s\". Please delete some test "
 "data before uploading more."
-msgstr "Dung lượng lưu trữ đã vượt giới hạn cho tổ chức \"%(org)s\". Vui lòng xóa một số dữ liệu test trước khi tải lên thêm."
+msgstr ""
+"Dung lượng lưu trữ đã vượt giới hạn cho tổ chức \"%(org)s\". Vui lòng xóa "
+"một số dữ liệu test trước khi tải lên thêm."
 
-#: judge/views/problem_data.py:331 judge/views/problem_data.py:332
+#: judge/views/problem_data.py:332 judge/views/problem_data.py:333
 #, python-format
 msgid "Generated init.yml for %s"
 msgstr "Tạo file Init.yml cho %s"
@@ -5431,7 +5438,7 @@ msgstr "Cập nhật"
 
 #: templates/blog/edit.html:56 templates/contest/edit.html:262
 #: templates/organization/edit.html:27 templates/organization/new.html:10
-#: templates/problem/suggest.html:25 templates/tag/create.html:27
+#: templates/problem/suggest.html:37 templates/tag/create.html:27
 msgid "Create"
 msgstr "Tạo"
 
@@ -6659,8 +6666,8 @@ msgid "Request membership"
 msgstr "Yêu cầu tư cách thành viên"
 
 #: templates/organization/home.html:109
-msgid "Organization Usage"
-msgstr "Sử dụng của tổ chức"
+msgid "Organization cost"
+msgstr "Chi phí sử dụng tổ chức"
 
 #: templates/organization/home.html:114
 msgid "View requests"
@@ -6741,7 +6748,7 @@ msgid "There are no requests to approve."
 msgstr "Không có yêu cầu để chấp nhận."
 
 #: templates/organization/requests/pending.html:36
-#: templates/problem/data.html:1044
+#: templates/problem/data.html:1049
 msgid "Delete?"
 msgstr "Xoá?"
 
@@ -6770,102 +6777,129 @@ msgstr "Danh sách kỳ thi"
 msgid "Create new problem"
 msgstr "Tạo bài mới"
 
-#: templates/organization/usage.html:80
+#: templates/organization/usage.html:71
 msgid "Storage usage"
 msgstr "Mức sử dụng dung lượng"
 
-#: templates/organization/usage.html:85
+#: templates/organization/usage.html:76
 msgid "Credit usage"
 msgstr "Chi phí chấm bài"
 
-#: templates/organization/usage.html:94
+#: templates/organization/usage.html:85
 msgid "Total used storage: "
 msgstr "Tổng dung lượng đã dùng: "
 
-#: templates/organization/usage.html:97
+#: templates/organization/usage.html:88
 msgid "Number of problems: "
 msgstr "Số lượng bài tập: "
 
-#: templates/organization/usage.html:104
+#: templates/organization/usage.html:95
 msgid "Active Quota Grants"
 msgstr "Các hạn mức"
 
-#: templates/organization/usage.html:108
+#: templates/organization/usage.html:99
 msgid "Start"
 msgstr "Bắt đầu"
 
-#: templates/organization/usage.html:109
+#: templates/organization/usage.html:100
 msgid "Expires"
 msgstr "Hết hạn"
 
-#: templates/organization/usage.html:110
+#: templates/organization/usage.html:101
 msgid "+ Problems"
 msgstr "+ Bài tập"
 
-#: templates/organization/usage.html:111
+#: templates/organization/usage.html:102
 msgid "+ Storage"
 msgstr "+ Dung lượng"
 
-#: templates/organization/usage.html:130
-msgid ""
-"Storage limit reached! Please delete some problems to free up "
-"space."
-msgstr "Đã đạt giới hạn lưu trữ! Vui lòng xóa một số bài tập để giải phóng dung lượng."
+#: templates/organization/usage.html:121
+msgid "Storage limit reached! Please delete some problems to free up space."
+msgstr ""
+"Đã đạt giới hạn lưu trữ! Vui lòng xóa một số bài tập để giải phóng dung "
+"lượng."
 
-#: templates/organization/usage.html:137
+#: templates/organization/usage.html:126 templates/problem/data.html:1013
+#, fuzzy
+#| msgid "You are already in the organization."
+msgid "You are approaching the storage limit"
+msgstr "Bạn đã trong tổ chức."
+
+#: templates/organization/usage.html:127 templates/problem/data.html:1014
+msgid "You will not be able to upload test if the limit is exceeded."
+msgstr ""
+
+#: templates/organization/usage.html:134 templates/problem/suggest.html:7
 msgid ""
 "Problem limit reached! Please delete some problems before creating new ones."
 msgstr "Đã đạt giới hạn số bài tập! Vui lòng xóa một số bài trước khi tạo mới."
 
-#: templates/organization/usage.html:146
+#: templates/organization/usage.html:139 templates/problem/suggest.html:12
+#, fuzzy
+#| msgid "Can set high problem timelimit"
+msgid "You are approaching the problem limit"
+msgstr "Có thể đặt giới hạn thời gian cao cho bài"
+
+#: templates/organization/usage.html:140 templates/problem/suggest.html:13
+#, fuzzy
+#| msgid ""
+#| "You will not be able to view your scratch codes after you leave this page!"
+msgid "You will not be able to create more problems if the limit is exceeded."
+msgstr "Bạn sẽ không thể xem mã dự phòng sau khi rời khỏi trang này!"
+
+#: templates/organization/usage.html:149
 msgid "Problem Code"
 msgstr "Mã bài tập"
 
-#: templates/organization/usage.html:147
+#: templates/organization/usage.html:150
 msgid "Problem Name"
 msgstr "Tên bài"
 
-#: templates/organization/usage.html:148
+#: templates/organization/usage.html:151
+msgid "Authors"
+msgstr "Tác giả"
+
+#: templates/organization/usage.html:152
 msgid "Total Size"
 msgstr "Tổng kích thước"
 
-#: templates/organization/usage.html:149 templates/submission/status.html:74
+#: templates/organization/usage.html:153 templates/submission/status.html:74
 msgid "Download"
 msgstr "Tải về"
 
-#: templates/organization/usage.html:166
+#: templates/organization/usage.html:173
 msgid "Test data"
 msgstr "Dữ liệu test"
 
-#: templates/organization/usage.html:173
+#: templates/organization/usage.html:180
 msgid "No problems found for this organization."
 msgstr "Không tìm thấy bài nào cho tổ chức này."
 
-#: templates/organization/usage.html:187
+#: templates/organization/usage.html:194
 msgid "Available free credits (reset each month): "
 msgstr "Số giờ chấm bài miễn phí còn lại trong tháng: "
 
-#: templates/organization/usage.html:188 templates/organization/usage.html:191
+#: templates/organization/usage.html:195 templates/organization/usage.html:198
 msgid "hours"
 msgstr "giờ"
 
-#: templates/organization/usage.html:188 templates/organization/usage.html:191
+#: templates/organization/usage.html:195 templates/organization/usage.html:198
 msgid "minutes"
 msgstr "phút"
 
-#: templates/organization/usage.html:188 templates/organization/usage.html:191
+#: templates/organization/usage.html:195 templates/organization/usage.html:198
 msgid "seconds"
 msgstr "giây"
 
-#: templates/organization/usage.html:190
+#: templates/organization/usage.html:197
 msgid "Available paid credits: "
 msgstr "Số giờ chấm bài trả phí còn lại: "
 
-#: templates/organization/usage.html:197
+#: templates/organization/usage.html:204
 msgid "Organization Monthly cost"
 msgstr "Chi phí chấm bài hàng tháng"
 
-#: templates/organization/usage.html:207
+#: templates/organization/usage.html:214
 msgid "Organization Monthly Credit usage"
 msgstr "Số giờ chấm bài hàng tháng"
 
@@ -6904,7 +6938,7 @@ msgstr "Các kỳ thi bị ảnh hưởng:"
 msgid "This problem is not used in any contests."
 msgstr "Bài tập này không được dùng trong kỳ thi nào."
 
-#: templates/problem/confirm_delete.html:44 templates/problem/data.html:1115
+#: templates/problem/confirm_delete.html:44 templates/problem/data.html:1120
 #: templates/status/oj-status.html:75
 msgid "Cancel"
 msgstr "Huỷ"
@@ -6925,8 +6959,8 @@ msgstr "Trình chấm ngoài phải có đuôi file là cpp, pas hoặc java, kh
 msgid "Instruction"
 msgstr "Hướng dẫn"
 
-#: templates/problem/data.html:258 templates/problem/data.html:1091
-#: templates/problem/data.html:1094 templates/urlshortener/form.html:31
+#: templates/problem/data.html:258 templates/problem/data.html:1096
+#: templates/problem/data.html:1099 templates/urlshortener/form.html:31
 msgid "Save"
 msgstr "Lưu"
 
@@ -6998,7 +7032,7 @@ msgstr "Giới hạn tối đa là 100 MB."
 msgid "Test file must be a ZIP file"
 msgstr "Tập tin dữ liệu phải có định dạng ZIP"
 
-#: templates/problem/data.html:625 templates/problem/data.html:1112
+#: templates/problem/data.html:625 templates/problem/data.html:1117
 msgid "No files selected"
 msgstr "Chưa chọn tập tin nào"
 
@@ -7033,7 +7067,7 @@ msgstr ""
 msgid "Failed to create ZIP file"
 msgstr "Tạo file ZIP thất bại"
 
-#: templates/problem/data.html:779 templates/problem/data.html:1116
+#: templates/problem/data.html:779 templates/problem/data.html:1121
 msgid "Build & Upload ZIP"
 msgstr "Tạo & Tải lên ZIP"
 
@@ -7041,70 +7075,72 @@ msgstr "Tạo & Tải lên ZIP"
 msgid "View YAML"
 msgstr "Xem YAML"
 
-#: templates/problem/data.html:1008
+#: templates/problem/data.html:1007
 msgid "Storage limit exceeded!"
 msgstr "Vượt giới hạn lưu trữ!"
 
-#: templates/problem/data.html:1009
+#: templates/problem/data.html:1008
 msgid ""
 "This organization has reached its storage quota. Please delete some test "
 "data before uploading more."
-msgstr "Tổ chức đã đạt hạn mức lưu trữ. Vui lòng xóa một số dữ liệu test trước khi tải lên thêm."
+msgstr ""
+"Tổ chức đã đạt hạn mức lưu trữ. Vui lòng xóa một số dữ liệu test trước khi "
+"tải lên thêm."
 
-#: templates/problem/data.html:1021
+#: templates/problem/data.html:1026
 msgid "Test cases have been filled automatically!"
 msgstr "Các test đã được điền tự động!"
 
-#: templates/problem/data.html:1023
+#: templates/problem/data.html:1028
 msgid "Test cases have been filled automatically and **not saved yet**!"
 msgstr "Các test dưới đây được điền tự động và **chưa được lưu lại**!"
 
-#: templates/problem/data.html:1025
+#: templates/problem/data.html:1030
 msgid ""
 "Please modify the table below if needed and press the `Apply` button to save!"
 msgstr "Hãy chỉnh sửa bảng dưới đây nếu cần thiết, và nhấn nút `Apply` để lưu!"
 
-#: templates/problem/data.html:1035
+#: templates/problem/data.html:1040
 msgid "Type"
 msgstr "Kiểu"
 
-#: templates/problem/data.html:1036
+#: templates/problem/data.html:1041
 msgid "Input file"
 msgstr "Tập tin đầu vào"
 
-#: templates/problem/data.html:1037
+#: templates/problem/data.html:1042
 msgid "Output file"
 msgstr "Tập tin đầu ra"
 
-#: templates/problem/data.html:1040
+#: templates/problem/data.html:1045
 msgid "Pretest?"
 msgstr "Pretest?"
 
-#: templates/problem/data.html:1042
+#: templates/problem/data.html:1047
 msgid "Generator args"
 msgstr "Tham số trình sinh tests"
 
-#: templates/problem/data.html:1081
+#: templates/problem/data.html:1086
 msgid "Edit generator args"
 msgstr "Sửa tham số trình sinh test"
 
-#: templates/problem/data.html:1092
+#: templates/problem/data.html:1097
 msgid "Add new case"
 msgstr "Thêm test mới"
 
-#: templates/problem/data.html:1099
+#: templates/problem/data.html:1104
 msgid "Build Test Data"
 msgstr "Tạo dữ liệu test"
 
-#: templates/problem/data.html:1102
+#: templates/problem/data.html:1107
 msgid "Choose Files"
 msgstr "Chọn tập tin"
 
-#: templates/problem/data.html:1105
+#: templates/problem/data.html:1110
 msgid "Choose Folder"
 msgstr "Chọn thư mục"
 
-#: templates/problem/data.html:1110
+#: templates/problem/data.html:1115
 msgid "Drop files or folder here"
 msgstr "Kéo thả tập tin hoặc thư mục vào đây"
 
@@ -7573,11 +7609,11 @@ msgstr "Tên file"
 msgid "File size"
 msgstr "Độ lớn của file"
 
-#: templates/problem/suggest.html:8
+#: templates/problem/suggest.html:20
 msgid "Thanks for suggesting problem!"
 msgstr "Cảm ơn bạn đã đề xuất!"
 
-#: templates/problem/suggest.html:10
+#: templates/problem/suggest.html:22
 msgid ""
 "Please keep in mind that this form is only for creating new problems. "
 "Spamming and using for wrong purposes is not allowed."
@@ -7585,7 +7621,7 @@ msgstr ""
 "Hãy lưu ý rằng form này chỉ dùng để đề xuất bài tập mới. Spam hoặc dùng nó "
 "không đúng mục đích là không được cho phép."
 
-#: templates/problem/suggest.html:12
+#: templates/problem/suggest.html:24
 msgid "If you don't know how to suggest a problem, please read [guide][0]."
 msgstr ""
 "Nếu bạn không biết cách đề xuất bài tập mới, hãy tham khảo [hướng dẫn][0]."
@@ -8954,9 +8990,6 @@ msgstr "Không tìm thấy URL rút gọn."
 msgid "This shortened URL is not active."
 msgstr "URL rút gọn này không hoạt động."
 
-#~ msgid "Organization cost"
-#~ msgstr "Chi phí sử dụng tổ chức"
-
 #~ msgid "Test Data"
 #~ msgstr "Dữ liệu test"
 
@@ -8989,9 +9022,6 @@ msgstr "URL rút gọn này không hoạt động."
 
 #~ msgid "Associated page"
 #~ msgstr "Trang liên kết"
-
-#~ msgid "Authors"
-#~ msgstr "Tác giả"
 
 #~ msgid "Page %(current)s of %(total)s"
 #~ msgstr "Trang %(current)s / %(total)s"
