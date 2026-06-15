@@ -53,6 +53,16 @@
 
             // Activate default tab
             $('#inner-page-tabs .tab a[data-tab="storage"]').click();
+
+            // Show delete buttons only for authors and superusers
+            var currentProfileId = {{ request.profile.id if request.profile else 'null' }};
+            var isSuperuser = {{ 'true' if request.user.is_superuser else 'false' }};
+            $('.delete-btn').each(function() {
+                var authorIds = $(this).data('author-ids');
+                if (isSuperuser || (currentProfileId && authorIds.indexOf(currentProfileId) !== -1)) {
+                    $(this).show();
+                }
+            });
         });
     </script>
 {% endblock %}
@@ -151,6 +161,7 @@
                     <th>{{ _('Authors') }}</th>
                     <th>{{ _('Total Size') }}</th>
                     <th>{{ _('Download') }}</th>
+                    <th>{{ _('Delete') }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -169,14 +180,25 @@
                         {{ problem.data_size|filesizeformat }}
                     </td>
                     <td>
-                        <a href="{{ url('problem_download_full_package', problem.code) }}" class="btn btn-xs">
+                        <a href="{{ url('problem_download_full_package', problem.code) }}"
+                           class="btn btn-xs delete-btn"
+                           data-author-ids="{{ problem.authors.all()|map(attribute='id')|list|tojson }}"
+                           style="display:none;">
                             <i class="fa fa-download"></i> {{ _('Test data') }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{ url('problem_delete', problem.code) }}?next={{ request.path }}"
+                           class="btn btn-xs btn-danger delete-btn"
+                           data-author-ids="{{ problem.authors.all()|map(attribute='id')|list|tojson }}"
+                           style="display:none;">
+                            <i class="fa fa-trash"></i> {{ _('Delete') }}
                         </a>
                     </td>
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" style="text-align: center; padding: 2em; color: #999;">
+                    <td colspan="6" style="text-align: center; padding: 2em; color: #999;">
                         {{ _('No problems found for this organization.') }}
                     </td>
                 </tr>
