@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    <script type="text/javascript">
+        $(function () {
+            $('#notification-mark-all-page').on('click', function (e) {
+                e.preventDefault();
+                $.post('{{ url("notification_mark_read") }}', {all: '1'}, function () {
+                    window.location.reload();
+                });
+            });
+
+            $('.notification-page-item').on('click', function () {
+                var $item = $(this);
+                var id = $item.data('id');
+                var url = $item.data('url');
+                if ($item.hasClass('unread')) {
+                    $.post('{{ url("notification_mark_read") }}', {id: id, read: '1'}, function () {
+                        if (url) window.location = url;
+                    });
+                    if (!url) $item.removeClass('unread');
+                } else if (url) {
+                    window.location = url;
+                }
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div class="notification-page">
+        <div class="notification-page-tabs">
+            <a href="?status=all" class="{% if status == 'all' %}active{% endif %}">{{ _('All') }}</a>
+            <a href="?status=unread" class="{% if status == 'unread' %}active{% endif %}">{{ _('Unread') }}</a>
+            <a href="?status=read" class="{% if status == 'read' %}active{% endif %}">{{ _('Read') }}</a>
+            {% if unread_count %}
+                <a href="#" id="notification-mark-all-page" class="notification-page-mark-all">{{ _('Mark all as read') }}</a>
+            {% endif %}
+        </div>
+
+        {% if page_obj.has_other_pages() %}
+            <div class="top-pagination-bar">{% include "list-pages.html" %}</div>
+        {% endif %}
+
+        <div class="notification-page-list">
+            {% for notification in notifications %}
+                <div class="notification-page-item{% if not notification.read %} unread{% endif %}"
+                     data-id="{{ notification.id }}" data-url="{{ notification.url }}">
+                    <div class="notification-page-item-title">{{ notification.title }}</div>
+                    {% if notification.html %}
+                        <div class="notification-page-item-body">{{ notification.html }}</div>
+                    {% endif %}
+                    <div class="notification-page-item-time">{{ relative_time(notification.time) }}</div>
+                </div>
+            {% else %}
+                <div class="notification-page-empty">{{ _('You have no notifications.') }}</div>
+            {% endfor %}
+        </div>
+
+        {% if page_obj.has_other_pages() %}
+            <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+        {% endif %}
+    </div>
+{% endblock %}
