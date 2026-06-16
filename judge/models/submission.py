@@ -287,6 +287,9 @@ class Submission(models.Model):
 
             # For user submissions page
             models.Index(fields=['user', '-id']),
+
+            # For submission heat map
+            models.Index(fields=['user', 'date'])
         ]
 
 
