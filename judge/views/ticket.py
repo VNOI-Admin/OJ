@@ -19,7 +19,7 @@ from django.views.generic.detail import SingleObjectMixin
 from django.views.generic.edit import FormView
 
 from judge import event_poster as event
-from judge.models import GeneralIssue, Problem, Profile, Ticket, TicketMessage
+from judge.models import GeneralIssue, Notification, Problem, Profile, Ticket, TicketMessage, make_notification
 from judge.tasks import on_new_ticket, on_new_ticket_message
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.tickets import filter_visible_tickets, own_ticket_filter
@@ -81,13 +81,11 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
                 'message': message.id, 'user': ticket.user_id,
                 'assignees': list(ticket.assignees.values_list('id', flat=True)),
             })
-            for assignee in ticket.assignees.all():
-                event.post(f'tickets_{assignee.ticket_secret}', {
-                    'type': 'new-ticket',
-                    'id': ticket.id,
-                    'title': ticket.title,
-                    'body': message.body,
-                })
+        make_notification(
+            ticket.assignees.all(), category=Notification.TICKET,
+            title=_('New ticket: %s') % ticket.title, html=message.body,
+            url=reverse('ticket', args=[ticket.id]), popup=True,
+        )
         on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, form.cleaned_data['body'])
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
@@ -134,7 +132,7 @@ class NewProblemTicketView(ProblemMixin, TitleMixin, NewTicketView):
             contest = self.request.participation.contest
             if self.object.contests.filter(contest=contest).exists():
                 return list(contest.authors.all()) + list(contest.curators.all())
-        return self.object.authors.all()
+        return list(self.object.authors.all()) + list(self.object.curators.all())
 
     def get_title(self):
         return _('New ticket for %s') % self.object.name
@@ -192,19 +190,16 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
                 'type': 'ticket-action', 'message': message.id,
             })
 
-            recipient_ids = []
-            if self.request.profile != self.object.user:
-                recipient_ids = [self.object.user_id]
-            else:
-                recipient_ids = self.object.assignees.values_list('id', flat=True)
+        if self.request.profile != self.object.user:
+            recipient_ids = [self.object.user_id]
+        else:
+            recipient_ids = list(self.object.assignees.values_list('id', flat=True))
 
-            for recipient_id in recipient_ids:
-                event.post(f'tickets_{Profile.get_ticket_secret(recipient_id)}', {
-                    'type': 'new-reply',
-                    'id': self.object.id,
-                    'title': self.object.title,
-                    'body': message.body,
-                })
+        make_notification(
+            recipient_ids, category=Notification.TICKET,
+            title=_('New reply on ticket: %s') % self.object.title, html=message.body,
+            url=reverse('ticket', args=[self.object.id]), popup=True,
+        )
 
         on_new_ticket_message.delay(message.pk, message.ticket.pk, message.body)
         return HttpResponseRedirect('%s#message-%d' % (reverse('ticket', args=[self.object.id]), message.id))

@@ -600,6 +600,8 @@ class ContestAnnouncement(models.Model):
                 'title': self.title,
                 'message': self.description,
             })
+        from judge.tasks import send_contest_announcement
+        send_contest_announcement.delay(self.id)
 
 
 class ContestParticipation(models.Model):

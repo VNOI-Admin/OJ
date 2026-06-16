@@ -11,9 +11,9 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
-from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
-    preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, submission, tag, \
-    tasks, ticket, two_factor, user, widgets
+from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, notification, \
+    organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
+    submission, tag, tasks, ticket, two_factor, user, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -406,6 +406,13 @@ urlpatterns = [
         path('', ticket.TicketList.as_view(), name='ticket_list'),
         path('ajax', ticket.TicketListDataAjax.as_view(), name='ticket_ajax'),
         path('new', ticket.NewIssueTicketView.as_view(), name='new_issue_ticket'),
+    ])),
+
+    path('notifications/', include([
+        path('', notification.NotificationList.as_view(), name='notification_list'),
+        path('ajax', notification.NotificationAjax.as_view(), name='notification_ajax'),
+        path('count', notification.NotificationCount.as_view(), name='notification_count'),
+        path('mark_read', notification.NotificationMarkRead.as_view(), name='notification_mark_read'),
     ])),
 
     path('ticket/<int:pk>', include([

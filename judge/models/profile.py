@@ -9,6 +9,7 @@ import pyotp
 import webauthn
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import F, Max, Sum
@@ -313,6 +314,28 @@ class Profile(models.Model):
     @cached_property
     def ticket_secret(self):
         return self.get_ticket_secret(self.id)
+
+    @classmethod
+    def get_notification_secret(cls, profile_id):
+        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_TICKET_KEY), b'notification:%d' % profile_id, hashlib.sha512)
+                    .hexdigest()[:16] + '%08x' % profile_id)
+
+    @cached_property
+    def notification_secret(self):
+        return self.get_notification_secret(self.id)
+
+    @classmethod
+    def unread_notification_count_cache_key(cls, profile_id):
+        return 'unread_notification_count:%d' % profile_id
+
+    @property
+    def unread_notification_count(self):
+        key = self.unread_notification_count_cache_key(self.id)
+        count = cache.get(key)
+        if count is None:
+            count = self.notifications.filter(read=False).count()
+            cache.set(key, count, 86400)
+        return count
 
     @cached_property
     def organization(self):

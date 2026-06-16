@@ -95,6 +95,8 @@ class RegistrationView(OldRegistrationView):
 
         cleaned_data = form.cleaned_data
         user.first_name = cleaned_data['full_name']
+        if not getattr(settings, 'SEND_ACTIVATION_EMAIL', True):
+            user.is_active = True
         profile.timezone = cleaned_data['timezone']
         profile.language = cleaned_data['language']
         profile.organizations.add(*cleaned_data['organizations'])
