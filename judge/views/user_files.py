@@ -90,7 +90,9 @@ class UserFileUploadView(UserOwnedFilesMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.profile
-        form.instance.storage_scope = UserFile.STORAGE_SCOPE_MARTOR
+        # Files uploaded directly on the /files page are user-owned uploads,
+        # not markdown-editor images, so tag them with the user scope.
+        form.instance.storage_scope = UserFile.STORAGE_SCOPE_USER
         uploaded_file = form.cleaned_data.get('file')
         if uploaded_file:
             form.instance.filename = os.path.basename(uploaded_file.name)

@@ -40,7 +40,8 @@ from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
-    Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
+    Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission, UserFile, \
+    extract_referenced_file_uuids, link_referenced_files
 from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
@@ -1239,6 +1240,14 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
                     problem.contest = self.object
                     problem.save()
 
+                link_referenced_files(
+                    extract_referenced_file_uuids(self.object.description),
+                    self.request.profile,
+                    scope=UserFile.STORAGE_SCOPE_CONTEST,
+                    contest_id=self.object.id,
+                    context_description=_('Contest %s description') % self.object.key,
+                )
+
                 revisions.set_comment(_('Created on site'))
                 revisions.set_user(self.request.user)
             on_new_contest.delay(self.object.key)
@@ -1298,7 +1307,7 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
 
         if form.is_valid() and form_set.is_valid():
             with revisions.create_revision(atomic=True):
-                form.save()
+                contest = form.save()
                 problems = form_set.save(commit=False)
 
                 for problem in form_set.deleted_objects:
@@ -1307,6 +1316,14 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
                 for problem in problems:
                     problem.contest = self.object
                     problem.save()
+
+                link_referenced_files(
+                    extract_referenced_file_uuids(contest.description),
+                    self.request.profile,
+                    scope=UserFile.STORAGE_SCOPE_CONTEST,
+                    contest_id=contest.id,
+                    context_description=_('Contest %s description') % contest.key,
+                )
 
                 revisions.set_comment(_('Edited from site'))
                 revisions.set_user(self.request.user)

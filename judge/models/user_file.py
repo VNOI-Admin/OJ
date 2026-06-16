@@ -1,5 +1,6 @@
 import mimetypes
 import os
+import re
 import uuid
 from urllib.parse import quote
 
@@ -11,16 +12,20 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-__all__ = ['user_file_storage', 'UserFileStorage', 'UserFile', 'FileUsage']
+__all__ = [
+    'user_file_storage', 'UserFileStorage', 'UserFile', 'FileUsage',
+    'extract_referenced_file_uuids', 'link_referenced_files',
+]
 
 USER_FILE_STORAGE_SCOPE_PROBLEM = 'problem'
 USER_FILE_STORAGE_SCOPE_CONTEST = 'contest'
-USER_FILE_STORAGE_SCOPE_MARTOR = 'martor'
+# Self-uploads via /files, and any markdown upload not tied to a problem/contest.
+USER_FILE_STORAGE_SCOPE_USER = 'user'
 
 USER_FILE_STORAGE_SCOPE_CHOICES = (
-    (USER_FILE_STORAGE_SCOPE_PROBLEM, _('Problem editor')),
-    (USER_FILE_STORAGE_SCOPE_CONTEST, _('Contest editor')),
-    (USER_FILE_STORAGE_SCOPE_MARTOR, _('Martor editor')),
+    (USER_FILE_STORAGE_SCOPE_PROBLEM, _('Problem')),
+    (USER_FILE_STORAGE_SCOPE_CONTEST, _('Contest')),
+    (USER_FILE_STORAGE_SCOPE_USER, _('User upload')),
 )
 USER_FILE_STORAGE_SCOPE_VALUES = frozenset(value for value, _ in USER_FILE_STORAGE_SCOPE_CHOICES)
 USER_FILE_CONTEXT_SCOPES = frozenset((
@@ -58,7 +63,7 @@ user_file_storage = UserFileStorage()
 
 def user_file_directory(instance, filename):
     # Files live under a per-scope subfolder so the on-disk location reflects
-    # where the file originated (martor/problem/contest).
+    # where the file originated (problem/contest/user).
     original_name = os.path.basename(filename)
     display_name = os.path.basename(getattr(instance, 'filename', '') or original_name)
 
@@ -70,9 +75,9 @@ def user_file_directory(instance, filename):
     if not display_base:
         display_base = os.path.splitext(original_name)[0] or 'file'
 
-    scope = getattr(instance, 'storage_scope', None) or USER_FILE_STORAGE_SCOPE_MARTOR
+    scope = getattr(instance, 'storage_scope', None) or USER_FILE_STORAGE_SCOPE_USER
     if scope not in USER_FILE_STORAGE_SCOPE_VALUES:
-        scope = USER_FILE_STORAGE_SCOPE_MARTOR
+        scope = USER_FILE_STORAGE_SCOPE_USER
 
     file_uuid = getattr(instance, 'uuid', None) or uuid.uuid4()
     return os.path.join(USER_FILE_STORAGE_PREFIX, scope, f'{file_uuid}_{display_base}{safe_ext}')
@@ -81,7 +86,7 @@ def user_file_directory(instance, filename):
 class UserFile(models.Model):
     STORAGE_SCOPE_PROBLEM = USER_FILE_STORAGE_SCOPE_PROBLEM
     STORAGE_SCOPE_CONTEST = USER_FILE_STORAGE_SCOPE_CONTEST
-    STORAGE_SCOPE_MARTOR = USER_FILE_STORAGE_SCOPE_MARTOR
+    STORAGE_SCOPE_USER = USER_FILE_STORAGE_SCOPE_USER
 
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     user = models.ForeignKey(
@@ -98,7 +103,7 @@ class UserFile(models.Model):
         max_length=20,
         verbose_name=_('storage scope'),
         choices=USER_FILE_STORAGE_SCOPE_CHOICES,
-        default=USER_FILE_STORAGE_SCOPE_MARTOR,
+        default=USER_FILE_STORAGE_SCOPE_USER,
         db_index=True,
     )
     size = models.BigIntegerField(verbose_name=_('file size in bytes'), default=0)
@@ -357,3 +362,73 @@ class FileUsage(models.Model):
             return f'Submission #{self.submission_id}'
         else:
             return self.context_description or self.get_usage_type_display()
+
+
+# Matches the file references that the Martor uploader inserts into markdown,
+# e.g. /files/5b8ed2dd-831c-4f8e-ab86-88d62e81f501/view (or /download).
+_FILE_REFERENCE_RE = re.compile(
+    r'/files/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/(?:view|download)',
+)
+
+
+def extract_referenced_file_uuids(text):
+    """Return the set of UserFile UUIDs referenced from a markdown body."""
+    if not text:
+        return set()
+    return {match.lower() for match in _FILE_REFERENCE_RE.findall(text)}
+
+
+def _move_user_file_to_scope(user_file, scope):
+    """Set a file's storage scope and relocate it on disk into the scope folder.
+
+    Relocation is best-effort: the URL is UUID-based, so a failed move never
+    breaks access — the scope (the source-of-truth for tracking) is still saved.
+    """
+    if user_file.storage_scope == scope:
+        return
+    user_file.storage_scope = scope
+
+    storage = user_file.file.storage
+    old_name = user_file.file.name
+    try:
+        new_name = user_file_directory(user_file, os.path.basename(old_name))
+        if old_name and new_name != old_name and storage.exists(old_name):
+            with storage.open(old_name, 'rb') as fh:
+                saved_name = storage.save(new_name, fh)
+            user_file.file.name = saved_name
+            user_file.save(update_fields=['storage_scope', 'file'])
+            storage.delete(old_name)
+            return
+    except Exception:
+        pass
+    user_file.save(update_fields=['storage_scope'])
+
+
+def link_referenced_files(referenced_uuids, owner_profile, *, scope,
+                          problem_id=None, contest_id=None,
+                          usage_type='markdown_content', context_description=''):
+    """Attach files referenced in a problem/contest body to that context.
+
+    Only files owned by ``owner_profile`` are touched, so an editor cannot
+    re-scope or hijack another user's file by pasting its UUID into a body.
+    """
+    if not referenced_uuids or owner_profile is None:
+        return
+
+    for user_file in UserFile.objects.filter(uuid__in=referenced_uuids, user=owner_profile):
+        _move_user_file_to_scope(user_file, scope)
+
+        usage = user_file.usages.filter(usage_type=usage_type).first()
+        if usage is None:
+            FileUsage.objects.create(
+                file=user_file,
+                usage_type=usage_type,
+                problem_id=problem_id,
+                contest_id=contest_id,
+                context_description=context_description,
+            )
+        elif usage.problem_id != problem_id or usage.contest_id != contest_id:
+            usage.problem_id = problem_id
+            usage.contest_id = contest_id
+            usage.context_description = context_description
+            usage.save(update_fields=['problem_id', 'contest_id', 'context_description'])

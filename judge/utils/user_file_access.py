@@ -38,10 +38,17 @@ class SuperuserAccessHandler(AccessHandler):
 
 
 class PublicFileAccessHandler(AccessHandler):
-    """Allow immediate access for public files."""
+    """Allow immediate access for public files.
+
+    ``is_public`` is an explicit "anyone may read this" flag, so it is honored
+    regardless of storage scope. This keeps inline markdown images (which are
+    public) rendering for anonymous visitors even after they are tagged with a
+    problem/contest scope. Private problem assets stay ``is_public=False`` and
+    fall through to the context-authorization handlers below.
+    """
 
     def handle(self, context):
-        if context.file_obj.is_public and not context.file_obj.requires_context_authorization:
+        if context.file_obj.is_public:
             return context.file_obj
         return super().handle(context)
 
