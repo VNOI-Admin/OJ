@@ -26,7 +26,7 @@ from judge.models.profile import OrganizationMonthlyUsage
 from judge.tasks import on_new_problem
 from judge.utils import cache_helper
 from judge.utils.infinite_paginator import InfinitePaginationMixin
-from judge.utils.organization import add_admin_to_group
+from judge.utils.organization import add_admin_to_group, add_quota_context
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message, \
@@ -390,6 +390,11 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
     def get_title(self):
         return _('Create new organization')
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             revisions.set_comment(_('Created on site'))
@@ -588,54 +593,6 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         return _filter & Q(organization=self.organization)
 
 
-class MonthlyCreditUsageOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, ListView):
-    template_name = 'organization/usage.html'
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['title'] = self.organization.name
-        context['usages'] = OrganizationMonthlyUsage.objects.filter(organization=self.organization)\
-            .order_by('time').values('time', 'consumed_credit')
-
-        usages = context['usages']
-        days = [usage['time'].isoformat() for usage in usages] + [_('Current month')]
-        used_credits = [usage['consumed_credit'] for usage in usages] + [self.organization.current_consumed_credit]
-        sec_per_hour = 60 * 60
-        chart = get_lines_chart(days, {
-            _('Credit usage (hour)'): [
-                round(credit / sec_per_hour, 2) for credit in used_credits
-            ],
-        })
-
-        cost_chart = get_lines_chart(days, {
-            _('Cost (thousand vnd)'): [
-                round(
-                    max(0, credit - settings.VNOJ_MONTHLY_FREE_CREDIT) / sec_per_hour * settings.VNOJ_PRICE_PER_HOUR, 3,
-                ) for credit in used_credits
-            ],
-        })
-
-        free_credit = int(self.organization.free_credit)
-
-        context['free_credit'] = {
-            'hour': free_credit // sec_per_hour,
-            'minute': (free_credit % sec_per_hour) // 60,
-            'second': free_credit % 60,
-        }
-
-        paid_credit = int(self.organization.paid_credit)
-
-        context['paid_credit'] = {
-            'hour': paid_credit // sec_per_hour,
-            'minute': (paid_credit % sec_per_hour) // 60,
-            'second': paid_credit % 60,
-        }
-
-        context['credit_chart'] = chart
-        context['cost_chart'] = cost_chart
-        return context
-
-
 class ContestListOrganization(PrivateOrganizationMixin, ContestList):
     template_name = 'organization/contest-list.html'
     permission_bypass = ['judge.see_private_contest', 'judge.edit_all_contest']
@@ -673,6 +630,25 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
 class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
     permission_required = 'judge.create_organization_problem'
 
+    def _quota_error_response(self):
+        return render(self.request, 'organization/quota-error.html', {
+            'title': _('Problem limit reached'),
+            'message': _('This organization has reached its maximum number of problems (%d). '
+                         'Please delete some problems before creating new ones.')
+            % self.organization.max_problems,
+            'quota_warning_suffix': settings.VNOJ_QUOTA_WARNING_SUFFIX,
+        })
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        add_quota_context(self.organization, context)
+        return context
+
+    def get(self, request, *args, **kwargs):
+        if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
+            return self._quota_error_response()
+        return super().get(request, *args, **kwargs)
+
     def get_initial(self):
         initial = super(ProblemCreateOrganization, self).get_initial()
         initial = initial.copy()
@@ -685,6 +661,8 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
         return kwargs
 
     def form_valid(self, form):
+        if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
+            return self._quota_error_response()
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()
             problem.authors.add(self.request.user.profile)
@@ -751,12 +729,12 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
 class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
                                    InfinitePaginationMixin, ListView):
     """Dashboard showing storage usage for organization admins."""
-    template_name = 'organization/storage.html'
+    template_name = 'organization/usage.html'
     context_object_name = 'problems'
     paginate_by = 100
 
     def get_title(self):
-        return _('Storage Dashboard - %s') % self.organization.name
+        return _('Organization cost - %s') % self.organization.name
 
     def get_queryset(self):
         queryset = Problem.available.filter(
@@ -765,7 +743,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
         ).only(
             'code', 'name',
-        ).order_by('-data_size')
+        ).prefetch_related('authors__user').order_by('-data_size')
 
         return queryset
 
@@ -779,18 +757,56 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             storage_totals = ProblemData.objects.filter(
                 problem__organization=self.organization,
             ).aggregate(
-                test_data=Sum('zipfile_size'),
+                total_storage=Sum('zipfile_size'),
             )
 
-            test_data_total = storage_totals['test_data'] or 0
+            total_storage_used = storage_totals['total_storage'] or 0
 
             cached_data = {
-                'test_data': test_data_total,
+                'total_storage': total_storage_used,
             }
 
             cache_factory.set_cache(cached_data)
 
-        context['test_data_storage'] = cached_data['test_data']
+        context['total_storage'] = cached_data.get('total_storage', cached_data.get('test_data', 0))
+
+        # Quota information — cached_property on org handles DB queries
+        org = self.organization
+        add_quota_context(org, context, total_storage=context['total_storage'])
+
+        today = timezone.now().date()
+        context['active_quotas'] = list(
+            org.quotas.filter(start_date__lte=today, end_date__gte=today).order_by('end_date'),
+        )
+
+        # Credit/cost chart context (merged from usage page)
+        usages = OrganizationMonthlyUsage.objects.filter(organization=org) \
+            .order_by('time').values('time', 'consumed_credit')
+        context['usages'] = usages
+        days = [usage['time'].isoformat() for usage in usages] + [_('Current month')]
+        used_credits = [usage['consumed_credit'] for usage in usages] + [org.current_consumed_credit]
+        sec_per_hour = 60 * 60
+        context['credit_chart'] = get_lines_chart(days, {
+            _('Credit usage (hour)'): [round(c / sec_per_hour, 2) for c in used_credits],
+        })
+        context['cost_chart'] = get_lines_chart(days, {
+            _('Cost (thousand vnd)'): [
+                round(max(0, c - settings.VNOJ_MONTHLY_FREE_CREDIT) / sec_per_hour * settings.VNOJ_PRICE_PER_HOUR, 3)
+                for c in used_credits
+            ],
+        })
+        free_credit = int(org.free_credit)
+        context['free_credit'] = {
+            'hour': free_credit // sec_per_hour,
+            'minute': (free_credit % sec_per_hour) // 60,
+            'second': free_credit % 60,
+        }
+        paid_credit = int(org.paid_credit)
+        context['paid_credit'] = {
+            'hour': paid_credit // sec_per_hour,
+            'minute': (paid_credit % sec_per_hour) // 60,
+            'second': paid_credit % 60,
+        }
 
         context.update(paginate_query_context(self.request))
 
