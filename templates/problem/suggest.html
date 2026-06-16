@@ -2,6 +2,18 @@
 
 {% block body %}
 <div>
+    {% if problem_limit_reached %}
+    <div class="alert alert-danger">
+        {{ _('Problem limit reached! Please delete some problems before creating new ones.') }}
+        {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+    </div>
+    {% elif problem_warning %}
+    <div class="alert alert-warning">
+        {{ _('You are approaching the problem limit') }} ({{ problem_count }} / {{ max_problems }}).
+        {{ _('You will not be able to create more problems if the limit is exceeded.') }}
+        {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+    </div>
+    {% endif %}
     {% if request.path == url('problem_suggest') %}
         <div class="alert alert-warning alert-dismissable">
             <a class="close">x</a>
