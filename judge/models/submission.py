@@ -289,7 +289,7 @@ class Submission(models.Model):
             models.Index(fields=['user', '-id']),
 
             # For submission heat map
-            models.Index(fields=['user', 'date'])
+            models.Index(fields=['user', 'date']),
         ]
 
 
