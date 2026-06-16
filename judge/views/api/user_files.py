@@ -64,7 +64,7 @@ class UserFileListView(APILoginRequiredMixin, APIListView):
         if storage_scope and storage_scope in {
             UserFile.STORAGE_SCOPE_PROBLEM,
             UserFile.STORAGE_SCOPE_CONTEST,
-            UserFile.STORAGE_SCOPE_MARTOR,
+            UserFile.STORAGE_SCOPE_USER,
         }:
             queryset = queryset.filter(storage_scope=storage_scope)
 
@@ -159,7 +159,7 @@ class UserFileUploadView(APILoginRequiredMixin, APIMixin, View):
                     return self._error_response('file', 'No file provided', 400)
 
                 uploaded_file = request.FILES['file']
-                storage_scope = request.POST.get('storage_scope', UserFile.STORAGE_SCOPE_MARTOR)
+                storage_scope = request.POST.get('storage_scope', UserFile.STORAGE_SCOPE_USER)
                 is_public = request.POST.get('is_public', 'false').lower() == 'true'
             else:
                 try:
@@ -176,7 +176,7 @@ class UserFileUploadView(APILoginRequiredMixin, APIMixin, View):
                     return self._error_response('file', 'Invalid file encoding', 400)
 
                 filename = data['filename']
-                storage_scope = data.get('storage_scope', UserFile.STORAGE_SCOPE_MARTOR)
+                storage_scope = data.get('storage_scope', UserFile.STORAGE_SCOPE_USER)
                 is_public = data.get('is_public', False)
 
                 uploaded_file = InMemoryUploadedFile(
@@ -191,7 +191,7 @@ class UserFileUploadView(APILoginRequiredMixin, APIMixin, View):
             valid_scopes = {
                 UserFile.STORAGE_SCOPE_PROBLEM,
                 UserFile.STORAGE_SCOPE_CONTEST,
-                UserFile.STORAGE_SCOPE_MARTOR,
+                UserFile.STORAGE_SCOPE_USER,
             }
             if storage_scope not in valid_scopes:
                 return self._error_response('storage_scope', 'Invalid storage scope', 400)
