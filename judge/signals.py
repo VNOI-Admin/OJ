@@ -15,7 +15,7 @@ from registration.signals import user_registered
 from judge.caching import finished_submission
 from judge.models import BlogPost, Comment, Contest, ContestAnnouncement, ContestProblem, ContestSubmission, \
     EFFECTIVE_MATH_ENGINES, Judge, Language, License, MiscConfig, Organization, Problem, Profile, Submission, \
-    WebAuthnCredential
+    UserFile, WebAuthnCredential
 from judge.tasks import on_new_comment
 from judge.views.register import RegistrationView
 
@@ -64,6 +64,12 @@ def profile_update(sender, instance, **kwargs):
 
     cache.delete_many([make_template_fragment_key('user_about', (instance.id, engine))
                        for engine in EFFECTIVE_MATH_ENGINES])
+
+
+@receiver(post_delete, sender=UserFile)
+def user_file_delete(sender, instance, **kwargs):
+    if instance.file:
+        instance.file.delete(save=False)
 
 
 @receiver(post_delete, sender=WebAuthnCredential)

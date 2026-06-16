@@ -1,11 +1,12 @@
 import mimetypes
 import os
 import uuid
+from urllib.parse import quote
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import models
-from django.db.models import Q
+from django.db.models import F, Q
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -28,6 +29,13 @@ USER_FILE_CONTEXT_SCOPES = frozenset((
 ))
 
 USER_FILE_STORAGE_PREFIX = 'user_files'
+
+INLINE_SAFE_MIME_TYPES = frozenset((
+    'image/png',
+    'image/jpeg',
+    'application/pdf',
+    'text/plain',
+))
 
 
 class UserFileStorage(FileSystemStorage):
@@ -225,9 +233,14 @@ class UserFile(models.Model):
         super().save(*args, **kwargs)
 
     def update_last_accessed(self):
-        self.last_accessed = timezone.now()
+        # Atomic, read-free increment so concurrent downloads don't lose counts.
+        now = timezone.now()
+        UserFile.objects.filter(pk=self.pk).update(
+            last_accessed=now,
+            access_count=F('access_count') + 1,
+        )
+        self.last_accessed = now
         self.access_count += 1
-        self.save(update_fields=['last_accessed', 'access_count'])
 
     def get_absolute_url(self):
         return reverse('user_file_detail', kwargs={'uuid': self.uuid})
@@ -261,6 +274,25 @@ class UserFile(models.Model):
         stored_basename = os.path.basename(self.file.name or '')
         mime_type, _ = mimetypes.guess_type(stored_basename)
         return mime_type or 'application/octet-stream'
+
+    def get_content_disposition(self, as_attachment):
+        download_name = self.get_resolved_filename()
+        mime_type = self.get_resolved_mime_type()
+
+        if not as_attachment and mime_type not in INLINE_SAFE_MIME_TYPES:
+            as_attachment = True
+        disposition_type = 'attachment' if as_attachment else 'inline'
+
+        safe_ascii = download_name.encode('ascii', errors='replace').decode('ascii')
+        for ch in ('"', '\\', '\r', '\n'):
+            safe_ascii = safe_ascii.replace(ch, '')
+        safe_utf8 = quote(download_name, safe='')
+
+        header = (
+            f'{disposition_type}; filename="{safe_ascii}"; '
+            f"filename*=UTF-8''{safe_utf8}"
+        )
+        return mime_type, header
 
 
 class FileUsage(models.Model):
