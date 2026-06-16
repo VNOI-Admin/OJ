@@ -27,7 +27,7 @@ class UserFileBaseMixin(TitleMixin):
     context_object_name = 'file'
 
     def get_queryset(self):
-        return UserFile.objects.all()
+        return UserFile.objects.none()
 
 
 class UserFilePermissionMixin(UserFileBaseMixin):
@@ -148,6 +148,13 @@ class UserFileDeleteView(UserOwnedFilesMixin, DeleteView):
     template_name = 'user/files/file_delete.html'
     success_url = reverse_lazy('user_file_list')
 
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if self.object.usages.exists():
+            messages.error(request, _('Cannot delete: file is currently in use.'))
+            return redirect('user_file_detail', uuid=self.object.uuid)
+        return super().post(request, *args, **kwargs)
+
 
 class UserFileBulkDeleteView(UserFilePermissionMixin, View):
     def post(self, request, *args, **kwargs):
@@ -160,13 +167,20 @@ class UserFileBulkDeleteView(UserFilePermissionMixin, View):
         if not request.user.is_superuser:
             qs = qs.filter(user=request.profile)
 
-        count = qs.count()
-        qs.delete()
+        deletable_pks = list(qs.filter(usages__isnull=True).values_list('pk', flat=True))
+        count = len(deletable_pks)
+        skipped = qs.count() - count
+        UserFile.objects.filter(pk__in=deletable_pks).delete()
 
         messages.success(
             request,
             _('%(count)d file(s) deleted.') % {'count': count},
         )
+        if skipped:
+            messages.warning(
+                request,
+                _('%(count)d file(s) skipped: still in use.') % {'count': skipped},
+            )
         return redirect('user_file_list')
 
 
@@ -178,15 +192,13 @@ class UserFileDownloadView(PublicAccessMixin, DetailView):
         self.object.update_last_accessed()
 
         try:
-            download_name = self.object.get_resolved_filename()
-            mime_type = self.object.get_resolved_mime_type()
+            mime_type, content_disposition = self.object.get_content_disposition(as_attachment)
 
             response = FileResponse(
                 self.object.file.open('rb'),
                 content_type=mime_type,
             )
-            disposition_type = 'attachment' if as_attachment else 'inline'
-            response['Content-Disposition'] = f'{disposition_type}; filename="{download_name}"'
+            response['Content-Disposition'] = content_disposition
             response['X-Content-Type-Options'] = 'nosniff'
             return response
         except (OSError, IOError) as e:

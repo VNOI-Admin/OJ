@@ -9,6 +9,7 @@ from django.http import FileResponse, Http404, JsonResponse
 from django.views import View
 from django.views.generic.detail import BaseDetailView
 
+from judge.forms import UserFileUploadForm
 from judge.models import UserFile
 from judge.utils.user_file_access import UserFileAccessChain
 from judge.views.api.api_v2 import APIListView, APILoginRequiredMixin, APIMixin
@@ -126,14 +127,13 @@ class UserFileDownloadView(APILoginRequiredMixin, APIMixin, BaseDetailView):
         self.object.update_last_accessed()
 
         try:
-            download_name = self.object.get_resolved_filename()
-            mime_type = self.object.get_resolved_mime_type()
+            mime_type, content_disposition = self.object.get_content_disposition(as_attachment=True)
 
             response = FileResponse(
                 self.object.file.open('rb'),
                 content_type=mime_type,
             )
-            response['Content-Disposition'] = f'attachment; filename="{download_name}"'
+            response['Content-Disposition'] = content_disposition
             response['X-Content-Type-Options'] = 'nosniff'
             return response
         except (OSError, IOError) as e:
@@ -151,6 +151,8 @@ class UserFileDownloadView(APILoginRequiredMixin, APIMixin, BaseDetailView):
 
 class UserFileUploadView(APILoginRequiredMixin, APIMixin, View):
     def post(self, request):
+        if not UserFile.can_upload_by(request.user):
+            raise PermissionDenied()
         try:
             if request.content_type and 'multipart/form-data' in request.content_type:
                 if 'file' not in request.FILES:
@@ -193,6 +195,9 @@ class UserFileUploadView(APILoginRequiredMixin, APIMixin, View):
             }
             if storage_scope not in valid_scopes:
                 return self._error_response('storage_scope', 'Invalid storage scope', 400)
+
+            if uploaded_file.size > UserFileUploadForm.MAX_UPLOAD_SIZE:
+                return self._error_response('file', 'File size exceeds maximum allowed size of 500 MB', 400)
 
             user_file = UserFile(
                 user=request.profile,
