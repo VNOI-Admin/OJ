@@ -21,6 +21,7 @@ from django.views.generic import DetailView
 from judge.highlight_code import highlight_code
 from judge.models import Problem, ProblemData, ProblemTestCase, Submission, problem_data_storage
 from judge.models.problem_data import CUSTOM_CHECKERS, IO_METHODS
+from judge.utils.organization import add_quota_context
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.utils.unicode import utf8text
 from judge.utils.views import TitleMixin, add_file_response, generic_message
@@ -230,6 +231,12 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         else:
             context['testcase_limit'] = settings.VNOJ_TESTCASE_HARD_LIMIT
             context['testcase_soft_limit'] = settings.VNOJ_TESTCASE_SOFT_LIMIT
+
+        problem = self.object
+        if problem.is_organization_private and problem.organization:
+            add_quota_context(problem.organization, context)
+
+        context['quota_warning_suffix'] = settings.VNOJ_QUOTA_WARNING_SUFFIX
         return context
 
     def check_valid(self, data_form, cases_formset):
@@ -244,6 +251,21 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
             )
             cases_formset._non_form_errors.append(error)
             return False
+
+        # Storage quota check for organization problems
+        problem = self.object
+        if problem.is_organization_private and problem.organization:
+            org = problem.organization
+            if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not org.can_upload_data():
+                error = ValidationError(
+                    _('Storage limit exceeded for organization "%(org)s". '
+                      'Please delete some test data before uploading more.'),
+                    code='storage_exceeded',
+                    params={'org': org.name},
+                )
+                data_form.add_error(None, error)
+                return False
+
         return True
 
     def post(self, request, *args, **kwargs):

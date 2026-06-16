@@ -2,99 +2,246 @@
 
 {% block media %}
     <style>
-        .post {
-            margin: 0 0.5em;
+        .storage-table {
+            td, th {
+                &.problem-code, &.problem-name {
+                    text-align: left;
+                    padding: 0 10px;
+                }
+
+                &.problem-code {
+                    word-break: break-all;
+                }
+            }
         }
 
-        .post:first-child {
-            margin-top: 0.6em;
+        .page-tab-content {
+            display: none;
         }
 
-        .comment-count {
-            font-size: 12px;
-        }
-
-        .comment-icon {
-            padding: 0.1em 0.2em 0 0.5em;
-        }
-
-        .comment-count-link {
-            color: #555;
-        }
-
-        table.bottom td.left {
-            text-align: left;
-            border-right: none !important;
-            border-top: none !important;
-        }
-
-        table.bottom td.right {
-            text-align: right;
-            border-top: none !important;
+        .page-tab-content.active {
+            display: block;
         }
     </style>
 {% endblock %}
 
 {% block js_media %}
-    {% include "blog/media-js.html" %}
     {% include "stats/media-js.html" %}
     <script type="text/javascript">
         $(document).ready(function() {
-            draw_line_chart({{ credit_chart|tojson }}, $('#org-credit'), {total_decimals: 2, hide_total: true});
-            draw_line_chart({{ cost_chart|tojson }}, $('#org-cost'), {total_suffix: 'k vnd', total_decimals: 0, hide_total: true});
+            var chartsInitialized = false;
+
+            function initCharts() {
+                if (!chartsInitialized) {
+                    draw_line_chart({{ credit_chart|tojson }}, $('#org-credit'), {total_decimals: 2, hide_total: true});
+                    draw_line_chart({{ cost_chart|tojson }}, $('#org-cost'), {total_suffix: 'k vnd', total_decimals: 0, hide_total: true});
+                    chartsInitialized = true;
+                }
+            }
+
+            $('#inner-page-tabs .tab a').on('click', function(e) {
+                e.preventDefault();
+                var target = $(this).data('tab');
+                $('#inner-page-tabs .tab').removeClass('active');
+                $(this).closest('.tab').addClass('active');
+                $('.page-tab-content').removeClass('active');
+                $('#tab-' + target).addClass('active');
+                if (target === 'credit') {
+                    initCharts();
+                }
+            });
+
+            // Activate default tab
+            $('#inner-page-tabs .tab a[data-tab="storage"]').click();
+
+            // Show delete buttons only for authors and superusers
+            var currentProfileId = {{ request.profile.id if request.profile else 'null' }};
+            var isSuperuser = {{ 'true' if request.user.is_superuser else 'false' }};
+            $('.delete-btn').each(function() {
+                var authorIds = $(this).data('author-ids');
+                if (isSuperuser || (currentProfileId && authorIds.indexOf(currentProfileId) !== -1)) {
+                    $(this).show();
+                }
+            });
         });
     </script>
 {% endblock %}
 
 {% block title_row %}
-    {% set tab = 'home' %}
+    {% set tab = 'usage' %}
     {% include "organization/tabs.html" %}
 {% endblock %}
 {% block title_ruler %}{% endblock %}
 
 {% block body %}
-    {% block before_posts %}{% endblock %}
-
-    <div>
-        <br>
-        {{_('Available free credits (reset each month): ')}}
-        <strong>{{ free_credit.hour }} {{_('hours')}}, {{ free_credit.minute }} {{_('minutes')}}, {{ free_credit.second }} {{_('seconds')}}</strong>
-        <br>
-        {{_('Available paid credits: ')}}
-        <strong>{{ paid_credit.hour }} {{_('hours')}}, {{ paid_credit.minute }} {{_('minutes')}}, {{ paid_credit.second }} {{_('seconds')}}</strong>
-        <br>
-        <br>
+    <div class="tabs" id="inner-page-tabs" style="margin-top: 0.5em;">
+        <ul>
+            <li class="tab">
+                <a href="#" data-tab="storage">
+                    <i class="tab-icon fa fa-hdd-o"></i>{{ _('Storage usage') }}
+                </a>
+            </li>
+            <li class="tab">
+                <a href="#" data-tab="credit">
+                    <i class="tab-icon fa fa-line-chart"></i>{{ _('Credit usage') }}
+                </a>
+            </li>
+        </ul>
     </div>
 
-    <table id="stats-table" class="table">
+    <div id="tab-storage" class="page-tab-content">
+        <div class="storage-summary">
+            <div>
+                {{ _('Total used storage: ') }}
+                <strong>{{ total_storage|filesizeformat }} / {{ max_storage|filesizeformat }}</strong>
+                <br>
+                {{ _('Number of problems: ') }}
+                <strong>{{ problem_count }} / {{ max_problems }}</strong>
+                <br><br>
+            </div>
 
-        <tr>
-            <th colspan="2">{{ _('Organization Monthly cost') }}</th>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <div id="org-cost" style="height: 500px">
-                    <canvas></canvas>
-                </div>
-            </td>
-        </tr>
+            {% if active_quotas and request.user.is_superuser %}
+            <div style="margin-left: 2em; margin-top: 0.75em;">
+                <h4 style="margin-bottom: 0.4em;">{{ _('Active Quota Grants') }}</h4>
+                <table class="table" style="width: auto;">
+                    <thead>
+                        <tr>
+                            <th>{{ _('Start') }}</th>
+                            <th>{{ _('Expires') }}</th>
+                            <th>{{ _('+ Problems') }}</th>
+                            <th>{{ _('+ Storage') }}</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for q in active_quotas %}
+                        <tr>
+                            <td>{{ q.start_date }}</td>
+                            <td>{{ q.end_date }}</td>
+                            <td>+{{ q.added_problems }}</td>
+                            <td>+{{ q.added_storage|filesizeformat }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
 
-        <tr>
-            <th colspan="2">{{ _('Organization Monthly Credit usage') }}</th>
-        </tr>
-        <tr>
-            <td colspan="2">
-                <div id="org-credit" style="height: 500px">
-                    <canvas></canvas>
-                </div>
-            </td>
-        </tr>
-    </table>
-{% endblock %}
+            {% if storage_exceeded %}
+            <div class="alert alert-danger">
+                {{ _('Storage limit reached! Please delete some problems to free up space.') }}
+                {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+            </div>
+            {% elif storage_warning %}
+            <div class="alert alert-warning">
+                {{ _('You are approaching the storage limit') }} ({{ total_storage|filesizeformat }} / {{ max_storage|filesizeformat }}).
+                {{ _('You will not be able to upload test if the limit is exceeded.') }}
+                {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+            </div>
+            {% endif %}
 
-{% block bodyend %}
-    {{ super() }}
-    {% if REQUIRE_JAX %}
-        {% include "mathjax-load.html" %}
-    {% endif %}
+            {% if problem_limit_reached %}
+            <div class="alert alert-danger">
+                {{ _('Problem limit reached! Please delete some problems before creating new ones.') }}
+                {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+            </div>
+            {% elif problem_warning %}
+            <div class="alert alert-warning">
+                {{ _('You are approaching the problem limit') }} ({{ problem_count }} / {{ max_problems }}).
+                {{ _('You will not be able to create more problems if the limit is exceeded.') }}
+                {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+            </div>
+            {% endif %}
+        </div>
+
+        <table class="storage-table table">
+            <thead>
+                <tr>
+                    <th>{{ _('Problem Code') }}</th>
+                    <th>{{ _('Problem Name') }}</th>
+                    <th>{{ _('Authors') }}</th>
+                    <th>{{ _('Total Size') }}</th>
+                    <th>{{ _('Download') }}</th>
+                    <th>{{ _('Delete') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for problem in problems %}
+                <tr>
+                    <td class="problem-code">
+                        <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code }}</a>
+                    </td>
+                    <td class="problem-name">
+                        <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                    </td>
+                    <td>
+                        {{ link_users(problem.authors.all()) }}
+                    </td>
+                    <td class="size-cell">
+                        {{ problem.data_size|filesizeformat }}
+                    </td>
+                    <td>
+                        <a href="{{ url('problem_download_full_package', problem.code) }}"
+                           class="btn btn-xs delete-btn"
+                           data-author-ids="{{ problem.authors.all()|map(attribute='id')|list|tojson }}"
+                           style="display:none;">
+                            <i class="fa fa-download"></i> {{ _('Test data') }}
+                        </a>
+                    </td>
+                    <td>
+                        <a href="{{ url('problem_delete', problem.code) }}?next={{ request.path }}"
+                           class="btn btn-xs btn-danger delete-btn"
+                           data-author-ids="{{ problem.authors.all()|map(attribute='id')|list|tojson }}"
+                           style="display:none;">
+                            <i class="fa fa-trash"></i> {{ _('Delete') }}
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 2em; color: #999;">
+                        {{ _('No problems found for this organization.') }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if page_obj.has_other_pages() %}
+            <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+        {% endif %}
+    </div>
+
+    <div id="tab-credit" class="page-tab-content">
+        <div>
+            {{_('Available free credits (reset each month): ')}}
+            <strong>{{ free_credit.hour }} {{_('hours')}}, {{ free_credit.minute }} {{_('minutes')}}, {{ free_credit.second }} {{_('seconds')}}</strong>
+            <br>
+            {{_('Available paid credits: ')}}
+            <strong>{{ paid_credit.hour }} {{_('hours')}}, {{ paid_credit.minute }} {{_('minutes')}}, {{ paid_credit.second }} {{_('seconds')}}</strong>
+            <br><br>
+        </div>
+
+        <table id="stats-table" class="table">
+            <tr>
+                <th colspan="2">{{ _('Organization Monthly cost') }}</th>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div id="org-cost" style="height: 500px">
+                        <canvas></canvas>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <th colspan="2">{{ _('Organization Monthly Credit usage') }}</th>
+            </tr>
+            <tr>
+                <td colspan="2">
+                    <div id="org-credit" style="height: 500px">
+                        <canvas></canvas>
+                    </div>
+                </td>
+            </tr>
+        </table>
+    </div>
 {% endblock %}
