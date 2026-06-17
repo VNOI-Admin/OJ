@@ -1145,7 +1145,7 @@ class ContestProblemMixin:
                 contest=contest_problem.contest,
             ).order_by('-virtual').first()  # get the last participation
 
-        if not contest_problem.is_accessible_by(user):
+        if not contest_problem.is_accessible_by(user, self.explicit_participation):
             raise Http404()
 
         return problem
