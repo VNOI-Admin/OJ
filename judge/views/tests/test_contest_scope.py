@@ -38,7 +38,8 @@ from judge.models.tests.util import (
     create_problem,
     create_user,
 )
-from judge.views.problem import ContestProblemDetail, ContestProblemRaw, ContestProblemSubmissions, ContestProblemSubmit, ProblemDetail
+from judge.views.problem import ContestProblemDetail, ContestProblemRaw, ContestProblemSubmissions, \
+    ContestProblemSubmit, ProblemDetail
 from judge.views.ranked_submission import ContestRankedSubmission
 from judge.views.submission import SubmissionDetailBase, UserContestSubmissions, submission_problem_redirect
 from judge.views.ticket import NewContestProblemTicketView
