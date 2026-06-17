@@ -18,7 +18,7 @@ Views / surfaces tested:
   - ContestAllProblems (contest_problems.order, hide_problem_code)
   - AllContestSubmissions (get_my_submissions_page — no problem code)
   - UserAllContestSubmissions (get_my_submissions_page — no problem code)
-  - DefaultContestFormat.display_user_problem (ranking cell URL)
+  - ContestRanking._build_json_base (ranking JSON url_templates: order-based, no problem code)
   - submission/row.html template (contest_object_id → submission_problem_redirect)
   - HTTP integration for key contest-scoped URLs (no /problem/<code>/ in response)
 """
@@ -591,11 +591,11 @@ class ContestDetailContextTest(ContestScopeTestBase):
 
 
 # ---------------------------------------------------------------------------
-# ContestRanking — ranking list provides problem.order for the ranking table
+# ContestRanking — _build_json_base exposes problem order and contest-scoped URLs
 # ---------------------------------------------------------------------------
 
 class ContestRankingTableTest(ContestScopeTestBase):
-    """ContestRanking provides ContestProblem objects with .order; rendered table uses contest_problem_detail."""
+    """ContestRanking._build_json_base includes problem order and uses contest_problem_detail URLs."""
 
     def _make_view(self, user):
         from judge.views.contests import ContestRanking
@@ -606,29 +606,27 @@ class ContestRankingTableTest(ContestScopeTestBase):
         view.kwargs = {'contest': self.active_contest.key}
         return view
 
-    def test_ranking_list_problems_are_contest_problems_with_order(self):
+    def test_ranking_json_problems_include_order(self):
         view = self._make_view(self.users['non_participant'])
-        _, problems, _ = view.get_ranking_list()
-        self.assertEqual(len(problems), 2)
-        orders = [p.order for p in problems]
+        _, problems_data, _ = view._build_json_base()
+        self.assertEqual(len(problems_data), 2)
+        orders = [p['order'] for p in problems_data]
         self.assertIn(1, orders)
         self.assertIn(2, orders)
 
-    def test_rendered_ranking_table_uses_contest_problem_detail_url(self):
+    def test_ranking_json_problem_url_uses_contest_problem_detail(self):
         view = self._make_view(self.users['non_participant'])
-        view.request.misc_config = {}
-        html = view.get_rendered_ranking_table()
+        _, problems_data, _ = view._build_json_base()
         expected_url = reverse('contest_problem_detail', args=[self.active_contest.key, 1])
-        self.assertIn(expected_url, html)
-        self.assertNotIn(f'/problem/{self.problem.code}/', html)
+        prob1 = next(p for p in problems_data if p['order'] == 1)
+        self.assertEqual(prob1['url'], expected_url)
+        self.assertNotIn(f'/problem/{self.problem.code}/', prob1['url'])
 
-    def test_rendered_ranking_table_has_no_problem_code_urls(self):
-        """No /problem/<code>/ links anywhere in the ranking table."""
+    def test_ranking_json_problem_url_has_no_problem_code(self):
         view = self._make_view(self.users['non_participant'])
-        view.request.misc_config = {}
-        html = view.get_rendered_ranking_table()
-        self.assertNotIn(f'/problem/{self.problem.code}/', html)
-        self.assertNotIn(f'/problem/{self.private_problem.code}/', html)
+        _, problems_data, _ = view._build_json_base()
+        for prob in problems_data:
+            self.assertNotIn('/problem/', prob['url'])
 
 
 # ---------------------------------------------------------------------------
@@ -711,60 +709,44 @@ class UserAllContestSubmissionsUrlTest(ContestScopeTestBase):
 
 
 # ---------------------------------------------------------------------------
-# DefaultContestFormat.display_user_problem — ranking cell URL
+# ContestRanking JSON — url_templates use order placeholder, not problem code
 # ---------------------------------------------------------------------------
 
-class ContestFormatRankingCellUrlTest(ContestScopeTestBase):
+class ContestRankingUrlTemplateTest(ContestScopeTestBase):
     """
-    The ranking table cell (per-participant per-problem) must link to
-    contest_user_problem_submissions, not contest_user_submissions or /problem/<code>/.
+    The ranking JSON url_templates must use order-based placeholders, not problem codes.
+    Replaces the old display_user_problem tests (method removed in master commit 0c219ae49).
     """
 
-    def _make_participation_with_data(self):
-        participation = ContestParticipation.objects.get(
-            contest=self.active_contest,
-            user=self.users['participant'].profile,
-        )
-        cp = self.contest_problem
-        participation.format_data = {
-            str(cp.id): {'points': 100, 'time': 3600},
-        }
-        participation.save(update_fields=['format_data'])
-        return participation
+    def _get_contest_data(self):
+        from judge.views.contests import ContestRanking
+        view = ContestRanking()
+        view.request = self._make_request(self.users['non_participant'])
+        view.request.session = {}
+        view.object = self.active_contest
+        view.kwargs = {'contest': self.active_contest.key}
+        _, _, contest_data = view._build_json_base()
+        return contest_data
 
-    def test_display_user_problem_uses_contest_user_problem_submissions(self):
-        participation = self._make_participation_with_data()
-        cp = self.contest_problem
-        html = self.active_contest.format.display_user_problem(participation, cp, {})
-        expected_url = reverse('contest_user_problem_submissions', args=[
-            self.active_contest.key, cp.order, self.users['participant'].username,
-        ])
-        self.assertIn(expected_url, html)
-        self.assertNotIn('/problem/', html)
-        self.assertNotIn(self.problem.code, html)
+    def test_problem_submissions_template_uses_order_placeholder(self):
+        contest_data = self._get_contest_data()
+        tpl = contest_data['url_templates']['problem_submissions']
+        self.assertIn(self.active_contest.key, tpl)
+        self.assertIn('__ORDER__', tpl)
+        self.assertIn('__USERNAME__', tpl)
 
-    def test_display_user_problem_url_contains_order_not_problem_code(self):
-        """URL must use numeric order, never the problem code string."""
-        participation = self._make_participation_with_data()
-        cp = self.contest_problem
-        html = self.active_contest.format.display_user_problem(participation, cp, {})
-        # The problem code must not appear as a URL segment
-        self.assertNotIn(f'/{self.problem.code}/', html)
-        # The order must be in the URL
-        self.assertIn(f'/{cp.order}/', html)
+    def test_problem_submissions_template_has_no_problem_code(self):
+        contest_data = self._get_contest_data()
+        tpl = contest_data['url_templates']['problem_submissions']
+        self.assertNotIn(self.problem.code, tpl)
+        self.assertNotIn(self.private_problem.code, tpl)
+        self.assertNotIn('/problem/', tpl)
 
-    def test_display_user_problem_no_data_renders_empty_cell(self):
-        """When a participant has no data for a problem, the cell is empty (no URL)."""
-        participation = ContestParticipation.objects.get(
-            contest=self.active_contest,
-            user=self.users['participant'].profile,
-        )
-        participation.format_data = {}
-        participation.save(update_fields=['format_data'])
-        cp = self.contest_problem
-        html = self.active_contest.format.display_user_problem(participation, cp, {})
-        self.assertNotIn('/problem/', html)
-        self.assertNotIn('href', html)
+    def test_all_submissions_template_has_username_placeholder(self):
+        contest_data = self._get_contest_data()
+        tpl = contest_data['url_templates']['all_submissions']
+        self.assertIn(self.active_contest.key, tpl)
+        self.assertIn('__USERNAME__', tpl)
 
 
 # ---------------------------------------------------------------------------
@@ -1085,7 +1067,8 @@ class ContestEndedHtmlTest(ContestScopeTestBase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
-        self.assertIn(f'/problem/{self.problem.code}/', content)
+        # problem_detail URL has no trailing slash, e.g. /problem/scope_problem
+        self.assertIn(f'/problem/{self.problem.code}', content)
 
     def test_active_contest_detail_does_not_render_problem_code_links(self):
         # Sanity/regression check: same problem in active contest must NOT expose the code.
@@ -1093,4 +1076,4 @@ class ContestEndedHtmlTest(ContestScopeTestBase):
         response = self.client.get(url)
         self.assertEqual(response.status_code, 200)
         content = response.content.decode()
-        self.assertNotIn(f'href="/problem/{self.problem.code}/"', content)
+        self.assertNotIn(f'href="/problem/{self.problem.code}', content)

@@ -959,12 +959,13 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         problems_data = [
             {
                 'id': prob.id,
+                'order': prob.order,
                 'code': prob.problem.code,
                 'label': contest.get_label_for_problem(i),
                 'name': prob.problem.name,
                 'points': float(prob.points),
                 'is_pretested': prob.is_pretested,
-                'url': reverse('problem_detail', args=[prob.problem.code]),
+                'url': reverse('contest_problem_detail', args=[contest.key, prob.order]),
             }
             for i, prob in enumerate(problems)
         ]
@@ -989,9 +990,9 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             'url_templates': {
                 'all_submissions': reverse('contest_all_user_submissions', args=[contest.key, '__USERNAME__']),
                 'problem_submissions': reverse(
-                    'contest_user_submissions',
-                    args=[contest.key, '__USERNAME__', '__PROBLEM__'],
-                ),
+                    'contest_user_problem_submissions',
+                    args=[contest.key, 0, '__USERNAME__'],
+                ).replace('/0/', '/__ORDER__/'),
             },
             'rating_config': {
                 'values': RATING_VALUES,
