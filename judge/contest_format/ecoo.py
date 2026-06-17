@@ -1,16 +1,9 @@
-from datetime import timedelta
-
 from django.core.exceptions import ValidationError
 from django.db.models import Count, Max, OuterRef, Subquery
-from django.template.defaultfilters import floatformat
-from django.urls import reverse
-from django.utils.html import format_html
-from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 
 from judge.contest_format.default import DefaultContestFormat
 from judge.contest_format.registry import register_contest_format
-from judge.utils.timedelta import nice_repr
 
 
 @register_contest_format('ecoo')
@@ -97,35 +90,6 @@ class ECOOContestFormat(DefaultContestFormat):
         participation.tiebreaker = 0
         participation.format_data = format_data
         participation.save()
-
-    def display_user_problem(self, participation, contest_problem, first_solves, frozen=False):
-        format_data = (participation.format_data or {}).get(str(contest_problem.id))
-        if format_data:
-            bonus = format_html('<small> +{bonus}</small>',
-                                bonus=floatformat(format_data['bonus'])) if format_data['bonus'] else ''
-
-            return format_html(
-                '<td class="{state}"><a href="{url}">{points}{bonus}<div class="solving-time">{time}</div></a></td>',
-                state=(('pretest-' if self.contest.run_pretests_only and contest_problem.is_pretested else '') +
-                       ('first-solve ' if first_solves.get(str(contest_problem.id), None) == participation.id else '') +
-                       self.best_solution_state(format_data['points'], contest_problem.points)),
-                url=reverse('contest_user_submissions',
-                            args=[self.contest.key, participation.user.user.username, contest_problem.problem.code]),
-                points=floatformat(format_data['points'], -self.contest.points_precision),
-                bonus=bonus,
-                time=nice_repr(timedelta(seconds=format_data['time']), 'noday'),
-            )
-        else:
-            return mark_safe('<td></td>')
-
-    def display_participation_result(self, participation, frozen=False):
-        return format_html(
-            '<td class="user-points"><a href="{url}">{points}<div class="solving-time">{cumtime}</div></a></td>',
-            url=reverse('contest_all_user_submissions',
-                        args=[self.contest.key, participation.user.user.username]),
-            points=floatformat(participation.score, -self.contest.points_precision),
-            cumtime=nice_repr(timedelta(seconds=participation.cumtime), 'noday') if self.config['cumtime'] else '',
-        )
 
     def get_short_form_display(self):
         yield _('The score on your **last** non-CE submission for each problem will be used.')
