@@ -28,7 +28,6 @@ from django.urls import reverse
 from django.utils import timezone
 
 from judge.models import Contest, Language, Submission
-from judge.models.contest import ContestParticipation
 from judge.models.submission import SubmissionSource
 from judge.models.tests.util import (
     CommonDataMixin,
@@ -614,19 +613,33 @@ class ContestRankingTableTest(ContestScopeTestBase):
         self.assertIn(1, orders)
         self.assertIn(2, orders)
 
-    def test_ranking_json_problem_url_uses_contest_problem_detail(self):
+    def test_active_contest_ranking_json_problem_url_uses_contest_problem_detail(self):
+        """Active contest: ranking header links must use contest_problem_detail (no code leakage)."""
         view = self._make_view(self.users['non_participant'])
         _, problems_data, _ = view._build_json_base()
         expected_url = reverse('contest_problem_detail', args=[self.active_contest.key, 1])
         prob1 = next(p for p in problems_data if p['order'] == 1)
         self.assertEqual(prob1['url'], expected_url)
-        self.assertNotIn(f'/problem/{self.problem.code}/', prob1['url'])
+        self.assertNotIn(f'/problem/{self.problem.code}', prob1['url'])
 
-    def test_ranking_json_problem_url_has_no_problem_code(self):
+    def test_active_contest_ranking_json_problem_url_has_no_problem_code(self):
         view = self._make_view(self.users['non_participant'])
         _, problems_data, _ = view._build_json_base()
         for prob in problems_data:
             self.assertNotIn('/problem/', prob['url'])
+
+    def test_ended_contest_ranking_json_problem_url_uses_problem_detail(self):
+        """Ended contest: ranking header links revert to problem_detail (consistent with contest detail page)."""
+        from judge.views.contests import ContestRanking
+        view = ContestRanking()
+        view.request = self._make_request(self.users['non_participant'])
+        view.request.session = {}
+        view.object = self.ended_contest
+        view.kwargs = {'contest': self.ended_contest.key}
+        _, problems_data, _ = view._build_json_base()
+        prob1 = next(p for p in problems_data if p['order'] == 1)
+        expected_url = reverse('problem_detail', args=[self.problem.code])
+        self.assertEqual(prob1['url'], expected_url)
 
 
 # ---------------------------------------------------------------------------

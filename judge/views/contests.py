@@ -51,7 +51,6 @@ from judge.utils.opengraph import generate_opengraph
 from judge.utils.problems import (
     _get_result_data, contest_attempted_ids, contest_completed_ids, user_attempted_ids, user_completed_ids,
 )
-from judge.utils.ranker import ranker
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 from judge.utils.views import SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message, paginate_query_context
@@ -953,6 +952,7 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     def _build_json_base(self):
         """Returns (problems, problems_data, contest_dict) with fields shared by all ranking JSON views."""
         contest = self.object
+        hide_problem_code = self.is_in_contest or not contest.ended
         problems = list(
             contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'),
         )
@@ -965,7 +965,11 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
                 'name': prob.problem.name,
                 'points': float(prob.points),
                 'is_pretested': prob.is_pretested,
-                'url': reverse('contest_problem_detail', args=[contest.key, prob.order]),
+                'url': (
+                    reverse('contest_problem_detail', args=[contest.key, prob.order])
+                    if hide_problem_code
+                    else reverse('problem_detail', args=[prob.problem.code])
+                ),
             }
             for i, prob in enumerate(problems)
         ]

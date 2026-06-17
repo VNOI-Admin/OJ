@@ -1,7 +1,5 @@
 from abc import ABCMeta, abstractmethod
 
-from django.urls import reverse
-
 
 class abstractclassmethod(classmethod):
     __isabstractmethod__ = True
