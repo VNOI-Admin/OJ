@@ -1,3 +1,5 @@
+from datetime import datetime, timezone as dt_timezone
+
 from django.core.exceptions import ValidationError
 from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
@@ -887,6 +889,10 @@ class ContestProblemIsAccessibleByTestCase(CommonDataMixin, TestCase):
     """
     Unit tests for ContestProblem.is_accessible_by(user).
 
+    Access requires: authenticated + contest accessible + contest started (can_join)
+    + active participation (not ended). No bypasses for public problems, special
+    permissions (see_private_problem, see_private_contest), or superuser status.
+
     Matrix of cases:
         problem:  public  / private
         contest:  public (visible, not private) / private (is_private=True)
@@ -912,8 +918,7 @@ class ContestProblemIsAccessibleByTestCase(CommonDataMixin, TestCase):
             'problem_author': create_user(username='cp_prob_author'),
             'contest_editor': create_user(username='cp_cont_editor'),
             'participant': create_user(username='cp_participant'),
-            'private_allowed': create_user(username='cp_priv_allowed'),
-            'private_not_allowed': create_user(username='cp_priv_not_allowed'),
+            'pre_registered': create_user(username='cp_pre_registered'),
         })
 
         cls.public_problem = create_problem(code='cp_pub_prob', is_public=True)
@@ -937,6 +942,12 @@ class ContestProblemIsAccessibleByTestCase(CommonDataMixin, TestCase):
             contest=cls.public_contest, problem=cls.private_problem, order=2,
         )
         create_contest_participation(contest=cls.public_contest, user='cp_participant')
+        # Pre-registered: participation exists but real_start is epoch (registered before start).
+        ContestParticipation.objects.create(
+            contest=cls.public_contest,
+            user=cls.users['pre_registered'].profile,
+            real_start=datetime(1970, 1, 1, tzinfo=dt_timezone.utc),
+        )
 
         cls.private_contest = create_contest(
             key='cp_private_contest',
@@ -944,7 +955,7 @@ class ContestProblemIsAccessibleByTestCase(CommonDataMixin, TestCase):
             end_time=cls._now + timezone.timedelta(days=1),
             is_visible=True,
             is_private=True,
-            private_contestants=('cp_priv_allowed',),
+            private_contestants=('cp_participant',),
         )
         cls.priv_contest_pub_cp = create_contest_problem(
             contest=cls.private_contest, problem=cls.public_problem, order=1,
@@ -952,29 +963,104 @@ class ContestProblemIsAccessibleByTestCase(CommonDataMixin, TestCase):
         cls.priv_contest_priv_cp = create_contest_problem(
             contest=cls.private_contest, problem=cls.private_problem, order=2,
         )
-        create_contest_participation(contest=cls.private_contest, user='cp_priv_allowed')
+        create_contest_participation(contest=cls.private_contest, user='cp_participant')
+
+        # Future (before-start) contests
+        cls.future_pub_contest = create_contest(
+            key='cp_future_pub_contest',
+            start_time=cls._now + timezone.timedelta(hours=1),
+            end_time=cls._now + timezone.timedelta(hours=5),
+            is_visible=True,
+            authors=('cp_cont_editor',),
+        )
+        cls.future_pub_contest_pub_cp = create_contest_problem(
+            contest=cls.future_pub_contest, problem=cls.public_problem, order=1,
+        )
+        cls.future_pub_contest_priv_cp = create_contest_problem(
+            contest=cls.future_pub_contest, problem=cls.private_problem, order=2,
+        )
+        create_contest_participation(contest=cls.future_pub_contest, user='cp_participant')
+        ContestParticipation.objects.create(
+            contest=cls.future_pub_contest,
+            user=cls.users['pre_registered'].profile,
+            real_start=datetime(1970, 1, 1, tzinfo=dt_timezone.utc),
+        )
+
+        cls.future_priv_contest = create_contest(
+            key='cp_future_priv_contest',
+            start_time=cls._now + timezone.timedelta(hours=1),
+            end_time=cls._now + timezone.timedelta(hours=5),
+            is_visible=True,
+            is_private=True,
+            private_contestants=('cp_participant',),
+        )
+        cls.future_priv_contest_pub_cp = create_contest_problem(
+            contest=cls.future_priv_contest, problem=cls.public_problem, order=1,
+        )
+        cls.future_priv_contest_priv_cp = create_contest_problem(
+            contest=cls.future_priv_contest, problem=cls.private_problem, order=2,
+        )
+        create_contest_participation(contest=cls.future_priv_contest, user='cp_participant')
+
+        # Ended (after-end) contests
+        cls.ended_pub_contest = create_contest(
+            key='cp_ended_pub_contest',
+            start_time=cls._now - timezone.timedelta(hours=5),
+            end_time=cls._now - timezone.timedelta(hours=1),
+            is_visible=True,
+            authors=('cp_cont_editor',),
+        )
+        cls.ended_pub_contest_pub_cp = create_contest_problem(
+            contest=cls.ended_pub_contest, problem=cls.public_problem, order=1,
+        )
+        cls.ended_pub_contest_priv_cp = create_contest_problem(
+            contest=cls.ended_pub_contest, problem=cls.private_problem, order=2,
+        )
+        create_contest_participation(contest=cls.ended_pub_contest, user='cp_participant')
+        ContestParticipation.objects.create(
+            contest=cls.ended_pub_contest,
+            user=cls.users['pre_registered'].profile,
+            real_start=datetime(1970, 1, 1, tzinfo=dt_timezone.utc),
+        )
+
+        cls.ended_priv_contest = create_contest(
+            key='cp_ended_priv_contest',
+            start_time=cls._now - timezone.timedelta(hours=5),
+            end_time=cls._now - timezone.timedelta(hours=1),
+            is_visible=True,
+            is_private=True,
+            private_contestants=('cp_participant',),
+        )
+        cls.ended_priv_contest_pub_cp = create_contest_problem(
+            contest=cls.ended_priv_contest, problem=cls.public_problem, order=1,
+        )
+        cls.ended_priv_contest_priv_cp = create_contest_problem(
+            contest=cls.ended_priv_contest, problem=cls.private_problem, order=2,
+        )
+        create_contest_participation(contest=cls.ended_priv_contest, user='cp_participant')
 
     def test_pub_contest_pub_problem_methods(self):
-        # Public problem -> always accessible regardless of contest or participation
+        # Only users with an active participation (or who can edit the contest) can access.
         data = {
-            'anonymous': {'is_accessible_by': self.assertTrue},
-            'normal': {'is_accessible_by': self.assertTrue},
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
             'participant': {'is_accessible_by': self.assertTrue},
-            'contest_editor': {'is_accessible_by': self.assertTrue},
+            'pre_registered': {'is_accessible_by': self.assertTrue},
+            'contest_editor': {'is_accessible_by': self.assertFalse},
             'superuser': {'is_accessible_by': self.assertTrue},
         }
         self._test_object_methods_with_users(self.pub_contest_pub_cp, data)
 
     def test_pub_contest_priv_problem_methods(self):
-        # Private problem in public contest:
-        #   - participant/problem_author/see_private_problem/superuser -> True
-        #   - all others -> False
+        # Private problem in public contest: active participants and contest editors -> True.
+        # No bypass for problem_author or see_private_problem perm.
         data = {
             'anonymous': {'is_accessible_by': self.assertFalse},
             'normal': {'is_accessible_by': self.assertFalse},
             'participant': {'is_accessible_by': self.assertTrue},
-            'problem_author': {'is_accessible_by': self.assertTrue},
-            'see_private_problem': {'is_accessible_by': self.assertTrue},
+            'pre_registered': {'is_accessible_by': self.assertTrue},
+            'problem_author': {'is_accessible_by': self.assertFalse},
+            'see_private_problem': {'is_accessible_by': self.assertFalse},
             'see_private_contest': {'is_accessible_by': self.assertFalse},
             'contest_editor': {'is_accessible_by': self.assertFalse},
             'superuser': {'is_accessible_by': self.assertTrue},
@@ -982,30 +1068,130 @@ class ContestProblemIsAccessibleByTestCase(CommonDataMixin, TestCase):
         self._test_object_methods_with_users(self.pub_contest_priv_cp, data)
 
     def test_priv_contest_pub_problem_methods(self):
-        # Public problem -> problem.is_accessible_by() returns True before contest check
+        # Public problem in private contest: participant (active) and superuser (editable) -> True.
+        # anonymous, normal fail contest access; see_private_contest passes contest access but
+        # has no participation and can't edit.
         data = {
-            'anonymous': {'is_accessible_by': self.assertTrue},
-            'private_not_allowed': {'is_accessible_by': self.assertTrue},
-            'private_allowed': {'is_accessible_by': self.assertTrue},
-            'see_private_contest': {'is_accessible_by': self.assertTrue},
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertTrue},
+            'see_private_contest': {'is_accessible_by': self.assertFalse},
             'superuser': {'is_accessible_by': self.assertTrue},
         }
         self._test_object_methods_with_users(self.priv_contest_pub_cp, data)
 
     def test_priv_contest_priv_problem_methods(self):
-        # Private problem in private contest:
-        #   - allowed+participation / problem_author / see_private_problem / superuser -> True
-        #   - see_private_contest has contest access but no participation -> False
+        # Private problem in private contest: participant (active) and superuser (editable) -> True.
+        # problem_author and see_private_problem can't access the private contest at all.
+        # see_private_contest passes contest access but has no participation and can't edit.
         data = {
             'anonymous': {'is_accessible_by': self.assertFalse},
-            'private_not_allowed': {'is_accessible_by': self.assertFalse},
-            'private_allowed': {'is_accessible_by': self.assertTrue},
-            'problem_author': {'is_accessible_by': self.assertTrue},
-            'see_private_problem': {'is_accessible_by': self.assertTrue},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertTrue},
+            'problem_author': {'is_accessible_by': self.assertFalse},
+            'see_private_problem': {'is_accessible_by': self.assertFalse},
             'see_private_contest': {'is_accessible_by': self.assertFalse},
             'superuser': {'is_accessible_by': self.assertTrue},
         }
         self._test_object_methods_with_users(self.priv_contest_priv_cp, data)
+
+    # --- Before start (can_join = False): blocked for all except contest editors ---
+
+    def test_pub_contest_pub_problem_before_start(self):
+        data = {
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertFalse},
+            'pre_registered': {'is_accessible_by': self.assertFalse},
+            'contest_editor': {'is_accessible_by': self.assertFalse},
+            'superuser': {'is_accessible_by': self.assertTrue},
+        }
+        self._test_object_methods_with_users(self.future_pub_contest_pub_cp, data)
+
+    def test_pub_contest_priv_problem_before_start(self):
+        data = {
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertFalse},
+            'pre_registered': {'is_accessible_by': self.assertFalse},
+            'problem_author': {'is_accessible_by': self.assertFalse},
+            'see_private_problem': {'is_accessible_by': self.assertFalse},
+            'see_private_contest': {'is_accessible_by': self.assertFalse},
+            'contest_editor': {'is_accessible_by': self.assertFalse},
+            'superuser': {'is_accessible_by': self.assertTrue},
+        }
+        self._test_object_methods_with_users(self.future_pub_contest_priv_cp, data)
+
+    def test_priv_contest_pub_problem_before_start(self):
+        data = {
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertFalse},
+            'see_private_contest': {'is_accessible_by': self.assertFalse},
+            'superuser': {'is_accessible_by': self.assertTrue},
+        }
+        self._test_object_methods_with_users(self.future_priv_contest_pub_cp, data)
+
+    def test_priv_contest_priv_problem_before_start(self):
+        data = {
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertFalse},
+            'problem_author': {'is_accessible_by': self.assertFalse},
+            'see_private_problem': {'is_accessible_by': self.assertFalse},
+            'see_private_contest': {'is_accessible_by': self.assertFalse},
+            'superuser': {'is_accessible_by': self.assertTrue},
+        }
+        self._test_object_methods_with_users(self.future_priv_contest_priv_cp, data)
+
+    # --- After end (participation.ended = True): blocked for all except contest editors ---
+
+    def test_pub_contest_pub_problem_after_end(self):
+        data = {
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertFalse},
+            'pre_registered': {'is_accessible_by': self.assertFalse},
+            'contest_editor': {'is_accessible_by': self.assertFalse},
+            'superuser': {'is_accessible_by': self.assertTrue},
+        }
+        self._test_object_methods_with_users(self.ended_pub_contest_pub_cp, data)
+
+    def test_pub_contest_priv_problem_after_end(self):
+        data = {
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertFalse},
+            'pre_registered': {'is_accessible_by': self.assertFalse},
+            'problem_author': {'is_accessible_by': self.assertFalse},
+            'see_private_problem': {'is_accessible_by': self.assertFalse},
+            'see_private_contest': {'is_accessible_by': self.assertFalse},
+            'contest_editor': {'is_accessible_by': self.assertFalse},
+            'superuser': {'is_accessible_by': self.assertTrue},
+        }
+        self._test_object_methods_with_users(self.ended_pub_contest_priv_cp, data)
+
+    def test_priv_contest_pub_problem_after_end(self):
+        data = {
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertFalse},
+            'see_private_contest': {'is_accessible_by': self.assertFalse},
+            'superuser': {'is_accessible_by': self.assertTrue},
+        }
+        self._test_object_methods_with_users(self.ended_priv_contest_pub_cp, data)
+
+    def test_priv_contest_priv_problem_after_end(self):
+        data = {
+            'anonymous': {'is_accessible_by': self.assertFalse},
+            'normal': {'is_accessible_by': self.assertFalse},
+            'participant': {'is_accessible_by': self.assertFalse},
+            'problem_author': {'is_accessible_by': self.assertFalse},
+            'see_private_problem': {'is_accessible_by': self.assertFalse},
+            'see_private_contest': {'is_accessible_by': self.assertFalse},
+            'superuser': {'is_accessible_by': self.assertTrue},
+        }
+        self._test_object_methods_with_users(self.ended_priv_contest_priv_cp, data)
 
 
 class ProblemIsAccessibleByNoContestCheckTestCase(CommonDataMixin, TestCase):
@@ -1068,11 +1254,9 @@ class ProblemIsAccessibleByNoContestCheckTestCase(CommonDataMixin, TestCase):
 class ContestProblemPreStartAccessTestCase(CommonDataMixin, TestCase):
     """
     ContestProblem.is_accessible_by() must block access before the contest starts
-    (can_join = False), even for pre-registered participants.
-
-    Regression guard: the old Problem.is_accessible_by() had an explicit
-    `if not current.contest.can_join: return False` check. The new
-    ContestProblem.is_accessible_by() must preserve that behaviour.
+    (can_join = False), except for users who can edit the contest (is_editable_by).
+    Pre-registered participants, see_private_problem perm users are all blocked.
+    Superusers bypass via is_editable_by.
     """
 
     @classmethod
@@ -1107,11 +1291,13 @@ class ContestProblemPreStartAccessTestCase(CommonDataMixin, TestCase):
         create_contest_participation(contest=cls.future_contest, user='pre_start_participant')
 
     def test_public_problem_accessible_before_start(self):
-        # Public problems are always accessible regardless of contest timing.
-        for key in ('anonymous', 'normal', 'pre_registered', 'superuser'):
+        # Non-editors cannot access before start (can_join = False).
+        for key in ('anonymous', 'normal', 'pre_registered'):
             with self.subTest(user=key):
                 user = self.users[key]
-                self.assertTrue(self.pub_cp.is_accessible_by(user))
+                self.assertFalse(self.pub_cp.is_accessible_by(user))
+        # Superuser bypasses via is_editable_by, regardless of can_join.
+        self.assertTrue(self.pub_cp.is_accessible_by(self.users['superuser']))
 
     def test_private_problem_blocked_for_pre_registered_before_start(self):
         # Pre-registered participant must NOT access a private problem before start.
@@ -1124,11 +1310,11 @@ class ContestProblemPreStartAccessTestCase(CommonDataMixin, TestCase):
         self.assertFalse(self.priv_cp.is_accessible_by(self.users['normal']))
 
     def test_private_problem_accessible_for_see_private_problem_perm_before_start(self):
-        # Users with see_private_problem bypass via Problem.is_accessible_by(), not via
-        # contest participation, so they should still see the problem before start.
-        self.assertTrue(self.priv_cp.is_accessible_by(self.users['see_private_problem']))
+        # see_private_problem perm no longer bypasses the can_join check.
+        self.assertFalse(self.priv_cp.is_accessible_by(self.users['see_private_problem']))
 
     def test_private_problem_accessible_for_superuser_before_start(self):
+        # Superuser bypasses can_join via is_editable_by.
         self.assertTrue(self.priv_cp.is_accessible_by(self.users['superuser']))
 
 
