@@ -2,6 +2,7 @@ import itertools
 import json
 from urllib.parse import quote
 
+from django.template.defaultfilters import filesizeformat
 from jinja2.ext import Extension
 from mptt.utils import get_cached_trees
 from statici18n.templatetags.statici18n import inlinei18n
@@ -35,3 +36,5 @@ class DMOJExtension(Extension):
         env.globals.update(registry.globals)
         env.filters.update(registry.filters)
         env.tests.update(registry.tests)
+
+        env.filters['filesizeformat'] = filesizeformat
