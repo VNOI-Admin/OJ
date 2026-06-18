@@ -767,6 +767,8 @@ class ContestProblem(models.Model):
             return False
         if not self.contest.is_accessible_by(user):
             return False
+        if self.contest.is_editable_by(user):
+            return True
         # Block access before the contest starts, even for pre-registered participants.
         if not self.contest.can_join:
             return False
