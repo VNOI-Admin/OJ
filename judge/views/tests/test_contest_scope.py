@@ -28,6 +28,7 @@ from django.urls import reverse
 from django.utils import timezone
 
 from judge.models import Contest, Language, Submission
+from judge.models.contest import ContestProblem
 from judge.models.submission import SubmissionSource
 from judge.models.tests.util import (
     CommonDataMixin,
@@ -222,22 +223,22 @@ class ContestProblemDetailContextTest(ContestScopeTestBase):
         return view
 
     def test_get_object_returns_correct_problem(self):
-        view = self._make_view(self.users['non_participant'], self.active_contest, 1)
+        view = self._make_view(self.users['participant'], self.active_contest, 1)
         self.assertEqual(view.get_object(), self.problem)
 
     def test_get_object_sets_contest_problem_order(self):
-        view = self._make_view(self.users['non_participant'], self.active_contest, 1)
+        view = self._make_view(self.users['participant'], self.active_contest, 1)
         view.get_object()
         self.assertEqual(view.contest_problem.order, 1)
         self.assertEqual(view.contest_problem.contest, self.active_contest)
 
     def test_wrong_order_raises_404(self):
-        view = self._make_view(self.users['non_participant'], self.active_contest, 99)
+        view = self._make_view(self.users['participant'], self.active_contest, 99)
         with self.assertRaises(Http404):
             view.get_object()
 
     def test_hide_problem_code_always_true_in_contest_scope(self):
-        view = self._make_view(self.users['non_participant'], self.active_contest, 1)
+        view = self._make_view(self.users['participant'], self.active_contest, 1)
         view.object = view.get_object()
         ctx = {
             'contest_key': view.contest_key,
@@ -246,10 +247,11 @@ class ContestProblemDetailContextTest(ContestScopeTestBase):
         }
         self.assertTrue(ctx['hide_problem_code'])
 
-    def test_accessible_to_non_participant_for_public_problem(self):
+    def test_non_participant_cannot_access_public_problem_via_contest_url(self):
+        """Non-participants no longer get access even for public contest problems."""
         view = self._make_view(self.users['non_participant'], self.active_contest, 1)
-        problem = view.get_object()
-        self.assertEqual(problem.code, 'scope_problem')
+        with self.assertRaises(Http404):
+            view.get_object()
 
     def test_private_problem_accessible_via_contest_for_participant(self):
         """A private problem should be reachable via the contest for participants."""
@@ -262,23 +264,23 @@ class ContestProblemDetailContextTest(ContestScopeTestBase):
         with self.assertRaises(Http404):
             view.get_object()
 
-    def test_private_problem_accessible_for_problem_editor_without_participation(self):
-        """Problem author/curator can access their own private problem even without contest participation."""
+    def test_private_problem_inaccessible_for_problem_editor_without_participation(self):
+        """Problem author/curator without contest participation cannot access via contest URL."""
         problem_editor = create_user(username='prob_editor')
         self.private_problem.authors.add(problem_editor.profile)
         try:
             view = self._make_view(problem_editor, self.active_contest, 2)
-            problem = view.get_object()
-            self.assertEqual(problem.code, 'scope_private')
+            with self.assertRaises(Http404):
+                view.get_object()
         finally:
             self.private_problem.authors.remove(problem_editor.profile)
 
-    def test_private_problem_accessible_with_see_private_problem_permission(self):
-        """User with see_private_problem can access a private problem without participation."""
+    def test_private_problem_inaccessible_with_see_private_problem_permission(self):
+        """see_private_problem permission alone does not grant access via contest URL."""
         privileged = create_user(username='see_priv', user_permissions=('see_private_problem',))
         view = self._make_view(privileged, self.active_contest, 2)
-        problem = view.get_object()
-        self.assertEqual(problem.code, 'scope_private')
+        with self.assertRaises(Http404):
+            view.get_object()
 
     def test_contest_editor_without_participation_cannot_access_private_problem(self):
         """A contest editor who hasn't joined cannot access a private problem via contest URL."""
@@ -341,9 +343,14 @@ class ContestProblemSubmissionsUrlTest(ContestScopeTestBase):
         view.selected_languages = set()
         view.selected_statuses = set()
         view.selected_organization = None
-        view.object = view.get_object()
-        view.problem = view.object
-        view.problem_name = view.object.name
+        # Bypass access control: these tests verify URL generation, not access.
+        cp = ContestProblem.objects.select_related('problem', 'contest').get(
+            contest__key=contest.key, order=order,
+        )
+        view.contest_problem = cp
+        view.object = cp.problem
+        view.problem = cp.problem
+        view.problem_name = cp.problem.name
         return view
 
     def test_content_title_uses_contest_problem_detail_url(self):
@@ -477,14 +484,14 @@ class ContestRankedSubmissionContentTitleTest(ContestScopeTestBase):
         return view
 
     def test_content_title_uses_contest_problem_detail_url(self):
-        view = self._make_view(self.users['non_participant'], self.active_contest, 1)
+        view = self._make_view(self.users['participant'], self.active_contest, 1)
         html = view.get_content_title()
         expected_url = reverse('contest_problem_detail', args=[self.active_contest.key, 1])
         self.assertIn(expected_url, html)
         self.assertNotIn(reverse('problem_detail', args=[self.problem.code]), html)
 
     def test_content_title_does_not_contain_problem_code_as_url_segment(self):
-        view = self._make_view(self.users['non_participant'], self.active_contest, 1)
+        view = self._make_view(self.users['participant'], self.active_contest, 1)
         html = view.get_content_title()
         self.assertNotIn(f'/problem/{self.problem.code}/', html)
 
@@ -812,7 +819,7 @@ class ContestScopeHttpIntegrationTest(ContestScopeTestBase):
     """
 
     def setUp(self):
-        self.client.force_login(self.users['non_participant'])
+        self.client.force_login(self.users['participant'])
 
     def test_contest_problem_detail_has_no_problem_code_url(self):
         url = reverse('contest_problem_detail', args=[self.active_contest.key, 1])
@@ -967,13 +974,13 @@ class ContestProblemBeforeStartTest(ContestScopeTestBase):
         with self.assertRaises(Http404):
             view.get_object()
 
-    def test_public_problem_accessible_before_start_for_any_user(self):
-        # Public problems are always accessible — this must not regress.
+    def test_public_problem_inaccessible_before_contest_start(self):
+        """Before the contest starts, no user can access problems (even public ones) via contest URL."""
         for key in ('pre_registered', 'non_participant'):
             with self.subTest(user=key):
                 view = self._make_detail_view(self.users[key], self.future_contest, 1)
-                problem = view.get_object()
-                self.assertEqual(problem.code, 'future_pub')
+                with self.assertRaises(Http404):
+                    view.get_object()
 
     # --- ContestProblemRaw access control ---
 
@@ -1021,11 +1028,12 @@ class ContestProblemBeforeStartTest(ContestScopeTestBase):
         self.assertEqual(response.status_code, 404)
 
     @override_settings(STATICFILES_STORAGE='django.contrib.staticfiles.storage.StaticFilesStorage')
-    def test_http_public_problem_accessible_before_start(self):
+    def test_http_public_problem_inaccessible_before_start(self):
+        """Before contest starts, even public problems return 404 via contest URL."""
         self.client.force_login(self.users['pre_registered'])
         url = reverse('contest_problem_detail', args=[self.future_contest.key, 1])
         response = self.client.get(url)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 404)
 
 
 # ---------------------------------------------------------------------------
