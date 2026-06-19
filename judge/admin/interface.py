@@ -91,6 +91,9 @@ class BlogPostAdmin(VersionAdmin):
     form = BlogPostForm
     date_hierarchy = 'publish_on'
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).prefetch_related('authors__user')
+
     def has_change_permission(self, request, obj=None):
         if obj is None:
             return request.user.has_perm('judge.change_blogpost')
