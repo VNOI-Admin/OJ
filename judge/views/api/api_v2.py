@@ -1,3 +1,5 @@
+import datetime as dt
+
 from operator import attrgetter
 
 from django.conf import settings
@@ -856,7 +858,7 @@ class APIContestSyncSubmissions(APIContestSyncBase):
         if parsed is None:
             raise ValidationError('from_timestamp must be ISO 8601')
         if timezone.is_naive(parsed):
-            parsed = timezone.make_aware(parsed, timezone=timezone.utc)
+            parsed = timezone.make_aware(parsed, timezone=dt.timezone.utc)
 
         limit_param = self.request.GET.get('limit')
         if limit_param is None:

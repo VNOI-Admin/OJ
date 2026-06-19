@@ -1,6 +1,6 @@
 import hashlib
 import hmac
-from datetime import date, timedelta
+from datetime import date, timedelta, timezone as dt_timezone
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
@@ -679,7 +679,7 @@ class ContestParticipation(models.Model):
 
     @cached_property
     def pre_registered(self):
-        return self.real_start.astimezone(timezone.utc).date() == date(1970, 1, 1)
+        return self.real_start.astimezone(dt_timezone.utc).date() == date(1970, 1, 1)
 
     @cached_property
     def start(self):
