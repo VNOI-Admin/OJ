@@ -162,6 +162,9 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
 
 
 class UserAdmin(OldUserAdmin):
+    def view_on_site(self, obj):
+        return obj.profile.get_absolute_url()
+
     def formfield_for_manytomany(self, db_field, request, **kwargs):
         if db_field.name == 'user_permissions':
             kwargs['queryset'] = Permission.objects.select_related('content_type').order_by(
