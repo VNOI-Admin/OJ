@@ -203,7 +203,8 @@ class ProblemAdmin(NoBatchDeleteMixin, VersionAdmin):
                                             count) % count)
 
     def get_queryset(self, request):
-        return Problem.get_editable_problems(request.user).prefetch_related('authors__user').distinct()
+        editable_ids = Problem.get_editable_problems(request.user).values('id')
+        return Problem.objects.filter(id__in=editable_ids).prefetch_related('authors__user')
 
     def has_change_permission(self, request, obj=None):
         if obj is None:
