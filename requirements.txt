@@ -1,4 +1,4 @@
-Django>=4.2,<5
+Django>=5.2,<5.3
 django-cleanup
 django_compressor>=3
 django-mptt>=0.13
@@ -14,8 +14,8 @@ lxml
 lxml_html_clean
 Pygments<2.12
 mistune<2
-social-auth-core==4.3.0
-social-auth-app-django==5.0.0
+social-auth-core>=4.5.4
+social-auth-app-django>=5.4.0
 pytz
 django-statici18n
 pika
