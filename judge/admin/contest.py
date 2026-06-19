@@ -75,14 +75,14 @@ class ContestProblemInline(SortableInlineAdminMixin, admin.TabularInline):
         if obj.id is None:
             return ''
         return format_html('<a class="button rejudge-link action-link" href="{0}">{1}</a>',
-                           reverse('admin:judge_contest_rejudge', args=(obj.contest.id, obj.id)), _('Rejudge'))
+                           reverse('admin:judge_contest_rejudge', args=(obj.contest_id, obj.id)), _('Rejudge'))
 
     @admin.display(description='')
     def rescore_column(self, obj):
         if obj.id is None:
             return ''
         return format_html('<a class="button rescore-link action-link" href="{}">Rescore</a>',
-                           reverse('admin:judge_contest_rescore', args=(obj.contest.id, obj.id)))
+                           reverse('admin:judge_contest_rescore', args=(obj.contest_id, obj.id)))
 
 
 class ContestAnnouncementInlineForm(ModelForm):
@@ -102,7 +102,7 @@ class ContestAnnouncementInline(admin.StackedInline):
         if obj.id is None:
             return 'Not available'
         return format_html('<a class="button resend-link action-link" href="{}">Resend</a>',
-                           reverse('admin:judge_contest_resend', args=(obj.contest.id, obj.id)))
+                           reverse('admin:judge_contest_resend', args=(obj.contest_id, obj.id)))
 
 
 class ContestForm(ModelForm):
@@ -111,9 +111,15 @@ class ContestForm(ModelForm):
         if 'rate_exclude' in self.fields:
             if self.instance and self.instance.id:
                 self.fields['rate_exclude'].queryset = \
-                    Profile.objects.filter(contest_history__contest=self.instance).distinct()
+                    Profile.objects.filter(contest_history__contest=self.instance).select_related('user').distinct()
             else:
                 self.fields['rate_exclude'].queryset = Profile.objects.none()
+        profile_qs = Profile.objects.select_related('user')
+        for field in (
+            'authors', 'curators', 'testers', 'private_contestants', 'banned_users', 'view_contest_scoreboard',
+        ):
+            if field in self.fields:
+                self.fields[field].queryset = profile_qs
         self.fields['banned_users'].widget.can_add_related = False
         self.fields['view_contest_scoreboard'].widget.can_add_related = False
         self.fields['banned_judges'].widget.can_add_related = False
@@ -364,13 +370,6 @@ class ContestAdmin(NoBatchDeleteMixin, SortableAdminBase, VersionAdmin):
             form.base_fields['problem_label_script'].widget = AdminAceWidget(
                 mode='lua', theme=request.profile.resolved_ace_theme,
             )
-
-        perms = ('edit_own_contest', 'edit_all_contest')
-        form.base_fields['curators'].queryset = Profile.objects.filter(
-            Q(user__is_superuser=True) |
-            Q(user__groups__permissions__codename__in=perms) |
-            Q(user__user_permissions__codename__in=perms),
-        ).distinct()
         return form
 
 
