@@ -756,6 +756,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
         if cached_data is None:
             storage_totals = ProblemData.objects.filter(
                 problem__organization=self.organization,
+                problem__deleted_at__isnull=True,
             ).aggregate(
                 total_storage=Sum('zipfile_size'),
             )

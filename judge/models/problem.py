@@ -20,6 +20,7 @@ from judge.models.problem_data import problem_data_storage
 from judge.models.profile import Organization, Profile
 from judge.models.runtime import Language
 from judge.user_translations import gettext as user_gettext
+from judge.utils import cache_helper
 from judge.utils.url import get_absolute_pdf_url
 
 __all__ = ['ProblemGroup', 'ProblemType', 'Problem', 'ProblemTranslation', 'ProblemClarification', 'License',
@@ -636,8 +637,11 @@ class Problem(models.Model):
 
     def mark_as_deleted(self):
         """Soft-delete this problem. Use the garbage collector to permanently remove it after the grace period."""
+        organization_id = self.organization_id
         self.deleted_at = timezone.now()
         self.save(update_fields=['deleted_at'])
+        if organization_id:
+            cache_helper.organization_storage_cache_factory(organization_id).delete_cache()
 
     mark_as_deleted.alters_data = True
 
