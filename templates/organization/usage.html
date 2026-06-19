@@ -93,7 +93,7 @@
         <div class="storage-summary">
             <div>
                 {{ _('Total used storage: ') }}
-                <strong>{{ total_storage|filesizeformat }} / {{ max_storage|filesizeformat }}</strong>
+                <strong>{{ current_storage|filesizeformat }} / {{ max_storage|filesizeformat }}</strong>
                 <br>
                 {{ _('Number of problems: ') }}
                 <strong>{{ problem_count }} / {{ max_problems }}</strong>
@@ -133,7 +133,7 @@
             </div>
             {% elif storage_warning %}
             <div class="alert alert-warning">
-                {{ _('You are approaching the storage limit') }} ({{ total_storage|filesizeformat }} / {{ max_storage|filesizeformat }}).
+                {{ _('You are approaching the storage limit') }} ({{ current_storage|filesizeformat }} / {{ max_storage|filesizeformat }}).
                 {{ _('You will not be able to upload test if the limit is exceeded.') }}
                 {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
             </div>

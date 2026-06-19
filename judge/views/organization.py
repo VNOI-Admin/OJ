@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.db.models import Count, FilteredRelation, Q, Sum
+from django.db.models import Count, FilteredRelation, Q
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
@@ -21,10 +21,9 @@ from reversion import revisions
 
 from judge.forms import OrganizationForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
-    Problem, ProblemData, Profile
+    Problem, Profile
 from judge.models.profile import OrganizationMonthlyUsage
 from judge.tasks import on_new_problem
-from judge.utils import cache_helper
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context
 from judge.utils.ranker import ranker
@@ -750,30 +749,8 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        cache_factory = cache_helper.organization_storage_cache_factory(self.organization.id)
-        cached_data = cache_factory.get_cache()
-
-        if cached_data is None:
-            storage_totals = ProblemData.objects.filter(
-                problem__organization=self.organization,
-                problem__deleted_at__isnull=True,
-            ).aggregate(
-                total_storage=Sum('zipfile_size'),
-            )
-
-            total_storage_used = storage_totals['total_storage'] or 0
-
-            cached_data = {
-                'total_storage': total_storage_used,
-            }
-
-            cache_factory.set_cache(cached_data)
-
-        context['total_storage'] = cached_data.get('total_storage', cached_data.get('test_data', 0))
-
-        # Quota information — cached_property on org handles DB queries
         org = self.organization
-        add_quota_context(org, context, total_storage=context['total_storage'])
+        add_quota_context(org, context)
 
         today = timezone.now().date()
         context['active_quotas'] = list(
