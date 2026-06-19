@@ -1,5 +1,4 @@
 import datetime as dt
-
 from operator import attrgetter
 
 from django.conf import settings
