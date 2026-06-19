@@ -130,6 +130,13 @@ class OrganizationQuotaTestCase(CommonDataMixin, TestCase):
         create_problem(code='quota_test_6', organization=self.org, is_organization_private=True)
         self.assertFalse(self.org.can_create_problem())
 
+    @override_settings(VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS=1)
+    def test_can_create_problem_ignores_deleted_problems(self):
+        """Deleted problems should not count against the problem quota."""
+        problem = create_problem(code='quota_deleted_1', organization=self.org, is_organization_private=True)
+        problem.mark_as_deleted()
+        self.assertTrue(self.org.can_create_problem())
+
     # ---- can_upload_data ----
 
     def test_can_upload_data_under_limit(self):
@@ -164,6 +171,16 @@ class OrganizationQuotaTestCase(CommonDataMixin, TestCase):
         )
         self._make_quota(added_storage=10 * 1024 * 1024 * 1024, end_offset=-1)
         self.assertFalse(self.org.can_upload_data())
+
+    def test_can_upload_data_ignores_deleted_problems(self):
+        """Deleted problems' storage should not count against the storage quota."""
+        problem = create_problem(code='storage_deleted_1', organization=self.org, is_organization_private=True)
+        ProblemData.objects.get_or_create(problem=problem)
+        ProblemData.objects.filter(problem=problem).update(
+            zipfile_size=settings.VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE,
+        )
+        problem.mark_as_deleted()
+        self.assertTrue(self.org.can_upload_data())
 
     # ---- current_problem_count / current_storage ----
 
