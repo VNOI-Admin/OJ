@@ -2,10 +2,10 @@
 Django settings for dmoj project.
 
 For more information on this file, see
-https://docs.djangoproject.com/en/4.2/topics/settings/
+https://docs.djangoproject.com/en/5.2/topics/settings/
 
 For the full list of settings and their values, see
-https://docs.djangoproject.com/en/4.2/ref/settings/
+https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -19,7 +19,7 @@ from jinja2 import select_autoescape
 BASE_DIR = os.path.dirname(os.path.dirname(__file__))
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/4.2/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '5*9f5q57mqmlz2#f$x1h76&jxy#yortjl1v+l*6hd18$d*yx#0'
@@ -741,7 +741,7 @@ STATIC_UPLOAD_URL_PREFIX = '/static-upload'
 STATIC_UPLOAD_MEDIA_DIR = 'static-upload'
 
 # Database
-# https://docs.djangoproject.com/en/4.2/ref/settings/#databases
+# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
 DATABASES = {
     'default': {
@@ -773,7 +773,7 @@ EVENT_DAEMON_CONTEST_KEY = '&w7hB-.9WnY2Jj^Qm+|?o6a<!}_2Wiw+?(_Yccqq{uR;:kWQP+3R
 EVENT_DAEMON_TICKET_KEY = '@R3DjH&egtm0HNhok6ERIMK!zlTzq2hrSGG2Se8SujCoO(2NX!DkbzcgQtm90FHDvpFM3gJ&D7acS$ta'
 
 # Internationalization
-# https://docs.djangoproject.com/en/4.2/topics/i18n/
+# https://docs.djangoproject.com/en/5.2/topics/i18n/
 
 # Whatever you do, this better be one of the entries in `LANGUAGES`.
 LANGUAGE_CODE = 'en'
@@ -786,7 +786,7 @@ USE_TZ = True
 SESSION_ENGINE = 'django.contrib.sessions.backends.cached_db'
 
 # Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/4.2/howto/static-files/
+# https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 DMOJ_RESOURCES = os.path.join(BASE_DIR, 'resources')
 STATICFILES_FINDERS = (
