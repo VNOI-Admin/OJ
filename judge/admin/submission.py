@@ -15,6 +15,7 @@ from django.utils.translation import gettext, gettext_lazy as _, ngettext, pgett
 from django.views.decorators.http import require_POST
 from reversion.admin import VersionAdmin
 
+from judge.admin.utils import AdminFastPaginationMixin
 from judge.models import ContestParticipation, ContestProblem, ContestSubmission, Profile, Submission, \
     SubmissionSource, SubmissionTestCase
 from judge.utils.raw_sql import use_straight_join
@@ -117,7 +118,7 @@ class SubmissionSourceInline(admin.StackedInline):
         return super().get_formset(request, obj, **kwargs)
 
 
-class SubmissionAdmin(VersionAdmin):
+class SubmissionAdmin(AdminFastPaginationMixin, VersionAdmin):
     readonly_fields = ('user', 'problem', 'date', 'judged_date')
     fields = ('user', 'problem', 'date', 'judged_date', 'locked_after', 'time', 'memory', 'points', 'language',
               'status', 'result', 'case_points', 'case_total', 'judged_on', 'error')
@@ -139,7 +140,7 @@ class SubmissionAdmin(VersionAdmin):
     def get_queryset(self, request):
         queryset = Submission.objects.select_related('problem', 'user__user', 'language').only(
             'problem__code', 'problem__name', 'user__user__username', 'language__name',
-            'time', 'memory', 'points', 'status', 'result',
+            'time', 'memory', 'points', 'status', 'result', 'locked_after',
         )
         use_straight_join(queryset)
         if not request.user.has_perm('judge.edit_all_problem'):
