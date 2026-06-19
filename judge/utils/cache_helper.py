@@ -17,7 +17,3 @@ class CacheFactory:
     def delete_cache(self):
         cache_key = self.get_cache_key()
         cache.delete(cache_key)
-
-
-def organization_storage_cache_factory(organization_id):
-    return CacheFactory(f'org_storage_total_{organization_id}')

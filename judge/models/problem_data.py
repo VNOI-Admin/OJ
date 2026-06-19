@@ -5,7 +5,6 @@ from django.core.validators import FileExtensionValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
-from judge.utils import cache_helper
 from judge.utils.problem_data import ProblemDataStorage
 
 __all__ = ['problem_data_storage', 'problem_directory_file', 'ProblemData', 'ProblemTestCase', 'CHECKERS']
@@ -113,10 +112,6 @@ class ProblemData(models.Model):
         # Update zipfile size before saving
         self.update_zipfile_size()
         super(ProblemData, self).save(*args, **kwargs)
-
-        # Invalidate organization storage cache when size changes
-        if self.problem.organization:
-            cache_helper.organization_storage_cache_factory(self.problem.organization.id).delete_cache()
 
     def _update_code(self, original, new):
         try:
