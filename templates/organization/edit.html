@@ -3,6 +3,25 @@
 {% block js_media %}
     {{ form.media.js }}
     <script src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
+    {% if quota_form %}
+    <script>
+        function autoFillEndDate() {
+            var start = $('#id_start_date').val();
+            if (start) {
+                var d = new Date(start);
+                d.setFullYear(d.getFullYear() + 1);
+                var yyyy = d.getFullYear();
+                var mm = String(d.getMonth() + 1).padStart(2, '0');
+                var dd = String(d.getDate()).padStart(2, '0');
+                $('#id_end_date').val(yyyy + '-' + mm + '-' + dd);
+            }
+        }
+        $(document).ready(function() {
+            autoFillEndDate();
+            $('#id_start_date').on('change', autoFillEndDate);
+        });
+    </script>
+    {% endif %}
 {% endblock %}
 
 {% block media %}
@@ -31,4 +50,53 @@
             </button>
         </div>
     </form>
+
+    {% if quota_form %}
+    <hr>
+    <h3>{{ _('Quota Grants') }}</h3>
+
+    {% if existing_quotas %}
+    <table class="table" style="width: auto; margin-bottom: 1em;">
+        <thead>
+            <tr>
+                <th>{{ _('Start') }}</th>
+                <th>{{ _('End') }}</th>
+                <th>{{ _('+ Problems') }}</th>
+                <th>{{ _('+ Storage') }}</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for q in existing_quotas %}
+            <tr>
+                <td>{{ q.start_date }}</td>
+                <td>{{ q.end_date }}</td>
+                <td>+{{ q.added_problems }}</td>
+                <td>+{{ q.added_storage|filesizeformat }}</td>
+                <td>
+                    <form method="post" action="{{ url('organization_quota_delete', organization.slug, q.id) }}" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-xs btn-danger"
+                                onclick="return confirm('{{ _('Delete this quota grant?') }}')">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p style="color: #999;">{{ _('No quota grants yet.') }}</p>
+    {% endif %}
+
+    <h4>{{ _('Add Quota Grant') }}</h4>
+    <form method="post" action="{{ url('organization_quota_add', organization.slug) }}" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+        {% csrf_token %}
+        <table class="django-as-table">{{ quota_form.as_table() }}</table>
+        <div style="display: flex; justify-content: flex-end; margin-top: 0.5em;">
+            <button class="submit-bar" type="submit">{{ _('Add') }}</button>
+        </div>
+    </form>
+    {% endif %}
 {% endblock %}
