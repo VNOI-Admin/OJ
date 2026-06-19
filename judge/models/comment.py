@@ -5,7 +5,7 @@ from django.core.cache import cache
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import CASCADE, UniqueConstraint
+from django.db.models import CASCADE
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
@@ -199,9 +199,7 @@ class CommentVote(models.Model):
     score = models.IntegerField()
 
     class Meta:
-        constraints = [
-            UniqueConstraint(fields=['voter', 'comment'], name='judge_commentvote_voter_comment_uniq'),
-        ]
+        unique_together = ['voter', 'comment']
         verbose_name = _('comment vote')
         verbose_name_plural = _('comment votes')
 

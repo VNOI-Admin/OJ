@@ -1,6 +1,6 @@
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import CASCADE, UniqueConstraint
+from django.db.models import CASCADE
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
@@ -52,9 +52,7 @@ class TagData(models.Model):
     problem = models.ForeignKey(TagProblem, on_delete=CASCADE)
 
     class Meta:
-        constraints = [
-            UniqueConstraint(fields=['tag', 'problem'], name='judge_tagdata_tag_problem_uniq'),
-        ]
+        unique_together = ('tag', 'problem')
 
     def __str__(self):
         return ''

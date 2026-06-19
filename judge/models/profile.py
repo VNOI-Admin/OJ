@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import F, Max, Sum, UniqueConstraint
+from django.db.models import F, Max, Sum
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -226,9 +226,7 @@ class OrganizationMonthlyUsage(models.Model):
     class Meta:
         verbose_name = _('organization monthly usage')
         verbose_name_plural = _('organization monthly usages')
-        constraints = [
-            UniqueConstraint(fields=['organization', 'time'], name='judge_orgmonthlyusage_org_time_uniq'),
-        ]
+        unique_together = ('organization', 'time')
 
 
 class Badge(models.Model):
