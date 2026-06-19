@@ -19,7 +19,7 @@ from judge.models import Contest, ContestAnnouncement, ContestProblem, ContestSu
 from judge.ratings import rate_contest
 from judge.utils.views import NoBatchDeleteMixin
 from judge.widgets import AdminAceWidget, AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, \
-    AdminMartorWidget, AdminSelect2MultipleWidget, AdminSelect2Widget
+    AdminMartorWidget, AdminSelect2MultipleWidget
 
 
 class AdminHeavySelect2Widget(AdminHeavySelect2Widget):

@@ -42,4 +42,4 @@ class TicketAdmin(ModelAdmin):
     date_hierarchy = 'time'
 
     def get_queryset(self, request):
-        return super().get_queryset(request).select_related('user__user', 'content_type').prefetch_related('linked_item')
+        return super().get_queryset(request).select_related('user__user').prefetch_related('linked_item')
