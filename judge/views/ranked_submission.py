@@ -1,4 +1,5 @@
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.html import escape, format_html
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
@@ -6,7 +7,7 @@ from django.utils.translation import gettext as _
 from judge.models import Language, Submission
 from judge.utils.problems import get_result_data
 from judge.utils.raw_sql import join_sql_subquery
-from judge.views.submission import ForceContestMixin, ProblemSubmissions
+from judge.views.submission import ForceContestProblemOrderMixin, ProblemSubmissions
 
 __all__ = ['RankedSubmissions', 'ContestRankedSubmission']
 
@@ -78,9 +79,14 @@ class RankedSubmissions(ProblemSubmissions):
         return get_result_data(queryset.order_by())
 
 
-class ContestRankedSubmission(ForceContestMixin, RankedSubmissions):
+class ContestRankedSubmission(ForceContestProblemOrderMixin, RankedSubmissions):
+    @cached_property
+    def _contest_problem(self):
+        from judge.models.contest import ContestProblem
+        return ContestProblem.objects.get(contest=self.contest, problem=self.problem)
+
     def get_title(self):
-        if self.problem.is_accessible_by(self.request.user):
+        if self._contest_problem.is_accessible_by(self.request.user):
             return _('Best solutions for %(problem)s in %(contest)s') % {
                 'problem': self.problem_name, 'contest': self.contest.name,
             }
@@ -89,10 +95,10 @@ class ContestRankedSubmission(ForceContestMixin, RankedSubmissions):
         }
 
     def get_content_title(self):
-        if self.problem.is_accessible_by(self.request.user):
+        if self._contest_problem.is_accessible_by(self.request.user):
             return mark_safe(escape(_('Best solutions for %(problem)s in %(contest)s')) % {
                 'problem': format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                       reverse('problem_detail', args=[self.problem.code])),
+                                       reverse('contest_problem_detail', args=[self.contest.key, self.problem_order])),
                 'contest': format_html('<a href="{1}">{0}</a>', self.contest.name,
                                        reverse('contest_view', args=[self.contest.key])),
             })

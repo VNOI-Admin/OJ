@@ -26,6 +26,9 @@ __all__ = ['Contest', 'ContestTag', 'ContestAnnouncement', 'ContestParticipation
            'ContestSubmission', 'Rating']
 
 
+_MISSING = object()
+
+
 class MinValueOrNoneValidator(MinValueValidator):
     def compare(self, a, b):
         return a is not None and b is not None and super().compare(a, b)
@@ -750,6 +753,33 @@ class ContestProblem(models.Model):
                                           default=None, null=True, blank=True,
                                           validators=[MinValueOrNoneValidator(1, _('Why include a problem you '
                                                                                    "can't submit to?"))])
+
+    def __str__(self):
+        return _('Problem %(order)s in %(contest)s') % {
+            'order': self.order, 'contest': self.contest.name,
+        }
+
+    def get_absolute_url(self):
+        return reverse('contest_problem_detail', args=[self.contest.key, self.order])
+
+    def is_accessible_by(self, user, user_participation=_MISSING):
+        if not user.is_authenticated:
+            return False
+        if not self.contest.is_accessible_by(user):
+            return False
+        if self.contest.is_editable_by(user):
+            return True
+        # Block access before the contest starts, even for pre-registered participants.
+        if not self.contest.can_join:
+            return False
+
+        if user_participation is _MISSING:
+            user_participation = self.contest.users.filter(user=user.profile).order_by('-virtual').first()
+
+        if user_participation is None:
+            return False
+
+        return not user_participation.ended
 
     class Meta:
         unique_together = ('problem', 'contest')

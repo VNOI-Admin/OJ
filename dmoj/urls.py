@@ -186,6 +186,8 @@ urlpatterns = [
     path('src/<int:submission>/download', submission.SubmissionSourceDownload.as_view(),
          name='submission_source_download'),
 
+    path('submission/<int:submission>/problem', submission.submission_problem_redirect,
+         name='submission_problem_redirect'),
     path('submission/<int:submission>', include([
         path('', submission.SubmissionStatus.as_view(), name='submission_status'),
         path('/abort', submission.abort_submission, name='submission_abort'),
@@ -260,22 +262,31 @@ urlpatterns = [
         path('/make_problems_public', contests.ContestProblemMakePublic.as_view(),
              name='contest_problems_make_public'),
 
-        path('/rank/<str:problem>/',
+        path('/<int:order>/rank/',
              paged_list_view(ranked_submission.ContestRankedSubmission, 'contest_ranked_submissions')),
 
         path('/submissions/',
              paged_list_view(submission.AllContestSubmissions, 'contest_all_submissions')),
         path('/submissions/<str:user>/',
              paged_list_view(submission.UserAllContestSubmissions, 'contest_all_user_submissions')),
-        path('/submissions/<str:user>/<str:problem>/',
-             paged_list_view(submission.UserContestSubmissions, 'contest_user_submissions')),
+        path('/<int:order>/submissions/<str:user>/',
+             paged_list_view(submission.UserContestSubmissions, 'contest_user_problem_submissions')),
 
         path('/participations/', contests.ContestParticipationList.as_view(), name='contest_participation_own'),
         path('/participations/<str:user>',
              contests.ContestParticipationList.as_view(), name='contest_participation'),
         path('/participation/disqualify', contests.ContestParticipationDisqualify.as_view(),
              name='contest_participation_disqualify'),
-
+        path('/<int:order>/submissions/',
+             paged_list_view(problem.ContestProblemSubmissions, 'contest_problem_submissions')),
+        path('/<int:order>/', problem.ContestProblemDetail.as_view(), name='contest_problem_detail'),
+        path('/<int:order>/raw', xframe_options_sameorigin(problem.ContestProblemRaw.as_view()),
+             name='contest_problem_raw'),
+        path('/<int:order>/submit', problem.ContestProblemSubmit.as_view(), name='contest_problem_submit'),
+        path('/<int:order>/resubmit/<int:submission>', problem.ContestProblemSubmit.as_view(),
+             name='contest_problem_submit'),
+        path('/<int:order>/tickets/new', ticket.NewContestProblemTicketView.as_view(),
+             name='new_contest_problem_ticket'),
         path('/', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),
 

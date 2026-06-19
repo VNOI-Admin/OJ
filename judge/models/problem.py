@@ -287,20 +287,7 @@ class Problem(models.Model):
             return True
         return False
 
-    def is_accessible_by(self, user, skip_contest_problem_check=False):
-        # If we don't want to check if the user is in a contest containing that problem.
-        if not skip_contest_problem_check and user.is_authenticated:
-            # If user is currently in a contest containing that problem.
-            current = user.profile.current_contest
-            if current is not None:
-                # If contest has not started (for joining contest in advance).
-                if not current.contest.can_join:
-                    return False
-
-                from judge.models import ContestProblem
-                if ContestProblem.objects.filter(problem_id=self.id, contest__users__id=current.id).exists():
-                    return True
-
+    def is_accessible_by(self, user):
         # Problem is public.
         if self.is_public and not self.is_suggesting:
             # Problem is not private to an organization.

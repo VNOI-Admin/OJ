@@ -329,7 +329,7 @@ class APIContestDetail(APIDetailView):
                     'max_submissions': problem.max_submissions or None,
                     'label': contest.get_label_for_problem(index),
                     'name': problem.problem.name,
-                    'code': problem.problem.code,
+                    **({'code': problem.problem.code} if contest.ended or in_contest else {}),
                 } for index, problem in enumerate(problems)
             ] if can_see_problems else [],
             'rankings': [
@@ -465,7 +465,7 @@ class APIProblemDetail(APIDetailView):
 
     def get_object(self, queryset=None):
         problem = super().get_object(queryset)
-        if not problem.is_accessible_by(self.request.user, skip_contest_problem_check=True):
+        if not problem.is_accessible_by(self.request.user):
             raise Http404()
         return problem
 

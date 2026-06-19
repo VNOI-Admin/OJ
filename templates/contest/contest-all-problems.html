@@ -24,17 +24,29 @@
                     <div style="display: flex">
                         <h2 style="margin-top: 0.5em; margin-right: 0.5em;">
                             {% if problem.id in completed_problem_ids %}
-                                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                <a href="{{ url('contest_user_problem_submissions', contest.key, problem.order, request.user.username) if hide_problem_code else url('user_submissions', problem.code, request.user.username) }}">
                                     <i class="solved-problem-color fa fa-check-circle"></i>
                                 </a>
                             {% elif problem.id in attempted_problem_ids %}
-                                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                <a href="{{ url('contest_user_problem_submissions', contest.key, problem.order, request.user.username) if hide_problem_code else url('user_submissions', problem.code, request.user.username) }}">
                                     <i class="attempted-problem-color fa fa-frown-o"></i>
                                 </a>
                             {% endif %}
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                            <a
+                                {% if hide_problem_code %}
+                                    href="{{ url('contest_problem_detail', contest.key, problem.order) }}"
+                                {% else %}
+                                    href="{{ url('problem_detail', problem.code) }}"
+                                {% endif %}
+                            >{{ problem.i18n_name or problem.name }}</a>
                         </h2>
-                        <a href="{{ url('problem_submit', problem.code) }}" class="button" style="display: inline; margin: auto 0;">
+                        <a
+                            {% if hide_problem_code %}
+                                href="{{ url('contest_problem_submit', contest.key, problem.order) }}"
+                            {% else %}
+                                href="{{ url('problem_submit', problem.code) }}"
+                            {% endif %}
+                            class="button" style="display: inline; margin: auto 0;">
                             {{ _('Submit') }}
                         </a>
                     </div>

@@ -48,7 +48,9 @@ from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
-from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
+from judge.utils.problems import (
+    _get_result_data, contest_attempted_ids, contest_completed_ids, user_attempted_ids, user_completed_ids,
+)
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 from judge.utils.views import SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message, paginate_query_context
@@ -232,6 +234,7 @@ class ContestMixin(object):
             context['logo_override_image'] = self.object.organization.logo_override_image
 
         context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
+        context['hide_problem_code'] = self.is_in_contest or not self.object.ended
         return context
 
     def get_object(self, queryset=None):
@@ -325,9 +328,11 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
             .add_i18n_name(self.request.LANGUAGE_CODE)
 
         # convert to problem points in contest instead of actual points
-        points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
+        # also attach the .order field to problem
+        points_list = list(self.object.contest_problems.values_list('points', 'order').order_by('order'))
         for idx, p in enumerate(context['contest_problems']):
             p.points = points_list[idx][0]
+            p.order = points_list[idx][1]
 
         context['metadata'] = {
             'has_public_editorials': any(
@@ -357,8 +362,13 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['can_announce'] = self.object.is_editable_by(self.request.user)
 
         authenticated = self.request.user.is_authenticated
-        context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
-        context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
+        if authenticated and self.is_in_contest:
+            participation = self.request.profile.current_contest
+            context['completed_problem_ids'] = contest_completed_ids(participation)
+            context['attempted_problem_ids'] = contest_attempted_ids(participation)
+        else:
+            context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
+            context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
         context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD)
 
@@ -383,13 +393,20 @@ class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
             .add_i18n_description(self.request.LANGUAGE_CODE)
 
         # convert to problem points in contest instead of actual points
-        points_list = list(self.object.contest_problems.values_list('points').order_by('order'))
+        # also attach the .order field to problem
+        points_list = list(self.object.contest_problems.values_list('points', 'order').order_by('order'))
         for idx, p in enumerate(context['contest_problems']):
             p.points = points_list[idx][0]
+            p.order = points_list[idx][1]
 
         authenticated = self.request.user.is_authenticated
-        context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
-        context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
+        if authenticated and self.is_in_contest:
+            participation = self.request.profile.current_contest
+            context['completed_problem_ids'] = contest_completed_ids(participation)
+            context['attempted_problem_ids'] = contest_attempted_ids(participation)
+        else:
+            context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
+            context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
         return context
 
@@ -935,18 +952,24 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
     def _build_json_base(self):
         """Returns (problems, problems_data, contest_dict) with fields shared by all ranking JSON views."""
         contest = self.object
+        hide_problem_code = self.is_in_contest or not contest.ended
         problems = list(
             contest.contest_problems.select_related('problem').defer('problem__description').order_by('order'),
         )
         problems_data = [
             {
                 'id': prob.id,
+                'order': prob.order,
                 'code': prob.problem.code,
                 'label': contest.get_label_for_problem(i),
                 'name': prob.problem.name,
                 'points': float(prob.points),
                 'is_pretested': prob.is_pretested,
-                'url': reverse('problem_detail', args=[prob.problem.code]),
+                'url': (
+                    reverse('contest_problem_detail', args=[contest.key, prob.order])
+                    if hide_problem_code
+                    else reverse('problem_detail', args=[prob.problem.code])
+                ),
             }
             for i, prob in enumerate(problems)
         ]
@@ -971,9 +994,9 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             'url_templates': {
                 'all_submissions': reverse('contest_all_user_submissions', args=[contest.key, '__USERNAME__']),
                 'problem_submissions': reverse(
-                    'contest_user_submissions',
-                    args=[contest.key, '__USERNAME__', '__PROBLEM__'],
-                ),
+                    'contest_user_problem_submissions',
+                    args=[contest.key, 0, '__USERNAME__'],
+                ).replace('/0/', '/__ORDER__/'),
             },
             'rating_config': {
                 'values': RATING_VALUES,
