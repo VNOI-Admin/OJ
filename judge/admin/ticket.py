@@ -21,6 +21,9 @@ class TicketMessageInline(StackedInline):
     fields = ('user', 'body', 'action')
     readonly_fields = ('action',)
 
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user__user')
+
 
 class TicketForm(ModelForm):
     class Meta:
@@ -37,3 +40,6 @@ class TicketAdmin(ModelAdmin):
     inlines = [TicketMessageInline]
     form = TicketForm
     date_hierarchy = 'time'
+
+    def get_queryset(self, request):
+        return super().get_queryset(request).select_related('user__user', 'content_type').prefetch_related('linked_item')
