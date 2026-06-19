@@ -1,5 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as OldUserAdmin
+from django.contrib.auth.models import Permission
 from django.forms import ModelForm
 from django.urls import reverse_lazy
 from django.utils.html import format_html
@@ -161,6 +162,21 @@ class ProfileAdmin(NoBatchDeleteMixin, VersionAdmin):
 
 
 class UserAdmin(OldUserAdmin):
+    def view_on_site(self, obj):
+        return obj.profile.get_absolute_url()
+
+    def formfield_for_manytomany(self, db_field, request, **kwargs):
+        if db_field.name == 'user_permissions':
+            kwargs['queryset'] = Permission.objects.select_related('content_type').order_by(
+                'content_type__app_label', 'codename',
+            )
+            field = super().formfield_for_manytomany(db_field, request, **kwargs)
+            field.label_from_instance = lambda obj: (
+                f'{obj.content_type.app_label}.{obj.codename} | {_(obj.name)}'
+            )
+            return field
+        return super().formfield_for_manytomany(db_field, request, **kwargs)
+
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
         if not change:
