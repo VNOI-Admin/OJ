@@ -376,7 +376,7 @@ class ContestAdmin(NoBatchDeleteMixin, SortableAdminBase, VersionAdmin):
 class ContestParticipationForm(ModelForm):
     class Meta:
         widgets = {
-            'contest': AdminSelect2Widget(),
+            'contest': AdminHeavySelect2Widget(data_view='contest_select2'),
             'user': AdminHeavySelect2Widget(data_view='profile_select2'),
         }
 
