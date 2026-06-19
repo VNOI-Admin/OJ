@@ -6,7 +6,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
-from django.db.models import CASCADE, Exists, OuterRef, Q
+from django.db.models import CASCADE, Exists, OuterRef, Q, UniqueConstraint
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -733,7 +733,9 @@ class ContestParticipation(models.Model):
         verbose_name = _('contest participation')
         verbose_name_plural = _('contest participations')
 
-        unique_together = ('contest', 'user', 'virtual')
+        constraints = [
+            UniqueConstraint(fields=['contest', 'user', 'virtual'], name='judge_contestparticipation_contest_user_virtual_uniq'),
+        ]
 
 
 class ContestProblem(models.Model):
@@ -752,7 +754,9 @@ class ContestProblem(models.Model):
                                                                                    "can't submit to?"))])
 
     class Meta:
-        unique_together = ('problem', 'contest')
+        constraints = [
+            UniqueConstraint(fields=['problem', 'contest'], name='judge_contestproblem_problem_contest_uniq'),
+        ]
         verbose_name = _('contest problem')
         verbose_name_plural = _('contest problems')
         ordering = ('order',)
@@ -787,7 +791,9 @@ class Rating(models.Model):
     last_rated = models.DateTimeField(db_index=True, verbose_name=_('last rated'))
 
     class Meta:
-        unique_together = ('user', 'contest')
+        constraints = [
+            UniqueConstraint(fields=['user', 'contest'], name='judge_rating_user_contest_uniq'),
+        ]
         verbose_name = _('contest rating')
         verbose_name_plural = _('contest ratings')
 
@@ -808,6 +814,8 @@ class ContestMoss(models.Model):
     url = models.URLField(null=True, blank=True)
 
     class Meta:
-        unique_together = ('contest', 'problem', 'language')
+        constraints = [
+            UniqueConstraint(fields=['contest', 'problem', 'language'], name='judge_contestmoss_contest_problem_language_uniq'),
+        ]
         verbose_name = _('contest moss result')
         verbose_name_plural = _('contest moss results')

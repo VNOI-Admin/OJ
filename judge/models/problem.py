@@ -8,7 +8,7 @@ from django.core.cache import cache
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
-from django.db.models import CASCADE, Exists, F, FilteredRelation, OuterRef, Q, SET_NULL
+from django.db.models import CASCADE, Exists, F, FilteredRelation, OuterRef, Q, SET_NULL, UniqueConstraint
 from django.db.models.functions import Coalesce
 from django.urls import reverse
 from django.utils import timezone
@@ -673,7 +673,9 @@ class ProblemTranslation(models.Model):
                                    validators=[disallowed_characters_validator])
 
     class Meta:
-        unique_together = ('problem', 'language')
+        constraints = [
+            UniqueConstraint(fields=['problem', 'language'], name='judge_problemtranslation_problem_language_uniq'),
+        ]
         verbose_name = _('problem translation')
         verbose_name_plural = _('problem translations')
 
@@ -695,7 +697,9 @@ class LanguageLimit(models.Model):
                                                    MaxValueValidator(settings.DMOJ_PROBLEM_MAX_MEMORY_LIMIT)])
 
     class Meta:
-        unique_together = ('problem', 'language')
+        constraints = [
+            UniqueConstraint(fields=['problem', 'language'], name='judge_languagelimit_problem_language_uniq'),
+        ]
         verbose_name = _('language-specific resource limit')
         verbose_name_plural = _('language-specific resource limits')
 

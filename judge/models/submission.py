@@ -4,6 +4,7 @@ import hmac
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import UniqueConstraint
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.functional import cached_property
@@ -330,6 +331,8 @@ class SubmissionTestCase(models.Model):
         return Submission.result_class_from_code(self.status)
 
     class Meta:
-        unique_together = ('submission', 'case')
+        constraints = [
+            UniqueConstraint(fields=['submission', 'case'], name='judge_submissiontestcase_submission_case_uniq'),
+        ]
         verbose_name = _('submission test case')
         verbose_name_plural = _('submission test cases')
