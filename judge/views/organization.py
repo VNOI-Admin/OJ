@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.db.models import Count, FilteredRelation, Q, Sum
+from django.db.models import Count, FilteredRelation, Q
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
@@ -19,12 +19,11 @@ from django.views.generic import CreateView, DetailView, FormView, ListView, Upd
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
-from judge.forms import OrganizationForm
+from judge.forms import OrganizationForm, QuotaGrantForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
-    Problem, ProblemData, Profile
-from judge.models.profile import OrganizationMonthlyUsage
+    Problem, Profile
+from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
-from judge.utils import cache_helper
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context
 from judge.utils.ranker import ranker
@@ -39,7 +38,8 @@ from judge.views.submission import SubmissionsListBase
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
-           'KickUserWidgetView', 'OrganizationStorageDashboard']
+           'KickUserWidgetView', 'OrganizationStorageDashboard',
+           'OrganizationQuotaAdd', 'OrganizationQuotaDelete']
 
 
 class OrganizationMixin(object):
@@ -438,6 +438,13 @@ class EditOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, U
             raise PermissionDenied()
         return object
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.user.has_perm('judge.add_organizationquota'):
+            context['quota_form'] = QuotaGrantForm()
+            context['existing_quotas'] = self.organization.quotas.order_by('start_date')
+        return context
+
     def form_valid(self, form):
         with revisions.create_revision(atomic=True):
             revisions.set_comment(_('Edited from site'))
@@ -449,6 +456,34 @@ class EditOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, U
         kwargs = super().get_form_kwargs()
         kwargs['request'] = self.request  # Pass the request object to the form
         return kwargs
+
+
+class OrganizationQuotaAdd(LoginRequiredMixin, AdminOrganizationMixin, View):
+    def post(self, request, *args, **kwargs):
+        if not request.user.has_perm('judge.add_organizationquota'):
+            raise PermissionDenied()
+        form = QuotaGrantForm(request.POST)
+        if form.is_valid():
+            packages = form.cleaned_data['packages']
+            OrganizationQuota.objects.create(
+                organization=self.organization,
+                start_date=form.cleaned_data['start_date'],
+                end_date=form.cleaned_data['end_date'],
+                added_problems=packages * settings.VNOJ_QUOTA_PACKAGE_PROBLEMS,
+                added_storage=packages * settings.VNOJ_QUOTA_PACKAGE_STORAGE,
+            )
+        return HttpResponseRedirect(reverse('edit_organization', args=[self.organization.slug]))
+
+
+class OrganizationQuotaDelete(LoginRequiredMixin, AdminOrganizationMixin, View):
+    def post(self, request, *args, **kwargs):
+        # We use `add_organizationquota` permission to indicate that this user has all edit permissions.
+        # I don't want to make this too complex.
+        if not request.user.has_perm('judge.add_organizationquota'):
+            raise PermissionDenied()
+        quota_id = kwargs.get('quota_id')
+        OrganizationQuota.objects.filter(id=quota_id, organization=self.organization).delete()
+        return HttpResponseRedirect(reverse('edit_organization', args=[self.organization.slug]))
 
 
 class KickUserWidgetView(LoginRequiredMixin, AdminOrganizationMixin, SingleObjectMixin, View):
@@ -750,29 +785,8 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
-        cache_factory = cache_helper.organization_storage_cache_factory(self.organization.id)
-        cached_data = cache_factory.get_cache()
-
-        if cached_data is None:
-            storage_totals = ProblemData.objects.filter(
-                problem__organization=self.organization,
-            ).aggregate(
-                total_storage=Sum('zipfile_size'),
-            )
-
-            total_storage_used = storage_totals['total_storage'] or 0
-
-            cached_data = {
-                'total_storage': total_storage_used,
-            }
-
-            cache_factory.set_cache(cached_data)
-
-        context['total_storage'] = cached_data.get('total_storage', cached_data.get('test_data', 0))
-
-        # Quota information — cached_property on org handles DB queries
         org = self.organization
-        add_quota_context(org, context, total_storage=context['total_storage'])
+        add_quota_context(org, context)
 
         today = timezone.now().date()
         context['active_quotas'] = list(

@@ -164,6 +164,8 @@ VNOJ_QUOTA_WARNING_THRESHOLD = 0.8
 # When False, quota warnings are shown but users are NOT blocked from creating problems
 # or uploading test data. Set to True to enforce hard limits.
 VNOJ_QUOTA_ENFORCEMENT_ENABLED = False
+VNOJ_QUOTA_PACKAGE_STORAGE = 5 * 1024 * 1024 * 1024  # 5 GB per package
+VNOJ_QUOTA_PACKAGE_PROBLEMS = 1000  # problems per package
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
 # Low power mode: Optimize queries by limiting data scope for performance

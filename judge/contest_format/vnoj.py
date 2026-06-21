@@ -160,7 +160,7 @@ class VNOJContestFormat(DefaultContestFormat):
     def get_format_data_for_api(self, entry, problem_points, frozen=False):
         if not entry:
             return entry
-        clean = {'points': entry['points'], 'time': entry['time'], 'penalty': entry['penalty']}
+        clean = {'points': entry.get('points', 0), 'time': entry.get('time', 0), 'penalty': entry.get('penalty', 0)}
         if not frozen:
             return clean
         pending = entry.get('pending', 0)

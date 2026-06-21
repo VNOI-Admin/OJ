@@ -158,7 +158,7 @@ class Organization(models.Model):
 
     @cached_property
     def current_problem_count(self):
-        return self.problem_set.count()
+        return self.problem_set(manager='available').count()
 
     @cached_property
     def current_storage(self):
@@ -166,6 +166,7 @@ class Organization(models.Model):
         ProblemData = apps.get_model('judge', 'ProblemData')
         result = ProblemData.objects.filter(
             problem__organization=self,
+            problem__deleted_at__isnull=True,
         ).aggregate(total=Sum('zipfile_size'))
         return result['total'] or 0
 
