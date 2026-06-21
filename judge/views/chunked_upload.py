@@ -27,6 +27,21 @@ end
 return -1
 """
 
+LUA_DISK_RESERVE = """
+local raw = redis.call('GET', KEYS[1])
+local current = raw and tonumber(raw) or 0
+if current == nil then current = 0 end
+local delta = tonumber(ARGV[1])
+local max_allowed = tonumber(ARGV[2])
+local ttl = tonumber(ARGV[3])
+if current + delta > max_allowed then
+    return -1
+end
+local new_val = redis.call('INCRBY', KEYS[1], delta)
+redis.call('EXPIRE', KEYS[1], ttl)
+return new_val
+"""
+
 _UUID_RE = re.compile(r'^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$')
 
 
@@ -64,6 +79,29 @@ def _delete_uploaded_chunks(upload_id):
     redis_conn = get_redis_connection('default')
     cache_key = cache.make_key(f'chunked_upload:{upload_id}:chunks')
     redis_conn.delete(cache_key)
+
+
+def _reserve_disk_quota(user_id, file_size, timeout):
+    max_disk = getattr(settings, 'CHUNKED_UPLOAD_MAX_USER_DISK', 20 * 1024 * 1024 * 1024)
+    disk_usage_key = cache.make_key(f'chunked_upload:disk_usage:{user_id}')
+    redis_conn = get_redis_connection('default')
+    result = redis_conn.eval(LUA_DISK_RESERVE, 1, disk_usage_key, file_size, max_disk, timeout)
+    return result != -1
+
+
+def _release_disk_quota(user_id, file_size, user_upload_dir=None):
+    if not file_size:
+        return
+    disk_usage_key = cache.make_key(f'chunked_upload:disk_usage:{user_id}')
+    redis_conn = get_redis_connection('default')
+
+    if user_upload_dir and (not os.path.exists(user_upload_dir) or not os.listdir(user_upload_dir)):
+        redis_conn.delete(disk_usage_key)
+        return
+
+    current = redis_conn.decrby(disk_usage_key, file_size)
+    if current is not None and current < 0:
+        redis_conn.set(disk_usage_key, 0, keepttl=True)
 
 
 @login_required
@@ -153,24 +191,18 @@ def chunked_upload_init(request):
         settings.MEDIA_ROOT, settings.CHUNKED_UPLOAD_MEDIA_DIR, str(request.user.id), upload_id,
     )
 
-    user_media_dir = os.path.join(settings.MEDIA_ROOT, settings.CHUNKED_UPLOAD_MEDIA_DIR, str(request.user.id))
-    current_disk_usage = 0
-    if os.path.exists(user_media_dir):
-        for dirpath, _, filenames in os.walk(user_media_dir):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                if not os.path.islink(fp):
-                    current_disk_usage += os.path.getsize(fp)
-
-    max_disk = getattr(settings, 'CHUNKED_UPLOAD_MAX_USER_DISK', 20 * 1024 * 1024 * 1024)
-    if current_disk_usage + file_size > max_disk:
-        # Revert the quota increment since we are rejecting
+    if not _reserve_disk_quota(request.user.id, file_size, timeout):
+        # Revert the session slot since we are rejecting.
         try:
             cache.decr(session_count_key)
         except ValueError:
             pass
+        max_disk = getattr(settings, 'CHUNKED_UPLOAD_MAX_USER_DISK', 20 * 1024 * 1024 * 1024)
         return JsonResponse({
-            'error': 'User disk quota for temporary chunked uploads exceeded.',
+            'error': (
+                f'User disk quota for temporary chunked uploads exceeded '
+                f'(limit: {max_disk / (1024 ** 3):.1f} GB).'
+            ),
         }, status=400)
 
     os.makedirs(upload_dir_path, exist_ok=True)
@@ -350,6 +382,7 @@ def clean_completed_upload(upload_id, meta=None):
 
     if meta:
         user_id = meta.get('user_id')
+        file_size = meta.get('file_size', 0)
         if user_id:
             session_count_key = f'chunked_upload:active_sessions:{user_id}'
             try:
@@ -358,15 +391,21 @@ def clean_completed_upload(upload_id, meta=None):
                     cache.set(session_count_key, 0, timeout=settings.CHUNKED_UPLOAD_EXPIRY_HOURS * 3600)
             except ValueError:
                 cache.set(session_count_key, 0, timeout=settings.CHUNKED_UPLOAD_EXPIRY_HOURS * 3600)
+
             upload_dir = os.path.join(settings.MEDIA_ROOT, settings.CHUNKED_UPLOAD_MEDIA_DIR, str(user_id), upload_id)
+            user_dir = os.path.join(settings.MEDIA_ROOT, settings.CHUNKED_UPLOAD_MEDIA_DIR, str(user_id))
             if os.path.exists(upload_dir):
                 shutil.rmtree(upload_dir, ignore_errors=True)
                 try:
-                    user_dir = os.path.dirname(upload_dir)
                     if not os.listdir(user_dir):
                         os.rmdir(user_dir)
                 except OSError:
                     pass
+
+            _release_disk_quota(
+                user_id, file_size,
+                user_upload_dir=user_dir if os.path.exists(user_dir) else None,
+            )
 
     cache.delete(f'chunked_upload:{upload_id}:meta')
     _delete_uploaded_chunks(upload_id)

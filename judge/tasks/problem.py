@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from judge.models import Problem
 from judge.utils.problems import fast_delete_problem
+from judge.views.chunked_upload import _release_disk_quota
 
 __all__ = ('problem_garbage_collect', 'cleanup_expired_chunked_uploads')
 
@@ -48,9 +49,10 @@ def cleanup_expired_chunked_uploads():
             try:
                 mtime = os.path.getmtime(path)
                 if now - mtime > expiry_seconds:
-                    shutil.rmtree(path, ignore_errors=True)
                     meta_key = f'chunked_upload:{upload_id}:meta'
                     meta = cache.get(meta_key)
+                    file_size = meta.get('file_size', 0) if meta else 0
+                    shutil.rmtree(path, ignore_errors=True)
                     if meta:
                         file_id = meta.get('file_id')
                         if file_id:
@@ -66,6 +68,7 @@ def cleanup_expired_chunked_uploads():
                             cache.set(session_count_key, 0, timeout=expiry_seconds)
                     except ValueError:
                         cache.set(session_count_key, 0, timeout=expiry_seconds)
+                    _release_disk_quota(user_id_str, file_size, user_upload_dir=user_path)
             except Exception:
                 logging.getLogger(__name__).warning(f'Failed to cleanup expired chunked upload: {path}', exc_info=True)
 
