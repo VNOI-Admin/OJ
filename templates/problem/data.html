@@ -6,6 +6,7 @@
     <script type="text/javascript" src="{{ static('vnoj/jquery-ui/jquery-ui.min.js') }}"></script>
     <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
     <script type="text/javascript" src="{{ static('vnoj/jszip/jszip.min.js') }}"></script>
+    <script type="text/javascript" src="{{ static('chunked-upload.js') }}"></script>
     <script type="text/javascript">
         window.valid_files = {{valid_files_json}}.sort();
         window.testcase_limit = {{testcase_limit}};
@@ -579,13 +580,22 @@
 
             $("#id_problem-data-zipfile").change((event) => {
                 let fileInput = event.target.files[0];
+                if (!fileInput) return;
 
-                // 100 MB limit (Cloudflare's request body size limit)
-                if (fileInput && fileInput.size > 100 * 1024 * 1024) {
+                var maxLimit = {{ chunked_upload_max_file_size|default(10 * 1024 * 1024 * 1024) }};
+                if (fileInput.size > maxLimit) {
                     alert({{ _('File too large!')|htmltojs }} + ' ' +
-                        {{ _('Your file is')|htmltojs }} + ' ' + (fileInput.size / (1024 * 1024)).toFixed(2) + ' MB. ' +
-                        {{ _('Maximum allowed is 100 MB.')|htmltojs }});
+                        {{ _('Your file is')|htmltojs }} + ' ' + (fileInput.size / (1024 * 1024 * 1024)).toFixed(2) + ' GB. ' +
+                        {{ _('Maximum allowed is')|htmltojs }} + ' ' + (maxLimit / (1024 * 1024 * 1024)).toFixed(0) + ' GB.');
                     event.target.value = "";
+                    return;
+                }
+
+                // Skip client-side ZIP loading/parsing to prevent browser memory exhaustion on files > 100MB.
+                // The chunked uploader will handle uploading the large file, and the server will parse it.
+                if (fileInput.size > 100 * 1024 * 1024) {
+                    alert({{ _('Large ZIP file detected.')|htmltojs }} + ' ' +
+                          {{ _('Automatic testcase filling will be skipped client-side to save memory, but the server will process it successfully after upload.')|htmltojs }});
                     return;
                 }
 
@@ -780,6 +790,39 @@
                     });
                 });
             })();
+
+            function startChunkedUpload(file, onSuccess, onError) {
+                new ChunkedUploader(file, {
+                    onSuccess: onSuccess,
+                    onError: onError
+                }).start();
+            }
+
+            $('#problem-data-form').submit(function (event) {
+                var fileInput = $('#id_problem-data-zipfile')[0];
+                var file = fileInput && fileInput.files && fileInput.files[0];
+                var chunkSize = {{ chunked_upload_chunk_size|default(10 * 1024 * 1024) }};
+                
+                if (file && file.size > chunkSize) {
+                    var uploadIdInput = $('#problem-data-chunked-upload-id');
+                    if (!uploadIdInput.val()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        
+                        startChunkedUpload(file, function(uploadId) {
+                            uploadIdInput.val(uploadId);
+                            try {
+                                fileInput.value = '';
+                            } catch(e) {}
+                            $('#problem-data-form').submit();
+                        }, function(err) {
+                            alert('Upload failed: ' + err);
+                            $('#problem-data-form').find(':submit').prop('disabled', false);
+                        });
+                        return false;
+                    }
+                }
+            });
 
             $('form').dirty('setAsClean');
         }).change();
@@ -997,6 +1040,7 @@
 {% endblock %}
 
 {% block body %}
+    {% include "problem/_chunked_upload_overlay.html" %}
     {% if data_form.instance.feedback %}
         <ul class="errorlist">
             <li>{{ data_form.instance.feedback }}</li>
@@ -1015,8 +1059,9 @@
             {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
         </div>
     {% endif %}
-    <form action="" method="POST" enctype="multipart/form-data">
+    <form action="" method="POST" enctype="multipart/form-data" id="problem-data-form">
         {% csrf_token %}
+        <input type="hidden" name="problem-data-chunked_upload_id" id="problem-data-chunked-upload-id">
         {{ cases_formset.management_form }}
         <table class="table">
             {{ data_form.as_table() }}

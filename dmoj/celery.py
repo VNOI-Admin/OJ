@@ -37,6 +37,13 @@ app.conf.beat_schedule = {
             'expires': 60 * 60 * 24,
         },
     },
+    'cleanup-expired-chunked-uploads': {
+        'task': 'judge.tasks.problem.cleanup_expired_chunked_uploads',
+        'schedule': crontab(minute=0),
+        'options': {
+            'expires': 60 * 60,
+        },
+    },
     'organization-monthly-reset': {
         'task': 'judge.tasks.organization.organization_monthly_reset',
         'schedule': crontab(minute=0, hour=0, day_of_month=1),

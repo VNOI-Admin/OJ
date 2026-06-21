@@ -1,0 +1,170 @@
+<style>
+    /* Resumable Chunked Upload Styling */
+    #chunked-upload-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        z-index: 100000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        color: #f8fafc;
+        transition: opacity 0.3s ease;
+    }
+
+    .chunked-upload-card {
+        background: rgba(30, 41, 59, 0.85);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.4);
+        border-radius: 16px;
+        padding: 2rem;
+        width: 480px;
+        max-width: 90%;
+        display: flex;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+
+    .chunked-upload-title {
+        margin: 0 !important;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #f1f5f9;
+    }
+
+    .chunked-upload-filename {
+        margin: 0;
+        font-size: 0.9rem;
+        color: #94a3b8;
+        word-break: break-all;
+    }
+
+    .chunked-upload-progress-container {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .chunked-upload-progress-bar {
+        flex-grow: 1;
+        height: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 9999px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .chunked-upload-progress-fill {
+        height: 100%;
+        width: 0%;
+        background: linear-gradient(90deg, #3b82f6 0%, #60a5fa 100%);
+        border-radius: 9999px;
+        transition: width 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .chunked-upload-percentage {
+        font-size: 0.95rem;
+        font-weight: 500;
+        min-width: 3rem;
+        text-align: right;
+        color: #f1f5f9;
+    }
+
+    .chunked-upload-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.85rem;
+        color: #94a3b8;
+    }
+
+    .chunked-upload-status {
+        font-size: 0.85rem;
+        color: #cbd5e1;
+        font-style: italic;
+    }
+
+    .chunked-upload-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 0.5rem;
+    }
+
+    #chunked-upload-overlay .chunked-upload-cancel-btn {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+        border: 1px solid rgba(239, 68, 68, 0.4);
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        transition: background 0.2s, border-color 0.2s;
+        box-shadow: none;
+    }
+
+    #chunked-upload-overlay .chunked-upload-cancel-btn:hover {
+        background: rgba(239, 68, 68, 0.4);
+        border-color: rgba(239, 68, 68, 0.6);
+    }
+</style>
+
+<!-- Template for Chunked Upload Overlay -->
+<div id="chunked-upload-template" style="display: none;">
+    <div id="chunked-upload-overlay">
+        <div class="chunked-upload-card">
+            <h3 class="chunked-upload-title">{{ _('Uploading File') }}</h3>
+            <p class="chunked-upload-filename"></p>
+            <div class="chunked-upload-progress-container">
+                <div class="chunked-upload-progress-bar">
+                    <div class="chunked-upload-progress-fill"></div>
+                </div>
+                <span class="chunked-upload-percentage">0%</span>
+            </div>
+            <div class="chunked-upload-meta">
+                <span class="chunked-upload-speed">0 B/s</span>
+                <span class="chunked-upload-eta">{{ _('Calculating...') }}</span>
+            </div>
+            <div class="chunked-upload-status">{{ _('Initializing...') }}</div>
+            <div class="chunked-upload-actions">
+                <button type="button" class="button chunked-upload-cancel-btn">{{ _('Cancel') }}</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    window.CHUNKED_UPLOAD_CONFIG = {
+        urls: {
+            init: '{{ url("chunked_upload_init") }}',
+            chunk: '{{ url("chunked_upload_chunk") }}',
+            complete: '{{ url("chunked_upload_complete") }}',
+            cancel: '{{ url("chunked_upload_cancel") }}'
+        },
+        i18n: {
+            resuming: {{ _('Resuming upload: {uploaded}/{total} chunks already uploaded.')|htmltojs }},
+            starting: {{ _('Starting upload...')|htmltojs }},
+            uploadedChunk: {{ _('Uploaded chunk {current}/{total}')|htmltojs }},
+            retryingChunk: {{ _('Retrying chunk {index} (attempt {attempt})...')|htmltojs }},
+            retryingComplete: {{ _('Retrying completion (attempt {attempt})...')|htmltojs }},
+            completing: {{ _('Completing upload...')|htmltojs }},
+            parsingError: {{ _('Response parsing error')|htmltojs }},
+            networkError: {{ _('Network error')|htmltojs }},
+            initError: {{ _('Failed to initialize session')|htmltojs }},
+            completeError: {{ _('Failed to complete session')|htmltojs }},
+            parseCompleteError: {{ _('Error parsing completion response')|htmltojs }},
+            networkCompleteError: {{ _('Network error completing session')|htmltojs }},
+            chunkUploadError: {{ _('Server error uploading chunk')|htmltojs }},
+            statusCodeError: {{ _('Status code {status}')|htmltojs }},
+            completeStatusError: {{ _('Completion status {status}')|htmltojs }},
+            userCancelled: {{ _('Upload cancelled by user.')|htmltojs }}
+        },
+        chunkSize: {{ chunked_upload_chunk_size|default(10 * 1024 * 1024) }},
+        maxParallel: {{ chunked_upload_max_parallel|default(3) }}
+    };
+</script>
+

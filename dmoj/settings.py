@@ -738,6 +738,15 @@ SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission_file'
 STATIC_UPLOAD_URL_PREFIX = '/static-upload'
 STATIC_UPLOAD_MEDIA_DIR = 'static-upload'
 
+# Chunked Upload Settings
+CHUNKED_UPLOAD_MEDIA_DIR = 'chunked_uploads'
+CHUNKED_UPLOAD_CHUNK_SIZE = 10 * 1024 * 1024            # 10 MB
+CHUNKED_UPLOAD_MAX_FILE_SIZE = 10 * 1024 * 1024 * 1024   # 10 GB
+CHUNKED_UPLOAD_MAX_PARALLEL = 3
+CHUNKED_UPLOAD_EXPIRY_HOURS = 24
+CHUNKED_UPLOAD_MAX_USER_DISK = 20 * 1024 * 1024 * 1024   # 20 GB
+
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
