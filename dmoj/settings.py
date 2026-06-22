@@ -746,6 +746,9 @@ SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission_file'
 STATIC_UPLOAD_URL_PREFIX = '/static-upload'
 STATIC_UPLOAD_MEDIA_DIR = 'static-upload'
 
+USER_FILE_STORAGE_MEDIA_DIR = 'user_file'
+
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
