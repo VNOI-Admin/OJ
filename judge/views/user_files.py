@@ -1,15 +1,18 @@
 import os
 
+import mimetypes
+
 from django.contrib import messages
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.http import Http404, HttpResponse
-from django.shortcuts import redirect
+from django.http import Http404, HttpResponse, JsonResponse
+from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView, DeleteView, DetailView, ListView, UpdateView, View
 
 from judge.forms import UserFileEditForm, UserFileUploadForm
-from judge.models import UserFile
+from judge.models import FileAttachment, UserFile
 from judge.utils.user_file_access import authorize_file_access
 from judge.utils.views import TitleMixin, add_file_response, generic_message
 
@@ -17,6 +20,7 @@ __all__ = [
     'UserFileListView', 'UserFileUploadView', 'UserFileDetailView',
     'UserFileEditView', 'UserFileDeleteView', 'UserFileBulkDeleteView',
     'UserFileDownloadView', 'UserFileAccessView',
+    'UserFileSearchView', 'AttachmentAccessView',
 ]
 
 
@@ -175,3 +179,44 @@ class UserFileDownloadView(PublicAccessMixin, DetailView):
 class UserFileAccessView(UserFileDownloadView):
     def get(self, request, *args, **kwargs):
         return self._serve_file(request, as_attachment=False)
+
+
+class UserFileSearchView(LoginRequiredMixin, View):
+    """JSON endpoint for Select2: search the current user's uploaded files."""
+
+    def get(self, request):
+        q = request.GET.get('q', '')
+        qs = UserFile.objects.filter(
+            user=request.profile,
+            file_type=UserFile.FileType.USER_UPLOAD,
+        ).order_by('-uploaded_at')
+        if q:
+            qs = qs.filter(filename__icontains=q)
+        results = [
+            {'id': f.id, 'text': f.filename, 'size': f.size}
+            for f in qs[:50]
+        ]
+        return JsonResponse({'results': results})
+
+
+class AttachmentAccessView(View):
+    """Serve a FileAttachment if the requesting user can view its parent object."""
+
+    def get(self, request, pk):
+        attachment = get_object_or_404(
+            FileAttachment.objects.select_related('file', 'content_type'),
+            pk=pk,
+        )
+        if not attachment.can_view_by(request.user):
+            raise Http404
+
+        f = attachment.file
+        try:
+            response = HttpResponse()
+            content_type = mimetypes.guess_type(f.filename)[0] or 'application/octet-stream'
+            response['Content-Type'] = content_type
+            response['Content-Disposition'] = f'inline; filename="{f.filename}"'
+            add_file_response(request, response, f.get_url_path(), f.get_file_path())
+            return response
+        except (OSError, IOError) as e:
+            return generic_message(request, 'File Error', 'File not found: {}'.format(e), status=404)
