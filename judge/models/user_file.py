@@ -1,5 +1,4 @@
 import os
-import re
 import uuid
 
 from django.conf import settings
@@ -11,9 +10,7 @@ from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
 __all__ = [
-    'user_file_storage', 'UserFileStorage', 'UserFile', 'FileUsage',
-    'extract_referenced_file_uuids', 'link_referenced_files',
-]
+    'user_file_storage', 'UserFileStorage', 'UserFile', 'FileUsage']
 
 USER_FILE_STORAGE_SCOPE_PROBLEM = 'problem'
 USER_FILE_STORAGE_SCOPE_CONTEST = 'contest'
@@ -270,20 +267,6 @@ class FileUsage(models.Model):
             return self.context_description or self.get_usage_type_display()
 
 
-# Matches the file references that the Martor uploader inserts into markdown,
-# e.g. /files/5b8ed2dd-831c-4f8e-ab86-88d62e81f501/view (or /download).
-_FILE_REFERENCE_RE = re.compile(
-    r'/files/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/(?:view|download)',
-)
-
-
-def extract_referenced_file_uuids(text):
-    """Return the set of UserFile UUIDs referenced from a markdown body."""
-    if not text:
-        return set()
-    return {match.lower() for match in _FILE_REFERENCE_RE.findall(text)}
-
-
 def _move_user_file_to_scope(user_file, scope):
     """Set a file's storage scope and relocate it on disk into the scope folder.
 
@@ -308,33 +291,3 @@ def _move_user_file_to_scope(user_file, scope):
     except Exception:
         pass
     user_file.save(update_fields=['storage_scope'])
-
-
-def link_referenced_files(referenced_uuids, owner_profile, *, scope,
-                          problem_id=None, contest_id=None,
-                          usage_type='markdown_content', context_description=''):
-    """Attach files referenced in a problem/contest body to that context.
-
-    Only files owned by ``owner_profile`` are touched, so an editor cannot
-    re-scope or hijack another user's file by pasting its UUID into a body.
-    """
-    if not referenced_uuids or owner_profile is None:
-        return
-
-    for user_file in UserFile.objects.filter(uuid__in=referenced_uuids, user=owner_profile):
-        _move_user_file_to_scope(user_file, scope)
-
-        usage = user_file.usages.filter(usage_type=usage_type).first()
-        if usage is None:
-            FileUsage.objects.create(
-                file=user_file,
-                usage_type=usage_type,
-                problem_id=problem_id,
-                contest_id=contest_id,
-                context_description=context_description,
-            )
-        elif usage.problem_id != problem_id or usage.contest_id != contest_id:
-            usage.problem_id = problem_id
-            usage.contest_id = contest_id
-            usage.context_description = context_description
-            usage.save(update_fields=['problem_id', 'contest_id', 'context_description'])
