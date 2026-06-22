@@ -10,7 +10,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 
 from judge.forms import UserFileEditForm, UserFileUploadForm
 from judge.models import UserFile
-from judge.utils.user_file_access import UserFileAccessChain
+from judge.utils.user_file_access import authorize_file_access
 from judge.utils.views import TitleMixin, add_file_response, generic_message
 
 __all__ = [
@@ -45,8 +45,6 @@ class UserOwnedFilesMixin(UserFilePermissionMixin):
 
 
 class PublicAccessMixin(UserFileBaseMixin):
-    access_chain = UserFileAccessChain()
-
     def get_object(self, queryset=None):
         uuid_value = self.kwargs.get(self.slug_url_kwarg)
         try:
@@ -54,7 +52,7 @@ class PublicAccessMixin(UserFileBaseMixin):
         except UserFile.DoesNotExist:
             raise Http404('File not found or access denied.')
 
-        return self.access_chain.authorize(self.request, file_obj)
+        return authorize_file_access(self.request, file_obj)
 
 
 class UserFileListView(UserOwnedFilesMixin, ListView):
@@ -82,17 +80,12 @@ class UserFileUploadView(UserOwnedFilesMixin, CreateView):
     template_name = 'user/files/file_upload.html'
 
     def dispatch(self, request, *args, **kwargs):
-        # Uploading on /files needs an explicit grant; unprivileged users may
-        # only see files attached through problems/contests/the editor.
         if request.user.is_authenticated and not UserFile.can_upload_by(request.user):
             raise PermissionDenied()
         return super().dispatch(request, *args, **kwargs)
 
     def form_valid(self, form):
         form.instance.user = self.request.profile
-        # Files uploaded directly on the /files page are user-owned uploads,
-        # not markdown-editor images, so tag them with the user scope.
-        form.instance.storage_scope = UserFile.STORAGE_SCOPE_USER
         uploaded_file = form.cleaned_data.get('file')
         if uploaded_file:
             form.instance.filename = os.path.basename(uploaded_file.name)
@@ -113,17 +106,6 @@ class UserFileUploadView(UserOwnedFilesMixin, CreateView):
 class UserFileDetailView(PublicAccessMixin, DetailView):
     title = 'File Details'
     template_name = 'user/files/file_detail.html'
-
-    def get_object(self, queryset=None):
-        obj = super().get_object(queryset=queryset)
-        self._check_related_access(obj)
-        return obj
-
-    def _check_related_access(self, file_obj):
-        # Scoped files are only visible to people who can reach the problem or
-        # contest that references them.
-        if file_obj.requires_context_authorization and not file_obj.can_view_by_context(self.request.user):
-            raise Http404('File access denied - related context is not accessible.')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -150,13 +132,6 @@ class UserFileDeleteView(UserOwnedFilesMixin, DeleteView):
     template_name = 'user/files/file_delete.html'
     success_url = reverse_lazy('user_file_list')
 
-    def post(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        if self.object.usages.exists():
-            messages.error(request, _('Cannot delete: file is currently in use.'))
-            return redirect('user_file_detail', uuid=self.object.uuid)
-        return super().post(request, *args, **kwargs)
-
 
 class UserFileBulkDeleteView(UserFilePermissionMixin, View):
     def post(self, request, *args, **kwargs):
@@ -169,20 +144,11 @@ class UserFileBulkDeleteView(UserFilePermissionMixin, View):
         if not request.user.is_superuser:
             qs = qs.filter(user=request.profile)
 
-        deletable_pks = list(qs.filter(usages__isnull=True).values_list('pk', flat=True))
-        count = len(deletable_pks)
-        skipped = qs.count() - count
-        UserFile.objects.filter(pk__in=deletable_pks).delete()
-
+        count, _ = qs.delete()
         messages.success(
             request,
             _('%(count)d file(s) deleted.') % {'count': count},
         )
-        if skipped:
-            messages.warning(
-                request,
-                _('%(count)d file(s) skipped: still in use.') % {'count': skipped},
-            )
         return redirect('user_file_list')
 
 
@@ -191,7 +157,6 @@ class UserFileDownloadView(PublicAccessMixin, DetailView):
 
     def _serve_file(self, request, as_attachment):
         self.object = self.get_object()
-        self.object.update_last_accessed()
 
         try:
             disposition = 'attachment' if as_attachment else 'inline'
