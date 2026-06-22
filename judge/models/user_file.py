@@ -44,18 +44,9 @@ INLINE_SAFE_MIME_TYPES = frozenset((
 
 
 class UserFileStorage(FileSystemStorage):
-    """Storage for user files.
-
-    Reads its location/URL from settings at construction time and deconstructs
-    with no arguments so migrations stay stable across environments.
-    """
-
     def __init__(self):
-        root = getattr(settings, 'USER_FILE_STORAGE_ROOT', settings.MEDIA_ROOT)
-        base_url = getattr(settings, 'USER_FILE_STORAGE_URL_PREFIX', settings.MEDIA_URL)
-        if not base_url.endswith('/'):
-            base_url += '/'
-        super().__init__(location=root, base_url=base_url)
+        location = os.path.join(settings.MEDIA_ROOT, settings.USER_FILE_STORAGE_MEDIA_DIR)
+        super().__init__(location)
 
 
 user_file_storage = UserFileStorage()
