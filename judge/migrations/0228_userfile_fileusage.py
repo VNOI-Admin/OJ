@@ -20,12 +20,9 @@ class Migration(migrations.Migration):
                 ('uuid', models.UUIDField(db_index=True, default=uuid.uuid4, editable=False, unique=True)),
                 ('file', models.FileField(storage=judge.models.user_file.UserFileStorage(), upload_to=judge.models.user_file.user_file_directory, verbose_name='file')),
                 ('filename', models.CharField(max_length=255, verbose_name='original filename')),
-                ('storage_scope', models.CharField(choices=[('problem', 'Problem'), ('contest', 'Contest'), ('user', 'User upload')], db_index=True, default='user', max_length=20, verbose_name='storage scope')),
                 ('size', models.BigIntegerField(default=0, verbose_name='file size in bytes')),
                 ('is_public', models.BooleanField(default=False, verbose_name='is public')),
                 ('uploaded_at', models.DateTimeField(auto_now_add=True, verbose_name='uploaded at')),
-                ('last_accessed', models.DateTimeField(auto_now_add=True, verbose_name='last accessed')),
-                ('access_count', models.IntegerField(default=0, verbose_name='access count')),
                 ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='uploaded_files', to='judge.profile', verbose_name='owner')),
             ],
             options={
