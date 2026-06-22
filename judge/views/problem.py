@@ -982,6 +982,7 @@ class ProblemImportPolygon(PermissionRequiredMixin, TitleMixin, FormView):
                     do_update=do_update,
                     interactive=False,
                     config=config,
+                    user=self.request.user,
                 )
                 importer.run()
             except ImportPolygonError as e:

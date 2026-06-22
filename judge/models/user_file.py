@@ -12,21 +12,40 @@ __all__ = ['user_file_storage', 'UserFileStorage', 'UserFile']
 
 class UserFileStorage(FileSystemStorage):
     def __init__(self):
-        location = os.path.join(settings.MEDIA_ROOT, settings.USER_FILE_STORAGE_MEDIA_DIR)
-        super().__init__(location)
+        super().__init__(settings.MEDIA_ROOT)
 
 
 user_file_storage = UserFileStorage()
 
 
 def user_file_directory(instance, filename):
-    return str(uuid.uuid4())
+    ext = os.path.splitext(filename)[1]
+    if instance.file_type == 'martor' and ext.lower() not in settings.MARTOR_UPLOAD_SAFE_EXTS:
+        ext = '.png'
+    subdir_map = {
+        'martor': settings.MARTOR_UPLOAD_MEDIA_DIR,
+        'user_upload': settings.USER_FILE_STORAGE_MEDIA_DIR,
+    }
+    subdir = subdir_map.get(instance.file_type, settings.USER_FILE_STORAGE_MEDIA_DIR)
+    return os.path.join(subdir, str(uuid.uuid4()) + ext)
 
 
 class UserFile(models.Model):
+    class FileType(models.TextChoices):
+        MARTOR_IMAGE = 'martor', _('Martor Image')
+        USER_UPLOAD = 'user_upload', _('User Upload')
+
     uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     user = models.ForeignKey(
-        'Profile', verbose_name=_('owner'), related_name='uploaded_files', on_delete=models.CASCADE,
+        'Profile', verbose_name=_('owner'), related_name='uploaded_files',
+        on_delete=models.CASCADE, null=True, blank=True,
+    )
+    file_type = models.CharField(
+        max_length=32,
+        choices=FileType.choices,
+        default=FileType.USER_UPLOAD,
+        db_index=True,
+        verbose_name=_('file type'),
     )
 
     file = models.FileField(
@@ -46,7 +65,8 @@ class UserFile(models.Model):
         ordering = ['-uploaded_at']
 
     def __str__(self):
-        return f'{self.filename} ({self.user.user.username})'
+        user_str = self.user.user.username if self.user_id else 'system'
+        return f'{self.filename} ({user_str})'
 
     @classmethod
     def can_list_by(cls, user):
@@ -108,8 +128,14 @@ class UserFile(models.Model):
         return user_file_storage.path(self.file.name)
 
     def get_url_path(self):
+        if self.file_type == self.FileType.MARTOR_IMAGE:
+            return None  # nginx serves directly; no X-Accel-Redirect needed
         internal_base = settings.USER_FILE_STORAGE_INTERNAL
         return '{}/{}'.format(internal_base, self.file.name) if internal_base else None
 
     def get_access_url(self):
+        if self.file_type == self.FileType.MARTOR_IMAGE:
+            name = os.path.basename(self.file.name)
+            url_base = getattr(settings, 'MARTOR_UPLOAD_URL_PREFIX', '/martor')
+            return url_base.rstrip('/') + '/' + name
         return reverse('user_file_access', kwargs={'uuid': self.uuid})
