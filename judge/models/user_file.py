@@ -33,8 +33,6 @@ USER_FILE_CONTEXT_SCOPES = frozenset((
     USER_FILE_STORAGE_SCOPE_CONTEST,
 ))
 
-USER_FILE_STORAGE_PREFIX = 'user_files'
-
 INLINE_SAFE_MIME_TYPES = frozenset((
     'image/png',
     'image/jpeg',
@@ -58,20 +56,12 @@ def user_file_directory(instance, filename):
     original_name = os.path.basename(filename)
     display_name = os.path.basename(getattr(instance, 'filename', '') or original_name)
 
-    display_base, _ = os.path.splitext(display_name)
-    _, safe_ext = os.path.splitext(original_name)
-    if not safe_ext:
-        safe_ext = os.path.splitext(display_name)[1]
-
-    if not display_base:
-        display_base = os.path.splitext(original_name)[0] or 'file'
-
     scope = getattr(instance, 'storage_scope', None) or USER_FILE_STORAGE_SCOPE_USER
     if scope not in USER_FILE_STORAGE_SCOPE_VALUES:
         scope = USER_FILE_STORAGE_SCOPE_USER
 
     file_uuid = getattr(instance, 'uuid', None) or uuid.uuid4()
-    return os.path.join(USER_FILE_STORAGE_PREFIX, scope, f'{file_uuid}_{display_base}{safe_ext}')
+    return os.path.join(scope, f'{file_uuid}_{display_name}')
 
 
 class UserFile(models.Model):
