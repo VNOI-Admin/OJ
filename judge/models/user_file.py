@@ -1,13 +1,11 @@
-import mimetypes
 import os
 import re
 import uuid
-from urllib.parse import quote
 
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
 from django.db import models
-from django.db.models import F, Q
+from django.db.models import F
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
@@ -33,13 +31,6 @@ USER_FILE_CONTEXT_SCOPES = frozenset((
     USER_FILE_STORAGE_SCOPE_CONTEST,
 ))
 
-INLINE_SAFE_MIME_TYPES = frozenset((
-    'image/png',
-    'image/jpeg',
-    'application/pdf',
-    'text/plain',
-))
-
 
 class UserFileStorage(FileSystemStorage):
     def __init__(self):
@@ -51,17 +42,11 @@ user_file_storage = UserFileStorage()
 
 
 def user_file_directory(instance, filename):
-    # Files live under a per-scope subfolder so the on-disk location reflects
-    # where the file originated (problem/contest/user).
-    original_name = os.path.basename(filename)
-    display_name = os.path.basename(getattr(instance, 'filename', '') or original_name)
-
     scope = getattr(instance, 'storage_scope', None) or USER_FILE_STORAGE_SCOPE_USER
     if scope not in USER_FILE_STORAGE_SCOPE_VALUES:
         scope = USER_FILE_STORAGE_SCOPE_USER
 
-    file_uuid = getattr(instance, 'uuid', None) or uuid.uuid4()
-    return os.path.join(scope, f'{file_uuid}_{display_name}')
+    return os.path.join(scope, str(uuid.uuid4()))
 
 
 class UserFile(models.Model):
@@ -130,10 +115,6 @@ class UserFile(models.Model):
     def requires_context_authorization(self):
         return self.storage_scope in USER_FILE_CONTEXT_SCOPES
 
-    @property
-    def has_context_usage(self):
-        return self.usages.filter(Q(problem_id__isnull=False) | Q(contest_id__isnull=False)).exists()
-
     def can_view_by_problem_context(self, user):
         problem_ids = list(self.usages.exclude(problem_id__isnull=True).values_list('problem_id', flat=True))
         if not problem_ids:
@@ -192,25 +173,11 @@ class UserFile(models.Model):
         return self.is_owned_by(user)
 
     def save(self, *args, **kwargs):
-        # Rotate the UUID when a file goes public -> private so previously
-        # shared links stop resolving.
-        if self.pk:
-            try:
-                previous = UserFile.objects.only('is_public').get(pk=self.pk)
-                if previous.is_public and not self.is_public:
-                    self.uuid = uuid.uuid4()
-            except UserFile.DoesNotExist:
-                pass
-
-        if self.file:
-            file_basename = os.path.basename(self.file.name)
-            if not self.filename:
-                self.filename = file_basename
-            elif '.' not in os.path.basename(self.filename) and '.' in file_basename:
-                _, ext = os.path.splitext(file_basename)
-                if ext:
-                    self.filename = f'{self.filename}{ext}'
-
+        if self.file and not self.filename:
+            self.filename = os.path.basename(self.file.name)
+        if self.filename:
+            for ch in ('"', '\\', '\r', '\n'):
+                self.filename = self.filename.replace(ch, '')
         if not self.size and self.file:
             try:
                 self.size = self.file.size
@@ -228,57 +195,15 @@ class UserFile(models.Model):
         self.last_accessed = now
         self.access_count += 1
 
-    def get_absolute_url(self):
-        return reverse('user_file_detail', kwargs={'uuid': self.uuid})
+    def get_file_path(self):
+        return user_file_storage.path(self.file.name)
 
-    def get_download_url(self):
-        return reverse('user_file_download', kwargs={'uuid': self.uuid})
+    def get_url_path(self):
+        internal_base = settings.USER_FILE_STORAGE_INTERNAL
+        return '{}/{}'.format(internal_base, self.file.name) if internal_base else None
 
     def get_access_url(self):
         return reverse('user_file_access', kwargs={'uuid': self.uuid})
-
-    def get_resolved_filename(self):
-        stored_basename = os.path.basename(self.file.name or '')
-        download_name = (self.filename or '').strip()
-
-        if not download_name:
-            return stored_basename
-
-        if '.' not in os.path.basename(download_name) and '.' in stored_basename:
-            _, ext = os.path.splitext(stored_basename)
-            if ext:
-                return f'{download_name}{ext}'
-
-        return download_name
-
-    def get_resolved_mime_type(self):
-        download_name = self.get_resolved_filename()
-        mime_type, _ = mimetypes.guess_type(download_name)
-        if mime_type:
-            return mime_type
-
-        stored_basename = os.path.basename(self.file.name or '')
-        mime_type, _ = mimetypes.guess_type(stored_basename)
-        return mime_type or 'application/octet-stream'
-
-    def get_content_disposition(self, as_attachment):
-        download_name = self.get_resolved_filename()
-        mime_type = self.get_resolved_mime_type()
-
-        if not as_attachment and mime_type not in INLINE_SAFE_MIME_TYPES:
-            as_attachment = True
-        disposition_type = 'attachment' if as_attachment else 'inline'
-
-        safe_ascii = download_name.encode('ascii', errors='replace').decode('ascii')
-        for ch in ('"', '\\', '\r', '\n'):
-            safe_ascii = safe_ascii.replace(ch, '')
-        safe_utf8 = quote(download_name, safe='')
-
-        header = (
-            f'{disposition_type}; filename="{safe_ascii}"; '
-            f"filename*=UTF-8''{safe_utf8}"
-        )
-        return mime_type, header
 
 
 class FileUsage(models.Model):
