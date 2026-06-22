@@ -12,6 +12,7 @@ from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db.models import Q
+from django.contrib.contenttypes.forms import generic_inlineformset_factory
 from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, ModelForm, MultipleChoiceField, \
     formset_factory, inlineformset_factory
 from django.forms.widgets import DateTimeInput
@@ -21,8 +22,9 @@ from django.utils import timezone
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
-from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, Language, \
-    LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, UserFile, WebAuthnCredential
+from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, \
+    FileAttachment, Language, LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, \
+    UserFile, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -936,3 +938,49 @@ class UserFileEditForm(ModelForm):
         widgets = {
             'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
+
+
+class FileAttachmentForm(ModelForm):
+    new_file = forms.FileField(required=False, label=_('Upload new file'))
+
+    class Meta:
+        model = FileAttachment
+        fields = ['file', 'display_name']
+        widgets = {
+            'file': HeavySelect2Widget(data_view='user_file_search', attrs={'style': 'width: 100%'}),
+            'display_name': forms.TextInput(attrs={'style': 'width: 100%'}),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields['file'].required = False
+
+    def save(self, commit=True):
+        new_file = self.cleaned_data.get('new_file')
+        if new_file and self.user:
+            user_file = UserFile(
+                file=new_file,
+                file_type=UserFile.FileType.USER_UPLOAD,
+                is_public=False,
+            )
+            if self.user.is_authenticated:
+                user_file.user = self.user.profile
+            user_file.save()
+            self.instance.file = user_file
+        return super().save(commit=commit)
+
+
+ProblemAttachmentFormSet = generic_inlineformset_factory(
+    FileAttachment,
+    form=FileAttachmentForm,
+    extra=1,
+    can_delete=True,
+)
+
+ContestAttachmentFormSet = generic_inlineformset_factory(
+    FileAttachment,
+    form=FileAttachmentForm,
+    extra=1,
+    can_delete=True,
+)

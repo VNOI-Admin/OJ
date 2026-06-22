@@ -338,6 +338,20 @@
         {% endif %}
     {% endif %}
 
+    {% if attachments %}
+    <div class="contest-attachments">
+        <h2><i class="fa fa-paperclip"></i> {{ _('Attachments') }}</h2>
+        <ul>
+            {% for att in attachments %}
+                <li>
+                    <a href="{{ url('attachment_access', att.id) }}">{{ att.get_display_name() }}</a>
+                    <span style="color: #888; font-size: 0.9em;">({{ att.file.size|filesizeformat }})</span>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
     <div class="content-description">
         {% cache 3600 'contest_html' contest.id MATH_ENGINE %}
             {{ contest.description|markdown('contest', MATH_ENGINE)|reference|str|safe }}

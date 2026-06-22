@@ -38,8 +38,9 @@ from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
-from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
-    ProposeContestProblemFormSet
+
+from judge.forms import ContestAnnouncementForm, ContestAttachmentFormSet, ContestCloneForm, \
+    ContestDownloadDataForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, \
     ContestSubmission, ContestTag, Language, Organization, Problem, ProblemClarification, Profile, Solution, \
     Submission
@@ -233,6 +234,7 @@ class ContestMixin(object):
             context['logo_override_image'] = self.object.organization.logo_override_image
 
         context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
+        context['attachments'] = self.object.attachments.select_related('file').order_by('id')
         return context
 
     def get_object(self, queryset=None):
@@ -1486,18 +1488,32 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
                                                 form_kwargs={'user': self.request.user})
         return ProposeContestProblemFormSet(instance=self.get_object(), form_kwargs={'user': self.request.user})
 
+    def get_attachment_formset(self):
+        form_kwargs = {'user': self.request.user}
+        if self.request.POST:
+            return ContestAttachmentFormSet(
+                self.request.POST, self.request.FILES,
+                instance=self.object, form_kwargs=form_kwargs,
+            )
+        return ContestAttachmentFormSet(instance=self.object, form_kwargs=form_kwargs)
+
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data['contest_problem_formset'] = self.get_contest_problem_formset()
         data['contest_org'] = self.object.organization
+        if self.request.user.is_superuser:
+            data['attachment_formset'] = self.get_attachment_formset()
         return data
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
         form_set = self.get_contest_problem_formset()
+        form_attachments = self.get_attachment_formset() if request.user.is_superuser else None
 
-        if form.is_valid() and form_set.is_valid():
+        valid = form.is_valid() and form_set.is_valid()
+        valid = valid and (form_attachments is None or form_attachments.is_valid())
+        if valid:
             with revisions.create_revision(atomic=True):
                 form.save()
                 problems = form_set.save(commit=False)
@@ -1508,6 +1524,9 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
                 for problem in problems:
                     problem.contest = self.object
                     problem.save()
+
+                if form_attachments is not None:
+                    form_attachments.save()
 
                 revisions.set_comment(_('Edited from site'))
                 revisions.set_user(self.request.user)
