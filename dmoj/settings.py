@@ -154,7 +154,18 @@ VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION = False
 VNOJ_MONTHLY_FREE_CREDIT = 3 * 60 * 60
 VNOJ_PRICE_PER_HOUR = 50
 
-
+# Organization quota limits
+VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS = 1000
+VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE = 5 * 1024 * 1024 * 1024  # 5GB
+# Suffix appended to every inline quota-warning message. May contain HTML (e.g. a link to a guide).
+# Example: ' <a href="https://example.com/quota-guide">Read our guide</a>.'
+VNOJ_QUOTA_WARNING_SUFFIX = ''
+VNOJ_QUOTA_WARNING_THRESHOLD = 0.8
+# When False, quota warnings are shown but users are NOT blocked from creating problems
+# or uploading test data. Set to True to enforce hard limits.
+VNOJ_QUOTA_ENFORCEMENT_ENABLED = False
+VNOJ_QUOTA_PACKAGE_STORAGE = 5 * 1024 * 1024 * 1024  # 5 GB per package
+VNOJ_QUOTA_PACKAGE_PROBLEMS = 1000  # problems per package
 VNOJ_LONG_QUEUE_ALERT_THRESHOLD = 10
 
 # Low power mode: Optimize queries by limiting data scope for performance

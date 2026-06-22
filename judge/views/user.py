@@ -210,7 +210,7 @@ class UserAboutPage(UserPage):
         timezone_offset = pytz.timezone(user_timezone).utcoffset(datetime.datetime.utcnow()).seconds
 
         submissions_count = self.object.submission_set.count()
-        if submissions_count > settings.VNOJ_LOW_POWER_MODE_CONFIG['heat_map_limit']:
+        if settings.VNOJ_LOW_POWER_MODE and submissions_count > settings.VNOJ_LOW_POWER_MODE_CONFIG['heat_map_limit']:
             submissions = []
         else:
             submissions = (

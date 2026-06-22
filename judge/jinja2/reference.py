@@ -4,7 +4,6 @@ from urllib.parse import urljoin
 
 from ansi2html import Ansi2HTMLConverter
 from django.contrib.auth.models import AbstractUser
-from django.db.models import QuerySet
 from django.urls import reverse
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -149,8 +148,6 @@ def link_user(user):
         user, profile = user.user, user
     elif isinstance(user, AbstractUser):
         profile = user.profile
-    elif type(user).__name__ == 'ContestRankingProfile':
-        user, profile = user.user, user
     else:
         raise ValueError('Expected profile or user, got %s' % (type(user),))
 
@@ -170,10 +167,6 @@ def link_user(user):
 @registry.function
 @registry.render_with('user/link-list.html')
 def link_users(users):
-    if isinstance(users, QuerySet) and users.model == Profile:
-        if not users.query.select_related:
-            users = users.select_related('user', 'display_badge')
-
     return {'users': users}
 
 
