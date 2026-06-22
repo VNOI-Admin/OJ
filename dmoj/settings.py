@@ -747,6 +747,7 @@ STATIC_UPLOAD_URL_PREFIX = '/static-upload'
 STATIC_UPLOAD_MEDIA_DIR = 'static-upload'
 
 USER_FILE_STORAGE_MEDIA_DIR = 'user_file'
+USER_FILE_STORAGE_INTERNAL = None
 
 
 # Database

@@ -2,7 +2,7 @@ import os
 
 from django.contrib import messages
 from django.core.exceptions import PermissionDenied
-from django.http import FileResponse, Http404
+from django.http import Http404, HttpResponse
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -11,7 +11,7 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 from judge.forms import UserFileEditForm, UserFileUploadForm
 from judge.models import UserFile
 from judge.utils.user_file_access import UserFileAccessChain
-from judge.utils.views import TitleMixin, generic_message
+from judge.utils.views import TitleMixin, add_file_response, generic_message
 
 __all__ = [
     'UserFileListView', 'UserFileUploadView', 'UserFileDetailView',
@@ -194,22 +194,14 @@ class UserFileDownloadView(PublicAccessMixin, DetailView):
         self.object.update_last_accessed()
 
         try:
-            mime_type, content_disposition = self.object.get_content_disposition(as_attachment)
+            disposition = 'attachment' if as_attachment else 'inline'
+            response = HttpResponse(content_type='application/octet-stream')
+            response['Content-Disposition'] = f'{disposition}; filename="{self.object.filename}"'
 
-            response = FileResponse(
-                self.object.file.open('rb'),
-                content_type=mime_type,
-            )
-            response['Content-Disposition'] = content_disposition
-            response['X-Content-Type-Options'] = 'nosniff'
+            add_file_response(request, response, self.object.get_url_path(), self.object.get_file_path())
             return response
         except (OSError, IOError) as e:
-            return generic_message(
-                request,
-                'File Error',
-                f'File not found or cannot be accessed: {str(e)}',
-                status=404,
-            )
+            return generic_message(request, 'File Error', 'File not found: {}'.format(e), status=404)
 
     def get(self, request, *args, **kwargs):
         return self._serve_file(request, as_attachment=True)
