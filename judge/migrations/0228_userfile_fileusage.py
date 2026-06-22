@@ -9,7 +9,7 @@ import judge.models.user_file
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0225_add_pac_result'),
+        ('judge', '0227_add_submission_heatmap_index'),
     ]
 
     operations = [
