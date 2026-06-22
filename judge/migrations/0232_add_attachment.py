@@ -34,46 +34,4 @@ class Migration(migrations.Migration):
                 'ordering': ['-uploaded_at'],
             },
         ),
-        migrations.CreateModel(
-            name='FileUsage',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('usage_type', models.CharField(choices=[('problem_checker', 'Problem - Checker'), ('problem_grader', 'Problem - Grader'), ('problem_header', 'Problem - Header'), ('problem_data', 'Problem - Test Data'), ('problem_statement_attachment', 'Problem - Statement Attachment'), ('submission_attachment', 'Submission - Attachment'), ('markdown_content', 'Markdown - Content Image'), ('library_personal', 'Library - Personal'), ('library_shared', 'Library - Shared'), ('other', 'Other')], default='other', max_length=50, verbose_name='usage type')),
-                ('problem_id', models.IntegerField(blank=True, db_index=True, null=True, verbose_name='problem ID')),
-                ('contest_id', models.IntegerField(blank=True, db_index=True, null=True, verbose_name='contest ID')),
-                ('submission_id', models.IntegerField(blank=True, db_index=True, null=True, verbose_name='submission ID')),
-                ('context_description', models.CharField(blank=True, max_length=255, verbose_name='context description')),
-                ('created_at', models.DateTimeField(auto_now_add=True, verbose_name='created at')),
-                ('file', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='usages', to='judge.userfile', verbose_name='file')),
-            ],
-            options={
-                'verbose_name': 'file usage',
-                'verbose_name_plural': 'file usages',
-                'ordering': ['-created_at'],
-            },
-        ),
-        migrations.AddIndex(
-            model_name='userfile',
-            index=models.Index(fields=['user', '-uploaded_at'], name='judge_userf_user_id_bcab28_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='userfile',
-            index=models.Index(fields=['storage_scope', '-uploaded_at'], name='judge_userf_storage_f87e05_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='fileusage',
-            index=models.Index(fields=['file', 'usage_type'], name='judge_fileu_file_id_349b69_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='fileusage',
-            index=models.Index(fields=['problem_id', 'usage_type'], name='judge_fileu_problem_db512d_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='fileusage',
-            index=models.Index(fields=['contest_id', 'usage_type'], name='judge_fileu_contest_6661a5_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='fileusage',
-            index=models.Index(fields=['submission_id'], name='judge_fileu_submiss_f0b8a9_idx'),
-        ),
     ]
