@@ -3,8 +3,8 @@ from django.http import Http404
 from django.test import RequestFactory, TestCase
 
 from judge.models import UserFile
-from judge.models.tests.util import create_contest, create_problem, create_user
-from judge.utils.user_file_access import UserFileAccessChain
+from judge.models.tests.util import create_user
+from judge.utils.user_file_access import authorize_file_access
 
 
 class UserFilePermissionTest(TestCase):
@@ -24,30 +24,9 @@ class UserFilePermissionTest(TestCase):
             username='upload_only_user_file',
             user_permissions=('add_userfile',),
         )
-
-        cls.public_problem = create_problem(
-            code='user_file_public_problem',
-            authors=('owner_user_file',),
-            is_public=True,
-        )
-        cls.private_problem = create_problem(
-            code='user_file_private_problem',
-            authors=('owner_user_file',),
-            is_public=False,
-        )
-
-        cls.public_contest = create_contest(
-            key='user_file_public_contest',
-            authors=('owner_user_file',),
-            is_visible=True,
-            is_private=False,
-        )
-        cls.private_contest = create_contest(
-            key='user_file_private_contest',
-            authors=('owner_user_file',),
-            is_visible=True,
-            is_private=True,
-            private_contestants=('other_user_file',),
+        cls.superuser = create_user(
+            username='superuser_user_file',
+            is_superuser=True,
         )
 
         cls.private_file = UserFile.objects.create(
@@ -63,23 +42,6 @@ class UserFilePermissionTest(TestCase):
             is_public=True,
         )
 
-        cls.problem_scoped_file = UserFile.objects.create(
-            user=cls.owner.profile,
-            file='user_files/problem-scoped.png',
-            filename='problem-scoped.png',
-            storage_scope=UserFile.STORAGE_SCOPE_PROBLEM,
-            is_public=False,
-        )
-
-        cls.contest_scoped_file = UserFile.objects.create(
-            user=cls.owner.profile,
-            file='user_files/contest-scoped.png',
-            filename='contest-scoped.png',
-            storage_scope=UserFile.STORAGE_SCOPE_CONTEST,
-            is_public=False,
-        )
-
-        cls.access_chain = UserFileAccessChain()
         cls.request_factory = RequestFactory()
 
     @classmethod
@@ -88,16 +50,20 @@ class UserFilePermissionTest(TestCase):
         request.user = user
         return request
 
-    def test_private_file_requires_owner_and_view_permission(self):
+    def test_private_file_owner_can_view(self):
         self.assertTrue(self.private_file.can_view_by(self.owner))
+
+    def test_private_file_other_cannot_view(self):
         self.assertFalse(self.private_file.can_view_by(self.other))
+
+    def test_private_file_anonymous_cannot_view(self):
         self.assertFalse(self.private_file.can_view_by(AnonymousUser()))
 
-    def test_public_file_can_be_viewed_without_permission(self):
+    def test_public_file_can_be_viewed_by_anyone(self):
         self.assertTrue(self.public_file.can_view_by(self.other))
         self.assertTrue(self.public_file.can_view_by(AnonymousUser()))
 
-    def test_change_and_delete_require_owner_permission(self):
+    def test_change_and_delete_require_ownership(self):
         self.assertTrue(self.private_file.can_change_by(self.owner))
         self.assertTrue(self.private_file.can_delete_by(self.owner))
         self.assertFalse(self.private_file.can_change_by(self.other))
@@ -109,25 +75,24 @@ class UserFilePermissionTest(TestCase):
         self.assertTrue(UserFile.can_upload_by(self.upload_only))
         self.assertFalse(UserFile.can_upload_by(AnonymousUser()))
 
-    def test_scoped_problem_file_requires_authentication(self):
+    def test_authorize_owner_can_access_private_file(self):
+        request = self._request_with_user(self.owner)
+        self.assertEqual(authorize_file_access(request, self.private_file), self.private_file)
+
+    def test_authorize_superuser_can_access_private_file(self):
+        request = self._request_with_user(self.superuser)
+        self.assertEqual(authorize_file_access(request, self.private_file), self.private_file)
+
+    def test_authorize_other_cannot_access_private_file(self):
+        request = self._request_with_user(self.other)
+        with self.assertRaises(Http404):
+            authorize_file_access(request, self.private_file)
+
+    def test_authorize_anonymous_cannot_access_private_file(self):
         request = self._request_with_user(AnonymousUser())
         with self.assertRaises(Http404):
-            self.access_chain.authorize(request, self.problem_scoped_file)
+            authorize_file_access(request, self.private_file)
 
-    def test_scoped_problem_file_checks_problem_access(self):
-        request = self._request_with_user(self.other)
-        self.assertEqual(
-            self.access_chain.authorize(request, self.problem_scoped_file),
-            self.problem_scoped_file,
-        )
-
-    def test_scoped_contest_file_checks_contest_access(self):
-        allowed_request = self._request_with_user(self.other)
-        denied_request = self._request_with_user(self.upload_only)
-
-        self.assertEqual(
-            self.access_chain.authorize(allowed_request, self.contest_scoped_file),
-            self.contest_scoped_file,
-        )
-        with self.assertRaises(Http404):
-            self.access_chain.authorize(denied_request, self.contest_scoped_file)
+    def test_authorize_public_file_accessible_to_anyone(self):
+        request = self._request_with_user(AnonymousUser())
+        self.assertEqual(authorize_file_access(request, self.public_file), self.public_file)
