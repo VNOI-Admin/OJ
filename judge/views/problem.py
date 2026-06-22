@@ -30,8 +30,7 @@ from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
 from judge.models import Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
-    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource, UserFile, \
-    extract_referenced_file_uuids, link_referenced_files
+    ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
@@ -923,14 +922,6 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
             self.save_statement(form, problem)
             problem.save()
 
-            link_referenced_files(
-                extract_referenced_file_uuids(problem.description),
-                self.request.profile,
-                scope=UserFile.STORAGE_SCOPE_PROBLEM,
-                problem_id=problem.id,
-                context_description=_('Problem %s description') % problem.code,
-            )
-
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
 
@@ -1121,14 +1112,6 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
                 problem.save()
                 form_lang_limit.save()
                 form_edit.save()
-
-                link_referenced_files(
-                    extract_referenced_file_uuids(problem.description),
-                    self.request.profile,
-                    scope=UserFile.STORAGE_SCOPE_PROBLEM,
-                    problem_id=problem.id,
-                    context_description=_('Problem %s description') % problem.code,
-                )
 
                 revisions.set_comment(_('Edited from site'))
                 revisions.set_user(self.request.user)

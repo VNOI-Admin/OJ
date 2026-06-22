@@ -21,7 +21,7 @@ from reversion import revisions
 
 from judge.forms import OrganizationForm, QuotaGrantForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
-    Problem, Profile, UserFile, extract_referenced_file_uuids, link_referenced_files
+    Problem, Profile
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -708,14 +708,6 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
             problem.date = timezone.now()
             self.save_statement(form, problem)
             problem.save()
-
-            link_referenced_files(
-                extract_referenced_file_uuids(problem.description),
-                self.request.profile,
-                scope=UserFile.STORAGE_SCOPE_PROBLEM,
-                problem_id=problem.id,
-                context_description=_('Problem %s description') % problem.code,
-            )
 
             revisions.set_comment(_('Created on site'))
             revisions.set_user(self.request.user)
