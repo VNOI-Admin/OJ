@@ -478,11 +478,6 @@ if settings.VNOJ_ENABLE_API:
             path('participations', api.api_v2.APIContestParticipationList.as_view()),
             path('languages', api.api_v2.APILanguageList.as_view()),
             path('judges', api.api_v2.APIJudgeList.as_view()),
-            path('user/files', api.user_files.UserFileListView.as_view()),
-            path('user/files/upload', api.user_files.UserFileUploadView.as_view()),
-            path('user/files/<uuid:uuid>', api.user_files.UserFileDetailView.as_view()),
-            path('user/files/<uuid:uuid>/download', api.user_files.UserFileDownloadView.as_view()),
-            path('user/files/<uuid:uuid>/delete', api.user_files.UserFileDeleteView.as_view()),
         ])),
     )
 
