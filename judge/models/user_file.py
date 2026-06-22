@@ -9,8 +9,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
 
-__all__ = [
-    'user_file_storage', 'UserFileStorage', 'UserFile', 'FileUsage']
+__all__ = ['user_file_storage', 'UserFileStorage', 'UserFile']
 
 USER_FILE_STORAGE_SCOPE_PROBLEM = 'problem'
 USER_FILE_STORAGE_SCOPE_CONTEST = 'contest'
@@ -201,93 +200,3 @@ class UserFile(models.Model):
 
     def get_access_url(self):
         return reverse('user_file_access', kwargs={'uuid': self.uuid})
-
-
-class FileUsage(models.Model):
-    USAGE_TYPE_CHOICES = (
-        ('problem_checker', _('Problem - Checker')),
-        ('problem_grader', _('Problem - Grader')),
-        ('problem_header', _('Problem - Header')),
-        ('problem_data', _('Problem - Test Data')),
-        ('problem_statement_attachment', _('Problem - Statement Attachment')),
-        ('submission_attachment', _('Submission - Attachment')),
-        ('markdown_content', _('Markdown - Content Image')),
-        ('library_personal', _('Library - Personal')),
-        ('library_shared', _('Library - Shared')),
-        ('other', _('Other')),
-    )
-
-    file = models.ForeignKey(UserFile, verbose_name=_('file'), related_name='usages', on_delete=models.CASCADE)
-    usage_type = models.CharField(
-        max_length=50,
-        verbose_name=_('usage type'),
-        choices=USAGE_TYPE_CHOICES,
-        default='other',
-    )
-
-    problem_id = models.IntegerField(verbose_name=_('problem ID'), null=True, blank=True, db_index=True)
-    contest_id = models.IntegerField(verbose_name=_('contest ID'), null=True, blank=True, db_index=True)
-    submission_id = models.IntegerField(verbose_name=_('submission ID'), null=True, blank=True, db_index=True)
-    context_description = models.CharField(max_length=255, verbose_name=_('context description'), blank=True)
-
-    created_at = models.DateTimeField(verbose_name=_('created at'), auto_now_add=True)
-
-    class Meta:
-        verbose_name = _('file usage')
-        verbose_name_plural = _('file usages')
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['file', 'usage_type']),
-            models.Index(fields=['problem_id', 'usage_type']),
-            models.Index(fields=['contest_id', 'usage_type']),
-            models.Index(fields=['submission_id']),
-        ]
-
-    def __str__(self):
-        return f'{self.file.filename} - {self.get_usage_type_display()}'
-
-    def get_context_label(self):
-        if self.problem_id:
-            try:
-                from judge.models import Problem
-                problem = Problem.objects.get(id=self.problem_id)
-                return f'Problem {problem.code}'
-            except Exception:
-                return f'Problem #{self.problem_id}'
-        elif self.contest_id:
-            try:
-                from judge.models import Contest
-                contest = Contest.objects.get(id=self.contest_id)
-                return f'Contest {contest.key}'
-            except Exception:
-                return f'Contest #{self.contest_id}'
-        elif self.submission_id:
-            return f'Submission #{self.submission_id}'
-        else:
-            return self.context_description or self.get_usage_type_display()
-
-
-def _move_user_file_to_scope(user_file, scope):
-    """Set a file's storage scope and relocate it on disk into the scope folder.
-
-    Relocation is best-effort: the URL is UUID-based, so a failed move never
-    breaks access — the scope (the source-of-truth for tracking) is still saved.
-    """
-    if user_file.storage_scope == scope:
-        return
-    user_file.storage_scope = scope
-
-    storage = user_file.file.storage
-    old_name = user_file.file.name
-    try:
-        new_name = user_file_directory(user_file, os.path.basename(old_name))
-        if old_name and new_name != old_name and storage.exists(old_name):
-            with storage.open(old_name, 'rb') as fh:
-                saved_name = storage.save(new_name, fh)
-            user_file.file.name = saved_name
-            user_file.save(update_fields=['storage_scope', 'file'])
-            storage.delete(old_name)
-            return
-    except Exception:
-        pass
-    user_file.save(update_fields=['storage_scope'])

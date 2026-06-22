@@ -2,7 +2,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import Http404
 from django.test import RequestFactory, TestCase
 
-from judge.models import FileUsage, UserFile
+from judge.models import UserFile
 from judge.models.tests.util import create_contest, create_problem, create_user
 from judge.utils.user_file_access import UserFileAccessChain
 
@@ -70,11 +70,6 @@ class UserFilePermissionTest(TestCase):
             storage_scope=UserFile.STORAGE_SCOPE_PROBLEM,
             is_public=False,
         )
-        FileUsage.objects.create(
-            file=cls.problem_scoped_file,
-            usage_type='markdown_content',
-            problem_id=cls.public_problem.id,
-        )
 
         cls.contest_scoped_file = UserFile.objects.create(
             user=cls.owner.profile,
@@ -82,11 +77,6 @@ class UserFilePermissionTest(TestCase):
             filename='contest-scoped.png',
             storage_scope=UserFile.STORAGE_SCOPE_CONTEST,
             is_public=False,
-        )
-        FileUsage.objects.create(
-            file=cls.contest_scoped_file,
-            usage_type='markdown_content',
-            contest_id=cls.private_contest.id,
         )
 
         cls.access_chain = UserFileAccessChain()
