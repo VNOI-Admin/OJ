@@ -21,7 +21,7 @@ from reversion import revisions
 
 from judge.forms import OrganizationForm, QuotaGrantForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
-    Problem, ProblemData, Profile, UserFile, extract_referenced_file_uuids, link_referenced_files
+    Problem, Profile, UserFile, extract_referenced_file_uuids, link_referenced_files
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
