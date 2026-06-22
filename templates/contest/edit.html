@@ -132,6 +132,15 @@
                     });
                 }
             });
+            {% if attachment_formset %}
+                $('#attachment_form_set tr').formset({
+                    prefix: '{{ attachment_formset.prefix }}',
+                    addText: '{{ _('Add attachment') }}',
+                    deleteText: '{{ _('Remove') }}',
+                    addCssClass: 'button',
+                    deleteCssClass: 'button',
+                });
+            {% endif %}
         })
     </script>
     {{ form.media.js }}
@@ -213,6 +222,20 @@
     <tr>
 {%- endmacro %}
 
+{% macro attachment_row(form) -%}
+    {% if form.non_field_errors() %}
+    <tr>
+        <td colspan="4">{{ form.non_field_errors() }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+        <td>{{ form.id }} {{ form.file.errors }}{{ form.file }}</td>
+        <td>{{ form.new_file.errors }}{{ form.new_file }}</td>
+        <td>{{ form.display_name.errors }}{{ form.display_name }}</td>
+        <td>{{ form.DELETE }}</td>
+    </tr>
+{%- endmacro %}
+
 <div>
     {% block edit_contest %}
         {% if request.user.is_staff %}
@@ -222,9 +245,10 @@
             </div>
         {% endif %}
     {% endblock %}
-    <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+    <form action="" method="post" enctype="multipart/form-data" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
         {{ contest_problem_formset.management_form }}
+        {{ attachment_formset.management_form }}
         {% if contest_problem_formset.non_form_errors() %}
             {{ contest_problem_formset.non_form_errors() }}
         {% endif %}
@@ -252,6 +276,23 @@
             <tbody id="form_set">
                 {% for form in contest_problem_formset %}
                     {{ form_as_row(form) }}
+                {% endfor %}
+            </tbody>
+        </table>
+        <hr>
+        <center><h3> {{ _('Attachments') }} </h3></center>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 35%;"> {{ _('Existing file') }} </th>
+                    <th style="width: 30%;"> {{ _('Upload new file') }} </th>
+                    <th> {{ _('Display name') }} </th>
+                    <th> {{ _('Delete') }} </th>
+                </tr>
+            </thead>
+            <tbody id="attachment_form_set">
+                {% for attach_form in attachment_formset %}
+                    {{ attachment_row(attach_form) }}
                 {% endfor %}
             </tbody>
         </table>

@@ -27,8 +27,9 @@ from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
-    ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
+from judge.forms import LanguageLimitFormSet, ProblemAttachmentFormSet, ProblemCloneForm, ProblemEditForm, \
+    ProblemEditTypeGroupForm, ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, \
+    ProposeProblemSolutionFormSet
 from judge.models import Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
@@ -422,6 +423,8 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, Commen
         context['has_pdf_render'] = PDF_RENDERING_ENABLED
         context['completed_problem_ids'] = self.get_completed_problems()
         context['attempted_problems'] = self.get_attempted_problems()
+
+        context['attachments'] = self.object.attachments.select_related('file').order_by('id')
 
         can_edit = self.object.is_editable_by(user)
         context['can_edit_problem'] = can_edit
@@ -1082,10 +1085,21 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
                                         form_kwargs={'user': self.request.user})
         return LanguageLimitFormSet(instance=self.get_object(), form_kwargs={'user': self.request.user})
 
+    def get_attachment_formset(self):
+        form_kwargs = {'user': self.request.user}
+        if self.request.POST:
+            return ProblemAttachmentFormSet(
+                self.request.POST, self.request.FILES,
+                instance=self.object, form_kwargs=form_kwargs,
+            )
+        return ProblemAttachmentFormSet(instance=self.object, form_kwargs=form_kwargs)
+
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data['lang_limit_formset'] = self.get_language_limit_formset()
         data['solution_formset'] = self.get_solution_formset()
+        if self.request.user.is_superuser:
+            data['attachment_formset'] = self.get_attachment_formset()
         return data
 
     def get_form_kwargs(self):
@@ -1106,13 +1120,18 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         form = self.get_form()
         form_lang_limit = self.get_language_limit_formset()
         form_edit = self.get_solution_formset()
-        if form.is_valid() and form_edit.is_valid() and form_lang_limit.is_valid():
+        form_attachments = self.get_attachment_formset() if request.user.is_superuser else None
+        valid = form.is_valid() and form_edit.is_valid() and form_lang_limit.is_valid()
+        valid = valid and (form_attachments is None or form_attachments.is_valid())
+        if valid:
             with revisions.create_revision(atomic=True):
                 problem = form.save()
                 self.save_statement(form, problem)
                 problem.save()
                 form_lang_limit.save()
                 form_edit.save()
+                if form_attachments is not None:
+                    form_attachments.save()
 
                 revisions.set_comment(_('Edited from site'))
                 revisions.set_user(self.request.user)

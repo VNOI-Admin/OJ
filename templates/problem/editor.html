@@ -21,6 +21,16 @@
             $('#lang_limit_title').click();
             {% endif %}
 
+            {% if attachment_formset %}
+                $('#attachment_form_set tr').formset({
+                    prefix: '{{ attachment_formset.prefix }}',
+                    addText: '{{ _('Add attachment') }}',
+                    deleteText: '{{ _('Remove') }}',
+                    addCssClass: 'button',
+                    deleteCssClass: 'button',
+                });
+            {% endif %}
+
             var noResults = function () {
                 return {{ _('Press Enter to select multiple users...')|htmltojs }};
             };
@@ -86,6 +96,20 @@
     <tr>
 {%- endmacro %}
 
+{% macro attachment_row(form) -%}
+    {% if form.non_field_errors() %}
+    <tr>
+        <td colspan="4">{{ form.non_field_errors() }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+        <td>{{ form.id }} {{ form.file.errors }}{{ form.file }}</td>
+        <td>{{ form.new_file.errors }}{{ form.new_file }}</td>
+        <td>{{ form.display_name.errors }}{{ form.display_name }}</td>
+        <td>{{ form.DELETE }}</td>
+    </tr>
+{%- endmacro %}
+
 {% block body %}
 <div>
     {% if request.user.is_staff %}
@@ -132,6 +156,25 @@
 
         <center><h3> {{ _('Editorial') }} </h3></center>
         <table class="django-as-table">{{ solution_formset.as_table() }}</table>
+
+        <hr>
+        <center><h3> {{ _('Attachments') }} </h3></center>
+        {{ attachment_formset.management_form }}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 35%;"> {{ _('Existing file') }} </th>
+                    <th style="width: 30%;"> {{ _('Upload new file') }} </th>
+                    <th> {{ _('Display name') }} </th>
+                    <th> {{ _('Delete') }} </th>
+                </tr>
+            </thead>
+            <tbody id="attachment_form_set">
+                {% for attach_form in attachment_formset %}
+                    {{ attachment_row(attach_form) }}
+                {% endfor %}
+            </tbody>
+        </table>
 
         <table>
             <tr><td style="float: left;">
