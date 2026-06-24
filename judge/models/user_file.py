@@ -55,8 +55,6 @@ class UserFile(models.Model):
     )
     filename = models.CharField(max_length=255, verbose_name=_('original filename'))
     size = models.BigIntegerField(verbose_name=_('file size in bytes'), default=0)
-    is_public = models.BooleanField(verbose_name=_('is public'), default=False)
-
     uploaded_at = models.DateTimeField(verbose_name=_('uploaded at'), auto_now_add=True)
 
     class Meta:
@@ -89,8 +87,6 @@ class UserFile(models.Model):
         return self.user_id == self._profile_id(user)
 
     def can_view_by(self, user):
-        if self.is_public:
-            return True
         if not user.is_authenticated:
             return False
         if user.is_superuser:

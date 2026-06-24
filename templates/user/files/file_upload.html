@@ -33,16 +33,6 @@
                 <div class="helptext">{{ _('Maximum file size: 500 MB') }}</div>
             </td>
         </tr>
-        <tr>
-            <th><label for="{{ form.is_public.id_for_label }}">{{ form.is_public.label }}</label></th>
-            <td>
-                {{ form.is_public }}
-                {% if form.is_public.errors %}
-                    <div class="errorlist">{% for e in form.is_public.errors %}{{ e }}{% endfor %}</div>
-                {% endif %}
-                <div class="helptext">{{ _('If checked, anyone with the link can access this file.') }}</div>
-            </td>
-        </tr>
     </table>
 
     <div style="display:flex;gap:0.5em;flex-wrap:wrap;margin-top:1em;">

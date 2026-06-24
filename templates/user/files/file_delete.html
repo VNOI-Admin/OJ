@@ -30,10 +30,10 @@
     <div class="sidebox-content">
         <p>{{ _('This action permanently deletes the file and cannot be undone.') }}</p>
 
-        {% if file.usages.exists() %}
+        {% if file.attachments.exists() %}
             <p>
                 <strong>{{ _('Note:') }}</strong>
-                {{ _('This file is referenced in') }} <strong>{{ file.usages.count() }}</strong> {{ _('place(s).') }}
+                {{ _('This file is referenced in') }} <strong>{{ file.attachments.count() }}</strong> {{ _('place(s).') }}
             </p>
         {% endif %}
 
