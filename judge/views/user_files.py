@@ -1,11 +1,9 @@
 import os
 
-import mimetypes
-
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import PermissionDenied
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.utils.translation import gettext_lazy as _
@@ -13,8 +11,8 @@ from django.views.generic import CreateView, DeleteView, DetailView, ListView, U
 
 from judge.forms import UserFileEditForm, UserFileUploadForm
 from judge.models import FileAttachment, UserFile
-from judge.utils.user_file_access import authorize_file_access
-from judge.utils.views import TitleMixin, add_file_response, generic_message
+from judge.utils.user_file_access import authorize_file_access, serve_user_file
+from judge.utils.views import TitleMixin
 
 __all__ = [
     'UserFileListView', 'UserFileUploadView', 'UserFileDetailView',
@@ -161,15 +159,7 @@ class UserFileAccessView(PublicAccessMixin, DetailView):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        try:
-            response = HttpResponse()
-            content_type = mimetypes.guess_type(self.object.filename)[0] or 'application/octet-stream'
-            response['Content-Type'] = content_type
-            response['Content-Disposition'] = f'inline; filename="{self.object.filename}"'
-            add_file_response(request, response, self.object.get_url_path(), self.object.get_file_path())
-            return response
-        except (OSError, IOError) as e:
-            return generic_message(request, 'File Error', 'File not found: {}'.format(e), status=404)
+        return serve_user_file(request, self.object)
 
 
 class UserFileSearchView(LoginRequiredMixin, View):
@@ -201,13 +191,4 @@ class AttachmentAccessView(View):
         if not attachment.can_view_by(request.user):
             raise Http404
 
-        f = attachment.file
-        try:
-            response = HttpResponse()
-            content_type = mimetypes.guess_type(f.filename)[0] or 'application/octet-stream'
-            response['Content-Type'] = content_type
-            response['Content-Disposition'] = f'inline; filename="{f.filename}"'
-            add_file_response(request, response, f.get_url_path(), f.get_file_path())
-            return response
-        except (OSError, IOError) as e:
-            return generic_message(request, 'File Error', 'File not found: {}'.format(e), status=404)
+        return serve_user_file(request, attachment.file)
