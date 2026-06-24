@@ -33,7 +33,7 @@
     <h3>{{ _('Actions') }}</h3>
     <div class="sidebox-content">
         <div style="display:flex;gap:0.5em;flex-wrap:wrap;">
-            <a href="{{ url('user_file_download', file.uuid) }}" class="button inline-button"><i class="fa fa-download"></i> {{ _('Download') }}</a>
+            <a href="{{ url('user_file_access', file.uuid) }}" class="button inline-button" target="_blank"><i class="fa fa-eye"></i> {{ _('View') }}</a>
             {% if can_delete %}
                 <a href="{{ url('user_file_delete', file.uuid) }}" class="button inline-button"><i class="fa fa-trash"></i> {{ _('Delete') }}</a>
             {% endif %}

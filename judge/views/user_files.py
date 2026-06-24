@@ -19,7 +19,7 @@ from judge.utils.views import TitleMixin, add_file_response, generic_message
 __all__ = [
     'UserFileListView', 'UserFileUploadView', 'UserFileDetailView',
     'UserFileEditView', 'UserFileDeleteView', 'UserFileBulkDeleteView',
-    'UserFileDownloadView', 'UserFileAccessView',
+    'UserFileAccessView',
     'UserFileSearchView', 'AttachmentAccessView',
 ]
 
@@ -156,29 +156,20 @@ class UserFileBulkDeleteView(UserFilePermissionMixin, View):
         return redirect('user_file_list')
 
 
-class UserFileDownloadView(PublicAccessMixin, DetailView):
+class UserFileAccessView(PublicAccessMixin, DetailView):
     template_name = None
 
-    def _serve_file(self, request, as_attachment):
+    def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-
         try:
-            disposition = 'attachment' if as_attachment else 'inline'
-            response = HttpResponse(content_type='application/octet-stream')
-            response['Content-Disposition'] = f'{disposition}; filename="{self.object.filename}"'
-
+            response = HttpResponse()
+            content_type = mimetypes.guess_type(self.object.filename)[0] or 'application/octet-stream'
+            response['Content-Type'] = content_type
+            response['Content-Disposition'] = f'inline; filename="{self.object.filename}"'
             add_file_response(request, response, self.object.get_url_path(), self.object.get_file_path())
             return response
         except (OSError, IOError) as e:
             return generic_message(request, 'File Error', 'File not found: {}'.format(e), status=404)
-
-    def get(self, request, *args, **kwargs):
-        return self._serve_file(request, as_attachment=True)
-
-
-class UserFileAccessView(UserFileDownloadView):
-    def get(self, request, *args, **kwargs):
-        return self._serve_file(request, as_attachment=False)
 
 
 class UserFileSearchView(LoginRequiredMixin, View):

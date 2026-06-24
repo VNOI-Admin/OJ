@@ -209,7 +209,6 @@ urlpatterns = [
     path('files/<uuid:uuid>/delete', user_files.UserFileDeleteView.as_view(), name='user_file_delete'),
     path('files/bulk-delete', user_files.UserFileBulkDeleteView.as_view(), name='user_file_bulk_delete'),
     path('files/<uuid:uuid>/view', user_files.UserFileAccessView.as_view(), name='user_file_access'),
-    path('files/<uuid:uuid>/download', user_files.UserFileDownloadView.as_view(), name='user_file_download'),
     path('files/search', user_files.UserFileSearchView.as_view(), name='user_file_search'),
     path('attachment/<int:pk>/view', user_files.AttachmentAccessView.as_view(), name='attachment_access'),
     path('user/<str:user>', include([
