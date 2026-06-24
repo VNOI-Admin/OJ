@@ -52,8 +52,7 @@
                             <td>{{ file.size|filesizeformat }}</td>
                             <td>{{ file.uploaded_at|date('SHORT_DATE_FORMAT') }}</td>
                             <td>
-                                <a href="{{ url('user_file_detail', file.uuid) }}" class="button inline-button" title="{{ _('View') }}"><i class="fa fa-eye"></i></a>
-                                <a href="{{ url('user_file_download', file.uuid) }}" class="button inline-button" title="{{ _('Download') }}"><i class="fa fa-download"></i></a>
+                                <a href="{{ url('user_file_access', file.uuid) }}" target="_blank">{{ _('View') }}</a>
                             </td>
                         </tr>
                     {% endfor %}
