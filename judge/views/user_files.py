@@ -148,7 +148,7 @@ class UserFileBulkDeleteView(UserFilePermissionMixin, View):
         if not request.user.is_superuser:
             qs = qs.filter(user=request.profile)
 
-        count, _ = qs.delete()
+        count, __ = qs.delete()
         messages.success(
             request,
             _('%(count)d file(s) deleted.') % {'count': count},

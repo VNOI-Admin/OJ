@@ -33,13 +33,6 @@ class UserFilePermissionTest(TestCase):
             user=cls.owner.profile,
             file='user_files/private.txt',
             filename='private.txt',
-            is_public=False,
-        )
-        cls.public_file = UserFile.objects.create(
-            user=cls.owner.profile,
-            file='user_files/public.txt',
-            filename='public.txt',
-            is_public=True,
         )
 
         cls.request_factory = RequestFactory()
@@ -58,10 +51,6 @@ class UserFilePermissionTest(TestCase):
 
     def test_private_file_anonymous_cannot_view(self):
         self.assertFalse(self.private_file.can_view_by(AnonymousUser()))
-
-    def test_public_file_can_be_viewed_by_anyone(self):
-        self.assertTrue(self.public_file.can_view_by(self.other))
-        self.assertTrue(self.public_file.can_view_by(AnonymousUser()))
 
     def test_change_and_delete_require_ownership(self):
         self.assertTrue(self.private_file.can_change_by(self.owner))
@@ -93,6 +82,3 @@ class UserFilePermissionTest(TestCase):
         with self.assertRaises(Http404):
             authorize_file_access(request, self.private_file)
 
-    def test_authorize_public_file_accessible_to_anyone(self):
-        request = self._request_with_user(AnonymousUser())
-        self.assertEqual(authorize_file_access(request, self.public_file), self.public_file)

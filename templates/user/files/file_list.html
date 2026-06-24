@@ -34,10 +34,8 @@
                     <tr>
                         <th style="width:1em;"></th>
                         <th>{{ _('Filename') }}</th>
-                        <th>{{ _('Scope') }}</th>
                         <th>{{ _('Size') }}</th>
                         <th>{{ _('Uploaded') }}</th>
-                        <th>{{ _('Visibility') }}</th>
                         <th>{{ _('Actions') }}</th>
                     </tr>
                 </thead>
@@ -51,24 +49,8 @@
                             <td>
                                 <a href="{{ url('user_file_detail', file.uuid) }}">{{ file.filename }}</a>
                             </td>
-                            <td>
-                                {% if file.storage_scope == 'problem' %}
-                                    {{ _('Problem') }}
-                                {% elif file.storage_scope == 'contest' %}
-                                    {{ _('Contest') }}
-                                {% else %}
-                                    {{ _('User upload') }}
-                                {% endif %}
-                            </td>
                             <td>{{ file.size|filesizeformat }}</td>
                             <td>{{ file.uploaded_at|date('SHORT_DATE_FORMAT') }}</td>
-                            <td>
-                                {% if file.is_public %}
-                                    {{ _('Public') }}
-                                {% else %}
-                                    {{ _('Private') }}
-                                {% endif %}
-                            </td>
                             <td>
                                 <a href="{{ url('user_file_detail', file.uuid) }}" class="button inline-button" title="{{ _('View') }}"><i class="fa fa-eye"></i></a>
                                 <a href="{{ url('user_file_download', file.uuid) }}" class="button inline-button" title="{{ _('Download') }}"><i class="fa fa-download"></i></a>
