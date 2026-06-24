@@ -42,7 +42,6 @@ def django_uploader(image, user):
     uf = UserFile(
         file=image,
         file_type=UserFile.FileType.MARTOR_IMAGE,
-        is_public=True,
         user=user.profile,
     )
     uf.save()

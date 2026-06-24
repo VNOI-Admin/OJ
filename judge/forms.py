@@ -908,10 +908,9 @@ class UserFileUploadForm(ModelForm):
 
     class Meta:
         model = UserFile
-        fields = ['file', 'is_public']
+        fields = ['file']
         widgets = {
             'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
-            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
         }
 
     def clean_file(self):
@@ -934,10 +933,7 @@ class UserFileEditForm(ModelForm):
 
     class Meta:
         model = UserFile
-        fields = ['is_public']
-        widgets = {
-            'is_public': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-        }
+        fields = []
 
 
 class FileAttachmentForm(ModelForm):
@@ -962,7 +958,6 @@ class FileAttachmentForm(ModelForm):
             user_file = UserFile(
                 file=new_file,
                 file_type=UserFile.FileType.USER_UPLOAD,
-                is_public=False,
             )
             if self.user.is_authenticated:
                 user_file.user = self.user.profile
