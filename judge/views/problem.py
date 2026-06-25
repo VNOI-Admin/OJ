@@ -269,9 +269,33 @@ class ProblemSubmitMixin:
             'submissions_left': self.remaining_submission_count,
             'ACE_URL': settings.ACE_URL,
             'default_lang': self.default_language,
+            'chunked_upload_chunk_size': settings.CHUNKED_UPLOAD_CHUNK_SIZE,
+            'chunked_upload_max_file_size': settings.CHUNKED_UPLOAD_MAX_FILE_SIZE,
+            'chunked_upload_max_parallel': settings.CHUNKED_UPLOAD_MAX_PARALLEL,
         }
 
     def handle_submission_post(self, request):
+        from judge.views.chunked_upload import get_completed_uploaded_file, clean_completed_upload
+        chunked_upload_id, uploaded_file = get_completed_uploaded_file(
+            request, 'chunked_upload_id', 'application/octet-stream',
+        )
+        if uploaded_file:
+            files = request.FILES.copy()
+            files['submission_file'] = uploaded_file
+            request._files = files
+
+        try:
+            return self._handle_submission_post(request)
+        finally:
+            if uploaded_file:
+                try:
+                    uploaded_file.close()
+                except Exception:
+                    pass
+            if chunked_upload_id:
+                clean_completed_upload(chunked_upload_id)
+
+    def _handle_submission_post(self, request):
         form = self.get_submit_form()
 
         if not form.is_valid():
@@ -283,7 +307,9 @@ class ProblemSubmitMixin:
             Submission.objects.filter(user=request.profile, rejudged_date__isnull=True)
                               .exclude(status__in=['D', 'IE', 'CE', 'AB']).count() >= settings.DMOJ_SUBMISSION_LIMIT
         ):
-            return HttpResponse(format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429), None
+            return HttpResponse(
+                format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429,
+            ), None
 
         if not self.object.allowed_languages.filter(id=form.cleaned_data['language'].id).exists():
             raise PermissionDenied()

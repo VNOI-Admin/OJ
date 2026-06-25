@@ -1,5 +1,7 @@
 <script type="text/javascript" src="{{ ACE_URL }}/ace.js"></script>
 {{ form.media.js }}
+<script type="text/javascript" src="{{ static('chunked-upload.js') }}"></script>
+{% include "problem/_chunked_upload_overlay.html" %}
 {% compress js %}
     <script type="text/javascript">
         $(function () {
@@ -131,25 +133,63 @@
                 $('#ace_source').height(Math.max($(window).height() - 353, 100));
             }).resize();
 
+            function startChunkedUpload(file, onSuccess, onError) {
+                new ChunkedUploader(file, {
+                    onSuccess: onSuccess,
+                    onError: onError
+                }).start();
+            }
+
             $('#problem_submit').submit(function (event) {
                 if ($('#id_source').val().length > 65536) {
                     alert({{ _('Your source code must contain at most 65536 characters.')|htmltojs }});
                     event.preventDefault();
                     $('#problem_submit').find(':submit').attr('disabled', false);
+                    return;
                 }
                 
-                obj = document.getElementById('id_language');
-                fileonly = obj.options[obj.selectedIndex].getAttribute('data-fileonly');
+                var obj = document.getElementById('id_language');
+                var fileonly = obj.options[obj.selectedIndex].getAttribute('data-fileonly');
                 if (fileonly == 'True') {
-                    file_size_limit = obj.options[obj.selectedIndex].getAttribute('data-file-size');
-                    let fileInput = $('#file_upload')[0];
+                    var file_size_limit = obj.options[obj.selectedIndex].getAttribute('data-file-size');
+                    var fileInput = $('#file_upload')[0];
                     if (fileInput.files.length > 0) {
-                        let file = fileInput.files[0];
-                        let limitBytes = parseInt(file_size_limit) * 1024 * 1024;
+                        var file = fileInput.files[0];
+                        var limitBytes = parseInt(file_size_limit) * 1024 * 1024;
                         if (file.size > limitBytes) {
                             alert({{ _('`Maximum file size is ${file_size_limit}MB.`') }});
                             event.preventDefault();
                             $('#problem_submit').find(':submit').attr('disabled', false);
+                            return;
+                        }
+                        
+                        var chunkSize = {{ chunked_upload_chunk_size|default(10 * 1024 * 1024) }};
+                        if (file.size > chunkSize) {
+                            var uploadIdInput = $('#chunked-upload-id');
+                            if (uploadIdInput.length === 0) {
+                                uploadIdInput = $('<input>').attr({
+                                    type: 'hidden',
+                                    name: 'chunked_upload_id',
+                                    id: 'chunked-upload-id'
+                                }).appendTo('#problem_submit');
+                            }
+                            
+                            if (!uploadIdInput.val()) {
+                                event.preventDefault();
+                                event.stopPropagation();
+                                
+                                startChunkedUpload(file, function(uploadId) {
+                                    uploadIdInput.val(uploadId);
+                                    try {
+                                        fileInput.value = '';
+                                    } catch(e) {}
+                                    $('#problem_submit').submit();
+                                }, function(err) {
+                                    alert('Upload failed: ' + err);
+                                    $('#problem_submit').find(':submit').attr('disabled', false);
+                                });
+                                return false;
+                            }
                         }
                     }
                 }

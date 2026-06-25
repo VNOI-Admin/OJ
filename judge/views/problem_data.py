@@ -237,6 +237,9 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
             add_quota_context(problem.organization, context)
 
         context['quota_warning_suffix'] = settings.VNOJ_QUOTA_WARNING_SUFFIX
+        context['chunked_upload_chunk_size'] = settings.CHUNKED_UPLOAD_CHUNK_SIZE
+        context['chunked_upload_max_file_size'] = settings.CHUNKED_UPLOAD_MAX_FILE_SIZE
+        context['chunked_upload_max_parallel'] = settings.CHUNKED_UPLOAD_MAX_PARALLEL
         return context
 
     def check_valid(self, data_form, cases_formset):
@@ -270,21 +273,41 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
 
     def post(self, request, *args, **kwargs):
         self.object = problem = self.get_object()
-        data_form = self.get_data_form(post=True)
-        valid_files = self.get_valid_files(data_form.instance, post=True)
-        data_form.zip_valid = valid_files is not False
-        cases_formset = self.get_case_formset(valid_files, post=True)
-        if self.check_valid(data_form, cases_formset):
-            data = data_form.save()
-            for case in cases_formset.save(commit=False):
-                case.dataset_id = problem.id
-                case.save()
-            for case in cases_formset.deleted_objects:
-                case.delete()
-            ProblemDataCompiler.generate(problem, data, problem.cases.order_by('order'), valid_files)
-            return HttpResponseRedirect(request.get_full_path())
-        return self.render_to_response(self.get_context_data(data_form=data_form, cases_formset=cases_formset,
-                                                             valid_files=valid_files))
+
+        from judge.views.chunked_upload import get_completed_uploaded_file
+        chunked_upload_id, uploaded_file = get_completed_uploaded_file(
+            request, 'problem-data-chunked_upload_id', 'application/zip',
+        )
+        if uploaded_file:
+            files = request.FILES.copy()
+            files['problem-data-zipfile'] = uploaded_file
+            request._files = files
+
+        try:
+            data_form = self.get_data_form(post=True)
+            valid_files = self.get_valid_files(data_form.instance, post=True)
+            data_form.zip_valid = valid_files is not False
+            cases_formset = self.get_case_formset(valid_files, post=True)
+            if self.check_valid(data_form, cases_formset):
+                data = data_form.save()
+                for case in cases_formset.save(commit=False):
+                    case.dataset_id = problem.id
+                    case.save()
+                for case in cases_formset.deleted_objects:
+                    case.delete()
+                ProblemDataCompiler.generate(problem, data, problem.cases.order_by('order'), valid_files)
+                return HttpResponseRedirect(request.get_full_path())
+            return self.render_to_response(self.get_context_data(data_form=data_form, cases_formset=cases_formset,
+                                                                 valid_files=valid_files))
+        finally:
+            if uploaded_file:
+                try:
+                    uploaded_file.close()
+                except Exception:
+                    pass
+            if chunked_upload_id:
+                from judge.views.chunked_upload import clean_completed_upload
+                clean_completed_upload(chunked_upload_id)
 
     put = post
 

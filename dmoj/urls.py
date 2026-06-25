@@ -11,9 +11,9 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
-from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
-    preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, submission, tag, \
-    tasks, ticket, two_factor, user, widgets
+from judge.views import TitledTemplateView, api, blog, chunked_upload, comment, contests, language, license, mailgun, \
+    organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
+    submission, tag, tasks, ticket, two_factor, user, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -352,6 +352,13 @@ urlpatterns = [
     path('license/<str:key>', license.LicenseDetail.as_view(), name='license'),
 
     path('mailgun/mail_activate/', mailgun.MailgunActivationView.as_view(), name='mailgun_activate'),
+
+    path('chunked-upload/', include([
+        path('init/', chunked_upload.chunked_upload_init, name='chunked_upload_init'),
+        path('chunk/', chunked_upload.chunked_upload_chunk, name='chunked_upload_chunk'),
+        path('complete/', chunked_upload.chunked_upload_complete, name='chunked_upload_complete'),
+        path('cancel/', chunked_upload.chunked_upload_cancel, name='chunked_upload_cancel'),
+    ])),
 
     path('widgets/', include([
         path('rejudge', widgets.rejudge_submission, name='submission_rejudge'),
