@@ -9,10 +9,10 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.forms import generic_inlineformset_factory
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db.models import Q
-from django.contrib.contenttypes.forms import generic_inlineformset_factory
 from django.forms import BooleanField, CharField, ChoiceField, DateInput, Form, ModelForm, MultipleChoiceField, \
     formset_factory, inlineformset_factory
 from django.forms.widgets import DateTimeInput
