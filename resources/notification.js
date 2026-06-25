@@ -14,23 +14,6 @@ $(function () {
         $badge.toggleClass('hidden', count === 0);
     }
 
-    function showToast(data) {
-        var $toast = $('<div>').addClass('notification-toast');
-        $('<div>').addClass('notification-toast-title').text(data.title).appendTo($toast);
-        if (data.body) {
-            var body = data.body.length > 200 ? data.body.slice(0, 200) + '…' : data.body;
-            $('<div>').addClass('notification-toast-body').text(body).appendTo($toast);
-        }
-        var $actions = $('<div>').addClass('notification-toast-actions').appendTo($toast);
-        if (data.url) {
-            $('<a>').attr({href: data.url}).addClass('notification-toast-access').text(cfg.access)
-                .on('click', function () { $toast.remove(); }).appendTo($actions);
-        }
-        $('<button>').addClass('notification-toast-close').text(cfg.close)
-            .on('click', function () { $toast.remove(); }).appendTo($actions);
-        $toast.appendTo('body');
-    }
-
     function renderItem(n) {
         var $item = $('<a>').addClass('notification-item').attr('href', n.url || '#')
             .attr('data-id', n.id).toggleClass('unread', !n.read);
@@ -79,7 +62,6 @@ $(function () {
         });
     }
 
-    // Load the list when the bell dropdown is opened.
     $nav.children('li').on('mouseenter', loadPanel);
 
     $nav.find('.notification-tab').on('click', function (e) {
@@ -99,17 +81,7 @@ $(function () {
         markAllRead();
     });
 
-    // Keep the panel open while interacting with the header controls.
     $nav.find('.notification-panel-header').on('click', function (e) {
         e.stopPropagation();
     });
-
-    // Realtime arrivals over the event daemon.
-    if (window.event_dispatcher) {
-        event_dispatcher.auto_reconnect = true;
-        event_dispatcher.on(cfg.channel, function (data) {
-            setBadge((parseInt($badge.text(), 10) || 0) + 1);
-            if (data.popup) showToast(data);
-        });
-    }
 });

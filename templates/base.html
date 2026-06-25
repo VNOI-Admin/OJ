@@ -92,6 +92,19 @@
         </script>
     {% endcompress %}
     {% block js_media %}{% endblock %}
+    {% if request.user.is_authenticated %}
+        <script>
+            window.notificationConfig = {
+                channel: 'notification_{{ NOTIFICATION_SECRET }}',
+                ajaxUrl: '{{ url("notification_ajax") }}',
+                markReadUrl: '{{ url("notification_mark_read") }}',
+                access: '{{ _("View") }}',
+                close: '{{ _("Close") }}',
+                empty: '{{ _("No notifications.") }}',
+            };
+        </script>
+        <script src="{{ static('notification.js') }}"></script>
+    {% endif %}
     {% if EVENT_LAST_MSG %}
         <script>
             window.event_dispatcher = new WSEventDispatcher(
@@ -101,17 +114,7 @@
             );
         </script>
         {% if request.user.is_authenticated %}
-            <script>
-                window.notificationConfig = {
-                    channel: 'notification_{{ NOTIFICATION_SECRET }}',
-                    ajaxUrl: '{{ url("notification_ajax") }}',
-                    markReadUrl: '{{ url("notification_mark_read") }}',
-                    access: '{{ _("View") }}',
-                    close: '{{ _("Close") }}',
-                    empty: '{{ _("No notifications.") }}',
-                };
-            </script>
-            <script src="{{ static('notification.js') }}"></script>
+            <script src="{{ static('notification-realtime.js') }}"></script>
         {% endif %}
     {% endif %}
     {% if request.in_contest %}

@@ -70,6 +70,7 @@
         .notification-list-container {
             .notification-items .notification-item {
                 display: block;
+                height: auto !important;
                 padding: 8px 12px !important;
                 border-left: 4px solid transparent !important;
                 white-space: normal !important;
