@@ -164,16 +164,6 @@
             $(document).mouseup(function () {
                 selected = null;
             })
-
-            {# Virtual = 0 is live participation, virtual = -1 is spectating #}
-            {% if EVENT_LAST_MSG and request.participation.contest.push_announcements and request.participation.virtual <= 0 %}
-                $(function () {
-                    event_dispatcher.auto_reconnect = true;
-                    event_dispatcher.on('contest_{{ request.participation.contest.id_secret }}', function (data) {
-                        alert(data.title + '\n\n' + data.message);
-                    });
-                })
-            {% endif %}
         });
         </script>
     {% endif %}
