@@ -1058,7 +1058,7 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         data = super().get_context_data(**kwargs)
         data['lang_limit_formset'] = self.get_language_limit_formset()
         data['solution_formset'] = self.get_solution_formset()
-        if self.request.user.is_superuser:
+        if self.request.user.has_perm('judge.add_fileattachment'):
             data['attachment_formset'] = self.get_attachment_formset()
         return data
 
@@ -1080,7 +1080,7 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         form = self.get_form()
         form_lang_limit = self.get_language_limit_formset()
         form_edit = self.get_solution_formset()
-        form_attachments = self.get_attachment_formset() if request.user.is_superuser else None
+        form_attachments = self.get_attachment_formset() if request.user.has_perm('judge.add_fileattachment') else None
         valid = form.is_valid() and form_edit.is_valid() and form_lang_limit.is_valid()
         valid = valid and (form_attachments is None or form_attachments.is_valid())
         if valid:
