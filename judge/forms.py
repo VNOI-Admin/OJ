@@ -957,7 +957,7 @@ class FileAttachmentForm(ModelForm):
         if new_file and self.user:
             user_file = UserFile(
                 file=new_file,
-                file_type=UserFile.FileType.USER_UPLOAD,
+                file_scope=UserFile.FileScope.ATTACHMENT,
             )
             if self.user.is_authenticated:
                 user_file.user = self.user.profile
