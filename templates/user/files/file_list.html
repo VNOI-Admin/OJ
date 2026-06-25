@@ -1,14 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}{{ _('My Files') }}{% endblock %}
-
 {% block header %}{% endblock %}
 
 {% block body %}
 {% include "messages.html" %}
 
 {% if files %}
-    <form id="bulk-delete-form" method="post" action="{{ url('user_file_bulk_delete') }}">
+    <form id="bulk-delete-form" method="post" action="{{ url('user_file_delete') }}">
         {% csrf_token %}
 
         <div style="display:flex;align-items:center;gap:0.8em;margin-bottom:0.6em;flex-wrap:wrap;">
@@ -17,7 +15,7 @@
             </label>
             <span id="selected-count" style="font-size:0.9em;color:#666;"></span>
             <button type="button" id="bulk-delete-btn" class="button" style="display:none;"
-                    onclick="confirmBulkDelete()">
+                    onclick="var n=document.querySelectorAll('.file-cb:checked').length;if(n&&confirm(n+' {{ _('file(s)? This cannot be undone.') }}'))document.getElementById('bulk-delete-form').submit()">
                 <i class="fa fa-trash"></i> {{ _('Delete selected') }}
             </button>
         </div>
@@ -100,11 +98,6 @@
         });
     }
 
-    window.confirmBulkDelete = function () {
-        var n = getCheckboxes().filter(function (cb) { return cb.checked; }).length;
-        if (n && confirm('{{ _("Delete") }} ' + n + ' {{ _("file(s)? This cannot be undone.") }}'))
-            document.getElementById('bulk-delete-form').submit();
-    };
 }());
 </script>
 {% endblock %}
