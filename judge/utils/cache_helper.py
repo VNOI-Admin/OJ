@@ -19,5 +19,5 @@ class CacheFactory:
         cache.delete(cache_key)
 
 
-def  unread_notification_count_cache_factory(profile_id):
+def unread_notification_count_cache_factory(profile_id):
     return CacheFactory(f'unread_notification_count{profile_id}')

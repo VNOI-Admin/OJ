@@ -9,7 +9,6 @@ import pyotp
 import webauthn
 from django.conf import settings
 from django.contrib.auth.models import User
-from judge.utils.cache_helper import unread_notification_count_cache_factory
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import F, Max, Sum
@@ -26,6 +25,7 @@ from sortedm2m.fields import SortedManyToManyField
 from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, SITE_THEMES, TIMEZONE
 from judge.models.runtime import Language
 from judge.ratings import rating_class
+from judge.utils.cache_helper import unread_notification_count_cache_factory
 from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
 from judge.utils.unicode import utf8bytes
