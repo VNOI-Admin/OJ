@@ -276,17 +276,15 @@
                         </span>
                     </a>
                     <ul class="settings-popup" style="min-width: 210px; right: 0; left: auto;">
-                        {% if request.user.is_authenticated %}
-                            <li>
-                                <div class="nav-settings-row">
-                                    <span class="nav-settings-lbl">{{ _('Theme') }}</span>
-                                    <span class="nav-seg">
-                                        <span onclick="set_theme('light')" class="nav-seg-btn{% if SITE_THEME_NAME != 'dark' %} active{% endif %}"><i class="fa fa-sun-o"></i></span>
-                                        <span onclick="set_theme('dark')" class="nav-seg-btn{% if SITE_THEME_NAME == 'dark' %} active{% endif %}"><i class="fa fa-moon-o"></i></span>
-                                    </span>
-                                </div>
-                            </li>
-                        {% endif %}
+                        <li>
+                            <div class="nav-settings-row">
+                                <span class="nav-settings-lbl">{{ _('Theme') }}</span>
+                                <span class="nav-seg">
+                                    <span onclick="set_theme('light')" class="nav-seg-btn{% if SITE_THEME_NAME != 'dark' %} active{% endif %}"><i class="fa fa-sun-o"></i></span>
+                                    <span onclick="set_theme('dark')" class="nav-seg-btn{% if SITE_THEME_NAME == 'dark' %} active{% endif %}"><i class="fa fa-moon-o"></i></span>
+                                </span>
+                            </div>
+                        </li>
                         <li>
                             <div class="nav-settings-row">
                                 <span class="nav-settings-lbl">{{ _('Language') }}</span>
@@ -414,13 +412,11 @@
             <input name="next" type="hidden" value="{{ request.get_full_path() }}">
             <input name="language" type="hidden" value="{{LANGUAGE_CODE}}">
           </form>
-            {% if request.user.is_authenticated %}
-                <form id="set_theme" action="{{ url('set_theme') }}" method="post" style="display: inline">
-                    {% csrf_token %}
-                    <input name="next" type="hidden" value="{{ request.get_full_path() }}">
-                    <input name="theme" type="hidden" value="{{ SITE_THEME_NAME }}">
-                </form>
-            {% endif %}
+            <form id="set_theme" action="{{ url('set_theme') }}" method="post" style="display: inline">
+                {% csrf_token %}
+                <input name="next" type="hidden" value="{{ request.get_full_path() }}">
+                <input name="theme" type="hidden" value="{{ SITE_THEME_NAME }}">
+            </form>
         </span>
     </footer>
 </div>
