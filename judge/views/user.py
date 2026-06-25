@@ -542,14 +542,17 @@ def generate_api_token(request):
 
 
 @require_POST
-@login_required
 def set_theme(request):
     theme = request.POST.get('theme', 'light')
     if theme not in ('light', 'dark', 'auto'):
         theme = 'light'
-    request.profile.site_theme = theme
-    request.profile.save(update_fields=['site_theme'])
-    return HttpResponseRedirect(request.POST.get('next', '/'))
+    response = HttpResponseRedirect(request.POST.get('next', '/'))
+    if request.user.is_authenticated:
+        request.profile.site_theme = theme
+        request.profile.save(update_fields=['site_theme'])
+    else:
+        response.set_cookie(settings.SITE_THEME_COOKIE_NAME, theme, max_age=settings.SITE_THEME_COOKIE_AGE)
+    return response
 
 
 @require_POST

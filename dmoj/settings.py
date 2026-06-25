@@ -339,6 +339,10 @@ DMOJ_THEME_DEFAULT_ACE_THEME = {
 }
 DMOJ_SELECT2_THEME = 'dmoj'
 
+# Cookie used to remember the site theme of anonymous (logged-out) users.
+SITE_THEME_COOKIE_NAME = 'site_theme'
+SITE_THEME_COOKIE_AGE = 60 * 60 * 24 * 365  # 1 year
+
 MARKDOWN_STYLES = {}
 MARKDOWN_DEFAULT_STYLE = {}
 
