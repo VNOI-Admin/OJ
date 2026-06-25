@@ -47,9 +47,18 @@
         <div class="sidebox-content sidebox-table">
             <table class="table">
                 {% for attachment in file.attachments.select_related('content_type').all() %}
+                    {% set obj = attachment.linked_item %}
                     <tr>
                         <td><strong>{{ attachment.content_type.model|title }}</strong></td>
-                        <td>{{ attachment.display_name or attachment.file.filename }}</td>
+                        <td>
+                            {% if attachment.content_type.model == 'problem' %}
+                                <a href="{{ url('problem_detail', obj.code) }}">{{ obj.name }}</a>
+                            {% elif attachment.content_type.model == 'contest' %}
+                                <a href="{{ url('contest_view', obj.key) }}">{{ obj.name }}</a>
+                            {% else %}
+                                {{ attachment.display_name or obj }}
+                            {% endif %}
+                        </td>
                     </tr>
                 {% endfor %}
             </table>
