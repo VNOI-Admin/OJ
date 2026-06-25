@@ -1389,7 +1389,7 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data['contest_problem_formset'] = self.get_contest_problem_formset()
-        if self.request.user.is_superuser:
+        if self.request.user.has_perm('judge.add_fileattachment'):
             data['attachment_formset'] = self.get_attachment_formset()
         return data
 
@@ -1397,7 +1397,7 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
         self.object = self.get_object()
         form = self.get_form()
         form_set = self.get_contest_problem_formset()
-        form_attachments = self.get_attachment_formset() if request.user.is_superuser else None
+        form_attachments = self.get_attachment_formset() if request.user.has_perm('judge.add_fileattachment') else None
 
         valid = form.is_valid() and form_set.is_valid()
         valid = valid and (form_attachments is None or form_attachments.is_valid())

@@ -28,7 +28,9 @@
                     deleteText: '{{ _('Remove') }}',
                     addCssClass: 'button',
                     deleteCssClass: 'button',
+                    added: initAttachmentRow,
                 });
+                $('#attachment_form_set tr.attachment-row').each(function() { initAttachmentRow($(this)); });
             {% endif %}
 
             var noResults = function () {
@@ -65,6 +67,18 @@
                 }
             });
         })
+
+        function initAttachmentRow(row) {
+            var $nameField = row.find('input[id$="-display_name"]');
+            row.find('input[id$="-new_file"]').on('change', function() {
+                if (!$nameField.val() && this.files && this.files[0])
+                    $nameField.val(this.files[0].name);
+            });
+            row.find('select[id$="-file"]').on('select2:select', function(e) {
+                if (!$nameField.val())
+                    $nameField.val(e.params.data.text);
+            });
+        }
     </script>
 {% endblock %}
 
@@ -72,9 +86,8 @@
     {{ form.media.css }}
     <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
     <style>
-        .hidden {
-            display: none;
-        }
+        .hidden { display: none; }
+        #attachment_form_set td { white-space: nowrap; }
     </style>
 {% endblock %}
 
@@ -98,11 +111,9 @@
 
 {% macro attachment_row(form) -%}
     {% if form.non_field_errors() %}
-    <tr>
-        <td colspan="4">{{ form.non_field_errors() }}</td>
-    </tr>
+    <tr><td colspan="3">{{ form.non_field_errors() }}</td></tr>
     {% endif %}
-    <tr>
+    <tr class="attachment-row">
         <td>{{ form.id }} {{ form.file.errors }}{{ form.file }}</td>
         <td>{{ form.new_file.errors }}{{ form.new_file }}</td>
         <td>{{ form.display_name.errors }}{{ form.display_name }}</td>
@@ -157,6 +168,7 @@
         <center><h3> {{ _('Editorial') }} </h3></center>
         <table class="django-as-table">{{ solution_formset.as_table() }}</table>
 
+        {% if attachment_formset %}
         <hr>
         <center><h3> {{ _('Attachments') }} </h3></center>
         {{ attachment_formset.management_form }}
@@ -175,6 +187,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
 
         <table>
             <tr><td style="float: left;">

@@ -65,6 +65,10 @@
                     row.find('select[id$="-problem"]').val(null).trigger('change');
                     _autoFillOrder(row);
                 },
+                addText: '{{ _('Add problem') }}',
+                deleteText: '{{ _('Remove') }}',
+                addCssClass: 'button',
+                deleteCssClass: 'button',
             });
 
             $('#form_set tr.dynamic-form').each(function() { _initRowOrder($(this)); });
@@ -139,9 +143,23 @@
                     deleteText: '{{ _('Remove') }}',
                     addCssClass: 'button',
                     deleteCssClass: 'button',
+                    added: initAttachmentRow,
                 });
+                $('#attachment_form_set tr.attachment-row').each(function() { initAttachmentRow($(this)); });
             {% endif %}
         })
+
+        function initAttachmentRow(row) {
+            var $nameField = row.find('input[id$="-display_name"]');
+            row.find('input[id$="-new_file"]').on('change', function() {
+                if (!$nameField.val() && this.files && this.files[0])
+                    $nameField.val(this.files[0].name);
+            });
+            row.find('select[id$="-file"]').on('select2:select', function(e) {
+                if (!$nameField.val())
+                    $nameField.val(e.params.data.text);
+            });
+        }
     </script>
     {{ form.media.js }}
 {% endblock %}
@@ -224,11 +242,9 @@
 
 {% macro attachment_row(form) -%}
     {% if form.non_field_errors() %}
-    <tr>
-        <td colspan="4">{{ form.non_field_errors() }}</td>
-    </tr>
+    <tr><td colspan="4">{{ form.non_field_errors() }}</td></tr>
     {% endif %}
-    <tr>
+    <tr class="attachment-row">
         <td>{{ form.id }} {{ form.file.errors }}{{ form.file }}</td>
         <td>{{ form.new_file.errors }}{{ form.new_file }}</td>
         <td>{{ form.display_name.errors }}{{ form.display_name }}</td>
@@ -248,7 +264,7 @@
     <form action="" method="post" enctype="multipart/form-data" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
         {{ contest_problem_formset.management_form }}
-        {{ attachment_formset.management_form }}
+        {% if attachment_formset %}{{ attachment_formset.management_form }}{% endif %}
         {% if contest_problem_formset.non_form_errors() %}
             {{ contest_problem_formset.non_form_errors() }}
         {% endif %}
@@ -279,6 +295,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% if attachment_formset %}
         <hr>
         <center><h3> {{ _('Attachments') }} </h3></center>
         <table class="table">
@@ -296,6 +313,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% endif %}
         <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">
             {% if request.resolver_match.url_name == 'contest_edit' %}
                 {{ _('Update') }}
