@@ -10,16 +10,28 @@
                 });
             });
 
-            $('.notification-page-item').on('click', function () {
+            $('.notification-page-item').on('click', function (e) {
                 var $item = $(this);
                 var id = $item.data('id');
-                var url = $item.data('url');
+                var url = $item.attr('href');
+                var hasUrl = url && url !== '#';
+
+                if (e.ctrlKey || e.metaKey || e.shiftKey) {
+                    if ($item.hasClass('unread')) {
+                        $.post('{{ url("notification_mark_read") }}', {id: id, read: '1'}, function () {
+                            $item.removeClass('unread');
+                        });
+                    }
+                    return;
+                }
+
+                e.preventDefault();
                 if ($item.hasClass('unread')) {
                     $.post('{{ url("notification_mark_read") }}', {id: id, read: '1'}, function () {
-                        if (url) window.location = url;
+                        if (hasUrl) window.location = url;
                     });
-                    if (!url) $item.removeClass('unread');
-                } else if (url) {
+                    if (!hasUrl) $item.removeClass('unread');
+                } else if (hasUrl) {
                     window.location = url;
                 }
             });
@@ -44,14 +56,14 @@
 
         <div class="notification-page-list">
             {% for notification in notifications %}
-                <div class="notification-page-item{% if not notification.read %} unread{% endif %}"
-                     data-id="{{ notification.id }}" data-url="{{ notification.url }}">
+                <a class="notification-page-item{% if not notification.read %} unread{% endif %}"
+                   href="{{ notification.url or '#' }}" data-id="{{ notification.id }}">
                     <div class="notification-page-item-title">{{ notification.title }}</div>
                     {% if notification.html %}
                         <div class="notification-page-item-body">{{ notification.html }}</div>
                     {% endif %}
                     <div class="notification-page-item-time">{{ relative_time(notification.time) }}</div>
-                </div>
+                </a>
             {% else %}
                 <div class="notification-page-empty">{{ _('You have no notifications.') }}</div>
             {% endfor %}
