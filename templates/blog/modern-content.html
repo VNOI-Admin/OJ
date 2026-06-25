@@ -24,7 +24,7 @@
 {% block media %}
     {% include "comments/media-css.html" %}
     {% compress css %}
-        <link rel="stylesheet" href="{{ static('blog-post.css') }}">
+        {{ select_css_theme('blog-post.css', 'dark/blog-post.css') }}
     {% endcompress %}
 {% endblock %}
 

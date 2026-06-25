@@ -3,7 +3,10 @@ import json
 from urllib.parse import quote
 
 from django.template.defaultfilters import filesizeformat
+from django.templatetags.static import static as django_static
+from jinja2 import pass_context
 from jinja2.ext import Extension
+from markupsafe import Markup
 from mptt.utils import get_cached_trees
 from statici18n.templatetags.statici18n import inlinei18n
 
@@ -28,6 +31,21 @@ registry.function('user_trans', gettext)
 @registry.function
 def counter(start=1):
     return itertools.count(start).__next__
+
+
+@registry.function
+@pass_context
+def select_css_theme(context, light, dark):
+    theme = context.get('SITE_THEME_NAME', 'auto')
+    if theme == 'dark':
+        return Markup(f'<link rel="stylesheet" href="{django_static(dark)}">')
+    elif theme == 'light':
+        return Markup(f'<link rel="stylesheet" href="{django_static(light)}">')
+    else:  # 'auto'
+        return Markup(
+            f'<link rel="stylesheet" href="{django_static(light)}">'
+            f'<link rel="stylesheet" href="{django_static(dark)}" media="(prefers-color-scheme: dark)">'
+        )
 
 
 class DMOJExtension(Extension):
