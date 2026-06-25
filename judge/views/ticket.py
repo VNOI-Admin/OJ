@@ -83,7 +83,7 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
             })
         make_notification(
             ticket.assignees.all(), category=Notification.TICKET,
-            title=_('New ticket: %s') % ticket.title, html=message.body,
+            title=_('New ticket: %s') % ticket.title, body=message.body,
             url=reverse('ticket', args=[ticket.id]), popup=True,
         )
         on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, form.cleaned_data['body'])
@@ -197,7 +197,7 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
 
         make_notification(
             recipient_ids, category=Notification.TICKET,
-            title=_('New reply on ticket: %s') % self.object.title, html=message.body,
+            title=_('New reply on ticket: %s') % self.object.title, body=message.body,
             url=reverse('ticket', args=[self.object.id]), popup=True,
         )
 

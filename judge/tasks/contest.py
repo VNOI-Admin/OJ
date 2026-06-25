@@ -165,6 +165,6 @@ def send_contest_announcement(announcement_id):
 
     make_notification(
         recipient_ids, category=Notification.CONTEST,
-        title=announcement.title, html=announcement.description,
+        title=announcement.title, body=announcement.description,
         url=contest.get_absolute_url(), popup=contest.push_announcements,
     )

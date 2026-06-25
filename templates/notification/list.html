@@ -59,8 +59,8 @@
                 <a class="notification-page-item{% if not notification.read %} unread{% endif %}"
                    href="{{ notification.url or '#' }}" data-id="{{ notification.id }}">
                     <div class="notification-page-item-title">{{ notification.title }}</div>
-                    {% if notification.html %}
-                        <div class="notification-page-item-body">{{ notification.html }}</div>
+                    {% if notification.body %}
+                        <div class="notification-page-item-body">{{ notification.body }}</div>
                     {% endif %}
                     <div class="notification-page-item-time">{{ relative_time(notification.time) }}</div>
                 </a>

@@ -9,7 +9,7 @@ import pyotp
 import webauthn
 from django.conf import settings
 from django.contrib.auth.models import User
-from django.core.cache import cache
+from judge.utils.cache_helper import unread_notification_count_cache_factory
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import F, Max, Sum
@@ -324,17 +324,13 @@ class Profile(models.Model):
     def notification_secret(self):
         return self.get_notification_secret(self.id)
 
-    @classmethod
-    def unread_notification_count_cache_key(cls, profile_id):
-        return 'unread_notification_count:%d' % profile_id
-
     @property
     def unread_notification_count(self):
-        key = self.unread_notification_count_cache_key(self.id)
-        count = cache.get(key)
+        factory = unread_notification_count_cache_factory(self.id)
+        count = factory.get_cache()
         if count is None:
             count = self.notifications.filter(read=False).count()
-            cache.set(key, count, 86400)
+            factory.set_cache(count, 86400)
         return count
 
     @cached_property

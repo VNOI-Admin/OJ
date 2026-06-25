@@ -1,11 +1,11 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.core.cache import cache
 from django.http import JsonResponse
 from django.utils.translation import gettext as _
 from django.views import View
 from django.views.generic import ListView
 
-from judge.models import Notification, Profile
+from judge.models import Notification
+from judge.utils.cache_helper import unread_notification_count_cache_factory
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.views import TitleMixin, paginate_query_context
 
@@ -21,12 +21,12 @@ class NotificationMixin(LoginRequiredMixin):
         return status if status in STATUS_CHOICES else 'all'
 
     def base_queryset(self):
-        return Notification.objects.filter(owner=self.request.profile)
+        return Notification.objects.filter(recipient=self.request.profile)
 
     def filtered_queryset(self):
         queryset = self.base_queryset()
         if self.status == 'unread':
-            queryset = queryset.filter(read=False)
+            queryset = queryset.filter(read=False).order_by('-priority', '-time')
         elif self.status == 'read':
             queryset = queryset.filter(read=True)
         return queryset
@@ -62,7 +62,7 @@ class NotificationAjax(NotificationMixin, View):
             'id': n.id,
             'category': n.category,
             'title': n.title,
-            'body': n.html,
+            'body': n.body,
             'url': n.url,
             'read': n.read,
             'time': n.time.isoformat(),
@@ -83,7 +83,7 @@ class NotificationMarkRead(LoginRequiredMixin, View):
 
     def post(self, request, *args, **kwargs):
         profile = request.profile
-        queryset = Notification.objects.filter(owner=profile)
+        queryset = Notification.objects.filter(recipient=profile)
         if request.POST.get('all') == '1':
             queryset.filter(read=False).update(read=True)
         else:
@@ -93,5 +93,5 @@ class NotificationMarkRead(LoginRequiredMixin, View):
                 return JsonResponse({'error': 'invalid id'}, status=400)
             read = request.POST.get('read', '1') == '1'
             queryset.filter(id=notification_id).update(read=read)
-        cache.delete(Profile.unread_notification_count_cache_key(profile.id))
+        unread_notification_count_cache_factory(profile.id).delete_cache()
         return JsonResponse({'unread_count': profile.unread_notification_count})

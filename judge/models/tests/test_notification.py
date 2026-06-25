@@ -19,7 +19,7 @@ class NotificationTestCase(TestCase):
     def test_make_notification_fans_out_per_recipient(self):
         make_notification(
             [self.alice, self.bob], category=Notification.CONTEST,
-            title='Hello', html='Body', url='/contest/x', popup=True,
+            title='Hello', body='Body', url='/contest/x', popup=True,
         )
         self.assertEqual(Notification.objects.count(), 2)
         self.assertEqual(self.alice.notifications.count(), 1)
@@ -28,7 +28,6 @@ class NotificationTestCase(TestCase):
         notification = self.alice.notifications.get()
         self.assertEqual(notification.title, 'Hello')
         self.assertEqual(notification.category, Notification.CONTEST)
-        self.assertTrue(notification.popup)
         self.assertFalse(notification.read)
 
     def test_make_notification_accepts_profile_ids(self):
