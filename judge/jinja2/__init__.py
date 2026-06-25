@@ -44,7 +44,7 @@ def select_css_theme(context, light, dark):
     else:  # 'auto'
         return Markup(
             f'<link rel="stylesheet" href="{django_static(light)}">'
-            f'<link rel="stylesheet" href="{django_static(dark)}" media="(prefers-color-scheme: dark)">'
+            f'<link rel="stylesheet" href="{django_static(dark)}" media="(prefers-color-scheme: dark)">',
         )
 
 
