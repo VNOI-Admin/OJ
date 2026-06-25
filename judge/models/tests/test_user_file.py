@@ -81,4 +81,3 @@ class UserFilePermissionTest(TestCase):
         request = self._request_with_user(AnonymousUser())
         with self.assertRaises(Http404):
             authorize_file_access(request, self.private_file)
-

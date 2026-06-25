@@ -9,7 +9,7 @@ __all__ = ['AttachmentMixin', 'FileAttachment']
 class AttachmentMixin:
     def can_view_attachment_by(self, user) -> bool:
         raise NotImplementedError(
-            f'{self.__class__.__name__} must implement can_view_attachment_by(user)'
+            f'{self.__class__.__name__} must implement can_view_attachment_by(user)',
         )
 
 

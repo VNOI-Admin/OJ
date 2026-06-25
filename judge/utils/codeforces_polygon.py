@@ -12,7 +12,6 @@ from typing import BinaryIO, List, Union
 
 from django.conf import settings
 from django.core.files import File
-from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 from lxml import etree as ET
