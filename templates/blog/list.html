@@ -89,12 +89,8 @@
                                         <a href="{{ url('ticket', ticket.id) }}">{{ ticket.title }}</a>
                                     </div>
                                     <div class="object">
-                                        {% if ticket.linked_item.get_absolute_url is defined %}
-                                            <a href="{{ ticket.linked_item.get_absolute_url() }}">
-                                                {{ ticket.linked_item|item_title|truncatechars_html(30) }}</a>
-                                        {% else %}
-                                            {{ ticket.linked_item|item_title|truncatechars_html(30) }}
-                                        {% endif %}
+                                        <a href="{{ ticket.linked_item.get_absolute_url() }}">
+                                            {{ ticket.linked_item|item_title|truncatechars_html(30) }}</a>
                                     </div>
                                 </li>
                             {% endfor %}
@@ -114,12 +110,8 @@
                                         <a href="{{ url('ticket', ticket.id) }}">{{ ticket.title }}</a>
                                     </div>
                                     <div class="object">
-                                        {% if ticket.linked_item.get_absolute_url is defined %}
-                                            <a href="{{ ticket.linked_item.get_absolute_url() }}">
-                                                {{ ticket.linked_item|item_title|truncatechars_html(30) }}</a>
-                                        {% else %}
-                                            {{ ticket.linked_item|item_title|truncatechars_html(30) }}
-                                        {% endif %}
+                                        <a href="{{ ticket.linked_item.get_absolute_url() }}">
+                                            {{ ticket.linked_item|item_title|truncatechars_html(30) }}</a>
                                     </div>
                                     <div class="author">{{ link_user(ticket.user) }}</div>
                                 </li>
