@@ -2,13 +2,7 @@
 
 {% block title %}{{ _('My Files') }}{% endblock %}
 
-{% block header %}
-    {% if can_upload %}
-        <div class="title-line-action">
-            [<a href="{{ url('user_file_upload') }}"><i class="fa fa-upload"></i> {{ _('Upload new file') }}</a>]
-        </div>
-    {% endif %}
-{% endblock %}
+{% block header %}{% endblock %}
 
 {% block body %}
 {% include "messages.html" %}
@@ -66,11 +60,7 @@
         <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
     {% endif %}
 {% else %}
-    {% if can_upload %}
-        <p>{{ _('No files yet. Click "Upload new file" to add your first file.') }}</p>
-    {% else %}
-        <p>{{ _('No files yet. Files you attach in problems, contests, or the editor will appear here.') }}</p>
-    {% endif %}
+    <p>{{ _('No files yet. Files you attach in problems or contests will appear here.') }}</p>
 {% endif %}
 
 <script>
