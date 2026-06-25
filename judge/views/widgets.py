@@ -41,7 +41,7 @@ def django_uploader(image, user):
     from judge.models import UserFile
     uf = UserFile(
         file=image,
-        file_type=UserFile.FileType.MARTOR_IMAGE,
+        file_scope=UserFile.FileScope.MARTOR,
         user=user.profile,
     )
     uf.save()
