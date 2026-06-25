@@ -515,6 +515,8 @@ class Contest(models.Model, AttachmentMixin):
             return True
 
     def can_view_attachment_by(self, user):
+        if self.is_editable_by(user):
+            return True
         return self.is_in_contest(user) and self.is_accessible_by(user)
 
     def is_editable_by(self, user):
