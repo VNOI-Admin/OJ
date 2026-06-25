@@ -41,17 +41,9 @@
             border-bottom: 1px solid rgba(255, 255, 255, 0.15);
             white-space: nowrap;
 
-            .notification-tab {
-                cursor: pointer;
-                padding: 2px 8px;
-                margin-right: 4px;
-                border-radius: 3px;
-                color: #ccc;
-
-                &.active {
-                    color: #fff;
-                    background: rgba(255, 255, 255, 0.2);
-                }
+            .notification-panel-title {
+                color: #fff;
+                font-weight: bold;
             }
 
             .notification-mark-all {

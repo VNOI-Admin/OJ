@@ -2,11 +2,13 @@ $(function () {
     var cfg = window.notificationConfig;
     if (!cfg) return;
 
+    var CACHE_KEY = 'notif_cache_' + cfg.channel;
+    var CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
     var $nav = $('#notification-nav');
     var $badge = $nav.find('.notification-badge');
     var $items = $nav.find('.notification-items');
     var $empty = $nav.find('.notification-empty');
-    var currentStatus = 'all';
 
     function setBadge(count) {
         count = parseInt(count, 10) || 0;
@@ -14,9 +16,33 @@ $(function () {
         $badge.toggleClass('hidden', count === 0);
     }
 
+    function readCache() {
+        try {
+            var raw = localStorage.getItem(CACHE_KEY);
+            if (!raw) return null;
+            var cached = JSON.parse(raw);
+            if (Date.now() - cached.ts > CACHE_TTL) return null;
+            return cached;
+        } catch (e) { return null; }
+    }
+
+    function writeCache(data) {
+        try {
+            localStorage.setItem(CACHE_KEY, JSON.stringify({
+                ts: Date.now(),
+                unread_count: data.unread_count,
+                notifications: data.notifications,
+            }));
+        } catch (e) {}
+    }
+
+    function clearCache() {
+        try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+    }
+
     function renderItem(n) {
-        var $item = $('<a>').addClass('notification-item').attr('href', n.url || '#')
-            .attr('data-id', n.id).toggleClass('unread', !n.read);
+        var $item = $('<a>').addClass('notification-item unread').attr('href', n.url || '#')
+            .attr('data-id', n.id);
         $('<div>').addClass('notification-item-title').text(n.title).appendTo($item);
         if (n.body) {
             $('<div>').addClass('notification-item-body').text(n.body).appendTo($item);
@@ -24,56 +50,52 @@ $(function () {
         if (n.time && window.moment) {
             $('<div>').addClass('notification-item-time').text(moment(n.time).fromNow()).appendTo($item);
         }
-        $item.on('click', function () {
-            if (!n.read) markRead(n.id, true);
+        $item.on('click', function (e) {
+            if (!n.url) e.preventDefault();
+            $item.remove();
+            clearCache();
+            $.post(cfg.markReadUrl, {id: n.id, read: '1'}, function (data) {
+                setBadge(data.unread_count);
+            });
         });
         return $item;
     }
 
-    function loadPanel() {
-        $.get(cfg.ajaxUrl, {status: currentStatus}, function (data) {
-            setBadge(data.unread_count);
-            $items.empty();
-            if (data.notifications.length === 0) {
-                $empty.removeClass('hidden');
-            } else {
-                $empty.addClass('hidden');
-                data.notifications.forEach(function (n) {
-                    $items.append(renderItem(n));
-                });
-            }
-        });
+    function renderPanel(data) {
+        setBadge(data.unread_count);
+        $items.empty();
+        if (data.notifications.length === 0) {
+            $empty.removeClass('hidden');
+        } else {
+            $empty.addClass('hidden');
+            data.notifications.forEach(function (n) {
+                $items.append(renderItem(n));
+            });
+        }
     }
 
-    function markRead(id, read) {
-        $.post(cfg.markReadUrl, {id: id, read: read ? '1' : '0'}, function (data) {
-            setBadge(data.unread_count);
-            var $item = $items.find('.notification-item[data-id="' + id + '"]');
-            $item.toggleClass('unread', !read);
-            if (read && currentStatus === 'unread') $item.remove();
+    function loadPanel() {
+        var cached = readCache();
+        if (cached) {
+            renderPanel(cached);
+            return;
+        }
+        $.get(cfg.ajaxUrl, {status: 'unread'}, function (data) {
+            writeCache(data);
+            renderPanel(data);
         });
     }
 
     function markAllRead() {
         $.post(cfg.markReadUrl, {all: '1'}, function (data) {
             setBadge(data.unread_count);
-            $items.find('.notification-item').removeClass('unread');
-            if (currentStatus === 'unread') loadPanel();
+            $items.empty();
+            $empty.removeClass('hidden');
+            clearCache();
         });
     }
 
     $nav.children('li').on('mouseenter', loadPanel);
-
-    $nav.find('.notification-tab').on('click', function (e) {
-        e.preventDefault();
-        e.stopPropagation();
-        var $tab = $(this);
-        if ($tab.hasClass('active')) return;
-        $nav.find('.notification-tab').removeClass('active');
-        $tab.addClass('active');
-        currentStatus = $tab.data('status');
-        loadPanel();
-    });
 
     $nav.find('.notification-mark-all').on('click', function (e) {
         e.preventDefault();
