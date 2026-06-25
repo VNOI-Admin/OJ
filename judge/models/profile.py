@@ -317,7 +317,7 @@ class Profile(models.Model):
 
     @classmethod
     def get_notification_secret(cls, profile_id):
-        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_TICKET_KEY), b'notification:%d' % profile_id, hashlib.sha512)
+        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_NOTIFICATION_KEY), b'%d' % profile_id, hashlib.sha512)
                     .hexdigest()[:16] + '%08x' % profile_id)
 
     @cached_property
