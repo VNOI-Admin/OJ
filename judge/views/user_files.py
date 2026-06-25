@@ -169,7 +169,7 @@ class UserFileSearchView(LoginRequiredMixin, View):
         q = request.GET.get('q', '')
         qs = UserFile.objects.filter(
             user=request.profile,
-            file_type=UserFile.FileType.USER_UPLOAD,
+            file_scope=UserFile.FileScope.ATTACHMENT,
         ).order_by('-uploaded_at')
         if q:
             qs = qs.filter(filename__icontains=q)
