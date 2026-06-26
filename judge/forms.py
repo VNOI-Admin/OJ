@@ -928,14 +928,6 @@ class UserFileUploadForm(ModelForm):
         return instance
 
 
-class UserFileEditForm(ModelForm):
-    """Form for editing user file metadata."""
-
-    class Meta:
-        model = UserFile
-        fields = []
-
-
 class FileAttachmentForm(ModelForm):
     new_file = forms.FileField(required=False, label=_('Upload new file'))
 
@@ -947,10 +939,18 @@ class FileAttachmentForm(ModelForm):
             'display_name': forms.TextInput(attrs={'style': 'width: 100%'}),
         }
 
+    MAX_UPLOAD_SIZE = 500 * 1024 * 1024
+
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
         self.fields['file'].required = False
+
+    def clean_new_file(self):
+        f = self.cleaned_data.get('new_file')
+        if f and f.size > self.MAX_UPLOAD_SIZE:
+            raise ValidationError(_('File size exceeds the 500 MB limit.'))
+        return f
 
     def save(self, commit=True):
         new_file = self.cleaned_data.get('new_file')
@@ -966,14 +966,7 @@ class FileAttachmentForm(ModelForm):
         return super().save(commit=commit)
 
 
-ProblemAttachmentFormSet = generic_inlineformset_factory(
-    FileAttachment,
-    form=FileAttachmentForm,
-    extra=1,
-    can_delete=True,
-)
-
-ContestAttachmentFormSet = generic_inlineformset_factory(
+AttachmentFormSet = generic_inlineformset_factory(
     FileAttachment,
     form=FileAttachmentForm,
     extra=1,
