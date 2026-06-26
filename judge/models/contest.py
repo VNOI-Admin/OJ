@@ -18,7 +18,7 @@ from lupa import LuaRuntime
 from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MOSS_LANG_PYTHON
 
 from judge import contest_format
-from judge.models.file_attachment import AttachmentMixin
+from judge.models.user_file import AttachmentMixin
 from judge.models.problem import Problem
 from judge.models.profile import Organization, Profile
 from judge.models.submission import Submission

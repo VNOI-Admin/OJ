@@ -4,7 +4,6 @@ from judge.models.choices import ACE_THEMES, EFFECTIVE_MATH_ENGINES, MATH_ENGINE
 from judge.models.comment import Comment, CommentLock, CommentVote
 from judge.models.contest import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, \
     ContestSubmission, ContestTag, Rating
-from judge.models.file_attachment import AttachmentMixin, FileAttachment
 from judge.models.interface import BlogPost, BlogPostTag, BlogVote, MiscConfig, NavigationBar, validate_regex
 from judge.models.notification import Notification, make_notification
 from judge.models.problem import LanguageLimit, License, Problem, ProblemClarification, ProblemGroup, \
@@ -17,7 +16,7 @@ from judge.models.runtime import Judge, Language, RuntimeVersion
 from judge.models.submission import SUBMISSION_RESULT, Submission, SubmissionSource, SubmissionTestCase
 from judge.models.tag import Tag, TagData, TagGroup, TagProblem
 from judge.models.ticket import GeneralIssue, Ticket, TicketMessage
-from judge.models.user_file import UserFile, user_file_storage
+from judge.models.user_file import AttachmentMixin, FileAttachment, UserFile, user_file_storage
 
 revisions.register(Profile, exclude=['points', 'last_access', 'ip', 'rating'])
 revisions.register(Problem, follow=['language_limits'])
