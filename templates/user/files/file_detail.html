@@ -43,12 +43,12 @@
     </div>
 </div>
 
-{% if file.attachments.exists() %}
+{% if used_in %}
     <div class="sidebox">
         <h3>{{ _('Used in') }}</h3>
         <div class="sidebox-content sidebox-table">
             <table class="table">
-                {% for attachment in file.attachments.select_related('content_type').all() %}
+                {% for attachment in used_in %}
                     {% set obj = attachment.linked_item %}
                     <tr>
                         <td><strong>{{ attachment.content_type.model|title }}</strong></td>
