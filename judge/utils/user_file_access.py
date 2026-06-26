@@ -1,6 +1,8 @@
 import mimetypes
+from urllib.parse import quote
 
 from django.http import Http404, HttpResponse
+from django.utils.translation import gettext_lazy as _
 
 from judge.utils.views import add_file_response, generic_message
 
@@ -17,8 +19,9 @@ def serve_user_file(request, user_file):
     try:
         response = HttpResponse()
         response['Content-Type'] = mimetypes.guess_type(user_file.filename)[0] or 'application/octet-stream'
-        response['Content-Disposition'] = f'inline; filename="{user_file.filename}"'
+        encoded = quote(user_file.filename, safe='')
+        response['Content-Disposition'] = f"inline; filename*=UTF-8''{encoded}"
         add_file_response(request, response, user_file.get_url_path(), user_file.get_file_path())
         return response
-    except (OSError, IOError) as e:
-        return generic_message(request, 'File Error', 'File not found: {}'.format(e), status=404)
+    except (OSError, IOError):
+        return generic_message(request, 'File Error', _('File not found.'), status=404)
