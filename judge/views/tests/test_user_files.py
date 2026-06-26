@@ -1,12 +1,14 @@
 from datetime import timedelta
 from unittest.mock import patch
 
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.http import HttpResponse
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from judge.models import FileAttachment, UserFile
+from judge.forms import AttachmentFormSet, FileAttachmentForm
+from judge.models import ContestParticipation, FileAttachment, UserFile
 from judge.models.tests.util import create_contest, create_problem, create_user
 
 _MOCK_SERVE = patch('judge.views.user_files.serve_user_file', return_value=HttpResponse('ok'))
@@ -198,3 +200,101 @@ class AttachmentAccessViewTestCase(TestCase):
         # Normal user is not in the contest and not an editor
         self.client.force_login(self.normal)
         self.assertEqual(self.client.get(self._url(self.pub_contest_att)).status_code, 404)
+
+    @_MOCK_SERVE
+    def test_contest_participant_can_view(self, _mock):
+        # User with an active participation (current_contest set) can view attachments
+        participation = ContestParticipation.objects.create(
+            contest=self.public_contest,
+            user=self.normal.profile,
+            virtual=ContestParticipation.LIVE,
+        )
+        self.normal.profile.current_contest = participation
+        self.normal.profile.save()
+        try:
+            self.client.force_login(self.normal)
+            self.assertEqual(self.client.get(self._url(self.pub_contest_att)).status_code, 200)
+        finally:
+            self.normal.profile.current_contest = None
+            self.normal.profile.save()
+            participation.delete()
+
+
+class FileAttachmentFormSecurityTest(TestCase):
+    fixtures = ['language_all.json']
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.owner = create_user('form_sec_owner')
+        cls.attacker = create_user('form_sec_attacker')
+        cls.owner_file = UserFile.objects.create(
+            user=cls.owner.profile,
+            file='user_file/form_sec.txt',
+            filename='form_sec.txt',
+            file_scope=UserFile.FileScope.ATTACHMENT,
+        )
+
+    # --- Issue 11: IDOR ownership check ---
+
+    def test_owner_can_use_own_file(self):
+        form = FileAttachmentForm(
+            data={'file': self.owner_file.pk, 'display_name': ''},
+            user=self.owner,
+        )
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_attacker_cannot_attach_other_users_file(self):
+        form = FileAttachmentForm(
+            data={'file': self.owner_file.pk, 'display_name': ''},
+            user=self.attacker,
+        )
+        self.assertFalse(form.is_valid())
+        self.assertIn('__all__', form.errors)
+
+    # --- Issue 13: dangerous file type rejection ---
+
+    def test_safe_file_type_accepted(self):
+        f = SimpleUploadedFile('report.pdf', b'%PDF-1.4', content_type='application/pdf')
+        form = FileAttachmentForm(data={'display_name': ''}, files={'new_file': f}, user=self.owner)
+        self.assertTrue(form.is_valid(), form.errors)
+
+    def test_html_file_rejected(self):
+        f = SimpleUploadedFile('exploit.html', b'<script>alert(1)</script>', content_type='text/html')
+        form = FileAttachmentForm(data={'display_name': ''}, files={'new_file': f}, user=self.owner)
+        self.assertFalse(form.is_valid())
+        self.assertIn('new_file', form.errors)
+
+    def test_svg_file_rejected(self):
+        f = SimpleUploadedFile('x.svg', b'<svg onload="alert(1)"/>', content_type='image/svg+xml')
+        form = FileAttachmentForm(data={'display_name': ''}, files={'new_file': f}, user=self.owner)
+        self.assertFalse(form.is_valid())
+        self.assertIn('new_file', form.errors)
+
+    def test_empty_form_rejected(self):
+        form = FileAttachmentForm(data={'display_name': ''}, user=self.owner)
+        self.assertFalse(form.is_valid())
+
+    # --- Issue 12: IDOR via formset (view-level) ---
+
+    def _make_formset_data(self, contest, file_pk):
+        prefix = AttachmentFormSet(instance=contest).prefix
+        return {
+            f'{prefix}-TOTAL_FORMS': '1',
+            f'{prefix}-INITIAL_FORMS': '0',
+            f'{prefix}-MIN_NUM_FORMS': '0',
+            f'{prefix}-MAX_NUM_FORMS': '1000',
+            f'{prefix}-0-file': str(file_pk),
+            f'{prefix}-0-display_name': '',
+        }
+
+    def test_formset_rejects_other_users_file(self):
+        contest = create_contest(key='formset_idor', authors=('form_sec_owner',))
+        data = self._make_formset_data(contest, self.owner_file.pk)
+        formset = AttachmentFormSet(data, instance=contest, form_kwargs={'user': self.attacker})
+        self.assertFalse(formset.is_valid())
+
+    def test_formset_accepts_own_file(self):
+        contest = create_contest(key='formset_own', authors=('form_sec_owner',))
+        data = self._make_formset_data(contest, self.owner_file.pk)
+        formset = AttachmentFormSet(data, instance=contest, form_kwargs={'user': self.owner})
+        self.assertTrue(formset.is_valid(), formset.errors)
