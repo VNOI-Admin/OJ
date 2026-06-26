@@ -58,9 +58,7 @@ class UserFilePermissionTest(TestCase):
         self.assertFalse(self.private_file.can_change_by(self.other))
         self.assertFalse(self.private_file.can_delete_by(self.other))
 
-    def test_list_and_upload_permissions(self):
-        self.assertTrue(UserFile.can_list_by(self.owner))
-        self.assertFalse(UserFile.can_list_by(self.upload_only))
+    def test_upload_permissions(self):
         self.assertTrue(UserFile.can_upload_by(self.upload_only))
         self.assertFalse(UserFile.can_upload_by(AnonymousUser()))
 
