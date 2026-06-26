@@ -949,8 +949,12 @@ class FileAttachmentForm(ModelForm):
 
     def clean_new_file(self):
         f = self.cleaned_data.get('new_file')
-        if f and f.size > self.MAX_UPLOAD_SIZE:
-            raise ValidationError(_('File size exceeds the 500 MB limit.'))
+        if f:
+            if f.size > self.MAX_UPLOAD_SIZE:
+                raise ValidationError(_('File size exceeds the 500 MB limit.'))
+            ext = os.path.splitext(f.name)[1].lower()
+            if ext not in settings.USER_FILE_ATTACHMENT_SAFE_EXTS:
+                raise ValidationError(_('File type %(ext)s is not allowed.') % {'ext': ext})
         return f
 
     def clean_display_name(self):
@@ -958,6 +962,17 @@ class FileAttachmentForm(ModelForm):
         if name and not re.fullmatch(r'[a-zA-Z0-9_\-.]+', name):
             raise ValidationError(_('Display name may only contain letters, digits, underscores, hyphens, and dots.'))
         return name
+
+    def clean(self):
+        cleaned_data = super().clean()
+        file_obj = cleaned_data.get('file')
+        new_file = cleaned_data.get('new_file')
+        if not new_file:
+            if not file_obj:
+                raise ValidationError(_('Either upload a new file or select an existing one.'))
+            if self.user and not file_obj.can_change_by(self.user):
+                raise ValidationError(_('You do not have permission to use this file.'))
+        return cleaned_data
 
     def save(self, commit=True):
         new_file = self.cleaned_data.get('new_file')

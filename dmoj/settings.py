@@ -748,6 +748,7 @@ STATIC_UPLOAD_MEDIA_DIR = 'static-upload'
 
 USER_FILE_STORAGE_MEDIA_DIR = 'user_file'
 USER_FILE_STORAGE_INTERNAL = None
+USER_FILE_ATTACHMENT_SAFE_EXTS = {'.pdf', '.txt', '.zip', '.png', '.jpg', '.jpeg', '.gif', '.mp4', '.mp3'}
 
 
 # Database
