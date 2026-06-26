@@ -968,20 +968,27 @@ class FileAttachmentForm(ModelForm):
         cleaned_data = super().clean()
         file_obj = cleaned_data.get('file')
         new_file = cleaned_data.get('new_file')
+
+        original_file_name = ''
+
         if not new_file:
             if not file_obj:
                 raise ValidationError(_('Either upload a new file or select an existing one.'))
+            else:
+                original_file_name = file_obj.filename
             if self.user and not file_obj.can_change_by(self.user):
                 raise ValidationError(_('You do not have permission to use this file.'))
         else:
-            display_name = cleaned_data.get('display_name', '')
-            if display_name:
-                file_ext = os.path.splitext(new_file.name)[1].lower()
-                name_ext = os.path.splitext(display_name)[1].lower()
-                if name_ext != file_ext:
-                    raise ValidationError(
-                        _('Display name extension must match the uploaded file (%(ext)s).') % {'ext': file_ext},
-                    )
+            original_file_name = new_file.name
+
+        display_name = cleaned_data.get('display_name', '')
+        if display_name:
+            file_ext = os.path.splitext(original_file_name)[1].lower()
+            name_ext = os.path.splitext(display_name)[1].lower()
+            if name_ext != file_ext:
+                raise ValidationError(
+                    _('Display name extension must match the uploaded file (%(ext)s).') % {'ext': file_ext},
+                )
         return cleaned_data
 
     def save(self, commit=True):
