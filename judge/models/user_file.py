@@ -1,4 +1,5 @@
 import os
+import re
 import uuid
 
 from django.conf import settings
@@ -67,11 +68,6 @@ class UserFile(models.Model):
         return f'{self.filename} ({user_str})'
 
     @classmethod
-    def can_list_by(cls, user):
-        """Whether the user may browse the file management list at /files."""
-        return user.is_authenticated and user.has_perm('judge.view_userfile')
-
-    @classmethod
     def can_upload_by(cls, user):
         """Whether the user may upload files directly on the /files page."""
         return user.is_authenticated and user.has_perm('judge.add_userfile')
@@ -111,8 +107,7 @@ class UserFile(models.Model):
         if self.file and not self.filename:
             self.filename = os.path.basename(self.file.name)
         if self.filename:
-            for ch in ('"', '\\', '\r', '\n'):
-                self.filename = self.filename.replace(ch, '')
+            self.filename = re.sub(r'[^a-zA-Z0-9_\-.]', '_', self.filename)
         if not self.size and self.file:
             try:
                 self.size = self.file.size
