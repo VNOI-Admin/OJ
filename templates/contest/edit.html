@@ -65,6 +65,10 @@
                     row.find('select[id$="-problem"]').val(null).trigger('change');
                     _autoFillOrder(row);
                 },
+                addText: '{{ _('Add problem') }}',
+                deleteText: '{{ _('Remove') }}',
+                addCssClass: 'button',
+                deleteCssClass: 'button',
             });
 
             $('#form_set tr.dynamic-form').each(function() { _initRowOrder($(this)); });
@@ -132,7 +136,31 @@
                     });
                 }
             });
+            {% if attachment_formset %}
+                $('#attachment_form_set tr').formset({
+                    prefix: '{{ attachment_formset.prefix }}',
+                    addText: '{{ _('Add attachment') }}',
+                    deleteText: '{{ _('Remove') }}',
+                    addCssClass: 'button',
+                    deleteCssClass: 'button',
+                    added: initAttachmentRow,
+                });
+                $('#attachment_form_set tr.attachment-row').each(function() { initAttachmentRow($(this)); });
+            {% endif %}
+
+            $('form').on('submit.attachments', function() {
+                $('#attachment_form_set tr.attachment-row').each(function() {
+                    var row = $(this);
+                    var hasFile = !!row.find('select[id$="-file"]').val();
+                    var hasNewFile = !!row.find('input[id$="-new_file"]').val();
+                    if (!hasFile && !hasNewFile) {
+                        row.find('input[id$="-display_name"]').val('');
+                    }
+                });
+            });
         })
+
+        {% include 'attachment_formset_js.html' %}
     </script>
     {{ form.media.js }}
 {% endblock %}
@@ -213,6 +241,18 @@
     <tr>
 {%- endmacro %}
 
+{% macro attachment_row(form) -%}
+    {% if form.non_field_errors() %}
+    <tr><td colspan="4">{{ form.non_field_errors() }}</td></tr>
+    {% endif %}
+    <tr class="attachment-row">
+        <td>{{ form.id }} {{ form.file.errors }}{{ form.file }}</td>
+        <td>{{ form.new_file.errors }}{{ form.new_file }}</td>
+        <td>{{ form.display_name.errors }}{{ form.display_name }}</td>
+        <td>{{ form.DELETE }}</td>
+    </tr>
+{%- endmacro %}
+
 <div>
     {% block edit_contest %}
         {% if request.user.is_staff %}
@@ -222,9 +262,10 @@
             </div>
         {% endif %}
     {% endblock %}
-    <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+    <form action="" method="post" enctype="multipart/form-data" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
         {{ contest_problem_formset.management_form }}
+        {% if attachment_formset %}{{ attachment_formset.management_form }}{% endif %}
         {% if contest_problem_formset.non_form_errors() %}
             {{ contest_problem_formset.non_form_errors() }}
         {% endif %}
@@ -255,6 +296,25 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% if attachment_formset %}
+        <hr>
+        <center><h3> {{ _('Attachments') }} </h3></center>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 35%;"> {{ _('Existing file') }} </th>
+                    <th style="width: 30%;"> {{ _('Upload new file') }} </th>
+                    <th> {{ _('Display name') }} </th>
+                    <th> {{ _('Delete') }} </th>
+                </tr>
+            </thead>
+            <tbody id="attachment_form_set">
+                {% for attach_form in attachment_formset %}
+                    {{ attachment_row(attach_form) }}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
         <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">
             {% if request.resolver_match.url_name == 'contest_edit' %}
                 {{ _('Update') }}

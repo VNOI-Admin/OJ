@@ -21,6 +21,29 @@
             $('#lang_limit_title').click();
             {% endif %}
 
+            {% if attachment_formset %}
+                $('#attachment_form_set tr').formset({
+                    prefix: '{{ attachment_formset.prefix }}',
+                    addText: '{{ _('Add attachment') }}',
+                    deleteText: '{{ _('Remove') }}',
+                    addCssClass: 'button',
+                    deleteCssClass: 'button',
+                    added: initAttachmentRow,
+                });
+                $('#attachment_form_set tr.attachment-row').each(function() { initAttachmentRow($(this)); });
+
+                $('form').on('submit.attachments', function() {
+                    $('#attachment_form_set tr.attachment-row').each(function() {
+                        var row = $(this);
+                        var hasFile = !!row.find('select[id$="-file"]').val();
+                        var hasNewFile = !!row.find('input[id$="-new_file"]').val();
+                        if (!hasFile && !hasNewFile) {
+                            row.find('input[id$="-display_name"]').val('');
+                        }
+                    });
+                });
+            {% endif %}
+
             var noResults = function () {
                 return {{ _('Press Enter to select multiple users...')|htmltojs }};
             };
@@ -55,6 +78,8 @@
                 }
             });
         })
+
+        {% include 'attachment_formset_js.html' %}
     </script>
 {% endblock %}
 
@@ -62,9 +87,8 @@
     {{ form.media.css }}
     <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
     <style>
-        .hidden {
-            display: none;
-        }
+        .hidden { display: none; }
+        #attachment_form_set td { white-space: nowrap; }
     </style>
 {% endblock %}
 
@@ -84,6 +108,18 @@
         {% endif %}
         </td>
     <tr>
+{%- endmacro %}
+
+{% macro attachment_row(form) -%}
+    {% if form.non_field_errors() %}
+    <tr><td colspan="3">{{ form.non_field_errors() }}</td></tr>
+    {% endif %}
+    <tr class="attachment-row">
+        <td>{{ form.id }} {{ form.file.errors }}{{ form.file }}</td>
+        <td>{{ form.new_file.errors }}{{ form.new_file }}</td>
+        <td>{{ form.display_name.errors }}{{ form.display_name }}</td>
+        <td>{{ form.DELETE }}</td>
+    </tr>
 {%- endmacro %}
 
 {% block body %}
@@ -132,6 +168,27 @@
 
         <center><h3> {{ _('Editorial') }} </h3></center>
         <table class="django-as-table">{{ solution_formset.as_table() }}</table>
+
+        {% if attachment_formset %}
+        <hr>
+        <center><h3> {{ _('Attachments') }} </h3></center>
+        {{ attachment_formset.management_form }}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th style="width: 35%;"> {{ _('Existing file') }} </th>
+                    <th style="width: 30%;"> {{ _('Upload new file') }} </th>
+                    <th> {{ _('Display name') }} </th>
+                    <th> {{ _('Delete') }} </th>
+                </tr>
+            </thead>
+            <tbody id="attachment_form_set">
+                {% for attach_form in attachment_formset %}
+                    {{ attachment_row(attach_form) }}
+                {% endfor %}
+            </tbody>
+        </table>
+        {% endif %}
 
         <table>
             <tr><td style="float: left;">

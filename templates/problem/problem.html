@@ -176,6 +176,19 @@
         </a>
     {% endif %}
 
+    {% if attachments %}
+        <div class="problem-info-entry" id="problem-attachments">
+            <i class="fa fa-paperclip fa-fw"></i><span class="pi-name">{{ _('Attachments:') }}</span>
+            <div class="pi-value">
+                {% for att in attachments %}
+                    <div><a href="{{ url('attachment_access', att.id) }}">{{ att.get_display_name() }}</a>
+                        <span class="filesize" style="color: #888; font-size: 0.9em;">({{ att.file.size|filesizeformat }})</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+
     <hr style="padding-bottom: 0.3em">
     {% if request.in_contest and contest_problem %}
         {% set contest = contest_problem.contest %}

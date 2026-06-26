@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block header %}{% endblock %}
+
+{% block body %}
+{% include "messages.html" %}
+
+{% if files %}
+    <form id="bulk-delete-form" method="post" action="{{ url('user_file_delete') }}">
+        {% csrf_token %}
+
+        <div style="display:flex;align-items:center;gap:0.8em;margin-bottom:0.6em;flex-wrap:wrap;">
+            <label style="display:flex;align-items:center;gap:0.4em;cursor:pointer;">
+                <input type="checkbox" id="select-all-cb"> {{ _('Select all') }}
+            </label>
+            <span id="selected-count" style="font-size:0.9em;color:#666;"></span>
+            <button type="button" id="bulk-delete-btn" class="button" style="display:none;"
+                    onclick="var n=document.querySelectorAll('.file-cb:checked').length;if(n&&confirm(n+' {{ _('file(s)? This cannot be undone.') }}'))document.getElementById('bulk-delete-form').submit()">
+                <i class="fa fa-trash"></i> {{ _('Delete selected') }}
+            </button>
+        </div>
+
+        <div class="h-scrollable-table">
+            <table class="table striped">
+                <thead>
+                    <tr>
+                        <th style="width:1em;"></th>
+                        <th>{{ _('Filename') }}</th>
+                        <th>{{ _('Size') }}</th>
+                        <th>{{ _('Uploaded') }}</th>
+                        <th>{{ _('Actions') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for file in files %}
+                        <tr>
+                            <td style="text-align:center;">
+                                <input type="checkbox" name="uuids" value="{{ file.uuid }}"
+                                       class="file-cb" aria-label="{{ file.filename }}">
+                            </td>
+                            <td>
+                                <a href="{{ url('user_file_detail', file.uuid) }}">{{ file.filename }}</a>
+                            </td>
+                            <td>{{ file.size|filesizeformat }}</td>
+                            <td>{{ file.uploaded_at|date('SHORT_DATE_FORMAT') }}</td>
+                            <td>
+                                <a href="{{ url('user_file_access', file.uuid) }}" target="_blank">{{ _('View') }}</a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </form>
+
+    {% if is_paginated %}
+        {% set page_prefix = '?page=' %}
+        <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+    {% endif %}
+{% else %}
+    <p>{{ _('No files yet. Files you attach in problems or contests will appear here.') }}</p>
+{% endif %}
+
+<script>
+(function () {
+    var selectAll = document.getElementById('select-all-cb');
+    var bulkBtn   = document.getElementById('bulk-delete-btn');
+    var countEl   = document.getElementById('selected-count');
+
+    function getCheckboxes() {
+        return Array.from(document.querySelectorAll('.file-cb'));
+    }
+
+    function updateToolbar() {
+        var checked = getCheckboxes().filter(function (cb) { return cb.checked; });
+        var n = checked.length;
+        bulkBtn.style.display = n > 0 ? 'inline-block' : 'none';
+        countEl.textContent = n > 0 ? (n + ' {{ _("selected") }}') : '';
+        var all = getCheckboxes();
+        selectAll.indeterminate = n > 0 && n < all.length;
+        selectAll.checked = all.length > 0 && n === all.length;
+    }
+
+    getCheckboxes().forEach(function (cb) {
+        cb.addEventListener('change', function () {
+            cb.closest('tr').classList.toggle('selected-row', cb.checked);
+            updateToolbar();
+        });
+    });
+
+    if (selectAll) {
+        selectAll.addEventListener('change', function () {
+            getCheckboxes().forEach(function (cb) {
+                cb.checked = selectAll.checked;
+                cb.closest('tr').classList.toggle('selected-row', cb.checked);
+            });
+            updateToolbar();
+        });
+    }
+
+}());
+</script>
+{% endblock %}

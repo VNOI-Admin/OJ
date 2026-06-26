@@ -3,6 +3,7 @@ import hmac
 from datetime import date, timedelta
 
 from django.conf import settings
+from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
@@ -16,6 +17,7 @@ from lupa import LuaRuntime
 from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MOSS_LANG_PYTHON
 
 from judge import contest_format, event_poster as event
+from judge.models.user_file import AttachmentMixin
 from judge.models.problem import Problem
 from judge.models.profile import Organization, Profile
 from judge.models.submission import Submission
@@ -60,7 +62,7 @@ class ContestTag(models.Model):
         verbose_name_plural = _('contest tags')
 
 
-class Contest(models.Model):
+class Contest(models.Model, AttachmentMixin):
     SCOREBOARD_VISIBLE = 'V'
     SCOREBOARD_HIDDEN = 'H'
     SCOREBOARD_AFTER_CONTEST = 'C'
@@ -389,6 +391,8 @@ class Contest(models.Model):
     def tester_ids(self):
         return Contest.testers.through.objects.filter(contest=self).values_list('profile_id', flat=True)
 
+    attachments = GenericRelation('FileAttachment')
+
     @classmethod
     def get_id_secret(cls, contest_id):
         return (hmac.new(utf8bytes(settings.EVENT_DAEMON_CONTEST_KEY), b'%d' % contest_id, hashlib.sha512)
@@ -485,6 +489,11 @@ class Contest(models.Model):
             return False
         else:
             return True
+
+    def can_view_attachment_by(self, user):
+        if self.is_editable_by(user):
+            return True
+        return self.is_in_contest(user) and self.is_accessible_by(user)
 
     def is_editable_by(self, user):
         # If the user can edit all contests

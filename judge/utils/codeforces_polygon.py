@@ -12,7 +12,6 @@ from typing import BinaryIO, List, Union
 
 from django.conf import settings
 from django.core.files import File
-from django.core.files.storage import default_storage
 from django.db import transaction
 from django.utils import timezone
 from lxml import etree as ET
@@ -276,6 +275,7 @@ class PolygonImporter:
             do_update: bool = False,
             interactive: bool = True,
             config=None,
+            user=None,
     ):
         # Check if pandoc is available
         if not shutil.which('pandoc'):
@@ -287,6 +287,10 @@ class PolygonImporter:
             raise ImportPolygonError('config must be provided if interactive is False')
         self.interactive = interactive
         self.config = config
+        if user is None:
+            from django.contrib.auth.models import User
+            user = User.objects.filter(is_superuser=True).first()
+        self.user = user
 
         # Let's validate the problem code right now.
         # We don't want to have done everything and still fail
@@ -336,9 +340,9 @@ class PolygonImporter:
             self.update_or_create_problem()
         except Exception:
             # Remove imported images
-            for image_url in self.meta['image_cache'].values():
-                path = default_storage.path(os.path.join(settings.MARTOR_UPLOAD_MEDIA_DIR, os.path.basename(image_url)))
-                os.remove(path)
+            from judge.models import UserFile
+            uuids = [v['uuid'] for v in self.meta.get('image_cache', {}).values() if isinstance(v, dict)]
+            UserFile.objects.filter(uuid__in=uuids).delete()
 
             raise
         finally:
@@ -650,10 +654,10 @@ class PolygonImporter:
                         file=self.package.open(norm_path, 'r'),
                         name=os.path.basename(image_path),
                     )
-                    data = json.loads(django_uploader(image))
-                    image_cache[sha1] = data['link']
+                    data = json.loads(django_uploader(image, self.user))
+                    image_cache[sha1] = {'link': data['link'], 'uuid': data['uuid']}
 
-                return image_cache[sha1]
+                return image_cache[sha1]['link']
 
             for image_path in set(re.findall(r'!\[image\]\((.+?)\)', text)):
                 text = text.replace(

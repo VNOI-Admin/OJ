@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block body %}
+<p><a href="{{ url('user_file_list', request.user.username) }}"><i class="fa fa-arrow-left"></i> {{ _('Back to My Files') }}</a></p>
+
+<div class="sidebox">
+    <h3>{{ _('File information') }}</h3>
+    <div class="sidebox-content sidebox-table">
+        <table class="table">
+            <tr>
+                <th>{{ _('Filename') }}</th>
+                <td>{{ file.filename }}</td>
+            </tr>
+            <tr>
+                <th>{{ _('Size') }}</th>
+                <td>{{ file.size|filesizeformat }}</td>
+            </tr>
+            <tr>
+                <th>{{ _('Uploaded') }}</th>
+                <td>{{ file.uploaded_at|date('DATETIME_FORMAT') }}</td>
+            </tr>
+            <tr>
+                <th>{{ _('UUID') }}</th>
+                <td style="font-family:monospace;font-size:0.85em;word-break:break-all;-webkit-user-select:all;user-select:all;">{{ file.uuid }}</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<div class="sidebox">
+    <h3>{{ _('Actions') }}</h3>
+    <div class="sidebox-content">
+        <div style="display:flex;gap:0.5em;flex-wrap:wrap;">
+            <a href="{{ url('user_file_access', file.uuid) }}" class="button inline-button" target="_blank"><i class="fa fa-eye"></i> {{ _('View') }}</a>
+            {% if can_delete %}
+                <form method="post" action="{{ url('user_file_delete') }}" style="display:inline;" onsubmit="return confirm('{{ _('Delete this file? This cannot be undone.') }}')">
+                    {% csrf_token %}
+                    <input type="hidden" name="uuids" value="{{ file.uuid }}">
+                    <button type="submit" class="button inline-button"><i class="fa fa-trash"></i> {{ _('Delete') }}</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if used_in %}
+    <div class="sidebox">
+        <h3>{{ _('Used in') }}</h3>
+        <div class="sidebox-content sidebox-table">
+            <table class="table">
+                {% for attachment in used_in %}
+                    {% set obj = attachment.linked_item %}
+                    <tr>
+                        <td><strong>{{ attachment.content_type.model|title }}</strong></td>
+                        <td>
+                            {% if attachment.content_type.model == 'problem' %}
+                                <a href="{{ url('problem_detail', obj.code) }}">{{ obj.name }}</a>
+                            {% elif attachment.content_type.model == 'contest' %}
+                                <a href="{{ url('contest_view', obj.key) }}">{{ obj.name }}</a>
+                            {% else %}
+                                {{ attachment.display_name or obj }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}
