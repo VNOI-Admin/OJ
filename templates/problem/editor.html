@@ -69,17 +69,7 @@
             });
         })
 
-        function initAttachmentRow(row) {
-            var $nameField = row.find('input[id$="-display_name"]');
-            row.find('input[id$="-new_file"]').on('change', function() {
-                if (!$nameField.val() && this.files && this.files[0])
-                    $nameField.val(this.files[0].name);
-            });
-            row.find('select[id$="-file"]').on('select2:select', function(e) {
-                if (!$nameField.val())
-                    $nameField.val(e.params.data.text);
-            });
-        }
+        {% include 'attachment_formset_js.html' %}
     </script>
 {% endblock %}
 
