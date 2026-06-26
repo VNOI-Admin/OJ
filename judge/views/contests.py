@@ -232,7 +232,6 @@ class ContestMixin(object):
             context['logo_override_image'] = self.object.organization.logo_override_image
 
         context['is_ICPC_format'] = (self.object.format.name == ICPCContestFormat.name)
-        context['attachments'] = self.object.attachments.select_related('file').order_by('id')
         return context
 
     def get_object(self, queryset=None):
@@ -362,6 +361,11 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
         context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD)
+
+        if self.object.can_view_attachment_by(self.request.user):
+            context['attachments'] = self.object.attachments.select_related('file').order_by('id')
+        else:
+            context['attachments'] = []
 
         return context
 
