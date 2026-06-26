@@ -27,7 +27,7 @@ from django.views.generic.detail import SingleObjectMixin
 from reversion import revisions
 
 from judge.comments import CommentedDetailView
-from judge.forms import LanguageLimitFormSet, ProblemAttachmentFormSet, ProblemCloneForm, ProblemEditForm, \
+from judge.forms import AttachmentFormSet, LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, \
     ProblemEditTypeGroupForm, ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, \
     ProposeProblemSolutionFormSet
 from judge.models import Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
@@ -1088,11 +1088,11 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
     def get_attachment_formset(self):
         form_kwargs = {'user': self.request.user}
         if self.request.POST:
-            return ProblemAttachmentFormSet(
+            return AttachmentFormSet(
                 self.request.POST, self.request.FILES,
                 instance=self.object, form_kwargs=form_kwargs,
             )
-        return ProblemAttachmentFormSet(instance=self.object, form_kwargs=form_kwargs)
+        return AttachmentFormSet(instance=self.object, form_kwargs=form_kwargs)
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)

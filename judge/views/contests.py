@@ -38,7 +38,7 @@ from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
-from judge.forms import ContestAnnouncementForm, ContestAttachmentFormSet, ContestCloneForm, \
+from judge.forms import AttachmentFormSet, ContestAnnouncementForm, ContestCloneForm, \
     ContestDownloadDataForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
     Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
@@ -1380,11 +1380,11 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
     def get_attachment_formset(self):
         form_kwargs = {'user': self.request.user}
         if self.request.POST:
-            return ContestAttachmentFormSet(
+            return AttachmentFormSet(
                 self.request.POST, self.request.FILES,
                 instance=self.object, form_kwargs=form_kwargs,
             )
-        return ContestAttachmentFormSet(instance=self.object, form_kwargs=form_kwargs)
+        return AttachmentFormSet(instance=self.object, form_kwargs=form_kwargs)
 
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
