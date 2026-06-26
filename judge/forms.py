@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import zipfile
 from operator import attrgetter, itemgetter
 
@@ -951,6 +952,12 @@ class FileAttachmentForm(ModelForm):
         if f and f.size > self.MAX_UPLOAD_SIZE:
             raise ValidationError(_('File size exceeds the 500 MB limit.'))
         return f
+
+    def clean_display_name(self):
+        name = self.cleaned_data.get('display_name', '')
+        if name and not re.fullmatch(r'[a-zA-Z0-9_\-.]+', name):
+            raise ValidationError(_('Display name may only contain letters, digits, underscores, hyphens, and dots.'))
+        return name
 
     def save(self, commit=True):
         new_file = self.cleaned_data.get('new_file')
