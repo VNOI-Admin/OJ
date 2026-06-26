@@ -898,40 +898,6 @@ class CompareSubmissionsForm(Form):
     )
 
 
-# ============================================================================
-# User File Upload Forms
-# ============================================================================
-
-class UserFileUploadForm(ModelForm):
-    MAX_UPLOAD_SIZE = 500 * 1024 * 1024
-
-    class Meta:
-        model = UserFile
-        fields = ['file']
-        widgets = {
-            'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
-        }
-
-    def clean_file(self):
-        file_obj = self.cleaned_data.get('file')
-        if file_obj and file_obj.size > self.MAX_UPLOAD_SIZE:
-            raise ValidationError(_('File size exceeds maximum allowed size of 500 MB.'))
-        return file_obj
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        if instance.file and not instance.filename:
-            instance.filename = os.path.basename(instance.file.name)
-        if commit:
-            instance.save()
-        return instance
-
-
-class UserFileEditForm(ModelForm):
-    class Meta:
-        model = UserFile
-        fields = []
-
 
 class FileAttachmentForm(ModelForm):
     new_file = forms.FileField(required=False, label=_('Upload new file'))
@@ -944,10 +910,18 @@ class FileAttachmentForm(ModelForm):
             'display_name': forms.TextInput(attrs={'style': 'width: 100%'}),
         }
 
+    MAX_UPLOAD_SIZE = 500 * 1024 * 1024
+
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
         self.fields['file'].required = False
+
+    def clean_new_file(self):
+        f = self.cleaned_data.get('new_file')
+        if f and f.size > self.MAX_UPLOAD_SIZE:
+            raise ValidationError(_('File size exceeds the 500 MB limit.'))
+        return f
 
     def save(self, commit=True):
         new_file = self.cleaned_data.get('new_file')
@@ -963,14 +937,7 @@ class FileAttachmentForm(ModelForm):
         return super().save(commit=commit)
 
 
-ProblemAttachmentFormSet = generic_inlineformset_factory(
-    FileAttachment,
-    form=FileAttachmentForm,
-    extra=1,
-    can_delete=True,
-)
-
-ContestAttachmentFormSet = generic_inlineformset_factory(
+AttachmentFormSet = generic_inlineformset_factory(
     FileAttachment,
     form=FileAttachmentForm,
     extra=1,
