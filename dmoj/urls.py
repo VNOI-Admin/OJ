@@ -202,11 +202,10 @@ urlpatterns = [
     path('set-theme/', user.set_theme, name='set_theme'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
-    path('files/<str:username>/', user_files.UserFileListView.as_view(), name='user_file_list'),
-    path('files/<uuid:uuid>', user_files.UserFileDetailView.as_view(), name='user_file_detail'),
     path('files/delete', user_files.UserFileDeleteView.as_view(), name='user_file_delete'),
-    path('files/<uuid:uuid>/view', user_files.UserFileAccessView.as_view(), name='user_file_access'),
     path('files/search', user_files.UserFileSearchView.as_view(), name='user_file_search'),
+    path('files/<uuid:uuid>/view', user_files.UserFileAccessView.as_view(), name='user_file_access'),
+    path('files/<uuid:uuid>', user_files.UserFileDetailView.as_view(), name='user_file_detail'),
     path('attachment/<int:pk>/view', user_files.AttachmentAccessView.as_view(), name='attachment_access'),
     path('user/<str:user>', include([
         path('', user.UserAboutPage.as_view(), name='user_page'),
@@ -221,7 +220,7 @@ urlpatterns = [
         path('/submissions/', paged_list_view(submission.AllUserSubmissions, 'all_user_submissions_old')),
         path('/submissions/', lambda _, user:
              HttpResponsePermanentRedirect(reverse('all_user_submissions', args=[user]))),
-
+        path('/files/', user_files.UserFileListView.as_view(), name='user_file_list'),
         path('/', lambda _, user: HttpResponsePermanentRedirect(reverse('user_page', args=[user]))),
     ])),
 
