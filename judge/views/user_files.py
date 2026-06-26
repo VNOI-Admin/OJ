@@ -28,12 +28,12 @@ class UserFileMixin(TitleMixin, LoginRequiredMixin):
 class UserFileListView(UserFileMixin, ListView):
     template_name = 'user/files/file_list.html'
     context_object_name = 'files'
-    paginate_by = 20
+    paginate_by = 50
     title = _('User files')
 
     def dispatch(self, request, *args, **kwargs):
-        target = get_object_or_404(User, username=kwargs['username'])
-        if not request.user.is_superuser and request.user != target:
+        target = get_object_or_404(User, username=kwargs['user'])
+        if request.user.is_authenticated and not request.user.is_superuser and request.user != target:
             raise PermissionDenied()
         self.target_user = target
         return super().dispatch(request, *args, **kwargs)
@@ -58,6 +58,7 @@ class UserFileDetailView(UserFileMixin, DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['can_delete'] = self.object.can_delete_by(self.request.user)
+        context['used_in'] = self.object.attachments.select_related('content_type').all()
         return context
 
     def get_title(self):
@@ -68,7 +69,7 @@ class UserFileDeleteView(LoginRequiredMixin, View):
     """POST-only: delete one or more files by UUID. Single delete reuses this endpoint."""
 
     def post(self, request):
-        uuids = request.POST.getlist('uuids')
+        uuids = request.POST.getlist('uuids')[:50]
         list_url = reverse('user_file_list', args=[request.user.username])
         if not uuids:
             messages.error(request, _('No files selected.'))
