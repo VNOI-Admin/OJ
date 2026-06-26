@@ -930,7 +930,14 @@ class UserFileUploadForm(ModelForm):
 
 
 class FileAttachmentForm(ModelForm):
-    new_file = forms.FileField(required=False, label=_('Upload new file'))
+    new_file = forms.FileField(
+        required=False,
+        label=_('Upload new file'),
+        validators=[FileExtensionValidator(allowed_extensions=settings.USER_FILE_ATTACHMENT_SAFE_EXTS)],
+        widget=forms.FileInput(attrs={
+            'accept': ','.join('.' + ext for ext in settings.USER_FILE_ATTACHMENT_SAFE_EXTS),
+        }),
+    )
 
     class Meta:
         model = FileAttachment
@@ -940,8 +947,6 @@ class FileAttachmentForm(ModelForm):
             'display_name': forms.TextInput(attrs={'style': 'width: 100%'}),
         }
 
-    MAX_UPLOAD_SIZE = 500 * 1024 * 1024
-
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.user = user
@@ -949,12 +954,8 @@ class FileAttachmentForm(ModelForm):
 
     def clean_new_file(self):
         f = self.cleaned_data.get('new_file')
-        if f:
-            if f.size > self.MAX_UPLOAD_SIZE:
-                raise ValidationError(_('File size exceeds the 500 MB limit.'))
-            ext = os.path.splitext(f.name)[1].lower()
-            if ext not in settings.USER_FILE_ATTACHMENT_SAFE_EXTS:
-                raise ValidationError(_('File type %(ext)s is not allowed.') % {'ext': ext})
+        if f and f.size > settings.USER_FILE_ATTACHMENT_MAX_SIZE:
+            raise ValidationError(_('File size exceeds the limit.'))
         return f
 
     def clean_display_name(self):
@@ -972,6 +973,15 @@ class FileAttachmentForm(ModelForm):
                 raise ValidationError(_('Either upload a new file or select an existing one.'))
             if self.user and not file_obj.can_change_by(self.user):
                 raise ValidationError(_('You do not have permission to use this file.'))
+        else:
+            display_name = cleaned_data.get('display_name', '')
+            if display_name:
+                file_ext = os.path.splitext(new_file.name)[1].lower()
+                name_ext = os.path.splitext(display_name)[1].lower()
+                if name_ext != file_ext:
+                    raise ValidationError(
+                        _('Display name extension must match the uploaded file (%(ext)s).') % {'ext': file_ext},
+                    )
         return cleaned_data
 
     def save(self, commit=True):
