@@ -80,7 +80,7 @@
                 border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 
                 &.unread {
-                    border-left-color: #4db7fe !important;
+                    border-left-color: $highlight_blue !important;
                     background: rgba(77, 183, 254, 0.08);
                 }
 
@@ -122,6 +122,9 @@
 
             a {
                 font-size: 0.8em;
+                border-left: none !important;
+                padding: 8px 12px !important;
+                white-space: normal !important;
             }
         }
     }
@@ -167,7 +170,7 @@
 
             &.unread {
                 border-left: 4px solid $highlight_blue;
-                background: rgba(77, 183, 254, 0.06);
+                background: rgba(77, 183, 254, 0.08);
             }
 
             .notification-page-item-title {

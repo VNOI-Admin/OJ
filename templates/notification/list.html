@@ -37,9 +37,9 @@
                 if ($item.hasClass('unread')) {
                     $.post('{{ url("notification_mark_read") }}', {id: id, read: '1'}, function () {
                         if (cfg) cfg.clearCache();
+                        $item.removeClass('unread');
                         if (hasUrl) window.location = url;
                     });
-                    if (!hasUrl) $item.removeClass('unread');
                 } else if (hasUrl) {
                     window.location = url;
                 }

@@ -48,8 +48,8 @@ $(function () {
         }
         $item.on('click', function (e) {
             if (!n.url) e.preventDefault();
-            $item.remove();
             $.post(cfg.markReadUrl, {id: n.id, read: '1'}, function (data) {
+                $item.remove();
                 setBadge(data.unread_count);
                 cfg.clearCache();
             });
