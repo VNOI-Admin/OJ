@@ -12,8 +12,8 @@ __all__ = ['Notification', 'make_notification']
 
 class Notification(models.Model):
     class Priority(IntEnum):
-        DEFAULT              =  0
-        TICKET               = 10
+        DEFAULT = 0
+        TICKET = 10
         CONTEST_ANNOUNCEMENT = 30
 
     recipient = models.ForeignKey(Profile, verbose_name=_('recipient'), related_name='notifications',
