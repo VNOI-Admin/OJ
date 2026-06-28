@@ -651,7 +651,7 @@ class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin,
             messages.success(request, ngettext(
                 'Successfully deleted %d problem.',
                 'Successfully deleted %d problems.',
-                count
+                count,
             ) % count)
         else:
             messages.warning(request, _('No valid problems could be deleted.'))
@@ -851,7 +851,7 @@ class OrganizationStorageDashboard(QueryStringSortMixin, LoginRequiredMixin, Tit
             queryset = queryset.order_by(
                 F('last_submission_date').desc(nulls_last=True) if descending
                 else F('last_submission_date').asc(nulls_first=True),
-                'id'
+                'id',
             )
         elif sort_key == 'data_size':
             queryset = queryset.order_by('-data_size' if descending else 'data_size', 'id')

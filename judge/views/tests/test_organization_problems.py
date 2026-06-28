@@ -1,9 +1,16 @@
 import datetime
+
 from django.test import TestCase
-from django.utils import timezone
 from django.urls import reverse
-from judge.models import Submission, Language
-from judge.models.tests.util import CommonDataMixin, create_user, create_organization, create_problem
+from django.utils import timezone
+
+from judge.models import Language, Submission
+from judge.models.tests.util import (
+    CommonDataMixin,
+    create_organization,
+    create_problem,
+    create_user,
+)
 
 
 class OrganizationProblemsTestCase(CommonDataMixin, TestCase):
@@ -95,7 +102,7 @@ class OrganizationProblemsTestCase(CommonDataMixin, TestCase):
         non_admin_id = self.users['org_member'].profile.id
         response = self.client.get(
             reverse('organization_monthly_usage', args=[self.org.slug]),
-            {'author': non_admin_id}
+            {'author': non_admin_id},
         )
         self.assertEqual(response.status_code, 200)
         # If ignore, it should return all 3 problems of this org
@@ -108,7 +115,7 @@ class OrganizationProblemsTestCase(CommonDataMixin, TestCase):
         # Date 3 days ago (prob2 is 2 days ago, prob1 is 5 days ago, prob3 has none)
         date_str = (timezone.now() - datetime.timedelta(days=3)).strftime('%Y-%m-%d')
         response = self.client.get(reverse('organization_monthly_usage', args=[self.org.slug]), {
-            'last_sub_after': date_str
+            'last_sub_after': date_str,
         })
         self.assertEqual(response.status_code, 200)
         problems = list(response.context['problems'])
@@ -122,7 +129,7 @@ class OrganizationProblemsTestCase(CommonDataMixin, TestCase):
         # Date 3 days ago (prob1 is 5 days ago, prob2 is 2 days ago)
         date_str = (timezone.now() - datetime.timedelta(days=3)).strftime('%Y-%m-%d')
         response = self.client.get(reverse('organization_monthly_usage', args=[self.org.slug]), {
-            'last_sub_before': date_str
+            'last_sub_before': date_str,
         })
         self.assertEqual(response.status_code, 200)
         problems = list(response.context['problems'])
@@ -174,7 +181,7 @@ class OrganizationProblemsTestCase(CommonDataMixin, TestCase):
         self.client.force_login(self.users['staff_organization_admin'])
         response = self.client.post(
             reverse('organization_problems_bulk_delete', args=[self.org.slug]),
-            {'problem_ids': [self.prob1.id, self.prob2.id]}
+            {'problem_ids': [self.prob1.id, self.prob2.id]},
         )
         # Should redirect back
         self.assertEqual(response.status_code, 302)
@@ -192,7 +199,7 @@ class OrganizationProblemsTestCase(CommonDataMixin, TestCase):
         self.client.force_login(self.users['org_member'])
         response = self.client.post(
             reverse('organization_problems_bulk_delete', args=[self.org.slug]),
-            {'problem_ids': [self.prob1.id]}
+            {'problem_ids': [self.prob1.id]},
         )
         self.assertEqual(response.status_code, 403)
         self.prob1.refresh_from_db()
@@ -203,7 +210,7 @@ class OrganizationProblemsTestCase(CommonDataMixin, TestCase):
         self.client.force_login(self.users['staff_organization_admin'])
         response = self.client.post(
             reverse('organization_problems_bulk_delete', args=[self.org.slug]),
-            {'problem_ids': [self.other_prob.id]}
+            {'problem_ids': [self.other_prob.id]},
         )
         self.assertEqual(response.status_code, 302)
         self.other_prob.refresh_from_db()
@@ -215,7 +222,7 @@ class OrganizationProblemsTestCase(CommonDataMixin, TestCase):
         self.prob1.mark_as_deleted()
         response = self.client.post(
             reverse('organization_problems_bulk_delete', args=[self.org.slug]),
-            {'problem_ids': [self.prob1.id, self.prob2.id]}
+            {'problem_ids': [self.prob1.id, self.prob2.id]},
         )
         self.assertEqual(response.status_code, 302)
         self.prob2.refresh_from_db()
