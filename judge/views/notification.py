@@ -21,7 +21,7 @@ class NotificationMixin(LoginRequiredMixin):
         return status if status in STATUS_CHOICES else 'all'
 
     def base_queryset(self):
-        return Notification.objects.filter(recipient=self.request.profile)
+        return Notification.objects.filter(recipient=self.request.profile).order_by('read', '-priority', '-time')
 
     def filtered_queryset(self):
         queryset = self.base_queryset()

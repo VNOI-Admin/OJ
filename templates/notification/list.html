@@ -7,9 +7,12 @@
         }
 
         $(function () {
+            var cfg = window.notificationConfig;
+
             $('#notification-mark-all-page').on('click', function (e) {
                 e.preventDefault();
                 $.post('{{ url("notification_mark_read") }}', {all: '1'}, function () {
+                    if (cfg) cfg.clearCache();
                     window.location.reload();
                 });
             });
@@ -23,6 +26,7 @@
                 if (e.ctrlKey || e.metaKey || e.shiftKey) {
                     if ($item.hasClass('unread')) {
                         $.post('{{ url("notification_mark_read") }}', {id: id, read: '1'}, function () {
+                            if (cfg) cfg.clearCache();
                             $item.removeClass('unread');
                         });
                     }
@@ -32,6 +36,7 @@
                 e.preventDefault();
                 if ($item.hasClass('unread')) {
                     $.post('{{ url("notification_mark_read") }}', {id: id, read: '1'}, function () {
+                        if (cfg) cfg.clearCache();
                         if (hasUrl) window.location = url;
                     });
                     if (!hasUrl) $item.removeClass('unread');

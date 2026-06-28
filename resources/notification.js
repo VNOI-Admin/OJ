@@ -49,9 +49,9 @@ $(function () {
         $item.on('click', function (e) {
             if (!n.url) e.preventDefault();
             $item.remove();
-            cfg.clearCache();
             $.post(cfg.markReadUrl, {id: n.id, read: '1'}, function (data) {
                 setBadge(data.unread_count);
+                cfg.clearCache();
             });
         });
         return $item;
