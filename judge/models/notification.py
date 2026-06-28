@@ -40,10 +40,12 @@ class Notification(models.Model):
         return f'{self.recipient}: {self.title}'
 
 
-def make_notification(recipients, *, category, title, body='', url='', popup=False):
+def make_notification(recipients, *, category, title, body='', url='', popup=False, broadcast_channel=None):
     """Persist a notification for each recipient and push it over the event daemon.
 
     ``recipients`` may be a queryset or iterable of ``Profile`` (or profile ids).
+    Pass ``broadcast_channel`` to post a single event to that channel instead of
+    sending one event per recipient (use for large fanouts like contest announcements).
     """
     profiles = []
     for recipient in recipients:
@@ -62,12 +64,10 @@ def make_notification(recipients, *, category, title, body='', url='', popup=Fal
         unread_notification_count_cache_factory(profile.id).delete_cache()
 
     if event.real:
-        for profile in profiles:
-            event.post(f'notification_{Profile.get_notification_secret(profile.id)}', {
-                'type': 'notification',
-                'category': category,
-                'title': title,
-                'body': body,
-                'url': url,
-                'popup': popup,
-            })
+        payload = {'type': 'notification', 'category': category, 'title': title,
+                   'body': body, 'url': url, 'popup': popup}
+        if broadcast_channel:
+            event.post(broadcast_channel, payload)
+        else:
+            for profile in profiles:
+                event.post(f'notification_{Profile.get_notification_secret(profile.id)}', payload)

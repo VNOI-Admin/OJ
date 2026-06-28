@@ -167,4 +167,5 @@ def send_contest_announcement(announcement_id):
         recipient_ids, category=Notification.CONTEST,
         title=announcement.title, body=announcement.description,
         url=contest.get_absolute_url(), popup=contest.push_announcements,
+        broadcast_channel='contest_%s' % contest.id_secret,
     )

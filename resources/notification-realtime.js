@@ -22,11 +22,15 @@ $(function () {
         $toast.appendTo('body');
     }
 
-    event_dispatcher.auto_reconnect = true;
-    event_dispatcher.on(cfg.channel, function (data) {
+    function handleNotificationEvent(data) {
         try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
         var count = (parseInt($badge.text(), 10) || 0) + 1;
         $badge.text(count).removeClass('hidden');
         if (data.popup) showToast(data);
-    });
+    }
+
+    window.handleNotificationEvent = handleNotificationEvent;
+
+    event_dispatcher.auto_reconnect = true;
+    event_dispatcher.on(cfg.channel, handleNotificationEvent);
 });

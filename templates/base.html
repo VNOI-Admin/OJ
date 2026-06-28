@@ -115,6 +115,18 @@
         </script>
         {% if request.user.is_authenticated %}
             <script src="{{ static('notification-realtime.js') }}"></script>
+
+            {# Virtual = 0 is live participation, virtual = -1 is spectating #}
+            {% if request.participation and request.participation.virtual <= 0 %}
+                <script>
+                    $(function () {
+                        event_dispatcher.auto_reconnect = true;
+                        event_dispatcher.on('contest_{{ request.participation.contest.id_secret }}', function (data) {
+                            if (window.handleNotificationEvent) window.handleNotificationEvent(data);
+                        });
+                    });
+                </script>
+            {% endif %}
         {% endif %}
     {% endif %}
     {% if request.in_contest %}
