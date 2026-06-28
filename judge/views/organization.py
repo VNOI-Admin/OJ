@@ -21,7 +21,7 @@ from reversion import revisions
 
 from judge.forms import OrganizationForm, QuotaGrantForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
-    Problem, Profile
+    Problem, Profile, Submission
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -628,6 +628,37 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         return _filter & Q(organization=self.organization)
 
 
+class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin, View):
+    def post(self, request, *args, **kwargs):
+        org = self.organization
+        problem_ids = request.POST.getlist('problem_ids')
+        if not problem_ids:
+            messages.warning(request, _('No problems selected for deletion.'))
+            return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
+
+        problems = Problem.available.filter(
+            id__in=problem_ids,
+            organization=org,
+        )
+
+        count = problems.count()
+        if count > 0:
+            with revisions.create_revision(atomic=True):
+                for problem in problems:
+                    problem.mark_as_deleted()
+                revisions.set_user(request.user)
+                revisions.set_comment(_('Bulk marked as deleted'))
+            messages.success(request, ngettext(
+                'Successfully deleted %d problem.',
+                'Successfully deleted %d problems.',
+                count
+            ) % count)
+        else:
+            messages.warning(request, _('No valid problems could be deleted.'))
+
+        return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
+
+
 class ContestListOrganization(PrivateOrganizationMixin, ContestList):
     template_name = 'organization/contest-list.html'
     permission_bypass = ['judge.see_private_contest', 'judge.edit_all_contest']
@@ -761,12 +792,15 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
         self.object.save()
 
 
-class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
+class OrganizationStorageDashboard(QueryStringSortMixin, LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
                                    InfinitePaginationMixin, ListView):
     """Dashboard showing storage usage for organization admins."""
     template_name = 'organization/usage.html'
     context_object_name = 'problems'
     paginate_by = 100
+    sql_sort = frozenset(('data_size', 'last_submission_date'))
+    all_sorts = sql_sort
+    default_sort = 'last_submission_date'
 
     def get_title(self):
         return _('Organization cost - %s') % self.organization.name
@@ -778,7 +812,52 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
         ).only(
             'code', 'name',
-        ).prefetch_related('authors__user').order_by('-data_size')
+        ).prefetch_related('authors__user')
+
+        # Annotate with the latest submission date
+        from django.db.models import Subquery, OuterRef
+        last_sub_query = Submission.objects.filter(problem=OuterRef('pk')).order_by('-date').values('date')[:1]
+        queryset = queryset.annotate(last_submission_date=Subquery(last_sub_query))
+
+        # Filter by author
+        author_id = self.request.GET.get('author')
+        if author_id:
+            try:
+                author_id = int(author_id)
+                if self.organization.admins.filter(id=author_id).exists():
+                    queryset = queryset.filter(authors__id=author_id)
+            except ValueError:
+                pass
+
+        # Filter by last submission time (after / before)
+        import datetime
+        from django.utils.dateparse import parse_date
+        for key, lookup, time_val in [('last_sub_after', '__gte', datetime.time.min),
+                                      ('last_sub_before', '__lte', datetime.time.max)]:
+            val = self.request.GET.get(key)
+            if val:
+                try:
+                    date_val = parse_date(val)
+                    if date_val:
+                        dt_val = timezone.make_aware(datetime.datetime.combine(date_val, time_val))
+                        queryset = queryset.filter(**{f'last_submission_date{lookup}': dt_val})
+                except ValueError:
+                    pass
+
+        # Order the queryset
+        sort_key = self.order.lstrip('-')
+        descending = self.order.startswith('-')
+        if sort_key == 'last_submission_date':
+            queryset = queryset.order_by(
+                F('last_submission_date').desc(nulls_last=True) if descending
+                else F('last_submission_date').asc(nulls_first=True),
+                'id'
+            )
+        elif sort_key == 'data_size':
+            queryset = queryset.order_by('-data_size' if descending else 'data_size', 'id')
+        else:
+            # Fallback default sort
+            queryset = queryset.order_by(F('last_submission_date').asc(nulls_first=True), 'id')
 
         return queryset
 
@@ -821,6 +900,13 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             'minute': (paid_credit % sec_per_hour) // 60,
             'second': paid_credit % 60,
         }
+
+        # Add filters and sort context
+        context['org_admins'] = org.admins.select_related('user')
+        context['selected_author'] = self.request.GET.get('author')
+        context['last_sub_after'] = self.request.GET.get('last_sub_after')
+        context['last_sub_before'] = self.request.GET.get('last_sub_before')
+        context.update(self.get_sort_context())
 
         context.update(paginate_query_context(self.request))
 
