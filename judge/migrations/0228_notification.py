@@ -13,7 +13,6 @@ class Migration(migrations.Migration):
             name='Notification',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('category', models.CharField(choices=[('ticket', 'Ticket'), ('contest', 'Contest'), ('storage', 'Storage')], max_length=50, verbose_name='category')),
                 ('title', models.CharField(max_length=255, verbose_name='title')),
                 ('body', models.TextField(blank=True, verbose_name='body')),
                 ('url', models.CharField(blank=True, max_length=255, verbose_name='target link')),

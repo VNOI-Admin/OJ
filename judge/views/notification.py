@@ -60,7 +60,6 @@ class NotificationAjax(NotificationMixin, View):
         notifications = list(self.filtered_queryset()[:10])
         data = [{
             'id': n.id,
-            'category': n.category,
             'title': n.title,
             'body': n.body,
             'url': n.url,

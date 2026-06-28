@@ -18,8 +18,7 @@ class NotificationTestCase(TestCase):
 
     def test_make_notification_fans_out_per_recipient(self):
         make_notification(
-            [self.alice, self.bob], category=Notification.CONTEST,
-            title='Hello', body='Body', url='/contest/x', popup=True,
+            [self.alice, self.bob], title='Hello', body='Body', url='/contest/x', popup=True,
         )
         self.assertEqual(Notification.objects.count(), 2)
         self.assertEqual(self.alice.notifications.count(), 1)
@@ -27,20 +26,19 @@ class NotificationTestCase(TestCase):
 
         notification = self.alice.notifications.get()
         self.assertEqual(notification.title, 'Hello')
-        self.assertEqual(notification.category, Notification.CONTEST)
         self.assertFalse(notification.read)
 
     def test_make_notification_accepts_profile_ids(self):
-        make_notification([self.alice.id], category=Notification.TICKET, title='By id')
+        make_notification([self.alice.id], title='By id')
         self.assertEqual(self.alice.notifications.count(), 1)
 
     def test_unread_count_reflects_make_notification(self):
         self.assertEqual(self.alice.unread_notification_count, 0)
-        make_notification([self.alice], category=Notification.TICKET, title='One')
+        make_notification([self.alice], title='One')
         self.assertEqual(self.alice.unread_notification_count, 1)
 
     def test_mark_read_is_scoped_to_owner(self):
-        make_notification([self.alice], category=Notification.TICKET, title='Alice only')
+        make_notification([self.alice], title='Alice only')
         alice_notification = self.alice.notifications.get()
 
         # Bob must not be able to mark Alice's notification as read.
@@ -59,8 +57,8 @@ class NotificationTestCase(TestCase):
         self.assertTrue(alice_notification.read)
 
     def test_mark_all_read(self):
-        make_notification([self.alice], category=Notification.TICKET, title='One')
-        make_notification([self.alice], category=Notification.TICKET, title='Two')
+        make_notification([self.alice], title='One')
+        make_notification([self.alice], title='Two')
         self.assertEqual(self.alice.unread_notification_count, 2)
 
         self.client.force_login(self.alice.user)

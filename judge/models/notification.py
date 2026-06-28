@@ -1,3 +1,5 @@
+from enum import IntEnum
+
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 
@@ -9,24 +11,19 @@ __all__ = ['Notification', 'make_notification']
 
 
 class Notification(models.Model):
-    TICKET = 'ticket'
-    CONTEST = 'contest'
-    STORAGE = 'storage'
-    CATEGORY_CHOICES = [
-        (TICKET, _('Ticket')),
-        (CONTEST, _('Contest')),
-        (STORAGE, _('Storage')),
-    ]
+    class Priority(IntEnum):
+        DEFAULT              =  0
+        TICKET               = 10
+        CONTEST_ANNOUNCEMENT = 30
 
     recipient = models.ForeignKey(Profile, verbose_name=_('recipient'), related_name='notifications',
                                   on_delete=models.CASCADE)
-    category = models.CharField(verbose_name=_('category'), max_length=50, choices=CATEGORY_CHOICES)
     title = models.CharField(verbose_name=_('title'), max_length=255)
     body = models.TextField(verbose_name=_('body'), blank=True)
     url = models.CharField(verbose_name=_('target link'), max_length=255, blank=True)
     time = models.DateTimeField(verbose_name=_('creation time'), auto_now_add=True)
     read = models.BooleanField(verbose_name=_('is read?'), default=False)
-    priority = models.IntegerField(verbose_name=_('priority'), default=0)
+    priority = models.IntegerField(verbose_name=_('priority'), default=Priority.DEFAULT)
 
     class Meta:
         ordering = ['-time']
@@ -40,7 +37,8 @@ class Notification(models.Model):
         return f'{self.recipient}: {self.title}'
 
 
-def make_notification(recipients, *, category, title, body='', url='', popup=False, broadcast_channel=None):
+def make_notification(recipients, title, body='', url='', popup=False,
+                      broadcast_channel=None, priority=Notification.Priority.DEFAULT):
     """Persist a notification for each recipient and push it over the event daemon.
 
     ``recipients`` may be a queryset or iterable of ``Profile`` (or profile ids).
@@ -55,7 +53,7 @@ def make_notification(recipients, *, category, title, body='', url='', popup=Fal
             profiles.append(Profile(id=recipient))
 
     notifications = [
-        Notification(recipient=profile, category=category, title=title, body=body, url=url)
+        Notification(recipient=profile, title=title, body=body, url=url, priority=int(priority))
         for profile in profiles
     ]
     Notification.objects.bulk_create(notifications)
@@ -64,8 +62,7 @@ def make_notification(recipients, *, category, title, body='', url='', popup=Fal
         unread_notification_count_cache_factory(profile.id).delete_cache()
 
     if event.real:
-        payload = {'type': 'notification', 'category': category, 'title': title,
-                   'body': body, 'url': url, 'popup': popup}
+        payload = {'type': 'notification', 'title': title, 'body': body, 'url': url, 'popup': popup}
         if broadcast_channel:
             event.post(broadcast_channel, payload)
         else:

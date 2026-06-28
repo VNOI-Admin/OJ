@@ -82,9 +82,9 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
                 'assignees': list(ticket.assignees.values_list('id', flat=True)),
             })
         make_notification(
-            ticket.assignees.all(), category=Notification.TICKET,
-            title=_('New ticket: %s') % ticket.title, body=message.body,
+            ticket.assignees.all(), title=_('New ticket: %s') % ticket.title, body=message.body,
             url=reverse('ticket', args=[ticket.id]), popup=True,
+            priority=Notification.Priority.TICKET,
         )
         on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, form.cleaned_data['body'])
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
@@ -196,9 +196,9 @@ class TicketView(TitleMixin, TicketMixin, SingleObjectFormView):
             recipient_ids = list(self.object.assignees.values_list('id', flat=True))
 
         make_notification(
-            recipient_ids, category=Notification.TICKET,
-            title=_('New reply on ticket: %s') % self.object.title, body=message.body,
+            recipient_ids, title=_('New reply on ticket: %s') % self.object.title, body=message.body,
             url=reverse('ticket', args=[self.object.id]), popup=True,
+            priority=Notification.Priority.TICKET,
         )
 
         on_new_ticket_message.delay(message.pk, message.ticket.pk, message.body)
