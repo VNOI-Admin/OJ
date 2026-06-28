@@ -12,10 +12,11 @@ from django.core.files.storage import default_storage
 from django.utils.translation import gettext as _
 from moss import MOSS
 
-from judge.models import Contest, ContestMoss, ContestParticipation, ContestSubmission, Problem, Submission
+from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestSubmission, \
+    Notification, Problem, Submission, make_notification
 from judge.utils.celery import Progress
 
-__all__ = ('rescore_contest', 'run_moss', 'prepare_contest_data')
+__all__ = ('rescore_contest', 'run_moss', 'prepare_contest_data', 'send_contest_announcement')
 rewildcard = re.compile(r'\*+')
 logger = logging.getLogger('judge.celery')
 
@@ -145,3 +146,26 @@ def prepare_contest_data(self, contest_id, options):
         data_file.close()
 
     return length
+
+
+@shared_task
+def send_contest_announcement(announcement_id):
+    try:
+        announcement = ContestAnnouncement.objects.select_related('contest').get(pk=announcement_id)
+    except ContestAnnouncement.DoesNotExist:
+        return
+
+    contest = announcement.contest
+    recipient_ids = list(
+        ContestParticipation.objects.filter(contest=contest, virtual__lte=0)
+        .values_list('user_id', flat=True).distinct(),
+    )
+    if not recipient_ids:
+        return
+
+    make_notification(
+        recipient_ids, title=announcement.title, body=announcement.description,
+        url=contest.get_absolute_url(), popup=True,
+        broadcast_channel='contest_%s' % contest.id_secret,
+        priority=Notification.Priority.CONTEST_ANNOUNCEMENT,
+    )
