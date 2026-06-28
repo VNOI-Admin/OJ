@@ -460,7 +460,6 @@ class ContestAnnounce(ContestMixin, TitleMixin, SingleObjectFormView):
         announcement = form.save(commit=False)
         announcement.contest = contest
         announcement.save()
-        announcement.send()
 
         return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
 
