@@ -95,15 +95,30 @@ $(function () {
         });
     }
 
-    $nav.children('li').on('mouseenter', loadPanel);
+    var $li = $nav.children('li');
+
+    $nav.find('.notification-bell').on('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        if ($li.hasClass('open')) {
+            $li.removeClass('open');
+        } else {
+            $li.addClass('open');
+            loadPanel();
+        }
+    });
+
+    $(document).on('click.notificationPanel', function () {
+        $li.removeClass('open');
+    });
+
+    $nav.find('.notification-panel').on('click', function (e) {
+        e.stopPropagation();
+    });
 
     $nav.find('.notification-mark-all').on('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
         markAllRead();
-    });
-
-    $nav.find('.notification-panel-header').on('click', function (e) {
-        e.stopPropagation();
     });
 });

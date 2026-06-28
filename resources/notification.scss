@@ -1,6 +1,17 @@
 @use "vars" as *;
 
 #notification-nav {
+    // Override the global nav hover-dropdown — panel is click-toggled instead
+    & > li:hover > ul,
+    & > li:active > ul,
+    & > li:focus > ul {
+        display: none !important;
+    }
+
+    & > li.open > ul {
+        display: block !important;
+    }
+
     .notification-bell {
         position: relative;
 
@@ -172,6 +183,13 @@
             .notification-page-item-time {
                 color: #999;
                 font-size: 0.85em;
+            }
+
+            .notification-page-item-url {
+                color: #4db7fe;
+                font-size: 0.8em;
+                margin-top: 4px;
+                word-break: break-all;
             }
         }
 

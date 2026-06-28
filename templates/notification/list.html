@@ -63,6 +63,9 @@
                         <div class="notification-page-item-body">{{ notification.body }}</div>
                     {% endif %}
                     <div class="notification-page-item-time">{{ relative_time(notification.time) }}</div>
+                    {% if notification.url %}
+                        <div class="notification-page-item-url">{{ notification.url }}</div>
+                    {% endif %}
                 </a>
             {% else %}
                 <div class="notification-page-empty">{{ _('You have no notifications.') }}</div>
