@@ -13,7 +13,8 @@ class CacheFactory:
         return cache.get(self.get_cache_key())
 
     def set_cache(self, data, timeout_s=None):
-        cache.set(self.get_cache_key(), data, timeout_s or self._default_timeout)
+        cache.set(self.get_cache_key(), data,
+                  self._default_timeout if timeout_s is None else timeout_s)
 
     def delete_cache(self):
         cache.delete(self.get_cache_key())
