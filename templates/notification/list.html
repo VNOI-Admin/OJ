@@ -49,7 +49,7 @@
             <a href="?status=all" class="{% if status == 'all' %}active{% endif %}">{{ _('All') }}</a>
             <a href="?status=unread" class="{% if status == 'unread' %}active{% endif %}">{{ _('Unread') }}</a>
             <a href="?status=read" class="{% if status == 'read' %}active{% endif %}">{{ _('Read') }}</a>
-            {% if unread_count %}
+            {% if UNREAD_NOTIFICATION_COUNT %}
                 <a href="#" id="notification-mark-all-page" class="notification-page-mark-all">{{ _('Mark all as read') }}</a>
             {% endif %}
         </div>

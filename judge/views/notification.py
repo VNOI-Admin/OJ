@@ -9,7 +9,7 @@ from judge.utils.cache_helper import unread_notification_count_cache_factory
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.views import TitleMixin, paginate_query_context
 
-__all__ = ['NotificationList', 'NotificationAjax', 'NotificationCount', 'NotificationMarkRead']
+__all__ = ['NotificationList', 'NotificationAjax', 'NotificationMarkRead']
 
 STATUS_CHOICES = ('all', 'unread', 'read')
 
@@ -48,7 +48,6 @@ class NotificationList(NotificationMixin, TitleMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['status'] = self.status
-        context['unread_count'] = self.request.profile.unread_notification_count
         context.update(paginate_query_context(self.request))
         return context
 
@@ -70,11 +69,6 @@ class NotificationAjax(NotificationMixin, View):
             'notifications': data,
             'unread_count': request.profile.unread_notification_count,
         })
-
-
-class NotificationCount(LoginRequiredMixin, View):
-    def get(self, request, *args, **kwargs):
-        return JsonResponse({'unread_count': request.profile.unread_notification_count})
 
 
 class NotificationMarkRead(LoginRequiredMixin, View):
