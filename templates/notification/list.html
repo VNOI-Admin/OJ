@@ -2,6 +2,10 @@
 
 {% block js_media %}
     <script type="text/javascript">
+        if (window.notificationConfig) {
+            window.notificationConfig.clearCache();
+        }
+
         $(function () {
             $('#notification-mark-all-page').on('click', function (e) {
                 e.preventDefault();

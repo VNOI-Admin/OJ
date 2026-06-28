@@ -2,7 +2,6 @@ $(function () {
     var cfg = window.notificationConfig;
     if (!cfg || !window.event_dispatcher) return;
 
-    var CACHE_KEY = 'notif_cache_' + cfg.channel;
     var $badge = $('#notification-nav .notification-badge');
 
     function showToast(data) {
@@ -23,7 +22,7 @@ $(function () {
     }
 
     function handleNotificationEvent(data) {
-        try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
+        cfg.clearCache();
         var count = (parseInt($badge.text(), 10) || 0) + 1;
         $badge.text(count).removeClass('hidden');
         if (data.popup) showToast(data);

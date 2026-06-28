@@ -5,7 +5,7 @@ from django.utils.translation import gettext_lazy as _
 
 from judge import event_poster as event
 from judge.models.profile import Profile
-from judge.utils.cache_helper import unread_notification_count_cache_factory
+from judge.utils.cache_helper import bulk_invalidate_notification_caches
 
 __all__ = ['Notification', 'make_notification']
 
@@ -58,8 +58,7 @@ def make_notification(recipients, title, body='', url='', popup=False,
     ]
     Notification.objects.bulk_create(notifications)
 
-    for profile in profiles:
-        unread_notification_count_cache_factory(profile.id).delete_cache()
+    bulk_invalidate_notification_caches(p.id for p in profiles)
 
     if event.real:
         payload = {'type': 'notification', 'title': title, 'body': body, 'url': url, 'popup': popup}

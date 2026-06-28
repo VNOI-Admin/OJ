@@ -330,7 +330,7 @@ class Profile(models.Model):
         count = factory.get_cache()
         if count is None:
             count = self.notifications.filter(read=False).count()
-            factory.set_cache(count, 86400)
+            factory.set_cache(count)
         return count
 
     @cached_property

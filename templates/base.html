@@ -96,6 +96,8 @@
         <script>
             window.notificationConfig = {
                 channel: 'notification_{{ NOTIFICATION_SECRET }}',
+                cacheKey: 'notif_cache_notification_{{ NOTIFICATION_SECRET }}',
+                clearCache: function () { try { localStorage.removeItem(this.cacheKey); } catch (e) {} },
                 ajaxUrl: '{{ url("notification_ajax") }}',
                 markReadUrl: '{{ url("notification_mark_read") }}',
                 access: '{{ _("View") }}',

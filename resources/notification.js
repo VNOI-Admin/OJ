@@ -2,7 +2,7 @@ $(function () {
     var cfg = window.notificationConfig;
     if (!cfg) return;
 
-    var CACHE_KEY = 'notif_cache_' + cfg.channel;
+    var CACHE_KEY = cfg.cacheKey;
     var CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
     var $nav = $('#notification-nav');
@@ -36,10 +36,6 @@ $(function () {
         } catch (e) {}
     }
 
-    function clearCache() {
-        try { localStorage.removeItem(CACHE_KEY); } catch (e) {}
-    }
-
     function renderItem(n) {
         var $item = $('<a>').addClass('notification-item unread').attr('href', n.url || '#')
             .attr('data-id', n.id);
@@ -53,7 +49,7 @@ $(function () {
         $item.on('click', function (e) {
             if (!n.url) e.preventDefault();
             $item.remove();
-            clearCache();
+            cfg.clearCache();
             $.post(cfg.markReadUrl, {id: n.id, read: '1'}, function (data) {
                 setBadge(data.unread_count);
             });
@@ -91,7 +87,7 @@ $(function () {
             setBadge(data.unread_count);
             $items.empty();
             $empty.removeClass('hidden');
-            clearCache();
+            cfg.clearCache();
         });
     }
 
