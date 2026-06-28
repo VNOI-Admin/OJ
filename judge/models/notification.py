@@ -45,25 +45,19 @@ def make_notification(recipients, title, body='', url='', popup=False,
     Pass ``broadcast_channel`` to post a single event to that channel instead of
     sending one event per recipient (use for large fanouts like contest announcements).
     """
-    profiles = []
-    for recipient in recipients:
-        if isinstance(recipient, Profile):
-            profiles.append(recipient)
-        else:
-            profiles.append(Profile(id=recipient))
+    profile_ids = [r.id if isinstance(r, Profile) else r for r in recipients]
 
-    notifications = [
-        Notification(recipient=profile, title=title, body=body, url=url, priority=int(priority))
-        for profile in profiles
-    ]
-    Notification.objects.bulk_create(notifications)
+    Notification.objects.bulk_create([
+        Notification(recipient_id=pid, title=title, body=body, url=url, priority=int(priority))
+        for pid in profile_ids
+    ])
 
-    bulk_invalidate_notification_caches(p.id for p in profiles)
+    bulk_invalidate_notification_caches(profile_ids)
 
     if event.real:
         payload = {'type': 'notification', 'title': title, 'body': body, 'url': url, 'popup': popup}
         if broadcast_channel:
             event.post(broadcast_channel, payload)
         else:
-            for profile in profiles:
-                event.post(f'notification_{Profile.get_notification_secret(profile.id)}', payload)
+            for pid in profile_ids:
+                event.post(f'notification_{Profile.get_notification_secret(pid)}', payload)
