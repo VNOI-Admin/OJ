@@ -157,7 +157,7 @@ def send_contest_announcement(announcement_id):
 
     contest = announcement.contest
     recipient_ids = list(
-        ContestParticipation.objects.filter(contest=contest)
+        ContestParticipation.objects.filter(contest=contest, virtual__lte=0)
         .values_list('user_id', flat=True).distinct(),
     )
     if not recipient_ids:
@@ -165,7 +165,7 @@ def send_contest_announcement(announcement_id):
 
     make_notification(
         recipient_ids, title=announcement.title, body=announcement.description,
-        url=contest.get_absolute_url(), popup=contest.push_announcements,
+        url=contest.get_absolute_url(), popup=True,
         broadcast_channel='contest_%s' % contest.id_secret,
         priority=Notification.Priority.CONTEST_ANNOUNCEMENT,
     )
