@@ -15,7 +15,7 @@ from jsonfield import JSONField
 from lupa import LuaRuntime
 from moss import MOSS_LANG_C, MOSS_LANG_CC, MOSS_LANG_JAVA, MOSS_LANG_PASCAL, MOSS_LANG_PYTHON
 
-from judge import contest_format, event_poster as event
+from judge import contest_format
 from judge.models.problem import Problem
 from judge.models.profile import Organization, Profile
 from judge.models.submission import Submission
@@ -595,11 +595,10 @@ class ContestAnnouncement(models.Model):
     date = models.DateTimeField(verbose_name=_('announcement timestamp'), auto_now_add=True)
 
     def send(self):
-        if self.contest.push_announcements:
-            event.post(f'contest_{self.contest.id_secret}', {
-                'title': self.title,
-                'message': self.description,
-            })
+        if not self.contest.push_announcements:
+            return
+        from judge.tasks import send_contest_announcement
+        send_contest_announcement.delay(self.id)
 
 
 class ContestParticipation(models.Model):

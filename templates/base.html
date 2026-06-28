@@ -92,6 +92,21 @@
         </script>
     {% endcompress %}
     {% block js_media %}{% endblock %}
+    {% if request.user.is_authenticated %}
+        <script>
+            window.notificationConfig = {
+                channel: 'notification_{{ NOTIFICATION_SECRET }}',
+                cacheKey: 'notif_cache_notification_{{ NOTIFICATION_SECRET }}',
+                clearCache: function () { try { localStorage.removeItem(this.cacheKey); } catch (e) {} },
+                ajaxUrl: '{{ url("notification_ajax") }}',
+                markReadUrl: '{{ url("notification_mark_read") }}',
+                access: '{{ _("View") }}',
+                close: '{{ _("Close") }}',
+                empty: '{{ _("No notifications.") }}',
+            };
+        </script>
+        <script src="{{ static('notification.js') }}"></script>
+    {% endif %}
     {% if EVENT_LAST_MSG %}
         <script>
             window.event_dispatcher = new WSEventDispatcher(
@@ -101,16 +116,7 @@
             );
         </script>
         {% if request.user.is_authenticated %}
-            <script>
-                window.ticketNotify = {
-                    channel: 'tickets_{{ request.profile.ticket_secret }}',
-                    newTicket: '{{ _("You have a new ticket: ") }}',
-                    newReply: '{{ _("You have a new reply on ticket ") }}',
-                    access: '{{ _("Access ticket") }}',
-                    close: '{{ _("Close") }}',
-                };
-            </script>
-            <script src="{{ static('ticket_notification.js') }}"></script>
+            <script src="{{ static('notification-realtime.js') }}"></script>
         {% endif %}
     {% endif %}
     {% if request.in_contest %}
@@ -166,9 +172,9 @@
                 $(function () {
                     event_dispatcher.auto_reconnect = true;
                     event_dispatcher.on('contest_{{ request.participation.contest.id_secret }}', function (data) {
-                        alert(data.title + '\n\n' + data.message);
+                        if (window.handleNotificationEvent) window.handleNotificationEvent(data);
                     });
-                })
+                });
             {% endif %}
         });
         </script>
@@ -309,6 +315,27 @@
                 </span>
             </a>
             {% if request.user.is_authenticated %}
+                <ul id="notification-nav">
+                    <li>
+                        <a href="{{ url('notification_list') }}" class="notification-bell" title="{{ _('Notifications') }}">
+                            <i class="fa fa-bell"></i>
+                            <span class="notification-badge{% if not UNREAD_NOTIFICATION_COUNT %} hidden{% endif %}">{{ UNREAD_NOTIFICATION_COUNT }}</span>
+                        </a>
+                        <ul class="notification-panel" style="width: 340px; right: 0; left: auto;">
+                            <li class="notification-panel-header">
+                                <span class="notification-panel-title">{{ _('Unread') }}</span>
+                                <a href="#" class="notification-mark-all">{{ _('Mark all read') }}</a>
+                            </li>
+                            <li class="notification-list-container">
+                                <div class="notification-items"></div>
+                                <div class="notification-empty hidden">{{ _('No notifications.') }}</div>
+                            </li>
+                            <li class="notification-panel-footer">
+                                <a href="{{ url('notification_list') }}">{{ _('See all notifications') }}</a>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
                 <ul>
                     <li>
                         <a href="{{ url('user_page') }}">

@@ -25,6 +25,7 @@ from sortedm2m.fields import SortedManyToManyField
 from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, SITE_THEMES, TIMEZONE
 from judge.models.runtime import Language
 from judge.ratings import rating_class
+from judge.utils.cache_helper import unread_notification_count_cache_factory
 from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
 from judge.utils.unicode import utf8bytes
@@ -313,6 +314,24 @@ class Profile(models.Model):
     @cached_property
     def ticket_secret(self):
         return self.get_ticket_secret(self.id)
+
+    @classmethod
+    def get_notification_secret(cls, profile_id):
+        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_NOTIFICATION_KEY), b'%d' % profile_id, hashlib.sha512)
+                    .hexdigest()[:16] + '%08x' % profile_id)
+
+    @cached_property
+    def notification_secret(self):
+        return self.get_notification_secret(self.id)
+
+    @property
+    def unread_notification_count(self):
+        factory = unread_notification_count_cache_factory(self.id)
+        count = factory.get_cache()
+        if count is None:
+            count = self.notifications.filter(read=False).count()
+            factory.set_cache(count)
+        return count
 
     @cached_property
     def organization(self):

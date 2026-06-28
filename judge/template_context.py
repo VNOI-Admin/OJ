@@ -59,7 +59,7 @@ def __nav_tab(path):
 
 def general_info(request):
     path = request.get_full_path()
-    return {
+    info = {
         'nav_tab': FixedSimpleLazyObject(partial(__nav_tab, request.path)),
         'nav_bar': NavigationBar.objects.all(),
         'LOGIN_RETURN_PATH': '' if path.startswith('/accounts/') else path,
@@ -67,6 +67,10 @@ def general_info(request):
         'perms': PermWrapper(request.user),
         'HAS_WEBAUTHN': bool(settings.WEBAUTHN_RP_ID),
     }
+    if hasattr(request.user, 'profile'):
+        info['NOTIFICATION_SECRET'] = request.profile.notification_secret
+        info['UNREAD_NOTIFICATION_COUNT'] = request.profile.unread_notification_count
+    return info
 
 
 def site(request):
