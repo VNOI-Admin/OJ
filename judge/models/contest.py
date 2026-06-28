@@ -595,6 +595,8 @@ class ContestAnnouncement(models.Model):
     date = models.DateTimeField(verbose_name=_('announcement timestamp'), auto_now_add=True)
 
     def send(self):
+        if not self.contest.push_announcements:
+            return
         from judge.tasks import send_contest_announcement
         send_contest_announcement.delay(self.id)
 
