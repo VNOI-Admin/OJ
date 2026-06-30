@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0228_notification'),
+        ('judge', '0229_rename_judge_notif_recip_i_0f60e0_idx_judge_notif_recipie_9180e7_idx'),
     ]
 
     operations = [
