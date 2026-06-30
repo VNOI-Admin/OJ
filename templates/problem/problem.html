@@ -54,13 +54,16 @@
             position: absolute;
             left: -999em;
         }
+
+        .comments-loading {
+            padding: 1em 0;
+            text-align: center;
+            color: #888;
+        }
     </style>
 {% endblock %}
 
 {% block content_js_media %}
-    {% if not comment_lock %}
-        {% include "comments/media-js.html" %}
-    {% endif %}
     {% if request.user.is_authenticated and form %}
         {% include "problem/submit-js.html" %}
     {% endif %}
@@ -77,6 +80,18 @@
                 frames['raw_problem'].print();
             });
 
+            // Lazily load the comments tab only when it's first opened.
+            var comments_loaded = false;
+            function load_comments() {
+                if (comments_loaded) return;
+                comments_loaded = true;
+                var $comments = $('#comments');
+                $comments.load($comments.data('comments-url'), function() {
+                    if (window.MathJax && MathJax.typesetPromise)
+                        MathJax.typesetPromise([$comments[0]]);
+                });
+            }
+
             // Tab switching functionality
             $('.problem-tabs a').click(function(e) {
                 e.preventDefault();
@@ -90,6 +105,10 @@
                 $('.tab-content').removeClass('active');
                 $(target).addClass('active');
 
+                if (target === '#comments') {
+                    load_comments();
+                }
+
                 // Update URL hash without scrolling
                 if (history.pushState) {
                     history.pushState(null, null, target);
@@ -102,6 +121,11 @@
             var hash = window.location.hash;
             if (hash && $(hash).length) {
                 $('.problem-tabs a[href="' + hash + '"]').click();
+            }
+
+            // If the comments tab is the active one on load (e.g. anonymous users), load it now.
+            if ($('#comments').hasClass('active')) {
+                load_comments();
             }
         });
     </script>
@@ -429,27 +453,8 @@
         </div>
     {% endif %}
 
-    <div id="comments" class="tab-content {% if not request.user.is_authenticated %}active{% endif %}">
-        {% if comment_lock %}
-            <div class="clarifications-area">
-                <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
-                {% if has_clarifications %}
-                    {% for clarification in clarifications %}
-                        <div class="problem-clarification">
-                            <div class="time">{{ relative_time(clarification.date) }}</div>
-                            <span class="body">
-                                {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
-                            </span>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="no-comments-message">{{ _('No clarifications have been made at this time.') }}</p>
-                {% endif %}
-            </div>
-        {% else %}
-            {% with comment_warn_code=true %}
-                {% include "comments/list.html" %}
-            {% endwith %}
-        {% endif %}
+    <div id="comments" class="tab-content {% if not request.user.is_authenticated %}active{% endif %}"
+         data-comments-url="{{ url('problem_comments', problem.code) }}">
+        <div class="comments-loading">{{ _('Loading...') }}</div>
     </div>
 {% endblock %}
