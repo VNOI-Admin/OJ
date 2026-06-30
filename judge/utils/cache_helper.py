@@ -27,3 +27,7 @@ def unread_notification_count_cache_factory(profile_id, timeout=86400):
 def bulk_invalidate_notification_caches(profile_ids):
     """Delete unread count caches for many profiles in one round-trip."""
     cache.delete_many([f'unread_notification_count{pid}' for pid in profile_ids])
+
+
+def storage_pie_cache_factory(org_id):
+    return CacheFactory(f'storage_pie_data_{org_id}', default_timeout=7 * 86400)

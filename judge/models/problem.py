@@ -634,10 +634,13 @@ class Problem(models.Model):
     def is_deleted(self):
         return self.deleted_at is not None
 
-    def mark_as_deleted(self):
+    def mark_as_deleted(self, invalidate_storage_cache=True):
         """Soft-delete this problem. Use the garbage collector to permanently remove it after the grace period."""
         self.deleted_at = timezone.now()
         self.save(update_fields=['deleted_at'])
+        if invalidate_storage_cache and self.organization_id:
+            from judge.utils.cache_helper import storage_pie_cache_factory
+            storage_pie_cache_factory(self.organization_id).delete_cache()
 
     mark_as_deleted.alters_data = True
 
