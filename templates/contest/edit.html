@@ -368,18 +368,7 @@
     <tr>
 {%- endmacro %}
 
-{% macro attachment_row(form) -%}
-    {% if form.non_field_errors() %}
-    <tr><td colspan="4">{{ form.non_field_errors() }}</td></tr>
-    {% endif %}
-    <tr class="attachment-row">
-        <td>{{ form.id }} {{ form.file.errors }}{{ form.file }}</td>
-        <td>{{ form.new_file.errors }}{{ form.new_file }}</td>
-        <td>{{ form.display_name.errors }}{{ form.display_name }}</td>
-        <td>{{ form.DELETE }}</td>
-    </tr>
-{%- endmacro %}
-
+{% include 'attachment_upload_modal.html' %}
 <div>
     {% block edit_contest %}
         {% if request.user.is_staff %}
@@ -426,25 +415,7 @@
                 {% endfor %}
             </tbody>
         </table>
-        {% if attachment_formset %}
-        <hr>
-        <center><h3> {{ _('Attachments') }} </h3></center>
-        <table class="table">
-            <thead>
-                <tr>
-                    <th style="width: 35%;"> {{ _('Existing file') }} </th>
-                    <th style="width: 30%;"> {{ _('Upload new file') }} </th>
-                    <th> {{ _('Display name') }} </th>
-                    <th> {{ _('Delete') }} </th>
-                </tr>
-            </thead>
-            <tbody id="attachment_form_set">
-                {% for attach_form in attachment_formset %}
-                    {{ attachment_row(attach_form) }}
-                {% endfor %}
-            </tbody>
-        </table>
-        {% endif %}
+        {% include 'attachment_formset_table.html' %}
         <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">
             {% if request.resolver_match.url_name == 'contest_edit' %}
                 {{ _('Update') }}

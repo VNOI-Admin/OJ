@@ -1,0 +1,109 @@
+<style>
+#att-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+</style>
+
+<div id="att-modal-overlay" style="display:none;">
+    <div id="att-modal-inner" class="form-area" style="border-radius:6px; padding:24px 28px; width:400px; max-width:calc(100vw - 40px); box-shadow:0 8px 40px rgba(0,0,0,0.4);">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <h3 style="margin:0;">{{ _('Upload file') }}</h3>
+            <a id="att-modal-close" style="cursor:pointer; font-size:18px; line-height:1;">&times;</a>
+        </div>
+        <p>
+            <label>{{ _('File') }}</label><br>
+            <input type="file" id="att-modal-file-input" accept=".pdf,.txt,.zip,.png,.jpg,.jpeg,.gif,.java,.cpp,.pas,.py">
+        </p>
+        <p>
+            <label>{{ _('File name') }}</label><br>
+            <input type="text" id="att-modal-name-input" placeholder="e.g. project-report.pdf" style="width:100%; box-sizing:border-box;">
+        </p>
+        <p id="att-modal-error" style="color:red; display:none;"></p>
+        <div style="display:flex; justify-content:flex-end; gap:8px; margin-top:8px;">
+            <a id="att-modal-cancel" style="cursor:pointer; padding:6px 14px;">{{ _('Cancel') }}</a>
+            <button type="button" id="att-modal-save" class="button" style="display:inline;">{{ _('Save file') }}</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    var currentRow = null;
+
+    function openModal(row) {
+        currentRow = row;
+        $('#att-modal-file-input').val('');
+        $('#att-modal-name-input').val('');
+        $('#att-modal-error').hide();
+        $('#att-modal-save').prop('disabled', false).text('{{ _("Save file") }}');
+        $('#att-modal-overlay').show();
+    }
+
+    function closeModal() {
+        $('#att-modal-overlay').hide();
+        currentRow = null;
+    }
+
+    $(function() {
+        $(document).on('click', '.att-upload-btn', function() {
+            openModal($(this).closest('.attachment-row'));
+        });
+
+        $('#att-modal-close, #att-modal-cancel').on('click', closeModal);
+        $('#att-modal-overlay').on('click', function(e) {
+            if (!$(e.target).closest('#att-modal-inner').length) closeModal();
+        });
+        $(document).on('keydown.attmodal', function(e) {
+            if ($('#att-modal-overlay').is(':hidden')) return;
+            if (e.key === 'Escape') closeModal();
+            if (e.key === 'Enter') { e.preventDefault(); $('#att-modal-save').click(); }
+        });
+
+        $('#att-modal-file-input').on('change', function() {
+            var file = this.files[0];
+            if (file && !$('#att-modal-name-input').val()) {
+                $('#att-modal-name-input').val(file.name);
+            }
+        });
+
+        $('#att-modal-save').on('click', function() {
+            var file = $('#att-modal-file-input')[0].files[0];
+            if (!file) {
+                $('#att-modal-error').text('{{ _("Please select a file.") }}').show();
+                return;
+            }
+            var $saveBtn = $(this).prop('disabled', true).text('{{ _("Uploading\u2026") }}');
+            $('#att-modal-error').hide();
+            var customName = $('#att-modal-name-input').val().trim();
+            var fd = new FormData();
+            fd.append('file', file);
+            fd.append('csrfmiddlewaretoken', $('[name=csrfmiddlewaretoken]').first().val());
+            if (customName) fd.append('filename', customName);
+            $.ajax({
+                url: '{{ url("user_file_upload") }}',
+                method: 'POST',
+                data: fd, processData: false, contentType: false,
+                success: function(data) {
+                    var $select = currentRow.find('select[id$="-file"]');
+                    $select.append(new Option(data.filename, data.id, true, true)).trigger('change');
+                    var $nameField = currentRow.find('input[id$="-display_name"]');
+                    if (!$nameField.val()) $nameField.val(customName || data.filename);
+                    closeModal();
+                },
+                error: function(xhr) {
+                    var msg = (xhr.responseJSON && xhr.responseJSON.error) || '{{ _("Upload failed.") }}';
+                    $('#att-modal-error').text(msg).show();
+                    $saveBtn.prop('disabled', false).text('{{ _("Save file") }}');
+                }
+            });
+        });
+    });
+
+})();
+</script>
