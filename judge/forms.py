@@ -930,15 +930,6 @@ class UserFileUploadForm(ModelForm):
 
 
 class FileAttachmentForm(ModelForm):
-    new_file = forms.FileField(
-        required=False,
-        label=_('Upload new file'),
-        validators=[FileExtensionValidator(allowed_extensions=settings.USER_FILE_ATTACHMENT_SAFE_EXTS)],
-        widget=forms.FileInput(attrs={
-            'accept': ','.join('.' + ext for ext in settings.USER_FILE_ATTACHMENT_SAFE_EXTS),
-        }),
-    )
-
     class Meta:
         model = FileAttachment
         fields = ['file', 'display_name']
@@ -952,12 +943,6 @@ class FileAttachmentForm(ModelForm):
         self.user = user
         self.fields['file'].required = False
 
-    def clean_new_file(self):
-        f = self.cleaned_data.get('new_file')
-        if f and f.size > settings.USER_FILE_ATTACHMENT_MAX_SIZE:
-            raise ValidationError(_('File size exceeds the limit.'))
-        return f
-
     def clean_display_name(self):
         name = self.cleaned_data.get('display_name', '')
         if name and not re.fullmatch(r'[a-zA-Z0-9_\-.]+', name):
@@ -967,42 +952,19 @@ class FileAttachmentForm(ModelForm):
     def clean(self):
         cleaned_data = super().clean()
         file_obj = cleaned_data.get('file')
-        new_file = cleaned_data.get('new_file')
-
-        original_file_name = ''
-
-        if not new_file:
-            if not file_obj:
-                raise ValidationError(_('Either upload a new file or select an existing one.'))
-            else:
-                original_file_name = file_obj.filename
-            if self.user and not file_obj.can_change_by(self.user):
-                raise ValidationError(_('You do not have permission to use this file.'))
-        else:
-            original_file_name = new_file.name
-
+        if not file_obj:
+            raise ValidationError(_('Please select a file.'))
+        if self.user and not file_obj.can_change_by(self.user):
+            raise ValidationError(_('You do not have permission to use this file.'))
         display_name = cleaned_data.get('display_name', '')
         if display_name:
-            file_ext = os.path.splitext(original_file_name)[1].lower()
+            file_ext = os.path.splitext(file_obj.filename)[1].lower()
             name_ext = os.path.splitext(display_name)[1].lower()
             if name_ext != file_ext:
                 raise ValidationError(
                     _('Display name extension must match the uploaded file (%(ext)s).') % {'ext': file_ext},
                 )
         return cleaned_data
-
-    def save(self, commit=True):
-        new_file = self.cleaned_data.get('new_file')
-        if new_file and self.user:
-            user_file = UserFile(
-                file=new_file,
-                file_scope=UserFile.FileScope.ATTACHMENT,
-            )
-            if self.user.is_authenticated:
-                user_file.user = self.user.profile
-            user_file.save()
-            self.instance.file = user_file
-        return super().save(commit=commit)
 
 
 AttachmentFormSet = generic_inlineformset_factory(

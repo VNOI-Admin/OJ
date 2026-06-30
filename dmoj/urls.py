@@ -204,6 +204,7 @@ urlpatterns = [
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
     path('files/delete', user_files.UserFileDeleteView.as_view(), name='user_file_delete'),
     path('files/search', user_files.UserFileSearchView.as_view(), name='user_file_search'),
+    path('files/upload', user_files.UserFileUploadView.as_view(), name='user_file_upload'),
     path('files/<uuid:uuid>/view', user_files.UserFileAccessView.as_view(), name='user_file_access'),
     path('files/<uuid:uuid>', user_files.UserFileDetailView.as_view(), name='user_file_detail'),
     path('attachment/<int:pk>/view', user_files.AttachmentAccessView.as_view(), name='attachment_access'),

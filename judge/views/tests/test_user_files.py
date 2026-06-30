@@ -254,21 +254,25 @@ class FileAttachmentFormSecurityTest(TestCase):
     # --- Issue 13: dangerous file type rejection ---
 
     def test_safe_file_type_accepted(self):
+        self.client.force_login(self.owner)
         f = SimpleUploadedFile('report.pdf', b'%PDF-1.4', content_type='application/pdf')
-        form = FileAttachmentForm(data={'display_name': ''}, files={'new_file': f}, user=self.owner)
-        self.assertTrue(form.is_valid(), form.errors)
+        response = self.client.post(reverse('user_file_upload'), {'file': f})
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('id', response.json())
 
     def test_html_file_rejected(self):
+        self.client.force_login(self.owner)
         f = SimpleUploadedFile('exploit.html', b'<script>alert(1)</script>', content_type='text/html')
-        form = FileAttachmentForm(data={'display_name': ''}, files={'new_file': f}, user=self.owner)
-        self.assertFalse(form.is_valid())
-        self.assertIn('new_file', form.errors)
+        response = self.client.post(reverse('user_file_upload'), {'file': f})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.json())
 
     def test_svg_file_rejected(self):
+        self.client.force_login(self.owner)
         f = SimpleUploadedFile('x.svg', b'<svg onload="alert(1)"/>', content_type='image/svg+xml')
-        form = FileAttachmentForm(data={'display_name': ''}, files={'new_file': f}, user=self.owner)
-        self.assertFalse(form.is_valid())
-        self.assertIn('new_file', form.errors)
+        response = self.client.post(reverse('user_file_upload'), {'file': f})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('error', response.json())
 
     def test_empty_form_rejected(self):
         form = FileAttachmentForm(data={'display_name': ''}, user=self.owner)
