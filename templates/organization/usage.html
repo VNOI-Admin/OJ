@@ -96,6 +96,11 @@
             // Activate default tab
             $('#inner-page-tabs .tab a[data-tab="storage"]').click();
 
+            if (window.location.hash === '#preset-filter') {
+                var offset = $('#preset-filter').offset().top - 60;
+                $(window).scrollTop(offset);
+            }
+
             // Storage breakdown pie charts
             var storagePieOpts = {
                 responsive: true,
@@ -185,7 +190,7 @@
             // Quick filter select
             $('#quick-filter-select').change(function () {
                 var val = $(this).val();
-                if (!val) return;
+                if (!val) { window.location = '{{ request.path }}#preset-filter'; return; }
 
                 var params = new URLSearchParams();
                 if (currentProfileId) params.set('author', currentProfileId);
@@ -204,7 +209,7 @@
                     params.set('last_sub_before', yyyy + '-' + mm + '-' + dd);
                 }
 
-                window.location = '{{ request.path }}?' + params.toString();
+                window.location = '{{ request.path }}?' + params.toString() + '#preset-filter';
             });
 
             // Advanced filter toggle — show when active filters exist
