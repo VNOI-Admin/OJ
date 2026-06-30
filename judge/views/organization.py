@@ -636,10 +636,17 @@ class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin,
             messages.warning(request, _('No problems selected for deletion.'))
             return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
 
+        if len(problem_ids) > 100:
+            messages.error(request, _('Cannot delete more than 100 problems at once.'))
+            return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
+
         problems = Problem.available.filter(
             id__in=problem_ids,
             organization=org,
         )
+
+        if not request.user.is_superuser:
+            problems = problems.filter(authors=request.profile)
 
         count = problems.count()
         if count > 0:
@@ -800,7 +807,7 @@ class OrganizationStorageDashboard(QueryStringSortMixin, LoginRequiredMixin, Tit
     paginate_by = 100
     sql_sort = frozenset(('data_size', 'last_submission_date'))
     all_sorts = sql_sort
-    default_sort = 'last_submission_date'
+    default_sort = '-data_size'
 
     def get_title(self):
         return _('Organization cost - %s') % self.organization.name

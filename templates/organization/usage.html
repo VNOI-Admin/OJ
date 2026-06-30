@@ -341,16 +341,8 @@
                     <th>{{ _('Problem Code') }}</th>
                     <th>{{ _('Problem Name') }}</th>
                     <th>{{ _('Authors') }}</th>
-                    <th>
-                        <a href="{{ sort_links.data_size if sort_links else '#' }}">
-                            {{ _('Total Size') }}{{ sort_order.data_size if sort_order else '' }}
-                        </a>
-                    </th>
-                    <th>
-                        <a href="{{ sort_links.last_submission_date if sort_links else '#' }}">
-                            {{ _('Last Submission') }}{{ sort_order.last_submission_date if sort_order else '' }}
-                        </a>
-                    </th>
+                    <th>{{ _('Total Size') }}</th>
+                    <th>{{ _('Last Submission') }}</th>
                     <th>{{ _('Download') }}</th>
                     <th>{{ _('Delete') }}</th>
                 </tr>
