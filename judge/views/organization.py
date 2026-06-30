@@ -880,7 +880,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
         label_recent = _('< %(months)d months ago')
 
         buckets = [
-            (_('Never submitted'), None, None),
+            (_('No submissions'), None, None),
             (label_threshold % {'months': 12}, ago(365), None),
             (label_range % {'from': 9, 'to': 12}, ago(274), ago(365)),
             (label_range % {'from': 6, 'to': 9}, ago(183), ago(274)),

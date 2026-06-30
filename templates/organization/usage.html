@@ -164,7 +164,7 @@
                 var checkedCount = $('.problem-select-checkbox:checked').length;
                 if (checkedCount === 0) return;
 
-                if (confirm("{{ _('Are you sure you want to delete the selected problems? This action cannot be easily undone.') }}")) {
+                if (confirm("{{ _('Are you sure you want to delete the selected problems? This action cannot be undone.') }}")) {
                     var $form = $('<form>')
                         .attr('method', 'POST')
                         .attr('action', "{{ url('organization_problems_bulk_delete', organization.slug) }}");
@@ -352,7 +352,7 @@
                     <option value="6">{{ _('Last submission %(months)d+ months ago', months=6) }}</option>
                     <option value="9">{{ _('Last submission %(months)d+ months ago', months=9) }}</option>
                     <option value="12">{{ _('Last submission %(months)d+ months ago', months=12) }}</option>
-                    <option value="never">{{ _('Never submitted') }}</option>
+                    <option value="never">{{ _('No submissions') }}</option>
                 </select>
                 <a href="#" id="show-advanced-filter" style="font-size: 13px; white-space: nowrap;">{{ _('Advanced filter') }} <i class="fa fa-chevron-down"></i></a>
             </div>
