@@ -1,22 +1,23 @@
 <script type="text/javascript" src="{{ static('libs/chart.js/Chart.js') }}"></script>
 <script type="text/javascript">
-    function draw_pie_chart(data, $chart) {
+    function draw_pie_chart(data, $chart, opts) {
         var ctx = $chart.find('canvas')[0].getContext('2d');
+        var options = Object.assign({
+            maintainAspectRatio: false,
+            responsive: false,
+            animation: false,
+            legend: {
+                position: 'right',
+                labels: {
+                    fontColor: 'black',
+                    boxWidth: 20,
+                },
+            },
+        }, opts);
         var chart = new Chart(ctx, {
             type: 'pie',
             data: data,
-            options: {
-                maintainAspectRatio: false,
-                responsive: false,
-                animation: false,
-                legend: {
-                    position: 'right',
-                    labels: {
-                        fontColor: 'black',
-                        boxWidth: 20,
-                    },
-                },
-            },
+            options: options,
         });
         return chart;
     }

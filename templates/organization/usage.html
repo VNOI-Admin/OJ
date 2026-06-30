@@ -96,6 +96,13 @@
             // Activate default tab
             $('#inner-page-tabs .tab a[data-tab="storage"]').click();
 
+            // Storage breakdown pie charts
+            var storagePieOpts = {
+                responsive: true,
+            };
+            draw_pie_chart({{ storage_count_chart|tojson }}, $('#storage-count-chart'), storagePieOpts);
+            draw_pie_chart({{ storage_size_chart|tojson }}, $('#storage-size-chart'), storagePieOpts);
+
             // Initialize select2 for author dropdown
             $('#author-select').select2({
                 theme: '{{ DMOJ_SELECT2_THEME }}',
@@ -317,6 +324,17 @@
             {% endif %}
         </div>
 
+        <div style="display: flex; gap: 30px; margin: 20px 0; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 280px;">
+                <h4 style="text-align: center; margin-bottom: 8px;">{{ _('Problems by last submission time') }}</h4>
+                <div id="storage-count-chart" style="height: 320px;"><canvas></canvas></div>
+            </div>
+            <div style="flex: 1; min-width: 280px;">
+                <h4 style="text-align: center; margin-bottom: 8px;">{{ _('Storage by last submission time') }}</h4>
+                <div id="storage-size-chart" style="height: 320px;"><canvas></canvas></div>
+            </div>
+        </div>
+
         <!-- Filter Form -->
         <div class="filter-section">
             <!-- Preset filters -->
@@ -325,11 +343,11 @@
                 <select id="quick-filter-select" class="form-control" style="min-width: 320px;">
                     <option value="">— {{ _('Select a filter') }} —</option>
 
-                    <option value="3">{{ _('No submissions in the last %(month)d months', month=3) }}</option>
-                    <option value="6">{{ _('No submissions in the last %(month)d months', month=6) }}</option>
-                    <option value="9">{{ _('No submissions in the last %(month)d months', month=9) }}</option>
-                    <option value="12">{{ _('No submissions in the last %(month)d months', month=12) }}</option>
-                    <option value="never">{{ _('Never had a submission') }}</option>
+                    <option value="3">{{ _('Last submission %(months)d+ months ago', months=3) }}</option>
+                    <option value="6">{{ _('Last submission %(months)d+ months ago', months=6) }}</option>
+                    <option value="9">{{ _('Last submission %(months)d+ months ago', months=9) }}</option>
+                    <option value="12">{{ _('Last submission %(months)d+ months ago', months=12) }}</option>
+                    <option value="never">{{ _('Never submitted') }}</option>
                 </select>
                 <a href="#" id="show-advanced-filter" style="font-size: 13px; white-space: nowrap;">{{ _('Advanced filter') }} <i class="fa fa-chevron-down"></i></a>
             </div>

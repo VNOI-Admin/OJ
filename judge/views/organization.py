@@ -1,3 +1,4 @@
+import datetime
 from functools import cached_property
 
 from django import forms
@@ -5,14 +6,16 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.db.models import Count, FilteredRelation, Q, Subquery, OuterRef
+from django.db.models import Count, FilteredRelation, Q, Subquery, OuterRef, Sum
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.template.defaultfilters import filesizeformat
 from django.utils import timezone
+from django.utils.dateparse import parse_date
 from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
@@ -27,7 +30,7 @@ from judge.tasks import on_new_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context
 from judge.utils.ranker import ranker
-from judge.utils.stats import get_lines_chart
+from judge.utils.stats import get_lines_chart, get_pie_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message, \
     paginate_query_context
 from judge.views.blog import BlogPostCreate, PostListBase
@@ -842,8 +845,6 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
                 pass
 
         # Filter by last submission time (after / before / never)
-        import datetime
-        from django.utils.dateparse import parse_date
         if self.request.GET.get('no_submission'):
             queryset = queryset.filter(last_submission_date__isnull=True)
         else:
@@ -861,16 +862,68 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
 
         return queryset.order_by('-data_size', 'id')
 
+    def _get_storage_pie_charts(self, now):
+        org = self.organization
+        all_problems = Problem.available.filter(organization=org).annotate(
+            data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
+        )
+        last_sub_qs = Submission.objects.filter(
+            problem=OuterRef('pk'),
+        ).order_by('-date').values('date')[:1]
+        all_problems = all_problems.annotate(last_submission_date=Subquery(last_sub_qs))
+
+        def ago(days):
+            return now - datetime.timedelta(days=days)
+
+        label_threshold = _('%(months)d+ months ago')
+        label_range = _('%(from)d-%(to)d months ago')
+        label_recent = _('< %(months)d months ago')
+
+        buckets = [
+            (_('Never submitted'), None, None),
+            (label_threshold % {'months': 12}, ago(365), None),
+            (label_range % {'from': 9, 'to': 12}, ago(274), ago(365)),
+            (label_range % {'from': 6, 'to': 9}, ago(183), ago(274)),
+            (label_range % {'from': 3, 'to': 6}, ago(91), ago(183)),
+            (label_recent % {'months': 3}, now, ago(91)),
+        ]
+
+        rows = []
+        for label, after, before in buckets:
+            if after is None:
+                qs = all_problems.filter(last_submission_date__isnull=True)
+            else:
+                filters = {'last_submission_date__lte': after}
+                if before is not None:
+                    filters['last_submission_date__gt'] = before
+                qs = all_problems.filter(**filters)
+            agg = qs.aggregate(cnt=Count('id'), total=Coalesce(Sum('data_size'), Value(0)))
+            rows.append((str(label), agg['cnt'], agg['total']))
+
+        total_cnt = sum(r[1] for r in rows) or 1
+        total_size = sum(r[2] for r in rows) or 1
+
+        count_data, size_data = [], []
+        for label, cnt, size in rows:
+            cnt_pct = round(cnt / total_cnt * 100)
+            size_pct = round(size / total_size * 100)
+            count_data.append(('{} ({}%, {} {})'.format(label, cnt_pct, cnt, _('problems')), cnt))
+            size_data.append(('{} ({}%, {})'.format(label, size_pct, filesizeformat(size)), size))
+
+        return get_pie_chart(count_data), get_pie_chart(size_data)
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         org = self.organization
         add_quota_context(org, context)
 
-        today = timezone.now().date()
+        today = timezone.now()
         context['active_quotas'] = list(
-            org.quotas.filter(start_date__lte=today, end_date__gte=today).order_by('end_date'),
+            org.quotas.filter(start_date__lte=today.date(), end_date__gte=today.date()).order_by('end_date'),
         )
+
+        context['storage_count_chart'], context['storage_size_chart'] = self._get_storage_pie_charts(today)
 
         # Credit/cost chart context (merged from usage page)
         usages = OrganizationMonthlyUsage.objects.filter(organization=org) \
