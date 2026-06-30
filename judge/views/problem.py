@@ -150,6 +150,35 @@ class ProblemSolution(SolvedProblemMixin, ProblemMixin, TitleMixin, CommentedDet
                                _('Could not find an editorial with the code "%s".') % code, status=404)
 
 
+class ProblemComments(ProblemMixin, CommentedDetailView):
+    context_object_name = 'problem'
+    template_name = 'problem/comments-tab.html'
+
+    def get_object(self, queryset=None):
+        problem = super(ProblemComments, self).get_object(queryset)
+        user = self.request.user
+        authed = user.is_authenticated
+        self.contest_problem = (None if not authed or user.profile.current_contest is None else
+                                get_contest_problem(problem, user.profile))
+        return problem
+
+    def is_comment_locked(self):
+        if self.contest_problem and self.contest_problem.contest.use_clarifications:
+            return True
+        return super(ProblemComments, self).is_comment_locked()
+
+    def get_comment_page(self):
+        return 'p:%s' % self.object.code
+
+    def get_context_data(self, **kwargs):
+        context = super(ProblemComments, self).get_context_data(**kwargs)
+        if self.contest_problem and self.contest_problem.contest.use_clarifications:
+            clarifications = self.object.clarifications
+            context['has_clarifications'] = clarifications.count() > 0
+            context['clarifications'] = clarifications.order_by('-date')
+        return context
+
+
 class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMixin, View):
     context_object_name = 'problem'
     template_name = 'problem/raw.html'
