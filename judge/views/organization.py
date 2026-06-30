@@ -27,6 +27,7 @@ from judge.models import BlogPost, Comment, Contest, Language, Organization, Org
     Problem, Profile, Submission
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
+from judge.utils.cache_helper import storage_pie_cache_factory
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context
 from judge.utils.ranker import ranker
@@ -663,9 +664,11 @@ class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin,
         if count > 0:
             with revisions.create_revision(atomic=True):
                 for problem in problems:
-                    problem.mark_as_deleted()
+                    problem.mark_as_deleted(invalidate_storage_cache=False)
                 revisions.set_user(request.user)
                 revisions.set_comment(_('Bulk marked as deleted'))
+
+            storage_pie_cache_factory(org.id).delete_cache()
             messages.success(request, ngettext(
                 'Successfully deleted %d problem.',
                 'Successfully deleted %d problems.',
@@ -864,47 +867,60 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
 
     def _get_storage_pie_charts(self, now):
         org = self.organization
-        all_problems = Problem.available.filter(organization=org).annotate(
-            data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
-        )
-        last_sub_qs = Submission.objects.filter(
-            problem=OuterRef('pk'),
-        ).order_by('-date').values('date')[:1]
-        all_problems = all_problems.annotate(last_submission_date=Subquery(last_sub_qs))
 
         def ago(days):
             return now - datetime.timedelta(days=days)
 
-        label_threshold = _('%(months)d+ months ago')
-        label_range = _('%(from)d-%(to)d months ago')
-        label_recent = _('< %(months)d months ago')
-
-        buckets = [
-            (_('No submissions'), None, None),
-            (label_threshold % {'months': 12}, ago(365), None),
-            (label_range % {'from': 9, 'to': 12}, ago(274), ago(365)),
-            (label_range % {'from': 6, 'to': 9}, ago(183), ago(274)),
-            (label_range % {'from': 3, 'to': 6}, ago(91), ago(183)),
-            (label_recent % {'months': 3}, now, ago(91)),
+        bucket_ranges = [
+            (None, None),
+            (ago(365), None),
+            (ago(274), ago(365)),
+            (ago(183), ago(274)),
+            (ago(91), ago(183)),
+            (now, ago(91)),
         ]
 
-        rows = []
-        for label, after, before in buckets:
-            if after is None:
-                qs = all_problems.filter(last_submission_date__isnull=True)
-            else:
-                filters = {'last_submission_date__lte': after}
-                if before is not None:
-                    filters['last_submission_date__gt'] = before
-                qs = all_problems.filter(**filters)
-            agg = qs.aggregate(cnt=Count('id'), total=Coalesce(Sum('data_size'), Value(0)))
-            rows.append((str(label), agg['cnt'], agg['total']))
+        cache = storage_pie_cache_factory(org.id)
+        raw = cache.get_cache()
+        if raw is None:
+            all_problems = Problem.available.filter(organization=org).annotate(
+                data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
+            )
+            last_sub_qs = Submission.objects.filter(
+                problem=OuterRef('pk'),
+            ).order_by('-date').values('date')[:1]
+            all_problems = all_problems.annotate(last_submission_date=Subquery(last_sub_qs))
 
-        total_cnt = sum(r[1] for r in rows) or 1
-        total_size = sum(r[2] for r in rows) or 1
+            raw = []
+            for after, before in bucket_ranges:
+                if after is None:
+                    qs = all_problems.filter(last_submission_date__isnull=True)
+                else:
+                    filters = {'last_submission_date__lte': after}
+                    if before is not None:
+                        filters['last_submission_date__gt'] = before
+                    qs = all_problems.filter(**filters)
+                agg = qs.aggregate(cnt=Count('id'), total=Coalesce(Sum('data_size'), Value(0)))
+                raw.append((agg['cnt'], agg['total']))
+            cache.set_cache(raw)
+
+        label_threshold = _('Last submission %(months)d+ months ago')
+        label_range = _('Last submission %(from)d–%(to)d months ago')
+        label_recent = _('Last submission < %(months)d months ago')
+        labels = [
+            _('Never submitted'),
+            label_threshold % {'months': 12},
+            label_range % {'from': 9, 'to': 12},
+            label_range % {'from': 6, 'to': 9},
+            label_range % {'from': 3, 'to': 6},
+            label_recent % {'months': 3},
+        ]
+
+        total_cnt = sum(r[0] for r in raw) or 1
+        total_size = sum(r[1] for r in raw) or 1
 
         count_data, size_data = [], []
-        for label, cnt, size in rows:
+        for label, (cnt, size) in zip(labels, raw):
             cnt_pct = round(cnt / total_cnt * 100)
             size_pct = round(size / total_size * 100)
             count_data.append(('{} ({}%, {} {})'.format(label, cnt_pct, cnt, _('problems')), cnt))
