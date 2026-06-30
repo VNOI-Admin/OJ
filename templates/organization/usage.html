@@ -177,19 +177,26 @@
 
             // Quick filter select
             $('#quick-filter-select').change(function () {
-                var months = parseInt($(this).val());
-                if (!months) return;
-                var today = new Date();
-                var target = new Date(today);
-                target.setMonth(today.getMonth() - months);
-                var yyyy = target.getFullYear();
-                var mm = String(target.getMonth() + 1).padStart(2, '0');
-                var dd = String(target.getDate()).padStart(2, '0');
+                var val = $(this).val();
+                if (!val) return;
 
                 var params = new URLSearchParams();
-                params.set('last_sub_before', yyyy + '-' + mm + '-' + dd);
                 if (currentProfileId) params.set('author', currentProfileId);
-                params.set('preset', months);
+                params.set('preset', val);
+
+                if (val === 'never') {
+                    params.set('no_submission', '1');
+                } else {
+                    var months = parseInt(val);
+                    var today = new Date();
+                    var target = new Date(today);
+                    target.setMonth(today.getMonth() - months);
+                    var yyyy = target.getFullYear();
+                    var mm = String(target.getMonth() + 1).padStart(2, '0');
+                    var dd = String(target.getDate()).padStart(2, '0');
+                    params.set('last_sub_before', yyyy + '-' + mm + '-' + dd);
+                }
+
                 window.location = '{{ request.path }}?' + params.toString();
             });
 
@@ -322,6 +329,7 @@
                     <option value="6">{{ _('No submissions in the last %(month)d months', month=6) }}</option>
                     <option value="9">{{ _('No submissions in the last %(month)d months', month=9) }}</option>
                     <option value="12">{{ _('No submissions in the last %(month)d months', month=12) }}</option>
+                    <option value="never">{{ _('Never had a submission') }}</option>
                 </select>
                 <a href="#" id="show-advanced-filter" style="font-size: 13px; white-space: nowrap;">{{ _('Advanced filter') }} <i class="fa fa-chevron-down"></i></a>
             </div>

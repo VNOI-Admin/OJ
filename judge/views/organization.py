@@ -841,20 +841,23 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             except ValueError:
                 pass
 
-        # Filter by last submission time (after / before)
+        # Filter by last submission time (after / before / never)
         import datetime
         from django.utils.dateparse import parse_date
-        for key, lookup, time_val in [('last_sub_after', '__gte', datetime.time.min),
-                                      ('last_sub_before', '__lte', datetime.time.max)]:
-            val = self.request.GET.get(key)
-            if val:
-                try:
-                    date_val = parse_date(val)
-                    if date_val:
-                        dt_val = timezone.make_aware(datetime.datetime.combine(date_val, time_val))
-                        queryset = queryset.filter(**{f'last_submission_date{lookup}': dt_val})
-                except ValueError:
-                    pass
+        if self.request.GET.get('no_submission'):
+            queryset = queryset.filter(last_submission_date__isnull=True)
+        else:
+            for key, lookup, time_val in [('last_sub_after', '__gte', datetime.time.min),
+                                          ('last_sub_before', '__lte', datetime.time.max)]:
+                val = self.request.GET.get(key)
+                if val:
+                    try:
+                        date_val = parse_date(val)
+                        if date_val:
+                            dt_val = timezone.make_aware(datetime.datetime.combine(date_val, time_val))
+                            queryset = queryset.filter(**{f'last_submission_date{lookup}': dt_val})
+                    except ValueError:
+                        pass
 
         return queryset.order_by('-data_size', 'id')
 
