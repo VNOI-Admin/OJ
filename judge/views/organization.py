@@ -646,7 +646,15 @@ class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin,
         )
 
         if not request.user.is_superuser:
+            all_count = problems.count()
             problems = problems.filter(authors=request.profile)
+            skipped = all_count - problems.count()
+            if skipped > 0:
+                messages.error(request, ngettext(
+                    '%d problem was skipped because you are not its author.',
+                    '%d problems were skipped because you are not their author.',
+                    skipped,
+                ) % skipped)
 
         count = problems.count()
         if count > 0:
@@ -661,7 +669,7 @@ class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin,
                 count,
             ) % count)
         else:
-            messages.warning(request, _('No valid problems could be deleted.'))
+            messages.error(request, _('No valid problems could be deleted.'))
 
         return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
 
