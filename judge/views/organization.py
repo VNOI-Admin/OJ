@@ -807,15 +807,12 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
         self.object.save()
 
 
-class OrganizationStorageDashboard(QueryStringSortMixin, LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
+class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
                                    InfinitePaginationMixin, ListView):
     """Dashboard showing storage usage for organization admins."""
     template_name = 'organization/usage.html'
     context_object_name = 'problems'
     paginate_by = 100
-    sql_sort = frozenset(('data_size', 'last_submission_date'))
-    all_sorts = sql_sort
-    default_sort = '-data_size'
 
     def get_title(self):
         return _('Organization cost - %s') % self.organization.name
@@ -859,22 +856,7 @@ class OrganizationStorageDashboard(QueryStringSortMixin, LoginRequiredMixin, Tit
                 except ValueError:
                     pass
 
-        # Order the queryset
-        sort_key = self.order.lstrip('-')
-        descending = self.order.startswith('-')
-        if sort_key == 'last_submission_date':
-            queryset = queryset.order_by(
-                F('last_submission_date').desc(nulls_last=True) if descending
-                else F('last_submission_date').asc(nulls_first=True),
-                'id',
-            )
-        elif sort_key == 'data_size':
-            queryset = queryset.order_by('-data_size' if descending else 'data_size', 'id')
-        else:
-            # Fallback default sort
-            queryset = queryset.order_by(F('last_submission_date').asc(nulls_first=True), 'id')
-
-        return queryset
+        return queryset.order_by('-data_size', 'id')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -916,12 +898,10 @@ class OrganizationStorageDashboard(QueryStringSortMixin, LoginRequiredMixin, Tit
             'second': paid_credit % 60,
         }
 
-        # Add filters and sort context
         context['org_admins'] = org.admins.select_related('user')
         context['selected_author'] = self.request.GET.get('author')
         context['last_sub_after'] = self.request.GET.get('last_sub_after')
         context['last_sub_before'] = self.request.GET.get('last_sub_before')
-        context.update(self.get_sort_context())
 
         context.update(paginate_query_context(self.request))
 
