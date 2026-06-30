@@ -1,3 +1,6 @@
+import os
+
+from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
@@ -15,6 +18,7 @@ from judge.utils.views import TitleMixin
 __all__ = [
     'UserFileListView', 'UserFileDetailView', 'UserFileDeleteView',
     'UserFileAccessView', 'UserFileSearchView', 'AttachmentAccessView',
+    'UserFileUploadView',
 ]
 
 
@@ -116,3 +120,23 @@ class AttachmentAccessView(View):
         if not attachment.can_view_by(request.user):
             raise Http404
         return serve_user_file(request, attachment.file)
+
+
+class UserFileUploadView(LoginRequiredMixin, View):
+    def post(self, request):
+        f = request.FILES.get('file')
+        if not f:
+            return JsonResponse({'error': _('No file provided.')}, status=400)
+        ext = os.path.splitext(f.name)[1].lstrip('.').lower()
+        if ext not in settings.USER_FILE_ATTACHMENT_SAFE_EXTS:
+            return JsonResponse({'error': _('Invalid file type.')}, status=400)
+        if f.size > settings.USER_FILE_ATTACHMENT_MAX_SIZE:
+            return JsonResponse({'error': _('File too large.')}, status=400)
+        user_file = UserFile(file=f, file_scope=UserFile.FileScope.ATTACHMENT, user=request.profile)
+        custom_name = request.POST.get('filename', '').strip()
+        if custom_name:
+            if os.path.splitext(custom_name)[1].lower() != os.path.splitext(f.name)[1].lower():
+                return JsonResponse({'error': _('Filename extension must match the uploaded file.')}, status=400)
+            user_file.filename = custom_name
+        user_file.save()
+        return JsonResponse({'id': user_file.id, 'filename': user_file.filename})

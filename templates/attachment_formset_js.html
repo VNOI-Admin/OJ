@@ -1,21 +1,14 @@
 function initAttachmentRow(row) {
     var $nameField = row.find('input[id$="-display_name"]');
-    row.find('input[id$="-new_file"]').on('change', function() {
-        if (!$nameField.val() && this.files && this.files[0])
-            $nameField.val(this.files[0].name);
-    });
     row.find('select[id$="-file"]').on('select2:select', function(e) {
-        if (!$nameField.val())
-            $nameField.val(e.params.data.text);
+        $nameField.val(e.params.data.text);
     });
 }
 
 $('form').on('submit.attachments', function() {
     $('#attachment_form_set tr.attachment-row').each(function() {
         var row = $(this);
-        var hasFile = !!row.find('select[id$="-file"]').val();
-        var hasNewFile = !!row.find('input[id$="-new_file"]').val();
-        if (!hasFile && !hasNewFile) {
+        if (!row.find('select[id$="-file"]').val()) {
             row.find('input[id$="-display_name"]').val('');
         }
     });
