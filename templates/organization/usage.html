@@ -113,17 +113,35 @@
                 placeholder: "{{ _('Filter by author...') }}"
             });
 
-            // Select All checkbox logic (only affects current page)
+            // Disable checkboxes for problems the user cannot delete
+            var currentProfileId = {{ request.profile.id if request.profile else 'null' }};
+            var isSuperuser = {{ 'true' if request.user.is_superuser else 'false' }};
+
+            $('.problem-select-checkbox').each(function () {
+                var authorIds = $(this).data('author-ids');
+                if (!isSuperuser && !(currentProfileId && authorIds.indexOf(currentProfileId) !== -1)) {
+                    $(this).prop('disabled', true).css('opacity', '0.4');
+                    $(this).wrap('<span style="position:relative;display:inline-block;">');
+                    $(this).after('<span class="no-delete-overlay" style="position:absolute;inset:0;cursor:not-allowed;" title="{{ _("Cannot delete problems from other authors.") }}"></span>');
+                }
+            });
+
+            $(document).on('click', '.no-delete-overlay', function () {
+                alert("{{ _('Cannot delete problems from other authors.') }}");
+            });
+
+            // Select All — skips disabled checkboxes
             $('#select-all-checkbox').change(function () {
                 var checked = this.checked;
-                $('.problem-select-checkbox').each(function () {
+                $('.problem-select-checkbox:not(:disabled)').each(function () {
                     this.checked = checked;
                 });
                 updateDeleteButtonState();
             });
 
             $('.problem-select-checkbox').change(function () {
-                var allChecked = $('.problem-select-checkbox:checked').length === $('.problem-select-checkbox').length;
+                var selectable = $('.problem-select-checkbox:not(:disabled)');
+                var allChecked = selectable.filter(':checked').length === selectable.length && selectable.length > 0;
                 $('#select-all-checkbox').prop('checked', allChecked);
                 updateDeleteButtonState();
             });
@@ -169,7 +187,7 @@
                 var today = new Date();
                 var targetDate = new Date(today);
                 targetDate.setMonth(today.getMonth() - months);
-                
+
                 var yyyy = targetDate.getFullYear();
                 var mm = String(targetDate.getMonth() + 1).padStart(2, '0');
                 var dd = String(targetDate.getDate()).padStart(2, '0');
@@ -181,8 +199,6 @@
             });
 
             // Show delete buttons only for authors and superusers
-            var currentProfileId = {{ request.profile.id if request.profile else 'null' }};
-            var isSuperuser = {{ 'true' if request.user.is_superuser else 'false' }};
             $('.delete-btn').each(function() {
                 var authorIds = $(this).data('author-ids');
                 if (isSuperuser || (currentProfileId && authorIds.indexOf(currentProfileId) !== -1)) {
@@ -353,7 +369,9 @@
                 {% for problem in problems %}
                 <tr>
                     <td style="text-align: center; vertical-align: middle;">
-                        <input type="checkbox" class="problem-select-checkbox" value="{{ problem.id }}" style="transform: scale(1.2); cursor: pointer;">
+                        <input type="checkbox" class="problem-select-checkbox" value="{{ problem.id }}"
+                               data-author-ids="{{ problem.authors.all()|map(attribute='id')|list|tojson }}"
+                               style="transform: scale(1.2); cursor: pointer;">
                     </td>
                     <td class="problem-code">
                         <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code }}</a>
