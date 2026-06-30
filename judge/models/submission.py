@@ -290,6 +290,9 @@ class Submission(models.Model):
 
             # For submission heat map
             models.Index(fields=['user', 'date']),
+
+            # For organization problem list: last submission time filter
+            models.Index(fields=['problem', '-date']),
         ]
 
 

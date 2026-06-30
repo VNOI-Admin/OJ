@@ -25,7 +25,7 @@
         {% csrf_token %}
         <input type="hidden" name="next" value="{{ next }}">
 
-        <p>{{ _('Are you sure you want to delete this problem? This action cannot be easily undone.') }}</p>
+        <p>{{ _('Are you sure you want to delete this problem? This action cannot be undone.') }}</p>
 
         {% if affected_contests %}
             <p><strong>{{ _('Affected contests:') }}</strong></p>
