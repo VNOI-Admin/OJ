@@ -43,18 +43,7 @@
             margin-bottom: 5px;
             font-weight: bold;
         }
-        .preset-buttons {
-            margin-top: 8px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 5px;
-        }
-        .preset-btn {
-            padding: 2px 8px !important;
-            font-size: 11px !important;
-            height: auto !important;
-            line-height: 1.4 !important;
-        }
+
         .bulk-actions {
             margin-bottom: 15px;
             display: flex;
@@ -111,6 +100,11 @@
             $('#author-select').select2({
                 theme: '{{ DMOJ_SELECT2_THEME }}',
                 placeholder: "{{ _('Filter by author...') }}"
+            });
+
+            $('#quick-filter-select').select2({
+                theme: '{{ DMOJ_SELECT2_THEME }}',
+                minimumResultsForSearch: Infinity
             });
 
             // Disable checkboxes for problems the user cannot delete
@@ -180,22 +174,41 @@
                 }
             });
 
-            // Preset months logic
-            $('.preset-btn').click(function (e) {
-                e.preventDefault();
-                var months = $(this).data('months');
+
+            // Quick filter select
+            $('#quick-filter-select').change(function () {
+                var months = parseInt($(this).val());
+                if (!months) return;
                 var today = new Date();
-                var targetDate = new Date(today);
-                targetDate.setMonth(today.getMonth() - months);
+                var target = new Date(today);
+                target.setMonth(today.getMonth() - months);
+                var yyyy = target.getFullYear();
+                var mm = String(target.getMonth() + 1).padStart(2, '0');
+                var dd = String(target.getDate()).padStart(2, '0');
 
-                var yyyy = targetDate.getFullYear();
-                var mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-                var dd = String(targetDate.getDate()).padStart(2, '0');
-                var formattedDate = yyyy + '-' + mm + '-' + dd;
+                var params = new URLSearchParams();
+                params.set('last_sub_before', yyyy + '-' + mm + '-' + dd);
+                if (currentProfileId) params.set('author', currentProfileId);
+                params.set('preset', months);
+                window.location = '{{ request.path }}?' + params.toString();
+            });
 
-                $('#last-sub-before-input').val(formattedDate);
-                $('#last-sub-after-input').val('');
-                $('#filter-form').submit();
+            // Advanced filter toggle — show when active filters exist
+            var hasActiveFilter = {{ 'true' if (last_sub_after or last_sub_before or selected_author) else 'false' }};
+            var urlParams = new URLSearchParams(window.location.search);
+            var presetMonths = urlParams.get('preset');
+            if (presetMonths) {
+                $('#quick-filter-select').val(presetMonths).trigger('change.select2');
+            }
+            if (hasActiveFilter && !presetMonths) {
+                $('#preset-filter').hide();
+                $('#advanced-filter').show();
+            }
+
+            $('#show-advanced-filter').click(function (e) {
+                e.preventDefault();
+                $('#preset-filter').hide();
+                $('#advanced-filter').show();
             });
 
             // Show delete buttons only for authors and superusers
@@ -299,46 +312,56 @@
 
         <!-- Filter Form -->
         <div class="filter-section">
-            <form id="filter-form" method="GET" action="{{ request.path }}">
-                <div class="filter-row">
-                    <div class="filter-item">
-                        <label for="author-select">{{ _('Author') }}</label>
-                        <select id="author-select" name="author" style="width: 100%">
-                            <option value="">{{ _('All Authors') }}</option>
-                            {% for admin in org_admins %}
-                                <option value="{{ admin.id }}" {% if selected_author == admin.id|string %}selected{% endif %}>
-                                    {{ admin.user.username }}
-                                </option>
-                            {% endfor %}
-                        </select>
-                    </div>
+            <!-- Preset filters -->
+            <div id="preset-filter" style="display: flex; align-items: center; gap: 12px;">
+                <label for="quick-filter-select" style="font-weight: bold; margin: 0; white-space: nowrap;">{{ _('Quick filter') }}</label>
+                <select id="quick-filter-select" class="form-control" style="min-width: 320px;">
+                    <option value="">— {{ _('Select a filter') }} —</option>
 
-                    <div class="filter-item">
-                        <label>{{ _('Last Submission Time') }}</label>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="date" id="last-sub-after-input" name="last_sub_after" class="form-control" value="{{ last_sub_after or '' }}" placeholder="From">
-                            <span>to</span>
-                            <input type="date" id="last-sub-before-input" name="last_sub_before" class="form-control" value="{{ last_sub_before or '' }}" placeholder="To">
-                        </div>
-                        <div class="preset-buttons">
-                            <button type="button" class="preset-btn btn btn-default" data-months="1">1 {{ _('month') }}</button>
-                            <button type="button" class="preset-btn btn btn-default" data-months="3">3 {{ _('months') }}</button>
-                            <button type="button" class="preset-btn btn btn-default" data-months="6">6 {{ _('months') }}</button>
-                            <button type="button" class="preset-btn btn btn-default" data-months="9">9 {{ _('months') }}</button>
-                            <button type="button" class="preset-btn btn btn-default" data-months="12">12 {{ _('months') }}</button>
-                        </div>
-                    </div>
+                    <option value="3">{{ _('No submissions in the last %(month)d months', month=3) }}</option>
+                    <option value="6">{{ _('No submissions in the last %(month)d months', month=6) }}</option>
+                    <option value="9">{{ _('No submissions in the last %(month)d months', month=9) }}</option>
+                    <option value="12">{{ _('No submissions in the last %(month)d months', month=12) }}</option>
+                </select>
+                <a href="#" id="show-advanced-filter" style="font-size: 13px; white-space: nowrap;">{{ _('Advanced filter') }} <i class="fa fa-chevron-down"></i></a>
+            </div>
 
-                    <div style="display: flex; gap: 10px;">
-                        <button type="submit" class="btn btn-primary" style="height: 34px;">
-                            <i class="fa fa-filter"></i> {{ _('Filter') }}
-                        </button>
-                        <a href="{{ request.path }}" class="btn btn-default" style="height: 34px; line-height: 20px;">
-                            {{ _('Reset') }}
-                        </a>
+            <!-- Advanced filter (hidden by default) -->
+            <div id="advanced-filter" style="display: none; margin-top: 12px;">
+                <form id="filter-form" method="GET" action="{{ request.path }}">
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label for="author-select">{{ _('Author') }}</label>
+                            <select id="author-select" name="author" style="width: 100%">
+                                <option value="">{{ _('All Authors') }}</option>
+                                {% for admin in org_admins %}
+                                    <option value="{{ admin.id }}" {% if selected_author == admin.id|string %}selected{% endif %}>
+                                        {{ admin.user.username }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="filter-item">
+                            <label>{{ _('Last Submission Time') }}</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="date" id="last-sub-after-input" name="last_sub_after" class="form-control" value="{{ last_sub_after or '' }}" placeholder="From">
+                                <span>to</span>
+                                <input type="date" id="last-sub-before-input" name="last_sub_before" class="form-control" value="{{ last_sub_before or '' }}" placeholder="To">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button type="submit" class="btn btn-primary" style="height: 34px;">
+                                <i class="fa fa-filter"></i> {{ _('Filter') }}
+                            </button>
+                            <a href="{{ request.path }}" class="btn btn-default" style="height: 34px; line-height: 20px;">
+                                {{ _('Reset') }}
+                            </a>
+                        </div>
                     </div>
-                </div>
-            </form>
+                </form>
+            </div>
         </div>
 
         <!-- Bulk Actions -->

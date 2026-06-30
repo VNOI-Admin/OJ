@@ -5,7 +5,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.db.models import Count, FilteredRelation, Q
+from django.db.models import Count, FilteredRelation, Q, Subquery, OuterRef
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
@@ -830,7 +830,7 @@ class OrganizationStorageDashboard(QueryStringSortMixin, LoginRequiredMixin, Tit
         ).prefetch_related('authors__user')
 
         # Annotate with the latest submission date
-        from django.db.models import Subquery, OuterRef
+
         last_sub_query = Submission.objects.filter(problem=OuterRef('pk')).order_by('-date').values('date')[:1]
         queryset = queryset.annotate(last_submission_date=Subquery(last_sub_query))
 
