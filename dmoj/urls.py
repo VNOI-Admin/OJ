@@ -113,8 +113,6 @@ urlpatterns = [
     path('problems', include([
         path('/', problem.ProblemList.as_view(), name='problem_list'),
         path('/random/', problem.RandomProblem.as_view(), name='problem_random'),
-        path('/suggest_list/', problem.SuggestList.as_view(), name='problem_suggest_list'),
-        path('/suggest', problem.ProblemSuggest.as_view(), name='problem_suggest'),
         path('/create', problem.ProblemCreate.as_view(), name='problem_create'),
         path('/import-polygon', problem.ProblemImportPolygon.as_view(), name='problem_import_polygon'),
     ])),
