@@ -44,11 +44,6 @@ def rejudge_problem_filter(self, problem_id, id_range=None, languages=None, resu
 def rescore_problem(self, problem_id, publicy_changed=False):
     problem = Problem.objects.get(id=problem_id)
     submissions = Submission.objects.filter(problem_id=problem_id)
-    if publicy_changed and problem.suggester is not None:
-        points = settings.VNOJ_CP_PROBLEM
-        if problem.is_public is False:
-            points = -points
-        problem.suggester.update_contribution_points(points)
 
     with Progress(self, submissions.count(), stage=_('Modifying submissions')) as p:
         rescored = 0

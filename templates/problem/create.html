@@ -1,0 +1,30 @@
+{% extends "problem/editor.html" %}
+
+{% block body %}
+<div>
+    {% if problem_limit_reached %}
+    <div class="alert alert-danger">
+        {{ _('Problem limit reached! Please delete some problems before creating new ones.') }}
+        {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+    </div>
+    {% elif problem_warning %}
+    <div class="alert alert-warning">
+        {{ _('You are approaching the problem limit') }} ({{ problem_count }} / {{ max_problems }}).
+        {{ _('You will not be able to create more problems if the limit is exceeded.') }}
+        {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+    </div>
+    {% endif %}
+    {% if perms.judge.import_polygon_package %}
+        <div class="alert alert-warning alert-dismissable">
+            <a class="close">x</a>
+            <a href="{{ url('problem_import_polygon') }}">{{ _('Import problem from Codeforces Polygon package') }}</a>
+        </div>
+    {% endif %}
+    <form action="" method="post" class="form-area" enctype="multipart/form-data" style="display: flex; justify-content: center; flex-direction: column;">
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <hr>
+        <div style="display: flex; justify-content: flex-end;"><input type="submit" value="{{ _('Create') }}" class="button"></div>
+    </form>
+</div>
+{% endblock %}
