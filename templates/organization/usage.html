@@ -424,7 +424,7 @@
                 <tr>
                     <td style="text-align: center; vertical-align: middle;">
                         <input type="checkbox" class="problem-select-checkbox" value="{{ problem.id }}"
-                               data-author-ids="{{ problem.authors.all()|map(attribute='id')|list|tojson }}"
+                               data-author-ids="{{ (problem.authors.all()|map(attribute='id')|list + problem.curators.all()|map(attribute='id')|list)|tojson }}"
                                style="transform: scale(1.2); cursor: pointer;">
                     </td>
                     <td class="problem-code">
@@ -434,7 +434,7 @@
                         <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
                     </td>
                     <td>
-                        {{ link_users(problem.authors.all()) }}
+                        {{ link_users((problem.authors.all()|list + problem.curators.all()|list)|unique(attribute='id')) }}
                     </td>
                     <td class="size-cell">
                         {{ problem.data_size|filesizeformat }}
@@ -445,7 +445,7 @@
                     <td>
                         <a href="{{ url('problem_download_full_package', problem.code) }}"
                            class="btn btn-xs delete-btn"
-                           data-author-ids="{{ problem.authors.all()|map(attribute='id')|list|tojson }}"
+                           data-author-ids="{{ (problem.authors.all()|map(attribute='id')|list + problem.curators.all()|map(attribute='id')|list)|tojson }}"
                            style="display:none;">
                             <i class="fa fa-download"></i> {{ _('Test data') }}
                         </a>
@@ -453,7 +453,7 @@
                     <td>
                         <a href="{{ url('problem_delete', problem.code) }}?next={{ request.path }}"
                            class="btn btn-xs btn-danger delete-btn"
-                           data-author-ids="{{ problem.authors.all()|map(attribute='id')|list|tojson }}"
+                           data-author-ids="{{ (problem.authors.all()|map(attribute='id')|list + problem.curators.all()|map(attribute='id')|list)|tojson }}"
                            style="display:none;">
                             <i class="fa fa-trash"></i> {{ _('Delete') }}
                         </a>

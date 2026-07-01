@@ -651,7 +651,7 @@ class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin,
 
         if not request.user.is_superuser:
             all_count = problems.count()
-            problems = problems.filter(authors=request.profile)
+            problems = problems.filter(Q(authors=request.profile) | Q(curators=request.profile))
             skipped = all_count - problems.count()
             if skipped > 0:
                 messages.error(request, ngettext(
@@ -830,7 +830,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
         ).only(
             'code', 'name',
-        ).prefetch_related('authors__user')
+        ).prefetch_related('authors__user', 'curators__user')
 
         # Annotate with the latest submission date
 
@@ -843,7 +843,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             try:
                 author_id = int(author_id)
                 if self.organization.admins.filter(id=author_id).exists():
-                    queryset = queryset.filter(authors__id=author_id)
+                    queryset = queryset.filter(Q(authors__id=author_id) | Q(curators__id=author_id))
             except ValueError:
                 pass
 
