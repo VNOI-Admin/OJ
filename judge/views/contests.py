@@ -40,8 +40,8 @@ from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
-from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
-    Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
+from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, \
+    ContestSubmission, ContestTag, Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
 from judge.ratings import RATING_CLASS, RATING_LEVELS, RATING_VALUES
 from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
@@ -875,7 +875,7 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
     ).values(
         'id', 'score', 'frozen_score', 'cumtime', 'frozen_cumtime',
         'tiebreaker', 'frozen_tiebreaker', 'is_disqualified', 'virtual',
-        'format_data',
+        'format_data', 'real_start',
         'user_id', 'user__display_rank', 'user__rating',
         'user__username_display_override',
         'user__user__username', 'user__user__first_name',
@@ -892,6 +892,7 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
             'tiebreaker': float(row['frozen_tiebreaker'] if frozen else row['tiebreaker']),
             'is_disqualified': row['is_disqualified'],
             'virtual': row['virtual'],
+            'real_start': int(row['real_start'].timestamp()) if row['real_start'] else None,
             'rating': row['rating__rating'],
             'user': _serialize_user(row, _user_url_tpl, _org_url_tpl),
             'format_data': _serialize_format_data(contest, problems, row['format_data'], frozen),
@@ -979,6 +980,11 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
                 'classes': RATING_CLASS,
                 'names': RATING_LEVELS,
             },
+            **(
+                {'virtual_subs_url': reverse('contest_virtual_subs', args=[contest.key])}
+                if contest.ended and contest.frozen_last_minutes == 0
+                else {}
+            ),
         }
         return problems, problems_data, contest_data
 
@@ -1000,10 +1006,25 @@ class ContestRanking(ContestRankingBase):
     def is_frozen(self):
         return self.object.is_frozen and not self.can_edit
 
+    @cached_property
+    def _is_virtual_participant(self):
+        if not self.request.user.is_authenticated or not self.object.ended:
+            return False
+        if self.object.frozen_last_minutes != 0:
+            return False
+        return self.object.users.filter(
+            user=self.request.profile,
+            virtual__gt=ContestParticipation.LIVE,
+        ).exists()
+
     @property
     def bypass_cache_ranking(self):
-        return self.object.scoreboard_cache_timeout == 0 or self.can_edit or \
-            (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user))
+        return (
+            self.object.scoreboard_cache_timeout == 0 or
+            self.can_edit or
+            (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user)) or
+            self._is_virtual_participant
+        )
 
     def _resolve_show_virtual(self):
         if 'show_virtual' in self.request.GET:
@@ -1046,6 +1067,31 @@ class ContestRanking(ContestRankingBase):
 
         contest_data['is_frozen'] = self.is_frozen
         contest_data['has_rating'] = contest.ratings.exists()
+
+        if self._is_virtual_participant:
+            virtual_part = contest.users.filter(
+                user=self.request.profile,
+                virtual__gt=ContestParticipation.LIVE,
+            ).order_by('-virtual').first()
+            if virtual_part:
+                vp_qs = contest.users.filter(pk=virtual_part.pk)
+                vp_data = make_contest_ranking_json(contest, problems, vp_qs, frozen=False)
+                if vp_data:
+                    own_subs = []
+                    for prob_id, points, result, date in (
+                        ContestSubmission.objects
+                        .filter(participation=virtual_part)
+                        .select_related('submission')
+                        .values_list('problem_id', 'points', 'submission__result', 'submission__date')
+                        .order_by('submission__date')
+                    ):
+                        t = (date - virtual_part.real_start).total_seconds()
+                        skip = 1 if result in (None, 'CE', 'IE') else 0
+                        own_subs.append([prob_id, float(points), skip, round(t, 3)])
+                    vp_data[0]['real_start'] = int(virtual_part.real_start.timestamp())
+                    vp_data[0]['subs'] = own_subs
+                    participations.append(vp_data[0])
+
         return {'contest': contest_data, 'problems': problems_data, 'participations': participations}
 
     def get_cached_json_ranking_data(self):
@@ -1214,6 +1260,57 @@ class ContestParticipationDisqualify(ContestMixin, SingleObjectMixin, View):
         else:
             participation.set_disqualified(not participation.is_disqualified)
         return HttpResponseRedirect(reverse('contest_ranking', args=(self.object.key,)))
+
+
+class ContestVirtualSubsData(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
+    def get(self, request, *args, **kwargs):
+        contest = self.get_object()
+
+        if not contest.ended:
+            raise Http404()
+        if contest.frozen_last_minutes != 0:
+            raise Http404()
+        if not contest.can_see_full_scoreboard(request.user):
+            raise Http404()
+
+        cache_key = f'contest_virtual_subs_{contest.key}'
+        data = cache.get(cache_key)
+        if data is None:
+            data = self._build_data(contest)
+            cache.set(cache_key, data, 3600)
+        return JsonResponse(data)
+
+    def _build_data(self, contest):
+        if contest.time_limit:
+            duration = int(contest.time_limit.total_seconds())
+        else:
+            duration = int((contest.end_time - contest.start_time).total_seconds())
+
+        subs_qs = (
+            ContestSubmission.objects
+            .filter(
+                participation__contest=contest,
+                participation__virtual=ContestParticipation.LIVE,
+                submission__date__gte=contest.start_time,
+                submission__date__lt=contest.end_time,
+            )
+            .select_related('submission')
+            .values_list('participation_id', 'problem_id', 'points', 'submission__result', 'submission__date')
+            .order_by('submission__date')
+        )
+
+        subs = []
+        for part_id, prob_id, points, result, date in subs_qs:
+            t = (date - contest.start_time).total_seconds()
+            skip = 1 if result in (None, 'CE', 'IE') else 0
+            subs.append([part_id, prob_id, float(points), skip, round(t, 3)])
+
+        return {
+            'start': int(contest.start_time.timestamp()),
+            'duration': duration,
+            'frozen': 0,
+            'subs': subs,
+        }
 
 
 class ContestMossMixin(ContestMixin, PermissionRequiredMixin):
