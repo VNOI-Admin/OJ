@@ -46,6 +46,9 @@ __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'Organiz
            'OrganizationQuotaAdd', 'OrganizationQuotaDelete']
 
 
+MAX_BULK_DELETE_PROBLEMS = 200
+
+
 class OrganizationMixin(object):
     model = Organization
 
@@ -640,8 +643,8 @@ class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin,
             messages.warning(request, _('No problems selected for deletion.'))
             return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
 
-        if len(problem_ids) > 100:
-            messages.error(request, _('Cannot delete more than 100 problems at once.'))
+        if len(problem_ids) > MAX_BULK_DELETE_PROBLEMS:
+            messages.error(request, _('Cannot delete more than %d problems at once.') % MAX_BULK_DELETE_PROBLEMS)
             return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
 
         problems = Problem.available.filter(
@@ -818,7 +821,7 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
     """Dashboard showing storage usage for organization admins."""
     template_name = 'organization/usage.html'
     context_object_name = 'problems'
-    paginate_by = 100
+    paginate_by = MAX_BULK_DELETE_PROBLEMS
 
     def get_title(self):
         return _('Organization cost - %s') % self.organization.name
@@ -905,10 +908,10 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
             cache.set_cache(raw)
 
         label_threshold = _('Last submission %(months)d+ months ago')
-        label_range = _('Last submission %(from)d–%(to)d months ago')
+        label_range = _('Last submission %(from)d-%(to)d months ago')
         label_recent = _('Last submission < %(months)d months ago')
         labels = [
-            _('Never submitted'),
+            _('No submissions'),
             label_threshold % {'months': 12},
             label_range % {'from': 9, 'to': 12},
             label_range % {'from': 6, 'to': 9},
