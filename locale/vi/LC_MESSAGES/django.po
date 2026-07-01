@@ -4457,10 +4457,9 @@ msgid "No problems selected for deletion."
 msgstr "Chưa chọn bài tập nào để xóa."
 
 #: judge/views/organization.py:647
-#, fuzzy, python-format
-#| msgid "Cannot delete more than 100 problems at once."
+#, python-format
 msgid "Cannot delete more than %d problems at once."
-msgstr "Không thể xóa quá 100 bài tập cùng lúc."
+msgstr "Không thể xóa quá %d bài tập cùng lúc."
 
 #: judge/views/organization.py:661
 #, python-format
