@@ -177,15 +177,15 @@ class ProblemAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, VersionAdmin):
     def show_public(self, obj):
         return format_html('<a href="{1}">{0}</a>', gettext('View on site'), obj.get_absolute_url())
 
-    def _rescore(self, request, problem_id, publicy_changed=False):
+    def _rescore(self, request, problem_id):
         from judge.tasks import rescore_problem
-        transaction.on_commit(rescore_problem.s(problem_id, publicy_changed).delay)
+        transaction.on_commit(rescore_problem.s(problem_id).delay)
 
     @admin.display(description=_('Mark problems as public and set publish date to now'))
     def make_public_and_update_publish_date(self, request, queryset):
         count = queryset.update(is_public=True, date=timezone.now())
         for problem_id in queryset.values_list('id', flat=True):
-            self._rescore(request, problem_id, True)
+            self._rescore(request, problem_id)
 
         self.message_user(request, ngettext('%d problem successfully marked as public.',
                                             '%d problems successfully marked as public.',
@@ -195,7 +195,7 @@ class ProblemAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, VersionAdmin):
     def make_private(self, request, queryset):
         count = queryset.update(is_public=False)
         for problem_id in queryset.values_list('id', flat=True):
-            self._rescore(request, problem_id, True)
+            self._rescore(request, problem_id)
         self.message_user(request, ngettext('%d problem successfully marked as private.',
                                             '%d problems successfully marked as private.',
                                             count) % count)
@@ -225,7 +225,7 @@ class ProblemAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, VersionAdmin):
             form.changed_data and
             any(f in form.changed_data for f in ('is_public', 'is_organization_private', 'partial'))
         ):
-            self._rescore(request, obj.id, 'is_public' in form.changed_data)
+            self._rescore(request, obj.id)
 
     def construct_change_message(self, request, form, *args, **kwargs):
         if form.cleaned_data.get('change_message'):
