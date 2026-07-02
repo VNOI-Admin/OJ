@@ -61,6 +61,7 @@
 
             $('#form_set tr').formset({
                 prefix: '{{ contest_problem_formset.prefix }}',
+                deleteText: '<i class="fa fa-trash" aria-hidden="true"></i>',
                 added: function(row) {
                     row.find('select[id$="-problem"]').val(null).trigger('change');
                     _autoFillOrder(row);
