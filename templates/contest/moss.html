@@ -47,7 +47,7 @@
                 {% for problem, results in moss_results %}
                     <tr id="problem-{{ problem.code }}">
                         <td>
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.name }}</a>
+                            <a href="{{ problem_url(problem, 'detail', contest) }}">{{ problem.name }}</a>
                         </td>
                         {% for result in results %}
                             <td>

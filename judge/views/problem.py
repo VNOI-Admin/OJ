@@ -34,6 +34,7 @@ from judge.models import Contest, ContestSubmission, Judge, Language, Problem, P
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
+from judge.utils.contest_problems import problem_url
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
@@ -55,9 +56,9 @@ def get_contest_problem(problem, profile):
         return None
 
 
-def get_contest_submission_count(problem, profile, virtual):
-    return profile.current_contest.submissions.exclude(submission__status__in=['IE']) \
-                  .filter(problem__problem=problem, participation__virtual=virtual).count()
+def get_contest_submission_count(problem, participation):
+    return participation.submissions.exclude(submission__status__in=['IE']) \
+                        .filter(problem__problem=problem).count()
 
 
 class ProblemDeleted(Exception):
@@ -96,6 +97,35 @@ class ProblemMixin(object):
             return render(request, 'problem/deleted.html', {'title': e.problem_name})
 
 
+class ContestScopeRedirectMixin:
+    """302-redirects active contest participants from global problem routes into the
+    contest namespace, so stale links and bookmarks can never drop contest context.
+
+    GET only: POSTs (e.g. an open submit tab) keep working through the global route.
+    """
+    contest_route_name = 'contest_problem_detail'
+
+    def dispatch(self, request, *args, **kwargs):
+        code = kwargs.get('problem')
+        if request.method == 'GET' and code:
+            participation = getattr(request, 'participation', None)
+            if participation is not None and not participation.ended:
+                contest = participation.contest
+                order = (contest.contest_problems.filter(problem__code=code)
+                         .values_list('order', flat=True).first())
+                if order is not None:
+                    url_args = [contest.key, order]
+                    if 'submission' in kwargs:  # resubmit
+                        url_args.append(kwargs['submission'])
+                    elif 'language' in kwargs:  # pdf language variant
+                        url_args.append(kwargs['language'])
+                    url = reverse(self.contest_route_name, args=url_args)
+                    if request.META.get('QUERY_STRING'):
+                        url += '?' + request.META['QUERY_STRING']
+                    return HttpResponseRedirect(url)
+        return super().dispatch(request, *args, **kwargs)
+
+
 class SolvedProblemMixin(object):
     def get_completed_problems(self):
         return user_completed_ids(self.profile) if self.profile is not None else ()
@@ -127,16 +157,20 @@ class ProblemSolution(SolvedProblemMixin, ProblemMixin, TitleMixin, CommentedDet
 
     def get_content_title(self):
         return mark_safe(escape(_('Editorial for {0}')).format(
-            format_html('<a href="{1}">{0}</a>', self.object.name, reverse('problem_detail', args=[self.object.code])),
+            format_html('<a href="{1}">{0}</a>', self.object.name,
+                        problem_url(self.object, contest=getattr(self.request, 'contest_scope', None))),
         ))
+
+    def editorial_access_check(self, solution):
+        if not solution.is_accessible_by(self.request.user) or self.request.in_contest:
+            raise Http404()
 
     def get_context_data(self, **kwargs):
         context = super(ProblemSolution, self).get_context_data(**kwargs)
 
         solution = get_object_or_404(Solution, problem=self.object)
 
-        if not solution.is_accessible_by(self.request.user) or self.request.in_contest:
-            raise Http404()
+        self.editorial_access_check(solution)
         context['solution'] = solution
         context['has_solved_problem'] = self.object.id in self.get_completed_problems()
         return context
@@ -150,9 +184,10 @@ class ProblemSolution(SolvedProblemMixin, ProblemMixin, TitleMixin, CommentedDet
                                _('Could not find an editorial with the code "%s".') % code, status=404)
 
 
-class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMixin, View):
+class ProblemRaw(ContestScopeRedirectMixin, ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMixin, View):
     context_object_name = 'problem'
     template_name = 'problem/raw.html'
+    contest_route_name = 'contest_problem_raw'
 
     def get_title(self):
         return self.object.name
@@ -190,21 +225,30 @@ class ProblemSubmitMixin:
         return get_contest_problem(self.object, self.request.profile)
 
     @cached_property
+    def submission_participation(self):
+        """The contest participation a submission would be attributed to, or None for practice.
+
+        On global routes this is the session participation; contest-scoped routes override
+        this to derive the participation from the URL contest instead.
+        """
+        if self.contest_problem is None:
+            return None
+        return self.request.profile.current_contest
+
+    @cached_property
     def remaining_submission_count(self):
         if not self.request.user.is_authenticated:
             return None
         max_subs = self.contest_problem and self.contest_problem.max_submissions
         if max_subs is None:
             return None
+        participation = self.submission_participation
+        if participation is None:
+            return None
         # When an IE submission is rejudged into a non-IE status, it will count towards the
         # submission limit. We max with 0 to ensure that `remaining_submission_count` returns
         # a non-negative integer, which is required for future checks in this view.
-        return max(
-            0,
-            max_subs - get_contest_submission_count(
-                self.object, self.request.profile, self.request.profile.current_contest.virtual,
-            ),
-        )
+        return max(0, max_subs - get_contest_submission_count(self.object, participation))
 
     @cached_property
     def default_language(self):
@@ -307,8 +351,8 @@ class ProblemSubmitMixin:
 
             if organization is None:
                 # check if the contest belongs to any organization
-                if self.contest_problem is not None:
-                    contest_object = request.profile.current_contest.contest
+                if self.submission_participation is not None:
+                    contest_object = self.submission_participation.contest
 
                     if contest_object.is_organization_private:
                         organization = contest_object.organization
@@ -331,18 +375,16 @@ class ProblemSubmitMixin:
         with transaction.atomic():
             new_submission = form.save(commit=False)
 
-            contest_problem = self.contest_problem
-            if contest_problem is not None:
-                # Use the contest object from current_contest.contest because we already use it
-                # in profile.update_contest().
-                new_submission.contest_object = request.profile.current_contest.contest
-                if request.profile.current_contest.live:
+            participation = self.submission_participation
+            if participation is not None:
+                new_submission.contest_object = participation.contest
+                if participation.live:
                     new_submission.locked_after = new_submission.contest_object.locked_after
                 new_submission.save()
                 ContestSubmission(
                     submission=new_submission,
-                    problem=contest_problem,
-                    participation=request.profile.current_contest,
+                    problem=self.contest_problem,
+                    participation=participation,
                 ).save()
             else:
                 new_submission.save()
@@ -376,7 +418,8 @@ class ProblemSubmitMixin:
         return HttpResponseRedirect(reverse('submission_status', args=(new_submission.id,))), None
 
 
-class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, CommentedDetailView):
+class ProblemDetail(ContestScopeRedirectMixin, ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin,
+                    CommentedDetailView):
     context_object_name = 'problem'
     template_name = 'problem/problem.html'
 
@@ -412,10 +455,8 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, Commen
             context['has_clarifications'] = clarifications.count() > 0
             context['clarifications'] = clarifications.order_by('-date')
             context['submission_limit'] = contest_problem.max_submissions
-            if contest_problem.max_submissions:
-                context['submissions_left'] = max(contest_problem.max_submissions -
-                                                  get_contest_submission_count(self.object, user.profile,
-                                                                               user.profile.current_contest.virtual), 0)
+            if contest_problem.max_submissions and self.submission_participation is not None:
+                context['submissions_left'] = self.remaining_submission_count
 
         context['available_judges'] = Judge.objects.filter(online=True, problems=self.object)
         context['show_languages'] = self.object.allowed_languages.count() != Language.objects.count()
@@ -487,9 +528,10 @@ class LatexError(Exception):
     pass
 
 
-class ProblemPdfView(ProblemMixin, SingleObjectMixin, View):
+class ProblemPdfView(ContestScopeRedirectMixin, ProblemMixin, SingleObjectMixin, View):
     logger = logging.getLogger('judge.problem.pdf')
     languages = set(map(itemgetter(0), settings.LANGUAGES))
+    contest_route_name = 'contest_problem_pdf'
 
     def get(self, request, *args, **kwargs):
         if not PDF_RENDERING_ENABLED:
@@ -785,15 +827,17 @@ class RandomProblem(ProblemList):
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
 
 
-class ProblemSubmit(LoginRequiredMixin, ProblemMixin, TitleMixin, ProblemSubmitMixin, SingleObjectFormView):
+class ProblemSubmit(ContestScopeRedirectMixin, LoginRequiredMixin, ProblemMixin, TitleMixin, ProblemSubmitMixin,
+                    SingleObjectFormView):
     template_name = 'problem/submit.html'
     form_class = ProblemSubmitForm
+    contest_route_name = 'contest_problem_submit'
 
     def get_content_title(self):
         return mark_safe(
             escape(_('Submit to %s')) % format_html(
                 '<a href="{0}">{1}</a>',
-                reverse('problem_detail', args=[self.object.code]),
+                problem_url(self.object, contest=getattr(self.request, 'contest_scope', None)),
                 self.object.translated_name(self.request.LANGUAGE_CODE),
             ),
         )

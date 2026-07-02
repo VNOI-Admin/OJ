@@ -15,7 +15,7 @@
 {% block body %}
     <div id="content-left" class="problems">
         <h2 class="title">
-            {{ _('Comments for') }} <a href="{{ url('problem_detail', problem.code) }}">{{ problem.name }}</a>
+            {{ _('Comments for') }} <a href="{{ problem_url(problem) }}">{{ problem.name }}</a>
         </h2>
         
         {% block comments %}

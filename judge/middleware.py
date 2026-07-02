@@ -142,6 +142,10 @@ class ContestMiddleware(object):
         else:
             request.in_contest = False
             request.participation = None
+        # Ambient contest scope for link generation: which contest the user is
+        # browsing. Views under /contest/<key>/... override this with the URL
+        # contest, which takes precedence over the session participation.
+        request.contest_scope = request.participation.contest if request.in_contest else None
         return self.get_response(request)
 
 

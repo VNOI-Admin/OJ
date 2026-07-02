@@ -26,6 +26,7 @@ from django.views.generic import DetailView, ListView
 from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
 from judge.models.problem import ProblemTestcaseResultAccess, SubmissionSourceAccess
+from judge.utils.contest_problems import contest_problem_order, problem_url, resolve_contest_problem
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.lazy import memo_lazy
 from judge.utils.problem_data import get_problem_testcases_data
@@ -63,8 +64,25 @@ class SubmissionDetailBase(LoginRequiredMixin, TitleMixin, SubmissionMixin, Deta
     def get_queryset(self):
         return super().get_queryset().select_related('problem', 'language', 'judged_on')
 
+    def adjust_contest_scope(self, submission):
+        """Make problem links on this page contest-aware for the submission's own contest.
+
+        The viewer's active contest wins when it contains the problem; otherwise
+        fall back to the contest the submission was made in, so a contest
+        submission never links back into the global problem namespace.
+        """
+        request = self.request
+        scope = getattr(request, 'contest_scope', None)
+        if scope is not None and contest_problem_order(scope, submission.problem) is not None:
+            return
+        contest = submission.contest_object
+        if contest is not None and contest_problem_order(contest, submission.problem) is not None and \
+                contest.is_accessible_by(request.user):
+            request.contest_scope = contest
+
     def get_object(self, queryset=None):
         submission = super(SubmissionDetailBase, self).get_object(queryset)
+        self.adjust_contest_scope(submission)
         if not submission.can_see_detail(self.request.user):
             raise SubmissionPermissionDenied(submission)
         return submission
@@ -82,7 +100,7 @@ class SubmissionDetailBase(LoginRequiredMixin, TitleMixin, SubmissionMixin, Deta
 
             message = escape(_('Permission denied. Solve %(problem)s in order to view it.')) % {
                 'problem': format_html('<a href="{0}">{1}</a>',
-                                       reverse('problem_detail', args=[problem.code]),
+                                       problem_url(problem, contest=getattr(self.request, 'contest_scope', None)),
                                        problem.translated_name(self.request.LANGUAGE_CODE)),
             }
             return generic_message(self.request, _("Can't access submission"), mark_safe(message), status=403)
@@ -100,7 +118,8 @@ class SubmissionDetailBase(LoginRequiredMixin, TitleMixin, SubmissionMixin, Deta
         submission = self.object
         return mark_safe(escape(_('Submission of %(problem)s by %(user)s')) % {
             'problem': format_html('<a href="{0}">{1}</a>',
-                                   reverse('problem_detail', args=[submission.problem.code]),
+                                   problem_url(submission.problem,
+                                               contest=getattr(self.request, 'contest_scope', None)),
                                    submission.problem.translated_name(self.request.LANGUAGE_CODE)),
             'user': format_html('<a href="{0}">{1}</a>',
                                 reverse('user_page', args=[submission.user.user.username]),
@@ -606,7 +625,7 @@ class ProblemSubmissionsBase(SubmissionsListBase):
     def get_content_title(self):
         return mark_safe(escape(_('All submissions for %s')) % (
             format_html('<a href="{1}">{0}</a>', self.problem_name,
-                        reverse('problem_detail', args=[self.problem.code])),
+                        problem_url(self.problem, contest=getattr(self.request, 'contest_scope', None))),
         ))
 
     def access_check_contest(self, request):
@@ -624,10 +643,13 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         if self.check_contest_in_access_check:
             self.access_check_contest(request)
 
+    def get_problem_object(self, kwargs):
+        return get_object_or_404(Problem, code=kwargs['problem'])
+
     def get(self, request, *args, **kwargs):
         if 'problem' not in kwargs:
             raise ImproperlyConfigured('Must pass a problem')
-        self.problem = get_object_or_404(Problem, code=kwargs['problem'])
+        self.problem = self.get_problem_object(kwargs)
         self.problem_name = self.problem.translated_name(self.request.LANGUAGE_CODE)
         return super(ProblemSubmissionsBase, self).get(request, *args, **kwargs)
 
@@ -641,24 +663,17 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         if self.dynamic_update:
             context['dynamic_update'] = context['page_obj'].number == 1
             context['dynamic_problem_id'] = self.problem.id
-        if hasattr(self, 'contest'):
-            context['best_submissions_link'] = reverse('contest_ranked_submissions',
-                                                       kwargs={'problem': self.problem.code,
-                                                               'contest': self.contest.key})
-        else:
-            context['best_submissions_link'] = reverse('ranked_submissions', kwargs={'problem': self.problem.code})
+        context['best_submissions_link'] = problem_url(
+            self.problem, 'rank', contest=self.contest if hasattr(self, 'contest') else None)
         return context
 
 
 class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
-            if hasattr(self, 'contest'):
-                return reverse('contest_user_submissions', kwargs={'problem': self.problem.code,
-                                                                   'user': self.request.user.username,
-                                                                   'contest': self.contest.key})
-            return reverse('user_submissions', kwargs={'problem': self.problem.code,
-                                                       'user': self.request.user.username})
+            return problem_url(self.problem, 'user_submissions',
+                               contest=self.contest if hasattr(self, 'contest') else None,
+                               extra=(self.request.user.username,))
 
 
 class UserProblemSubmissions(ConditionalUserTabMixin, UserMixin, ProblemSubmissions):
@@ -681,16 +696,15 @@ class UserProblemSubmissions(ConditionalUserTabMixin, UserMixin, ProblemSubmissi
         }
 
     def get_content_title(self):
+        problem_link = problem_url(self.problem, contest=getattr(self.request, 'contest_scope', None))
         if self.request.user.is_authenticated and self.request.profile == self.profile:
             return mark_safe(escape(_('My submissions for %(problem)s')) % {
-                'problem': format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                       reverse('problem_detail', args=[self.problem.code])),
+                'problem': format_html('<a href="{1}">{0}</a>', self.problem_name, problem_link),
             })
         return mark_safe(escape(_("%(user)s's submissions for %(problem)s")) % {
             'user': format_html('<a href="{1}">{0}</a>', self.profile.display_name,
                                 reverse('user_page', args=[self.username])),
-            'problem': format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                   reverse('problem_detail', args=[self.problem.code])),
+            'problem': format_html('<a href="{1}">{0}</a>', self.problem_name, problem_link),
         })
 
     def is_in_low_power_mode(self):
@@ -796,11 +810,26 @@ class ForceContestMixin(object):
     def get_problem_label(self, problem):
         return self.contest.get_label_for_problem(self.get_problem_number(problem) - 1)
 
+    def get_problem_object(self, kwargs):
+        # Inside the contest namespace, the <problem> segment may be either a
+        # contest problem order or a problem code; orders take precedence.
+        return resolve_contest_problem(self.contest, str(kwargs['problem']))
+
     def get(self, request, *args, **kwargs):
         if 'contest' not in kwargs:
             raise ImproperlyConfigured('Must pass a contest')
         self._contest = get_object_or_404(Contest, key=kwargs['contest'])
+        # The URL contest wins over the session participation for link generation.
+        request.contest_scope = self._contest
         return super(ForceContestMixin, self).get(request, *args, **kwargs)
+
+
+class ContestProblemByOrderMixin(ForceContestMixin):
+    """Adapts /contest/<key>/<order>/... submission routes to the code-based machinery."""
+
+    def get(self, request, *args, **kwargs):
+        kwargs['problem'] = str(kwargs.pop('order'))
+        return super().get(request, *args, **kwargs)
 
 
 class AllContestSubmissions(ForceContestMixin, AllSubmissions):
@@ -878,7 +907,7 @@ class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
                 user=format_html('<a href="{1}">{0}</a>', self.profile.display_name,
                                  reverse('user_page', args=[self.username])),
                 problem=format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                    reverse('problem_detail', args=[self.problem.code])),
+                                    problem_url(self.problem, contest=self.contest)),
                 contest=format_html('<a href="{1}">{0}</a>', self.contest.name,
                                     reverse('contest_view', args=[self.contest.key])),
             ))
@@ -889,3 +918,11 @@ class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
             contest=format_html('<a href="{1}">{0}</a>', self.contest.name,
                                 reverse('contest_view', args=[self.contest.key])),
         ))
+
+
+class ContestProblemSubmissions(ContestProblemByOrderMixin, ProblemSubmissions):
+    pass
+
+
+class ContestProblemUserSubmissions(ContestProblemByOrderMixin, UserContestSubmissions):
+    pass

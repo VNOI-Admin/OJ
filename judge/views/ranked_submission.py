@@ -4,11 +4,12 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from judge.models import Language, Submission
+from judge.utils.contest_problems import problem_url
 from judge.utils.problems import get_result_data
 from judge.utils.raw_sql import join_sql_subquery
-from judge.views.submission import ForceContestMixin, ProblemSubmissions
+from judge.views.submission import ContestProblemByOrderMixin, ForceContestMixin, ProblemSubmissions
 
-__all__ = ['RankedSubmissions', 'ContestRankedSubmission']
+__all__ = ['RankedSubmissions', 'ContestRankedSubmission', 'ContestProblemRankedSubmissions']
 
 
 class RankedSubmissions(ProblemSubmissions):
@@ -69,7 +70,7 @@ class RankedSubmissions(ProblemSubmissions):
     def get_content_title(self):
         return mark_safe(escape(_('Best solutions for %s')) % (
             format_html('<a href="{1}">{0}</a>', self.problem_name,
-                        reverse('problem_detail', args=[self.problem.code])),
+                        problem_url(self.problem, contest=getattr(self.request, 'contest_scope', None))),
         ))
 
     def _get_result_data(self, queryset=None):
@@ -92,7 +93,7 @@ class ContestRankedSubmission(ForceContestMixin, RankedSubmissions):
         if self.problem.is_accessible_by(self.request.user):
             return mark_safe(escape(_('Best solutions for %(problem)s in %(contest)s')) % {
                 'problem': format_html('<a href="{1}">{0}</a>', self.problem_name,
-                                       reverse('problem_detail', args=[self.problem.code])),
+                                       problem_url(self.problem, contest=self.contest)),
                 'contest': format_html('<a href="{1}">{0}</a>', self.contest.name,
                                        reverse('contest_view', args=[self.contest.key])),
             })
@@ -104,3 +105,7 @@ class ContestRankedSubmission(ForceContestMixin, RankedSubmissions):
 
     def _get_queryset(self):
         return super()._get_queryset().filter(contest_object=self.contest)
+
+
+class ContestProblemRankedSubmissions(ContestProblemByOrderMixin, ContestRankedSubmission):
+    pass

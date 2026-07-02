@@ -176,7 +176,7 @@
         if (!entry) return '<td></td>';
         var pid = String(problem.id);
         var isFirst = firstSolves[pid] === participationId;
-        var url = makeSubmissionUrl(meta, problem.code);
+        var url = makeSubmissionUrl(meta, problem.order);
 
         var pointsHtml = escapeHtml(fmtPoints(entry.points, meta.contest.points_precision));
         var extraHtml = opts && opts.extraHtml ? opts.extraHtml : '';
@@ -230,7 +230,7 @@
 
             var pid = String(problem.id);
             var isFirst = firstSolves[pid] === participationId;
-            var url = makeSubmissionUrl(meta, problem.code);
+            var url = makeSubmissionUrl(meta, problem.order);
 
             var triesText = tries + ' ' + (tries === 1 ? 'try' : 'tries');
             var extraPrefix = entry.is_frozen ? 'pending ' : '';
@@ -303,7 +303,7 @@
             // Pending path: post-freeze submissions hidden
             var pid = String(problem.id);
             var isFirst = firstSolves[pid] === participationId;
-            var url = makeSubmissionUrl(meta, problem.code);
+            var url = makeSubmissionUrl(meta, problem.order);
             var state = problemStateClass(entry, problem, isFirst, meta, 'pending ');
 
             var pendingBadge = '<small style="color:black;"> [' + escapeHtml(String(pending)) + ']</small>';
@@ -372,7 +372,9 @@
             if (!isICPC) {
                 html += '<div class="point-denominator">' + escapeHtml(String(prob.points)) + '</div>';
             }
-            html += '<div class="problem-code" style="display:none;">' + escapeHtml(prob.code) + '</div>';
+            if (prob.code) {
+                html += '<div class="problem-code" style="display:none;">' + escapeHtml(prob.code) + '</div>';
+            }
             html += '</a></th>';
         }
         if (contest.has_rating) {

@@ -172,7 +172,7 @@
                         <ul class="problem-list">
                             {% for problem in new_problems %}
                                 <li>
-                                    <a href="{{ url('problem_detail', problem.code) }}">{{ problem.name }}</a>
+                                    <a href="{{ problem_url(problem) }}">{{ problem.name }}</a>
                                     {{ problem.date|date(_("M j, Y, G:i")) }}
                                 </li>
                             {% endfor %}

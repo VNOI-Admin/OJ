@@ -11,9 +11,9 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
-from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, notification, \
-    organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
-    submission, tag, tasks, ticket, two_factor, user, widgets
+from judge.views import TitledTemplateView, api, blog, comment, contest_problem, contests, language, license, \
+    mailgun, notification, organization, preview, problem, problem_download, problem_manage, ranked_submission, \
+    register, stats, status, submission, tag, tasks, ticket, two_factor, user, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -275,6 +275,28 @@ urlpatterns = [
              contests.ContestParticipationList.as_view(), name='contest_participation'),
         path('/participation/disqualify', contests.ContestParticipationDisqualify.as_view(),
              name='contest_participation_disqualify'),
+
+        path('/<int:order>', include([
+            path('', contest_problem.ContestProblemDetail.as_view(), name='contest_problem_detail'),
+            path('/submit', contest_problem.ContestProblemSubmit.as_view(), name='contest_problem_submit'),
+            path('/resubmit/<int:submission>', contest_problem.ContestProblemSubmit.as_view(),
+                 name='contest_problem_submit'),
+            path('/raw', xframe_options_sameorigin(contest_problem.ContestProblemRaw.as_view()),
+                 name='contest_problem_raw'),
+            path('/pdf', contest_problem.ContestProblemPdfView.as_view(), name='contest_problem_pdf'),
+            path('/pdf/<slug:language>', contest_problem.ContestProblemPdfView.as_view(),
+                 name='contest_problem_pdf'),
+            path('/editorial', contest_problem.ContestProblemSolution.as_view(), name='contest_problem_editorial'),
+            path('/rank/', paged_list_view(ranked_submission.ContestProblemRankedSubmissions,
+                                           'contest_problem_ranked_submissions')),
+            path('/submissions/', paged_list_view(submission.ContestProblemSubmissions,
+                                                  'contest_problem_submissions')),
+            path('/submissions/<str:user>/', paged_list_view(submission.ContestProblemUserSubmissions,
+                                                             'contest_problem_user_submissions')),
+            path('/tickets/new', ticket.NewContestProblemTicketView.as_view(), name='contest_new_problem_ticket'),
+            path('/', lambda _, contest, order: HttpResponsePermanentRedirect(
+                reverse('contest_problem_detail', args=[contest, order]))),
+        ])),
 
         path('/', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),

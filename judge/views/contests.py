@@ -48,7 +48,8 @@ from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
-from judge.utils.problems import _get_result_data, user_attempted_ids, user_completed_ids
+from judge.utils.problems import _get_result_data, contest_attempted_ids, contest_completed_ids, \
+    user_attempted_ids, user_completed_ids
 from judge.utils.stats import get_bar_chart, get_pie_chart, get_stacked_bar_chart
 from judge.utils.views import SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message, paginate_query_context
@@ -195,6 +196,19 @@ class ContestMixin(object):
     def can_view_all_problems(self):
         return self.is_in_contest or self.is_editor or self.is_tester or self.request.user.is_superuser or \
             not Problem.objects.filter(contests__contest=self.object, is_public=False).exists()
+
+    def get_problem_status_ids(self):
+        """(completed, attempted) problem ids for the status icons: scoped to the
+        viewer's participation while they are in this contest (live or virtual),
+        their general status otherwise. Spectators cannot submit, so they keep
+        the general status too."""
+        if not self.request.user.is_authenticated:
+            return [], []
+        profile = self.request.profile
+        participation = profile.current_contest
+        if participation is not None and participation.contest_id == self.object.id and not participation.spectate:
+            return contest_completed_ids(participation), contest_attempted_ids(participation)
+        return user_completed_ids(profile), user_attempted_ids(profile)
 
     def get_context_data(self, **kwargs):
         context = super(ContestMixin, self).get_context_data(**kwargs)
@@ -356,9 +370,7 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['announcements'] = announcements.order_by('-date')
         context['can_announce'] = self.object.is_editable_by(self.request.user)
 
-        authenticated = self.request.user.is_authenticated
-        context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
-        context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
+        context['completed_problem_ids'], context['attempted_problem_ids'] = self.get_problem_status_ids()
 
         context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD)
 
@@ -387,9 +399,7 @@ class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
         for idx, p in enumerate(context['contest_problems']):
             p.points = points_list[idx][0]
 
-        authenticated = self.request.user.is_authenticated
-        context['completed_problem_ids'] = user_completed_ids(self.request.profile) if authenticated else []
-        context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
+        context['completed_problem_ids'], context['attempted_problem_ids'] = self.get_problem_status_ids()
 
         return context
 
@@ -940,12 +950,14 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
         problems_data = [
             {
                 'id': prob.id,
-                'code': prob.problem.code,
                 'label': contest.get_label_for_problem(i),
                 'name': prob.problem.name,
                 'points': float(prob.points),
                 'is_pretested': prob.is_pretested,
-                'url': reverse('problem_detail', args=[prob.problem.code]),
+                'order': prob.order,
+                'url': reverse('contest_problem_detail', args=[contest.key, prob.order]),
+                # The internal problem code is only exposed to contest editors.
+                **({'code': prob.problem.code} if self.can_edit else {}),
             }
             for i, prob in enumerate(problems)
         ]

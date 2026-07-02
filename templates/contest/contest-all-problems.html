@@ -17,6 +17,9 @@
 {% endblock %}
 
 {% block body %}
+    {# After the contest ends, link the original problem pages again — unless the
+       viewer is in a live/virtual participation, which stays in the contest namespace. #}
+    {% set link_contest = contest if (not contest.ended or contest.is_in_contest(request.user)) else none %}
     {% for problem in contest_problems %}
         <div style="display: flex; flex-direction: column; align-items: center;">
             <div class="content-description" style="width: 70%;">
@@ -24,17 +27,17 @@
                     <div style="display: flex">
                         <h2 style="margin-top: 0.5em; margin-right: 0.5em;">
                             {% if problem.id in completed_problem_ids %}
-                                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                <a href="{{ problem_url(problem, 'user_submissions', link_contest, request.user.username) }}">
                                     <i class="solved-problem-color fa fa-check-circle"></i>
                                 </a>
                             {% elif problem.id in attempted_problem_ids %}
-                                <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                <a href="{{ problem_url(problem, 'user_submissions', link_contest, request.user.username) }}">
                                     <i class="attempted-problem-color fa fa-frown-o"></i>
                                 </a>
                             {% endif %}
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                            <a href="{{ problem_url(problem, 'detail', link_contest) }}">{{ problem.i18n_name or problem.name }}</a>
                         </h2>
-                        <a href="{{ url('problem_submit', problem.code) }}" class="button" style="display: inline; margin: auto 0;">
+                        <a href="{{ problem_url(problem, 'submit', link_contest) }}" class="button" style="display: inline; margin: auto 0;">
                             {{ _('Submit') }}
                         </a>
                     </div>

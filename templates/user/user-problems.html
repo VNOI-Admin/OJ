@@ -64,10 +64,10 @@
                 {% for problem in authored %}
                     <tr>
                         <td>
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.name }}</a>
+                            <a href="{{ problem_url(problem) }}">{{ problem.name }}</a>
                         </td>
                         <td>{{ problem.group.full_name }}</td>
-                        <td><a href="{{ url('ranked_submissions', problem.code) }}">
+                        <td><a href="{{ problem_url(problem, 'rank') }}">
                             {{ problem.points|floatformat }}{% if problem.partial %}p{% endif %}
                         </a></td>
                     </tr>

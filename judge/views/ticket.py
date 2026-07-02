@@ -21,9 +21,11 @@ from django.views.generic.edit import FormView
 from judge import event_poster as event
 from judge.models import GeneralIssue, Notification, Problem, Profile, Ticket, TicketMessage, make_notification
 from judge.tasks import on_new_ticket, on_new_ticket_message
+from judge.utils.contest_problems import problem_url
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.tickets import filter_visible_tickets, own_ticket_filter
 from judge.utils.views import SingleObjectFormView, TitleMixin, paginate_query_context
+from judge.views.contest_problem import ContestProblemResolverMixin
 from judge.views.problem import ProblemMixin
 from judge.widgets import MartorWidget
 
@@ -139,13 +141,29 @@ class NewProblemTicketView(ProblemMixin, TitleMixin, NewTicketView):
 
     def get_content_title(self):
         return mark_safe(escape(_('New ticket for %s')) %
-                         format_html('<a href="{0}">{1}</a>', reverse('problem_detail', args=[self.object.code]),
+                         format_html('<a href="{0}">{1}</a>',
+                                     problem_url(self.object, contest=getattr(self.request, 'contest_scope', None)),
                                      self.object.translated_name(self.request.LANGUAGE_CODE)))
 
-    def form_valid(self, form):
+    def check_ticket_access(self):
         if not self.object.is_accessible_by(self.request.user):
             raise Http404()
+
+    def form_valid(self, form):
+        self.check_ticket_access()
         return super().form_valid(form)
+
+
+class NewContestProblemTicketView(ContestProblemResolverMixin, NewProblemTicketView):
+    def get_assignees(self):
+        if not self.contest.ended:
+            return list(self.contest.authors.all()) + list(self.contest.curators.all())
+        return list(self.object.authors.all()) + list(self.object.curators.all())
+
+    def check_ticket_access(self):
+        # Access was already granted contest-scoped in get_object; re-run the
+        # same check instead of the current_contest-coupled global one.
+        self.check_contest_problem_access(self.object)
 
 
 class TicketCommentForm(forms.Form):

@@ -196,6 +196,9 @@
             {% if can_edit and can_download_data %}
                 <a class="button" style="float:right" href="{{ url('contest_prepare_data', contest.key) }}">{{ _('Download data') }}</a>
             {% endif %}
+            {# After the contest ends, link the original problem pages again — unless the
+               viewer is in a live/virtual participation, which stays in the contest namespace. #}
+            {% set link_contest = contest if (not contest.ended or contest.is_in_contest(request.user)) else none %}
             <table class="table striped">
                 <thead>
                 <tr>
@@ -219,7 +222,7 @@
                         {% if request.user.is_authenticated %}
                             {% if problem.id in completed_problem_ids %}
                                 <td style="width: 1em;">
-                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                    <a href="{{ problem_url(problem, 'user_submissions', link_contest, request.user.username) }}">
                                         {% if problem.is_public %}
                                             <i class="solved-problem-color fa fa-check-circle"></i>
                                         {% else %}
@@ -229,7 +232,7 @@
                                 </td>
                             {% elif problem.id in attempted_problem_ids %}
                                 <td style="width: 1em;">
-                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                    <a href="{{ problem_url(problem, 'user_submissions', link_contest, request.user.username) }}">
                                         {% if problem.is_public %}
                                             <i class="attempted-problem-color fa fa-frown-o"></i>
                                         {% else %}
@@ -249,7 +252,7 @@
                         {% endif %}
                         <td style="text-align: left; padding-left: 2em;">
                             {% if can_view_all_problems or problem.is_public %}
-                                <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                                <a href="{{ problem_url(problem, 'detail', link_contest) }}">{{ problem.i18n_name or problem.name }}</a>
                             {% else %}
                                 {{ problem.i18n_name or problem.name }}
                             {% endif %}
@@ -259,8 +262,8 @@
                         {% endif %}
                         {% if metadata.has_public_editorials %}
                             <td>
-                                {% if problem.is_public and problem.has_public_editorial %}
-                                    <a href="{{ url('problem_editorial', problem.code) }}">{{ _('Editorial') }}</a>
+                                {% if problem.is_public and problem.has_public_editorial and (contest.ended or can_edit) %}
+                                    <a href="{{ problem_url(problem, 'editorial', link_contest) }}">{{ _('Editorial') }}</a>
                                 {% endif %}
                             </td>
                         {% endif %}
@@ -322,7 +325,7 @@
                     <tr>
                         <td style="width: 15%;">{{ clarification.date|date(_("F j, Y, G:i")) }}</td>
                         <td style="width: 20%; text-align: left; padding-left: 2em;">
-                            <a href="{{ url('problem_detail', clarification.problem.code) }}"
+                            <a href="{{ problem_url(clarification.problem, 'detail', link_contest) }}"
                                 class="problem">
                                 {{ clarification.problem.name }}
                             </a>

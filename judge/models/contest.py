@@ -750,6 +750,14 @@ class ContestProblem(models.Model):
                                           validators=[MinValueOrNoneValidator(1, _('Why include a problem you '
                                                                                    "can't submit to?"))])
 
+    @property
+    def label(self):
+        # Orders are normalized to 1..n per contest, so the 0-based label index is order - 1.
+        return self.contest.get_label_for_problem(self.order - 1)
+
+    def get_absolute_url(self):
+        return reverse('contest_problem_detail', args=(self.contest.key, self.order))
+
     class Meta:
         unique_together = ('problem', 'contest')
         verbose_name = _('contest problem')

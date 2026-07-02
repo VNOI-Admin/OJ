@@ -135,7 +135,7 @@
                         <h3>{{ _('Hot problems') }} <i class="fa fa-fire"></i></h3>
                         <div class="sidebox-content">
                             <ul class="problem-list">{% for problem in hot_problems %}
-                                <li><a href="{{ url('problem_detail', problem.code) }}" class="hot-problem-link">
+                                <li><a href="{{ problem_url(problem) }}" class="hot-problem-link">
                                     {{ problem.name }}
                                 </a></li>
                             {% endfor %}</ul>
@@ -191,7 +191,7 @@
                         {% if request.user.is_authenticated %}
                             {% if problem.id in completed_problem_ids %}
                                 <td class="solved" solved="1">
-                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                    <a href="{{ problem_url(problem, 'user_submissions', None, request.user.username) }}">
                                         {% if problem.is_public %}
                                             <i class="solved-problem-color fa fa-check-circle"></i>
                                         {% else %}
@@ -201,7 +201,7 @@
                                 </td>
                             {% elif problem.id in attempted_problems %}
                                 <td class="solved" solved="0">
-                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                    <a href="{{ problem_url(problem, 'user_submissions', None, request.user.username) }}">
                                         {% if problem.is_public %}
                                             <i class="attempted-problem-color fa fa-frown-o"></i>
                                         {% else %}
@@ -220,10 +220,10 @@
                             {% endif %}
                         {% endif %}
                         <td class="problem-code">
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code}}</a>
+                            <a href="{{ problem_url(problem) }}">{{ problem.code}}</a>
                         </td>
                         <td class="problem-name">
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                            <a href="{{ problem_url(problem) }}">{{ problem.i18n_name or problem.name }}</a>
                         </td>
                         <td class="category">{{ problem.group.full_name }}</td>
                         {% if show_types %}
@@ -236,13 +236,13 @@
                         <td class="p">{{ problem.points|floatformat(2) }}</td>
                         <td class="ac-rate">{{ problem.ac_rate|floatformat(1) }}%</td>
                         <td class="users">
-                            <a href="{{ url('ranked_submissions', problem.code) }}">
+                            <a href="{{ problem_url(problem, 'rank') }}">
                                 {{ problem.user_count }}
                             </a>
                         </td>
                         <td>
                             {% if problem.has_public_editorial %}
-                                <a href="{{ url('problem_editorial', problem.code) }}">
+                                <a href="{{ problem_url(problem, 'editorial') }}">
                                     <i class="has-editorial-color fa fa-check-circle"></i>
                                 </a>
                             {% else %}
