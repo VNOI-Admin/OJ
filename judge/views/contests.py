@@ -1539,7 +1539,7 @@ class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMix
                 problem.is_public = True
                 problem.date = now
                 problem.save(update_fields=['is_public', 'date'])
-                rescore_problem.delay(problem.id, True)
+                rescore_problem.delay(problem.id)
 
             if is_editable:
                 Solution.objects.filter(problem=problem, is_public=False).update(is_public=True, publish_on=now)

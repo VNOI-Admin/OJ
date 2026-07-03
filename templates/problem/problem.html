@@ -306,13 +306,6 @@
                         <div class="pi-value authors-value">{{ link_users(authors) }}</div>
                     </div>
                 {% endif %}
-                {% if problem.suggester %}
-                <div class="problem-info-entry">
-                    <i class="fa fa-pencil-square-o fa-fw"></i><span
-                        class="pi-name">{{ _("Suggester:") }}</span>
-                        <div class="pi-value authors-value">{{ link_user(problem.suggester) }}</div>
-                    </div>
-                {% endif %}
             {% endwith %}
         {% endcache %}
     {% endif %}
@@ -388,14 +381,6 @@
 
 {% block description %}
     <iframe name="raw_problem" id="raw_problem"></iframe>
-    {% if problem.is_suggesting %}
-        <div class="alert alert-warning alert-dismissable">
-            <a class="close">x</a>
-            <b>{{ _('This problem is only a suggestion!') }}</b>
-            <br>
-            {{ _('This problem cannot be accessed by normal users until it is approved by an admin or staff. Please make sure that all the data for this problem is correct.') }}
-        </div>
-    {% endif %}
     {% include "problem/problem-detail.html" %}
 {% endblock %}
 

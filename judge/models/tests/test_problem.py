@@ -26,13 +26,6 @@ class ProblemTestCase(CommonDataMixin, TestCase):
             ),
         })
 
-        self.users.update({
-            'suggester': create_user(
-                username='suggester',
-                user_permissions=('edit_own_problem', 'suggest_new_problem', 'rejudge_submission'),
-            ),
-        })
-
         create_problem_type(name='type')
 
         self.basic_problem = create_problem(
@@ -116,11 +109,6 @@ class ProblemTestCase(CommonDataMixin, TestCase):
         self.organization_admin_problem = create_problem(
             code='organization_admin',
             organization=self.problem_organization,
-        )
-
-        self.suggesting_problem = create_problem(
-            code='suggesting',
-            suggester=self.users['suggester'].profile,
         )
 
     def test_basic_problem(self):
@@ -373,52 +361,6 @@ class ProblemTestCase(CommonDataMixin, TestCase):
             },
         }
         self._test_object_methods_with_users(self.organization_admin_problem, data)
-
-    def test_suggesting_problem_methods(self):
-        data = {
-            'superuser': {
-                'is_accessible_by': self.assertTrue,
-                'is_editable_by': self.assertTrue,
-            },
-            'staff_problem_edit_own': {
-                'is_accessible_by': self.assertFalse,
-                'is_editable_by': self.assertFalse,
-            },
-            'staff_problem_see_all': {
-                'is_accessible_by': self.assertTrue,
-                'is_editable_by': self.assertFalse,
-            },
-            'staff_problem_edit_all': {
-                'is_accessible_by': self.assertTrue,
-                'is_editable_by': self.assertTrue,
-            },
-            'staff_problem_edit_public': {
-                'is_accessible_by': self.assertFalse,
-                'is_editable_by': self.assertFalse,
-            },
-            'staff_organization_admin': {
-                'is_accessible_by': self.assertFalse,
-                'is_editable_by': self.assertFalse,
-            },
-            'staff_problem_see_organization': {
-                'is_accessible_by': self.assertFalse,
-                'is_editable_by': self.assertFalse,
-            },
-            'normal': {
-                'is_accessible_by': self.assertFalse,
-                'is_editable_by': self.assertFalse,
-            },
-            'anonymous': {
-                'is_accessible_by': self.assertFalse,
-                'is_editable_by': self.assertFalse,
-            },
-            'suggester': {
-                'is_accessible_by': self.assertTrue,
-                'is_editable_by': self.assertTrue,
-                'is_rejudgeable_by': self.assertTrue,
-            },
-        }
-        self._test_object_methods_with_users(self.suggesting_problem, data)
 
     def test_problems_list(self):
         for name, user in self.users.items():

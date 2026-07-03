@@ -97,17 +97,17 @@ def on_new_comment(comment_id):
 
 
 @shared_task
-def on_new_problem(problem_code, is_suggested=False):
-    event_name = 'on_new_suggested_problem' if is_suggested else 'on_new_problem'
+def on_new_problem(problem_code):
+    event_name = 'on_new_problem'
     webhook_config = get_webhook_config(event_name)
     if webhook_config is None or settings.SITE_FULL_URL is None:
         return
 
     problem = Problem.objects.get(code=problem_code)
-    author = problem.suggester or problem.authors.first()
+    author = problem.authors.first()
 
     url = settings.SITE_FULL_URL + problem.get_absolute_url()
-    title = f'New {"suggested" if is_suggested else "organization"} problem {url}'
+    title = f'New organization problem {url}'
 
     description = [
         ('Title', problem.name),
