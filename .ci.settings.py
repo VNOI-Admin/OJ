@@ -21,3 +21,4 @@ DATABASES = {
         },
     },
 }
+VNOJ_ENABLE_SYNC_API = True
