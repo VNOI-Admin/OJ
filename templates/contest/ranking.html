@@ -287,7 +287,8 @@
 
                 $('#ranking-table > tbody > tr[id]').each(function () {
                     $(this).show();
-                    $(this).find("td")[0].innerHTML = extractCurrentAbsRank($(this).find("td")[0].innerText);
+                    let td = $(this).find("td")[0];
+                    td.innerHTML = extractCurrentAbsRank(td.textContent);
                 });
 
                 localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
@@ -302,6 +303,7 @@
                     window.clearRankingFilter();
                     return;
                 }
+                console.time('applyRankingFilter');
 
                 $('#ranking-table > tbody > tr[id]').each(function () {
                     let row = $(this);
@@ -315,7 +317,7 @@
                     }
 
                     row.show();
-                    let current_abs_rank = extractCurrentAbsRank(row.find("td")[0].innerText);
+                    let current_abs_rank = extractCurrentAbsRank(row.find("td")[0].textContent);
 
                     if (previous_abs_rank == -1 || previous_abs_rank != current_abs_rank) {
                         ++counter;
@@ -328,6 +330,7 @@
                 if (counter > 0) {
                     localStorage.setItem(`filter-cleared-${contest_key}`, 'false');
                 }
+                console.timeEnd('applyRankingFilter');
             };
 
             window.restoreChecklistOptions = function () {
