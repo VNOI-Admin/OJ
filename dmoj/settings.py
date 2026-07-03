@@ -54,8 +54,7 @@ VNOJ_ORG_PP_STEP = 0.95
 VNOJ_ORG_PP_ENTRIES = 100
 VNOJ_ORG_PP_SCALE = 1
 
-VNOJ_ENABLE_API = False
-VNOJ_ENABLE_SYNC_API = True  # need to make this true for testing :sad:
+VNOJ_ENABLE_SYNC_API = False
 GLOBAL_API_KEY = 'test-api-key-123'
 
 VNOJ_OFFICIAL_CONTEST_MODE = False
