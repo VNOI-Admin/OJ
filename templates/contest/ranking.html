@@ -90,7 +90,7 @@
     <script type="text/javascript">
         $(function () {
             if (window.RANKING_DATA) {
-                window.renderRankingTable(window.RANKING_DATA);
+                window.initVirtualRanking(window.RANKING_DATA, '{{ contest.key }}');
             }
 
             var url = '{{ url('contest_participation', contest.key, '__username__') }}';
