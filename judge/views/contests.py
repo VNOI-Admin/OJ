@@ -979,6 +979,14 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
                 'classes': RATING_CLASS,
                 'names': RATING_LEVELS,
             },
+            **(
+                {
+                    'replay_url': reverse('contest_replay_data', args=[contest.key]),
+                    'replay_duration': int((contest.end_time - contest.start_time).total_seconds()),
+                }
+                if contest.ended and contest.frozen_last_minutes == 0
+                else {}
+            ),
         }
         return problems, problems_data, contest_data
 
@@ -1086,7 +1094,6 @@ class ContestRanking(ContestRankingBase):
         return {
             'contest': contest_data,
             'problems': problems_data,
-            'virtual_subs_url': reverse('contest_virtual_subs', args=[contest.key]),
             'own': {
                 'id': virtual_part.id,
                 'real_start': int(virtual_part.real_start.timestamp()),
@@ -1276,7 +1283,7 @@ class ContestParticipationDisqualify(ContestMixin, SingleObjectMixin, View):
         return HttpResponseRedirect(reverse('contest_ranking', args=(self.object.key,)))
 
 
-class ContestVirtualSubsData(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
+class ContestReplayData(ContestMixin, SingleObjectMixin, View):
     def get(self, request, *args, **kwargs):
         contest = self.get_object()
 

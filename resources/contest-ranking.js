@@ -746,29 +746,31 @@
             };
         });
 
-        var ownData = rankingData.own;
-        var vProbMap = {};
-        for (var j = 0; j < ownData.subs.length; j++) {
-            var s = ownData.subs[j]; // [prob_id, pts, skip, t]
-            if (s[3] > elapsed) break; // subs ordered by t
-            if (!vProbMap[s[0]]) vProbMap[s[0]] = [];
-            vProbMap[s[0]].push({ pts: s[1], skip: s[2], t: s[3] });
+        if (rankingData.own) {
+            var ownData = rankingData.own;
+            var vProbMap = {};
+            for (var j = 0; j < ownData.subs.length; j++) {
+                var s = ownData.subs[j]; // [prob_id, pts, skip, t]
+                if (s[3] > elapsed) break; // subs ordered by t
+                if (!vProbMap[s[0]]) vProbMap[s[0]] = [];
+                vProbMap[s[0]].push({ pts: s[1], skip: s[2], t: s[3] });
+            }
+            var vScored = scoreOne(vProbMap);
+            newParts.push({
+                id: ownData.id, score: vScored.score, cumtime: vScored.cumtime,
+                tiebreaker: vScored.tiebreaker, format_data: vScored.format_data,
+                is_disqualified: ownData.is_disqualified, virtual: ownData.virtual,
+                rating: ownData.rating, user: ownData.user,
+            });
         }
-        var vScored = scoreOne(vProbMap);
-        newParts.push({
-            id: ownData.id, score: vScored.score, cumtime: vScored.cumtime,
-            tiebreaker: vScored.tiebreaker, format_data: vScored.format_data,
-            is_disqualified: ownData.is_disqualified, virtual: ownData.virtual,
-            rating: ownData.rating, user: ownData.user,
-        });
 
         sortAndRankParticipations(newParts);
         var isFrozenNow = frozenSec > 0 && cutoff > duration - frozenSec;
         return { contest: Object.assign({}, contest, { is_frozen: isFrozenNow }), problems: problems, participations: newParts };
     }
 
-    function fetchVirtualSubs(url, contestKey, callback) {
-        var cacheKey = 'virtual_subs_' + contestKey;
+    function fetchReplayData(url, contestKey, callback) {
+        var cacheKey = 'replay_' + contestKey;
         var cached = sessionStorage.getItem(cacheKey);
         if (cached) {
             try { callback(JSON.parse(cached)); return; } catch (e) { sessionStorage.removeItem(cacheKey); }
@@ -788,34 +790,33 @@
     }
 
     window.initVirtualRanking = function (rankingData, contestKey) {
-        if (!rankingData.own) {
-            window.renderRankingTable(rankingData);
-            return;
-        }
+        window.renderRankingTable(rankingData);
 
-        var ownData = rankingData.own;
-        var virtualSubsUrl = rankingData.virtual_subs_url;
+        var replayUrl = rankingData.contest && rankingData.contest.replay_url;
+        if (!replayUrl) return;
+
+        var isVirtual = !!rankingData.own;
         var virtualSubsData = null;
         var timerId = null;
-        var manualElapsed = null; // null = live mode
-
+        var manualElapsed = null; // null = auto mode
         var $slider = null, $timeLabel = null;
 
         function getLiveElapsed() {
-            return (Date.now() / 1000) - ownData.real_start;
+            return (Date.now() / 1000) - rankingData.own.real_start;
         }
 
         function renderAt(elapsed) {
             window.renderRankingTable(computeVirtualRanking(virtualSubsData, rankingData, elapsed));
         }
 
-        function updateBar(elapsed) {
+        function updateBar(elapsed, duration) {
             if (!$slider) return;
             $slider.val(Math.floor(elapsed));
-            $timeLabel.text(fmtHMS(elapsed) + ' / ' + fmtHMS(virtualSubsData.duration));
+            $timeLabel.text(fmtHMS(elapsed) + ' / ' + fmtHMS(duration));
         }
 
-        function initDebugBar(duration) {
+        // Creates the replay bar DOM; returns $endBtn. Does NOT wire data-dependent events.
+        function createBar(duration) {
             var $bar = $('<div>').css({
                 display: 'flex', alignItems: 'center', gap: '8px',
                 padding: '6px 0', marginBottom: '8px', fontSize: '13px',
@@ -823,42 +824,69 @@
             $slider = $('<input>').attr({ type: 'range', min: 0, max: Math.floor(duration), step: 1 })
                 .css({ flex: '1', cursor: 'pointer' });
             $timeLabel = $('<span>').css({ minWidth: '110px', fontFamily: 'monospace' });
-            var $liveBtn = $('<button>').text('Live').css({ fontSize: '12px', padding: '2px 8px' });
+            var $endBtn = $('<button>').text(isVirtual ? 'Live' : 'End').css({ fontSize: '12px', padding: '2px 8px' });
+            $bar.append($('<span>').text('⏱'), $slider, $timeLabel, $endBtn);
+            $('#ranking-container').before($bar);
+            return $endBtn;
+        }
 
+        // Wires slider + button once virtualSubsData is available.
+        function wireEvents($endBtn) {
             $slider.on('input', function () {
                 manualElapsed = parseInt(this.value);
                 if (timerId) { clearInterval(timerId); timerId = null; }
-                updateBar(manualElapsed);
+                updateBar(manualElapsed, virtualSubsData.duration);
                 renderAt(manualElapsed);
             });
-            $liveBtn.on('click', function () {
-                manualElapsed = null;
-                if (!timerId) timerId = setInterval(tick, 30000);
+            $endBtn.on('click', function () {
+                if (isVirtual) {
+                    manualElapsed = null;
+                    if (!timerId) timerId = setInterval(tick, 30000);
+                } else {
+                    manualElapsed = Math.floor(virtualSubsData.duration);
+                }
                 tick();
             });
-
-            $bar.append($('<span>').text('⏱'), $slider, $timeLabel, $liveBtn);
-            $('#ranking-container').before($bar);
         }
 
         function tick() {
             if (!virtualSubsData) return;
-            var elapsed = manualElapsed !== null ? manualElapsed : Math.min(getLiveElapsed(), virtualSubsData.duration);
-            updateBar(elapsed);
+            var elapsed = manualElapsed !== null
+                ? manualElapsed
+                : (isVirtual ? Math.min(getLiveElapsed(), virtualSubsData.duration) : virtualSubsData.duration);
+            updateBar(elapsed, virtualSubsData.duration);
             renderAt(elapsed);
-            if (manualElapsed === null && elapsed >= virtualSubsData.duration) {
-                clearInterval(timerId);
-                timerId = null;
+            if (isVirtual && manualElapsed === null && elapsed >= virtualSubsData.duration) {
+                clearInterval(timerId); timerId = null;
             }
         }
 
-        fetchVirtualSubs(virtualSubsUrl, contestKey, function (data) {
-            if (!data) return;
-            virtualSubsData = data;
-            initDebugBar(data.duration);
-            tick();
-            timerId = setInterval(tick, 30000);
-        });
+        if (isVirtual) {
+            // Auto-fetch, auto-start at current elapsed.
+            fetchReplayData(replayUrl, contestKey, function (data) {
+                if (!data) return;
+                virtualSubsData = data;
+                var $endBtn = createBar(data.duration);
+                wireEvents($endBtn);
+                tick();
+                timerId = setInterval(tick, 30000);
+            });
+        } else {
+            // Show bar immediately using duration from page data; lazy-load subs on first touch.
+            var $endBtn = createBar(rankingData.contest.replay_duration);
+            updateBar(rankingData.contest.replay_duration, rankingData.contest.replay_duration);
+            $slider.one('mousedown touchstart', function () {
+                fetchReplayData(replayUrl, contestKey, function (data) {
+                    if (!data) return;
+                    virtualSubsData = data;
+                    $slider.attr('max', Math.floor(data.duration));
+                    wireEvents($endBtn);
+                    manualElapsed = parseInt($slider.val());
+                    updateBar(manualElapsed, data.duration);
+                    renderAt(manualElapsed);
+                });
+            });
+        }
     };
 
 })(jQuery);
