@@ -64,7 +64,6 @@ VNOJ_OFFICIAL_CONTEST_MODE = False
 # Both should be int
 VNOJ_CP_COMMENT = 1   # Each comment vote equals 1 CP
 VNOJ_CP_TICKET = 10   # Each good ticket equals CP
-VNOJ_CP_PROBLEM = 20  # Each suggested problem equal 20 CP
 
 TICKET_AUTOFILL_REPLIES = [
     {'en': 'No comments',
@@ -241,7 +240,6 @@ DISCORD_WEBHOOK = {
     'on_new_ticket': None,
     'on_new_comment': None,
     'on_new_problem': None,
-    'on_new_suggested_problem': None,
     'on_new_tag_problem': None,
     'on_new_tag': None,
     'on_new_blogpost': None,

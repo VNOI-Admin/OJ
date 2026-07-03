@@ -152,8 +152,6 @@ class Submission(models.Model):
             return True
         elif user.has_perm('judge.view_all_submission'):
             return True
-        elif not self.problem.is_public and user.has_perm('judge.suggest_new_problem') and self.problem.is_suggesting:
-            return True
         elif self.user_id == profile.id:
             return True
         elif source_visibility == SubmissionSourceAccess.ALWAYS:
