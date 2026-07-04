@@ -323,14 +323,21 @@
         var virtualSubsData = null;
         var timerId        = null;
         var manualElapsed  = null; // null = auto mode
-        var $slider = null, $timeLabel = null;
+        var $slider = null, $timeLabel = null, $freezeInput = null;
+
+        var FREEZE_KEY = 'replay_freeze_' + replayUrl;
+        var _stored = localStorage.getItem(FREEZE_KEY);
+        var frozenOverride = _stored !== null ? parseInt(_stored) : null; // minutes; null = use backend value
 
         function getLiveElapsed() {
             return (Date.now() / 1000) - rankingData.own.real_start;
         }
 
         function renderAt(elapsed) {
-            window.renderRankingTable(computeVirtualRanking(virtualSubsData, rankingData, elapsed));
+            var data = frozenOverride !== null
+                ? Object.assign({}, virtualSubsData, { frozen: frozenOverride * 60 })
+                : virtualSubsData;
+            window.renderRankingTable(computeVirtualRanking(data, rankingData, elapsed));
         }
 
         function updateBar(elapsed, duration) {
@@ -348,9 +355,35 @@
                 .css({ flex: '1', cursor: 'pointer' });
             $timeLabel = $('<span>').css({ minWidth: '110px', fontFamily: 'monospace' });
             var $endBtn = $('<button>').text(isVirtual ? 'Live' : 'End').css({ fontSize: '12px', padding: '2px 8px' });
-            $bar.append($('<span>').text('⏱'), $slider, $timeLabel, $endBtn);
+            $freezeInput = $('<input>').attr({ type: 'number', min: 0, placeholder: 'Freeze min' })
+                .css({ width: '90px', fontSize: '12px' });
+            if (frozenOverride !== null) $freezeInput.val(frozenOverride);
+            $bar.append($('<span>').text('⏱'), $slider, $timeLabel, $endBtn, $freezeInput);
             $('#ranking-container').before($bar);
             return $endBtn;
+        }
+
+        function wireFreezeInput() {
+            $freezeInput.on('input', function () {
+                var val = this.value.trim();
+                if (val === '') {
+                    frozenOverride = null;
+                    localStorage.removeItem(FREEZE_KEY);
+                } else {
+                    frozenOverride = Math.max(0, parseInt(val) || 0);
+                    localStorage.setItem(FREEZE_KEY, frozenOverride);
+                }
+                if (!virtualSubsData) {
+                    if (!isVirtual && frozenOverride !== null) {
+                        $slider.off('mousedown touchstart');
+                        fetchReplayData(replayUrl, onReplayLoaded);
+                    }
+                    return;
+                }
+                var elapsed = manualElapsed !== null ? manualElapsed
+                    : (isVirtual ? Math.min(getLiveElapsed(), virtualSubsData.duration) : virtualSubsData.duration);
+                renderAt(elapsed);
+            });
         }
 
         function wireEvents($endBtn) {
@@ -383,29 +416,38 @@
             }
         }
 
+        function onReplayLoaded(data) {
+            if (!data) return;
+            virtualSubsData = data;
+            $slider.attr('max', Math.floor(data.duration));
+            wireEvents(_endBtn);
+            manualElapsed = parseInt($slider.val());
+            updateBar(manualElapsed, data.duration);
+            renderAt(manualElapsed);
+        }
+
+        var _endBtn;
         if (isVirtual) {
             fetchReplayData(replayUrl, function (data) {
                 if (!data) return;
                 virtualSubsData = data;
-                var $endBtn = createBar(data.duration);
-                wireEvents($endBtn);
+                _endBtn = createBar(data.duration);
+                wireFreezeInput();
+                wireEvents(_endBtn);
                 tick();
                 timerId = setInterval(tick, 30000);
             });
         } else {
-            var $endBtn = createBar(rankingData.contest.replay_duration);
+            _endBtn = createBar(rankingData.contest.replay_duration);
+            wireFreezeInput();
             updateBar(rankingData.contest.replay_duration, rankingData.contest.replay_duration);
-            $slider.one('mousedown touchstart', function () {
-                fetchReplayData(replayUrl, function (data) {
-                    if (!data) return;
-                    virtualSubsData = data;
-                    $slider.attr('max', Math.floor(data.duration));
-                    wireEvents($endBtn);
-                    manualElapsed = parseInt($slider.val());
-                    updateBar(manualElapsed, data.duration);
-                    renderAt(manualElapsed);
+            if (frozenOverride !== null) {
+                fetchReplayData(replayUrl, onReplayLoaded);
+            } else {
+                $slider.one('mousedown touchstart', function () {
+                    fetchReplayData(replayUrl, onReplayLoaded);
                 });
-            });
+            }
         }
     };
 
