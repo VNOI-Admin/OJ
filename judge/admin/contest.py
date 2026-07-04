@@ -306,7 +306,8 @@ class ContestAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, SortableAdminBa
         return [
             path('rate/all/', self.rate_all_view, name='judge_contest_rate_all'),
             path('<int:id>/rate/', self.rate_view, name='judge_contest_rate'),
-            path('<int:contest_id>/invalidate_replay/', self.invalidate_replay_view, name='judge_contest_invalidate_replay'),
+            path('<int:contest_id>/invalidate_replay/', self.invalidate_replay_view,
+                 name='judge_contest_invalidate_replay'),
             path('<int:contest_id>/rejudge/<int:problem_id>/', self.rejudge_view, name='judge_contest_rejudge'),
             path('<int:contest_id>/rescore/<int:problem_id>/', self.rescore_view, name='judge_contest_rescore'),
             path('<int:contest_id>/resend/<int:announcement_id>/', self.resend_view, name='judge_contest_resend'),

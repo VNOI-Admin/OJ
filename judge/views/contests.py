@@ -1003,10 +1003,10 @@ class ContestRanking(ContestRankingBase):
     @cached_property
     def _virtual_participation(self):
         p = self.request.participation
-        if (p is not None
-                and p.contest_id == self.object.id
-                and p.virtual > ContestParticipation.LIVE
-                and self.object.can_replay):
+        if (p is not None and
+                p.contest_id == self.object.id and
+                p.virtual > ContestParticipation.LIVE and
+                self.object.can_replay):
             return p
         return None
 
@@ -1334,7 +1334,7 @@ class ContestReplayData(ContestMixin, SingleObjectMixin, View):
 
         problems = list(
             contest.contest_problems
-            .select_related('problem').defer('problem__description').order_by('order')
+            .select_related('problem').defer('problem__description').order_by('order'),
         )
 
         parts_qs = contest.users.filter(virtual=ContestParticipation.LIVE)
