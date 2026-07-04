@@ -1006,7 +1006,7 @@ class ContestRanking(ContestRankingBase):
         if (p is not None
                 and p.contest_id == self.object.id
                 and p.virtual > ContestParticipation.LIVE
-                and self.object.frozen_last_minutes == 0):
+                and self.object.can_replay):
             return p
         return None
 
@@ -1321,16 +1321,15 @@ class ContestReplayData(ContestMixin, SingleObjectMixin, View):
         if not os.path.exists(filepath):
             os.makedirs(replay_dir, exist_ok=True)
             data = self._build_data(contest)
-            with open(filepath, 'w') as f:
+            tmp = filepath + '.tmp'
+            with open(tmp, 'w') as f:
                 json.dump(data, f, separators=(',', ':'))
+            os.replace(tmp, filepath)
 
         return filepath, filename
 
     def _build_data(self, contest):
-        if contest.time_limit:
-            duration = int(contest.time_limit.total_seconds())
-        else:
-            duration = int((contest.end_time - contest.start_time).total_seconds())
+        duration = int((contest.end_time - contest.start_time).total_seconds())
 
         problems = list(
             contest.contest_problems
