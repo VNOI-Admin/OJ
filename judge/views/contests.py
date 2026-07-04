@@ -1076,9 +1076,10 @@ class ContestRanking(ContestRankingBase):
             .values_list('problem_id', 'points', 'submission__result', 'submission__date')
             .order_by('submission__date')
         ):
+            if result in (None, 'CE', 'IE'):
+                continue
             t = (sub_date - virtual_part.real_start).total_seconds()
-            skip = 1 if result in (None, 'CE', 'IE') else 0
-            own_subs.append([prob_id, float(points), skip, round(t, 3)])
+            own_subs.append([prob_id, float(points), round(t, 3)])
 
         profile = self.request.profile
         _user_url_tpl = reverse('user_page', args=['__USERNAME__'])
@@ -1353,9 +1354,10 @@ class ContestReplayData(ContestMixin, SingleObjectMixin, View):
 
         subs = []
         for part_id, prob_id, points, result, sub_date in subs_qs:
+            if result in (None, 'CE', 'IE'):
+                continue
             t = (sub_date - contest.start_time).total_seconds()
-            skip = 1 if result in (None, 'CE', 'IE') else 0
-            subs.append([part_id, prob_id, float(points), skip, round(t, 3)])
+            subs.append([part_id, prob_id, float(points), round(t, 3)])
 
         return {
             'start': int(contest.start_time.timestamp()),

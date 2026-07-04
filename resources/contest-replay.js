@@ -8,280 +8,192 @@
 (function ($) {
     'use strict';
 
-    // subs: [[part_id, prob_id, pts, skip, t], ...] → {part_id: {prob_id: [{pts,skip,t}]}}
-    function buildSubsIndex(subs) {
-        var idx = {};
-        for (var i = 0; i < subs.length; i++) {
-            var s = subs[i], partId = s[0], probId = s[1];
-            if (!idx[partId]) idx[partId] = {};
-            if (!idx[partId][probId]) idx[partId][probId] = [];
-            idx[partId][probId].push({ pts: s[2], skip: s[3], t: s[4] });
-        }
-        return idx;
+    // ─── Per-problem state (accumulated as subs arrive in time order) ─────────
+
+    function emptyState() {
+        return { bestPts: 0, bestSubTime: 0, triesUpToAc: 0, totalTries: 0, lastValidSub: null, lastTime: 0, pending: 0 };
     }
 
-    function scoreICPC(probMap, problems, config, cutoff, duration, frozenSec) {
-        var penaltyMin = (config && config.penalty !== undefined) ? config.penalty : 20;
-        var freezePoint = duration - frozenSec;
-        var inFrozen = frozenSec > 0 && cutoff > freezePoint;
+    // Process one submission; mutates `s` (the state object for this problem).
+    // Backend omits CE/IE/null subs, so every sub here is a scoring attempt.
+    function updateState(s, sub) {
+        if (sub.pts > s.bestPts) {
+            s.bestPts     = sub.pts;
+            s.bestSubTime = sub.t;
+            s.triesUpToAc = s.totalTries + 1;
+        }
+        s.totalTries++;
+        s.lastValidSub = sub;
+        if (sub.t > s.lastTime) s.lastTime = sub.t;
+    }
 
-        var score = 0, cumtimeMin = 0, tiebreakerMin = 0, totalPenalty = 0;
+    // ─── Generic scorer ───────────────────────────────────────────────────────
+    // Each format is expressed as a descriptor object produced by a factory in
+    // FORMAT_DESCRIPTORS. scoreGeneric drives the single per-problem loop.
+    //
+    // Descriptor shape:
+    //   probScore(st, prob)       → number — score contribution; return 0 if problem doesn't count
+    //   probTime(st, prob)        → number — time contribution (called only when probScore > 0)
+    //   probPenalty(st, prob)     → number — penalty contribution (called only when probScore > 0)
+    //   probTiebreaker(st, prob)  → number — tiebreaker contribution (called only when probScore > 0)
+    //   timeReducer               → 'sum' | 'max'
+    //   tiebreakerReducer         → 'max'  | 'none'
+    //   buildEntry(st, prob, scored) → object | null
+
+    function scoreGeneric(probStates, problems, desc) {
+        var score = 0, cumtime = 0, penalty = 0, tiebreaker = 0;
         var formatData = {};
-
         for (var pi = 0; pi < problems.length; pi++) {
-            var prob = problems[pi];
-            var pid = prob.id;
-            var allSubs = probMap[pid] || [];
-            if (!allSubs.length) continue;
-
-            var preFreeze = inFrozen ? allSubs.filter(function (s) { return s.t <= freezePoint; }) : allSubs;
-            var postFreeze = inFrozen ? allSubs.filter(function (s) { return s.t > freezePoint; }) : [];
-
-            var maxPts = 0;
-            for (var j = 0; j < preFreeze.length; j++) maxPts = Math.max(maxPts, preFreeze[j].pts);
-            var firstAcTime = Infinity;
-            if (maxPts > 0) {
-                for (var j = 0; j < preFreeze.length; j++) {
-                    if (preFreeze[j].pts === maxPts && preFreeze[j].t < firstAcTime)
-                        firstAcTime = preFreeze[j].t;
+            var prob = problems[pi], pid = prob.id;
+            var st = probStates[pid] || emptyState();
+            if (!st.totalTries && !st.pending) continue;
+            var s = desc.probScore(st, prob);
+            if (s > 0) {
+                score += s;
+                var t = desc.probTime(st, prob);
+                cumtime = desc.timeReducer === 'sum' ? cumtime + t : Math.max(cumtime, t);
+                penalty += desc.probPenalty(st, prob);
+                if (desc.tiebreakerReducer === 'max') {
+                    tiebreaker = Math.max(tiebreaker, desc.probTiebreaker(st, prob));
                 }
             }
-            var isSolved = (maxPts === prob.points && maxPts > 0);
+            var entry = desc.buildEntry(st, prob, s > 0);
+            if (entry) formatData[String(pid)] = entry;
+        }
+        return { score: score, cumtime: Math.max(cumtime + penalty, 0), tiebreaker: tiebreaker, format_data: formatData };
+    }
 
-            var tries = 0;
-            if (isSolved) {
-                for (var j = 0; j < preFreeze.length; j++) {
-                    if (!preFreeze[j].skip && preFreeze[j].t <= firstAcTime) tries++;
-                }
-                var dtMin = Math.floor(firstAcTime / 60);
-                score += maxPts;
-                cumtimeMin += dtMin;
-                tiebreakerMin = Math.max(tiebreakerMin, dtMin);
-                totalPenalty += (tries - 1) * penaltyMin;
-            } else {
-                for (var j = 0; j < preFreeze.length; j++) {
-                    if (!preFreeze[j].skip) tries++;
-                }
-            }
+    // ─── Format descriptor factories ─────────────────────────────────────────
+    // Each factory takes (config, ctx) and returns a descriptor.
+    // ctx = { duration } — runtime values not available in config.
 
-            if (!tries && !postFreeze.length) continue;
+    var FORMAT_DESCRIPTORS = {
+        // ICPC: score = problems fully solved (bestPts must reach problem max).
+        // cumtime = sum of AC times (minutes) + penalty per wrong try before AC (default 20 min).
+        // tiebreaker = time of last AC (minutes). Frozen subs show as pending.
+        icpc: function (cfg) {
+            var penMin = cfg.penalty !== undefined ? cfg.penalty : 20;
+            return {
+                probScore:   function (st, prob) { return (st.bestPts === prob.points) ? st.bestPts : 0; },
+                probTime:    function (st)       { return Math.floor(st.bestSubTime / 60); },
+                probPenalty: function (st)       { return (st.triesUpToAc - 1) * penMin; },
+                probTiebreaker: function (st)    { return Math.floor(st.bestSubTime / 60); },
+                timeReducer: 'sum', tiebreakerReducer: 'max',
 
-            var entry = {
-                points: isSolved ? maxPts : 0,
-                tries: tries,
-                time: isSolved ? firstAcTime : 0,
+                buildEntry: function (st, prob, scored) {
+                    var tries = scored ? st.triesUpToAc : (st.totalTries + st.pending);
+                    var e = { points: st.bestPts, tries: tries, time: st.bestSubTime };
+                    if (st.pending > 0 && !scored) e.is_frozen = true;
+                    return e;
+                },
             };
-            if (postFreeze.length > 0 && !isSolved) {
-                entry.is_frozen = true;
-                for (var j = 0; j < postFreeze.length; j++) {
-                    if (!postFreeze[j].skip) entry.tries++;
-                }
+        },
+
+        // VNOJ: score = best (max) score per problem; partial scores count.
+        // cumtime = sum (or max if LSO) of best-score times + penalty per wrong try (default 5 min).
+        // tiebreaker = time of last score-altering submission. Frozen subs show as pending.
+        vnoj: function (cfg) {
+            var penSec = (cfg.penalty !== undefined ? cfg.penalty : 5) * 60;
+            var lso = !!cfg.LSO;
+            return {
+                probScore:      function (st)       { return st.bestPts; },
+                probTime:       function (st)       { return st.bestSubTime; },
+                probPenalty:    function (st)       { return (st.triesUpToAc - 1) * penSec; },
+                probTiebreaker: function (st)       { return st.bestSubTime; },
+                timeReducer: lso ? 'max' : 'sum', tiebreakerReducer: 'max',
+
+                buildEntry: function (st, prob, scored) {
+                    var prev = scored ? st.triesUpToAc - 1 : st.totalTries;
+                    var e = { points: st.bestPts, time: st.bestSubTime, penalty: prev };
+                    if (st.pending > 0 && st.bestPts < prob.points) e.pending = st.pending;
+                    return e;
+                },
+            };
+        },
+
+        // AtCoder: score = max score per problem; partial scores count.
+        // cumtime = max AC time across all problems + total penalty (wrong tries × default 5 min).
+        // No tiebreaker beyond cumtime.
+        atcoder: function (cfg) {
+            var penSec = (cfg.penalty !== undefined ? cfg.penalty : 5) * 60;
+            return {
+                probScore:      function (st)       { return st.bestPts; },
+                probTime:       function (st)       { return st.bestSubTime; },
+                probPenalty:    function (st)       { return (st.triesUpToAc - 1) * penSec; },
+                probTiebreaker: function ()         { return 0; },
+                timeReducer: 'max', tiebreakerReducer: 'none',
+
+                buildEntry: function (st, _, scored) {
+                    var wrong = scored ? st.triesUpToAc - 1 : st.totalTries;
+                    return { points: st.bestPts, time: st.bestSubTime, penalty: wrong };
+                },
+            };
+        },
+
+        // IOI: score = max score per problem; partial scores (batches) count, no penalty.
+        // cumtime = sum of best-score times if config.cumtime=true, else 0.
+        // tiebreaker = time of last score-altering submission.
+        ioi: function (cfg) {
+            var useCumtime = !!cfg.cumtime;
+            return {
+                probScore:      function (st)       { return st.bestPts; },
+                probTime:       function (st)       { return useCumtime ? st.bestSubTime : 0; },
+                probPenalty:    function ()         { return 0; },
+                probTiebreaker: function (st)       { return st.bestSubTime; },
+                timeReducer: 'sum', tiebreakerReducer: 'max',
+
+                buildEntry: function (st) {
+                    return { points: st.bestPts, time: st.bestSubTime };
+                },
+            };
+        },
+
+        // ECOO: score = last valid submission's score per problem + bonuses.
+        //   first_ac_bonus (+10): if problem fully solved on very first submission.
+        //   time_bonus: +1 point per N minutes remaining before contest end (default N=5).
+        // cumtime = sum of last-sub times if config.cumtime=true, else ties not broken.
+        ecoo: function (cfg, ctx) {
+            var firstAcBonus      = cfg.first_ac_bonus !== undefined ? cfg.first_ac_bonus : 10;
+            var timeBonusInterval = cfg.time_bonus     !== undefined ? cfg.time_bonus     : 5;
+            var useCumtime = !!cfg.cumtime;
+            var duration = ctx.duration;
+            function calcBonus(st, prob) {
+                var sub = st.lastValidSub, bonus = 0;
+                if (st.totalTries === 1 && sub.pts === prob.points) bonus += firstAcBonus;
+                var rem = duration - sub.t;
+                if (rem > 0) bonus += Math.floor(rem / 60 / timeBonusInterval);
+                return bonus;
             }
-            formatData[String(pid)] = entry;
-        }
+            return {
+                probScore:      function (st, prob)  { return st.lastValidSub ? st.lastValidSub.pts + calcBonus(st, prob) : 0; },
+                probTime:       function (st)       { return useCumtime ? st.lastValidSub.t : 0; },
+                probPenalty:    function ()         { return 0; },
+                probTiebreaker: function ()         { return 0; },
+                timeReducer: 'sum', tiebreakerReducer: 'none',
 
-        return { score: score, cumtime: Math.max(cumtimeMin + totalPenalty, 0), tiebreaker: tiebreakerMin, format_data: formatData };
-    }
+                buildEntry: function (st, prob) {
+                    var sub = st.lastValidSub;
+                    return { points: sub.pts, time: sub.t, bonus: calcBonus(st, prob) };
+                },
+            };
+        },
 
-    function scoreVNOJ(probMap, problems, config, cutoff, duration, frozenSec) {
-        var penaltyMin = (config && config.penalty !== undefined) ? config.penalty : 5;
-        var penaltySec = penaltyMin * 60;
-        var lso = !!(config && config.LSO);
-        var freezePoint = duration - frozenSec;
-        var inFrozen = frozenSec > 0 && cutoff > freezePoint;
+        // Default: score = max score per problem; partial scores count, no penalty.
+        // cumtime = sum of last-submission times on problems with any score. No tiebreaker.
+        default: function () {
+            return {
+                probScore:      function (st)       { return st.bestPts; },
+                probTime:       function (st)       { return st.lastTime; },
+                probPenalty:    function ()         { return 0; },
+                probTiebreaker: function ()         { return 0; },
+                timeReducer: 'sum', tiebreakerReducer: 'none',
 
-        var score = 0, cumtime = 0, lastAc = 0, totalPenalty = 0;
-        var formatData = {};
+                buildEntry: function (st) { return { points: st.bestPts, time: st.lastTime }; },
+            };
+        },
+    };
 
-        for (var pi = 0; pi < problems.length; pi++) {
-            var prob = problems[pi];
-            var pid = prob.id;
-            var allSubs = probMap[pid] || [];
-            if (!allSubs.length) continue;
-
-            var preFreeze = inFrozen ? allSubs.filter(function (s) { return s.t <= freezePoint; }) : allSubs;
-            var postFreeze = inFrozen ? allSubs.filter(function (s) { return s.t > freezePoint; }) : [];
-
-            var maxPts = 0;
-            for (var j = 0; j < preFreeze.length; j++) maxPts = Math.max(maxPts, preFreeze[j].pts);
-            var firstAcTime = Infinity;
-            if (maxPts > 0) {
-                for (var j = 0; j < preFreeze.length; j++) {
-                    if (preFreeze[j].pts === maxPts && preFreeze[j].t < firstAcTime)
-                        firstAcTime = preFreeze[j].t;
-                }
-            }
-            var isSolved = maxPts > 0;
-
-            var prev = 0;
-            if (isSolved) {
-                for (var j = 0; j < preFreeze.length; j++) {
-                    if (!preFreeze[j].skip && preFreeze[j].t <= firstAcTime) prev++;
-                }
-                prev = Math.max(0, prev - 1);
-                cumtime += firstAcTime;
-                lastAc = Math.max(lastAc, firstAcTime);
-                score += maxPts;
-                totalPenalty += prev * penaltySec;
-            } else {
-                for (var j = 0; j < preFreeze.length; j++) {
-                    if (!preFreeze[j].skip) prev++;
-                }
-            }
-
-            var entry = { points: maxPts, time: isSolved ? firstAcTime : 0, penalty: prev };
-
-            if (postFreeze.length > 0 && maxPts < prob.points) {
-                var pendingCount = 0;
-                for (var j = 0; j < postFreeze.length; j++) {
-                    if (!postFreeze[j].skip) pendingCount++;
-                }
-                if (pendingCount > 0) entry.pending = pendingCount;
-            }
-
-            if (maxPts > 0 || prev > 0 || entry.pending) formatData[String(pid)] = entry;
-        }
-
-        var finalCumtime = lso ? Math.max(lastAc + totalPenalty, 0) : Math.max(cumtime + totalPenalty, 0);
-        return { score: score, cumtime: finalCumtime, tiebreaker: lastAc, format_data: formatData };
-    }
-
-    function scoreAtCoder(probMap, problems, config) {
-        var penaltyMin = (config && config.penalty !== undefined) ? config.penalty : 5;
-        var penaltySec = penaltyMin * 60;
-
-        var score = 0, cumtime = 0, totalPenalty = 0;
-        var formatData = {};
-
-        for (var pi = 0; pi < problems.length; pi++) {
-            var prob = problems[pi];
-            var pid = prob.id;
-            var allSubs = probMap[pid] || [];
-            if (!allSubs.length) continue;
-
-            var maxPts = 0;
-            for (var j = 0; j < allSubs.length; j++) maxPts = Math.max(maxPts, allSubs[j].pts);
-
-            var firstAcTime = Infinity;
-            if (maxPts > 0) {
-                for (var j = 0; j < allSubs.length; j++) {
-                    if (allSubs[j].pts === maxPts && allSubs[j].t < firstAcTime)
-                        firstAcTime = allSubs[j].t;
-                }
-            }
-
-            var wrongTries = 0;
-            if (maxPts > 0) {
-                for (var j = 0; j < allSubs.length; j++) {
-                    if (!allSubs[j].skip && allSubs[j].t <= firstAcTime) wrongTries++;
-                }
-                wrongTries = Math.max(0, wrongTries - 1); // don't count the AC itself
-                score += maxPts;
-                cumtime = Math.max(cumtime, firstAcTime);
-                totalPenalty += wrongTries * penaltySec;
-            } else {
-                for (var j = 0; j < allSubs.length; j++) {
-                    if (!allSubs[j].skip) wrongTries++;
-                }
-            }
-
-            if (maxPts > 0 || wrongTries > 0) {
-                formatData[String(pid)] = { points: maxPts, time: maxPts > 0 ? firstAcTime : 0, penalty: wrongTries };
-            }
-        }
-
-        return { score: score, cumtime: Math.max(cumtime + totalPenalty, 0), tiebreaker: 0, format_data: formatData };
-    }
-
-    function scoreIOI(probMap, problems, config) {
-        var useCumtime = !!(config && config.cumtime);
-
-        var score = 0, sumTime = 0, lastSolveTime = 0;
-        var formatData = {};
-
-        for (var pi = 0; pi < problems.length; pi++) {
-            var prob = problems[pi];
-            var pid = prob.id;
-            var allSubs = probMap[pid] || [];
-            if (!allSubs.length) continue;
-
-            var maxPts = 0;
-            for (var j = 0; j < allSubs.length; j++) maxPts = Math.max(maxPts, allSubs[j].pts);
-
-            var firstAcTime = 0;
-            if (maxPts > 0) {
-                firstAcTime = Infinity;
-                for (var j = 0; j < allSubs.length; j++) {
-                    if (allSubs[j].pts === maxPts && allSubs[j].t < firstAcTime)
-                        firstAcTime = allSubs[j].t;
-                }
-                score += maxPts;
-                sumTime += firstAcTime;
-                lastSolveTime = Math.max(lastSolveTime, firstAcTime);
-            }
-
-            formatData[String(pid)] = { points: maxPts, time: maxPts > 0 ? firstAcTime : 0 };
-        }
-
-        var finalCumtime = useCumtime ? sumTime : lastSolveTime;
-        return { score: score, cumtime: Math.max(finalCumtime, 0), tiebreaker: lastSolveTime, format_data: formatData };
-    }
-
-    function scoreECOO(probMap, problems, config, duration) {
-        var firstAcBonus = (config && config.first_ac_bonus !== undefined) ? config.first_ac_bonus : 10;
-        var timeBonusInterval = (config && config.time_bonus !== undefined) ? config.time_bonus : 5;
-        var useCumtime = !!(config && config.cumtime);
-
-        var score = 0, cumtime = 0;
-        var formatData = {};
-
-        for (var pi = 0; pi < problems.length; pi++) {
-            var prob = problems[pi];
-            var pid = prob.id;
-            var allSubs = probMap[pid] || [];
-            if (!allSubs.length) continue;
-
-            var lastSub = null, subCnt = 0;
-            for (var j = 0; j < allSubs.length; j++) {
-                if (!allSubs[j].skip) { subCnt++; lastSub = allSubs[j]; }
-            }
-            if (!lastSub) continue;
-
-            var pts = lastSub.pts;
-            var bonus = 0;
-            if (subCnt === 1 && pts === prob.points) bonus += firstAcBonus;
-            var remaining = duration - lastSub.t;
-            if (remaining > 0) bonus += Math.floor(remaining / 60 / timeBonusInterval);
-
-            score += pts + bonus;
-            if (useCumtime) cumtime += lastSub.t;
-            formatData[String(pid)] = { points: pts, time: lastSub.t, bonus: bonus };
-        }
-
-        return { score: score, cumtime: Math.max(cumtime, 0), tiebreaker: 0, format_data: formatData };
-    }
-
-    function scoreDefault(probMap, problems) {
-        var score = 0, cumtime = 0;
-        var formatData = {};
-
-        for (var pi = 0; pi < problems.length; pi++) {
-            var prob = problems[pi];
-            var pid = prob.id;
-            var subs = probMap[pid] || [];
-            if (!subs.length) continue;
-
-            var maxPts = 0, lastTime = 0;
-            for (var j = 0; j < subs.length; j++) {
-                if (subs[j].pts > maxPts) maxPts = subs[j].pts;
-                if (subs[j].t > lastTime) lastTime = subs[j].t;
-            }
-            if (maxPts > 0) { score += maxPts; cumtime += lastTime; }
-            formatData[String(pid)] = { points: maxPts, time: lastTime };
-        }
-
-        return { score: score, cumtime: Math.max(cumtime, 0), tiebreaker: 0, format_data: formatData };
-    }
+    // ─── Ranking helpers ──────────────────────────────────────────────────────
 
     function sortAndRankParticipations(parts) {
         parts.sort(function (a, b) {
@@ -302,29 +214,57 @@
         }
     }
 
+    // ─── Core replay engine ───────────────────────────────────────────────────
+
     function computeVirtualRanking(virtualSubsData, rankingData, elapsed) {
-        var duration = virtualSubsData.duration;
+        var duration  = virtualSubsData.duration;
         var frozenSec = virtualSubsData.frozen;
-        var cutoff = Math.min(elapsed, duration);
-        var contest = rankingData.contest;
-        var problems = rankingData.problems;
-        var format = contest.format;
-        var config = contest.format_config || {};
+        var cutoff    = Math.min(elapsed, duration);
+        var contest   = rankingData.contest;
+        var problems  = rankingData.problems;
+        var format    = contest.format;
+        var config    = contest.format_config || {};
+        var freezePoint = duration - frozenSec;
 
-        var filteredSubs = virtualSubsData.subs.filter(function (s) { return s[4] <= cutoff; });
-        var subsIndex = buildSubsIndex(filteredSubs);
+        // Single forward pass: build state[partId][probId]
+        var state = {};
+        var subs = virtualSubsData.subs;
+        for (var i = 0; i < subs.length; i++) {
+            var s = subs[i]; // [partId, probId, pts, t]
+            if (s[3] > cutoff) continue;
+            var partId = s[0], probId = s[1];
+            if (!state[partId]) state[partId] = {};
+            if (!state[partId][probId]) state[partId][probId] = emptyState();
+            if (frozenSec > 0 && s[3] > freezePoint) {
+                state[partId][probId].pending++;
+            } else {
+                updateState(state[partId][probId], { pts: s[2], t: s[3] });
+            }
+        }
 
-        function scoreOne(probMap) {
-            if (format === 'icpc')    return scoreICPC(probMap, problems, config, cutoff, duration, frozenSec);
-            if (format === 'vnoj')    return scoreVNOJ(probMap, problems, config, cutoff, duration, frozenSec);
-            if (format === 'atcoder') return scoreAtCoder(probMap, problems, config);
-            if (format === 'ioi') return scoreIOI(probMap, problems, config);
-            if (format === 'ecoo')    return scoreECOO(probMap, problems, config, duration);
-            return scoreDefault(probMap, problems);
+        // Own subs for the virtual participant
+        if (rankingData.own) {
+            var ownData = rankingData.own;
+            var ownId   = ownData.id;
+            state[ownId] = {};
+            for (var j = 0; j < ownData.subs.length; j++) {
+                var os = ownData.subs[j]; // [probId, pts, t]
+                if (os[2] > elapsed) break; // subs ordered by t
+                var probId = os[0];
+                if (!state[ownId][probId]) state[ownId][probId] = emptyState();
+                updateState(state[ownId][probId], { pts: os[1], t: os[2] });
+            }
+        }
+
+        var fac  = FORMAT_DESCRIPTORS[format] || FORMAT_DESCRIPTORS['default'];
+        var desc = fac(config, { duration: duration });
+
+        function scoreOne(partId) {
+            return scoreGeneric(state[partId] || {}, problems, desc);
         }
 
         var newParts = virtualSubsData.participations.map(function (p) {
-            var scored = scoreOne(subsIndex[p.id] || {});
+            var scored = scoreOne(p.id);
             return {
                 id: p.id, score: scored.score, cumtime: scored.cumtime,
                 tiebreaker: scored.tiebreaker, format_data: scored.format_data,
@@ -335,30 +275,25 @@
 
         if (rankingData.own) {
             var ownData = rankingData.own;
-            var vProbMap = {};
-            for (var j = 0; j < ownData.subs.length; j++) {
-                var s = ownData.subs[j]; // [prob_id, pts, skip, t]
-                if (s[3] > elapsed) break; // subs ordered by t
-                if (!vProbMap[s[0]]) vProbMap[s[0]] = [];
-                vProbMap[s[0]].push({ pts: s[1], skip: s[2], t: s[3] });
-            }
-            var vScored = scoreOne(vProbMap);
+            var scored  = scoreOne(ownData.id);
             newParts.push({
-                id: ownData.id, score: vScored.score, cumtime: vScored.cumtime,
-                tiebreaker: vScored.tiebreaker, format_data: vScored.format_data,
+                id: ownData.id, score: scored.score, cumtime: scored.cumtime,
+                tiebreaker: scored.tiebreaker, format_data: scored.format_data,
                 is_disqualified: ownData.is_disqualified, virtual: ownData.virtual,
                 rating: ownData.rating, user: ownData.user,
             });
         }
 
         sortAndRankParticipations(newParts);
-        var isFrozenNow = frozenSec > 0 && cutoff > duration - frozenSec;
+        var isFrozenNow = frozenSec > 0 && cutoff > freezePoint;
         return { contest: Object.assign({}, contest, { is_frozen: isFrozenNow }), problems: problems, participations: newParts };
     }
 
+    // ─── Fetch helpers ────────────────────────────────────────────────────────
+
     function fetchReplayData(url, callback) {
         var cacheKey = 'replay_' + url;
-        var cached = sessionStorage.getItem(cacheKey);
+        var cached   = sessionStorage.getItem(cacheKey);
         if (cached) {
             try { callback(JSON.parse(cached)); return; } catch (e) { sessionStorage.removeItem(cacheKey); }
         }
@@ -376,16 +311,18 @@
         return (h ? h + ':' : '') + (h && m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
     }
 
+    // ─── Public entry point ───────────────────────────────────────────────────
+
     window.initVirtualRanking = function (rankingData) {
         window.renderRankingTable(rankingData);
 
         var replayUrl = rankingData.contest && rankingData.contest.replay_url;
         if (!replayUrl) return;
 
-        var isVirtual = !!rankingData.own;
+        var isVirtual      = !!rankingData.own;
         var virtualSubsData = null;
-        var timerId = null;
-        var manualElapsed = null; // null = auto mode
+        var timerId        = null;
+        var manualElapsed  = null; // null = auto mode
         var $slider = null, $timeLabel = null;
 
         function getLiveElapsed() {
@@ -402,7 +339,6 @@
             $timeLabel.text(fmtHMS(elapsed) + ' / ' + fmtHMS(duration));
         }
 
-        // Creates the replay bar DOM; returns $endBtn. Does NOT wire data-dependent events.
         function createBar(duration) {
             var $bar = $('<div>').css({
                 display: 'flex', alignItems: 'center', gap: '8px',
@@ -417,7 +353,6 @@
             return $endBtn;
         }
 
-        // Wires slider + button once virtualSubsData is available.
         function wireEvents($endBtn) {
             $slider.on('input', function () {
                 manualElapsed = parseInt(this.value);
@@ -449,7 +384,6 @@
         }
 
         if (isVirtual) {
-            // Auto-fetch, auto-start at current elapsed.
             fetchReplayData(replayUrl, function (data) {
                 if (!data) return;
                 virtualSubsData = data;
@@ -459,7 +393,6 @@
                 timerId = setInterval(tick, 30000);
             });
         } else {
-            // Show bar immediately using duration from page data; lazy-load subs on first touch.
             var $endBtn = createBar(rankingData.contest.replay_duration);
             updateBar(rankingData.contest.replay_duration, rankingData.contest.replay_duration);
             $slider.one('mousedown touchstart', function () {
