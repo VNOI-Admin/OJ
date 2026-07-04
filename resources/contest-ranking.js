@@ -772,8 +772,8 @@
         return { contest: Object.assign({}, contest, { is_frozen: isFrozenNow }), problems: problems, participations: newParts };
     }
 
-    function fetchReplayData(url, contestKey, callback) {
-        var cacheKey = 'replay_' + contestKey;
+    function fetchReplayData(url, callback) {
+        var cacheKey = 'replay_' + url;
         var cached = sessionStorage.getItem(cacheKey);
         if (cached) {
             try { callback(JSON.parse(cached)); return; } catch (e) { sessionStorage.removeItem(cacheKey); }
@@ -792,7 +792,7 @@
         return (h ? h + ':' : '') + (h && m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
     }
 
-    window.initVirtualRanking = function (rankingData, contestKey) {
+    window.initVirtualRanking = function (rankingData) {
         window.renderRankingTable(rankingData);
 
         var replayUrl = rankingData.contest && rankingData.contest.replay_url;
@@ -866,7 +866,7 @@
 
         if (isVirtual) {
             // Auto-fetch, auto-start at current elapsed.
-            fetchReplayData(replayUrl, contestKey, function (data) {
+            fetchReplayData(replayUrl, function (data) {
                 if (!data) return;
                 virtualSubsData = data;
                 var $endBtn = createBar(data.duration);
@@ -879,7 +879,7 @@
             var $endBtn = createBar(rankingData.contest.replay_duration);
             updateBar(rankingData.contest.replay_duration, rankingData.contest.replay_duration);
             $slider.one('mousedown touchstart', function () {
-                fetchReplayData(replayUrl, contestKey, function (data) {
+                fetchReplayData(replayUrl, function (data) {
                     if (!data) return;
                     virtualSubsData = data;
                     $slider.attr('max', Math.floor(data.duration));

@@ -979,14 +979,6 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
                 'classes': RATING_CLASS,
                 'names': RATING_LEVELS,
             },
-            **(
-                {
-                    'replay_url': reverse('contest_replay_data', args=[contest.key]),
-                    'replay_duration': int((contest.end_time - contest.start_time).total_seconds()),
-                }
-                if contest.ended and contest.frozen_last_minutes == 0
-                else {}
-            ),
         }
         return problems, problems_data, contest_data
 
@@ -1124,12 +1116,25 @@ class ContestRanking(ContestRankingBase):
             cache.set(self.json_cache_key, cached, self.object.scoreboard_cache_timeout)
         return cached
 
+    def _inject_replay_url(self, data):
+        contest = self.object
+        if not contest.can_replay or 'contest' not in data:
+            return data
+        return {
+            **data,
+            'contest': {
+                **data['contest'],
+                'replay_url': reverse('contest_replay_data', args=[contest.key, contest.replay_version]),
+                'replay_duration': int((contest.end_time - contest.start_time).total_seconds()),
+            },
+        }
+
     def get(self, request, *args, **kwargs):
         if 'data' in request.GET:
             self.object = self.get_object()
             self._resolve_show_virtual()
             self.check_can_see_own_scoreboard()
-            return JsonResponse(self.get_cached_json_ranking_data())
+            return JsonResponse(self._inject_replay_url(self.get_cached_json_ranking_data()))
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -1139,7 +1144,9 @@ class ContestRanking(ContestRankingBase):
         context['show_virtual'] = self.show_virtual
         context['is_frozen'] = self.is_frozen
         context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
-        context['ranking_json'] = json.dumps(self.get_cached_json_ranking_data()).translate(_json_script_escapes)
+        context['ranking_json'] = json.dumps(
+            self._inject_replay_url(self.get_cached_json_ranking_data()),
+        ).translate(_json_script_escapes)
         return context
 
 
@@ -1287,14 +1294,37 @@ class ContestReplayData(ContestMixin, SingleObjectMixin, View):
     def get(self, request, *args, **kwargs):
         contest = self.get_object()
 
-        if not contest.ended:
-            raise Http404()
-        if contest.frozen_last_minutes != 0:
-            raise Http404()
-        if not contest.can_see_full_scoreboard(request.user):
+        if not contest.can_replay:
             raise Http404()
 
-        return JsonResponse(self._build_data(contest))
+        version = kwargs['version']
+        if version != contest.replay_version:
+            raise Http404()
+
+        filepath, filename = self.prepare_replay_data(contest)
+
+        if getattr(settings, 'DMOJ_CONTEST_REPLAY_INTERNAL', None):
+            url_path = '%s/%s' % (settings.DMOJ_CONTEST_REPLAY_INTERNAL, filename)
+        else:
+            url_path = None
+
+        response = HttpResponse(content_type='application/json')
+        response['Cache-Control'] = 'public, max-age=31536000, immutable'
+        add_file_response(request, response, url_path, filepath)
+        return response
+
+    def prepare_replay_data(self, contest):
+        replay_dir = os.path.join(settings.MEDIA_ROOT, settings.CONTEST_REPLAY_MEDIA_DIR)
+        filename = f'{contest.key}_v{contest.replay_version}.json'
+        filepath = os.path.join(replay_dir, filename)
+
+        if not os.path.exists(filepath):
+            os.makedirs(replay_dir, exist_ok=True)
+            data = self._build_data(contest)
+            with open(filepath, 'w') as f:
+                json.dump(data, f, separators=(',', ':'))
+
+        return filepath, filename
 
     def _build_data(self, contest):
         if contest.time_limit:

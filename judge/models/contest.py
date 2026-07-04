@@ -198,6 +198,11 @@ class Contest(models.Model):
                                            help_text=_('An optional code to view the contest ranking. '
                                                        'Leave it blank to disable.'),
                                            blank=True, default='', max_length=255)
+    replay_version = models.PositiveIntegerField(default=0)
+
+    @property
+    def can_replay(self):
+        return self.ended and self.frozen_last_minutes == 0 and self.show_scoreboard
 
     @cached_property
     def format_class(self):
