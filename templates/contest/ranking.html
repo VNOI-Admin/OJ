@@ -45,6 +45,7 @@
 {% block users_js_media %}
     {% compress js %}
         <script type="text/javascript" src="{{ static('contest-ranking.js') }}"></script>
+        <script type="text/javascript" src="{{ static('contest-replay.js') }}"></script>
     {% endcompress %}
     <script type="text/javascript">
         window.RANKING_DATA = {{ ranking_json|safe }};
