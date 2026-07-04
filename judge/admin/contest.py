@@ -285,6 +285,7 @@ class ContestAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, SortableAdminBa
                                             '%d contests successfully unlocked.',
                                             count) % count)
 
+    @method_decorator(require_POST)
     def invalidate_replay_view(self, request, contest_id):
         if not request.user.has_perm('judge.change_contest'):
             raise PermissionDenied()

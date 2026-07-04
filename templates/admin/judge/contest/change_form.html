@@ -18,7 +18,7 @@
             $('.resend-link').click(function () {
                 return confirm('{{ _('Are you sure you want to resend this announcement?') }}');
             });
-            $('.invalidate-replay-link').click(function () {
+            $('.invalidate-replay-form button').click(function () {
                 return confirm('{{ _('Invalidate replay cache? Users will need to re-fetch the replay data.') }}');
             });
         });
@@ -34,11 +34,13 @@
         </a>
     {% endif %}
     {% if original and original.ended and perms.judge.change_contest %}
-        <a style="display: none" title="{% trans "Invalidate Replay Cache" %}"
-           href="{% url 'admin:judge_contest_invalidate_replay' original.pk %}"
-           class="button rerate-link action-link invalidate-replay-link">
-            <i class="fa fa-lg fa-refresh"></i>
-            <span class="text">{% trans "Invalidate Replay" %}</span>
-        </a>
+        <form style="display: none" class="rerate-link invalidate-replay-form"
+              method="post" action="{% url 'admin:judge_contest_invalidate_replay' original.pk %}">
+            {% csrf_token %}
+            <button type="submit" title="{% trans "Invalidate Replay Cache" %}" class="button action-link">
+                <i class="fa fa-lg fa-refresh"></i>
+                <span class="text">{% trans "Invalidate Replay" %}</span>
+            </button>
+        </form>
     {% endif %}
 {% endblock %}
