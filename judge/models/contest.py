@@ -203,7 +203,7 @@ class Contest(models.Model):
     @property
     def can_replay(self):
         return self.ended and self.frozen_last_minutes == 0 and self.show_scoreboard and \
-            self.format_name != contest_format.IOIContestFormat.name
+            self.format.name != contest_format.IOIContestFormat.name
 
     @cached_property
     def format_class(self):
