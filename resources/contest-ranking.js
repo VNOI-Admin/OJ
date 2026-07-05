@@ -506,10 +506,10 @@
 
     // ─── Public entry point ───────────────────────────────────────────────────
 
-    window.renderRankingTable = function (data) {
+    window.renderRankingTable = function (data, isNewDataFromBackend) {
         var contest = data.contest;
         var problems = data.problems;
-        var participations = data.participations;
+        var participations = data.participations || [];
 
         if (contest.rating_config) {
             initRatingConfig(contest.rating_config);
@@ -534,6 +534,9 @@
         var container = document.getElementById('ranking-container');
         if (container) {
             container.innerHTML = html;
+        }
+        if (typeof window.onFinishRankingRender === 'function') {
+            window.onFinishRankingRender(isNewDataFromBackend === true);
         }
     };
 
