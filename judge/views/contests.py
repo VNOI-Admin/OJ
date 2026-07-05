@@ -1530,6 +1530,7 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data['contest_problem_formset'] = self.get_contest_problem_formset()
+        data['contest_org'] = self.object.organization
         return data
 
     def post(self, request, *args, **kwargs):

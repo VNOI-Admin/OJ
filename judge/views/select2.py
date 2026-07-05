@@ -125,6 +125,32 @@ class ProblemSelect2View(Select2View):
         return Problem.get_visible_problems(self.request.user) \
                       .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term))
 
+    def get_name(self, obj):
+        return f'[{obj.code}] {obj.name}'
+
+
+class PublicProblemSelect2View(Select2View):
+    def get_queryset(self):
+        return Problem.get_public_problems() \
+                      .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term))
+
+    def get_name(self, obj):
+        return f'[{obj.code}] {obj.name}'
+
+
+class OrganizationProblemSelect2View(Select2View):
+    def dispatch(self, request, *args, **kwargs):
+        self.org_pk = kwargs['org_pk']
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return Problem.get_visible_problems(self.request.user) \
+                      .filter(organization_id=self.org_pk, is_organization_private=True) \
+                      .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term))
+
+    def get_name(self, obj):
+        return f'[{obj.code}] {obj.name}'
+
 
 class ContestSelect2View(Select2View):
     def get_queryset(self):

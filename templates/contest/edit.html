@@ -61,9 +61,16 @@
 
             $('#form_set tr').formset({
                 prefix: '{{ contest_problem_formset.prefix }}',
+                deleteText: '<i class="fa fa-trash" aria-hidden="true"></i>',
                 added: function(row) {
                     row.find('select[id$="-problem"]').val(null).trigger('change');
                     _autoFillOrder(row);
+                    {% if contest_org %}
+                    var $probSel = row.find('select[data-problem-src]');
+                    if ($probSel.data('select2')) $probSel.select2('destroy');
+                    $probSel.val(null);
+                    _initProblemPicker($probSel[0]);
+                    {% endif %}
                 },
             });
 
@@ -132,6 +139,54 @@
                     });
                 }
             });
+
+            {% if contest_org %}
+            var _problemSrcUrls = {
+                org: "{{ url('org_problem_select2', org_pk=contest_org.id) }}",
+                public: "{{ url('public_problem_select2') }}",
+            };
+            var _problemSrcLabels = {
+                org: {{ _('Organization problems')|tojson }},
+                public: {{ _('Public problems')|tojson }},
+            };
+
+            function _initProblemPicker(select) {
+                var $sel = $(select);
+                if ($sel.data('select2')) $sel.select2('destroy');
+                $sel.select2({
+                    ajax: {
+                        url: function() { return _problemSrcUrls[$sel.data('problemSrc') || 'org']; },
+                        delay: 300,
+                        data: function(p) { return { term: p.term || '', page: p.page || 1 }; },
+                        processResults: function(d) { return { results: d.results, pagination: { more: d.more } }; },
+                    },
+                    placeholder: '---------',
+                    minimumInputLength: 0,
+                    width: '100%',
+                });
+                $sel.on('select2:open', function() {
+                    var $dropdown = $('.select2-container--open .select2-dropdown');
+                    if ($dropdown.find('.tab-bar').length) return;
+                    var $tabBar = $('<div class="tab-bar"></div>');
+                    Object.keys(_problemSrcUrls).forEach(function(key) {
+                        var $btn = $('<button type="button" class="tab-bar-btn">' + _problemSrcLabels[key] + '</button>');
+                        if (($sel.data('problemSrc') || 'org') === key) $btn.addClass('active');
+                        $btn.on('mousedown', function(e) {
+                            e.preventDefault();
+                            if (($sel.data('problemSrc') || 'org') === key) return;
+                            $sel.data('problemSrc', key);
+                            $tabBar.find('.tab-bar-btn').removeClass('active');
+                            $(this).addClass('active');
+                            $dropdown.find('.select2-search__field').val('').trigger('input');
+                        });
+                        $tabBar.append($btn);
+                    });
+                    $dropdown.prepend($tabBar);
+                });
+            }
+
+            $('#form_set select[data-problem-src]').each(function() { _initProblemPicker(this); });
+            {% endif %}
         })
     </script>
     {{ form.media.js }}
@@ -202,7 +257,20 @@
     {% endif %}
     <tr>
         <td>{{ form.order.errors }}{{ form.order }}</td>
-        <td>{{ form.id }} {{ form.problem.errors }}{{ form.problem }}</td>
+        <td>{{ form.id }} {{ form.problem.errors }}
+            {% if contest_org %}
+            <select name="{{ form.problem.html_name }}" id="{{ form.problem.auto_id }}" style="width:100%"
+                    data-problem-src="{{ 'public' if form.instance.problem_id and not form.instance.problem.is_organization_private else 'org' }}">
+                {% if form.instance.problem_id %}
+                <option value="{{ form.instance.problem_id }}" selected>
+                    [{{ form.instance.problem.code }}] {{ form.instance.problem.name }}
+                </option>
+                {% endif %}
+            </select>
+            {% else %}
+            {{ form.problem }}
+            {% endif %}
+        </td>
         <td class="points-column">{{ form.points.errors }}{{ form.points }}</td>
         <td>{{ form.max_submissions.errors }}{{ form.max_submissions }}</td>
         <td>
