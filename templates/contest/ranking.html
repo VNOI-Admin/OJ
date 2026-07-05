@@ -82,7 +82,7 @@
     <script type="text/javascript">
         $(function () {
             if (window.RANKING_DATA) {
-                window.initVirtualRanking(window.RANKING_DATA);
+                window.initContestRanking(window.RANKING_DATA);
             }
 
             var url = '{{ url('contest_participation', contest.key, '__username__') }}';

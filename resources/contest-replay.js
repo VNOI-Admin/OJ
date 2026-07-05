@@ -2,7 +2,7 @@
  * Scoring functions for all contest formats + virtual ranking computation.
  * Depends on window.renderRankingTable defined in contest-ranking.js.
  *
- * Entry point: window.initVirtualRanking(rankingData)
+ * Entry point: window.initContestRanking(rankingData)
  */
 
 (function ($) {
@@ -313,7 +313,7 @@
 
     // ─── Public entry point ───────────────────────────────────────────────────
 
-    window.initVirtualRanking = function (rankingData) {
+    window.initContestRanking = function (rankingData) {
         window.renderRankingTable(rankingData);
 
         var replayUrl = rankingData.contest && rankingData.contest.replay_url;
