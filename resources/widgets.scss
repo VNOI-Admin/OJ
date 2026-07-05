@@ -518,3 +518,29 @@ details {
     padding: 5px 10px;
     border-radius: 4px;
 }
+
+.tab-bar {
+    display: flex;
+    border-bottom: 2px solid $color_primary25;
+
+    .tab-bar-btn {
+        flex: 1;
+        padding: 8px 12px;
+        border: 2px solid transparent;
+        background: $color_primary10;
+        font-size: 12px;
+        font-weight: 700;
+        color: $color_primary66 !important;
+        cursor: pointer;
+        margin-bottom: -2px;
+        outline: none;
+
+        &:hover { background: $color_primary25; }
+
+        &.active {
+            background: $color_primary0;
+            border-color: $color_problem_tab_active_text;
+            color: $color_problem_tab_active_text !important;
+        }
+    }
+}
