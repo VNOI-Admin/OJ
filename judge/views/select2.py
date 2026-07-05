@@ -149,8 +149,7 @@ class OrganizationProblemSelect2View(Select2View):
                       .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term))
 
     def get_name(self, obj):
-        # cut the organization prefix from the problem code for display
-        return f'[{obj.code.split("_")[1]}] {obj.name}'
+        return f'[{obj.code}] {obj.name}'
 
 
 class ContestSelect2View(Select2View):
