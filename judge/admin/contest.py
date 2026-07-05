@@ -2,7 +2,7 @@ from adminsortable2.admin import SortableAdminBase, SortableInlineAdminMixin
 from django.contrib import admin
 from django.core.exceptions import PermissionDenied
 from django.db import connection, transaction
-from django.db.models import Q, TextField
+from django.db.models import F, Q, TextField
 from django.forms import ModelForm, ModelMultipleChoiceField
 from django.http import Http404, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
@@ -285,6 +285,16 @@ class ContestAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, SortableAdminBa
                                             '%d contests successfully unlocked.',
                                             count) % count)
 
+    @method_decorator(require_POST)
+    def invalidate_replay_view(self, request, contest_id):
+        if not request.user.has_perm('judge.change_contest'):
+            raise PermissionDenied()
+        contest = get_object_or_404(Contest, id=contest_id)
+        if not contest.ended:
+            raise Http404()
+        Contest.objects.filter(pk=contest.pk).update(replay_version=F('replay_version') + 1)
+        return HttpResponseRedirect(request.headers.get('referer', reverse('admin:judge_contest_changelist')))
+
     def set_locked_after(self, contest, locked_after):
         with transaction.atomic():
             contest.locked_after = locked_after
@@ -296,6 +306,8 @@ class ContestAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, SortableAdminBa
         return [
             path('rate/all/', self.rate_all_view, name='judge_contest_rate_all'),
             path('<int:id>/rate/', self.rate_view, name='judge_contest_rate'),
+            path('<int:contest_id>/invalidate_replay/', self.invalidate_replay_view,
+                 name='judge_contest_invalidate_replay'),
             path('<int:contest_id>/rejudge/<int:problem_id>/', self.rejudge_view, name='judge_contest_rejudge'),
             path('<int:contest_id>/rescore/<int:problem_id>/', self.rescore_view, name='judge_contest_rescore'),
             path('<int:contest_id>/resend/<int:announcement_id>/', self.resend_view, name='judge_contest_resend'),

@@ -301,6 +301,11 @@ DMOJ_CONTEST_DATA_CACHE = ''
 DMOJ_CONTEST_DATA_INTERNAL = ''
 DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT = datetime.timedelta(days=1)
 
+# directory to store replay JSON files;
+CONTEST_REPLAY_MEDIA_DIR = 'contest_replay'
+# Internal path to serve replay JSON files with X-Accel-Redirect
+DMOJ_CONTEST_REPLAY_INTERNAL = None
+
 DMOJ_COMMENT_VOTE_HIDE_THRESHOLD = -5
 DMOJ_COMMENT_REPLY_TIMEFRAME = datetime.timedelta(days=365)
 

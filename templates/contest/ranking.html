@@ -45,6 +45,7 @@
 {% block users_js_media %}
     {% compress js %}
         <script type="text/javascript" src="{{ static('contest-ranking.js') }}"></script>
+        <script type="text/javascript" src="{{ static('contest-replay.js') }}"></script>
     {% endcompress %}
     <script type="text/javascript">
         window.RANKING_DATA = {{ ranking_json|safe }};
@@ -63,16 +64,7 @@
                         url: queryParam ? queryParam + '&data' : '?data',
                         dataType: 'json',
                     }).done(function (data) {
-                        window.renderRankingTable(data);
-                        if (localStorage.getItem('show-personal-info') == 'true') {
-                            $('.personal-info').show();
-                            $('#show-personal-info-checkbox').prop('checked', true);
-                        }
-                        {% if tab == 'ranking' %}
-                            window.getOrganizationCodes();
-                            window.applyRankingFilter();
-                        {% endif %}
-                        window.enableAdminOperations();
+                        window.renderRankingTable(data, true);
                     }).always(function () {
                         ranking_outdated = false;
                         setTimeout(update_ranking, 10000);
@@ -90,7 +82,7 @@
     <script type="text/javascript">
         $(function () {
             if (window.RANKING_DATA) {
-                window.renderRankingTable(window.RANKING_DATA);
+                window.initContestRanking(window.RANKING_DATA);
             }
 
             var url = '{{ url('contest_participation', contest.key, '__username__') }}';
@@ -231,6 +223,10 @@
             }
 
             $('#apply-organization-filter').click(function () {
+                // to avoid unnecessary re-filtering
+                if ($('#org-check-list-wrapper').is(':hidden')) {
+                    return;
+                }
                 $('#org-check-list-wrapper').hide();
 
                 let selected_orgs = $('#org-check-list').val().map(x => x.trim());
@@ -244,25 +240,8 @@
             });
 
             // hide checklist by clicking outside
-            $(document).mouseup(function (e) {
-                e.stopPropagation();
-
-                // if clicked on the filter button
-                // then this function should not do anything
-                if ($('#filter-by-organization-button').has(e.target).length !== 0) {
-                    return;
-                }
-
-                if ($('#select2-org-check-list-results').has(e.target).length !== 0) {
-                    return;
-                }
-
-                if ($(e.target).attr('id') && $(e.target).attr('id').startsWith('select2-org-check-list-result')) {
-                    return;
-                }
-
-                // check if the clicked area is the checklist or not
-                if ($('#org-dropdown-check-list').has(e.target).length === 0) {
+            $(document).on('click', function (e) {
+                if (!$(e.target).closest('#org-dropdown-check-list, #filter-by-organization-button, .select2-dropdown, .select2-selection__choice').length) {
                     $('#apply-organization-filter').click();
                 }
             });
@@ -293,8 +272,6 @@
                 });
             };
 
-            window.getOrganizationCodes();
-
             function extractCurrentAbsRank(row_text) {
                 let paren_surround_text = row_text.match(/\(([^)]+)\)/);
                 let current_abs_rank
@@ -311,7 +288,8 @@
 
                 $('#ranking-table > tbody > tr[id]').each(function () {
                     $(this).show();
-                    $(this).find("td")[0].innerHTML = extractCurrentAbsRank($(this).find("td")[0].innerText);
+                    let td = $(this).find("td")[0];
+                    td.innerHTML = extractCurrentAbsRank(td.textContent);
                 });
 
                 localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
@@ -326,6 +304,7 @@
                     window.clearRankingFilter();
                     return;
                 }
+                console.time('applyRankingFilter');
 
                 $('#ranking-table > tbody > tr[id]').each(function () {
                     let row = $(this);
@@ -339,7 +318,7 @@
                     }
 
                     row.show();
-                    let current_abs_rank = extractCurrentAbsRank(row.find("td")[0].innerText);
+                    let current_abs_rank = extractCurrentAbsRank(row.find("td")[0].textContent);
 
                     if (previous_abs_rank == -1 || previous_abs_rank != current_abs_rank) {
                         ++counter;
@@ -352,16 +331,13 @@
                 if (counter > 0) {
                     localStorage.setItem(`filter-cleared-${contest_key}`, 'false');
                 }
+                console.timeEnd('applyRankingFilter');
             };
-
-            window.applyRankingFilter();
 
             window.restoreChecklistOptions = function () {
                 let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`).split(',');
                 $('#org-check-list').val(selected_orgs).trigger('change');
             };
-
-            window.restoreChecklistOptions();
 
             function submitDisqualifyForm($a) {
                 var form = document.createElement('form');
@@ -395,7 +371,21 @@
                 });
             };
 
-            window.enableAdminOperations();
+            window.onFinishRankingRender = function (isNewDataFromBackend = false) {
+                if (localStorage.getItem('show-personal-info') == 'true') {
+                    $('.personal-info').show();
+                    $('#show-personal-info-checkbox').prop('checked', true);
+                }
+                window.enableAdminOperations();
+                {% if tab == 'ranking' %}
+                    if (isNewDataFromBackend) {
+                        window.getOrganizationCodes();
+                        window.restoreChecklistOptions();
+                    }
+                    window.applyRankingFilter();
+                {% endif %}
+            };
+            window.onFinishRankingRender(true);
         });
 
         {% if tab == 'ranking' %}
