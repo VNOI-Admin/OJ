@@ -145,6 +145,10 @@
                 org: "{{ url('org_problem_select2', org_pk=contest_org.id) }}",
                 public: "{{ url('public_problem_select2') }}",
             };
+            var _problemSrcLabels = {
+                org: {{ _('Organization problems')|tojson }},
+                public: {{ _('Public problems')|tojson }},
+            };
 
             function _initProblemPicker(select) {
                 var $sel = $(select);
@@ -165,8 +169,7 @@
                     if ($dropdown.find('.tab-bar').length) return;
                     var $tabBar = $('<div class="tab-bar"></div>');
                     Object.keys(_problemSrcUrls).forEach(function(key) {
-                        var label = key.charAt(0).toUpperCase() + key.slice(1);
-                        var $btn = $('<button type="button" class="tab-bar-btn">' + label + '</button>');
+                        var $btn = $('<button type="button" class="tab-bar-btn">' + _problemSrcLabels[key] + '</button>');
                         if (($sel.data('problemSrc') || 'org') === key) $btn.addClass('active');
                         $btn.on('mousedown', function(e) {
                             e.preventDefault();
