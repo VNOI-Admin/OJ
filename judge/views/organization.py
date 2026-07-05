@@ -815,6 +815,11 @@ class ContestCreateOrganization(AdminOrganizationMixin, CreateContest):
         self.object.organization = self.organization
         self.object.save()
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['contest_org'] = self.organization
+        return context
+
 
 class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
                                    InfinitePaginationMixin, ListView):

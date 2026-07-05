@@ -11,7 +11,8 @@
         $(function() {
             {% if lang_limit_formset %}
                 $('#form_set tr').formset({
-                    prefix: '{{ lang_limit_formset.prefix }}'
+                    prefix: '{{ lang_limit_formset.prefix }}',
+                    deleteText: '<i class="fa fa-trash" aria-hidden="true"></i>'
                 });
 
             $('#lang_limit_title').click(function() {
