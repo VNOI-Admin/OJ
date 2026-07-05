@@ -325,8 +325,9 @@
         var manualElapsed  = null; // null = auto mode
         var $slider = null, $timeLabel = null, $freezeInput = null;
 
+        var supportsFrozen = (rankingData.contest.format === 'icpc' || rankingData.contest.format === 'vnoj');
         var FREEZE_KEY = 'replay_freeze_' + replayUrl;
-        var _stored = localStorage.getItem(FREEZE_KEY);
+        var _stored = supportsFrozen ? localStorage.getItem(FREEZE_KEY) : null;
         var frozenOverride = _stored !== null ? parseInt(_stored) : null; // minutes; null = use backend value
 
         function getLiveElapsed() {
@@ -355,15 +356,19 @@
                 .css({ flex: '1', cursor: 'pointer' });
             $timeLabel = $('<span>').css({ minWidth: '110px', fontFamily: 'monospace' });
             var $endBtn = $('<button>').text(isVirtual ? 'Live' : 'End').css({ fontSize: '12px', padding: '2px 8px' });
-            $freezeInput = $('<input>').attr({ type: 'number', min: 0, placeholder: 'Freeze min' })
-                .css({ width: '90px', fontSize: '12px' });
-            if (frozenOverride !== null) $freezeInput.val(frozenOverride);
-            $bar.append($('<span>').text('⏱'), $slider, $timeLabel, $endBtn, $freezeInput);
+            if (supportsFrozen) {
+                $freezeInput = $('<input>').attr({ type: 'number', min: 0, placeholder: 'Freeze min' })
+                    .css({ width: '90px', fontSize: '12px' });
+                if (frozenOverride !== null) $freezeInput.val(frozenOverride);
+            }
+            $bar.append($('<span>').text('⏱'), $slider, $timeLabel, $endBtn);
+            if ($freezeInput) $bar.append($freezeInput);
             $('#ranking-container').before($bar);
             return $endBtn;
         }
 
         function wireFreezeInput() {
+            if (!supportsFrozen) return;
             $freezeInput.on('input', function () {
                 var val = this.value.trim();
                 if (val === '') {

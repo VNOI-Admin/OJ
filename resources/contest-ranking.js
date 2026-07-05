@@ -509,7 +509,7 @@
     window.renderRankingTable = function (data, isNewDataFromBackend) {
         var contest = data.contest;
         var problems = data.problems;
-        var participations = data.participations;
+        var participations = data.participations || [];
 
         if (contest.rating_config) {
             initRatingConfig(contest.rating_config);
