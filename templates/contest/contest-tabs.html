@@ -12,9 +12,6 @@
             {% if contest.csv_ranking %}
                 {{ make_tab('official_ranking', 'fa-bar-chart', url('contest_official_ranking', contest.key), _('Official Rankings')) }}
             {% endif %}
-            {% if request.user.is_authenticated %}
-                {{ make_tab('participation', 'fa-users', url('contest_participation_own', contest.key), _('Participation')) }}
-            {% endif %}
         {% else %}
             {{ make_tab('ranking', 'fa-bar-chart', None, _('Hidden Rankings')) }}
         {% endif %}
