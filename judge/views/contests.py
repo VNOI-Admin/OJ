@@ -18,7 +18,7 @@ from django.db.models import BooleanField, Case, Count, F, FloatField, IntegerFi
 from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.template.defaultfilters import date as date_filter, floatformat
 from django.template.loader import get_template
 from django.urls import reverse
@@ -55,7 +55,7 @@ from judge.utils.views import SingleObjectFormView, TitleMixin, \
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
-           'ContestParticipationList', 'ContestParticipationDisqualify',
+           'ContestParticipationDisqualify',
            'ContestProblemMakePublic']
 
 
@@ -1226,49 +1226,6 @@ class ContestOfficialRanking(ContestRankingBase):
         if self.object.csv_ranking.startswith('http'):
             return redirect(self.object.csv_ranking)
 
-        return super().get(request, *args, **kwargs)
-
-
-class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
-    tab = 'participation'
-
-    def get_title(self):
-        if self.profile == self.request.profile:
-            return _('Your participation in %(contest)s') % {'contest': self.object.name}
-        return _("%(user)s's participation in %(contest)s") % {
-            'user': self.profile.username, 'contest': self.object.name,
-        }
-
-    def _build_participation_json_data(self):
-        contest = self.object
-        if not contest.can_see_full_scoreboard(self.request.user) and self.profile != self.request.profile:
-            raise Http404()
-
-        problems, problems_data, contest_data = self._build_json_base()
-        queryset = contest.users.filter(user=self.profile, virtual__gte=0).order_by('-virtual')
-        participations = make_contest_ranking_json(contest, problems, queryset)
-        for p in participations:
-            p['rank'] = p['virtual']  # 0 = live, N = Nth virtual
-
-        contest_data.update({
-            'is_frozen': False,
-            'has_rating': False,
-            'mode': 'participation',
-            'rank_header': str(_('Participation')),
-            'ranking_url': reverse('contest_ranking', args=[contest.key]),
-        })
-        return {'contest': contest_data, 'problems': problems_data, 'participations': participations}
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['ranking_json'] = json.dumps(self._build_participation_json_data()).translate(_json_script_escapes)
-        return context
-
-    def get(self, request, *args, **kwargs):
-        if 'user' in kwargs:
-            self.profile = get_object_or_404(Profile, user__username=kwargs['user'])
-        else:
-            self.profile = self.request.profile
         return super().get(request, *args, **kwargs)
 
 
