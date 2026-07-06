@@ -49,6 +49,7 @@
     {% endcompress %}
     <script type="text/javascript">
         window.RANKING_DATA = {{ ranking_json|safe }};
+        window.CONTEST_CAN_SEE_SUBMISSIONS = {{ 'true' if can_see_full_submission_list else 'false' }};
     </script>
     {% if not contest.ended %}
         <script type="text/javascript">
