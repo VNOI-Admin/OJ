@@ -148,14 +148,62 @@ class BaseOrganizationListView(PublicOrganizationMixin, ListView):
         return super(BaseOrganizationListView, self).get_object(queryset)
 
 
-class OrganizationList(TitleMixin, ListView):
+class OrganizationList(DiggPaginatorMixin, TitleMixin, ListView):
     model = Organization
     context_object_name = 'organizations'
     template_name = 'organization/list.html'
     title = gettext_lazy('Organizations')
+    paginate_by = 200
+
+    @cached_property
+    def can_manage_organizations(self):
+        return self.request.user.has_perm('judge.edit_all_organization')
+
+    def GET_with_session(self, key):
+        if key not in self.request.GET:
+            return self.request.session.get(key, False)
+        return self.request.GET.get(key, None) == '1'
+
+    @cached_property
+    def show_all_orgs(self):
+        return self.can_manage_organizations and self.GET_with_session('show_all_orgs')
 
     def get_queryset(self):
-        return Organization.objects.filter(is_unlisted=False)
+        if self.show_all_orgs:
+            queryset = Organization.objects.prefetch_related('admins__user')
+        else:
+            queryset = Organization.objects.filter(is_unlisted=False)
+
+        self.search_query = None
+        if self.show_all_orgs and 'search' in self.request.GET:
+            self.search_query = search_query = ' '.join(self.request.GET.getlist('search')).strip()
+            if search_query:
+                queryset = queryset.filter(
+                    Q(name__icontains=search_query) |
+                    Q(slug__icontains=search_query) |
+                    Q(short_name__icontains=search_query) |
+                    Q(admins__user__username__icontains=search_query),
+                ).distinct()
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['show_all_orgs'] = self.show_all_orgs
+        context['search_query'] = self.search_query
+        context.update(paginate_query_context(self.request))
+        if self.request.user.is_authenticated:
+            user_organizations = self.request.profile.organizations.all()
+            if self.show_all_orgs:
+                user_organizations = user_organizations.prefetch_related('admins__user')
+            context['user_organizations'] = user_organizations
+        return context
+
+    def post(self, request, *args, **kwargs):
+        if 'show_all_orgs' in request.GET:
+            request.session['show_all_orgs'] = request.GET.get('show_all_orgs') == '1'
+        else:
+            request.session.pop('show_all_orgs', None)
+        return HttpResponseRedirect(request.get_full_path())
 
 
 class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizationListView):
