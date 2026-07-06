@@ -60,6 +60,11 @@
             text-align: center;
             color: #888;
         }
+
+        .show-comments-wrapper {
+            padding: 1.5em 0;
+            text-align: center;
+        }
     </style>
 {% endblock %}
 
@@ -82,15 +87,40 @@
 
             // Lazily load the comments tab only when it's first opened.
             var comments_loaded = false;
+            function fetch_comments(page, scroll) {
+                // First match is the outer tab container (the fragment renders an
+                // inner #comments div of its own).
+                var $comments = $('#comments').first();
+                var url = $comments.data('comments-url');
+                if (page)
+                    url += '?page=' + page;
+                $comments.html('<div class="comments-loading">{{ _('Loading...') }}</div>');
+                $comments.load(url, function() {
+                    if (window.MathJax && MathJax.typesetPromise)
+                        MathJax.typesetPromise([$comments[0]]);
+                    if (scroll)
+                        $comments[0].scrollIntoView({behavior: 'instant', block: 'start'});
+                });
+            }
+
             function load_comments() {
                 if (comments_loaded) return;
                 comments_loaded = true;
-                var $comments = $('#comments');
-                $comments.load($comments.data('comments-url'), function() {
-                    if (window.MathJax && MathJax.typesetPromise)
-                        MathJax.typesetPromise([$comments[0]]);
-                });
+                fetch_comments(null, false);
             }
+
+            // Paginate comments without reloading the page.
+            $('#comments').on('click', '.comments-pagination a', function(e) {
+                var match = /page=(\d+)/.exec($(this).attr('href'));
+                if (!match) return;
+                e.preventDefault();
+                fetch_comments(match[1], true);
+            });
+
+            // Comments are only fetched when explicitly requested.
+            $('#comments').on('click', '#show-comments-button', function() {
+                load_comments();
+            });
 
             // Tab switching functionality
             $('.problem-tabs a').click(function(e) {
@@ -121,11 +151,6 @@
             var hash = window.location.hash;
             if (hash && $(hash).length) {
                 $('.problem-tabs a[href="' + hash + '"]').click();
-            }
-
-            // If the comments tab is the active one on load (e.g. anonymous users), load it now.
-            if ($('#comments').hasClass('active')) {
-                load_comments();
             }
         });
     </script>
@@ -455,6 +480,10 @@
 
     <div id="comments" class="tab-content {% if not request.user.is_authenticated %}active{% endif %}"
          data-comments-url="{{ url('problem_comments', problem.code) }}">
-        <div class="comments-loading">{{ _('Loading...') }}</div>
+        <div class="show-comments-wrapper">
+            <button id="show-comments-button" class="unselectable button">
+                <i class="fa fa-comments"></i> {{ _('Show comments') }}
+            </button>
+        </div>
     </div>
 {% endblock %}
