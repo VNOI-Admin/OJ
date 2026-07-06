@@ -1145,6 +1145,7 @@ class ContestRanking(ContestRankingBase):
         context['show_virtual'] = self.show_virtual
         context['is_frozen'] = self.is_frozen
         context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
+        context['can_see_full_submission_list'] = self.object.can_see_full_submission_list(self.request.user)
         context['ranking_json'] = json.dumps(
             self._inject_replay_url(self.get_cached_json_ranking_data()),
         ).translate(_json_script_escapes)
