@@ -140,6 +140,13 @@
             </ul>
         {% endif %}
 
+        {% if comments_page_obj and comments_page_obj.paginator.num_pages > 1 %}
+            <div class="bottom-pagination-bar comments-pagination">
+                {% set page_obj = comments_page_obj %}
+                {% include "list-pages.html" %}
+            </div>
+        {% endif %}
+
         {% if request.user.is_authenticated and comment_form and not comment_lock %}
             <div id="new-comment" class="form-area comment-submit">
                 {% block comment_submit_title %}

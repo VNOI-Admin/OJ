@@ -33,6 +33,7 @@ from judge.models import Contest, ContestSubmission, Judge, Language, Problem, P
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
+from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
@@ -152,6 +153,7 @@ class ProblemSolution(SolvedProblemMixin, ProblemMixin, TitleMixin, CommentedDet
 class ProblemComments(ProblemMixin, CommentedDetailView):
     context_object_name = 'problem'
     template_name = 'problem/comments-tab.html'
+    comments_per_page = 20
 
     def get_object(self, queryset=None):
         problem = super(ProblemComments, self).get_object(queryset)
@@ -175,6 +177,15 @@ class ProblemComments(ProblemMixin, CommentedDetailView):
             clarifications = self.object.clarifications
             context['has_clarifications'] = clarifications.count() > 0
             context['clarifications'] = clarifications.order_by('-date')
+
+        queryset = context['comment_list']
+        paginator = DiggPaginator(queryset.filter(parent=None), self.comments_per_page,
+                                  body=6, padding=2, orphans=5)
+        page = paginator.get_page(self.request.GET.get('page'))
+        context['comment_list'] = queryset.filter(tree_id__in=[node.tree_id for node in page.object_list])
+        context['comments_page_obj'] = page
+        context['page_prefix'] = '?page='
+        context['first_page_href'] = '?page=1'
         return context
 
 
