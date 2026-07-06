@@ -25,7 +25,7 @@ def contest_completed_ids(participation):
     key = 'contest_complete:%d' % participation.id
     result = cache.get(key)
     if result is None:
-        result = set(participation.submissions.filter(submission__result='AC', points__gte=F('problem__points'))
+        result = set(participation.submissions.filter(submission__result='AC')
                      .values_list('problem__problem_id', flat=True).distinct())
         cache.set(key, result, 86400)
     return result
