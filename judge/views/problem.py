@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import BooleanField, Case, F, Prefetch, Q, When
+from django.db.models import BooleanField, Case, Prefetch, Q, When
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -620,7 +620,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
 
         if self.profile is not None and self.hide_solved:
             queryset = queryset.exclude(id__in=Submission.objects
-                                        .filter(user=self.profile, result='AC', case_points__gte=F('case_total'))
+                                        .filter(user=self.profile, result='AC')
                                         .values_list('problem_id', flat=True))
         if self.show_types:
             queryset = queryset.prefetch_related('types')
