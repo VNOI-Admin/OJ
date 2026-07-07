@@ -1,31 +1,76 @@
 <ul class="pagination">
-    {% if page_obj.has_previous() %}
-        {% if page_obj.previous_page_number() == 1 and first_page_href != None %}
-            <li><a href="{{ first_page_href }}">«</a></li>
-        {% else %}
-            <li><a href="{{ page_prefix or '' }}{{ page_obj.previous_page_number() }}{{ page_suffix or '' }}">«</a></li>
-        {% endif %}
-    {% else %}
-        <li class="disabled-page"><span>«</span></li>
-    {% endif %}
+    {% if page_obj.is_cursor|default(False) %}
+        <li{% if not page_obj.has_previous() %} class="disabled-page"{% endif %}>
+            <a href="javascript:void(0)"
+               class="cursor-page-link"
+               data-direction="previous"
+               data-cursor="{{ page_obj.previous_cursor or '' }}">«</a>
+        </li>
 
-    {% for page in page_obj.page_range %}
-        {% if not page %}
-            <li class="disabled-page"><span>...</span></li>
-        {% else %}
-            <li{% if page == page_obj.number %} class="active-page"{% endif %}><a href="
-                {%- if page == 1 and first_page_href != None -%}
-                    {{ first_page_href }}
-                {%- else -%}
-                    {{ page_prefix or '' }}{{ page }}{{ page_suffix or '' }}
-                {%- endif -%}
-            ">{{ page }}</a></li>
-        {% endif %}
-    {% endfor %}
+        <li class="disabled-page cursor-page-ellipsis-before" style="display: none"><span>...</span></li>
 
-    {% if page_obj.has_next() %}
-        <li><a href="{{ page_prefix or '' }}{{ page_obj.next_page_number() }}{{ page_suffix or '' }}">»</a></li>
+        <li class="cursor-page-previous-item{% if not page_obj.has_previous() %} disabled-page{% endif %}"
+            {% if not page_obj.has_previous() %}style="display: none"{% endif %}>
+            <a href="javascript:void(0)"
+               class="cursor-page-link"
+               data-direction="previous"
+               data-cursor="{{ page_obj.previous_cursor or '' }}">
+                <span class="cursor-page-previous-number">{{ page_obj.number - 1 }}</span>
+            </a>
+        </li>
+
+        <li class="active-page"><span class="cursor-page-current-number">{{ page_obj.number }}</span></li>
+
+        <li class="cursor-page-next-item{% if not page_obj.has_next() %} disabled-page{% endif %}"
+            {% if not page_obj.has_next() %}style="display: none"{% endif %}>
+            <a href="javascript:void(0)"
+               class="cursor-page-link"
+               data-direction="next"
+               data-cursor="{{ page_obj.next_cursor or '' }}">
+                <span class="cursor-page-next-number">{{ page_obj.number + 1 }}</span>
+            </a>
+        </li>
+
+        <li class="disabled-page cursor-page-ellipsis-after"
+            {% if not page_obj.has_next() %}style="display: none"{% endif %}><span>...</span></li>
+
+        <li{% if not page_obj.has_next() %} class="disabled-page"{% endif %}>
+            <a href="javascript:void(0)"
+               class="cursor-page-link"
+               data-direction="next"
+               data-cursor="{{ page_obj.next_cursor or '' }}">»</a>
+        </li>
     {% else %}
-        <li class="disabled-page"><span>»</span></li>
+        {% if page_obj.has_previous() %}
+            {% if page_obj.previous_page_number() == 1 and first_page_href != None %}
+                <li><a href="{{ first_page_href }}">«</a></li>
+            {% else %}
+                <li>
+                    <a href="{{ page_prefix or '' }}{{ page_obj.previous_page_number() }}{{ page_suffix or '' }}">«</a>
+                </li>
+            {% endif %}
+        {% else %}
+            <li class="disabled-page"><span>«</span></li>
+        {% endif %}
+
+        {% for page in page_obj.page_range %}
+            {% if not page %}
+                <li class="disabled-page"><span>...</span></li>
+            {% else %}
+                <li{% if page == page_obj.number %} class="active-page"{% endif %}><a href="
+                    {%- if page == 1 and first_page_href != None -%}
+                        {{ first_page_href }}
+                    {%- else -%}
+                        {{ page_prefix or '' }}{{ page }}{{ page_suffix or '' }}
+                    {%- endif -%}
+                ">{{ page }}</a></li>
+            {% endif %}
+        {% endfor %}
+
+        {% if page_obj.has_next() %}
+            <li><a href="{{ page_prefix or '' }}{{ page_obj.next_page_number() }}{{ page_suffix or '' }}">»</a></li>
+        {% else %}
+            <li class="disabled-page"><span>»</span></li>
+        {% endif %}
     {% endif %}
 </ul>

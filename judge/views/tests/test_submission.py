@@ -1,7 +1,9 @@
-from unittest.mock import PropertyMock
+import json
+from unittest.mock import PropertyMock, patch
 
 from django.http import Http404
 from django.test import RequestFactory, TestCase
+from django.urls import Resolver404, resolve
 from django.utils import timezone
 
 from judge.models import Contest, Language, Submission
@@ -23,6 +25,10 @@ from judge.views.submission import (
     UserAllContestSubmissions,
     UserContestSubmissions,
     UserProblemSubmissions,
+)
+from judge.views.submission_v2 import (
+    AllSubmissions as NewAllSubmissions,
+    AllSubmissionsPage as NewAllSubmissionsPage,
 )
 
 
@@ -1157,22 +1163,114 @@ class AllSubmissionsTestCase(CommonDataMixin, TestCase):
             status='D',
         )
 
-    def _create_view_instance(self, user):
+        cls.visible_scoreboard_contest = create_contest(
+            key='all_subs_vis',
+            start_time=cls._now - timezone.timedelta(days=1),
+            end_time=cls._now + timezone.timedelta(days=100),
+            is_visible=True,
+            scoreboard_visibility=Contest.SCOREBOARD_VISIBLE,
+        )
+        cls.hidden_scoreboard_contest = create_contest(
+            key='all_subs_hid',
+            start_time=cls._now - timezone.timedelta(days=1),
+            end_time=cls._now + timezone.timedelta(days=100),
+            is_visible=True,
+            scoreboard_visibility=Contest.SCOREBOARD_AFTER_CONTEST,
+        )
+        cls.ended_contest = create_contest(
+            key='all_subs_end',
+            start_time=cls._now - timezone.timedelta(days=10),
+            end_time=cls._now - timezone.timedelta(days=1),
+            is_visible=True,
+            scoreboard_visibility=Contest.SCOREBOARD_AFTER_CONTEST,
+        )
+
+        cls.visible_contest_sub = Submission.objects.create(
+            user=cls.users['normal'].profile,
+            problem=cls.public_problem,
+            language=Language.get_python3(),
+            result='AC',
+            status='D',
+            contest_object=cls.visible_scoreboard_contest,
+        )
+        cls.hidden_contest_sub = Submission.objects.create(
+            user=cls.users['normal'].profile,
+            problem=cls.public_problem,
+            language=Language.get_python3(),
+            result='AC',
+            status='D',
+            contest_object=cls.hidden_scoreboard_contest,
+        )
+        cls.ended_contest_sub = Submission.objects.create(
+            user=cls.users['normal'].profile,
+            problem=cls.public_problem,
+            language=Language.get_python3(),
+            result='WA',
+            status='D',
+            contest_object=cls.ended_contest,
+        )
+
+    def _create_view_instance(self, user, view_class=AllSubmissions, data=None):
         """Helper to create AllSubmissions view instance."""
         factory = RequestFactory()
-        request = factory.get('/submissions/')
+        request = factory.get('/submissions/', data=data or {})
         request.user = user
         request.profile = user.profile if hasattr(user, 'profile') else None
         request.LANGUAGE_CODE = 'en'
 
-        view = AllSubmissions()
+        view = view_class()
         view.request = request
+        view.kwargs = {}
         view.show_problem = True
         view.selected_languages = set()
         view.selected_statuses = set()
         view.selected_organization = None
 
         return view
+
+    def _load_new_filters(self, view):
+        view._load_filters(view.request)
+        return view
+
+    def _old_submission_ids(self, view):
+        return list(view.get_queryset().values_list('id', flat=True)[:50])
+
+    def _new_submission_ids(self, view):
+        return [submission.id for submission in view.get_queryset()[:50]]
+
+    def _new_submission_page(self, user, data=None):
+        view = self._load_new_filters(self._create_view_instance(
+            user=user,
+            view_class=NewAllSubmissions,
+            data=data,
+        ))
+        _, page, _, _ = view.paginate_queryset(view.get_queryset(), view.paginate_by)
+        return page
+
+    def _new_submission_page_response(self, user, data=None):
+        view = self._create_view_instance(
+            user=user,
+            view_class=NewAllSubmissionsPage,
+            data=data,
+        )
+        return view.get(view.request)
+
+    def _assert_new_matches_old(self, user, data=None):
+        old_view = self._create_view_instance(user=user, data=data)
+        new_view = self._load_new_filters(self._create_view_instance(
+            user=user,
+            view_class=NewAllSubmissions,
+            data=data,
+        ))
+
+        old_view.selected_languages = set(old_view.request.GET.getlist('language'))
+        old_view.selected_statuses = set(old_view.request.GET.getlist('status'))
+        old_view.selected_organization = old_view.request.GET.get('organization')
+        if old_view.selected_organization:
+            old_view.selected_organization = int(old_view.selected_organization)
+
+        self.assertEqual(self._old_submission_ids(old_view), self._new_submission_ids(new_view))
+        self.assertEqual(old_view.get_result_data(), new_view.get_result_data())
 
     def test_returns_all_visible_submissions(self):
         """Test that all visible submissions are returned."""
@@ -1184,6 +1282,183 @@ class AllSubmissionsTestCase(CommonDataMixin, TestCase):
         # Should include all submissions
         self.assertIn(self.sub_1.id, submission_ids)
         self.assertIn(self.sub_2.id, submission_ids)
+
+    def test_new_endpoint_matches_old_endpoint_for_anonymous_user(self):
+        self._assert_new_matches_old(self.users['anonymous'])
+
+    def test_new_endpoint_uses_cursor_template(self):
+        self.assertEqual('submission/list_cursor.html', NewAllSubmissions.template_name)
+
+    def test_new_endpoint_matches_old_endpoint_for_authenticated_user_with_filters(self):
+        self._assert_new_matches_old(self.users['normal'], data={
+            'language': ['PY3'],
+            'status': ['AC'],
+        })
+
+    def test_new_endpoint_matches_old_endpoint_for_staff_status_filter(self):
+        Submission.objects.create(
+            user=self.users['normal'].profile,
+            problem=self.public_problem,
+            language=Language.get_python3(),
+            result=None,
+            status='P',
+        )
+
+        self._assert_new_matches_old(self.users['superuser'], data={'status': ['P']})
+
+    def test_new_endpoint_matches_old_endpoint_for_overlapping_staff_status_filter(self):
+        Submission.objects.create(
+            user=self.users['normal'].profile,
+            problem=self.public_problem,
+            language=Language.get_python3(),
+            result='CE',
+            status='CE',
+        )
+
+        self._assert_new_matches_old(self.users['superuser'], data={'status': ['CE']})
+
+    def test_new_endpoint_skips_stats_for_multiple_status_filters(self):
+        view = self._load_new_filters(self._create_view_instance(
+            user=self.users['superuser'],
+            view_class=NewAllSubmissions,
+            data={'status': ['AC', 'WA']},
+        ))
+
+        with patch('judge.views.submission_v2.SubmissionService.get_result_counts') as get_result_counts:
+            result = view.get_result_data()
+
+        self.assertTrue(result['unavailable'])
+        self.assertEqual([], result['categories'])
+        get_result_counts.assert_not_called()
+
+    def test_new_endpoint_uses_cursor_pagination(self):
+        extra_submissions = [
+            Submission.objects.create(
+                user=self.users['normal'].profile,
+                problem=self.public_problem,
+                language=Language.get_python3(),
+                result='AC',
+                status='D',
+            )
+            for _ in range(60)
+        ]
+
+        page1 = self._new_submission_page(self.users['superuser'])
+        page1_ids = [submission.id for submission in page1.object_list]
+
+        self.assertEqual(50, len(page1_ids))
+        self.assertIsNone(page1.previous_cursor)
+        self.assertIsNotNone(page1.next_cursor)
+        self.assertTrue(set(page1_ids) & {submission.id for submission in extra_submissions})
+
+        page2 = self._new_submission_page(
+            self.users['superuser'],
+            data={'cursor': page1.next_cursor},
+        )
+        page2_ids = [submission.id for submission in page2.object_list]
+
+        self.assertTrue(page2_ids)
+        self.assertFalse(set(page1_ids) & set(page2_ids))
+        self.assertIsNotNone(page2.previous_cursor)
+
+        page1_again = self._new_submission_page(
+            self.users['superuser'],
+            data={'cursor': page2.previous_cursor},
+        )
+        self.assertEqual(page1_ids, [submission.id for submission in page1_again.object_list])
+
+    def test_new_endpoint_returns_cursor_page_json(self):
+        for _ in range(60):
+            Submission.objects.create(
+                user=self.users['normal'].profile,
+                problem=self.public_problem,
+                language=Language.get_python3(),
+                result='AC',
+                status='D',
+            )
+
+        page1 = self._new_submission_page(self.users['superuser'])
+        response = self._new_submission_page_response(
+            self.users['superuser'],
+            data={'cursor': page1.next_cursor},
+        )
+        payload = json.loads(response.content.decode())
+
+        self.assertEqual(200, response.status_code)
+        self.assertIn('submission-row', payload['rows_html'])
+        self.assertIsNotNone(payload['previous_cursor'])
+        self.assertTrue(payload['has_previous'])
+
+    def test_new_endpoint_rejects_invalid_cursor(self):
+        view = self._create_view_instance(
+            self.users['superuser'],
+            view_class=NewAllSubmissions,
+            data={'cursor': 'bad-cursor'},
+        )
+        with self.assertRaises(Http404):
+            view.get(view.request)
+
+        response = self._new_submission_page_response(
+            self.users['superuser'],
+            data={'cursor': 'bad-cursor'},
+        )
+        self.assertEqual(400, response.status_code)
+
+    def test_new_endpoint_rejects_cursor_for_different_filters(self):
+        for _ in range(60):
+            Submission.objects.create(
+                user=self.users['normal'].profile,
+                problem=self.public_problem,
+                language=Language.get_python3(),
+                result='AC',
+                status='D',
+            )
+
+        page1 = self._new_submission_page(self.users['superuser'], data={'status': ['AC']})
+        response = self._new_submission_page_response(
+            self.users['superuser'],
+            data={'status': ['WA'], 'cursor': page1.next_cursor},
+        )
+
+        self.assertEqual(400, response.status_code)
+
+    def test_all_submissions_numbered_page_url_is_not_registered(self):
+        with self.assertRaises(Resolver404):
+            resolve('/submissions/2')
+
+    def test_all_submissions_cursor_page_url_is_registered(self):
+        self.assertEqual('all_submissions_page', resolve('/submissions/page').url_name)
+
+    def test_new_endpoint_ignores_low_power_filter_restrictions(self):
+        with self.settings(VNOJ_LOW_POWER_MODE=True):
+            organization_id = self.organizations['open'].id
+            view = self._load_new_filters(self._create_view_instance(
+                user=self.users['normal'],
+                view_class=NewAllSubmissions,
+                data={
+                    'language': ['PY3', 'CPP17'],
+                    'status': ['AC', 'WA'],
+                    'organization': str(organization_id),
+                },
+            ))
+
+        self.assertEqual({'PY3', 'CPP17'}, view.selected_languages)
+        self.assertEqual({'AC', 'WA'}, view.selected_statuses)
+        self.assertEqual(organization_id, view.selected_organization)
+
+    def test_new_endpoint_ignores_low_power_max_page_for_results(self):
+        with self.settings(VNOJ_LOW_POWER_MODE=True, VNOJ_LOW_POWER_MODE_CONFIG={'max_page': 5}):
+            request = RequestFactory().get('/submissions/', data={'page': '6', 'results': ''})
+            request.user = self.users['normal']
+            request.profile = self.users['normal'].profile
+            request.LANGUAGE_CODE = 'en'
+            view = NewAllSubmissions()
+            view.request = request
+            view.kwargs = {}
+
+            response = view.get(request)
+
+        self.assertEqual(200, response.status_code)
 
 
 class AllContestSubmissionsTestCase(CommonDataMixin, TestCase):

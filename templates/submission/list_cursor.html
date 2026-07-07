@@ -1,0 +1,484 @@
+{% extends "common-content.html" %}
+{% block js_media %}
+    <script type="text/javascript">
+        {% if dynamic_update and EVENT_LAST_MSG %}
+            {% if dynamic_contest_id %}
+                window.dynamic_contest_id = {{ dynamic_contest_id }};
+            {% else %}
+                window.dynamic_contest_id = null;
+            {% endif %}
+            {% if dynamic_user_id %}
+                window.dynamic_user_id = {{ dynamic_user_id }};
+            {% else %}
+                window.dynamic_user_id = null;
+            {% endif %}
+            {% if dynamic_problem_id %}
+                window.dynamic_problem_id = {{ dynamic_problem_id }};
+            {% else %}
+                window.dynamic_problem_id = null;
+            {% endif %}
+            {% if show_problem %}
+                window.show_problem = 1;
+            {% else %}
+                window.show_problem = 0;
+            {% endif %}
+        {% endif %}
+        window.results_json = {{ results_json }};
+        {% if submission_pagination_json is defined %}
+            window.submission_pagination = {{ submission_pagination_json }};
+        {% else %}
+            window.submission_pagination = null;
+        {% endif %}
+    </script>
+
+    {% compress js %}
+        {% if request.user.is_authenticated and perms.judge.rejudge_submission %}
+            <script type="text/javascript">
+                window.rejudge_submission = function (id, e) {
+                    if ((typeof e !== 'undefined' && (e.ctrlKey || e.metaKey)) ||
+                        confirm({{ _('Are you sure you want to rejudge?')|htmltojs }})) {
+                        $.ajax({
+                            url: '{{ url('submission_rejudge') }}',
+                            type: "POST",
+                            data: {
+                                id: id
+                            }
+                        });
+                    }
+                };
+            </script>
+        {% endif %}
+
+        <script src="{{ static('libs/chart.js/Chart.js') }}"></script>
+        <script type="text/javascript">
+            $(function () {
+                var info_float = $('.info-float');
+                var container = $('#content-right');
+                if (!featureTest('position', 'sticky')) {
+                    fix_div(info_float, 55);
+                    $(window).resize(function () {
+                        info_float.width(container.width());
+                    });
+                    info_float.width(container.width());
+                }
+
+                function escapeRegExp(string) {
+                    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); // $& means the whole matched string
+                }
+
+                function idAndTextMatcher(params, data) {
+                    if ($.trim(params.term) === '')
+                        return data;
+                    var regex = new RegExp(escapeRegExp(params.term), 'i');
+                    return data.text.search(regex) >= 0 || data.id.search(regex) >= 0 ? data : null;
+                }
+
+                $('#status').select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}',
+                    multiple: {% if is_in_low_power_mode %}0{% else %}1{% endif %},
+                    placeholder: {{ _('Filter by status...')|htmltojs }},
+                    matcher: idAndTextMatcher,
+                    width: '100%',
+                }).css({'visibility': 'visible'});
+
+                $('#language').select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}',
+                    multiple: {% if is_in_low_power_mode %}0{% else %}1{% endif %},
+                    placeholder: {{ _('Filter by language...')|htmltojs }},
+                    matcher: idAndTextMatcher,
+                    width: '100%',
+                }).css({'visibility': 'visible'});
+
+                $('#organization').select2({
+                    theme: '{{ DMOJ_SELECT2_THEME }}',
+                    multiple: 0,
+                    matcher: idAndTextMatcher,
+                    width: '100%',
+                }).css({'visibility': 'visible'});
+            });
+
+            function setup_cursor_pagination() {
+                var state = window.submission_pagination;
+                if (!state)
+                    return;
+
+                function set_link_state(direction, cursor, enabled) {
+                    var link = $('.cursor-page-link[data-direction="' + direction + '"]');
+                    link.attr('data-cursor', cursor || '');
+                    link.closest('li').toggleClass('disabled-page', !enabled);
+                    link.attr('aria-disabled', enabled ? 'false' : 'true');
+                }
+
+                function update_controls() {
+                    $('.cursor-page-current-number').text(state.page);
+                    $('.cursor-page-previous-number').text(state.page - 1);
+                    $('.cursor-page-next-number').text(state.page + 1);
+                    $('.cursor-page-previous-item').toggle(state.hasPrevious);
+                    $('.cursor-page-next-item').toggle(state.hasNext);
+                    $('.cursor-page-ellipsis-before').toggle(state.page > 2);
+                    $('.cursor-page-ellipsis-after').toggle(state.hasNext);
+                    set_link_state('previous', state.previousCursor, state.hasPrevious);
+                    set_link_state('next', state.nextCursor, state.hasNext);
+                }
+
+                function request_page(direction) {
+                    var cursor = direction == 'next' ? state.nextCursor : state.previousCursor;
+                    if (!cursor)
+                        return;
+
+                    var data = $('#filter-form').serializeArray();
+                    data.push({name: 'cursor', value: cursor});
+                    $('.cursor-page-link').closest('li').addClass('disabled-page');
+
+                    $.ajax({
+                        url: state.pageUrl,
+                        data: data,
+                        dataType: 'json',
+                    }).done(function (data) {
+                        $('#submissions-table').html(data.rows_html);
+                        register_time($('#submissions-table').find('.time-with-rel'));
+                        state.previousCursor = data.previous_cursor;
+                        state.nextCursor = data.next_cursor;
+                        state.hasPrevious = data.has_previous;
+                        state.hasNext = data.has_next;
+                        state.page += direction == 'next' ? 1 : -1;
+                        update_controls();
+                        window.scrollTo(0, 0);
+                    }).fail(function () {
+                        window.location.reload();
+                    });
+                }
+
+                $(document).on('click', '.cursor-page-link', function (event) {
+                    event.preventDefault();
+                    if ($(this).closest('li').hasClass('disabled-page'))
+                        return;
+                    request_page($(this).data('direction'));
+                });
+
+                update_controls();
+            }
+
+            $(setup_cursor_pagination);
+
+            // Draw the statistics graph.
+            var chart = null;
+            function stats_graph(raw_data) {
+                if (raw_data.unavailable) {
+                    $('#statistics-table').show();
+                    $('#status-graph').hide();
+                    $('#statistics-unavailable').show();
+                    $('#statistics-total').hide();
+                    return;
+                }
+
+                $('#status-graph').show();
+                $('#statistics-unavailable').hide();
+                $('#statistics-total').show();
+
+                if (raw_data.categories.length === 0) {
+                    // hide the statistics-table
+                    $('#statistics-table').hide();
+                    return;
+                }
+                var colors = {{ results_colors_json }};
+
+                var ctx = $('#status-graph').find('canvas')[0].getContext('2d');
+                var font = $('body').css('font-family');
+                if (chart !== null) {
+                    chart.destroy();
+                }
+                chart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        datasets: [{
+                            data: raw_data.categories.map(function(entry) {
+                                return entry.count;
+                            }),
+                            backgroundColor: raw_data.categories.map(function(entry) {
+                                return colors[entry.code];
+                            }),
+                        }],
+                        labels: raw_data.categories.map(function(entry) {
+                            return entry.name;
+                        }),
+                    },
+                    options: {
+                        animation: false,
+                        scaleFontFamily: font,
+                        tooltips: {
+                            titleFontFamily: font,
+                            bodyFontFamily: font,
+                        },
+                        legend: {
+                            display: false,
+                        },
+                    },
+                });
+
+                $('#total-submission-count').text(raw_data.total);
+            }
+
+            $(function () {
+                stats_graph(window.results_json);
+            });
+
+            function load_dynamic_update() {
+                var _collect = function (e) {
+                    return e.value;
+                };
+                var language_filter = $.map($('select#language option[selected]'), _collect);
+                var status_filter = $.map($('select#status option[selected]'), _collect);
+                var organization_filter = $.map($('select#organization option[selected]'), _collect);
+
+                var table = $('#submissions-table');
+                var statistics = $("#statistics-table");
+                var doing_ajax = false;
+                var first = parseInt(table.find('>div:first-child').attr('id'));
+
+                var update_submission = function (message, force) {
+                    if (window.submission_pagination && window.submission_pagination.page !== 1)
+                        return;
+                    if (language_filter.length && 'language' in message &&
+                        language_filter.indexOf(message.language) == -1)
+                        return;
+                    if (status_filter.length && 'status' in message &&
+                        status_filter.indexOf(message.status) == -1)
+                        return;
+                    if (organization_filter.length && 'organizations' in message &&
+                        message.organizations.indexOf(parseInt(organization_filter[0])) == -1)
+                        return;
+                    var id = message.id;
+                    var row = table.find('div#' + id);
+                    if (row.length < 1) {
+                        if (id < first)
+                            return;
+                        first = id;
+                        row = $('<div>', {id: id, 'class': 'submission-row'}).hide().prependTo(table);
+                        if (table.find('>div').length >= {{ paginator.per_page }})
+                            table.find('>div:last-child').slideUp('slow', function () {
+                                $(this).remove();
+                            });
+                    }
+                    if (force || !doing_ajax) {
+                        if (!force) doing_ajax = true;
+                        $.ajax({
+                            url: '{{ url('submission_single_query') }}',
+                            data: {id: id, show_problem: show_problem}
+                        }).done(function (data) {
+                            var was_shown = row.is(':visible');
+                            row.html(data);
+                            register_time(row.find('.time-with-rel'));
+                            if (!was_shown) {
+                                row.slideDown('slow');
+                            }
+                            if (!force)
+                                setTimeout(function () {
+                                    doing_ajax = false;
+                                }, 1000);
+                        }).fail(function () {
+                            console.log('Failed to update submission: ' + id);
+                            if (!force) doing_ajax = false;
+                        });
+                    }
+                };
+
+                var stats_outdated = false;
+                var last_stat_update = Date.now();
+                var stats_update_interval = {{ stats_update_interval|default(0) * 1000 }};
+
+                function update_stats() {
+                    if (Date.now() - last_stat_update < stats_update_interval)
+                        return;
+                    $.ajax({
+                        url: '?results'
+                    }).done(function (data) {
+                        last_stat_update = Date.now();
+                        stats_graph(data);
+                    }).fail(function () {
+                        console.log('Failed to update statistics table!' + id);
+                    }).always(function () {
+                        stats_outdated = false;
+                    });
+                }
+
+                $(window).on('dmoj:window-visible', function () {
+                    if (stats_outdated)
+                        update_stats();
+                });
+
+                var $body = $(document.body);
+                event_dispatcher.on('submissions', function (message) {
+                        if (dynamic_user_id && message.user != dynamic_user_id ||
+                            dynamic_problem_id && message.problem != dynamic_problem_id ||
+                            dynamic_contest_id && message.contest != dynamic_contest_id)
+                            return;
+                        if (message.type == 'update-submission') {
+                            if (message.state == 'test-case' && $body.hasClass('window-hidden'))
+                                return;
+                            update_submission(message);
+                        } else if (message.type == 'done-submission') {
+                            update_submission(message, true);
+
+                            if (!statistics.length) return;
+                            if ($('body').hasClass('window-hidden'))
+                                return stats_outdated = true;
+                            update_stats();
+                        }
+                    }
+                );
+                event_dispatcher.onwsclose(function (event) {
+                    if (event.code == 1001) {
+                        console.log('Navigated away');
+                        return;
+                    }
+                    console.log('You probably should refresh?');
+                    $('.ws-closed').show().find('a').click(function () {
+                        window.location.reload();
+                    });
+                });
+            }
+        </script>
+    {% endcompress %}
+
+    {% if dynamic_update and EVENT_LAST_MSG %}
+        <script type="text/javascript">
+            $(function () {
+                load_dynamic_update();
+            });
+        </script>
+    {% endif %}
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% include "submission/submission-list-tabs.html" %}
+{% endblock %}
+
+{% block media %}
+    {% if perms.judge.change_submission and perms.judge.rejudge_submission %}
+        <style>
+            td.sub-prop, col.sub-prop {
+                width: 22%
+            }
+
+            col.sub-info, td.sub-info {
+                width: 78%
+            }
+
+            #status, #language {
+                visibility: hidden;
+            }
+        </style>
+    {% endif %}
+
+    <style>
+        .total {
+            text-align: center;
+            margin-bottom: 0.5em;
+        }
+
+        #status-graph {
+            padding: 1em 0em;
+        }
+
+        #status-graph canvas {
+            display: block;
+            margin: 0 auto;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% if page_obj.has_other_pages() %}
+        <div class="top-pagination-bar">{% include "list-pages.html" %}</div>
+    {% endif %}
+
+    <div id="common-content">
+        <div id="content-right" class="submission">
+            <div class="info-float">
+                <div class="sidebox">
+                    <h3>{{ _('Filter submissions') }} <i class="fa fa-search"></i></h3>
+                    <div class="sidebox-content">
+                        <form id="filter-form" name="form" action="{{ first_page_href }}" method="get">
+                            <div class="filter-form-group">
+                                <label for="status"><i>{{ _('Status') }}</i></label>
+                                <select id="status" name="status"{% if not is_in_low_power_mode %} multiple{% endif %}>
+                                    {% if is_in_low_power_mode %}
+                                        <option value="">{{ _('All') }}</option>
+                                        <option disabled="disabled">---</option>
+                                    {% endif %}
+                                    {% for id, name in all_statuses %}
+                                        <option {% if id in selected_statuses %}selected{% endif %}
+                                                value="{{ id }}">{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="filter-form-group">
+                                <label for="language"><i>{{ _('Language') }}</i></label>
+                                <select id="language" name="language"{% if not is_in_low_power_mode %} multiple{% endif %}>
+                                    {% if is_in_low_power_mode %}
+                                        <option value="">{{ _('All') }}</option>
+                                        <option disabled="disabled">---</option>
+                                    {% endif %}
+                                    {% for code, name in all_languages %}
+                                        <option {% if code in selected_languages %}selected{% endif %}
+                                                value="{{ code }}">{{ name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% if not organization and not is_in_low_power_mode %}
+                                <div class="filter-form-group">
+                                    <label for="organization"><i>{{ _('Organization') }}</i></label>
+                                    <select id="organization" name="organization">
+                                        <option value="">{{ _('All') }}</option>
+                                        <option disabled="disabled">---</option>
+                                        {% for code, name in all_organizations %}
+                                            <option {% if code == selected_organization %}selected{% endif %}
+                                                    value="{{ code }}">{{ name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            {% endif %}
+                            <div class="form-submit-group">
+                                <a id="go" onclick="form.submit()" class="button">{{ _('Go') }}</a>
+                            </div>
+                        </form>
+                    </div>
+                    <div id="statistics-table">
+                        <h3>{{ _('Statistics') }} <i class="fa fa-pie-chart"></i></h3>
+                        <div class="sidebox-content">
+                            <div id="status-graph">
+                                <canvas width="230" height="170"></canvas>
+                            </div>
+                            <div id="statistics-unavailable" class="total" style="display: none">
+                                {{ _('Unavailable') }}
+                            </div>
+                            <div id="statistics-total" class="total">
+                                {{ _('Total:') }} <span id="total-submission-count"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-left" class="submission">
+            <div class="ws-closed">
+                <a href="javascript:void(0)">{{ _('You were disconnected. Refresh to show latest updates.') }}</a>
+            </div>
+
+            <div id="submissions-table">
+                {% include "submission/list-rows.html" %}
+            </div>
+        </div>
+    </div>
+    {% if page_obj.has_other_pages() %}
+        <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+    {% endif %}
+{% endblock %}
+
+{% block bodyend %}
+    {# Don't load MathJax from common-content! #}
+{% endblock %}

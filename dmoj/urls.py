@@ -14,6 +14,7 @@ from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
     preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, submission, tag, \
     tasks, ticket, two_factor, user, widgets
+from judge.views.submission_v2 import AllSubmissions, AllSubmissionsPage
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -177,7 +178,8 @@ urlpatterns = [
         path('/', lambda _, tagproblem: HttpResponsePermanentRedirect(reverse('tagproblem_detail', args=[tagproblem]))),
     ])),
 
-    path('submissions/', paged_list_view(submission.AllSubmissions, 'all_submissions')),
+    path('submissions/', AllSubmissions.as_view(), name='all_submissions'),
+    path('submissions/page', AllSubmissionsPage.as_view(), name='all_submissions_page'),
     path('submissions/diff', submission.SubmissionSourceDiff, name='diff_submissions'),
     path('submissions/user/<str:user>/', paged_list_view(submission.AllUserSubmissions, 'all_user_submissions')),
 

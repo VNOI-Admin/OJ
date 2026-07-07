@@ -148,6 +148,10 @@ def link_user(user):
         user, profile = user.user, user
     elif isinstance(user, AbstractUser):
         profile = user.profile
+    elif type(user).__name__ == 'ContestRankingProfile':
+        user, profile = user.user, user
+    elif type(user).__name__ == 'ProfileDTO':
+        user, profile = user.user, user
     else:
         raise ValueError('Expected profile or user, got %s' % (type(user),))
 

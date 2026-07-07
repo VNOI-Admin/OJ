@@ -6,6 +6,8 @@ from . import registry
 
 # TODO: maybe refactor this?
 def get_editor_ids(contest):
+    if hasattr(contest, 'editor_ids'):
+        return contest.editor_ids
     return set(map(attrgetter('id'), contest.authors.all())) | set(map(attrgetter('id'), contest.curators.all()))
 
 
