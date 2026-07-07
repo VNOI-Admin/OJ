@@ -24,14 +24,50 @@
     <script src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
     <script type="text/javascript">
         $(function() {
+            var dragDropMode = false;
+
+            function _hideRowOrderInput($order) {
+                if ($order.data('origType') === undefined) {
+                    $order.data('origType', $order.attr('type'));
+                }
+                return $order.attr('type', 'hidden');
+            }
+
             function _initRowOrder(row) {
-                var $order = row.find('input[id$="-order"]').attr('type', 'hidden');
+                var $order = _hideRowOrderInput(row.find('input[id$="-order"]'));
                 if (!row.find('span.order').length) {
                     $order.after($('<span>', {'class': 'order'}).text($order.val()))
                           .after($('<i>', {'class': 'fa fa-fw fa-lg fa-ellipsis-v'}));
                 }
 
                 _renumberOrders();
+            }
+
+            function _revertRowOrder(row) {
+                var $order = row.find('input[id$="-order"]');
+                var origType = $order.data('origType');
+                if (origType !== undefined) $order.attr('type', origType);
+                row.find('span.order').remove();
+                row.find('i.fa-ellipsis-v').remove();
+            }
+
+            function _positionOrderHeader(dragDropMode) {
+                var $headerRow = $('#problem-table thead tr');
+                var $orderTh = $headerRow.find('th.order-column');
+                if (dragDropMode) {
+                    $orderTh.prependTo($headerRow);
+                } else {
+                    $orderTh.insertAfter($headerRow.find('th.points-column'));
+                }
+            }
+
+            function _positionRowOrderCell(row, dragDropMode) {
+                var $orderTd = row.find('td.order-column');
+                if (dragDropMode) {
+                    $orderTd.prependTo(row);
+                } else {
+                    $orderTd.insertAfter(row.find('td.points-column'));
+                }
             }
 
             function _renumberOrders() {
@@ -50,7 +86,7 @@
                     if (val > maxOrder) maxOrder = val;
                 });
                 var newOrder = maxOrder + 1;
-                var $order = row.find('input[id$="-order"]').attr('type', 'hidden').val(newOrder);
+                var $order = _hideRowOrderInput(row.find('input[id$="-order"]')).val(newOrder);
                 if (!row.find('span.order').length) {
                     $order.after($('<span>', {'class': 'order'}).text(newOrder))
                           .after($('<i>', {'class': 'fa fa-fw fa-lg fa-ellipsis-v'}));
@@ -59,12 +95,43 @@
                 }
             }
 
+            function _enterDragDropMode() {
+                dragDropMode = true;
+                _positionOrderHeader(true);
+                $('#form_set tr.dynamic-form').each(function() {
+                    _positionRowOrderCell($(this), true);
+                    _initRowOrder($(this));
+                });
+                $('#form_set').sortable('enable');
+                $('#problem-table').addClass('dragdrop-mode');
+                $('#order-mode-toggle').text({{ _('Switch to manual order mode')|tojson }});
+            }
+
+            function _exitDragDropMode() {
+                dragDropMode = false;
+                $('#form_set').sortable('disable');
+                $('#form_set tr.dynamic-form').each(function() {
+                    _revertRowOrder($(this));
+                    _positionRowOrderCell($(this), false);
+                });
+                _positionOrderHeader(false);
+                $('#problem-table').removeClass('dragdrop-mode');
+                $('#order-mode-toggle').text({{ _('Switch to drag and drop mode')|tojson }});
+            }
+
+            $('#order-mode-toggle').click(function() {
+                if (dragDropMode) _exitDragDropMode(); else _enterDragDropMode();
+            });
+
             $('#form_set tr').formset({
                 prefix: '{{ contest_problem_formset.prefix }}',
                 deleteText: '<i class="fa fa-trash" aria-hidden="true"></i>',
                 added: function(row) {
                     row.find('select[id$="-problem"]').val(null).trigger('change');
-                    _autoFillOrder(row);
+                    _positionRowOrderCell(row, dragDropMode);
+                    if (dragDropMode) {
+                        _autoFillOrder(row);
+                    }
                     {% if contest_org %}
                     var $probSel = row.find('select[data-problem-src]');
                     if ($probSel.data('select2')) $probSel.select2('destroy');
@@ -74,13 +141,12 @@
                 },
             });
 
-            $('#form_set tr.dynamic-form').each(function() { _initRowOrder($(this)); });
-
             var oldSortIndex;
             $('#form_set').sortable({
-                handle: 'i.fa-ellipsis-v',
+                handle: 'td.order-column',
                 placeholder: 'placeholder',
                 cancel: '.dynamic-form-add',
+                disabled: true,
                 start: function(event, ui) {
                     ui.placeholder.empty();
                     oldSortIndex = ui.item.index();
@@ -229,12 +295,16 @@
             border-right: none;
         }
 
-        i.fa-ellipsis-v {
+        #problem-table.dragdrop-mode td.order-column {
             cursor: move;
         }
 
-        .order-column {
+        #problem-table.dragdrop-mode .order-column {
             width: 1em;
+        }
+
+        #problem-table.dragdrop-mode .order-column-label {
+            display: none;
         }
 
         span.order {
@@ -256,7 +326,6 @@
     </tr>
     {% endif %}
     <tr>
-        <td>{{ form.order.errors }}{{ form.order }}</td>
         <td>{{ form.id }} {{ form.problem.errors }}
             {% if contest_org %}
             <select name="{{ form.problem.html_name }}" id="{{ form.problem.auto_id }}" style="width:100%"
@@ -272,6 +341,7 @@
             {% endif %}
         </td>
         <td class="points-column">{{ form.points.errors }}{{ form.points }}</td>
+        <td class="order-column">{{ form.order.errors }}{{ form.order }}</td>
         <td>{{ form.max_submissions.errors }}{{ form.max_submissions }}</td>
         <td>
         {% if contest_problem_formset.can_delete and form.instance.pk %}
@@ -298,13 +368,16 @@
         {% endif %}
         <table class="django-as-table">{{ form.as_table() }}</table>
         <hr>
-        <center><h3> {{ _('Problems') }} </h3></center>
-        <table class="table">
+        <center>
+            <h3> {{ _('Problems') }} </h3>
+            <button type="button" id="order-mode-toggle" class="button">{{ _('Switch to drag and drop mode') }}</button>
+        </center>
+        <table class="table" id="problem-table">
             <thead>
                 <tr>
-                    <th class="order-column"></th>
                     <th class="problem-column" style="width: 20em;"> {{ _('Problems') }} </th>
                     <th class="points-column"> {{ _('Points') }} </th>
+                    <th class="order-column"><span class="order-column-label"> {{ _('Order in contest') }} </span></th>
                     <th>
                         {{ _('Max submission') }}
                         <br>
