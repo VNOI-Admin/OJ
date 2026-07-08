@@ -111,6 +111,9 @@ urlpatterns = [
     # URL Shortener management (on main domain)
     path('shorteners/', include('urlshortener.urls')),
 
+    # Resumable upload (tusd integration)
+    path('upload/', include('resumable_upload.urls')),
+
     path('problems', include([
         path('/', problem.ProblemList.as_view(), name='problem_list'),
         path('/random/', problem.RandomProblem.as_view(), name='problem_random'),

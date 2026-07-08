@@ -206,6 +206,14 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         try:
             if post and 'problem-data-zipfile-clear' in self.request.POST:
                 return []
+            # File was already moved to data dir by tusd pre-finish hook.
+            # Use the existing zip on disk to derive valid_files without re-uploading.
+            elif post and self.request.POST.get('tus_upload_completed'):
+                filename = os.path.basename(self.request.POST.get('tus_upload_completed'))
+                zip_path = os.path.join(settings.DMOJ_PROBLEM_DATA_ROOT, data.problem.code, filename)
+                if os.path.exists(zip_path):
+                    return ZipFile(zip_path).namelist()
+                return []
             elif post and 'problem-data-zipfile' in self.request.FILES:
                 return ZipFile(self.request.FILES['problem-data-zipfile']).namelist()
             elif data.zipfile:
@@ -237,6 +245,10 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
             add_quota_context(problem.organization, context)
 
         context['quota_warning_suffix'] = settings.VNOJ_QUOTA_WARNING_SUFFIX
+        if settings.TUSD_ENDPOINT:
+            context['tusd_upload_threshold_bytes'] = settings.TUSD_UPLOAD_THRESHOLD_BYTES
+        else:
+            context['tusd_upload_threshold_bytes'] = None
         return context
 
     def check_valid(self, data_form, cases_formset):
@@ -273,8 +285,21 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         data_form = self.get_data_form(post=True)
         valid_files = self.get_valid_files(data_form.instance, post=True)
         data_form.zip_valid = valid_files is not False
+
+        # When the zip was already moved to disk by tusd, bypass the in-memory
+        # zip-field required check — the model zipfile field already points to the
+        # correct file and was NOT re-uploaded through the form.
+        tus_completed = request.POST.get('tus_upload_completed')
+        if tus_completed:
+            data_form.zip_valid = True
+
         cases_formset = self.get_case_formset(valid_files, post=True)
         if self.check_valid(data_form, cases_formset):
+            if tus_completed:
+                filename = os.path.basename(tus_completed)
+                relative_path = f'{problem.code}/{filename}'
+                data_form.cleaned_data['zipfile'] = relative_path
+                data_form.instance.zipfile = relative_path
             data = data_form.save()
             for case in cases_formset.save(commit=False):
                 case.dataset_id = problem.id
