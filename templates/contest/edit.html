@@ -142,6 +142,7 @@
             });
 
             var oldSortIndex;
+            var dragCursorOffset;
             $('#form_set').sortable({
                 handle: 'td.order-column',
                 placeholder: 'placeholder',
@@ -150,8 +151,35 @@
                 start: function(event, ui) {
                     ui.placeholder.empty();
                     oldSortIndex = ui.item.index();
+                    // .table has backdrop-filter (table.scss), which makes the table a CSS
+                    // containing block for fixed/absolute descendants in Chrome (but not
+                    // consistently in Firefox/Safari), throwing off the dragged row's
+                    // on-screen position. Suspend it for the drag and drive the helper with
+                    // raw viewport coordinates so it never depends on any ancestor's offset.
+                    $('#problem-table').css('backdrop-filter', 'none');
+                    // Read the true on-screen rect BEFORE switching position, then set
+                    // fixed + matching top/left atomically. Otherwise jQuery UI's old
+                    // absolute-relative top/left gets reinterpreted under fixed semantics
+                    // and the helper jumps far off its actual position.
+                    var rect = ui.helper[0].getBoundingClientRect();
+                    dragCursorOffset = {
+                        top: event.clientY - rect.top,
+                        left: event.clientX - rect.left,
+                    };
+                    ui.helper.css({
+                        position: 'fixed',
+                        top: rect.top,
+                        left: rect.left,
+                    });
+                },
+                sort: function(event, ui) {
+                    ui.helper.css({
+                        top: event.clientY - dragCursorOffset.top,
+                        left: event.clientX - dragCursorOffset.left,
+                    });
                 },
                 stop: function(event, ui) {
+                    $('#problem-table').css('backdrop-filter', '');
                     _renumberOrders();
                 },
             });
