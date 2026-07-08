@@ -3,6 +3,7 @@ import hmac
 from datetime import date, timedelta
 
 from django.conf import settings
+from django.contrib.auth.models import AnonymousUser
 from django.core.exceptions import ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
@@ -202,8 +203,25 @@ class Contest(models.Model):
 
     @property
     def can_replay(self):
+        """
+        Determine if the contest can be replayed.
+
+        If a contest is replayable, **the ranking will be leaked**, regardless of whether the contest is private or not.
+
+        `can_replay` is independent of users, so we need to be very strict about **what contests can be replayed**,
+        otherwise, the ranking information will be leaked to all users.
+
+        1. The contest must be visible to all users.
+        2. The contest must be ended and not frozen.
+        3. Ranking must be visible.
+        4. The contest format must support replay.
+        """
+        try:
+            self.access_check(AnonymousUser())
+        except Exception:
+            return False
         return self.ended and self.frozen_last_minutes == 0 and self.show_scoreboard and \
-            self.format.name != contest_format.IOIContestFormat.name
+            self.format.name != contest_format.IOIContestFormat.name  # new IOI format is not replayable
 
     @cached_property
     def format_class(self):
