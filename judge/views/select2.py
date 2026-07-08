@@ -2,6 +2,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.db.models import F, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
+from django.utils.cache import patch_cache_control
 from django.utils.encoding import smart_str
 from django.views.generic.list import BaseListView
 
@@ -24,7 +25,16 @@ def _get_organization_user_queryset(org_pk, term):
     return qs
 
 
-class Select2View(BaseListView):
+class Select2CacheControlMixin:
+    cache_timeout = 300  # Cache timeout (in seconds) for select2 ajax responses
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super().dispatch(request, *args, **kwargs)
+        patch_cache_control(response, private=True, max_age=self.cache_timeout)
+        return response
+
+
+class Select2View(Select2CacheControlMixin, BaseListView):
     paginate_by = 20
 
     def get(self, request, *args, **kwargs):
@@ -163,7 +173,7 @@ class CommentSelect2View(Select2View):
         return Comment.objects.filter(page__icontains=self.term)
 
 
-class UserSearchSelect2View(BaseListView):
+class UserSearchSelect2View(Select2CacheControlMixin, BaseListView):
     paginate_by = 20
 
     def get_queryset(self):
