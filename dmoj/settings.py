@@ -260,6 +260,21 @@ DMOJ_CAMO_EXCLUDE = ()
 
 DMOJ_PROBLEM_DATA_ROOT = None
 
+# Resumable upload settings
+TUSD_ENDPOINT = None                              # Disable by default
+TUSD_DATA_DIR = None                              # tusd storage dir
+TUSD_HOOK_SECRET = None                           # Shared secret to verify webhook requests
+TUSD_JWT_SECRET = None                            # JWT signing key (fallback: SECRET_KEY)
+TUSD_JWT_EXPIRY_SECONDS = 7200
+TUSD_UPLOAD_THRESHOLD_BYTES = 100 * 1024 * 1024
+TUSD_ALLOWED_FILE_TYPES = (
+    'zipfile',
+    'generator',
+    'custom_checker',
+    'custom_grader',
+    'custom_header',
+)
+
 DMOJ_PROBLEM_MIN_TIME_LIMIT = 0.01  # seconds
 DMOJ_PROBLEM_MAX_TIME_LIMIT = 60  # seconds
 DMOJ_PROBLEM_MIN_MEMORY_LIMIT = 0  # kilobytes
@@ -482,6 +497,7 @@ else:
 INSTALLED_APPS += (
     'django.contrib.admin',
     'judge',
+    'resumable_upload',
     'urlshortener',
     'django.contrib.auth',
     'django.contrib.contenttypes',
