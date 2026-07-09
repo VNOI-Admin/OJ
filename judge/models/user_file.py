@@ -1,5 +1,6 @@
 import os
 import re
+from urllib.parse import urljoin
 import uuid
 
 from django.conf import settings
@@ -129,7 +130,11 @@ class UserFile(models.Model):
     def get_access_url(self):
         if self.file_scope == self.FileScope.MARTOR:
             name = os.path.basename(self.file.name)
-            url_base = getattr(settings, 'MARTOR_UPLOAD_URL_PREFIX', '/martor')
+            url_base = getattr(
+                settings,
+                'MARTOR_UPLOAD_URL_PREFIX',
+                urljoin(settings.MEDIA_URL, settings.MARTOR_UPLOAD_MEDIA_DIR)
+            )
             return url_base.rstrip('/') + '/' + name
         return reverse('user_file_access', kwargs={'uuid': self.uuid})
 
