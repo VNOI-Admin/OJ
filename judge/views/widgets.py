@@ -37,17 +37,15 @@ def rejudge_submission(request):
     return HttpResponseRedirect(redirect) if redirect else HttpResponse('success', content_type='text/plain')
 
 
-def django_uploader(image):
-    ext = os.path.splitext(image.name)[1]
-    if ext not in settings.MARTOR_UPLOAD_SAFE_EXTS:
-        ext = '.png'
-    name = str(uuid.uuid4()) + ext
-    default_storage.save(os.path.join(settings.MARTOR_UPLOAD_MEDIA_DIR, name), image)
-    url_base = getattr(settings, 'MARTOR_UPLOAD_URL_PREFIX',
-                       urljoin(settings.MEDIA_URL, settings.MARTOR_UPLOAD_MEDIA_DIR))
-    if not url_base.endswith('/'):
-        url_base += '/'
-    return json.dumps({'status': 200, 'name': '', 'link': urljoin(url_base, name)})
+def django_uploader(image, user):
+    from judge.models import UserFile
+    uf = UserFile(
+        file=image,
+        file_scope=UserFile.FileScope.MARTOR,
+        user=user.profile,
+    )
+    uf.save()
+    return json.dumps({'status': 200, 'name': '', 'link': uf.get_access_url(), 'uuid': str(uf.uuid)})
 
 
 def pdf_statement_uploader(statement):
@@ -82,7 +80,7 @@ def martor_image_uploader(request):
 
     image = request.FILES['markdown-image-upload']
     if request.user.is_staff or request.user.has_perm('judge.can_upload_image'):
-        data = django_uploader(image)
+        data = django_uploader(image, user=request.user)
     else:
         return HttpResponseForbidden(_('You do not have permission to upload images'))
     return HttpResponse(data, content_type='application/json')

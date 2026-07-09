@@ -38,10 +38,11 @@ from reversion import revisions
 
 from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
-from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
-    ProposeContestProblemFormSet
+from judge.forms import AttachmentFormSet, ContestAnnouncementForm, ContestCloneForm, \
+    ContestDownloadDataForm, ContestForm, ProposeContestProblemFormSet
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, \
-    ContestSubmission, ContestTag, Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
+    ContestSubmission, ContestTag, Language, Organization, Problem, ProblemClarification, Profile, Solution, \
+    Submission
 from judge.ratings import RATING_CLASS, RATING_LEVELS, RATING_VALUES
 from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
@@ -361,6 +362,11 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         context['attempted_problem_ids'] = user_attempted_ids(self.request.profile) if authenticated else []
 
         context['can_download_data'] = bool(settings.DMOJ_CONTEST_DATA_DOWNLOAD)
+
+        if self.object.can_view_attachment_by(self.request.user):
+            context['attachments'] = self.object.attachments.select_related('file').order_by('id')
+        else:
+            context['attachments'] = []
 
         return context
 
@@ -1485,18 +1491,32 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
                                                 form_kwargs={'user': self.request.user})
         return ProposeContestProblemFormSet(instance=self.get_object(), form_kwargs={'user': self.request.user})
 
+    def get_attachment_formset(self):
+        form_kwargs = {'user': self.request.user}
+        if self.request.POST:
+            return AttachmentFormSet(
+                self.request.POST, self.request.FILES,
+                instance=self.object, form_kwargs=form_kwargs,
+            )
+        return AttachmentFormSet(instance=self.object, form_kwargs=form_kwargs)
+
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data['contest_problem_formset'] = self.get_contest_problem_formset()
         data['contest_org'] = self.object.organization
+        if self.request.user.has_perm('judge.add_fileattachment'):
+            data['attachment_formset'] = self.get_attachment_formset()
         return data
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         form = self.get_form()
         form_set = self.get_contest_problem_formset()
+        form_attachments = self.get_attachment_formset() if request.user.has_perm('judge.add_fileattachment') else None
 
-        if form.is_valid() and form_set.is_valid():
+        valid = form.is_valid() and form_set.is_valid()
+        valid = valid and (form_attachments is None or form_attachments.is_valid())
+        if valid:
             with revisions.create_revision(atomic=True):
                 form.save()
                 problems = form_set.save(commit=False)
@@ -1507,6 +1527,9 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
                 for problem in problems:
                     problem.contest = self.object
                     problem.save()
+
+                if form_attachments is not None:
+                    form_attachments.save()
 
                 revisions.set_comment(_('Edited from site'))
                 revisions.set_user(self.request.user)

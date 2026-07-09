@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import zipfile
 from operator import attrgetter, itemgetter
 
@@ -9,6 +10,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.forms import AuthenticationForm
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.forms import generic_inlineformset_factory
 from django.core.exceptions import ValidationError
 from django.core.validators import FileExtensionValidator, RegexValidator
 from django.db.models import Q
@@ -21,8 +23,9 @@ from django.utils import timezone
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
-from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, Language, \
-    LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
+from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, \
+    FileAttachment, Language, LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, \
+    UserFile, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -894,3 +897,79 @@ class CompareSubmissionsForm(Form):
     user = forms.ChoiceField(
         widget=HeavySelect2MultipleWidget(data_view='profile_select2', attrs={'style': 'width: 100%'}),
     )
+
+
+# ============================================================================
+# User File Upload Forms
+# ============================================================================
+
+class UserFileUploadForm(ModelForm):
+    """Form for uploading new user files."""
+    MAX_UPLOAD_SIZE = 500 * 1024 * 1024
+
+    class Meta:
+        model = UserFile
+        fields = ['file']
+        widgets = {
+            'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
+        }
+
+    def clean_file(self):
+        file_obj = self.cleaned_data.get('file')
+        if file_obj and file_obj.size > self.MAX_UPLOAD_SIZE:
+            raise ValidationError(_('File size exceeds maximum allowed size of 500 MB.'))
+        return file_obj
+
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        if instance.file and not instance.filename:
+            instance.filename = os.path.basename(instance.file.name)
+        if commit:
+            instance.save()
+        return instance
+
+
+class FileAttachmentForm(ModelForm):
+    class Meta:
+        model = FileAttachment
+        fields = ['file', 'display_name']
+        widgets = {
+            'file': HeavySelect2Widget(data_view='user_file_search', attrs={'style': 'width: 100%'}),
+            'display_name': forms.TextInput(attrs={'style': 'width: 100%'}),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.user = user
+        self.fields['file'].required = False
+
+    def clean_display_name(self):
+        name = self.cleaned_data.get('display_name', '')
+        if name and not re.fullmatch(r'[a-zA-Z0-9_\-.]+', name):
+            raise ValidationError(_('Display name may only contain letters, digits, underscores, hyphens, and dots.'))
+        return name
+
+    def clean(self):
+        cleaned_data = super().clean()
+        file_obj = cleaned_data.get('file')
+        if not file_obj:
+            raise ValidationError(_('Please select a file.'))
+        if self.user and not file_obj.can_change_by(self.user):
+            raise ValidationError(_('You do not have permission to use this file.'))
+        display_name = cleaned_data.get('display_name', '')
+        if display_name:
+            file_ext = os.path.splitext(file_obj.filename)[1].lower()
+            name_ext = os.path.splitext(display_name)[1].lower()
+            if name_ext != file_ext:
+                raise ValidationError(
+                    _('Display name extension must match the uploaded file (%(ext)s).') % {'ext': file_ext},
+                )
+        return cleaned_data
+
+
+AttachmentFormSet = generic_inlineformset_factory(
+    FileAttachment,
+    form=FileAttachmentForm,
+    extra=1,
+    can_delete=True,
+)

@@ -272,6 +272,20 @@
             <a class="button" style="width: fit-content" href="{{ url('contest_all_problems', contest.key) }}">{{ _('All problems') }}</a>
             {% endif %}
         </div>
+
+        {% if attachments %}
+        <div class="contest-attachments">
+            <h2><i class="fa fa-paperclip"></i> {{ _('Attachments') }}</h2>
+            <ul>
+                {% for att in attachments %}
+                    <li>
+                        <a href="{{ url('attachment_access', att.id) }}">{{ att.get_display_name() }}</a>
+                        <span style="color: #888; font-size: 0.9em;">({{ att.file.size|filesizeformat }})</span>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
         {% if has_announcements or can_edit %}
         <div class="contest-clartifications">
             <h2 style="margin-bottom: 0.2em"><i class="fa fa-check"></i> {{ _('Announcements') }}</h2>

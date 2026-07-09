@@ -22,6 +22,18 @@
             $('#lang_limit_title').click();
             {% endif %}
 
+            {% if attachment_formset %}
+                $('#attachment_form_set tr').formset({
+                    prefix: '{{ attachment_formset.prefix }}',
+                    addText: '{{ _('Add attachment') }}',
+                    deleteText: '{{ _('Remove') }}',
+                    addCssClass: 'button',
+                    deleteCssClass: 'button',
+                    added: initAttachmentRow,
+                });
+                $('#attachment_form_set tr.attachment-row').each(function() { initAttachmentRow($(this)); });
+            {% endif %}
+
             var noResults = function () {
                 return {{ _('Press Enter to select multiple users...')|htmltojs }};
             };
@@ -56,6 +68,8 @@
                 }
             });
         })
+
+        {% include 'attachment_formset_js.html' %}
     </script>
 {% endblock %}
 
@@ -63,9 +77,8 @@
     {{ form.media.css }}
     <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
     <style>
-        .hidden {
-            display: none;
-        }
+        .hidden { display: none; }
+        #attachment_form_set td { white-space: nowrap; }
     </style>
 {% endblock %}
 
@@ -88,6 +101,7 @@
 {%- endmacro %}
 
 {% block body %}
+{% include 'attachment_upload_modal.html' %}
 <div>
     {% if request.user.is_staff %}
         <div class="alert alert-warning alert-dismissable">
@@ -133,6 +147,9 @@
 
         <center><h3> {{ _('Editorial') }} </h3></center>
         <table class="django-as-table">{{ solution_formset.as_table() }}</table>
+
+        {% if attachment_formset %}{{ attachment_formset.management_form }}{% endif %}
+        {% include 'attachment_formset_table.html' %}
 
         <table>
             <tr><td style="float: left;">

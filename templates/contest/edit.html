@@ -139,6 +139,10 @@
                     _initProblemPicker($probSel[0]);
                     {% endif %}
                 },
+                addText: '{{ _('Add problem') }}',
+                deleteText: '{{ _('Remove') }}',
+                addCssClass: 'button',
+                deleteCssClass: 'button',
             });
 
             var oldSortIndex;
@@ -252,8 +256,21 @@
             }
 
             $('#form_set select[data-problem-src]').each(function() { _initProblemPicker(this); });
+            {% if attachment_formset %}
+                $('#attachment_form_set tr').formset({
+                    prefix: '{{ attachment_formset.prefix }}',
+                    addText: '{{ _('Add attachment') }}',
+                    deleteText: '{{ _('Remove') }}',
+                    addCssClass: 'button',
+                    deleteCssClass: 'button',
+                    added: initAttachmentRow,
+                });
+                $('#attachment_form_set tr.attachment-row').each(function() { initAttachmentRow($(this)); });
             {% endif %}
+
         })
+
+        {% include 'attachment_formset_js.html' %}
     </script>
     {{ form.media.js }}
 {% endblock %}
@@ -351,6 +368,7 @@
     <tr>
 {%- endmacro %}
 
+{% include 'attachment_upload_modal.html' %}
 <div>
     {% block edit_contest %}
         {% if request.user.is_staff %}
@@ -360,9 +378,10 @@
             </div>
         {% endif %}
     {% endblock %}
-    <form action="" method="post" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
+    <form action="" method="post" enctype="multipart/form-data" class="form-area" style="display: flex; justify-content: center; flex-direction: column;">
         {% csrf_token %}
         {{ contest_problem_formset.management_form }}
+        {% if attachment_formset %}{{ attachment_formset.management_form }}{% endif %}
         {% if contest_problem_formset.non_form_errors() %}
             {{ contest_problem_formset.non_form_errors() }}
         {% endif %}
@@ -396,6 +415,7 @@
                 {% endfor %}
             </tbody>
         </table>
+        {% include 'attachment_formset_table.html' %}
         <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">
             {% if request.resolver_match.url_name == 'contest_edit' %}
                 {{ _('Update') }}
