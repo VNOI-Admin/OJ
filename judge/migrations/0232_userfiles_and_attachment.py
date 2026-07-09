@@ -10,7 +10,7 @@ import judge.models.user_file
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0227_add_submission_heatmap_index'),
+        ('judge', '0231_contest_replay_version'),
     ]
 
     operations = [
