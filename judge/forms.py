@@ -945,7 +945,7 @@ class FileAttachmentForm(ModelForm):
         model = FileAttachment
         fields = ['file', 'display_name']
         widgets = {
-            'file': HeavySelect2Widget(data_view='user_file_search', attrs={'style': 'width: 100%'}),
+            'file': HeavySelect2Widget(data_view='user_file_select2', attrs={'style': 'width: 100%'}),
             'display_name': forms.TextInput(attrs={'style': 'width: 100%'}),
         }
 

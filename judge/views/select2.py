@@ -7,7 +7,7 @@ from django.utils.encoding import smart_str
 from django.views.generic.list import BaseListView
 
 from judge.jinja2.gravatar import gravatar
-from judge.models import Comment, Contest, Organization, Problem, Profile, Tag, TagGroup
+from judge.models import Comment, Contest, Organization, Problem, Profile, Tag, TagGroup, UserFile
 
 
 def _get_user_queryset(term):
@@ -171,6 +171,20 @@ class ContestSelect2View(Select2View):
 class CommentSelect2View(Select2View):
     def get_queryset(self):
         return Comment.objects.filter(page__icontains=self.term)
+
+
+class UserFileSelect2View(Select2View):
+    def get_queryset(self):
+        if not self.request.user.is_authenticated:
+            return UserFile.objects.none()
+        return UserFile.objects.filter(
+            user=self.request.profile,
+            file_scope=UserFile.FileScope.ATTACHMENT,
+            filename__icontains=self.term,
+        ).order_by('-uploaded_at')
+
+    def get_name(self, obj):
+        return obj.filename
 
 
 class UserSearchSelect2View(Select2CacheControlMixin, BaseListView):

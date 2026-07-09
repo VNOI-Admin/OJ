@@ -23,7 +23,7 @@ from judge.views.select2 import AssigneeSelect2View, CommentSelect2View, Contest
     OrganizationProblemSelect2View, OrganizationSelect2View, \
     OrganizationUserSearchSelect2View, OrganizationUserSelect2View, ProblemSelect2View, \
     PublicProblemSelect2View, TagGroupSelect2View, TagSelect2View, TicketUserSelect2View, \
-    UserSearchSelect2View, UserSelect2View
+    UserFileSelect2View, UserSearchSelect2View, UserSelect2View
 from judge.views.widgets import martor_image_uploader
 from martor.views import markdown_search_user
 
@@ -206,7 +206,6 @@ urlpatterns = [
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
     path('files/delete', user_files.UserFileDeleteView.as_view(), name='user_file_delete'),
-    path('files/search', user_files.UserFileSearchView.as_view(), name='user_file_search'),
     path('files/upload', user_files.UserFileUploadView.as_view(), name='user_file_upload'),
     path('files/<uuid:uuid>/view', user_files.UserFileAccessView.as_view(), name='user_file_access'),
     path('files/<uuid:uuid>', user_files.UserFileDetailView.as_view(), name='user_file_detail'),
@@ -454,6 +453,7 @@ urlpatterns = [
         path('comment/', CommentSelect2View.as_view(), name='comment_select2'),
         path('tag/', TagSelect2View.as_view(), name='tag_select2'),
         path('taggroup/', TagGroupSelect2View.as_view(), name='taggroup_select2'),
+        path('user_file/', UserFileSelect2View.as_view(), name='user_file_select2'),
     ])),
 
     path('tasks/', include([
