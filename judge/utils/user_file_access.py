@@ -21,7 +21,7 @@ def serve_user_file(request, user_file):
         response['Content-Type'] = mimetypes.guess_type(user_file.filename)[0] or 'application/octet-stream'
         encoded = quote(user_file.filename, safe='')
         response['Content-Disposition'] = f"inline; filename*=UTF-8''{encoded}"
-        add_file_response(request, response, user_file.get_url_path(), user_file.get_file_path())
+        add_file_response(request, response, user_file.get_internal_url_path(), user_file.get_file_path())
         return response
     except (OSError, IOError):
         return generic_message(request, 'File Error', _('File not found.'), status=404)

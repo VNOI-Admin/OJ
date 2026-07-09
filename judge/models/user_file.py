@@ -1,7 +1,7 @@
 import os
 import re
-from urllib.parse import urljoin
 import uuid
+from urllib.parse import urljoin
 
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
@@ -121,7 +121,7 @@ class UserFile(models.Model):
     def get_file_path(self):
         return user_file_storage.path(self.file.name)
 
-    def get_url_path(self):
+    def get_internal_url_path(self):
         if self.file_scope == self.FileScope.MARTOR:
             return None  # nginx serves directly; no X-Accel-Redirect needed
         internal_base = settings.USER_FILE_STORAGE_INTERNAL
@@ -133,7 +133,7 @@ class UserFile(models.Model):
             url_base = getattr(
                 settings,
                 'MARTOR_UPLOAD_URL_PREFIX',
-                urljoin(settings.MEDIA_URL, settings.MARTOR_UPLOAD_MEDIA_DIR)
+                urljoin(settings.MEDIA_URL, settings.MARTOR_UPLOAD_MEDIA_DIR),
             )
             return url_base.rstrip('/') + '/' + name
         return reverse('user_file_access', kwargs={'uuid': self.uuid})
