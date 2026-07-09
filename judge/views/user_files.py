@@ -17,8 +17,7 @@ from judge.utils.views import TitleMixin
 
 __all__ = [
     'UserFileListView', 'UserFileDetailView', 'UserFileDeleteView',
-    'UserFileAccessView', 'UserFileSearchView', 'AttachmentAccessView',
-    'UserFileUploadView',
+    'UserFileAccessView', 'AttachmentAccessView', 'UserFileUploadView',
 ]
 
 
@@ -94,21 +93,6 @@ class UserFileAccessView(LoginRequiredMixin, View):
             raise Http404
         authorize_file_access(request, file_obj)
         return serve_user_file(request, file_obj)
-
-
-class UserFileSearchView(LoginRequiredMixin, View):
-    def get(self, request):
-        q = request.GET.get('q', '')
-        qs = UserFile.objects.filter(
-            user=request.profile,
-            file_scope=UserFile.FileScope.ATTACHMENT,
-        ).order_by('-uploaded_at')
-        if q:
-            qs = qs.filter(filename__icontains=q)
-        return JsonResponse({'results': [
-            {'id': f.id, 'text': f.filename, 'size': f.size}
-            for f in qs[:50]
-        ]})
 
 
 class AttachmentAccessView(View):
