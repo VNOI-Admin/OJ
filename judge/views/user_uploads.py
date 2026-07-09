@@ -1,24 +1,39 @@
+import mimetypes
 import os
+from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import User
 from django.core.exceptions import PermissionDenied
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, ListView, View
 
 from judge.models import FileAttachment, UserUpload
-from judge.utils.user_upload_access import authorize_file_access, serve_user_upload
-from judge.utils.views import TitleMixin
+from judge.utils.views import TitleMixin, add_file_response, generic_message
 
 __all__ = [
     'UserUploadListView', 'UserUploadDetailView', 'UserUploadDeleteView',
     'UserUploadAccessView', 'AttachmentAccessView', 'UserUploadCreateView',
 ]
+
+
+def serve_user_upload(request, user_upload):
+    """Build an inline HTTP response for a UserUpload, using X-Accel-Redirect when available."""
+    try:
+        # TODO: what should we do if martor image is an attachment?
+        response = HttpResponse()
+        response['Content-Type'] = mimetypes.guess_type(user_upload.filename)[0] or 'application/octet-stream'
+        encoded = quote(user_upload.filename, safe='')
+        response['Content-Disposition'] = f"inline; filename*=UTF-8''{encoded}"
+        add_file_response(request, response, user_upload.get_internal_url_path(), user_upload.get_file_path())
+        return response
+    except (OSError, IOError):
+        return generic_message(request, 'File Error', _('File not found.'), status=404)
 
 
 class UserUploadMixin(TitleMixin, LoginRequiredMixin):
@@ -55,7 +70,8 @@ class UserUploadDetailView(UserUploadMixin, DetailView):
 
     def get_object(self, queryset=None):
         file_obj = super().get_object(queryset)
-        authorize_file_access(self.request, file_obj)
+        if not file_obj.is_accessible_by(self.request.user):
+            raise Http404('File not found or access denied.')
         return file_obj
 
     def get_context_data(self, **kwargs):
@@ -91,7 +107,8 @@ class UserUploadAccessView(LoginRequiredMixin, View):
             file_obj = UserUpload.objects.get(uuid=uuid)
         except UserUpload.DoesNotExist:
             raise Http404
-        authorize_file_access(request, file_obj)
+        if not file_obj.is_accessible_by(request.user):
+            raise Http404('File not found or access denied.')
         return serve_user_upload(request, file_obj)
 
 

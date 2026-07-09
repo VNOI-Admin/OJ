@@ -85,7 +85,7 @@ class UserUpload(models.Model):
     def is_owned_by(self, user):
         return self.user_id == self._profile_id(user)
 
-    def can_view_by(self, user):
+    def is_accessible_by(self, user):
         if not user.is_authenticated:
             return False
         if user.is_superuser:
