@@ -1,6 +1,5 @@
 import mimetypes
 import os
-from urllib.parse import quote
 
 from django.conf import settings
 from django.contrib import messages
@@ -22,14 +21,14 @@ __all__ = [
 ]
 
 
-def serve_user_upload(request, user_upload):
+def serve_user_upload(request, user_upload, filename=None):
     """Build an inline HTTP response for a UserUpload, using X-Accel-Redirect when available."""
+    filename = filename or user_upload.filename
     try:
         # TODO: what should we do if martor image is an attachment?
         response = HttpResponse()
-        response['Content-Type'] = mimetypes.guess_type(user_upload.filename)[0] or 'application/octet-stream'
-        encoded = quote(user_upload.filename, safe='')
-        response['Content-Disposition'] = f"inline; filename*=UTF-8''{encoded}"
+        response['Content-Type'] = mimetypes.guess_type(filename)[0] or 'application/octet-stream'
+        response['Content-Disposition'] = f'inline; filename="{filename}"'
         add_file_response(request, response, user_upload.get_internal_url_path(), user_upload.get_file_path())
         return response
     except (OSError, IOError):
@@ -120,7 +119,7 @@ class AttachmentAccessView(View):
         )
         if not attachment.can_view_by(request.user):
             raise Http404
-        return serve_user_upload(request, attachment.file)
+        return serve_user_upload(request, attachment.file, filename=attachment.get_display_name())
 
 
 class UserUploadCreateView(LoginRequiredMixin, View):

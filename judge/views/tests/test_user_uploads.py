@@ -176,6 +176,16 @@ class AttachmentAccessViewTestCase(TestCase):
     def test_public_problem_anonymous(self, _mock):
         self.assertEqual(self.client.get(self._url(self.pub_problem_att)).status_code, 200)
 
+    def test_attachment_serves_display_name(self):
+        att = FileAttachment.objects.create(
+            linked_item=self.public_problem,
+            file=self.pub_problem_att.file,
+            display_name='renamed.txt',
+        )
+        with patch('judge.views.user_uploads.serve_user_upload', return_value=HttpResponse('ok')) as mock_serve:
+            self.assertEqual(self.client.get(self._url(att)).status_code, 200)
+        self.assertEqual(mock_serve.call_args.kwargs['filename'], 'renamed.txt')
+
     @_MOCK_SERVE
     def test_private_problem_author(self, _mock):
         self.client.force_login(self.author)
