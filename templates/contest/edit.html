@@ -256,6 +256,7 @@
             }
 
             $('#form_set select[data-problem-src]').each(function() { _initProblemPicker(this); });
+            {% endif %}
             {% if attachment_formset %}
                 $('#attachment_form_set tr').formset({
                     prefix: '{{ attachment_formset.prefix }}',
