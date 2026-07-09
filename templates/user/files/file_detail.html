@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block body %}
-<p><a href="{{ url('user_file_list', request.user.username) }}"><i class="fa fa-arrow-left"></i> {{ _('Back to My Files') }}</a></p>
+<p><a href="{{ url('user_upload_list', request.user.username) }}"><i class="fa fa-arrow-left"></i> {{ _('Back to My Files') }}</a></p>
 
 <div class="sidebox">
     <h3>{{ _('File information') }}</h3>
@@ -31,9 +31,9 @@
     <h3>{{ _('Actions') }}</h3>
     <div class="sidebox-content">
         <div style="display:flex;gap:0.5em;flex-wrap:wrap;">
-            <a href="{{ url('user_file_access', file.uuid) }}" class="button inline-button" target="_blank"><i class="fa fa-eye"></i> {{ _('View') }}</a>
+            <a href="{{ url('user_upload_access', file.uuid) }}" class="button inline-button" target="_blank"><i class="fa fa-eye"></i> {{ _('View') }}</a>
             {% if can_delete %}
-                <form method="post" action="{{ url('user_file_delete') }}" style="display:inline;" onsubmit="return confirm('{{ _('Delete this file? This cannot be undone.') }}')">
+                <form method="post" action="{{ url('user_upload_delete') }}" style="display:inline;" onsubmit="return confirm('{{ _('Delete this file? This cannot be undone.') }}')">
                     {% csrf_token %}
                     <input type="hidden" name="uuids" value="{{ file.uuid }}">
                     <button type="submit" class="button inline-button"><i class="fa fa-trash"></i> {{ _('Delete') }}</button>

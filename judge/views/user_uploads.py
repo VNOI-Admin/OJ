@@ -11,24 +11,24 @@ from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import DetailView, ListView, View
 
-from judge.models import FileAttachment, UserFile
-from judge.utils.user_file_access import authorize_file_access, serve_user_file
+from judge.models import FileAttachment, UserUpload
+from judge.utils.user_upload_access import authorize_file_access, serve_user_upload
 from judge.utils.views import TitleMixin
 
 __all__ = [
-    'UserFileListView', 'UserFileDetailView', 'UserFileDeleteView',
-    'UserFileAccessView', 'AttachmentAccessView', 'UserFileUploadView',
+    'UserUploadListView', 'UserUploadDetailView', 'UserUploadDeleteView',
+    'UserUploadAccessView', 'AttachmentAccessView', 'UserUploadCreateView',
 ]
 
 
-class UserFileMixin(TitleMixin, LoginRequiredMixin):
-    model = UserFile
+class UserUploadMixin(TitleMixin, LoginRequiredMixin):
+    model = UserUpload
     slug_field = 'uuid'
     slug_url_kwarg = 'uuid'
     context_object_name = 'file'
 
 
-class UserFileListView(UserFileMixin, ListView):
+class UserUploadListView(UserUploadMixin, ListView):
     template_name = 'user/files/file_list.html'
     context_object_name = 'files'
     paginate_by = 50
@@ -42,7 +42,7 @@ class UserFileListView(UserFileMixin, ListView):
         return super().dispatch(request, *args, **kwargs)
 
     def get_queryset(self):
-        return UserFile.objects.filter(user=self.target_user.profile).order_by('-uploaded_at')
+        return UserUpload.objects.filter(user=self.target_user.profile).order_by('-uploaded_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -50,7 +50,7 @@ class UserFileListView(UserFileMixin, ListView):
         return context
 
 
-class UserFileDetailView(UserFileMixin, DetailView):
+class UserUploadDetailView(UserUploadMixin, DetailView):
     template_name = 'user/files/file_detail.html'
 
     def get_object(self, queryset=None):
@@ -68,31 +68,31 @@ class UserFileDetailView(UserFileMixin, DetailView):
         return self.object.filename
 
 
-class UserFileDeleteView(LoginRequiredMixin, View):
+class UserUploadDeleteView(LoginRequiredMixin, View):
     """POST-only: delete one or more files by UUID. Single delete reuses this endpoint."""
 
     def post(self, request):
         uuids = request.POST.getlist('uuids')[:50]
-        list_url = reverse('user_file_list', args=[request.user.username])
+        list_url = reverse('user_upload_list', args=[request.user.username])
         if not uuids:
             messages.error(request, _('No files selected.'))
             return redirect(list_url)
 
-        qs = UserFile.objects.filter(uuid__in=uuids, user=request.profile)
+        qs = UserUpload.objects.filter(uuid__in=uuids, user=request.profile)
 
         count = qs.delete()[0]
         messages.success(request, _('%(count)d file(s) deleted.') % {'count': count})
         return redirect(list_url)
 
 
-class UserFileAccessView(LoginRequiredMixin, View):
+class UserUploadAccessView(LoginRequiredMixin, View):
     def get(self, request, uuid):
         try:
-            file_obj = UserFile.objects.get(uuid=uuid)
-        except UserFile.DoesNotExist:
+            file_obj = UserUpload.objects.get(uuid=uuid)
+        except UserUpload.DoesNotExist:
             raise Http404
         authorize_file_access(request, file_obj)
-        return serve_user_file(request, file_obj)
+        return serve_user_upload(request, file_obj)
 
 
 class AttachmentAccessView(View):
@@ -103,24 +103,24 @@ class AttachmentAccessView(View):
         )
         if not attachment.can_view_by(request.user):
             raise Http404
-        return serve_user_file(request, attachment.file)
+        return serve_user_upload(request, attachment.file)
 
 
-class UserFileUploadView(LoginRequiredMixin, View):
+class UserUploadCreateView(LoginRequiredMixin, View):
     def post(self, request):
         f = request.FILES.get('file')
         if not f:
             return JsonResponse({'error': _('No file provided.')}, status=400)
         ext = os.path.splitext(f.name)[1].lstrip('.').lower()
-        if ext not in settings.USER_FILE_ATTACHMENT_SAFE_EXTS:
+        if ext not in settings.USER_UPLOAD_ATTACHMENT_SAFE_EXTS:
             return JsonResponse({'error': _('Invalid file type.')}, status=400)
-        if f.size > settings.USER_FILE_ATTACHMENT_MAX_SIZE:
+        if f.size > settings.USER_UPLOAD_ATTACHMENT_MAX_SIZE:
             return JsonResponse({'error': _('File too large.')}, status=400)
-        user_file = UserFile(file=f, file_scope=UserFile.FileScope.ATTACHMENT, user=request.profile)
+        user_upload = UserUpload(file=f, file_scope=UserUpload.FileScope.ATTACHMENT, user=request.profile)
         custom_name = request.POST.get('filename', '').strip()
         if custom_name:
             if os.path.splitext(custom_name)[1].lower() != os.path.splitext(f.name)[1].lower():
                 return JsonResponse({'error': _('Filename extension must match the uploaded file.')}, status=400)
-            user_file.filename = custom_name
-        user_file.save()
-        return JsonResponse({'id': user_file.id, 'filename': user_file.filename})
+            user_upload.filename = custom_name
+        user_upload.save()
+        return JsonResponse({'id': user_upload.id, 'filename': user_upload.filename})

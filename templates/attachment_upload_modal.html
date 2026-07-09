@@ -86,7 +86,7 @@
             fd.append('csrfmiddlewaretoken', $('[name=csrfmiddlewaretoken]').first().val());
             if (customName) fd.append('filename', customName);
             $.ajax({
-                url: '{{ url("user_file_upload") }}',
+                url: '{{ url("user_upload_create") }}',
                 method: 'POST',
                 data: fd, processData: false, contentType: false,
                 success: function(data) {

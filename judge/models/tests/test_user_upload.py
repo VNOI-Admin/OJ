@@ -2,36 +2,36 @@ from django.contrib.auth.models import AnonymousUser
 from django.http import Http404
 from django.test import RequestFactory, TestCase
 
-from judge.models import UserFile
+from judge.models import UserUpload
 from judge.models.tests.util import create_user
-from judge.utils.user_file_access import authorize_file_access
+from judge.utils.user_upload_access import authorize_file_access
 
 
-class UserFilePermissionTest(TestCase):
+class UserUploadPermissionTest(TestCase):
     fixtures = ['language_all.json']
 
     @classmethod
     def setUpTestData(cls):
         cls.owner = create_user(
-            username='owner_user_file',
-            user_permissions=('view_userfile', 'add_userfile', 'change_userfile', 'delete_userfile'),
+            username='owner_user_upload',
+            user_permissions=('view_userupload', 'add_userupload', 'change_userupload', 'delete_userupload'),
         )
         cls.other = create_user(
-            username='other_user_file',
-            user_permissions=('view_userfile', 'change_userfile', 'delete_userfile'),
+            username='other_user_upload',
+            user_permissions=('view_userupload', 'change_userupload', 'delete_userupload'),
         )
         cls.upload_only = create_user(
-            username='upload_only_user_file',
-            user_permissions=('add_userfile',),
+            username='upload_only_user_upload',
+            user_permissions=('add_userupload',),
         )
         cls.superuser = create_user(
-            username='superuser_user_file',
+            username='superuser_user_upload',
             is_superuser=True,
         )
 
-        cls.private_file = UserFile.objects.create(
+        cls.private_file = UserUpload.objects.create(
             user=cls.owner.profile,
-            file='user_files/private.txt',
+            file='user_uploads/private.txt',
             filename='private.txt',
         )
 
@@ -59,8 +59,8 @@ class UserFilePermissionTest(TestCase):
         self.assertFalse(self.private_file.can_delete_by(self.other))
 
     def test_upload_permissions(self):
-        self.assertTrue(UserFile.can_upload_by(self.upload_only))
-        self.assertFalse(UserFile.can_upload_by(AnonymousUser()))
+        self.assertTrue(UserUpload.can_upload_by(self.upload_only))
+        self.assertFalse(UserUpload.can_upload_by(AnonymousUser()))
 
     def test_authorize_owner_can_access_private_file(self):
         request = self._request_with_user(self.owner)

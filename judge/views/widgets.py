@@ -38,10 +38,10 @@ def rejudge_submission(request):
 
 
 def django_uploader(image, user):
-    from judge.models import UserFile
-    uf = UserFile(
+    from judge.models import UserUpload
+    uf = UserUpload(
         file=image,
-        file_scope=UserFile.FileScope.MARTOR,
+        file_scope=UserUpload.FileScope.MARTOR,
         user=user.profile,
     )
     uf.save()

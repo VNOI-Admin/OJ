@@ -6,7 +6,7 @@
 {% include "messages.html" %}
 
 {% if files %}
-    <form id="bulk-delete-form" method="post" action="{{ url('user_file_delete') }}">
+    <form id="bulk-delete-form" method="post" action="{{ url('user_upload_delete') }}">
         {% csrf_token %}
 
         <div style="display:flex;align-items:center;gap:0.8em;margin-bottom:0.6em;flex-wrap:wrap;">
@@ -39,12 +39,12 @@
                                        class="file-cb" aria-label="{{ file.filename }}">
                             </td>
                             <td>
-                                <a href="{{ url('user_file_detail', file.uuid) }}">{{ file.filename }}</a>
+                                <a href="{{ url('user_upload_detail', file.uuid) }}">{{ file.filename }}</a>
                             </td>
                             <td>{{ file.size|filesizeformat }}</td>
                             <td>{{ file.uploaded_at|date('SHORT_DATE_FORMAT') }}</td>
                             <td>
-                                <a href="{{ url('user_file_access', file.uuid) }}" target="_blank">{{ _('View') }}</a>
+                                <a href="{{ url('user_upload_access', file.uuid) }}" target="_blank">{{ _('View') }}</a>
                             </td>
                         </tr>
                     {% endfor %}

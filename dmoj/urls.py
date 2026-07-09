@@ -13,7 +13,7 @@ from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed,
 from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, notification, \
     organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
-    submission, tag, tasks, ticket, two_factor, user, user_files, widgets
+    submission, tag, tasks, ticket, two_factor, user, user_uploads, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -23,7 +23,7 @@ from judge.views.select2 import AssigneeSelect2View, CommentSelect2View, Contest
     OrganizationProblemSelect2View, OrganizationSelect2View, \
     OrganizationUserSearchSelect2View, OrganizationUserSelect2View, ProblemSelect2View, \
     PublicProblemSelect2View, TagGroupSelect2View, TagSelect2View, TicketUserSelect2View, \
-    UserFileSelect2View, UserSearchSelect2View, UserSelect2View
+    UserSearchSelect2View, UserSelect2View, UserUploadSelect2View
 from judge.views.widgets import martor_image_uploader
 from martor.views import markdown_search_user
 
@@ -205,11 +205,11 @@ urlpatterns = [
     path('set-theme/', user.set_theme, name='set_theme'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
-    path('files/delete', user_files.UserFileDeleteView.as_view(), name='user_file_delete'),
-    path('files/upload', user_files.UserFileUploadView.as_view(), name='user_file_upload'),
-    path('files/<uuid:uuid>/view', user_files.UserFileAccessView.as_view(), name='user_file_access'),
-    path('files/<uuid:uuid>', user_files.UserFileDetailView.as_view(), name='user_file_detail'),
-    path('attachment/<int:pk>/view', user_files.AttachmentAccessView.as_view(), name='attachment_access'),
+    path('files/delete', user_uploads.UserUploadDeleteView.as_view(), name='user_upload_delete'),
+    path('files/upload', user_uploads.UserUploadCreateView.as_view(), name='user_upload_create'),
+    path('files/<uuid:uuid>/view', user_uploads.UserUploadAccessView.as_view(), name='user_upload_access'),
+    path('files/<uuid:uuid>', user_uploads.UserUploadDetailView.as_view(), name='user_upload_detail'),
+    path('attachment/<int:pk>/view', user_uploads.AttachmentAccessView.as_view(), name='attachment_access'),
     path('user/<str:user>', include([
         path('', user.UserAboutPage.as_view(), name='user_page'),
         path('/ban', user.UserBan.as_view(), name='user_ban'),
@@ -223,7 +223,7 @@ urlpatterns = [
         path('/submissions/', paged_list_view(submission.AllUserSubmissions, 'all_user_submissions_old')),
         path('/submissions/', lambda _, user:
              HttpResponsePermanentRedirect(reverse('all_user_submissions', args=[user]))),
-        path('/files/', user_files.UserFileListView.as_view(), name='user_file_list'),
+        path('/files/', user_uploads.UserUploadListView.as_view(), name='user_upload_list'),
         path('/', lambda _, user: HttpResponsePermanentRedirect(reverse('user_page', args=[user]))),
     ])),
 
@@ -453,7 +453,7 @@ urlpatterns = [
         path('comment/', CommentSelect2View.as_view(), name='comment_select2'),
         path('tag/', TagSelect2View.as_view(), name='tag_select2'),
         path('taggroup/', TagGroupSelect2View.as_view(), name='taggroup_select2'),
-        path('user_file/', UserFileSelect2View.as_view(), name='user_file_select2'),
+        path('user_upload/', UserUploadSelect2View.as_view(), name='user_upload_select2'),
     ])),
 
     path('tasks/', include([

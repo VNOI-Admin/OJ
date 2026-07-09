@@ -11,30 +11,30 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 
-__all__ = ['user_file_storage', 'UserFileStorage', 'UserFile', 'AttachmentMixin', 'FileAttachment']
+__all__ = ['user_upload_storage', 'UserUploadStorage', 'UserUpload', 'AttachmentMixin', 'FileAttachment']
 
 
-class UserFileStorage(FileSystemStorage):
+class UserUploadStorage(FileSystemStorage):
     def __init__(self):
         super().__init__(settings.MEDIA_ROOT)
 
 
-user_file_storage = UserFileStorage()
+user_upload_storage = UserUploadStorage()
 
 
-def user_file_directory(instance, filename):
+def user_upload_directory(instance, filename):
     ext = os.path.splitext(filename)[1]
-    if instance.file_scope == UserFile.FileScope.MARTOR and ext.lower() not in settings.MARTOR_UPLOAD_SAFE_EXTS:
+    if instance.file_scope == UserUpload.FileScope.MARTOR and ext.lower() not in settings.MARTOR_UPLOAD_SAFE_EXTS:
         ext = '.png'
     subdir_map = {
-        UserFile.FileScope.MARTOR: settings.MARTOR_UPLOAD_MEDIA_DIR,
-        UserFile.FileScope.ATTACHMENT: settings.USER_FILE_STORAGE_MEDIA_DIR,
+        UserUpload.FileScope.MARTOR: settings.MARTOR_UPLOAD_MEDIA_DIR,
+        UserUpload.FileScope.ATTACHMENT: settings.USER_UPLOAD_STORAGE_MEDIA_DIR,
     }
-    subdir = subdir_map.get(instance.file_scope, settings.USER_FILE_STORAGE_MEDIA_DIR)
+    subdir = subdir_map.get(instance.file_scope, settings.USER_UPLOAD_STORAGE_MEDIA_DIR)
     return os.path.join(subdir, str(uuid.uuid4()) + ext)
 
 
-class UserFile(models.Model):
+class UserUpload(models.Model):
     class FileScope(models.TextChoices):
         MARTOR = 'martor', _('Martor Image')
         ATTACHMENT = 'attachment', _('Attachment')
@@ -54,16 +54,16 @@ class UserFile(models.Model):
 
     file = models.FileField(
         verbose_name=_('file'),
-        storage=user_file_storage,
-        upload_to=user_file_directory,
+        storage=user_upload_storage,
+        upload_to=user_upload_directory,
     )
     filename = models.CharField(max_length=255, verbose_name=_('original filename'))
     size = models.BigIntegerField(verbose_name=_('file size in bytes'), default=0)
     uploaded_at = models.DateTimeField(verbose_name=_('uploaded at'), auto_now_add=True)
 
     class Meta:
-        verbose_name = _('user file')
-        verbose_name_plural = _('user files')
+        verbose_name = _('user upload')
+        verbose_name_plural = _('user uploads')
         ordering = ['-uploaded_at']
 
     def __str__(self):
@@ -73,7 +73,7 @@ class UserFile(models.Model):
     @classmethod
     def can_upload_by(cls, user):
         """Whether the user may upload files directly on the /files page."""
-        return user.is_authenticated and user.has_perm('judge.add_userfile')
+        return user.is_authenticated and user.has_perm('judge.add_userupload')
 
     @staticmethod
     def _profile_id(user):
@@ -119,12 +119,12 @@ class UserFile(models.Model):
         super().save(*args, **kwargs)
 
     def get_file_path(self):
-        return user_file_storage.path(self.file.name)
+        return user_upload_storage.path(self.file.name)
 
     def get_internal_url_path(self):
         if self.file_scope == self.FileScope.MARTOR:
             return None  # nginx serves directly; no X-Accel-Redirect needed
-        internal_base = settings.USER_FILE_STORAGE_INTERNAL
+        internal_base = settings.USER_UPLOAD_STORAGE_INTERNAL
         return '{}/{}'.format(internal_base, self.file.name) if internal_base else None
 
     def get_access_url(self):
@@ -136,7 +136,7 @@ class UserFile(models.Model):
                 urljoin(settings.MEDIA_URL, settings.MARTOR_UPLOAD_MEDIA_DIR),
             )
             return url_base.rstrip('/') + '/' + name
-        return reverse('user_file_access', kwargs={'uuid': self.uuid})
+        return reverse('user_upload_access', kwargs={'uuid': self.uuid})
 
 
 class AttachmentMixin:
@@ -152,7 +152,7 @@ class FileAttachment(models.Model):
     linked_item = GenericForeignKey('content_type', 'object_id')
 
     file = models.ForeignKey(
-        'UserFile',
+        'UserUpload',
         on_delete=models.CASCADE,
         related_name='attachments',
         verbose_name=_('file'),
