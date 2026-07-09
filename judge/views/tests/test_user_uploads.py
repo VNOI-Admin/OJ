@@ -8,13 +8,13 @@ from django.urls import reverse
 from django.utils import timezone
 
 from judge.forms import AttachmentFormSet, FileAttachmentForm
-from judge.models import ContestParticipation, FileAttachment, UserFile
+from judge.models import ContestParticipation, FileAttachment, UserUpload
 from judge.models.tests.util import create_contest, create_problem, create_user
 
-_MOCK_SERVE = patch('judge.views.user_files.serve_user_file', return_value=HttpResponse('ok'))
+_MOCK_SERVE = patch('judge.views.user_uploads.serve_user_upload', return_value=HttpResponse('ok'))
 
 
-class UserFileViewsTestCase(TestCase):
+class UserUploadViewsTestCase(TestCase):
     fixtures = ['language_all.json']
 
     @classmethod
@@ -23,82 +23,82 @@ class UserFileViewsTestCase(TestCase):
         cls.other = create_user('other_uf')
         cls.superuser = create_user('super_uf', is_superuser=True)
 
-        cls.owner_file = UserFile.objects.create(
+        cls.owner_file = UserUpload.objects.create(
             user=cls.owner.profile,
-            file='user_file/test.txt',
+            file='user_upload/test.txt',
             filename='test.txt',
-            file_scope=UserFile.FileScope.ATTACHMENT,
+            file_scope=UserUpload.FileScope.ATTACHMENT,
         )
 
     # --- List view ---
 
     def test_list_owner(self):
         self.client.force_login(self.owner)
-        response = self.client.get(reverse('user_file_list', args=[self.owner.username]))
+        response = self.client.get(reverse('user_upload_list', args=[self.owner.username]))
         self.assertEqual(response.status_code, 200)
 
     def test_list_other_forbidden(self):
         self.client.force_login(self.other)
-        response = self.client.get(reverse('user_file_list', args=[self.owner.username]))
+        response = self.client.get(reverse('user_upload_list', args=[self.owner.username]))
         self.assertEqual(response.status_code, 403)
 
     def test_list_superuser(self):
         self.client.force_login(self.superuser)
-        response = self.client.get(reverse('user_file_list', args=[self.owner.username]))
+        response = self.client.get(reverse('user_upload_list', args=[self.owner.username]))
         self.assertEqual(response.status_code, 200)
 
     def test_list_anonymous_redirects(self):
-        response = self.client.get(reverse('user_file_list', args=[self.owner.username]))
+        response = self.client.get(reverse('user_upload_list', args=[self.owner.username]))
         self.assertEqual(response.status_code, 302)
 
     # --- Detail view ---
 
     def test_detail_owner(self):
         self.client.force_login(self.owner)
-        response = self.client.get(reverse('user_file_detail', args=[self.owner_file.uuid]))
+        response = self.client.get(reverse('user_upload_detail', args=[self.owner_file.uuid]))
         self.assertEqual(response.status_code, 200)
 
     def test_detail_other_not_found(self):
         self.client.force_login(self.other)
-        response = self.client.get(reverse('user_file_detail', args=[self.owner_file.uuid]))
+        response = self.client.get(reverse('user_upload_detail', args=[self.owner_file.uuid]))
         self.assertEqual(response.status_code, 404)
 
     def test_detail_superuser(self):
         self.client.force_login(self.superuser)
-        response = self.client.get(reverse('user_file_detail', args=[self.owner_file.uuid]))
+        response = self.client.get(reverse('user_upload_detail', args=[self.owner_file.uuid]))
         self.assertEqual(response.status_code, 200)
 
     def test_detail_anonymous_redirects(self):
-        response = self.client.get(reverse('user_file_detail', args=[self.owner_file.uuid]))
+        response = self.client.get(reverse('user_upload_detail', args=[self.owner_file.uuid]))
         self.assertEqual(response.status_code, 302)
 
     # --- Delete view ---
 
     def test_delete_owner_removes_file(self):
-        file_to_delete = UserFile.objects.create(
+        file_to_delete = UserUpload.objects.create(
             user=self.owner.profile,
-            file='user_file/to_delete.txt',
+            file='user_upload/to_delete.txt',
             filename='to_delete.txt',
-            file_scope=UserFile.FileScope.ATTACHMENT,
+            file_scope=UserUpload.FileScope.ATTACHMENT,
         )
         self.client.force_login(self.owner)
-        response = self.client.post(reverse('user_file_delete'), {'uuids': [str(file_to_delete.uuid)]})
+        response = self.client.post(reverse('user_upload_delete'), {'uuids': [str(file_to_delete.uuid)]})
         self.assertEqual(response.status_code, 302)
-        self.assertFalse(UserFile.objects.filter(uuid=file_to_delete.uuid).exists())
+        self.assertFalse(UserUpload.objects.filter(uuid=file_to_delete.uuid).exists())
 
     def test_delete_other_cannot_delete_owners_file(self):
         self.client.force_login(self.other)
-        self.client.post(reverse('user_file_delete'), {'uuids': [str(self.owner_file.uuid)]})
-        self.assertTrue(UserFile.objects.filter(uuid=self.owner_file.uuid).exists())
+        self.client.post(reverse('user_upload_delete'), {'uuids': [str(self.owner_file.uuid)]})
+        self.assertTrue(UserUpload.objects.filter(uuid=self.owner_file.uuid).exists())
 
     def test_delete_anonymous_redirects(self):
-        response = self.client.post(reverse('user_file_delete'), {'uuids': [str(self.owner_file.uuid)]})
+        response = self.client.post(reverse('user_upload_delete'), {'uuids': [str(self.owner_file.uuid)]})
         self.assertEqual(response.status_code, 302)
-        self.assertTrue(UserFile.objects.filter(uuid=self.owner_file.uuid).exists())
+        self.assertTrue(UserUpload.objects.filter(uuid=self.owner_file.uuid).exists())
 
     def test_delete_empty_uuids_shows_error(self):
         self.client.force_login(self.owner)
-        response = self.client.post(reverse('user_file_delete'), {})
+        response = self.client.post(reverse('user_upload_delete'), {})
         self.assertEqual(response.status_code, 302)
 
     # --- Access (serve) view ---
@@ -106,18 +106,18 @@ class UserFileViewsTestCase(TestCase):
     @_MOCK_SERVE
     def test_access_owner(self, _mock):
         self.client.force_login(self.owner)
-        response = self.client.get(reverse('user_file_access', args=[self.owner_file.uuid]))
+        response = self.client.get(reverse('user_upload_access', args=[self.owner_file.uuid]))
         self.assertEqual(response.status_code, 200)
 
     @_MOCK_SERVE
     def test_access_other_not_found(self, _mock):
         self.client.force_login(self.other)
-        response = self.client.get(reverse('user_file_access', args=[self.owner_file.uuid]))
+        response = self.client.get(reverse('user_upload_access', args=[self.owner_file.uuid]))
         self.assertEqual(response.status_code, 404)
 
     @_MOCK_SERVE
     def test_access_anonymous_redirects(self, _mock):
-        response = self.client.get(reverse('user_file_access', args=[self.owner_file.uuid]))
+        response = self.client.get(reverse('user_upload_access', args=[self.owner_file.uuid]))
         self.assertEqual(response.status_code, 302)
 
 
@@ -142,11 +142,11 @@ class AttachmentAccessViewTestCase(TestCase):
             authors=('author_att',),
         )
 
-        shared_file = UserFile.objects.create(
+        shared_file = UserUpload.objects.create(
             user=cls.author.profile,
-            file='user_file/att.txt',
+            file='user_upload/att.txt',
             filename='att.txt',
-            file_scope=UserFile.FileScope.ATTACHMENT,
+            file_scope=UserUpload.FileScope.ATTACHMENT,
         )
 
         cls.pub_problem_att = FileAttachment.objects.create(
@@ -227,11 +227,11 @@ class FileAttachmentFormSecurityTest(TestCase):
     def setUpTestData(cls):
         cls.owner = create_user('form_sec_owner')
         cls.attacker = create_user('form_sec_attacker')
-        cls.owner_file = UserFile.objects.create(
+        cls.owner_file = UserUpload.objects.create(
             user=cls.owner.profile,
-            file='user_file/form_sec.txt',
+            file='user_upload/form_sec.txt',
             filename='form_sec.txt',
-            file_scope=UserFile.FileScope.ATTACHMENT,
+            file_scope=UserUpload.FileScope.ATTACHMENT,
         )
 
     # --- Issue 11: IDOR ownership check ---
@@ -256,21 +256,21 @@ class FileAttachmentFormSecurityTest(TestCase):
     def test_safe_file_type_accepted(self):
         self.client.force_login(self.owner)
         f = SimpleUploadedFile('report.pdf', b'%PDF-1.4', content_type='application/pdf')
-        response = self.client.post(reverse('user_file_upload'), {'file': f})
+        response = self.client.post(reverse('user_upload_create'), {'file': f})
         self.assertEqual(response.status_code, 200)
         self.assertIn('id', response.json())
 
     def test_html_file_rejected(self):
         self.client.force_login(self.owner)
         f = SimpleUploadedFile('exploit.html', b'<script>alert(1)</script>', content_type='text/html')
-        response = self.client.post(reverse('user_file_upload'), {'file': f})
+        response = self.client.post(reverse('user_upload_create'), {'file': f})
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.json())
 
     def test_svg_file_rejected(self):
         self.client.force_login(self.owner)
         f = SimpleUploadedFile('x.svg', b'<svg onload="alert(1)"/>', content_type='image/svg+xml')
-        response = self.client.post(reverse('user_file_upload'), {'file': f})
+        response = self.client.post(reverse('user_upload_create'), {'file': f})
         self.assertEqual(response.status_code, 400)
         self.assertIn('error', response.json())
 

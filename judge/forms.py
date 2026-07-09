@@ -25,7 +25,7 @@ from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, \
     FileAttachment, Language, LanguageLimit, Organization, OrganizationProblemTag, Problem, Profile, Solution, \
-    Submission, Tag, UserFile, WebAuthnCredential
+    Submission, Tag, UserUpload, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -911,15 +911,15 @@ class CompareSubmissionsForm(Form):
 
 
 # ============================================================================
-# User File Upload Forms
+# User Upload Forms
 # ============================================================================
 
-class UserFileUploadForm(ModelForm):
-    """Form for uploading new user files."""
+class UserUploadForm(ModelForm):
+    """Form for uploading new user uploads."""
     MAX_UPLOAD_SIZE = 500 * 1024 * 1024
 
     class Meta:
-        model = UserFile
+        model = UserUpload
         fields = ['file']
         widgets = {
             'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
@@ -945,7 +945,7 @@ class FileAttachmentForm(ModelForm):
         model = FileAttachment
         fields = ['file', 'display_name']
         widgets = {
-            'file': HeavySelect2Widget(data_view='user_file_select2', attrs={'style': 'width: 100%'}),
+            'file': HeavySelect2Widget(data_view='user_upload_select2', attrs={'style': 'width: 100%'}),
             'display_name': forms.TextInput(attrs={'style': 'width: 100%'}),
         }
 

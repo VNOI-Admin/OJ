@@ -340,9 +340,9 @@ class PolygonImporter:
             self.update_or_create_problem()
         except Exception:
             # Remove imported images
-            from judge.models import UserFile
+            from judge.models import UserUpload
             uuids = [v['uuid'] for v in self.meta.get('image_cache', {}).values() if isinstance(v, dict)]
-            UserFile.objects.filter(uuid__in=uuids).delete()
+            UserUpload.objects.filter(uuid__in=uuids).delete()
 
             raise
         finally:
