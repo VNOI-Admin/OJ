@@ -29,10 +29,11 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
-from judge.models import Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
+from judge.models import Comment, Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
+from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
@@ -147,6 +148,48 @@ class ProblemSolution(SolvedProblemMixin, ProblemMixin, TitleMixin, CommentedDet
         code = self.kwargs.get(self.slug_url_kwarg, None)
         return generic_message(self.request, _('No such editorial'),
                                _('Could not find an editorial with the code "%s".') % code, status=404)
+
+
+class ProblemComments(ProblemMixin, CommentedDetailView):
+    context_object_name = 'problem'
+    template_name = 'problem/comments-tab.html'
+    comments_per_page = 20
+
+    def get_object(self, queryset=None):
+        problem = super(ProblemComments, self).get_object(queryset)
+        user = self.request.user
+        authed = user.is_authenticated
+        self.contest_problem = (None if not authed or user.profile.current_contest is None else
+                                get_contest_problem(problem, user.profile))
+        return problem
+
+    def is_comment_locked(self):
+        if self.contest_problem and self.contest_problem.contest.use_clarifications:
+            return True
+        return super(ProblemComments, self).is_comment_locked()
+
+    def get_comment_page(self):
+        return 'p:%s' % self.object.code
+
+    def get_context_data(self, **kwargs):
+        context = super(ProblemComments, self).get_context_data(**kwargs)
+        if self.contest_problem and self.contest_problem.contest.use_clarifications:
+            clarifications = self.object.clarifications
+            context['has_clarifications'] = clarifications.count() > 0
+            context['clarifications'] = clarifications.order_by('-date')
+
+        queryset = context['comment_list']
+        root_tree_ids = Comment.objects.filter(
+            hidden=False, page=self.get_comment_page(), parent=None,
+        ).values_list('tree_id', flat=True)
+        paginator = DiggPaginator(root_tree_ids, self.comments_per_page,
+                                  body=6, padding=2, orphans=5)
+        page = paginator.get_page(self.request.GET.get('page'))
+        context['comment_list'] = queryset.filter(tree_id__in=list(page.object_list))
+        context['comments_page_obj'] = page
+        context['page_prefix'] = '?page='
+        context['first_page_href'] = '?page=1'
+        return context
 
 
 class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMixin, View):

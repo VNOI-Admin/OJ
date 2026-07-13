@@ -54,13 +54,21 @@
             position: absolute;
             left: -999em;
         }
+
+        .comments-loading {
+            padding: 1em 0;
+            text-align: center;
+            color: #888;
+        }
+
+        .show-comments-wrapper {
+            padding: 1.5em 0;
+            text-align: center;
+        }
     </style>
 {% endblock %}
 
 {% block content_js_media %}
-    {% if not comment_lock %}
-        {% include "comments/media-js.html" %}
-    {% endif %}
     {% if request.user.is_authenticated and form %}
         {% include "problem/submit-js.html" %}
     {% endif %}
@@ -77,6 +85,43 @@
                 frames['raw_problem'].print();
             });
 
+            // Lazily load the comments tab only when it's first opened.
+            var comments_loaded = false;
+            function fetch_comments(page, scroll) {
+                // First match is the outer tab container (the fragment renders an
+                // inner #comments div of its own).
+                var $comments = $('#comments').first();
+                var url = $comments.data('comments-url');
+                if (page)
+                    url += '?page=' + page;
+                $comments.html('<div class="comments-loading">{{ _('Loading...') }}</div>');
+                $comments.load(url, function() {
+                    if (window.MathJax && MathJax.typesetPromise)
+                        MathJax.typesetPromise([$comments[0]]);
+                    if (scroll)
+                        $comments[0].scrollIntoView({behavior: 'instant', block: 'start'});
+                });
+            }
+
+            function load_comments() {
+                if (comments_loaded) return;
+                comments_loaded = true;
+                fetch_comments(null, false);
+            }
+
+            // Paginate comments without reloading the page.
+            $('#comments').on('click', '.comments-pagination a', function(e) {
+                var match = /page=(\d+)/.exec($(this).attr('href'));
+                if (!match) return;
+                e.preventDefault();
+                fetch_comments(match[1], true);
+            });
+
+            // Comments are only fetched when explicitly requested.
+            $('#comments').on('click', '#show-comments-button', function() {
+                load_comments();
+            });
+
             // Tab switching functionality
             $('.problem-tabs a').click(function(e) {
                 e.preventDefault();
@@ -89,6 +134,10 @@
                 // Update active content
                 $('.tab-content').removeClass('active');
                 $(target).addClass('active');
+
+                if (target === '#comments') {
+                    load_comments();
+                }
 
                 // Update URL hash without scrolling
                 if (history.pushState) {
@@ -414,27 +463,12 @@
         </div>
     {% endif %}
 
-    <div id="comments" class="tab-content {% if not request.user.is_authenticated %}active{% endif %}">
-        {% if comment_lock %}
-            <div class="clarifications-area">
-                <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
-                {% if has_clarifications %}
-                    {% for clarification in clarifications %}
-                        <div class="problem-clarification">
-                            <div class="time">{{ relative_time(clarification.date) }}</div>
-                            <span class="body">
-                                {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
-                            </span>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="no-comments-message">{{ _('No clarifications have been made at this time.') }}</p>
-                {% endif %}
-            </div>
-        {% else %}
-            {% with comment_warn_code=true %}
-                {% include "comments/list.html" %}
-            {% endwith %}
-        {% endif %}
+    <div id="comments" class="tab-content {% if not request.user.is_authenticated %}active{% endif %}"
+         data-comments-url="{{ url('problem_comments', problem.code) }}">
+        <div class="show-comments-wrapper">
+            <button id="show-comments-button" class="unselectable button">
+                <i class="fa fa-comments"></i> {{ _('Show comments') }}
+            </button>
+        </div>
     </div>
 {% endblock %}
