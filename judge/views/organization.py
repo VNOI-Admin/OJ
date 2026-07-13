@@ -76,8 +76,6 @@ class OrganizationMixin(object):
         except Http404:
             return self.organization_not_found(request)
 
-    # Override this to customize the "organization not found" response,
-    # e.g. when the organization is looked up by a different key.
     def organization_not_found(self, request):
         slug = self.kwargs.get('slug', None)
         if slug:
@@ -98,8 +96,6 @@ class OrganizationMixin(object):
         return hasattr(self.request, 'organization')
 
 
-# Same as OrganizationMixin, but looks the organization up by its numeric id
-# instead of its slug.
 class OrganizationByIdMixin(OrganizationMixin):
     @cached_property
     def organization(self):
@@ -654,8 +650,6 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
         return context
 
 
-# Same as OrganizationHome, but the organization is addressed by its numeric id
-# instead of its slug (see OrganizationByIdMixin). All the view logic is reused.
 class OrganizationHomeById(OrganizationByIdMixin, OrganizationHome):
     pass
 
