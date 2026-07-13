@@ -131,12 +131,14 @@
     // ─── Shared rendering helpers ────────────────────────────────────────────
 
     function makeSubmissionUrl(meta, problemCode) {
+        if (!meta.contest.url_templates) return null;
         return meta.contest.url_templates.problem_submissions
             .replace('__USERNAME__', meta.username)
             .replace('__PROBLEM__', problemCode);
     }
 
     function makeAllSubmissionsUrl(meta) {
+        if (!meta.contest.url_templates) return null;
         return meta.contest.url_templates.all_submissions
             .replace('__USERNAME__', meta.username);
     }
@@ -156,6 +158,7 @@
 
     // Wraps inner HTML in a standard problem <td><a>...</a></td>.
     function wrapProblemCell(state, url, innerHtml) {
+        if (!url) return '<td class="' + state + '">' + innerHtml + '</td>';
         return '<td class="' + state + '"><a href="' + escapeHtml(url) + '">' +
                innerHtml + '</a></td>';
     }
@@ -163,11 +166,12 @@
     // Standard result cell: score with optional cumtime.
     function standardResultCell(participation, meta, showTime) {
         var url = makeAllSubmissionsUrl(meta);
-        return '<td class="user-points"><a href="' + escapeHtml(url) + '">' +
-            escapeHtml(fmtPoints(participation.score, meta.contest.points_precision)) +
+        var inner = escapeHtml(fmtPoints(participation.score, meta.contest.points_precision)) +
             '<div class="solving-time">' +
             (showTime !== false ? escapeHtml(fmtTime(participation.cumtime)) : '') +
-            '</div></a></td>';
+            '</div>';
+        if (!url) return '<td class="user-points">' + inner + '</td>';
+        return '<td class="user-points"><a href="' + escapeHtml(url) + '">' + inner + '</a></td>';
     }
 
     // Standard problem cell: points + optional extra HTML + time.
@@ -248,10 +252,10 @@
 
         renderResultCell: function (participation, meta) {
             var url = makeAllSubmissionsUrl(meta);
+            var scoreHtml = escapeHtml(fmtPoints(participation.score, meta.contest.points_precision));
             return '<td class="user-points">' +
-                '<a href="' + escapeHtml(url) + '">' +
-                escapeHtml(fmtPoints(participation.score, meta.contest.points_precision)) +
-                '</a></td>' +
+                (url ? '<a href="' + escapeHtml(url) + '">' + scoreHtml + '</a>' : scoreHtml) +
+                '</td>' +
                 '<td class="user-penalty">' +
                 escapeHtml(Math.round(participation.cumtime)) +
                 '</td>';
@@ -506,10 +510,11 @@
 
     // ─── Public entry point ───────────────────────────────────────────────────
 
-    window.renderRankingTable = function (data) {
+    window.renderRankingTable = function (data, isNewDataFromBackend) {
         var contest = data.contest;
+        if (!window.CONTEST_CAN_SEE_SUBMISSIONS) contest.url_templates = null;
         var problems = data.problems;
-        var participations = data.participations;
+        var participations = data.participations || [];
 
         if (contest.rating_config) {
             initRatingConfig(contest.rating_config);
@@ -534,6 +539,9 @@
         var container = document.getElementById('ranking-container');
         if (container) {
             container.innerHTML = html;
+        }
+        if (typeof window.onFinishRankingRender === 'function') {
+            window.onFinishRankingRender(isNewDataFromBackend === true);
         }
     };
 

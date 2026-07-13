@@ -18,7 +18,7 @@ from django.db.models import BooleanField, Case, Count, F, FloatField, IntegerFi
 from django.db.models.expressions import CombinedExpression
 from django.db.models.query import Prefetch
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
-from django.shortcuts import get_object_or_404, redirect, render
+from django.shortcuts import redirect, render
 from django.template.defaultfilters import date as date_filter, floatformat
 from django.template.loader import get_template
 from django.urls import reverse
@@ -40,8 +40,8 @@ from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
-from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, ContestTag, \
-    Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
+from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, \
+    ContestSubmission, ContestTag, Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
 from judge.ratings import RATING_CLASS, RATING_LEVELS, RATING_VALUES
 from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
@@ -55,7 +55,7 @@ from judge.utils.views import SingleObjectFormView, TitleMixin, \
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
-           'ContestParticipationList', 'ContestParticipationDisqualify',
+           'ContestParticipationDisqualify',
            'ContestProblemMakePublic']
 
 
@@ -1000,10 +1000,23 @@ class ContestRanking(ContestRankingBase):
     def is_frozen(self):
         return self.object.is_frozen and not self.can_edit
 
+    @cached_property
+    def _virtual_participation(self):
+        p = self.request.participation
+        if (p is not None and
+                p.contest_id == self.object.id and
+                p.virtual > ContestParticipation.LIVE and
+                self.object.can_replay):
+            return p
+        return None
+
     @property
     def bypass_cache_ranking(self):
-        return self.object.scoreboard_cache_timeout == 0 or self.can_edit or \
+        return (
+            self.object.scoreboard_cache_timeout == 0 or
+            self.can_edit or
             (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user))
+        )
 
     def _resolve_show_virtual(self):
         if 'show_virtual' in self.request.GET:
@@ -1046,9 +1059,56 @@ class ContestRanking(ContestRankingBase):
 
         contest_data['is_frozen'] = self.is_frozen
         contest_data['has_rating'] = contest.ratings.exists()
+
         return {'contest': contest_data, 'problems': problems_data, 'participations': participations}
 
+    def _build_virtual_json_data(self):
+        virtual_part = self._virtual_participation
+        contest = self.object
+        problems, problems_data, contest_data = self._build_json_base()
+        contest_data['is_frozen'] = self.is_frozen
+        contest_data['has_rating'] = contest.ratings.exists()
+
+        own_subs = []
+        for prob_id, points, result, sub_date in (
+            ContestSubmission.objects
+            .filter(participation=virtual_part)
+            .values_list('problem_id', 'points', 'submission__result', 'submission__date')
+            .order_by('submission__date')
+        ):
+            if result in (None, 'CE', 'IE'):
+                continue
+            t = (sub_date - virtual_part.real_start).total_seconds()
+            own_subs.append([prob_id, float(points), round(t, 3)])
+
+        profile = self.request.profile
+        _user_url_tpl = reverse('user_page', args=['__USERNAME__'])
+        username = profile.user.username
+        return {
+            'contest': contest_data,
+            'problems': problems_data,
+            'own': {
+                'id': virtual_part.id,
+                'real_start': int(virtual_part.real_start.timestamp()),
+                'is_disqualified': virtual_part.is_disqualified,
+                'virtual': virtual_part.virtual,
+                'rating': profile.rating,
+                'user': {
+                    'username': username,
+                    'display_name': profile.username_display_override or username,
+                    'name': profile.user.first_name,
+                    'css_class': profile.css_class,
+                    'url': _user_url_tpl.replace('__USERNAME__', username),
+                    'organization': None,
+                    'badge': None,
+                },
+                'subs': own_subs,
+            },
+        }
+
     def get_cached_json_ranking_data(self):
+        if self._virtual_participation:
+            return self._build_virtual_json_data()
         if self.bypass_cache_ranking:
             return self._build_ranking_json_data()
         cached = cache.get(self.json_cache_key)
@@ -1057,12 +1117,25 @@ class ContestRanking(ContestRankingBase):
             cache.set(self.json_cache_key, cached, self.object.scoreboard_cache_timeout)
         return cached
 
+    def _inject_replay_url(self, data):
+        contest = self.object
+        if not contest.can_replay or 'contest' not in data:
+            return data
+        return {
+            **data,
+            'contest': {
+                **data['contest'],
+                'replay_url': reverse('contest_replay_data', args=[contest.key, contest.replay_version]),
+                'replay_duration': int((contest.end_time - contest.start_time).total_seconds()),
+            },
+        }
+
     def get(self, request, *args, **kwargs):
         if 'data' in request.GET:
             self.object = self.get_object()
             self._resolve_show_virtual()
             self.check_can_see_own_scoreboard()
-            return JsonResponse(self.get_cached_json_ranking_data())
+            return JsonResponse(self._inject_replay_url(self.get_cached_json_ranking_data()))
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
@@ -1072,7 +1145,10 @@ class ContestRanking(ContestRankingBase):
         context['show_virtual'] = self.show_virtual
         context['is_frozen'] = self.is_frozen
         context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
-        context['ranking_json'] = json.dumps(self.get_cached_json_ranking_data()).translate(_json_script_escapes)
+        context['can_see_full_submission_list'] = self.object.can_see_full_submission_list(self.request.user)
+        context['ranking_json'] = json.dumps(
+            self._inject_replay_url(self.get_cached_json_ranking_data()),
+        ).translate(_json_script_escapes)
         return context
 
 
@@ -1154,49 +1230,6 @@ class ContestOfficialRanking(ContestRankingBase):
         return super().get(request, *args, **kwargs)
 
 
-class ContestParticipationList(LoginRequiredMixin, ContestRankingBase):
-    tab = 'participation'
-
-    def get_title(self):
-        if self.profile == self.request.profile:
-            return _('Your participation in %(contest)s') % {'contest': self.object.name}
-        return _("%(user)s's participation in %(contest)s") % {
-            'user': self.profile.username, 'contest': self.object.name,
-        }
-
-    def _build_participation_json_data(self):
-        contest = self.object
-        if not contest.can_see_full_scoreboard(self.request.user) and self.profile != self.request.profile:
-            raise Http404()
-
-        problems, problems_data, contest_data = self._build_json_base()
-        queryset = contest.users.filter(user=self.profile, virtual__gte=0).order_by('-virtual')
-        participations = make_contest_ranking_json(contest, problems, queryset)
-        for p in participations:
-            p['rank'] = p['virtual']  # 0 = live, N = Nth virtual
-
-        contest_data.update({
-            'is_frozen': False,
-            'has_rating': False,
-            'mode': 'participation',
-            'rank_header': str(_('Participation')),
-            'ranking_url': reverse('contest_ranking', args=[contest.key]),
-        })
-        return {'contest': contest_data, 'problems': problems_data, 'participations': participations}
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context['ranking_json'] = json.dumps(self._build_participation_json_data()).translate(_json_script_escapes)
-        return context
-
-    def get(self, request, *args, **kwargs):
-        if 'user' in kwargs:
-            self.profile = get_object_or_404(Profile, user__username=kwargs['user'])
-        else:
-            self.profile = self.request.profile
-        return super().get(request, *args, **kwargs)
-
-
 class ContestParticipationDisqualify(ContestMixin, SingleObjectMixin, View):
     def get_object(self, queryset=None):
         contest = super().get_object(queryset)
@@ -1214,6 +1247,83 @@ class ContestParticipationDisqualify(ContestMixin, SingleObjectMixin, View):
         else:
             participation.set_disqualified(not participation.is_disqualified)
         return HttpResponseRedirect(reverse('contest_ranking', args=(self.object.key,)))
+
+
+class ContestReplayData(ContestMixin, SingleObjectMixin, View):
+    def get(self, request, *args, **kwargs):
+        contest = self.get_object()
+
+        if not contest.can_replay:
+            raise Http404()
+
+        version = kwargs['version']
+        if version != contest.replay_version:
+            raise Http404()
+
+        filepath, filename = self.prepare_replay_data(contest)
+
+        if getattr(settings, 'DMOJ_CONTEST_REPLAY_INTERNAL', None):
+            url_path = '%s/%s' % (settings.DMOJ_CONTEST_REPLAY_INTERNAL, filename)
+        else:
+            url_path = None
+
+        response = HttpResponse(content_type='application/json')
+        response['Cache-Control'] = 'public, max-age=31536000, immutable'
+        add_file_response(request, response, url_path, filepath)
+        return response
+
+    def prepare_replay_data(self, contest):
+        replay_dir = os.path.join(settings.MEDIA_ROOT, settings.CONTEST_REPLAY_MEDIA_DIR)
+        filename = f'{contest.key}_v{contest.replay_version}.json'
+        filepath = os.path.join(replay_dir, filename)
+
+        if not os.path.exists(filepath):
+            os.makedirs(replay_dir, exist_ok=True)
+            data = self._build_data(contest)
+            tmp = filepath + '.tmp'
+            with open(tmp, 'w') as f:
+                json.dump(data, f, separators=(',', ':'))
+            os.replace(tmp, filepath)
+
+        return filepath, filename
+
+    def _build_data(self, contest):
+        duration = int((contest.end_time - contest.start_time).total_seconds())
+
+        problems = list(
+            contest.contest_problems
+            .select_related('problem').defer('problem__description').order_by('order'),
+        )
+
+        parts_qs = contest.users.filter(virtual=ContestParticipation.LIVE)
+        participations_data = make_contest_ranking_json(contest, problems, parts_qs)
+        for p in participations_data:
+            del p['score'], p['cumtime'], p['tiebreaker'], p['format_data']
+
+        subs_qs = (
+            ContestSubmission.objects
+            .filter(
+                participation__contest=contest,
+                participation__virtual=ContestParticipation.LIVE,
+            )
+            .values_list('participation_id', 'problem_id', 'points', 'submission__result', 'submission__date')
+            .order_by('submission__date')
+        )
+
+        subs = []
+        for part_id, prob_id, points, result, sub_date in subs_qs:
+            if result in (None, 'CE', 'IE'):
+                continue
+            t = (sub_date - contest.start_time).total_seconds()
+            subs.append([part_id, prob_id, float(points), round(t, 3)])
+
+        return {
+            'start': int(contest.start_time.timestamp()),
+            'duration': duration,
+            'frozen': 0,
+            'participations': participations_data,
+            'subs': subs,
+        }
 
 
 class ContestMossMixin(ContestMixin, PermissionRequiredMixin):
@@ -1378,6 +1488,7 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
     def get_context_data(self, **kwargs):
         data = super().get_context_data(**kwargs)
         data['contest_problem_formset'] = self.get_contest_problem_formset()
+        data['contest_org'] = self.object.organization
         return data
 
     def post(self, request, *args, **kwargs):
@@ -1539,7 +1650,7 @@ class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMix
                 problem.is_public = True
                 problem.date = now
                 problem.save(update_fields=['is_public', 'date'])
-                rescore_problem.delay(problem.id, True)
+                rescore_problem.delay(problem.id)
 
             if is_editable:
                 Solution.objects.filter(problem=problem, is_public=False).update(is_public=True, publish_on=now)

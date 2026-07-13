@@ -11,7 +11,7 @@ from django.conf import settings
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from django.db import models
-from django.db.models import F, Max, Sum
+from django.db.models import Max, Sum
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.encoding import force_bytes
@@ -401,8 +401,7 @@ class Profile(models.Model):
         bonus_function = settings.DMOJ_PP_BONUS_FUNCTION
         points = sum(data)
         problems = (
-            public_problems.filter(submission__user=self, submission__result='AC',
-                                   submission__case_points__gte=F('submission__case_total'))
+            public_problems.filter(submission__user=self, submission__result='AC')
             .values('id').distinct().count()
         )
         pp = sum(x * y for x, y in zip(table, data)) + bonus_function(problems)
@@ -431,10 +430,8 @@ class Profile(models.Model):
             .aggregate(sum=Sum('score'))['sum'] or 0
         count_good_tickets = Ticket.objects.filter(user=self.id, is_contributive=True) \
             .count()
-        count_suggested_problem = self.suggested_problems.filter(is_public=True).count()
         new_pp = (total_comment_scores + total_blog_scores) * settings.VNOJ_CP_COMMENT + \
-            count_good_tickets * settings.VNOJ_CP_TICKET + \
-            count_suggested_problem * settings.VNOJ_CP_PROBLEM
+            count_good_tickets * settings.VNOJ_CP_TICKET
         if new_pp != old_pp:
             self.contribution_points = new_pp
             self.save(update_fields=['contribution_points'])

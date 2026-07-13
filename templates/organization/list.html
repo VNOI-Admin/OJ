@@ -8,6 +8,13 @@
     <script type="text/javascript">
         $(function () {
             $('.organization-table').tablesorter({sortList: [[1, 1]]});
+
+            $('input#show_all_orgs').click(function () {
+                ($('<form>').attr('action', window.location.pathname + '?' + $('form#show-all-orgs-form').serialize())
+                    .append($('<input>').attr('type', 'hidden').attr('name', 'csrfmiddlewaretoken')
+                        .attr('value', $.cookie('csrftoken')))
+                    .attr('method', 'POST').appendTo($('body')).submit());
+            });
         });
     </script>
 {% endblock %}
@@ -19,14 +26,19 @@
     {% include "organization/list-tabs.html" %}
 {% endblock %}
 
-{% macro org_table(name, queryset) %}
+{% macro org_table(name, queryset, show_admin_info=False) %}
     <h4>{{ name }}</h4>
     <table class="organization-table table striped">
         <thead>
             <tr>
-                <th style="width:70%">{{ _('Name') }}</th>
-                <th style="width:15%">{{ _('Points') }}</th>
+                <th{% if not show_admin_info %} style="width:70%"{% endif %}>{{ _('Name') }}</th>
+                <th{% if not show_admin_info %} style="width:15%"{% endif %}>{{ _('Points') }}</th>
                 <th>{{ _('Members') }}</th>
+                {% if show_admin_info %}
+                    <th>{{ _('Short name') }}</th>
+                    <th>{{ _('Slug') }}</th>
+                    <th>{{ _('Admins') }}</th>
+                {% endif %}
             </tr>
         </thead>
         <tbody>
@@ -35,6 +47,11 @@
                 <td class="organization-name"><a href="{{ org.get_absolute_url() }}">{{ org.name }}</a></td>
                 <td><a href="{{ org.get_users_url() }}">{{ org.performance_points|floatformat(2) }}</a></td>
                 <td><a href="{{ org.get_users_url() }}">{{ org.member_count }}</a></td>
+                {% if show_admin_info %}
+                    <td>{{ org.short_name }}</td>
+                    <td>{{ org.slug }}</td>
+                    <td>{{ link_users(org.admins.all()) }}</td>
+                {% endif %}
             </tr>
         {% endfor %}
         </tbody>
@@ -42,21 +59,27 @@
 {% endmacro %}
 
 {% block body %}
-    <div class="search-container">
-        <form method="get" class="search-form">
-            <input type="text" name="search" class="search-input" placeholder="{{ _('Search organizations...') }}"
-                   value="{{ request.GET.search }}">
-            <button type="submit" class="search-submit"><i class="fa fa-search"></i></button>
-        </form>
-    </div>
     <div class="content-description">
-        {% if request.user.is_authenticated %}
-            {% with orgs=request.profile.organizations.all() %}
-                {% if orgs %}
-                    {{ org_table(_('Your organizations'), orgs) }}
-                {% endif %}
-            {% endwith %}
+        {% if user_organizations %}
+            {{ org_table(_('Your organizations'), user_organizations, show_admin_info=show_all_orgs) }}
         {% endif %}
-        {{ org_table(_('All organizations'), organizations) }}
+
+        {% if (page_obj and page_obj.has_other_pages()) or show_all_orgs %}
+            <div class="top-pagination-bar">
+                {% if page_obj and page_obj.has_other_pages() %}
+                    {% include "list-pages.html" %}
+                {% endif %}
+                {% if show_all_orgs %}
+                    <div style="display: flex; align-items: center; margin-left: auto;">
+                        <form id="search-form" name="form" action="" method="get">
+                            <input id="search" type="text" name="search" value="{{ search_query or '' }}"
+                                placeholder="{{ _('Search organization...') }}">
+                        </form>
+                    </div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {{ org_table(_('All organizations'), organizations, show_admin_info=show_all_orgs) }}
     </div>
 {% endblock %}

@@ -10,7 +10,7 @@ from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ObjectDoesNotExist, PermissionDenied
 from django.db import transaction
-from django.db.models import BooleanField, Case, F, Prefetch, Q, When
+from django.db.models import BooleanField, Case, Prefetch, Q, When
 from django.db.utils import ProgrammingError
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
@@ -31,7 +31,6 @@ from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm,
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
 from judge.models import Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
-from judge.tasks import on_new_problem
 from judge.template_context import misc_config
 from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -621,7 +620,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
 
         if self.profile is not None and self.hide_solved:
             queryset = queryset.exclude(id__in=Submission.objects
-                                        .filter(user=self.profile, result='AC', case_points__gte=F('case_total'))
+                                        .filter(user=self.profile, result='AC')
                                         .values_list('problem_id', flat=True))
         if self.show_types:
             queryset = queryset.prefetch_related('types')
@@ -746,20 +745,6 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
             else:
                 request.session.pop(key, None)
         return HttpResponseRedirect(request.get_full_path())
-
-
-class SuggestList(ProblemList):
-    title = gettext_lazy('Suggested problem list')
-    template_name = 'problem/suggest-list.html'
-    permission_required = 'superuser'
-
-    def get_filter(self):
-        return Q(is_public=False) & ~Q(suggester=None)
-
-    def get(self, request, *args, **kwargs):
-        if not request.user.has_perm('judge.suggest_new_problem'):
-            raise Http404
-        return super(SuggestList, self).get(request, *args, **kwargs)
 
 
 class LanguageTemplateAjax(View):
@@ -892,7 +877,7 @@ class ProblemClone(ProblemMixin, PermissionRequiredMixin, TitleMixin, SingleObje
 
 
 class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
-    template_name = 'problem/suggest.html'
+    template_name = 'problem/create.html'
     model = Problem
     form_class = ProblemEditForm
     permission_required = 'judge.add_problem'
@@ -942,31 +927,6 @@ class ProblemCreate(PermissionRequiredMixin, TitleMixin, CreateView):
         except ProblemType.DoesNotExist:
             initial['types'] = ProblemType.objects.order_by('id').first().pk
         return initial
-
-
-class ProblemSuggest(ProblemCreate):
-    permission_required = 'judge.suggest_new_problem'
-
-    def get_title(self):
-        return _('Suggesting new problem')
-
-    def get_content_title(self):
-        return _('Suggesting new problem')
-
-    def form_valid(self, form):
-        with revisions.create_revision(atomic=True):
-            self.object = problem = form.save()
-            problem.suggester = self.request.user.profile
-            problem.allowed_languages.set(Language.objects.filter(include_in_problem=True))
-            problem.date = timezone.now()
-            self.save_statement(form, problem)
-            problem.save()
-
-            revisions.set_comment(_('Created on site'))
-            revisions.set_user(self.request.user)
-
-        on_new_problem.delay(problem.code, is_suggested=True)
-        return HttpResponseRedirect(self.get_success_url())
 
 
 class ProblemImportPolygon(PermissionRequiredMixin, TitleMixin, FormView):

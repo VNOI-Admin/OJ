@@ -22,6 +22,48 @@
         .page-tab-content.active {
             display: block;
         }
+
+        .filter-section {
+            padding: 15px 0;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--table-border, #ddd);
+        }
+        .filter-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: flex-end;
+        }
+        .filter-item {
+            flex: 1;
+            min-width: 200px;
+        }
+        .filter-item label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .bulk-actions {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-danger-bulk {
+            background: #d9534f;
+            color: #fff;
+            border: 1px solid #d43f3a;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-danger-bulk:disabled {
+            background: #e6e6e6;
+            color: #ababab;
+            border-color: #dcdcdc;
+            cursor: not-allowed;
+        }
     </style>
 {% endblock %}
 
@@ -54,9 +96,141 @@
             // Activate default tab
             $('#inner-page-tabs .tab a[data-tab="storage"]').click();
 
-            // Show delete buttons only for authors and superusers
+            if (window.location.hash === '#preset-filter') {
+                var offset = $('#preset-filter').offset().top - 60;
+                $(window).scrollTop(offset);
+            }
+
+            // Storage breakdown pie charts
+            var storagePieOpts = {
+                responsive: true,
+            };
+            draw_pie_chart({{ storage_count_chart|tojson }}, $('#storage-count-chart'), storagePieOpts);
+            draw_pie_chart({{ storage_size_chart|tojson }}, $('#storage-size-chart'), storagePieOpts);
+
+            // Initialize select2 for author dropdown
+            $('#author-select').select2({
+                theme: '{{ DMOJ_SELECT2_THEME }}',
+                placeholder: "{{ _('Filter by author...') }}"
+            });
+
+            $('#quick-filter-select').select2({
+                theme: '{{ DMOJ_SELECT2_THEME }}',
+                minimumResultsForSearch: Infinity
+            });
+
+            // Disable checkboxes for problems the user cannot delete
             var currentProfileId = {{ request.profile.id if request.profile else 'null' }};
             var isSuperuser = {{ 'true' if request.user.is_superuser else 'false' }};
+
+            $('.problem-select-checkbox').each(function () {
+                var authorIds = $(this).data('author-ids');
+                if (!isSuperuser && !(currentProfileId && authorIds.indexOf(currentProfileId) !== -1)) {
+                    $(this).prop('disabled', true).css('opacity', '0.4');
+                    $(this).wrap('<span style="position:relative;display:inline-block;">');
+                    $(this).after('<span class="no-delete-overlay" style="position:absolute;inset:0;cursor:not-allowed;" title="{{ _("Cannot delete problems from other authors.") }}"></span>');
+                }
+            });
+
+            $(document).on('click', '.no-delete-overlay', function () {
+                alert("{{ _('Cannot delete problems from other authors.') }}");
+            });
+
+            // Select All — skips disabled checkboxes
+            $('#select-all-checkbox').change(function () {
+                var checked = this.checked;
+                $('.problem-select-checkbox:not(:disabled)').each(function () {
+                    this.checked = checked;
+                });
+                updateDeleteButtonState();
+            });
+
+            $('.problem-select-checkbox').change(function () {
+                var selectable = $('.problem-select-checkbox:not(:disabled)');
+                var allChecked = selectable.filter(':checked').length === selectable.length && selectable.length > 0;
+                $('#select-all-checkbox').prop('checked', allChecked);
+                updateDeleteButtonState();
+            });
+
+            function updateDeleteButtonState() {
+                var checkedCount = $('.problem-select-checkbox:checked').length;
+                $('#bulk-delete-btn').prop('disabled', checkedCount === 0);
+                $('#selected-count-badge').text(checkedCount);
+            }
+
+            // Submitting bulk delete with confirmation
+            $('#bulk-delete-btn').click(function (e) {
+                e.preventDefault();
+                var checkedCount = $('.problem-select-checkbox:checked').length;
+                if (checkedCount === 0) return;
+
+                if (confirm("{{ _('Are you sure you want to delete the selected problems? This action cannot be undone.') }}")) {
+                    var $form = $('<form>')
+                        .attr('method', 'POST')
+                        .attr('action', "{{ url('organization_problems_bulk_delete', organization.slug) }}");
+
+                    $form.append($('<input>')
+                        .attr('type', 'hidden')
+                        .attr('name', 'csrfmiddlewaretoken')
+                        .attr('value', $.cookie('csrftoken')));
+
+                    $('.problem-select-checkbox:checked').each(function () {
+                        $form.append($('<input>')
+                            .attr('type', 'hidden')
+                            .attr('name', 'problem_ids')
+                            .attr('value', $(this).val()));
+                    });
+
+                    $('body').append($form);
+                    $form.submit();
+                }
+            });
+
+
+            // Quick filter select
+            $('#quick-filter-select').change(function () {
+                var val = $(this).val();
+                if (!val) { window.location = '{{ request.path }}#preset-filter'; return; }
+
+                var params = new URLSearchParams();
+                if (currentProfileId) params.set('author', currentProfileId);
+                params.set('preset', val);
+
+                if (val === 'never') {
+                    params.set('no_submission', '1');
+                } else {
+                    var months = parseInt(val);
+                    var today = new Date();
+                    var target = new Date(today);
+                    target.setMonth(today.getMonth() - months);
+                    var yyyy = target.getFullYear();
+                    var mm = String(target.getMonth() + 1).padStart(2, '0');
+                    var dd = String(target.getDate()).padStart(2, '0');
+                    params.set('last_sub_before', yyyy + '-' + mm + '-' + dd);
+                }
+
+                window.location = '{{ request.path }}?' + params.toString() + '#preset-filter';
+            });
+
+            // Advanced filter toggle — show when active filters exist
+            var hasActiveFilter = {{ 'true' if (last_sub_after or last_sub_before or selected_author) else 'false' }};
+            var urlParams = new URLSearchParams(window.location.search);
+            var presetMonths = urlParams.get('preset');
+            if (presetMonths) {
+                $('#quick-filter-select').val(presetMonths).trigger('change.select2');
+            }
+            if (hasActiveFilter && !presetMonths) {
+                $('#preset-filter').hide();
+                $('#advanced-filter').show();
+            }
+
+            $('#show-advanced-filter').click(function (e) {
+                e.preventDefault();
+                $('#preset-filter').hide();
+                $('#advanced-filter').show();
+            });
+
+            // Show delete buttons only for authors and superusers
             $('.delete-btn').each(function() {
                 var authorIds = $(this).data('author-ids');
                 if (isSuperuser || (currentProfileId && authorIds.indexOf(currentProfileId) !== -1)) {
@@ -88,6 +262,8 @@
             </li>
         </ul>
     </div>
+
+    {% include "messages.html" %}
 
     <div id="tab-storage" class="page-tab-content">
         <div class="storage-summary">
@@ -153,13 +329,92 @@
             {% endif %}
         </div>
 
+        <div style="display: flex; gap: 30px; margin: 20px 0; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 280px;">
+                <h4 style="text-align: center; margin-bottom: 8px;">{{ _('Problems by last submission time') }}</h4>
+                <div id="storage-count-chart" style="height: 320px;"><canvas></canvas></div>
+            </div>
+            <div style="flex: 1; min-width: 280px;">
+                <h4 style="text-align: center; margin-bottom: 8px;">{{ _('Storage by last submission time') }}</h4>
+                <div id="storage-size-chart" style="height: 320px;"><canvas></canvas></div>
+            </div>
+        </div>
+
+        <!-- Filter Form -->
+        <div class="filter-section">
+            <!-- Preset filters -->
+            <div id="preset-filter" style="display: flex; align-items: center; gap: 12px;">
+                <label for="quick-filter-select" style="font-weight: bold; margin: 0; white-space: nowrap;">{{ _('Quick filter') }}</label>
+                <select id="quick-filter-select" class="form-control" style="min-width: 320px;">
+                    <option value="">— {{ _('Select a filter') }} —</option>
+
+                    <option value="3">{{ _('Last submission %(months)d+ months ago', months=3) }}</option>
+                    <option value="6">{{ _('Last submission %(months)d+ months ago', months=6) }}</option>
+                    <option value="9">{{ _('Last submission %(months)d+ months ago', months=9) }}</option>
+                    <option value="12">{{ _('Last submission %(months)d+ months ago', months=12) }}</option>
+                    <option value="never">{{ _('No submissions') }}</option>
+                </select>
+                <a href="#" id="show-advanced-filter" style="font-size: 13px; white-space: nowrap;">{{ _('Advanced filter') }} <i class="fa fa-chevron-down"></i></a>
+            </div>
+
+            <!-- Advanced filter (hidden by default) -->
+            <div id="advanced-filter" style="display: none; margin-top: 12px;">
+                <form id="filter-form" method="GET" action="{{ request.path }}">
+                    <div class="filter-row">
+                        <div class="filter-item">
+                            <label for="author-select">{{ _('Author') }}</label>
+                            <select id="author-select" name="author" style="width: 100%">
+                                <option value="">{{ _('All Authors') }}</option>
+                                {% for admin in org_admins %}
+                                    <option value="{{ admin.id }}" {% if selected_author == admin.id|string %}selected{% endif %}>
+                                        {{ admin.user.username }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <div class="filter-item">
+                            <label>{{ _('Last Submission Time') }}</label>
+                            <div style="display: flex; gap: 10px; align-items: center;">
+                                <input type="date" id="last-sub-after-input" name="last_sub_after" class="form-control" value="{{ last_sub_after or '' }}" placeholder="From">
+                                <span>to</span>
+                                <input type="date" id="last-sub-before-input" name="last_sub_before" class="form-control" value="{{ last_sub_before or '' }}" placeholder="To">
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button type="submit" class="btn btn-primary" style="height: 34px;">
+                                <i class="fa fa-filter"></i> {{ _('Filter') }}
+                            </button>
+                            <a href="{{ request.path }}" class="btn btn-default" style="height: 34px; line-height: 20px;">
+                                {{ _('Reset') }}
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="bulk-actions">
+            <input type="checkbox" id="select-all-checkbox" style="transform: scale(1.2); margin-right: 5px; cursor: pointer;">
+            <label for="select-all-checkbox" style="margin-bottom: 0; cursor: pointer; font-weight: normal;">
+                {{ _('Select All (Current Page)') }}
+            </label>
+            <button id="bulk-delete-btn" class="btn-danger-bulk" disabled>
+                <i class="fa fa-trash"></i> {{ _('Delete Selected') }} (<span id="selected-count-badge">0</span>)
+            </button>
+        </div>
+
         <table class="storage-table table">
             <thead>
                 <tr>
+                    <th style="width: 30px; text-align: center;"></th>
                     <th>{{ _('Problem Code') }}</th>
                     <th>{{ _('Problem Name') }}</th>
                     <th>{{ _('Authors') }}</th>
                     <th>{{ _('Total Size') }}</th>
+                    <th>{{ _('Last Submission') }}</th>
                     <th>{{ _('Download') }}</th>
                     <th>{{ _('Delete') }}</th>
                 </tr>
@@ -167,6 +422,11 @@
             <tbody>
                 {% for problem in problems %}
                 <tr>
+                    <td style="text-align: center; vertical-align: middle;">
+                        <input type="checkbox" class="problem-select-checkbox" value="{{ problem.id }}"
+                               data-author-ids="{{ (problem.authors.all()|map(attribute='id')|list + problem.curators.all()|map(attribute='id')|list)|tojson }}"
+                               style="transform: scale(1.2); cursor: pointer;">
+                    </td>
                     <td class="problem-code">
                         <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code }}</a>
                     </td>
@@ -174,15 +434,18 @@
                         <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
                     </td>
                     <td>
-                        {{ link_users(problem.authors.all()) }}
+                        {{ link_users((problem.authors.all()|list + problem.curators.all()|list)|unique(attribute='id')) }}
                     </td>
                     <td class="size-cell">
                         {{ problem.data_size|filesizeformat }}
                     </td>
                     <td>
+                        {{ problem.last_submission_date|date("Y-m-d H:i:s") if problem.last_submission_date else '—' }}
+                    </td>
+                    <td>
                         <a href="{{ url('problem_download_full_package', problem.code) }}"
                            class="btn btn-xs delete-btn"
-                           data-author-ids="{{ problem.authors.all()|map(attribute='id')|list|tojson }}"
+                           data-author-ids="{{ (problem.authors.all()|map(attribute='id')|list + problem.curators.all()|map(attribute='id')|list)|tojson }}"
                            style="display:none;">
                             <i class="fa fa-download"></i> {{ _('Test data') }}
                         </a>
@@ -190,7 +453,7 @@
                     <td>
                         <a href="{{ url('problem_delete', problem.code) }}?next={{ request.path }}"
                            class="btn btn-xs btn-danger delete-btn"
-                           data-author-ids="{{ problem.authors.all()|map(attribute='id')|list|tojson }}"
+                           data-author-ids="{{ (problem.authors.all()|map(attribute='id')|list + problem.curators.all()|map(attribute='id')|list)|tojson }}"
                            style="display:none;">
                             <i class="fa fa-trash"></i> {{ _('Delete') }}
                         </a>
@@ -198,7 +461,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 2em; color: #999;">
+                    <td colspan="8" style="text-align: center; padding: 2em; color: #999;">
                         {{ _('No problems found for this organization.') }}
                     </td>
                 </tr>

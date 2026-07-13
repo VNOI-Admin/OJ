@@ -1,6 +1,13 @@
 {% extends "user/user-list-tabs.html" %}
 
 {% block tabs %}
+    {% if perms.judge.edit_all_organization %}
+        <form id="show-all-orgs-form" action="" method="get" style="display: inline-block; padding: 0.75em 1em 0.75em 0;">
+            <input id="show_all_orgs" type="checkbox" name="show_all_orgs" value="1"
+                   {% if show_all_orgs %}checked{% endif %}>
+            <label for="show_all_orgs">{{ _('Show all orgs') }}</label>
+        </form>
+    {% endif %}
     {% if perms.judge.add_organization %}
         {{ make_tab('create', 'fa-plus', url('organization_create'), _('Create new organization')) }}
     {% endif %}

@@ -54,8 +54,7 @@ VNOJ_ORG_PP_STEP = 0.95
 VNOJ_ORG_PP_ENTRIES = 100
 VNOJ_ORG_PP_SCALE = 1
 
-VNOJ_ENABLE_API = False
-VNOJ_ENABLE_SYNC_API = True  # need to make this true for testing :sad:
+VNOJ_ENABLE_SYNC_API = False
 GLOBAL_API_KEY = 'test-api-key-123'
 
 VNOJ_OFFICIAL_CONTEST_MODE = False
@@ -64,7 +63,6 @@ VNOJ_OFFICIAL_CONTEST_MODE = False
 # Both should be int
 VNOJ_CP_COMMENT = 1   # Each comment vote equals 1 CP
 VNOJ_CP_TICKET = 10   # Each good ticket equals CP
-VNOJ_CP_PROBLEM = 20  # Each suggested problem equal 20 CP
 
 TICKET_AUTOFILL_REPLIES = [
     {'en': 'No comments',
@@ -241,7 +239,6 @@ DISCORD_WEBHOOK = {
     'on_new_ticket': None,
     'on_new_comment': None,
     'on_new_problem': None,
-    'on_new_suggested_problem': None,
     'on_new_tag_problem': None,
     'on_new_tag': None,
     'on_new_blogpost': None,
@@ -303,6 +300,11 @@ DMOJ_CONTEST_DATA_DOWNLOAD = False
 DMOJ_CONTEST_DATA_CACHE = ''
 DMOJ_CONTEST_DATA_INTERNAL = ''
 DMOJ_CONTEST_DATA_DOWNLOAD_RATELIMIT = datetime.timedelta(days=1)
+
+# directory to store replay JSON files;
+CONTEST_REPLAY_MEDIA_DIR = 'contest_replay'
+# Internal path to serve replay JSON files with X-Accel-Redirect
+DMOJ_CONTEST_REPLAY_INTERNAL = None
 
 DMOJ_COMMENT_VOTE_HIDE_THRESHOLD = -5
 DMOJ_COMMENT_REPLY_TIMEFRAME = datetime.timedelta(days=365)
@@ -633,11 +635,11 @@ BLEACH_USER_SAFE_TAGS = [
     'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'tfoot',
     'img', 'audio', 'video', 'source',
     'a', 'strike',
-    'style', 'noscript', 'center', 'object', 'iframe',
+    'noscript', 'center', 'object', 'iframe',
 ]
 
 BLEACH_USER_SAFE_ATTRS = {
-    '*': ['id', 'class', 'style', 'data', 'height'],
+    '*': ['id', 'class', 'data', 'height'],
     'img': ['src', 'alt', 'title', 'width', 'height', 'data-src', 'align'],
     'a': ['href', 'alt', 'title'],
     'iframe': ['src', 'height', 'width', 'allow'],
@@ -681,7 +683,7 @@ MARKDOWN_DEFAULT_STYLE = {
     'bleach': {
         'tags': BLEACH_USER_SAFE_TAGS,
         'attributes': BLEACH_USER_SAFE_ATTRS,
-        'styles': True,
+        'styles': False,
         'mathml': True,
     },
 }
@@ -694,7 +696,7 @@ MARKDOWN_USER_LARGE_STYLE = {
     'bleach': {
         'tags': BLEACH_USER_SAFE_TAGS,
         'attributes': BLEACH_USER_SAFE_ATTRS,
-        'styles': True,
+        'styles': False,
         'mathml': True,
     },
 }

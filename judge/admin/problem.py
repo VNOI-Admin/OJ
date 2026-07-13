@@ -24,7 +24,6 @@ class ProblemForm(ModelForm):
         super(ProblemForm, self).__init__(*args, **kwargs)
         self.fields['authors'].widget.can_add_related = False
         self.fields['curators'].widget.can_add_related = False
-        self.fields['suggester'].widget.can_add_related = False
         self.fields['testers'].widget.can_add_related = False
         self.fields['banned_users'].widget.can_add_related = False
         self.fields['change_message'].widget.attrs.update({
@@ -35,7 +34,6 @@ class ProblemForm(ModelForm):
         widgets = {
             'authors': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'curators': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
-            'suggester': AdminHeavySelect2Widget(data_view='profile_select2'),
             'testers': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'banned_users': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'organization': AdminHeavySelect2Widget(data_view='organization_select2'),
@@ -123,7 +121,7 @@ class ProblemAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, VersionAdmin):
     fieldsets = (
         (None, {
             'fields': (
-                'code', 'name', 'suggester', 'is_public', 'is_manually_managed', 'date', 'authors',
+                'code', 'name', 'is_public', 'is_manually_managed', 'date', 'authors',
                 'curators', 'testers', 'is_organization_private', 'organization', 'submission_source_visibility_mode',
                 'testcase_visibility_mode', 'testcase_result_visibility_mode', 'allow_view_feedback',
                 'is_full_markup', 'pdf_url', 'source', 'description', 'license',
@@ -179,15 +177,15 @@ class ProblemAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, VersionAdmin):
     def show_public(self, obj):
         return format_html('<a href="{1}">{0}</a>', gettext('View on site'), obj.get_absolute_url())
 
-    def _rescore(self, request, problem_id, publicy_changed=False):
+    def _rescore(self, request, problem_id):
         from judge.tasks import rescore_problem
-        transaction.on_commit(rescore_problem.s(problem_id, publicy_changed).delay)
+        transaction.on_commit(rescore_problem.s(problem_id).delay)
 
     @admin.display(description=_('Mark problems as public and set publish date to now'))
     def make_public_and_update_publish_date(self, request, queryset):
         count = queryset.update(is_public=True, date=timezone.now())
         for problem_id in queryset.values_list('id', flat=True):
-            self._rescore(request, problem_id, True)
+            self._rescore(request, problem_id)
 
         self.message_user(request, ngettext('%d problem successfully marked as public.',
                                             '%d problems successfully marked as public.',
@@ -197,7 +195,7 @@ class ProblemAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, VersionAdmin):
     def make_private(self, request, queryset):
         count = queryset.update(is_public=False)
         for problem_id in queryset.values_list('id', flat=True):
-            self._rescore(request, problem_id, True)
+            self._rescore(request, problem_id)
         self.message_user(request, ngettext('%d problem successfully marked as private.',
                                             '%d problems successfully marked as private.',
                                             count) % count)
@@ -227,7 +225,7 @@ class ProblemAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, VersionAdmin):
             form.changed_data and
             any(f in form.changed_data for f in ('is_public', 'is_organization_private', 'partial'))
         ):
-            self._rescore(request, obj.id, 'is_public' in form.changed_data)
+            self._rescore(request, obj.id)
 
     def construct_change_message(self, request, form, *args, **kwargs):
         if form.cleaned_data.get('change_message'):
