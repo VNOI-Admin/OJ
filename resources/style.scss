@@ -5,8 +5,10 @@
 @use "math";
 @use "status";
 @use "blog";
+@use "blog-modern";
 @use "problem";
 @use "ticket";
+@use "notification";
 @use "ranks";
 @use "users";
 @use "content-description";
@@ -20,3 +22,4 @@
 @use "accordion";
 @use "select2-dmoj";
 @use "ace-dmoj";
+

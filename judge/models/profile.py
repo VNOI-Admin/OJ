@@ -1,4 +1,5 @@
 import base64
+import hashlib
 import hmac
 import json
 import secrets
@@ -24,10 +25,13 @@ from sortedm2m.fields import SortedManyToManyField
 from judge.models.choices import ACE_THEMES, MATH_ENGINES_CHOICES, SITE_THEMES, TIMEZONE
 from judge.models.runtime import Language
 from judge.ratings import rating_class
+from judge.utils.cache_helper import unread_notification_count_cache_factory
 from judge.utils.float_compare import float_compare_equal
 from judge.utils.two_factor import webauthn_decode
+from judge.utils.unicode import utf8bytes
 
-__all__ = ['Organization', 'OrganizationMonthlyUsage', 'Profile', 'OrganizationRequest', 'WebAuthnCredential']
+__all__ = ['Organization', 'OrganizationQuota', 'OrganizationMonthlyUsage', 'Profile', 'OrganizationRequest',
+           'WebAuthnCredential']
 
 
 class EncryptedNullCharField(EncryptedCharField):
@@ -76,7 +80,6 @@ class Organization(models.Model):
         default=settings.VNOJ_MONTHLY_FREE_CREDIT,
         help_text=_('Amount of free credits allocated each month'),
     )
-
     _pp_table = [pow(settings.VNOJ_ORG_PP_STEP, i) for i in range(settings.VNOJ_ORG_PP_ENTRIES)]
 
     def calculate_points(self, table=_pp_table):
@@ -138,6 +141,42 @@ class Organization(models.Model):
         self.current_consumed_credit += consumed
         self.save(update_fields=['free_credit', 'paid_credit', 'current_consumed_credit'])
 
+    @cached_property
+    def _active_quota_agg(self):
+        today = timezone.now().date()
+        return self.quotas.filter(
+            start_date__lte=today,
+            end_date__gte=today,
+        ).aggregate(total_problems=Sum('added_problems'), total_storage=Sum('added_storage'))
+
+    @cached_property
+    def max_problems(self):
+        return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_PROBLEMS + (self._active_quota_agg['total_problems'] or 0)
+
+    @cached_property
+    def max_storage(self):
+        return settings.VNOJ_ORGANIZATION_DEFAULT_MAX_STORAGE + (self._active_quota_agg['total_storage'] or 0)
+
+    @cached_property
+    def current_problem_count(self):
+        return self.problem_set(manager='available').count()
+
+    @cached_property
+    def current_storage(self):
+        from django.apps import apps
+        ProblemData = apps.get_model('judge', 'ProblemData')
+        result = ProblemData.objects.filter(
+            problem__organization=self,
+            problem__deleted_at__isnull=True,
+        ).aggregate(total=Sum('zipfile_size'))
+        return result['total'] or 0
+
+    def can_create_problem(self):
+        return self.current_problem_count < self.max_problems
+
+    def can_upload_data(self):
+        return self.current_storage < self.max_storage
+
     class Meta:
         ordering = ['name']
         permissions = (
@@ -148,6 +187,35 @@ class Organization(models.Model):
         )
         verbose_name = _('organization')
         verbose_name_plural = _('organizations')
+
+
+class OrganizationQuota(models.Model):
+    organization = models.ForeignKey(
+        Organization,
+        verbose_name=_('organization'),
+        related_name='quotas',
+        on_delete=models.CASCADE,
+    )
+    start_date = models.DateField(verbose_name=_('start date'))
+    end_date = models.DateField(verbose_name=_('end date'))
+    added_problems = models.IntegerField(
+        verbose_name=_('additional problems'),
+        default=0,
+        help_text=_('Number of additional problems allowed above the default limit.'),
+    )
+    added_storage = models.BigIntegerField(
+        verbose_name=_('additional storage (bytes)'),
+        default=0,
+        help_text=_('Additional storage allowed above the default limit, in bytes.'),
+    )
+
+    class Meta:
+        verbose_name = _('organization quota')
+        verbose_name_plural = _('organization quotas')
+        ordering = ['start_date']
+
+    def __str__(self):
+        return '%s [%s – %s]' % (self.organization, self.start_date, self.end_date)
 
 
 class OrganizationMonthlyUsage(models.Model):
@@ -237,6 +305,33 @@ class Profile(models.Model):
     data_last_downloaded = models.DateTimeField(verbose_name=_('last data download time'), null=True, blank=True)
     username_display_override = models.CharField(max_length=100, blank=True, verbose_name=_('display name override'),
                                                  help_text=_('Name displayed in place of username.'))
+
+    @classmethod
+    def get_ticket_secret(cls, profile_id):
+        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_TICKET_KEY), b'%d' % profile_id, hashlib.sha512)
+                    .hexdigest()[:16] + '%08x' % profile_id)
+
+    @cached_property
+    def ticket_secret(self):
+        return self.get_ticket_secret(self.id)
+
+    @classmethod
+    def get_notification_secret(cls, profile_id):
+        return (hmac.new(utf8bytes(settings.EVENT_DAEMON_NOTIFICATION_KEY), b'%d' % profile_id, hashlib.sha512)
+                    .hexdigest()[:16] + '%08x' % profile_id)
+
+    @cached_property
+    def notification_secret(self):
+        return self.get_notification_secret(self.id)
+
+    @property
+    def unread_notification_count(self):
+        factory = unread_notification_count_cache_factory(self.id)
+        count = factory.get_cache()
+        if count is None:
+            count = self.notifications.filter(read=False).count()
+            factory.set_cache(count)
+        return count
 
     @cached_property
     def organization(self):

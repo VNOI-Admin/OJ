@@ -5,19 +5,17 @@ from django.contrib import admin
 from django.contrib.auth import views as auth_views
 from django.contrib.sitemaps.views import sitemap
 from django.http import Http404, HttpResponsePermanentRedirect
-from django.templatetags.static import static
 from django.urls import include, path, re_path, reverse
-from django.utils.functional import lazy
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.clickjacking import xframe_options_sameorigin
-from django.views.generic import RedirectView
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
-from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, organization, \
-    preview, problem, problem_manage, ranked_submission, register, stats, status, submission, tag, tasks, ticket, \
-    two_factor, user, widgets
+from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, notification, \
+    organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
+    submission, tag, tasks, ticket, two_factor, user, widgets
 from judge.views.magazine import MagazinePage
+from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
     problem_data_file, problem_init_view
 from judge.views.register import ActivationView, RegistrationView
@@ -109,6 +107,9 @@ urlpatterns = [
     path('accounts/', include(register_patterns)),
     path('', include('social_django.urls')),
 
+    # URL Shortener management (on main domain)
+    path('shorteners/', include('urlshortener.urls')),
+
     path('problems', include([
         path('/', problem.ProblemList.as_view(), name='problem_list'),
         path('/random/', problem.RandomProblem.as_view(), name='problem_random'),
@@ -127,6 +128,7 @@ urlpatterns = [
         path('/pdf', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/pdf/<slug:language>', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/clone', problem.ProblemClone.as_view(), name='problem_clone'),
+        path('/delete', problem.ProblemDelete.as_view(), name='problem_delete'),
         path('/submit', problem.ProblemSubmit.as_view(), name='problem_submit'),
         path('/resubmit/<int:submission>', problem.ProblemSubmit.as_view(), name='problem_submit'),
         path('/update-polygon', problem.ProblemUpdatePolygon.as_view(), name='problem_update_polygon'),
@@ -141,6 +143,9 @@ urlpatterns = [
         path('/test_data/init', problem_init_view, name='problem_data_init'),
         path('/test_data/diff', ProblemSubmissionDiff.as_view(), name='problem_submission_diff'),
         path('/data/<path:path>', problem_data_file, name='problem_data_file'),
+
+        path('/download/package', problem_download.DownloadProblemFullPackage.as_view(),
+             name='problem_download_full_package'),
 
         path('/tickets/', ticket.ProblemTicketListView.as_view(), name='problem_ticket_list'),
         path('/tickets/new', ticket.NewProblemTicketView.as_view(), name='new_problem_ticket'),
@@ -195,6 +200,7 @@ urlpatterns = [
 
     path('user', user.UserAboutPage.as_view(), name='user_page'),
     path('edit/profile/', user.edit_profile, name='user_edit_profile'),
+    path('set-theme/', user.set_theme, name='set_theme'),
     path('data/prepare/', user.UserPrepareData.as_view(), name='user_prepare_data'),
     path('data/download/', user.UserDownloadData.as_view(), name='user_download_data'),
     path('user/<str:user>', include([
@@ -251,6 +257,8 @@ urlpatterns = [
         path('/stats', contests.ContestStats.as_view(), name='contest_stats'),
         path('/data/prepare/', contests.ContestPrepareData.as_view(), name='contest_prepare_data'),
         path('/data/download/', contests.ContestDownloadData.as_view(), name='contest_download_data'),
+        path('/make_problems_public', contests.ContestProblemMakePublic.as_view(),
+             name='contest_problems_make_public'),
 
         path('/rank/<str:problem>/',
              paged_list_view(ranked_submission.ContestRankedSubmission, 'contest_ranked_submissions')),
@@ -293,8 +301,11 @@ urlpatterns = [
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
         path('/leave', organization.LeaveOrganization.as_view(), name='leave_organization'),
         path('/edit', organization.EditOrganization.as_view(), name='edit_organization'),
+        path('/quota/add', organization.OrganizationQuotaAdd.as_view(), name='organization_quota_add'),
+        path('/quota/<int:quota_id>/delete', organization.OrganizationQuotaDelete.as_view(),
+             name='organization_quota_delete'),
         path('/kick', organization.KickUserWidgetView.as_view(), name='organization_user_kick'),
-        path('/usage', organization.MonthlyCreditUsageOrganization.as_view(), name='organization_monthly_usage'),
+        path('/usage', organization.OrganizationStorageDashboard.as_view(), name='organization_monthly_usage'),
         path('/problems/', organization.ProblemListOrganization.as_view(), name='problem_list_organization'),
         path('/contests/', organization.ContestListOrganization.as_view(), name='contest_list_organization'),
         path('/submissions/',
@@ -326,12 +337,14 @@ urlpatterns = [
     path('status/', status.status_all, name='status_all'),
     path('status/oj/', status.status_oj, name='status_oj'),
 
+    path('blogs/', paged_list_view(blog.ModernBlogList, 'blog_modern_list')),
     path('posts/', paged_list_view(blog.PostList, 'blog_post_list')),
     path('posts/new', blog.BlogPostCreate.as_view(), name='blog_post_new'),
     path('posts/upvote', blog.upvote_blog, name='blog_upvote'),
     path('posts/downvote', blog.downvote_blog, name='blog_downvote'),
     path('post/<int:id>-<slug:slug>', include([
         path('', blog.PostView.as_view(), name='blog_post'),
+        path('/modern', blog.PostModernView.as_view(), name='blog_post_modern'),
         path('/edit', blog.BlogPostEdit.as_view(), name='blog_post_edit'),
         path('/delete', blog.BlogPostDelete.as_view(), name='blog_post_delete'),
         path('/', lambda _, id, slug: HttpResponsePermanentRedirect(reverse('blog_post', args=[id, slug]))),
@@ -396,6 +409,12 @@ urlpatterns = [
         path('new', ticket.NewIssueTicketView.as_view(), name='new_issue_ticket'),
     ])),
 
+    path('notifications/', include([
+        path('', notification.NotificationList.as_view(), name='notification_list'),
+        path('ajax', notification.NotificationAjax.as_view(), name='notification_ajax'),
+        path('mark_read', notification.NotificationMarkRead.as_view(), name='notification_mark_read'),
+    ])),
+
     path('ticket/<int:pk>', include([
         path('', ticket.TicketView.as_view(), name='ticket'),
         path('/ajax', ticket.TicketMessageDataAjax.as_view(), name='ticket_message_ajax'),
@@ -429,23 +448,10 @@ urlpatterns = [
     ])),
 
     path('magazine/', MagazinePage.as_view(), name='magazine'),
+
+    path('misc_config/', MiscConfigEdit.as_view(), name='misc_config'),
 ]
 
-favicon_paths = ['apple-touch-icon-180x180.png', 'apple-touch-icon-114x114.png', 'android-chrome-72x72.png',
-                 'apple-touch-icon-57x57.png', 'apple-touch-icon-72x72.png', 'apple-touch-icon.png', 'mstile-70x70.png',
-                 'android-chrome-36x36.png', 'apple-touch-icon-precomposed.png', 'apple-touch-icon-76x76.png',
-                 'apple-touch-icon-60x60.png', 'android-chrome-96x96.png', 'mstile-144x144.png', 'mstile-150x150.png',
-                 'safari-pinned-tab.svg', 'android-chrome-144x144.png', 'apple-touch-icon-152x152.png',
-                 'favicon-96x96.png',
-                 'favicon-32x32.png', 'favicon-16x16.png', 'android-chrome-192x192.png', 'android-chrome-48x48.png',
-                 'mstile-310x150.png', 'apple-touch-icon-144x144.png', 'browserconfig.xml', 'manifest.json',
-                 'apple-touch-icon-120x120.png', 'mstile-310x310.png']
-
-static_lazy = lazy(static, str)
-for favicon in favicon_paths:
-    urlpatterns.append(path(favicon, RedirectView.as_view(
-        url=static_lazy('icons/' + favicon),
-    )))
 
 handler404 = 'judge.views.error.error404'
 handler403 = 'judge.views.error.error403'
@@ -471,6 +477,32 @@ if settings.VNOJ_ENABLE_API:
             path('participations', api.api_v2.APIContestParticipationList.as_view()),
             path('languages', api.api_v2.APILanguageList.as_view()),
             path('judges', api.api_v2.APIJudgeList.as_view()),
+        ])),
+    )
+
+if settings.VNOJ_ENABLE_SYNC_API:
+    urlpatterns.append(
+        path('api/v2/sync/', include([
+            path(
+                'contest/<str:contest_code>',
+                api.api_v2.APIContestSyncDetail.as_view(),
+                name='api_contest_sync_detail',
+            ),
+            path(
+                'contest/<str:contest_code>/problems',
+                api.api_v2.APIContestSyncProblems.as_view(),
+                name='api_contest_sync_problems',
+            ),
+            path(
+                'contest/<str:contest_code>/participants',
+                api.api_v2.APIContestSyncParticipants.as_view(),
+                name='api_contest_sync_participants',
+            ),
+            path(
+                'contest/<str:contest_code>/submissions',
+                api.api_v2.APIContestSyncSubmissions.as_view(),
+                name='api_contest_sync_submissions',
+            ),
         ])),
     )
 

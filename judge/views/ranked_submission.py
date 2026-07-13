@@ -17,7 +17,7 @@ class RankedSubmissions(ProblemSubmissions):
 
     def get_queryset(self):
         params = [self.problem.id]
-        if self.in_contest:
+        if self.is_contest_scoped:
             contest_join = 'INNER JOIN judge_contestsubmission AS cs ON (sub.id = cs.submission_id)'
             points = 'cs.points'
             constraint = ' AND sub.contest_object_id = %s'
@@ -58,7 +58,7 @@ class RankedSubmissions(ProblemSubmissions):
             params=params * 3, alias='best_subs', join_fields=[('id', 'id')], related_model=Submission,
         )
 
-        if self.in_contest:
+        if self.is_contest_scoped:
             return queryset.order_by('-contest__points', 'time')
         else:
             return queryset.order_by('-points', 'time')

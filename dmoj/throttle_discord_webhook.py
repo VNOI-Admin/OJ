@@ -68,10 +68,15 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
         self.send_webhook(subject, message)
 
     def send_webhook(self, subject, message):
-        webhook = settings.DISCORD_WEBHOOK.get('on_error', None)
-        if webhook is None:
+        webhook_config = settings.DISCORD_WEBHOOK.get('on_error', None)
+        if webhook_config is None:
             return
-        webhook = DiscordWebhook(url=webhook, content=subject)
+        if isinstance(webhook_config, str):
+            webhook_config = {
+                'url': webhook_config,
+                'thread_id': None,
+            }
+        webhook = DiscordWebhook(url=webhook_config['url'], content=subject, thread_id=webhook_config['thread_id'])
         # Discord has a limit 8 MB file size for normal server (without boost)
         # Use 7MB just for safe.
         webhook.add_file(file=message[:7 * 1024 * 1024], filename='log.txt')

@@ -1,0 +1,20 @@
+<div id="message-{{ message.id }}" class="ticket-action">
+    <span class="action-icon">
+        {% if message.action == 'close' %}
+            <i class="fa fa-check-circle"></i>
+        {% else %}
+            <i class="fa fa-exclamation-circle"></i>
+        {% endif %}
+    </span>
+    <img src="{{ gravatar(message.user, 20) }}" class="action-gravatar">
+    {{ link_user(message.user) }}
+    {% if message.action == 'close' %}
+        {{ _('closed this') }}
+    {% else %}
+        {{ _('reopened this') }}
+    {% endif %}
+    &middot;
+    {% with abs=_('{time}'), rel=_('{time}') %}
+        {{ relative_time(message.time, abs=abs, rel=rel) }}
+    {% endwith %}
+</div>

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    {{ form.media.js }}
+{% endblock %}
+
+{% block media %}
+    {{ form.media.css }}
+    <link rel="stylesheet" type="text/css" href="{{ static('ui_form.css') }}">
+    <style>
+        .misc-config-section { margin-bottom: 1.5em; }
+        .misc-config-section h3 { border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 0.5em; }
+        .misc-config-current { font-size: 0.85em; color: #555; margin-bottom: 4px; }
+        .misc-config-current img { max-height: 32px; vertical-align: middle; margin-right: 4px; }
+    </style>
+{% endblock %}
+
+{% macro field_row(field) %}
+<tr>
+    <th>{{ field.label_tag() }}</th>
+    <td>
+        {{ field }}
+        {% if field.help_text %}<p class="help">{{ field.help_text }}</p>{% endif %}
+        {{ field.errors }}
+    </td>
+</tr>
+{% endmacro %}
+
+{% block body %}
+<div>
+{% if request.user.is_staff %}
+    <div class="alert alert-warning alert-dismissable">
+        <a class="close">x</a>
+        <a href="{{ url('admin:judge_miscconfig_changelist') }}">{{ _('Configure in admin panel for more options') }}</a>
+    </div>
+{% endif %}
+<form action="" method="post" class="form-area" enctype="multipart/form-data" style="display: flex; justify-content: center; flex-direction: column;">
+    {% if form.errors %}
+        <p class="errornote">{{ _('Please correct the error below.') }}</p>
+    {% endif %}
+    {% csrf_token %}
+
+    <div class="misc-config-section">
+        <h3>{{ _('Branding') }}</h3>
+        <table class="django-as-table">
+            <tr>
+                <th>{{ form.logo.label_tag() }}</th>
+                <td>
+                    {% if current_logo %}
+                        <p class="misc-config-current">
+                            {{ _('Current:') }}
+                            <a href="{{ current_logo }}" target="_blank">
+                                <img src="{{ current_logo }}" alt="logo">{{ current_logo }}
+                            </a>
+                        </p>
+                    {% endif %}
+                    {{ form.logo }}
+                    {% if form.logo.help_text %}<p class="help">{{ form.logo.help_text }}</p>{% endif %}
+                    {{ form.logo.errors }}
+                </td>
+            </tr>
+            <tr>
+                <th>{{ form.favicon.label_tag() }}</th>
+                <td>
+                    {% if current_favicon %}
+                        <p class="misc-config-current">
+                            {{ _('Current:') }}
+                            <a href="{{ current_favicon }}" target="_blank">{{ current_favicon }}</a>
+                        </p>
+                    {% endif %}
+                    {{ form.favicon }}
+                    {% if form.favicon.help_text %}<p class="help">{{ form.favicon.help_text }}</p>{% endif %}
+                    {{ form.favicon.errors }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="misc-config-section">
+        <h3>{{ _('SEO') }}</h3>
+        <table class="django-as-table">
+            {{ field_row(form.meta_keywords) }}
+            {{ field_row(form.meta_description) }}
+        </table>
+    </div>
+
+    <div class="misc-config-section">
+        <h3>{{ _('Content') }}</h3>
+        <table class="django-as-table">
+            {{ field_row(form.home_page_top) }}
+            {{ field_row(form.announcement) }}
+            {{ field_row(form.footer) }}
+        </table>
+    </div>
+
+    <div class="misc-config-section">
+        <h3>{{ _('Notifications') }}</h3>
+        <table class="django-as-table">
+            {{ field_row(form.top_notification) }}
+        </table>
+    </div>
+
+    <div class="misc-config-section">
+        <h3>{{ _('Analytics') }}</h3>
+        <table class="django-as-table">
+            {{ field_row(form.analytics) }}
+        </table>
+    </div>
+
+    <div class="misc-config-section">
+        <h3>{{ _('Community') }}</h3>
+        <table class="django-as-table">
+            {{ field_row(form.discord_invite_link) }}
+            {{ field_row(form.discord_invite_shieldio) }}
+        </table>
+    </div>
+
+    <div class="misc-config-section">
+        <h3>{{ _('Problem editor') }}</h3>
+        <table class="django-as-table">
+            {{ field_row(form.description_example) }}
+        </table>
+    </div>
+
+    <table>
+        <tr><td style="float: right;"><input type="submit" value="{{ _('Update') }}" class="button"></td></tr>
+    </table>
+</form>
+</div>
+{% endblock %}

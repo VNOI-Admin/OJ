@@ -2,12 +2,13 @@ from collections import defaultdict
 from math import e
 
 from django.core.cache import cache
+from django.db import transaction
 from django.db.models import Case, Count, ExpressionWrapper, F, When
 from django.db.models.fields import FloatField
 from django.utils import timezone
 from django.utils.translation import gettext_noop
 
-from judge.models import Problem, Submission
+from judge.models import ContestSubmission, Problem, Submission, SubmissionTestCase
 
 __all__ = ['contest_completed_ids', 'get_result_data', 'user_completed_ids', 'user_editable_ids', 'user_tester_ids']
 
@@ -34,7 +35,7 @@ def user_completed_ids(profile):
     key = 'user_complete:%d' % profile.id
     result = cache.get(key)
     if result is None:
-        result = set(Submission.objects.filter(user=profile, result='AC', case_points__gte=F('case_total'))
+        result = set(Submission.objects.filter(user=profile, result='AC')
                      .values_list('problem_id', flat=True).distinct())
         cache.set(key, result, 86400)
     return result
@@ -64,6 +65,7 @@ def _get_result_data(results):
             # Using gettext_noop here since this will be tacked into the cache, so it must be language neutral.
             # The caller, SubmissionList.get_result_data will run gettext on the name.
             {'code': 'AC', 'name': gettext_noop('Accepted'), 'count': results['AC']},
+            {'code': 'PAC', 'name': gettext_noop('Partial'), 'count': results['PAC']},
             {'code': 'WA', 'name': gettext_noop('Wrong'), 'count': results['WA']},
             {'code': 'CE', 'name': gettext_noop('Compile Error'), 'count': results['CE']},
             {'code': 'TLE', 'name': gettext_noop('Timeout'), 'count': results['TLE']},
@@ -102,6 +104,7 @@ def hot_problems(duration, limit):
         # fix braindamage in excluding CE
         qs = qs.annotate(submission_volume=Count(Case(
             When(submission__result='AC', then=1),
+            When(submission__result='PAC', then=1),
             When(submission__result='WA', then=1),
             When(submission__result='IR', then=1),
             When(submission__result='RTE', then=1),
@@ -122,3 +125,19 @@ def hot_problems(duration, limit):
 
         cache.set(cache_key, qs, 900)
     return qs
+
+
+@transaction.atomic
+def fast_delete_problem(problem: Problem):
+    # Deliberately skips point recalculation and contest result recomputation during cascade deletion.
+    from django.db.models.signals import post_delete
+    from judge.signals import contest_submission_delete, submission_delete
+
+    post_delete.disconnect(submission_delete, sender=Submission)
+    post_delete.disconnect(contest_submission_delete, sender=ContestSubmission)
+    try:
+        SubmissionTestCase.objects.filter(submission__problem=problem).delete()
+        problem.delete()
+    finally:
+        post_delete.connect(submission_delete, sender=Submission)
+        post_delete.connect(contest_submission_delete, sender=ContestSubmission)

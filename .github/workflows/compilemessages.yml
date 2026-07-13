@@ -21,7 +21,8 @@ jobs:
         git submodule update
     - name: Install requirements
       run: |
-        sudo apt-get install gettext
+        sudo apt-get update
+        sudo apt-get install -y --no-install-recommends gettext
         pip install -r requirements.txt
         pip install pymysql
     - name: Check .po file validity

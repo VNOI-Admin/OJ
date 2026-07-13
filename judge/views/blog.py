@@ -18,9 +18,9 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.dblock import LockModel
 from judge.forms import BlogPostForm
-from judge.models import (BlogPost, BlogVote, Comment, Contest, Language,
+from judge.models import (BlogPost, BlogPostTag, BlogVote, Comment, Contest, Language,
                           Problem, Profile, Submission, Ticket)
-from judge.tasks import on_new_blogpost
+from judge.tasks.webhook import on_new_blogpost
 from judge.utils.cachedict import CacheDict
 from judge.utils.diggpaginator import DiggPaginator
 from judge.utils.opengraph import generate_opengraph
@@ -115,9 +115,15 @@ class PostListBase(ListView):
         return DiggPaginator(queryset, per_page, body=6, padding=2,
                              orphans=orphans, allow_empty_first_page=allow_empty_first_page, **kwargs)
 
+    def ignore_magazine_tag(self, queryset):
+        if settings.VNOJ_MAGAZINE_TAG_SLUG:
+            queryset = queryset.exclude(tags__slug=settings.VNOJ_MAGAZINE_TAG_SLUG)
+        return queryset
+
     def get_queryset(self):
         queryset = (BlogPost.objects.filter(visible=True, publish_on__lte=timezone.now())
                     .prefetch_related('authors__user', 'authors__display_badge'))
+        queryset = self.ignore_magazine_tag(queryset)
         if self.request.user.is_authenticated:
             profile = self.request.profile
             queryset = queryset.annotate(
@@ -135,6 +141,59 @@ class PostListBase(ListView):
                    .filter(page__in=['b:%d' % post.id for post in context['posts']], hidden=False)
                    .values_list('page').annotate(count=Count('page')).order_by()
         }
+        return context
+
+
+class ModernBlogList(PostListBase):
+    template_name = 'blog/modern-list.html'
+    title = _('Blog')
+
+    def ignore_magazine_tag(self, queryset):
+        # we do not ignore magazine tag here
+        return queryset
+
+    def get_queryset(self):
+        queryset = super(ModernBlogList, self).get_queryset()
+        queryset = queryset.prefetch_related('tags').filter(global_post=True)
+
+        # Search functionality
+        search_query = self.request.GET.get('q', '').strip()
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) |
+                Q(content__icontains=search_query) |
+                Q(summary__icontains=search_query),
+            )
+
+        # Tag filter
+        tag_slug = self.request.GET.get('tag', '').strip()
+        if not tag_slug and settings.VNOJ_MAGAZINE_TAG_SLUG:
+            tag_slug = settings.VNOJ_MAGAZINE_TAG_SLUG
+        queryset = queryset.filter(tags__slug=tag_slug)
+
+        # Sort functionality
+        sort_by = self.request.GET.get('sort', 'latest').strip()
+        if sort_by == 'top':
+            queryset = queryset.order_by('-score', '-publish_on')
+        else:
+            queryset = queryset.order_by('-sticky', '-publish_on')
+
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super(ModernBlogList, self).get_context_data(**kwargs)
+        context['page_prefix'] = reverse('blog_modern_list')
+
+        # Pass current filters to template
+        context['current_search'] = self.request.GET.get('q', '')
+        context['current_filter'] = self.request.GET.get('filter', '')
+        context['current_sort'] = self.request.GET.get('sort', 'latest')
+        context['current_tag'] = self.request.GET.get('tag', '')
+
+        if settings.VNOJ_MAGAZINE_TAG_SLUG:
+            context['tags'] = BlogPostTag.objects.exclude(slug=settings.VNOJ_MAGAZINE_TAG_SLUG)
+        else:
+            context['tags'] = []
         return context
 
 
@@ -190,7 +249,7 @@ class PostList(PostListBase):
         context['current_contests'] = visible_contests.filter(start_time__lte=now, end_time__gt=now)
         context['future_contests'] = visible_contests.filter(start_time__gt=now)
 
-        context['top_pp_users'] = self.get_top_pp_users()
+        context['top_rated_users'] = self.get_top_rated_users()
         context['top_contrib'] = self.get_top_contributors()
 
         if self.request.user.is_authenticated:
@@ -214,11 +273,10 @@ class PostList(PostListBase):
 
         return context
 
-    def get_top_pp_users(self):
-        return (Profile.objects.order_by('-performance_points')
-                .filter(performance_points__gt=0, is_unlisted=False)
-                .only('user', 'performance_points', 'display_rank', 'display_badge', 'rating',
-                      'username_display_override')
+    def get_top_rated_users(self):
+        return (Profile.objects.filter(rating__isnull=False, is_unlisted=False)
+                .order_by('-rating')
+                .only('user', 'rating', 'display_rank', 'display_badge', 'username_display_override')
                 .select_related('user', 'display_badge')
                 [:settings.VNOJ_HOMEPAGE_TOP_USERS_COUNT])
 
@@ -269,6 +327,10 @@ class PostView(TitleMixin, CommentedDetailView):
         return post
 
 
+class PostModernView(PostView):
+    template_name = 'blog/modern-content.html'
+
+
 class BlogPostCreate(TitleMixin, CreateView):
     template_name = 'blog/edit.html'
     model = BlogPost
@@ -291,7 +353,10 @@ class BlogPostCreate(TitleMixin, CreateView):
             post = form.save()
             post.slug = remove_accents(self.request.user.username.lower())
             post.publish_on = timezone.now()
-            post.authors.add(self.request.user.profile)
+            if not form.cleaned_data.get('authors'):
+                post.authors.add(self.request.user.profile)
+            else:
+                post.authors.set(form.cleaned_data['authors'])
             post.save()
 
             revisions.set_comment(_('Created on site'))
@@ -304,13 +369,15 @@ class BlogPostCreate(TitleMixin, CreateView):
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated:
             raise PermissionDenied()
-        # hasattr(self, 'organization') -> admin org
+
+        # Check if user has permission to create blog posts
         if request.official_contest_mode or request.user.profile.problem_count < settings.VNOJ_BLOG_MIN_PROBLEM_COUNT \
                 and not request.user.is_superuser and not hasattr(self, 'organization'):
             return generic_message(request, _('Permission denied'),
                                    _('You cannot create blog post.\n'
                                      'Note: You need to solve at least %d problems to create new blog post.')
                                    % settings.VNOJ_BLOG_MIN_PROBLEM_COUNT)
+
         return super().dispatch(request, *args, **kwargs)
 
 

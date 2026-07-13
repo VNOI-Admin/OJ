@@ -252,13 +252,20 @@
             }).appendTo($checker.parent());
 
             var $file_test = $('#id_problem-data-zipfile');
-            $("<br>").appendTo($file_test.parent());
+
             $("<input/>", {
                 type: "submit",
-                value: {{ _('Please press this button if you have just updated the zip data')|htmltojs }},
-                class: "button",
-                style: "display: inherit",
-                id: "submit-button",
+                value: {{ _('Save')|htmltojs }},
+                class: "button zip-submit-full",
+                id: "zip-save-btn",
+            }).insertAfter($file_test.closest('table'));
+
+            $('<br>').appendTo($file_test.parent());
+            $('<a>', {
+                href: '#',
+                id: 'btn-build-test-data',
+                style: 'margin-left: 1em;',
+                text: {{ _('or click here to build zip file')|htmltojs }},
             }).appendTo($file_test.parent());
 
             function swap_row($a, $b) {
@@ -561,14 +568,32 @@
                 fill_testcases();
             }
 
+            function shouldIgnoreFile(path) {
+                if (!path) return true;
+                var parts = path.split('/');
+                var last = parts[parts.length - 1];
+                if (!last) return true;
+                var lower = last.toLowerCase();
+                return lower === '.ds_store' || lower.indexOf('._') === 0 || path.indexOf('__MACOSX/') === 0;
+            }
+
             $("#id_problem-data-zipfile").change((event) => {
                 let fileInput = event.target.files[0];
+
+                // 100 MB limit (Cloudflare's request body size limit)
+                if (fileInput && fileInput.size > 100 * 1024 * 1024) {
+                    alert({{ _('File too large!')|htmltojs }} + ' ' +
+                        {{ _('Your file is')|htmltojs }} + ' ' + (fileInput.size / (1024 * 1024)).toFixed(2) + ' MB. ' +
+                        {{ _('Maximum allowed is 100 MB.')|htmltojs }});
+                    event.target.value = "";
+                    return;
+                }
+
                 var reader = new FileReader();
                 reader.onload = function(ev) {
                     JSZip.loadAsync(ev.target.result).then(function(zip) {
                         let all_files = Object.keys(zip.files).sort();
-                        // ignore macos stupid files
-                        window.valid_files = all_files.filter(file => !file.startsWith('__MACOSX/') && !file.startsWith('._') && !file.startsWith('.DS_Store'));
+                        window.valid_files = all_files.filter(file => !shouldIgnoreFile(file));
 
                         fill_testcases();
                     }).catch(function(err) {
@@ -579,7 +604,183 @@
                     })
                 };
                 reader.readAsArrayBuffer(fileInput);
-            })
+            });
+            (function () {
+                var selectedFiles = [];
+                var $modal = $('#build-test-data-modal');
+                var $dropZone = $('#build-drop-zone');
+                var $fileList = $('#build-test-data-file-list');
+                var $countLabel = $('#build-test-data-count');
+                var $buildBtn = $('#btn-build-upload');
+
+                var folderInputEl = document.getElementById('build-folder-input');
+                if (folderInputEl) {
+                    folderInputEl.setAttribute('webkitdirectory', '');
+                    folderInputEl.setAttribute('directory', '');
+                }
+
+                function renderFileList() {
+                    $fileList.empty();
+                    if (!selectedFiles.length) {
+                        $countLabel.text({{ _('No files selected')|htmltojs }});
+                        $buildBtn.prop('disabled', true);
+                        return;
+                    }
+                    $countLabel.text(selectedFiles.length + ' ' + {{ _('files selected')|htmltojs }});
+                    $buildBtn.prop('disabled', false);
+                    selectedFiles.slice(0, 50).forEach(function (entry) {
+                        $('<li>').text(entry.path).appendTo($fileList);
+                    });
+                    if (selectedFiles.length > 50) {
+                        $('<li class="build-more-label">').text(
+                            '... ' + {{ _('and')|htmltojs }} + ' ' + (selectedFiles.length - 50) + ' ' + {{ _('more files')|htmltojs }}
+                        ).appendTo($fileList);
+                    }
+                }
+
+                function setFiles(entries) {
+                    selectedFiles = entries.filter(function (e) { return !shouldIgnoreFile(e.path); });
+                    renderFileList();
+                }
+
+                function fromFileList(files) {
+                    return Array.from(files).map(function (f) {
+                        return {file: f, path: f.webkitRelativePath || f.name};
+                    });
+                }
+
+                // Recursively read a FileSystemEntry into [{file, path}]
+                function readEntry(entry, basePath) {
+                    return new Promise(function (resolve) {
+                        if (entry.isFile) {
+                            entry.file(function (file) {
+                                var path = basePath ? basePath + '/' + entry.name : entry.name;
+                                resolve([{file: file, path: path}]);
+                            }, function () { resolve([]); });
+                        } else if (entry.isDirectory) {
+                            var dirPath = basePath ? basePath + '/' + entry.name : entry.name;
+                            var reader = entry.createReader();
+                            var allEntries = [];
+                            function readBatch() {
+                                reader.readEntries(function (batch) {
+                                    if (!batch.length) {
+                                        Promise.all(allEntries.map(function (e) {
+                                            return readEntry(e, dirPath);
+                                        })).then(function (results) {
+                                            resolve([].concat.apply([], results));
+                                        });
+                                    } else {
+                                        allEntries = allEntries.concat(Array.from(batch));
+                                        readBatch();
+                                    }
+                                }, function () { resolve([]); });
+                            }
+                            readBatch();
+                        } else {
+                            resolve([]);
+                        }
+                    });
+                }
+
+                function handleDropped(dataTransfer) {
+                    var items = dataTransfer.items;
+                    if (items && items.length && items[0].webkitGetAsEntry) {
+                        var promises = Array.from(items).map(function (item) {
+                            var entry = item.webkitGetAsEntry();
+                            return entry ? readEntry(entry, '') : Promise.resolve([]);
+                        });
+                        Promise.all(promises).then(function (results) {
+                            setFiles([].concat.apply([], results));
+                        });
+                    } else {
+                        setFiles(fromFileList(dataTransfer.files));
+                    }
+                }
+
+                function closeModal() { $modal.hide(); }
+
+                $(document).on('keydown.buildModal', function (e) {
+                    if (e.key === 'Escape' && $modal.is(':visible')) closeModal();
+                });
+
+                $('#btn-build-test-data').click(function () {
+                    selectedFiles = [];
+                    renderFileList();
+                    $modal.show();
+                });
+
+                $('#btn-build-cancel').click(closeModal);
+                $('#build-test-data-overlay').click(closeModal);
+
+                $('#btn-choose-files').click(function () {
+                    $('#build-files-input').val('').trigger('click');
+                });
+
+                $('#btn-choose-folder').click(function () {
+                    $('#build-folder-input').val('').trigger('click');
+                });
+
+                $('#build-files-input').change(function () { setFiles(fromFileList(this.files)); });
+                $('#build-folder-input').change(function () { setFiles(fromFileList(this.files)); });
+
+                var dragCounter = 0;
+                $dropZone.on('dragenter', function (e) {
+                    e.preventDefault();
+                    if (++dragCounter === 1) $dropZone.addClass('drag-over');
+                }).on('dragleave', function () {
+                    if (--dragCounter <= 0) {
+                        dragCounter = 0;
+                        $dropZone.removeClass('drag-over');
+                    }
+                }).on('dragover', function (e) {
+                    e.preventDefault();
+                }).on('drop', function (e) {
+                    e.preventDefault();
+                    dragCounter = 0;
+                    $dropZone.removeClass('drag-over');
+                    handleDropped(e.originalEvent.dataTransfer);
+                });
+
+                $buildBtn.click(function () {
+                    if (!selectedFiles.length) return;
+
+                    var $btn = $(this);
+                    $btn.prop('disabled', true);
+
+                    var zip = new JSZip();
+                    var total = selectedFiles.length;
+                    selectedFiles.forEach(function (entry, i) {
+                        zip.file(entry.path, entry.file);
+                        $btn.text({{ _('Adding files...')|htmltojs }} + ' ' + (i + 1) + '/' + total);
+                    });
+
+                    zip.generateAsync(
+                        {type: 'blob', compression: 'DEFLATE', compressionOptions: {level: 9}},
+                        function (meta) {
+                            $btn.text({{ _('Compressing...')|htmltojs }} + ' ' + Math.round(meta.percent) + '%');
+                        }
+                    ).then(function (blob) {
+                        var zipName = 'tests.zip';
+                        var zipFile = new File([blob], zipName, {type: 'application/zip'});
+
+                        if (typeof DataTransfer === 'undefined') {
+                            alert({{ _('Automatic zipping is not supported in this browser. Please upload a ZIP file manually.')|htmltojs }});
+                            return;
+                        }
+                        var dt = new DataTransfer();
+                        dt.items.add(zipFile);
+                        $file_test[0].files = dt.files;
+                        $file_test.trigger('change');
+                        closeModal();
+                    }).catch(function (err) {
+                        console.error(err);
+                        alert({{ _('Failed to create ZIP file')|htmltojs }});
+                    }).finally(function () {
+                        $btn.prop('disabled', false).text({{ _('Build & Upload ZIP')|htmltojs }});
+                    });
+                });
+            })();
+
             $('form').dirty('setAsClean');
         }).change();
     </script>
@@ -671,19 +872,121 @@
             padding-bottom: 1em;
             background: #e99;
         }
+
+        .zip-submit-full {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
+        }
+
+        #build-test-data-modal {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #build-test-data-overlay {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        #build-test-data-dialog {
+            position: relative;
+            background: var(--body-bg, #fff);
+            color: var(--body-fg, #333);
+            border-radius: 6px;
+            padding: 1.5em;
+            width: 500px;
+            max-width: 90vw;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.35);
+            z-index: 1;
+        }
+
+        #build-test-data-dialog h3 {
+            margin: 0 0 0.75em;
+        }
+
+        .build-actions {
+            display: flex;
+            gap: 0.5em;
+            margin-bottom: 1em;
+        }
+
+        #build-test-data-count {
+            margin: 0 0 0.4em;
+            font-size: 0.9em;
+            color: var(--body-fg, #555);
+        }
+
+        #build-test-data-file-list {
+            overflow-y: auto;
+            max-height: 240px;
+            margin: 0 0 1em;
+            padding: 0.4em 0.4em 0.4em 1.8em;
+            font-size: 0.82em;
+            font-family: monospace;
+            background: var(--input-bg, #f5f5f5);
+            border: 1px solid var(--border-color, #ccc);
+            border-radius: 4px;
+            list-style: disc;
+        }
+
+        #build-test-data-file-list li.build-more-label {
+            color: var(--body-fg, #888);
+            list-style: none;
+        }
+
+        #build-drop-zone {
+            border: 2px dashed var(--border-color, #ccc);
+            border-radius: 4px;
+            padding: 1.2em;
+            text-align: center;
+            color: var(--body-fg, #888);
+            margin-bottom: 0.75em;
+            cursor: default;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
+        }
+
+        #build-drop-zone.drag-over {
+            background: rgba(0, 120, 255, 0.08);
+            border-color: #0078ff;
+            color: #0078ff;
+        }
+
+        #build-drop-zone i {
+            font-size: 1.4em;
+            display: block;
+            margin-bottom: 0.25em;
+        }
+
+        .build-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5em;
+            margin-top: auto;
+        }
     </style>
 {% endblock %}
 
 {% block header %}
-    {% if problem.is_organization_private %}
+    {% if problem.is_organization_private and problem.organization %}
         <span class="organization-tags">
-            {% for org in problem.organizations.all() %}
-                <span class="organization-tag">
-                    <a href="{{ org.get_absolute_url() }}">
-                        <i class="fa fa-lock"></i> {{ org.name }}
-                    </a>
-                </span>
-            {% endfor %}
+            <span class="organization-tag">
+                <a href="{{ problem.organization.get_absolute_url() }}">
+                    <i class="fa fa-lock"></i> {{ problem.organization.name }}
+                </a>
+            </span>
         </span>
     {% endif %}
     {% if data_form.instance.has_yml() %}
@@ -698,6 +1001,19 @@
         <ul class="errorlist">
             <li>{{ data_form.instance.feedback }}</li>
         </ul>
+    {% endif %}
+    {% if storage_exceeded %}
+        <div class="alert alert-danger">
+            <strong>{{ _('Storage limit exceeded!') }}</strong>
+            {{ _('This organization has reached its storage quota. Please delete some test data before uploading more.') }}
+            {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+        </div>
+    {% elif storage_warning %}
+        <div class="alert alert-warning">
+            {{ _('You are approaching the storage limit') }} ({{ current_storage|filesizeformat }} / {{ max_storage|filesizeformat }}).
+            {{ _('You will not be able to upload test if the limit is exceeded.') }}
+            {% if quota_warning_suffix %}{{ quota_warning_suffix|safe }}{% endif %}
+        </div>
     {% endif %}
     <form action="" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
@@ -725,7 +1041,9 @@
                 <th>{{ _('Input file') }}</th>
                 <th>{{ _('Output file') }}</th>
                 <th>{{ _('Points') }}</th>
+                {% if request.user.is_staff %}
                 <th>{{ _('Pretest?') }}</th>
+                {% endif %}
                 <!-- <th class="generator-args">{{ _('Generator args') }}</th> -->
                 {% if cases_formset.can_delete %}
                     <th>{{ _('Delete?') }}
@@ -758,8 +1076,10 @@
                                   form['output_file'].value() in valid_files) %} class="bad-file"{% endif %}>
                         {{ form.output_file.errors }}{{ form.output_file }}
                     </td>
-                    <td>{{ form.points.errors }}{{ form.points }}</td>
-                    <td>{{ form.is_pretest.errors }}{{ form.is_pretest }}</td>
+                    <td>{{ form.points.errors }}{{ form.points }}{% if not request.user.is_staff %}{{ form.is_pretest.as_hidden() }}{% endif %}</td>
+                    {% if request.user.is_staff %}
+                        <td>{{ form.is_pretest.errors }}{{ form.is_pretest }}</td>
+                    {% endif %}
                     <!-- <td class="generator-args">{{ form.generator_args.errors }}{{ form.generator_args }}
                         <a href="javascript:void(0)" class="edit-generator-args">
                             <i class="fa fa-pencil"></i>
@@ -773,8 +1093,35 @@
             {% endfor %}
             </tbody>
         </table>
-        <input type="submit" value="{{ _('Apply!') }}" class="button" id="submit-button">
+        <input type="submit" value="{{ _('Save') }}" class="button" id="submit-button">
         <a id="add-case-row" href="#" style="display: None;"><i class="fa fa-plus"></i> {{ _('Add new case') }}</a>
     </form>
     <div style="display: none" class="generator-args-editor"><textarea></textarea><a class="button">{{ _('Save') }}</a></div>
+
+    <div id="build-test-data-modal" style="display: none;">
+        <div id="build-test-data-overlay"></div>
+        <div id="build-test-data-dialog">
+            <h3>{{ _('Build Test Data') }}</h3>
+            <div class="build-actions">
+                <button type="button" id="btn-choose-files" class="button">
+                    <i class="fa fa-file-o"></i> {{ _('Choose Files') }}
+                </button>
+                <button type="button" id="btn-choose-folder" class="button">
+                    <i class="fa fa-folder-open-o"></i> {{ _('Choose Folder') }}
+                </button>
+            </div>
+            <div id="build-drop-zone">
+                <i class="fa fa-cloud-upload"></i>
+                <span>{{ _('Drop files or folder here') }}</span>
+            </div>
+            <p id="build-test-data-count">{{ _('No files selected') }}</p>
+            <ul id="build-test-data-file-list"></ul>
+            <div class="build-footer">
+                <button type="button" id="btn-build-cancel" class="button">{{ _('Cancel') }}</button>
+                <button type="button" id="btn-build-upload" class="button" disabled>{{ _('Build & Upload ZIP') }}</button>
+            </div>
+            <input type="file" id="build-files-input" multiple accept=".in,.inp,.out,.ok,.ans,.a,.txt" style="display: none;">
+            <input type="file" id="build-folder-input" style="display: none;">
+        </div>
+    </div>
 {% endblock %}

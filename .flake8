@@ -1,6 +1,6 @@
 [flake8]
 max-line-length = 120
-application-import-names = dmoj,judge,django_ace,martor
+application-import-names = dmoj,judge,urlshortener,django_ace,martor
 import-order-style = pycharm
 enable-extensions = G
 ignore =
@@ -26,3 +26,4 @@ exclude =
     # is actually a fragment to be included by settings.py
     ./.ci.settings.py,
     fc_*
+    _mytempfile/

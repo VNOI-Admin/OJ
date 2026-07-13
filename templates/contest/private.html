@@ -5,16 +5,14 @@
         <p><i>{{ _('This contest is private to specific users.') }}</i></p>
     {% endif %}
 
-    {% if error.is_organization_private %}
+    {% if error.is_organization_private and error.org %}
         {% if error.is_private %}
-            <p>{{ _('Additionally, only the following organizations may access this contest:') }}</p>
+            <p>{{ _('Additionally, only the following organization may access this contest:') }}</p>
         {% else %}
-            <p>{{ _('Only the following organizations may access this contest:') }}</p>
+            <p>{{ _('Only the following organization may access this contest:') }}</p>
         {% endif %}
         <ul>
-            {% for org in error.orgs %}
-                <li><a href="{{ org.get_absolute_url() }}">{{ org.name }}</a></li>
-            {% endfor %}
+            <li><a href="{{ error.org.get_absolute_url() }}">{{ error.org.name }}</a></li>
         </ul>
     {% endif %}
 {% endblock %}
