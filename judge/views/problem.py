@@ -29,7 +29,7 @@ from reversion import revisions
 from judge.comments import CommentedDetailView
 from judge.forms import LanguageLimitFormSet, ProblemCloneForm, ProblemEditForm, ProblemEditTypeGroupForm, \
     ProblemImportPolygonForm, ProblemImportPolygonStatementFormSet, ProblemSubmitForm, ProposeProblemSolutionFormSet
-from judge.models import Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
+from judge.models import Comment, Contest, ContestSubmission, Judge, Language, Problem, ProblemGroup, \
     ProblemTranslation, ProblemType, RuntimeVersion, Solution, Submission, SubmissionSource
 from judge.tasks import on_new_problem
 from judge.template_context import misc_config
@@ -180,10 +180,13 @@ class ProblemComments(ProblemMixin, CommentedDetailView):
             context['clarifications'] = clarifications.order_by('-date')
 
         queryset = context['comment_list']
-        paginator = DiggPaginator(queryset.filter(parent=None), self.comments_per_page,
+        root_tree_ids = Comment.objects.filter(
+            hidden=False, page=self.get_comment_page(), parent=None,
+        ).values_list('tree_id', flat=True)
+        paginator = DiggPaginator(root_tree_ids, self.comments_per_page,
                                   body=6, padding=2, orphans=5)
         page = paginator.get_page(self.request.GET.get('page'))
-        context['comment_list'] = queryset.filter(tree_id__in=[node.tree_id for node in page.object_list])
+        context['comment_list'] = queryset.filter(tree_id__in=list(page.object_list))
         context['comments_page_obj'] = page
         context['page_prefix'] = '?page='
         context['first_page_href'] = '?page=1'
