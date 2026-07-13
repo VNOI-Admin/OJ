@@ -19,15 +19,6 @@
     {% include "organization/list-tabs.html" %}
 {% endblock %}
 
-{% block body %}
-    <div class="search-container">
-        <form method="get" class="search-form">
-            <input type="text" name="search" class="search-input" placeholder="{{ _('Search organizations...') }}"
-                   value="{{ request.GET.search }}">
-            <button type="submit" class="search-submit"><i class="fa fa-search"></i></button>
-        </form>
-    </div>
-
 {% macro org_table(name, queryset) %}
     <h4>{{ name }}</h4>
     <table class="organization-table table striped">
@@ -51,6 +42,13 @@
 {% endmacro %}
 
 {% block body %}
+    <div class="search-container">
+        <form method="get" class="search-form">
+            <input type="text" name="search" class="search-input" placeholder="{{ _('Search organizations...') }}"
+                   value="{{ request.GET.search }}">
+            <button type="submit" class="search-submit"><i class="fa fa-search"></i></button>
+        </form>
+    </div>
     <div class="content-description">
         {% if request.user.is_authenticated %}
             {% with orgs=request.profile.organizations.all() %}
