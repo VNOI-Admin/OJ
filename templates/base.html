@@ -405,6 +405,13 @@
         {% if misc_config.top_notification %}
             {{ render_django(misc_config.top_notification) }}
         {% endif %}
+        {% if request.user.is_authenticated and UNREAD_NOTIFICATION_COUNT %}
+            <div class="alert alert-warning unread-notification-banner">
+                <i class="fa fa-bell" style="color:#e6a817;"></i>
+                <span>{{ _('You have unread notifications.') }}</span>
+                <a href="{{ url('notification_list') }}">{{ _('View all') }}</a>
+            </div>
+        {% endif %}
         {% block title_row %}
             <h2 style="display:inline">
                 {% block content_title %}
