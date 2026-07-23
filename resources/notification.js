@@ -117,4 +117,11 @@ $(function () {
         e.stopPropagation();
         markAllRead();
     });
+
+    $(document).on('click', '.banner-open-notifications', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        $li.addClass('open');
+        loadPanel();
+    });
 });

@@ -409,7 +409,7 @@
             <div class="alert alert-warning unread-notification-banner">
                 <i class="fa fa-bell" style="color:#e6a817;"></i>
                 <span>{{ _('You have unread notifications.') }}</span>
-                <a href="{{ url('notification_list') }}">{{ _('View all') }}</a>
+                <a href="#" class="banner-open-notifications">{{ _('View') }}</a>
             </div>
         {% endif %}
         {% block title_row %}

@@ -341,6 +341,13 @@ ul.pagination {
     border-color: $color_warning50;
 }
 
+.unread-notification-banner {
+    position: sticky;
+    top: 52px;
+    z-index: 499;
+    text-align: center;
+}
+
 .alert-danger {
     color: $color_danger100;
     background-color: $color_danger25;
