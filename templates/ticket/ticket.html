@@ -158,7 +158,7 @@
                 ace.edit('martor-body').setValue(message);
             }
 
-            const AUTOFILL_OPTIONS = {{ autofill_replies|default("[]") }}
+            const AUTOFILL_OPTIONS = {{ autofill_replies|default("[]")|safe }}
 
             var selectedIdx = null;
 
