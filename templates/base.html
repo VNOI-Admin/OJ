@@ -302,17 +302,42 @@
                     </ul>
                 </li>
             </ul>
-            <a href=
-                {% if request.resolver_match.view_name == "problem_detail" and problem %}
-                    "{{ url('new_problem_ticket', problem.code) }}"
-                {% else %}
-                    "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
-                {% endif %}
-            style="margin-right: 5px;">
-                <span title="{{ _('Report issue') }}">
-                    <i class="fa fa-exclamation-triangle" style="color: yellow;"></i>
-                </span>
-            </a>
+            <ul style="margin-right: 5px;">
+                <li>
+                    <a href=
+                        {% if request.resolver_match.view_name == "problem_detail" and problem %}
+                            "{{ url('new_problem_ticket', problem.code) }}"
+                        {% else %}
+                            "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
+                        {% endif %}
+                    style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 5px 12px; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap;">
+                        <i class="fa fa-exclamation-triangle" style="color: #f5a623;"></i>
+                        {{ _('Report issue') }}
+                    </a>
+                    <ul class="settings-popup" style="right: 0; left: auto; min-width: 160px;">
+                        <li onclick="window.location=
+                                {% if request.resolver_match.view_name == "problem_detail" and problem %}
+                                    '{{ url('new_problem_ticket', problem.code) }}';"
+                                {% else %}
+                                    '/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}';"
+                                {% endif %}
+                            style="cursor: pointer;">
+                            <div class="nav-settings-row">
+                                <span class="nav-settings-lbl">
+                                    <i class="fa fa-exclamation-triangle" style="color: #f5a623;"></i> {{ _('Report issue') }}
+                                </span>
+                            </div>
+                        </li>
+                        <li onclick="window.location='{{ url('ticket_list') }}';" style="cursor: pointer;">
+                            <div class="nav-settings-row">
+                                <span class="nav-settings-lbl">
+                                    <i class="fa fa-list"></i> {{ _('View tickets') }}
+                                </span>
+                            </div>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
             {% if request.user.is_authenticated %}
                 <ul id="notification-nav">
                     <li>

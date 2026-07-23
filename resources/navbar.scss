@@ -306,6 +306,11 @@ nav .settings-popup {
     margin-top: 2px;
 }
 
+nav .settings-popup li:hover {
+    background: $color_primary10;
+    border-radius: 8px;
+}
+
 .nav-settings-row {
     display: flex;
     align-items: center;
