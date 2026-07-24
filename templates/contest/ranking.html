@@ -669,6 +669,10 @@ $('#show-personal-info-checkbox').click(function () {
                         toAdd.forEach(function (el) { frag.appendChild(el); });
                         feed.appendChild(frag);
                     }
+                    while (feed.children.length > 5) {
+                        var removed = feed.removeChild(feed.firstChild);
+                        delete rows[removed.id.replace('sf-row-', '')];
+                    }
                     var next = hasUnfinished ? 1000 : 5000;
                     if (next !== interval) interval = next;
                     timer = setTimeout(poll, interval);

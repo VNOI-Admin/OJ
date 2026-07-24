@@ -829,7 +829,7 @@ class ContestSubmissionFeed(ContestMixin, DetailView):
                 'points': s.contest.points,
                 'date': s.date.isoformat(),
             }
-            for s in qs[:5]
+            for s in reversed(list(qs[:5]))
         ]
         return JsonResponse(data, safe=False)
 
