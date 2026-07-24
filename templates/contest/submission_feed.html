@@ -1,0 +1,250 @@
+{% extends "common-content.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'live' %}
+    {% include "contest/contest-tabs.html" %}
+{% endblock %}
+
+{% block body %}
+{% if not can_see_feed %}
+    <p>{{ _('You are not allowed to view submissions for this contest.') }}</p>
+{% else %}
+<style>
+#sub-feed {
+    font-family: sans-serif;
+    max-width: 480px;
+}
+.sf-row {
+    display: flex;
+    align-items: center;
+    background: #3a5f8a;
+    color: #fff;
+    margin-bottom: 3px;
+    border-radius: 3px;
+    padding: 6px 10px;
+    gap: 10px;
+    min-height: 38px;
+}
+.sf-id {
+    min-width: 36px;
+    text-align: center;
+    background: rgba(0,0,0,.25);
+    border-radius: 3px;
+    font-size: .85em;
+    padding: 2px 6px;
+    flex-shrink: 0;
+}
+.sf-id.sf-id-pending {
+    background: #e07840;
+}
+.sf-user {
+    flex: 1;
+    font-size: 1em;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+.sf-user a, .sf-user span {
+    color: #fff !important;
+    text-decoration: none;
+}
+.sf-pts {
+    min-width: 24px;
+    text-align: right;
+    font-size: .9em;
+    flex-shrink: 0;
+}
+.sf-prob {
+    min-width: 30px;
+    height: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: 1em;
+    flex-shrink: 0;
+    color: #fff;
+}
+.sf-result {
+    min-width: 36px;
+    height: 26px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 3px;
+    font-weight: bold;
+    font-size: .8em;
+    flex-shrink: 0;
+    background: #555;
+    color: #fff;
+}
+.sf-result.AC  { background: #2e7d32; }
+.sf-result._AC { background: #558b2f; }
+.sf-result.WA  { background: #c62828; }
+.sf-result.TLE { background: #e65100; }
+.sf-result.MLE { background: #e65100; }
+.sf-result.OLE { background: #e65100; }
+.sf-result.RTE { background: #ad1457; }
+.sf-result.IR  { background: #ad1457; }
+.sf-result.CE  { background: #37474f; }
+.sf-result.IE  { background: #37474f; }
+.sf-result.SC  { background: #37474f; }
+.sf-result.AB  { background: #37474f; }
+.sf-result.pending { background: transparent; border: 2px solid rgba(255,255,255,.4); animation: sf-pulse 1s ease-in-out infinite; }
+@keyframes sf-pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+.sf-time {
+    min-width: 52px;
+    text-align: right;
+    font-size: .78em;
+    color: rgba(255,255,255,.6);
+    flex-shrink: 0;
+}
+#feed-status { font-size: .8em; color: #888; margin-bottom: 6px; }
+</style>
+
+<div id="feed-status"></div>
+<div id="sub-feed"></div>
+
+<script>
+(function () {
+    var feedUrl = "{{ url('contest_submission_feed', contest.key) }}";
+    var rows = {};   /* id → {el, date} */
+    var order = [];  /* submission ids newest-first */
+    var interval = 5000;
+    var timer = null;
+    var DONE = { D: 1, CE: 1, IE: 1, AB: 1 };
+
+    var PROB_COLORS = [
+        '#e91e63','#9c27b0','#3f51b5','#1976d2',
+        '#00838f','#2e7d32','#f57f17','#795548',
+    ];
+    function probColor(letter) {
+        return PROB_COLORS[letter.charCodeAt(0) % PROB_COLORS.length];
+    }
+
+    function resultClass(status, result) {
+        if (status === 'IE' || status === 'CE') return status;
+        if (result === 'PAC') return '_AC';
+        return result || 'pending';
+    }
+
+    var ABBREV = { TLE: 'TL', RTE: 'RE', MLE: 'ML', OLE: 'OL' };
+    function resultLabel(status, result) {
+        if (!result) return '';
+        return ABBREV[result] || result;
+    }
+
+    function relativeTime(iso) {
+        var s = Math.floor((Date.now() - new Date(iso)) / 1000);
+        if (s < 60)   return s + 's ago';
+        if (s < 3600) return Math.floor(s / 60) + 'm ago';
+        return Math.floor(s / 3600) + 'h ago';
+    }
+
+    function makeEl(s) {
+        var letter = s.problem.split('_').pop();
+        var rc = resultClass(s.status, s.result);
+        var isPending = !DONE[s.status];
+        var div = document.createElement('div');
+        div.className = 'sf-row';
+        div.id = 'sf-row-' + s.id;
+
+        var idEl = document.createElement('div');
+        idEl.className = 'sf-id' + (isPending ? ' sf-id-pending' : '');
+        idEl.textContent = s.id;
+
+        var userEl = document.createElement('div');
+        userEl.className = 'sf-user';
+        userEl.innerHTML = s.user_html;
+
+        var ptsEl = document.createElement('div');
+        ptsEl.className = 'sf-pts';
+        ptsEl.textContent = s.points != null ? s.points : '—';
+
+        var probEl = document.createElement('div');
+        probEl.className = 'sf-prob';
+        probEl.style.background = probColor(letter);
+        probEl.textContent = letter;
+
+        var resEl = document.createElement('div');
+        resEl.className = 'sf-result ' + rc;
+        resEl.textContent = resultLabel(s.status, s.result);
+
+        var timeEl = document.createElement('div');
+        timeEl.className = 'sf-time';
+        timeEl.textContent = relativeTime(s.date);
+
+        div.appendChild(idEl);
+        div.appendChild(userEl);
+        div.appendChild(ptsEl);
+        div.appendChild(probEl);
+        div.appendChild(resEl);
+        div.appendChild(timeEl);
+        return div;
+    }
+
+    function updateEl(s) {
+        var entry = rows[s.id];
+        if (!entry) return;
+        var div = entry.el;
+        var rc = resultClass(s.status, s.result);
+        var isPending = !DONE[s.status];
+        div.querySelector('.sf-id').className = 'sf-id' + (isPending ? ' sf-id-pending' : '');
+        div.querySelector('.sf-pts').textContent = s.points != null ? s.points : '—';
+        var resEl = div.querySelector('.sf-result');
+        resEl.className = 'sf-result ' + rc;
+        resEl.textContent = resultLabel(s.status, s.result);
+    }
+
+    function refreshTimes() {
+        order.forEach(function (id) {
+            var entry = rows[id];
+            if (entry) entry.el.querySelector('.sf-time').textContent = relativeTime(entry.date);
+        });
+    }
+    setInterval(refreshTimes, 30000);
+
+    function poll() {
+        fetch(feedUrl)
+            .then(function (r) { return r.json(); })
+            .then(function (data) {
+                var feed = document.getElementById('sub-feed');
+                var hasUnfinished = false;
+                var toAdd = [];
+
+                data.forEach(function (s) {
+                    if (!DONE[s.status]) hasUnfinished = true;
+                    if (rows[s.id]) {
+                        updateEl(s);
+                    } else {
+                        var el = makeEl(s);
+                        rows[s.id] = { el: el, date: s.date };
+                        order.unshift(s.id);
+                        toAdd.push(el);
+                    }
+                });
+
+                toAdd.reverse().forEach(function (el) {
+                    feed.insertBefore(el, feed.firstChild);
+                });
+
+                document.getElementById('feed-status').textContent =
+                    hasUnfinished ? "{{ _('Judging in progress…') }}" : "{{ _('Up to date') }}";
+
+                var next = hasUnfinished ? 1000 : 5000;
+                if (next !== interval) interval = next;
+                timer = setTimeout(poll, interval);
+            })
+            .catch(function () {
+                timer = setTimeout(poll, interval);
+            });
+    }
+
+    poll();
+})();
+</script>
+{% endif %}
+{% endblock %}

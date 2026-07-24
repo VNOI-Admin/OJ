@@ -37,6 +37,7 @@ from reversion import revisions
 
 
 from judge.comments import CommentedDetailView
+from judge.jinja2.reference import link_user
 from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
@@ -55,8 +56,8 @@ from judge.utils.views import SingleObjectFormView, TitleMixin, \
 
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
-           'ContestParticipationDisqualify',
-           'ContestProblemMakePublic']
+           'ContestParticipationDisqualify', 'ContestProblemMakePublic',
+           'ContestSubmissionFeed', 'ContestSubmissionFeedPage']
 
 
 def _find_contest(request, key, private_check=True):
@@ -802,6 +803,46 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
         if not self.can_edit:
             raise Http404()
         return super().dispatch(request, *args, **kwargs)
+
+
+class ContestSubmissionFeed(ContestMixin, DetailView):
+    def get(self, request, *args, **kwargs):
+        contest = self.get_object()
+        if not contest.can_see_full_scoreboard(request.user):
+            return HttpResponseForbidden()
+        cutoff = timezone.now() - timedelta(minutes=10)
+        qs = (
+            Submission.objects.filter(contest_object=contest, date__gte=cutoff)
+            .select_related('user__user', 'user__display_badge', 'problem', 'contest')
+            .order_by('-id')
+        )
+        if contest.is_frozen:
+            qs = qs.filter(date__lt=contest.frozen_time)
+        data = [
+            {
+                'id': s.id,
+                'user_html': str(link_user(s.user)),
+                'problem': s.problem.code,
+                'status': s.status,
+                'result': s.result,
+                'points': s.contest.points,
+                'date': s.date.isoformat(),
+            }
+            for s in qs[:5]
+        ]
+        return JsonResponse(data, safe=False)
+
+
+class ContestSubmissionFeedPage(TitleMixin, ContestMixin, DetailView):
+    template_name = 'contest/submission_feed.html'
+
+    def get_title(self):
+        return _('%s — Live Submissions') % self.object.name
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['can_see_feed'] = self.object.can_see_full_scoreboard(self.request.user)
+        return context
 
 
 def base_contest_ranking_queryset(contest):

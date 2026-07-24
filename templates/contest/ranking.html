@@ -528,4 +528,162 @@ $('#show-personal-info-checkbox').click(function () {
         </tbody>
     </table>
     {% endif %}
+
+    {% if contest.can_see_full_scoreboard(request.user) %}
+    <style>
+    #sf-widget-panel {
+        position: fixed; bottom: 52px; right: 16px;
+        width: 420px; max-height: 60vh;
+        overflow-y: auto; z-index: 1000;
+        display: none;
+    }
+    #sf-widget-btn {
+        position: fixed; bottom: 16px; right: 16px;
+        z-index: 1001; cursor: pointer;
+        background: #3a5f8a; color: #fff;
+        border: none; border-radius: 4px;
+        padding: 6px 12px; font-size: .85em;
+    }
+    .sf-row {
+        display: flex; align-items: center;
+        background: #3a5f8a; color: #fff;
+        margin-bottom: 3px; border-radius: 3px;
+        padding: 6px 10px; gap: 10px; min-height: 38px;
+    }
+    .sf-id {
+        min-width: 36px; text-align: center;
+        background: rgba(0,0,0,.25); border-radius: 3px;
+        font-size: .85em; padding: 2px 6px; flex-shrink: 0;
+    }
+    .sf-id.sf-id-pending { background: #e07840; }
+    .sf-user { flex: 1; font-size: 1em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .sf-user a, .sf-user span { color: #fff !important; text-decoration: none; }
+    .sf-pts { min-width: 24px; text-align: right; font-size: .9em; flex-shrink: 0; }
+    .sf-prob {
+        min-width: 30px; height: 30px; display: flex;
+        align-items: center; justify-content: center;
+        border-radius: 3px; font-weight: bold; font-size: 1em;
+        flex-shrink: 0; color: #fff;
+    }
+    .sf-result {
+        min-width: 36px; height: 26px; display: flex;
+        align-items: center; justify-content: center;
+        border-radius: 3px; font-weight: bold; font-size: .8em;
+        flex-shrink: 0; background: #555; color: #fff;
+    }
+    .sf-result.AC  { background: #2e7d32; }
+    .sf-result._AC { background: #558b2f; }
+    .sf-result.WA  { background: #c62828; }
+    .sf-result.TLE { background: #e65100; }
+    .sf-result.MLE { background: #e65100; }
+    .sf-result.OLE { background: #e65100; }
+    .sf-result.RTE { background: #ad1457; }
+    .sf-result.IR  { background: #ad1457; }
+    .sf-result.CE  { background: #37474f; }
+    .sf-result.IE  { background: #37474f; }
+    .sf-result.SC  { background: #37474f; }
+    .sf-result.AB  { background: #37474f; }
+    .sf-result.pending { background: transparent; border: 2px solid rgba(255,255,255,.4); animation: sf-pulse 1s ease-in-out infinite; }
+    @keyframes sf-pulse { 0%,100%{opacity:.4} 50%{opacity:1} }
+    .sf-time { min-width: 52px; text-align: right; font-size: .78em; color: rgba(255,255,255,.6); flex-shrink: 0; }
+    </style>
+
+    <button id="sf-widget-btn">⚡ {{ _('Live') }}</button>
+    <div id="sf-widget-panel">
+        <div id="sf-widget-feed"></div>
+    </div>
+
+    <script>
+    (function () {
+        var feedUrl = "{{ url('contest_submission_feed', contest.key) }}";
+        var STORE_KEY = 'sf-widget-{{ contest.key }}';
+        var panel = document.getElementById('sf-widget-panel');
+        var btn = document.getElementById('sf-widget-btn');
+
+        function setVisible(v) {
+            panel.style.display = v ? 'block' : 'none';
+            btn.style.opacity = v ? '1' : '0.5';
+            localStorage.setItem(STORE_KEY, v ? '1' : '0');
+        }
+        btn.addEventListener('click', function () {
+            setVisible(panel.style.display === 'none');
+        });
+        setVisible(localStorage.getItem(STORE_KEY) === '1');
+
+        var rows = {}, order = [], interval = 5000, timer = null;
+        var DONE = { D: 1, CE: 1, IE: 1, AB: 1 };
+        var PROB_COLORS = [
+            '#e91e63','#9c27b0','#3f51b5','#1976d2',
+            '#00838f','#2e7d32','#f57f17','#795548',
+        ];
+        function probColor(l) { return PROB_COLORS[l.charCodeAt(0) % PROB_COLORS.length]; }
+        function resultClass(status, result) {
+            if (status === 'IE' || status === 'CE') return status;
+            if (result === 'PAC') return '_AC';
+            return result || 'pending';
+        }
+        var ABBREV = { TLE: 'TL', RTE: 'RE', MLE: 'ML', OLE: 'OL' };
+        function resultLabel(status, result) { return result ? (ABBREV[result] || result) : ''; }
+        function relativeTime(iso) {
+            var s = Math.floor((Date.now() - new Date(iso)) / 1000);
+            if (s < 60) return s + 's ago';
+            if (s < 3600) return Math.floor(s / 60) + 'm ago';
+            return Math.floor(s / 3600) + 'h ago';
+        }
+        function makeEl(s) {
+            var letter = s.problem.split('_').pop();
+            var rc = resultClass(s.status, s.result);
+            var isPending = !DONE[s.status];
+            var div = document.createElement('div');
+            div.className = 'sf-row'; div.id = 'sf-row-' + s.id; div.dataset.date = s.date;
+            div.innerHTML =
+                '<div class="sf-id' + (isPending ? ' sf-id-pending' : '') + '">' + s.id + '</div>' +
+                '<div class="sf-user">' + s.user_html + '</div>' +
+                '<div class="sf-pts">' + (s.points != null ? s.points : '—') + '</div>' +
+                '<div class="sf-prob" style="background:' + probColor(letter) + '">' + letter + '</div>' +
+                '<div class="sf-result ' + rc + '">' + resultLabel(s.status, s.result) + '</div>' +
+                '<div class="sf-time">' + relativeTime(s.date) + '</div>';
+            return div;
+        }
+        function updateEl(s) {
+            var div = document.getElementById('sf-row-' + s.id); if (!div) return;
+            var rc = resultClass(s.status, s.result);
+            div.querySelector('.sf-id').className = 'sf-id' + (!DONE[s.status] ? ' sf-id-pending' : '');
+            div.querySelector('.sf-pts').textContent = s.points != null ? s.points : '—';
+            var resEl = div.querySelector('.sf-result');
+            resEl.className = 'sf-result ' + rc;
+            resEl.textContent = resultLabel(s.status, s.result);
+        }
+        setInterval(function () {
+            order.forEach(function (id) {
+                var div = document.getElementById('sf-row-' + id);
+                if (div) div.querySelector('.sf-time').textContent = relativeTime(div.dataset.date);
+            });
+        }, 30000);
+        function poll() {
+            fetch(feedUrl)
+                .then(function (r) { return r.json(); })
+                .then(function (data) {
+                    var feed = document.getElementById('sf-widget-feed');
+                    var hasUnfinished = false, toAdd = [];
+                    data.forEach(function (s) {
+                        if (!DONE[s.status]) hasUnfinished = true;
+                        if (rows[s.id]) { updateEl(s); }
+                        else { rows[s.id] = true; order.unshift(s.id); toAdd.push(makeEl(s)); }
+                    });
+                    if (toAdd.length) {
+                        var frag = document.createDocumentFragment();
+                        toAdd.reverse().forEach(function (el) { frag.appendChild(el); });
+                        feed.insertBefore(frag, feed.firstChild);
+                    }
+                    var next = hasUnfinished ? 1000 : 5000;
+                    if (next !== interval) interval = next;
+                    timer = setTimeout(poll, interval);
+                })
+                .catch(function () { timer = setTimeout(poll, interval); });
+        }
+        poll();
+    })();
+    </script>
+    {% endif %}
 {% endblock %}
