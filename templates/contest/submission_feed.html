@@ -27,18 +27,6 @@
     gap: 10px;
     min-height: 38px;
 }
-.sf-id {
-    min-width: 36px;
-    text-align: center;
-    background: rgba(0,0,0,.25);
-    border-radius: 3px;
-    font-size: .85em;
-    padding: 2px 6px;
-    flex-shrink: 0;
-}
-.sf-id.sf-id-pending {
-    background: #e07840;
-}
 .sf-user {
     flex: 1;
     font-size: 1em;
@@ -133,8 +121,7 @@
 
     var ABBREV = { TLE: 'TL', RTE: 'RE', MLE: 'ML', OLE: 'OL' };
     function resultLabel(status, result) {
-        if (!result) return '';
-        return ABBREV[result] || result;
+        return result ? (ABBREV[result] || result) : '<i class="fa fa-spinner fa-pulse"></i>';
     }
 
     function relativeTime(iso) {
@@ -152,10 +139,6 @@
         div.className = 'sf-row';
         div.id = 'sf-row-' + s.id;
 
-        var idEl = document.createElement('div');
-        idEl.className = 'sf-id' + (isPending ? ' sf-id-pending' : '');
-        idEl.textContent = s.id;
-
         var userEl = document.createElement('div');
         userEl.className = 'sf-user';
         userEl.innerHTML = s.user_html;
@@ -171,13 +154,12 @@
 
         var resEl = document.createElement('div');
         resEl.className = 'sf-result ' + rc;
-        resEl.textContent = resultLabel(s.status, s.result);
+        resEl.innerHTML = resultLabel(s.status, s.result);
 
         var timeEl = document.createElement('div');
         timeEl.className = 'sf-time';
         timeEl.textContent = relativeTime(s.date);
 
-        div.appendChild(idEl);
         div.appendChild(userEl);
         div.appendChild(ptsEl);
         div.appendChild(probEl);
@@ -191,12 +173,10 @@
         if (!entry) return;
         var div = entry.el;
         var rc = resultClass(s.status, s.result);
-        var isPending = !DONE[s.status];
-        div.querySelector('.sf-id').className = 'sf-id' + (isPending ? ' sf-id-pending' : '');
         div.querySelector('.sf-pts').textContent = s.points != null ? s.points : '—';
         var resEl = div.querySelector('.sf-result');
         resEl.className = 'sf-result ' + rc;
-        resEl.textContent = resultLabel(s.status, s.result);
+        resEl.innerHTML = resultLabel(s.status, s.result);
     }
 
     function refreshTimes() {
@@ -205,7 +185,7 @@
             if (entry) entry.el.querySelector('.sf-time').textContent = relativeTime(entry.date);
         });
     }
-    setInterval(refreshTimes, 30000);
+    setInterval(refreshTimes, 1000);
 
     function poll() {
         fetch(feedUrl)
@@ -227,9 +207,7 @@
                     }
                 });
 
-                toAdd.reverse().forEach(function (el) {
-                    feed.insertBefore(el, feed.firstChild);
-                });
+                toAdd.forEach(function (el) { feed.appendChild(el); });
 
                 document.getElementById('feed-status').textContent =
                     hasUnfinished ? "{{ _('Judging in progress…') }}" : "{{ _('Up to date') }}";

@@ -550,12 +550,6 @@ $('#show-personal-info-checkbox').click(function () {
         margin-bottom: 3px; border-radius: 3px;
         padding: 6px 10px; gap: 10px; min-height: 38px;
     }
-    .sf-id {
-        min-width: 36px; text-align: center;
-        background: rgba(0,0,0,.25); border-radius: 3px;
-        font-size: .85em; padding: 2px 6px; flex-shrink: 0;
-    }
-    .sf-id.sf-id-pending { background: #e07840; }
     .sf-user { flex: 1; font-size: 1em; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     .sf-user a, .sf-user span { color: #fff !important; text-decoration: none; }
     .sf-pts { min-width: 24px; text-align: right; font-size: .9em; flex-shrink: 0; }
@@ -623,7 +617,7 @@ $('#show-personal-info-checkbox').click(function () {
             return result || 'pending';
         }
         var ABBREV = { TLE: 'TL', RTE: 'RE', MLE: 'ML', OLE: 'OL' };
-        function resultLabel(status, result) { return result ? (ABBREV[result] || result) : ''; }
+        function resultLabel(status, result) { return result ? (ABBREV[result] || result) : '<i class="fa fa-spinner fa-pulse"></i>'; }
         function relativeTime(iso) {
             var s = Math.floor((Date.now() - new Date(iso)) / 1000);
             if (s < 60) return s + 's ago';
@@ -637,7 +631,6 @@ $('#show-personal-info-checkbox').click(function () {
             var div = document.createElement('div');
             div.className = 'sf-row'; div.id = 'sf-row-' + s.id; div.dataset.date = s.date;
             div.innerHTML =
-                '<div class="sf-id' + (isPending ? ' sf-id-pending' : '') + '">' + s.id + '</div>' +
                 '<div class="sf-user">' + s.user_html + '</div>' +
                 '<div class="sf-pts">' + (s.points != null ? s.points : '—') + '</div>' +
                 '<div class="sf-prob" style="background:' + probColor(letter) + '">' + letter + '</div>' +
@@ -652,14 +645,14 @@ $('#show-personal-info-checkbox').click(function () {
             div.querySelector('.sf-pts').textContent = s.points != null ? s.points : '—';
             var resEl = div.querySelector('.sf-result');
             resEl.className = 'sf-result ' + rc;
-            resEl.textContent = resultLabel(s.status, s.result);
+            resEl.innerHTML = resultLabel(s.status, s.result);
         }
         setInterval(function () {
             order.forEach(function (id) {
                 var div = document.getElementById('sf-row-' + id);
                 if (div) div.querySelector('.sf-time').textContent = relativeTime(div.dataset.date);
             });
-        }, 30000);
+        }, 1000);
         function poll() {
             fetch(feedUrl)
                 .then(function (r) { return r.json(); })
@@ -673,8 +666,8 @@ $('#show-personal-info-checkbox').click(function () {
                     });
                     if (toAdd.length) {
                         var frag = document.createDocumentFragment();
-                        toAdd.reverse().forEach(function (el) { frag.appendChild(el); });
-                        feed.insertBefore(frag, feed.firstChild);
+                        toAdd.forEach(function (el) { frag.appendChild(el); });
+                        feed.appendChild(frag);
                     }
                     var next = hasUnfinished ? 1000 : 5000;
                     if (next !== interval) interval = next;
