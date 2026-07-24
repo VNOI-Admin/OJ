@@ -541,11 +541,6 @@ $('#show-personal-info-checkbox').click(function () {
     #sf-layout-wrapper { display: flex; gap: 14px; align-items: flex-start; }
     #ranking-container { flex: 1; min-width: 0; }
     #sf-widget-panel { display: none; width: 380px; flex-shrink: 0; overflow-y: auto; }
-    /* float mode */
-    body.sf-float #sf-widget-panel {
-        position: fixed; bottom: 52px; right: 16px;
-        max-height: 60vh; z-index: 1000;
-    }
     /* side mode: squeeze username column */
     body.sf-side .user-name { max-width: 140px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     #sf-widget-btn {
@@ -601,22 +596,24 @@ $('#show-personal-info-checkbox').click(function () {
         var STORE_KEY = 'sf-widget-{{ contest.key }}';
         var panel = document.getElementById('sf-widget-panel');
         var btn = document.getElementById('sf-widget-btn');
-        var mode = localStorage.getItem(STORE_KEY) || 'off';
+        var VALID = { 'off': 1, 'float': 1, 'side': 1 };
+        var mode = VALID[localStorage.getItem(STORE_KEY)] ? localStorage.getItem(STORE_KEY) : 'off';
         var NEXT = { 'off': 'float', 'float': 'side', 'side': 'off' };
-        var LABELS = { 'off': '⚡ {{ _("Live") }}', 'float': '⚡ {{ _("Float") }}', 'side': '⚡ {{ _("Side") }}' };
+        var LABELS = { 'off': '⚡ Live', 'float': '⚡ Float', 'side': '⚡ Side' };
 
         function applyMode(m) {
             mode = m;
             localStorage.setItem(STORE_KEY, m);
-            document.body.classList.remove('sf-float', 'sf-side');
-            panel.style.display = 'none';
+            // reset
+            document.body.classList.remove('sf-side');
+            panel.style.cssText = 'display:none;width:380px;flex-shrink:0;overflow-y:auto;';
             btn.style.opacity = '0.5';
             if (m === 'float') {
-                panel.style.display = 'block';
-                document.body.classList.add('sf-float');
+                panel.style.cssText = 'display:block;width:380px;overflow-y:auto;' +
+                    'position:fixed;bottom:52px;right:16px;max-height:60vh;z-index:1000;';
                 btn.style.opacity = '1';
             } else if (m === 'side') {
-                panel.style.display = 'block';
+                panel.style.cssText = 'display:block;width:380px;flex-shrink:0;overflow-y:auto;max-height:80vh;';
                 document.body.classList.add('sf-side');
                 btn.style.opacity = '1';
             }
