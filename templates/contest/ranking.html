@@ -478,7 +478,14 @@ $('#show-personal-info-checkbox').click(function () {
 {% endblock %}
 
 {% block users_table %}
-    <div id="ranking-container"></div>
+    <div id="sf-layout-wrapper">
+        <div id="ranking-container"></div>
+        {% if contest.can_see_full_scoreboard(request.user) %}
+        <div id="sf-widget-panel">
+            <div id="sf-widget-feed"></div>
+        </div>
+        {% endif %}
+    </div>
 {% endblock %}
 
 {% block body %}
@@ -531,12 +538,16 @@ $('#show-personal-info-checkbox').click(function () {
 
     {% if contest.can_see_full_scoreboard(request.user) %}
     <style>
-    #sf-widget-panel {
+    #sf-layout-wrapper { display: flex; gap: 14px; align-items: flex-start; }
+    #ranking-container { flex: 1; min-width: 0; }
+    #sf-widget-panel { display: none; width: 380px; flex-shrink: 0; overflow-y: auto; }
+    /* float mode */
+    body.sf-float #sf-widget-panel {
         position: fixed; bottom: 52px; right: 16px;
-        width: 420px; max-height: 60vh;
-        overflow-y: auto; z-index: 1000;
-        display: none;
+        max-height: 60vh; z-index: 1000;
     }
+    /* side mode: squeeze username column */
+    body.sf-side .user-name { max-width: 140px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
     #sf-widget-btn {
         position: fixed; bottom: 16px; right: 16px;
         z-index: 1001; cursor: pointer;
@@ -583,9 +594,6 @@ $('#show-personal-info-checkbox').click(function () {
     </style>
 
     <button id="sf-widget-btn">⚡ {{ _('Live') }}</button>
-    <div id="sf-widget-panel">
-        <div id="sf-widget-feed"></div>
-    </div>
 
     <script>
     (function () {
@@ -593,16 +601,29 @@ $('#show-personal-info-checkbox').click(function () {
         var STORE_KEY = 'sf-widget-{{ contest.key }}';
         var panel = document.getElementById('sf-widget-panel');
         var btn = document.getElementById('sf-widget-btn');
+        var mode = localStorage.getItem(STORE_KEY) || 'off';
+        var NEXT = { 'off': 'float', 'float': 'side', 'side': 'off' };
+        var LABELS = { 'off': '⚡ {{ _("Live") }}', 'float': '⚡ {{ _("Float") }}', 'side': '⚡ {{ _("Side") }}' };
 
-        function setVisible(v) {
-            panel.style.display = v ? 'block' : 'none';
-            btn.style.opacity = v ? '1' : '0.5';
-            localStorage.setItem(STORE_KEY, v ? '1' : '0');
+        function applyMode(m) {
+            mode = m;
+            localStorage.setItem(STORE_KEY, m);
+            document.body.classList.remove('sf-float', 'sf-side');
+            panel.style.display = 'none';
+            btn.style.opacity = '0.5';
+            if (m === 'float') {
+                panel.style.display = 'block';
+                document.body.classList.add('sf-float');
+                btn.style.opacity = '1';
+            } else if (m === 'side') {
+                panel.style.display = 'block';
+                document.body.classList.add('sf-side');
+                btn.style.opacity = '1';
+            }
+            btn.textContent = LABELS[m];
         }
-        btn.addEventListener('click', function () {
-            setVisible(panel.style.display === 'none');
-        });
-        setVisible(localStorage.getItem(STORE_KEY) === '1');
+        btn.addEventListener('click', function () { applyMode(NEXT[mode] || 'off'); });
+        applyMode(mode);
 
         var rows = {}, order = [], interval = 5000, timer = null;
         var DONE = { D: 1, CE: 1, IE: 1, AB: 1 };
@@ -648,9 +669,16 @@ $('#show-personal-info-checkbox').click(function () {
             resEl.innerHTML = resultLabel(s.status, s.result);
         }
         setInterval(function () {
+            var cutoff = Date.now() - 4 * 60 * 1000;
             order.forEach(function (id) {
                 var div = document.getElementById('sf-row-' + id);
-                if (div) div.querySelector('.sf-time').textContent = relativeTime(div.dataset.date);
+                if (!div) return;
+                if (new Date(div.dataset.date) < cutoff) {
+                    div.parentNode && div.parentNode.removeChild(div);
+                    delete rows[id];
+                } else {
+                    div.querySelector('.sf-time').textContent = relativeTime(div.dataset.date);
+                }
             });
         }, 1000);
         function poll() {
