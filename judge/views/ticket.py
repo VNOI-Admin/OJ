@@ -61,7 +61,7 @@ class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
     template_name = 'ticket/new.html'
 
     def get_assignees(self):
-        return []
+        return [Profile.objects.get(user__username='admin')]
 
     def get_form_kwargs(self):
         kwargs = super(NewTicketView, self).get_form_kwargs()
