@@ -627,9 +627,10 @@ $('#show-personal-info-checkbox').click(function () {
         function makeEl(s) {
             var letter = s.problem.split('_').pop();
             var rc = resultClass(s.status, s.result);
-            var isPending = !DONE[s.status];
             var div = document.createElement('div');
             div.className = 'sf-row'; div.id = 'sf-row-' + s.id; div.dataset.date = s.date;
+            div.style.cursor = 'pointer';
+            div.addEventListener('click', function () { window.open(s.url, '_blank'); });
             div.innerHTML =
                 '<div class="sf-user">' + s.user_html + '</div>' +
                 '<div class="sf-pts">' + (s.points != null ? s.points : '—') + '</div>' +
@@ -641,7 +642,6 @@ $('#show-personal-info-checkbox').click(function () {
         function updateEl(s) {
             var div = document.getElementById('sf-row-' + s.id); if (!div) return;
             var rc = resultClass(s.status, s.result);
-            div.querySelector('.sf-id').className = 'sf-id' + (!DONE[s.status] ? ' sf-id-pending' : '');
             div.querySelector('.sf-pts').textContent = s.points != null ? s.points : '—';
             var resEl = div.querySelector('.sf-result');
             resEl.className = 'sf-result ' + rc;

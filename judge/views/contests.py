@@ -810,7 +810,7 @@ class ContestSubmissionFeed(ContestMixin, DetailView):
         contest = self.get_object()
         if not contest.can_see_full_scoreboard(request.user):
             return HttpResponseForbidden()
-        cutoff = timezone.now() - timedelta(minutes=10)
+        cutoff = timezone.now() - timedelta(minutes=3)
         qs = (
             Submission.objects.filter(contest_object=contest, date__gte=cutoff)
             .select_related('user__user', 'user__display_badge', 'problem', 'contest')
@@ -821,6 +821,7 @@ class ContestSubmissionFeed(ContestMixin, DetailView):
         data = [
             {
                 'id': s.id,
+                'url': reverse('submission_status', args=[s.id]),
                 'user_html': str(link_user(s.user)),
                 'problem': s.problem.code,
                 'status': s.status,

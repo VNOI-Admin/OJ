@@ -134,10 +134,11 @@
     function makeEl(s) {
         var letter = s.problem.split('_').pop();
         var rc = resultClass(s.status, s.result);
-        var isPending = !DONE[s.status];
         var div = document.createElement('div');
         div.className = 'sf-row';
         div.id = 'sf-row-' + s.id;
+        div.style.cursor = 'pointer';
+        div.addEventListener('click', function () { window.open(s.url, '_blank'); });
 
         var userEl = document.createElement('div');
         userEl.className = 'sf-user';
