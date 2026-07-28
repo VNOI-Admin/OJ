@@ -33,6 +33,10 @@ def _ensure_connection():
     db.connection.close_if_unusable_or_obsolete()
 
 
+class SubmissionUnavailable(Exception):
+    """Raised when a submission cannot be prepared for dispatch, in which case no judge is at fault."""
+
+
 class JudgeHandler(ZlibPacketHandler):
     proxies = proxy_list(settings.BRIDGED_JUDGE_PROXIES or [])
 
@@ -63,6 +67,9 @@ class JudgeHandler(ZlibPacketHandler):
         self.latency = None
         self.time_delta = None
         self.load = 1e100
+        # Dispatch health, see JudgeList. Starts at zero, and is decreased whenever we fail to hand
+        # a submission over to this judge.
+        self.dispatch_score = 0
         self.name = None
         self.is_disabled = False
         self.tier = None
@@ -235,9 +242,10 @@ class JudgeHandler(ZlibPacketHandler):
 
     def submit(self, id, problem, language, source):
         data = self.get_related_submission_data(id)
-        self._working = id
-        self._no_response_job = threading.Timer(20, self._kill_if_no_response)
-        self.send({
+        if data is None:
+            raise SubmissionUnavailable('submission %s vanished before it could be dispatched' % id)
+
+        packet = {
             'name': 'submission-request',
             'submission-id': id,
             'problem-id': problem,
@@ -254,7 +262,17 @@ class JudgeHandler(ZlibPacketHandler):
                 'file-only': data.file_only,
                 'file-size-limit': data.file_size_limit,
             },
-        })
+        }
+
+        self._working = id
+        self._no_response_job = threading.Timer(20, self._kill_if_no_response)
+        try:
+            self.send(packet)
+        except Exception:
+            # The judge never got the submission, so don't leave it marked as busy forever.
+            self._working = False
+            self._no_response_job = None
+            raise
 
     def _kill_if_no_response(self):
         logger.error('Judge failed to acknowledge submission: %s: %s', self.name, self._working)
