@@ -157,7 +157,7 @@
                             <div id="form-errors">
                                 {{ comment_form.non_field_errors() }}
                                 {{ comment_form.parent.errors }}
-                                {% if comment_form.body.errors %}{{ _('Invalid comment body.') }}{% endif %}
+                                {{ comment_form.body.errors }}
                             </div>
                         {% endif %}
                         {{ comment_form.parent }}
