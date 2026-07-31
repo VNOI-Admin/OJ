@@ -163,7 +163,7 @@ class AttachmentAccessViewTestCase(TestCase):
         )
 
     def _url(self, attachment):
-        return reverse('attachment_access', args=[attachment.pk])
+        return reverse('attachment_access', args=[attachment.uuid])
 
     # --- Problem attachments ---
 

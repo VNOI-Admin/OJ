@@ -112,10 +112,10 @@ class UserUploadAccessView(LoginRequiredMixin, View):
 
 
 class AttachmentAccessView(View):
-    def get(self, request, pk):
+    def get(self, request, uuid):
         attachment = get_object_or_404(
             FileAttachment.objects.select_related('file', 'content_type'),
-            pk=pk,
+            uuid=uuid,
         )
         if not attachment.can_view_by(request.user):
             raise Http404
