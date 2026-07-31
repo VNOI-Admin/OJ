@@ -209,7 +209,7 @@ urlpatterns = [
     path('files/upload', user_uploads.UserUploadCreateView.as_view(), name='user_upload_create'),
     path('files/<uuid:uuid>/view', user_uploads.UserUploadAccessView.as_view(), name='user_upload_access'),
     path('files/<uuid:uuid>', user_uploads.UserUploadDetailView.as_view(), name='user_upload_detail'),
-    path('attachment/<int:pk>/view', user_uploads.AttachmentAccessView.as_view(), name='attachment_access'),
+    path('attachment/<uuid:uuid>/view', user_uploads.AttachmentAccessView.as_view(), name='attachment_access'),
     path('user/<str:user>', include([
         path('', user.UserAboutPage.as_view(), name='user_page'),
         path('/ban', user.UserBan.as_view(), name='user_ban'),

@@ -36,6 +36,7 @@ class Migration(migrations.Migration):
             name='FileAttachment',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('uuid', models.UUIDField(db_index=True, default=uuid.uuid4, editable=False, unique=True)),
                 ('object_id', models.PositiveIntegerField(db_index=True)),
                 ('display_name', models.CharField(blank=True, max_length=255, verbose_name='display name')),
                 ('content_type', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='contenttypes.contenttype')),

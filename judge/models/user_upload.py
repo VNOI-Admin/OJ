@@ -151,6 +151,7 @@ class FileAttachment(models.Model):
     object_id = models.PositiveIntegerField(db_index=True)
     linked_item = GenericForeignKey('content_type', 'object_id')
 
+    uuid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True, db_index=True)
     file = models.ForeignKey(
         'UserUpload',
         on_delete=models.CASCADE,

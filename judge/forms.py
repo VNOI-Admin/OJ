@@ -25,7 +25,7 @@ from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, \
     FileAttachment, Language, LanguageLimit, Organization, OrganizationProblemTag, Problem, Profile, Solution, \
-    Submission, Tag, UserUpload, WebAuthnCredential
+    Submission, Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -913,32 +913,6 @@ class CompareSubmissionsForm(Form):
 # ============================================================================
 # User Upload Forms
 # ============================================================================
-
-class UserUploadForm(ModelForm):
-    """Form for uploading new user uploads."""
-    MAX_UPLOAD_SIZE = 500 * 1024 * 1024
-
-    class Meta:
-        model = UserUpload
-        fields = ['file']
-        widgets = {
-            'file': forms.FileInput(attrs={'class': 'form-control', 'accept': '*/*'}),
-        }
-
-    def clean_file(self):
-        file_obj = self.cleaned_data.get('file')
-        if file_obj and file_obj.size > self.MAX_UPLOAD_SIZE:
-            raise ValidationError(_('File size exceeds maximum allowed size of 500 MB.'))
-        return file_obj
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        if instance.file and not instance.filename:
-            instance.filename = os.path.basename(instance.file.name)
-        if commit:
-            instance.save()
-        return instance
-
 
 class FileAttachmentForm(ModelForm):
     class Meta:
