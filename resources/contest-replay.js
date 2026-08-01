@@ -319,10 +319,39 @@
         var replayUrl = rankingData.contest && rankingData.contest.replay_url;
         if (!replayUrl) return;
 
+        // Virtual participations have no replay subs, so virtual and ghost/replay
+        // are mutually exclusive in the UI.
+        var showVirtual = window.CONTEST_SHOW_VIRTUAL;
+        var virtualTooltip = window.CONTEST_REPLAY_VIRTUAL_TOOLTIP;
+
+        if (showVirtual) {
+            // Floating tooltip that follows the cursor over greyed (replay-blocked) controls.
+            var $tip = null;
+            $(document)
+                .on('mouseenter', '.replay-blocked', function () {
+                    if (!$tip) $tip = $('<div class="replay-tooltip"></div>').appendTo('body');
+                    $tip.text($(this).attr('data-tooltip')).show();
+                })
+                .on('mousemove', '.replay-blocked', function (e) {
+                    if ($tip) $tip.css({ left: (e.clientX + 12) + 'px', top: (e.clientY + 12) + 'px' });
+                })
+                .on('mouseleave', '.replay-blocked', function () {
+                    if ($tip) $tip.hide();
+                });
+        }
+
         // Ghost toggle: swap between the backend ranking and end-of-contest
         // standings (A's live participants + ghosts) computed from the replay file.
         var $ghost = $('#show-ghosts-checkbox');
-        if ($ghost.length) {
+        if ($ghost.length && showVirtual) {
+            // Virtual can't be replayed: grey the ghost toggle and show a tooltip on hover.
+            // Children are greyed (not the wrap) so the tooltip stays crisp; pointer-events:none
+            // lets hover reach the wrap so its :hover ::after tooltip fires.
+            var $wrap = $('#show-ghosts-wrap');
+            $wrap.addClass('replay-blocked').attr('data-tooltip', virtualTooltip);
+            $wrap.children().css({ 'opacity': 0.5, 'pointer-events': 'none' });
+            $ghost.prop('disabled', true);
+        } else if ($ghost.length) {
             $ghost.on('change', function () {
                 if (this.checked) {
                     fetchReplayData(replayUrl, function (data) {
@@ -333,6 +362,8 @@
                     window.renderRankingTable(rankingData);
                 }
             });
+            // Show ghosts by default when available (and virtual isn't active).
+            $ghost.prop('checked', true).trigger('change');
         }
 
         var isVirtual      = !!rankingData.own;
@@ -460,14 +491,24 @@
             });
         } else {
             _endBtn = createBar(rankingData.contest.replay_duration);
-            wireFreezeInput();
             updateBar(rankingData.contest.replay_duration, rankingData.contest.replay_duration);
-            if (frozenOverride !== null) {
-                fetchReplayData(replayUrl, onReplayLoaded);
+            if (showVirtual) {
+                // Grey out and disable the replay bar; virtual can't be replayed.
+                // Children greyed (not the bar) so the tooltip stays crisp; pointer-events:none
+                // lets hover reach the bar so its :hover ::after tooltip fires.
+                var $bar = $slider.parent();
+                $bar.addClass('replay-blocked').attr('data-tooltip', virtualTooltip);
+                $bar.children().css({ 'opacity': 0.5, 'pointer-events': 'none' });
+                $bar.find('input, button').prop('disabled', true);
             } else {
-                $slider.one('mousedown touchstart', function () {
+                wireFreezeInput();
+                if (frozenOverride !== null) {
                     fetchReplayData(replayUrl, onReplayLoaded);
-                });
+                } else {
+                    $slider.one('mousedown touchstart', function () {
+                        fetchReplayData(replayUrl, onReplayLoaded);
+                    });
+                }
             }
         }
     };
