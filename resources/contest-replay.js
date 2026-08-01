@@ -269,7 +269,7 @@
                 id: p.id, score: scored.score, cumtime: scored.cumtime,
                 tiebreaker: scored.tiebreaker, format_data: scored.format_data,
                 is_disqualified: p.is_disqualified, virtual: p.virtual,
-                rating: p.rating, user: p.user,
+                rating: p.rating, user: p.user, ghost: p.ghost,
             };
         });
 

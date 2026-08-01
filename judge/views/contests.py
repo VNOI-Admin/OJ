@@ -1321,6 +1321,7 @@ class ContestReplayData(ContestMixin, SingleObjectMixin, View):
             'start': int(contest.start_time.timestamp()),
             'duration': duration,
             'frozen': 0,
+            'problems': [prob.id for prob in problems],
             'participations': participations_data,
             'subs': subs,
         }
