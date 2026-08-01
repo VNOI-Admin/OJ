@@ -6,7 +6,7 @@ from django.core.management.base import BaseCommand, CommandError
 def merge_replay(a, b):
     """Merge replay data b into a (mutating a), marking b's participations as ghosts.
 
-    Both dicts are in ContestReplayData._build_data shape. b's problem ids are remapped
+    Both dicts are in build_contest_replay_data shape. b's problem ids are remapped
     to a's by position in the ordered `problems` list; b's participation ids are offset
     past a's to avoid collisions.
     """
@@ -33,15 +33,23 @@ def merge_replay(a, b):
 
 
 class Command(BaseCommand):
-    help = 'merge one contest replay JSON (b, shown as ghosts) into another (a), overwriting a'
+    help = "patch contest A's replay data with contest B's participations shown as ghosts"
 
     def add_arguments(self, parser):
-        parser.add_argument('a_json', help='replay data to merge into (overwritten)')
+        parser.add_argument('contest', help="key of contest A (this server's contest) to patch")
         parser.add_argument('b_json', help='replay data whose participations become ghosts')
 
     def handle(self, *args, **options):
-        with open(options['a_json']) as f:
-            a = json.load(f)
+        from judge.models import Contest
+        from judge.views.contests import build_contest_replay_data, write_contest_replay_data
+
+        try:
+            contest = Contest.objects.get(key=options['contest'])
+        except Contest.DoesNotExist:
+            raise CommandError('No contest with key "%s".' % options['contest'])
+
+        # Regenerate A fresh from the DB so re-running is idempotent (no duplicate ghosts).
+        a = build_contest_replay_data(contest)
         with open(options['b_json']) as f:
             b = json.load(f)
 
@@ -53,9 +61,13 @@ class Command(BaseCommand):
 
         merge_replay(a, b)
 
-        with open(options['a_json'], 'w') as f:
-            json.dump(a, f, separators=(',', ':'))
+        # Bump the version so the (immutable-cached) replay URL changes and clients refetch.
+        contest.replay_version += 1
+        filepath, _ = write_contest_replay_data(contest, a)  # path uses the new version
+
+        contest.csv_ranking = 'ghost'  # sentinel the ranking page reads to show the ghost toggle
+        contest.save(update_fields=['csv_ranking', 'replay_version'])
 
         self.stdout.write(self.style.SUCCESS(
-            'Merged %d ghost participations into %s.' % (len(b['participations']), options['a_json']),
+            'Merged %d ghost participations into %s.' % (len(b['participations']), filepath),
         ))

@@ -319,6 +319,22 @@
         var replayUrl = rankingData.contest && rankingData.contest.replay_url;
         if (!replayUrl) return;
 
+        // Ghost toggle: swap between the backend ranking and end-of-contest
+        // standings (A's live participants + ghosts) computed from the replay file.
+        var $ghost = $('#show-ghosts-checkbox');
+        if ($ghost.length) {
+            $ghost.on('change', function () {
+                if (this.checked) {
+                    fetchReplayData(replayUrl, function (data) {
+                        if (!data) return;
+                        window.renderRankingTable(computeVirtualRanking(data, rankingData, data.duration));
+                    });
+                } else {
+                    window.renderRankingTable(rankingData);
+                }
+            });
+        }
+
         var isVirtual      = !!rankingData.own;
         var virtualSubsData = null;
         var timerId        = null;
