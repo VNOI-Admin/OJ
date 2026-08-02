@@ -1143,7 +1143,7 @@ class ContestRanking(ContestRankingBase):
         context = super().get_context_data(**kwargs)
         context['has_rating'] = self.object.ratings.exists()
         context['show_virtual'] = self.show_virtual
-        context['has_ghosts'] = self.object.csv_ranking == 'ghost' and self.object.can_replay
+        context['has_ghosts'] = self.object.csv_ranking == Contest.HAS_GHOST_PARTICIPATION and self.object.can_replay
         context['is_frozen'] = self.is_frozen
         context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
         context['can_see_full_submission_list'] = self.object.can_see_full_submission_list(self.request.user)
@@ -1220,7 +1220,8 @@ class ContestOfficialRanking(ContestRankingBase):
 
     def get(self, request, *args, **kwargs):
         self.object = self.get_object()
-        if not self.object.csv_ranking:
+        # HAS_GHOST_PARTICIPATION is a sentinel for the ghost-participations toggle, not real CSV data.
+        if not self.object.csv_ranking or self.object.csv_ranking == Contest.HAS_GHOST_PARTICIPATION:
             raise Http404()
 
         # If the csv_ranking is an url, redirect to it

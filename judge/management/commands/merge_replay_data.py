@@ -68,7 +68,7 @@ class Command(BaseCommand):
         contest.replay_version += 1
         filepath, _ = write_contest_replay_data(contest, a)  # path uses the new version
 
-        contest.csv_ranking = 'ghost'  # sentinel the ranking page reads to show the ghost toggle
+        contest.csv_ranking = Contest.HAS_GHOST_PARTICIPATION  # ranking page reads this to show the ghost toggle
         contest.save(update_fields=['csv_ranking', 'replay_version'])
 
         self.stdout.write(self.style.SUCCESS(
