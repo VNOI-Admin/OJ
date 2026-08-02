@@ -241,6 +241,15 @@ form.contest-join-pseudotab {
         background-color: $color_contest_ranking_disqualified !important;
     }
 
+    tr.ghost {
+        opacity: 0.5;
+    }
+
+    .ghost-user::before {
+        content: "👻";
+        margin-right: 0.25em;
+    }
+
     .point-denominator {
         border-top: 1px solid $color_primary50;
         font-size: 0.7em;

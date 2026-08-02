@@ -72,6 +72,9 @@ class Contest(models.Model):
         (SCOREBOARD_AFTER_CONTEST, _('Hidden for duration of contest')),
         (SCOREBOARD_AFTER_PARTICIPATION, _('Hidden for duration of participation')),
     )
+    # Sentinel stored in csv_ranking to flag that the replay data has ghost participations
+    # merged in (set by the merge_replay_data command), rather than real CSV ranking data.
+    HAS_GHOST_PARTICIPATION = 'ghost'
     key = models.CharField(max_length=32, verbose_name=_('contest id'), unique=True,
                            validators=[RegexValidator('^[a-z0-9_]+$', _('Contest id must be ^[a-z0-9_]+$'))])
     name = models.CharField(max_length=100, verbose_name=_('contest name'), db_index=True)
