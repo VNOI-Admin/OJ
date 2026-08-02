@@ -311,6 +311,15 @@
         return (h ? h + ':' : '') + (h && m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
     }
 
+    // Grey out and disable a control that can't be used while virtual is showing.
+    // Children (not $el itself) are greyed and get pointer-events:none, so mouse
+    // events fall through to $el and fire the delegated .replay-blocked tooltip.
+    function blockForVirtual($el, tooltip) {
+        $el.addClass('replay-blocked').attr('data-tooltip', tooltip);
+        $el.children().css({ 'opacity': 0.5, 'pointer-events': 'none' });
+        $el.find('input, button').prop('disabled', true);
+    }
+
     // ─── Public entry point ───────────────────────────────────────────────────
 
     window.initContestRanking = function (rankingData) {
@@ -344,13 +353,8 @@
         // standings (A's live participants + ghosts) computed from the replay file.
         var $ghost = $('#show-ghosts-checkbox');
         if ($ghost.length && showVirtual) {
-            // Virtual can't be replayed: grey the ghost toggle and show a tooltip on hover.
-            // Children are greyed (not the wrap) so the tooltip stays crisp; pointer-events:none
-            // lets hover reach the wrap so its :hover ::after tooltip fires.
-            var $wrap = $('#show-ghosts-wrap');
-            $wrap.addClass('replay-blocked').attr('data-tooltip', virtualTooltip);
-            $wrap.children().css({ 'opacity': 0.5, 'pointer-events': 'none' });
-            $ghost.prop('disabled', true);
+            // Virtual can't be replayed: grey out the ghost toggle with an explanatory tooltip.
+            blockForVirtual($('#show-ghosts-wrap'), virtualTooltip);
         } else if ($ghost.length) {
             $ghost.on('change', function () {
                 if (this.checked) {
@@ -494,12 +498,7 @@
             updateBar(rankingData.contest.replay_duration, rankingData.contest.replay_duration);
             if (showVirtual) {
                 // Grey out and disable the replay bar; virtual can't be replayed.
-                // Children greyed (not the bar) so the tooltip stays crisp; pointer-events:none
-                // lets hover reach the bar so its :hover ::after tooltip fires.
-                var $bar = $slider.parent();
-                $bar.addClass('replay-blocked').attr('data-tooltip', virtualTooltip);
-                $bar.children().css({ 'opacity': 0.5, 'pointer-events': 'none' });
-                $bar.find('input, button').prop('disabled', true);
+                blockForVirtual($slider.parent(), virtualTooltip);
             } else {
                 wireFreezeInput();
                 if (frozenOverride !== null) {
