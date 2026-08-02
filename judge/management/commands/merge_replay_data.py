@@ -27,6 +27,9 @@ def merge_replay(a, b):
         a['participations'].append(p)
 
     for part_id, prob_id, points, t in b['subs']:
+        if prob_id not in pmap:
+            raise CommandError('Submission references problem id %s not in the "problems" list; '
+                               'regenerate the replay data.' % prob_id)
         a['subs'].append([part_id + offset, pmap[prob_id], points, t])
 
     return a
