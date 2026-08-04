@@ -5,7 +5,12 @@
 
 {% block js_media %}
     {% include "blog/media-js.html" %}
-    {% include "comments/media-js.html" %}
+    {% if comment_form and comment_form.errors %}
+        {# comments/list.html is SSR'd directly below (not via the AJAX fragment) in
+           this case, so it needs its own media JS (martor editor, vote/hide/edit). #}
+        {% include "comments/media-js.html" %}
+    {% endif %}
+    {% include "comments/lazy-load-js.html" %}
 {% endblock %}
 
 {% block media %}
@@ -77,7 +82,15 @@
         {{ post_to_facebook(request, post, '<i class="fa fa-facebook-official"></i>') }}
         {{ post_to_twitter(request, SITE_NAME + ':', post, '<i class="fa fa-twitter"></i>') }}
     </span>
-    {% include "comments/list.html" %}
+    <div id="comments" data-comments-url="{{ url('blog_post_comments', post.id, post.slug) }}"
+         data-comments-trigger="auto"
+         data-comments-preloaded="{{ 'true' if comment_form and comment_form.errors else 'false' }}">
+        {% if comment_form and comment_form.errors %}
+            {% include "comments/list.html" %}
+        {% else %}
+            <div class="comments-loading">{{ _('Loading...') }}</div>
+        {% endif %}
+    </div>
     <div style="clear: both;"></div>
 {% endblock %}
 

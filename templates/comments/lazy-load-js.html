@@ -1,0 +1,65 @@
+<script type="text/javascript">
+    $(function () {
+        var $container = $('#comments').first();
+        var url = $container.data('comments-url');
+        if (!$container.length || !url)
+            return;
+
+        var mode = $container.data('comments-trigger');
+        // When the server already rendered the full comment list inline (the
+        // comment_form-errors fallback, so a failed submission stays visible),
+        // treat comments as already loaded so nothing here re-fetches and
+        // clobbers it with a fresh, error-free AJAX fragment.
+        var loaded = !!$container.data('comments-preloaded');
+        var pendingScrollHash = null;
+
+        function fetchComments(page, scrollToContainer) {
+            var fetchUrl = page ? url + '?page=' + page : url;
+            $container.html('<div class="comments-loading">{{ _('Loading...') }}</div>');
+            $container.load(fetchUrl, function () {
+                if (window.MathJax && MathJax.typesetPromise)
+                    MathJax.typesetPromise([$container[0]]);
+                if (pendingScrollHash && $(pendingScrollHash).length) {
+                    $(pendingScrollHash)[0].scrollIntoView({behavior: 'instant', block: 'start'});
+                    pendingScrollHash = null;
+                } else if (scrollToContainer) {
+                    $container[0].scrollIntoView({behavior: 'instant', block: 'start'});
+                }
+            });
+        }
+
+        function loadComments() {
+            if (loaded) return;
+            loaded = true;
+            fetchComments(null, false);
+        }
+
+        // Exposed so a host page with its own trigger UI (e.g. problem.html's
+        // .problem-tabs click handler / initial-hash handling) can hook in without
+        // reimplementing the fetch/pagination logic.
+        $container.data('load-comments', loadComments);
+        $container.data('set-pending-scroll', function (hash) {
+            pendingScrollHash = hash;
+        });
+
+        // Paginate comments without reloading the page.
+        $container.on('click', '.comments-pagination a', function (e) {
+            var match = /page=(\d+)/.exec($(this).attr('href'));
+            if (!match) return;
+            e.preventDefault();
+            fetchComments(match[1], true);
+        });
+
+        // Tab-mode pages (problem.html) load comments themselves once the
+        // comments tab becomes active (via click or on initial load if it's
+        // already the default tab), using the hooks exposed above. Every other
+        // page has no tab to wait on, so just fetch immediately.
+        if (mode === 'tab') return;
+
+        var hash = window.location.hash;
+        if (/^#comment-\d+$/.test(hash)) {
+            pendingScrollHash = hash;
+        }
+        loadComments();
+    });
+</script>

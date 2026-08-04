@@ -1,0 +1,24 @@
+{% if not comment_lock %}
+    {% include "comments/media-js.html" %}
+{% endif %}
+{% if comment_lock %}
+    <div class="clarifications-area">
+        <h2><i class="fa fa-question-circle"></i> {{ _('Clarifications') }}</h2>
+        {% if has_clarifications %}
+            {% for clarification in clarifications %}
+                <div class="problem-clarification">
+                    <div class="time">{{ relative_time(clarification.date) }}</div>
+                    <span class="body">
+                        {{ clarification.description|markdown('problem', MATH_ENGINE)|reference }}
+                    </span>
+                </div>
+            {% endfor %}
+        {% else %}
+            <p class="no-comments-message">{{ _('No clarifications have been made at this time.') }}</p>
+        {% endif %}
+    </div>
+{% else %}
+    {% with comment_warn_code=true %}
+        {% include "comments/list.html" %}
+    {% endwith %}
+{% endif %}

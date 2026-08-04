@@ -365,6 +365,22 @@ class ContestDetail(ContestMixin, TitleMixin, CommentedDetailView):
         return context
 
 
+class ContestComments(ContestMixin, CommentedDetailView):
+    template_name = 'contest/comments-tab.html'
+    skip_comment_list = False
+
+    def is_comment_locked(self):
+        if self.object.use_clarifications:
+            now = timezone.now()
+            if self.is_in_contest or (self.object.start_time <= now and now <= self.object.end_time):
+                return True
+
+        return super(ContestComments, self).is_comment_locked()
+
+    def get_comment_page(self):
+        return 'c:%s' % self.object.key
+
+
 class ContestAllProblems(ContestMixin, TitleMixin, DetailView):
     template_name = 'contest/contest-all-problems.html'
 

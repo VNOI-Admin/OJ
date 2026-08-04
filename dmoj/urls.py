@@ -120,9 +120,11 @@ urlpatterns = [
 
     path('problem/<str:problem>', include([
         path('', problem.ProblemDetail.as_view(), name='problem_detail'),
+        path('/comments', problem.ProblemComments.as_view(), name='problem_comments'),
         path('/edit', problem.ProblemEdit.as_view(), name='problem_edit'),
         path('/edit-type-group', problem.ProblemEditTypeGroup.as_view(), name='problem_edit_type_group'),
         path('/editorial', problem.ProblemSolution.as_view(), name='problem_editorial'),
+        path('/editorial/comments', problem.ProblemSolutionComments.as_view(), name='problem_editorial_comments'),
         path('/raw', xframe_options_sameorigin(problem.ProblemRaw.as_view()), name='problem_raw'),
         path('/pdf', problem.ProblemPdfView.as_view(), name='problem_pdf'),
         path('/pdf/<slug:language>', problem.ProblemPdfView.as_view(), name='problem_pdf'),
@@ -172,6 +174,7 @@ urlpatterns = [
 
     path('tag/<str:tagproblem>', include([
         path('', tag.TagProblemDetail.as_view(), name='tagproblem_detail'),
+        path('/comments', tag.TagProblemComments.as_view(), name='tagproblem_comments'),
         path('/assign', tag.TagProblemAssign.as_view(), name='tagproblem_assign'),
         path('/', lambda _, tagproblem: HttpResponsePermanentRedirect(reverse('tagproblem_detail', args=[tagproblem]))),
     ])),
@@ -241,6 +244,7 @@ urlpatterns = [
 
     path('contest/<str:contest>', include([
         path('', contests.ContestDetail.as_view(), name='contest_view'),
+        path('/comments', contests.ContestComments.as_view(), name='contest_comments'),
         path('/all', contests.ContestAllProblems.as_view(), name='contest_all_problems'),
         path('/edit', contests.EditContest.as_view(), name='contest_edit'),
         path('/moss', contests.ContestMossView.as_view(), name='contest_moss'),
@@ -343,6 +347,7 @@ urlpatterns = [
     path('post/<int:id>-<slug:slug>', include([
         path('', blog.PostView.as_view(), name='blog_post'),
         path('/modern', blog.PostModernView.as_view(), name='blog_post_modern'),
+        path('/comments', blog.PostComments.as_view(), name='blog_post_comments'),
         path('/edit', blog.BlogPostEdit.as_view(), name='blog_post_edit'),
         path('/delete', blog.BlogPostDelete.as_view(), name='blog_post_delete'),
         path('/', lambda _, id, slug: HttpResponsePermanentRedirect(reverse('blog_post', args=[id, slug]))),

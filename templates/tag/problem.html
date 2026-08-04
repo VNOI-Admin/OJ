@@ -9,7 +9,12 @@
 {% endblock %}
 
 {% block js_media %}
-    {% include "comments/media-js.html" %}
+    {% if comment_form and comment_form.errors %}
+        {# comments/list.html is SSR'd directly below (not via the AJAX fragment) in
+           this case, so it needs its own media JS (martor editor, vote/hide/edit). #}
+        {% include "comments/media-js.html" %}
+    {% endif %}
+    {% include "comments/lazy-load-js.html" %}
 {% endblock %}
 
 {% block title_ruler %}{% endblock %}
@@ -55,7 +60,15 @@
             {% endfor %}
         </tbody>
     </table>
-    {% include "comments/list.html" %}
+    <div id="comments" data-comments-url="{{ url('tagproblem_comments', problem.code) }}"
+         data-comments-trigger="auto"
+         data-comments-preloaded="{{ 'true' if comment_form and comment_form.errors else 'false' }}">
+        {% if comment_form and comment_form.errors %}
+            {% include "comments/list.html" %}
+        {% else %}
+            <div class="comments-loading">{{ _('Loading...') }}</div>
+        {% endif %}
+    </div>
 {% endblock %}
 
 {% block bodyend %}

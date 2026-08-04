@@ -51,8 +51,14 @@
 
     $(document).ready(function () {
         sort_top_level_comments_by_status();
-        window.reply_comment = function (parent) {
+        // keepContent: true when restoring a failed submission (see the
+        // reply-error auto-open below) - in that case #new-comment already has
+        // the submitted body and the validation errors rendered into it (it's
+        // the same bound comment_form), so cloning it must NOT wipe them.
+        window.reply_comment = function (parent, keepContent) {
             var $comment_reply = $('#comment-' + parent + '-reply');
+            if ($comment_reply.length === 0)
+                return;
             var reply_id = 'reply-' + parent;
             if ($comment_reply.find('#' + reply_id).length == 0) {
                 var $reply_form = $('#new-comment').clone(false).prop('id', reply_id);
@@ -61,7 +67,8 @@
                 $reply_form.appendTo($comment_reply);
                 $reply_form.find('form.comment-submit-form input#id_parent').val(parent);
                 rename_martor_widget($reply_form, 'body', reply_id);
-                ace.edit('martor-' + reply_id).setValue('');
+                if (!keepContent)
+                    ace.edit('martor-' + reply_id).setValue('');
             }
             $comment_reply.fadeIn();
 
@@ -70,9 +77,33 @@
             }, 500);
         };
 
-        $(document).on('click', '.close', function() {
-            $(this).closest('.reply-comment').fadeOut();
-        });
+        {% if reply_parent_id %}
+            // A reply to this comment just failed validation (see get_context_data
+            // in judge/comments.py); open its reply box automatically instead of
+            // leaving the error only visible in the page-bottom "New comment" box.
+            reply_comment({{ reply_parent_id }}, true);
+        {% endif %}
+
+        // This whole script re-runs every time a comment fragment is (re)loaded via AJAX
+        // (pagination, lazy-load). Delegated `document`-level handlers must only ever be
+        // bound once, or they accumulate one duplicate per reload.
+        if (!window.__commentsMediaBound) {
+            window.__commentsMediaBound = true;
+
+            $(document).on('click', '.close', function() {
+                $(this).closest('.reply-comment').fadeOut();
+            });
+
+            var code_regex = [/input\(/, /#include/, /void\s+main/, /fn\s+main/, /func\s+main/];
+            $(document).on('click', 'form.comment-warn-code .button[type=submit]', function (e) {
+                var text = $(this).parents('form').find('#id_body').val();
+                if (code_regex.some(function (regex) {return regex.test(text);})) {
+                    if (!confirm({{ _('Looks like you\'re trying to post some source code!\n\nThe comment section is not for posting source code.\nIf you want to submit your solution, please use the "Submit solution" button.\n\nAre you sure you want to post this?')|htmltojs }})) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
 
         function update_math($comment) {
             if ('MathJax' in window) {
@@ -296,18 +327,18 @@
             });
         }
 
-        $(window).on('load', function() {
+        // Was unconditionally `$(window).on('load', ...)`: the native `load` event only
+        // fires once per real page load, so on every reload after the first (pagination,
+        // lazy-load) that registered a callback for an event that would never fire again,
+        // and the "Show more/Show less" toggle silently never initialized. Still wait for
+        // `load` the first time (so image layout has settled before measuring
+        // scrollHeight), but call directly on later reloads since `load` has already
+        // fired by then and initializeCommentToggle is idempotent per comment body
+        // (guarded by the 'toggle-initialized' data flag above).
+        if (document.readyState === 'complete') {
             initializeCommentToggle();
-        });
-
-        var code_regex = [/input\(/, /#include/, /void\s+main/, /fn\s+main/, /func\s+main/];
-        $(document).on('click', 'form.comment-warn-code .button[type=submit]', function (e) {
-            var text = $(this).parents('form').find('#id_body').val();
-            if (code_regex.some(function (regex) {return regex.test(text);})) {
-                if (!confirm({{ _('Looks like you\'re trying to post some source code!\n\nThe comment section is not for posting source code.\nIf you want to submit your solution, please use the "Submit solution" button.\n\nAre you sure you want to post this?')|htmltojs }})) {
-                    e.preventDefault();
-                }
-            }
-        });
+        } else {
+            $(window).on('load', initializeCommentToggle);
+        }
     });
 </script>

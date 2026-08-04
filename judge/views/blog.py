@@ -331,6 +331,23 @@ class PostModernView(PostView):
     template_name = 'blog/modern-content.html'
 
 
+class PostComments(CommentedDetailView):
+    model = BlogPost
+    pk_url_kwarg = 'id'
+    context_object_name = 'post'
+    template_name = 'blog/comments-tab.html'
+    skip_comment_list = False
+
+    def get_comment_page(self):
+        return 'b:%s' % self.object.id
+
+    def get_object(self, queryset=None):
+        post = super(PostComments, self).get_object(queryset)
+        if not post.can_see(self.request.user):
+            raise Http404()
+        return post
+
+
 class BlogPostCreate(TitleMixin, CreateView):
     template_name = 'blog/edit.html'
     model = BlogPost
