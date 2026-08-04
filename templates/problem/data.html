@@ -6,10 +6,14 @@
     <script type="text/javascript" src="{{ static('vnoj/jquery-ui/jquery-ui.min.js') }}"></script>
     <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
     <script type="text/javascript" src="{{ static('vnoj/jszip/jszip.min.js') }}"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tus-js-client@latest/dist/tus.min.js"></script>
     <script type="text/javascript">
         window.valid_files = {{valid_files_json}}.sort();
         window.testcase_limit = {{testcase_limit}};
         window.testcase_soft_limit = {{testcase_soft_limit}};
+        {% if tusd_upload_threshold_bytes is not none %}
+        window.TUSD_UPLOAD_THRESHOLD_BYTES = {{ tusd_upload_threshold_bytes }};
+        {% endif %}
 
         $(function () {
             function autofill_if_exists($select, file) {
@@ -577,31 +581,123 @@
                 return lower === '.ds_store' || lower.indexOf('._') === 0 || path.indexOf('__MACOSX/') === 0;
             }
 
+            // --- Resumable upload (tus) ---
+            var tusUploadThreshold = window.TUSD_UPLOAD_THRESHOLD_BYTES;
+            var problemCode = '{{ object.code }}';
+            var activeTusUpload = null;
+
+            var $tusProgress = $('#tus-upload-progress');
+            var $tusBar = $('#tus-upload-bar');
+            var $tusStatus = $('#tus-upload-status');
+            var $tusPauseBtn = $('#tus-pause-btn');
+            var $tusCompletedInput = $('input[name="tus_upload_completed"]');
+            var $saveBtn = $('#zip-save-btn');
+
+            $tusPauseBtn.click(function () {
+                if (!activeTusUpload) return;
+                if ($tusPauseBtn.data('state') === 'paused') {
+                    activeTusUpload.start();
+                    $tusPauseBtn.data('state', 'running').text({{ _('Pause')|htmltojs }});
+                } else {
+                    activeTusUpload.abort();
+                    $tusPauseBtn.data('state', 'paused').text({{ _('Resume')|htmltojs }});
+                }
+            });
+
+            function startTusUpload(file) {
+                $tusProgress.show();
+                $tusBar.css('width', '0%');
+                $tusStatus.text({{ _('Requesting upload token...')|htmltojs }});
+                $saveBtn.prop('disabled', true);
+                $tusPauseBtn.data('state', 'running').text({{ _('Pause')|htmltojs }}).show();
+                $tusCompletedInput.val('');
+
+                var csrfToken = $('[name=csrfmiddlewaretoken]').val();
+
+                fetch('/upload/intent/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                    },
+                    body: JSON.stringify({
+                        problem_code: problemCode,
+                        file_type: 'zipfile',
+                        file_name: file.name,
+                    }),
+                }).then(function (resp) {
+                    if (!resp.ok) {
+                        return resp.json().then(function (data) {
+                            throw new Error(data.error || 'Failed to get upload token.');
+                        });
+                    }
+                    return resp.json();
+                }).then(function (data) {
+                    var upload = new tus.Upload(file, {
+                        endpoint: data.tusd_endpoint,
+                        retryDelays: [0, 1000, 3000, 5000],
+                        chunkSize: 50 * 1024 * 1024,
+                        metadata: {
+                            filename: file.name,
+                            filetype: file.type || 'application/zip',
+                            token: data.token,
+                        },
+                        onProgress: function (bytesUploaded, bytesTotal) {
+                            var pct = (bytesUploaded / bytesTotal * 100).toFixed(1);
+                            $tusBar.css('width', pct + '%');
+                            var mb = (bytesUploaded / (1024 * 1024)).toFixed(1);
+                            var total = (bytesTotal / (1024 * 1024)).toFixed(1);
+                            $tusStatus.text(mb + ' / ' + total + ' MB (' + pct + '%)');
+                        },
+                        onSuccess: function () {
+                            activeTusUpload = null;
+                            $tusBar.css('width', '100%');
+                            $tusStatus.text({{ _('Upload complete! You can now save.')|htmltojs }});
+                            $tusPauseBtn.hide();
+                            $saveBtn.prop('disabled', false);
+                            $tusCompletedInput.val(file.name);
+                        },
+                        onError: function (error) {
+                            activeTusUpload = null;
+                            console.error('tus upload error:', error);
+                            $tusStatus.text({{ _('Upload failed:')|htmltojs }} + ' ' + error);
+                            $tusPauseBtn.hide();
+                            $saveBtn.prop('disabled', false);
+                        },
+                    });
+                    activeTusUpload = upload;
+                    upload.start();
+                }).catch(function (err) {
+                    console.error(err);
+                    $tusStatus.text({{ _('Error:')|htmltojs }} + ' ' + err.message);
+                    $tusProgress.hide();
+                    $saveBtn.prop('disabled', false);
+                });
+            }
+
             $("#id_problem-data-zipfile").change((event) => {
                 let fileInput = event.target.files[0];
+                if (!fileInput) return;
 
-                // 100 MB limit (Cloudflare's request body size limit)
-                if (fileInput && fileInput.size > 100 * 1024 * 1024) {
-                    alert({{ _('File too large!')|htmltojs }} + ' ' +
-                        {{ _('Your file is')|htmltojs }} + ' ' + (fileInput.size / (1024 * 1024)).toFixed(2) + ' MB. ' +
-                        {{ _('Maximum allowed is 100 MB.')|htmltojs }});
-                    event.target.value = "";
+                if (tusUploadThreshold && fileInput.size >= tusUploadThreshold) {
+                    // Large file: use resumable tus upload
+                    startTusUpload(fileInput);
                     return;
                 }
 
+                // Small file: traditional form upload — read zip to populate test case list
                 var reader = new FileReader();
                 reader.onload = function(ev) {
                     JSZip.loadAsync(ev.target.result).then(function(zip) {
                         let all_files = Object.keys(zip.files).sort();
                         window.valid_files = all_files.filter(file => !shouldIgnoreFile(file));
-
                         fill_testcases();
                     }).catch(function(err) {
                         console.log(err);
                         console.error("Failed to open as ZIP file");
                         alert({{ _('Test file must be a ZIP file')|htmltojs }});
                         event.target.value = "";
-                    })
+                    });
                 };
                 reader.readAsArrayBuffer(fileInput);
             });
@@ -1018,9 +1114,21 @@
     <form action="" method="POST" enctype="multipart/form-data">
         {% csrf_token %}
         {{ cases_formset.management_form }}
+        <input type="hidden" name="tus_upload_completed" value="">
         <table class="table">
             {{ data_form.as_table() }}
         </table>
+
+        {# tus resumable upload progress UI #}
+        <div id="tus-upload-progress" style="display: none; margin: 0.5em 0;">
+            <div style="background: var(--input-bg, #e8e8e8); border-radius: 4px; height: 10px; overflow: hidden;">
+                <div id="tus-upload-bar" style="height: 100%; width: 0%; background: #2196f3; transition: width 0.2s;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 0.25em;">
+                <span id="tus-upload-status" style="font-size: 0.85em;"></span>
+                <button type="button" id="tus-pause-btn" class="button" style="display: none;">{{ _('Pause') }}</button>
+            </div>
+        </div>
         <div class="alert alert-warning alert-dismissable" id="fill-test-case-noti" style="display: none;">
             <a class="close">x</a>
             <b>{{ _('Test cases have been filled automatically!') }}</b>
@@ -1093,7 +1201,7 @@
             {% endfor %}
             </tbody>
         </table>
-        <input type="submit" value="{{ _('Save') }}" class="button" id="submit-button">
+        <input type="submit" value="{{ _('Save') }}" class="button" id="zip-save-btn">
         <a id="add-case-row" href="#" style="display: None;"><i class="fa fa-plus"></i> {{ _('Add new case') }}</a>
     </form>
     <div style="display: none" class="generator-args-editor"><textarea></textarea><a class="button">{{ _('Save') }}</a></div>
