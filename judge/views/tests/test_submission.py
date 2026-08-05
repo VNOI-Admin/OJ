@@ -1,7 +1,10 @@
 from unittest.mock import PropertyMock
+from urllib.parse import parse_qs, urlparse
 
+from django.core.exceptions import BadRequest
 from django.http import Http404
 from django.test import RequestFactory, TestCase
+from django.urls import reverse
 from django.utils import timezone
 
 from judge.models import Contest, Language, Submission
@@ -869,6 +872,8 @@ class AllUserSubmissionsTestCase(CommonDataMixin, TestCase):
             language=Language.get_python3(),
             result='AC',
             status='D',
+            time=0.1,
+            memory=1024,
         )
 
         cls.sub_other = Submission.objects.create(
@@ -877,12 +882,14 @@ class AllUserSubmissionsTestCase(CommonDataMixin, TestCase):
             language=Language.get_python3(),
             result='WA',
             status='D',
+            time=0.1,
+            memory=1024,
         )
 
-    def _create_view_instance(self, request_user, target_user):
+    def _create_view_instance(self, request_user, target_user, data=None):
         """Helper to create AllUserSubmissions view instance."""
         factory = RequestFactory()
-        request = factory.get(f'/user/{target_user.username}/submissions/')
+        request = factory.get(f'/submissions/user/{target_user.username}/', data=data or {})
         request.user = request_user
         request.profile = request_user.profile if hasattr(request_user, 'profile') else None
         request.LANGUAGE_CODE = 'en'
@@ -897,6 +904,131 @@ class AllUserSubmissionsTestCase(CommonDataMixin, TestCase):
         view.selected_organization = None
 
         return view
+
+    # --- cursor pagination -------------------------------------------------
+
+    def _make_submissions(self, count):
+        return [
+            Submission.objects.create(
+                user=self.users['normal'].profile,
+                problem=self.public_problem,
+                language=Language.get_python3(),
+                result='AC',
+                status='D',
+                time=0.1,
+                memory=1024,
+            )
+            for _ in range(count)
+        ]
+
+    def _page(self, cursor=None, page_size=5):
+        data = {'cursor': cursor} if cursor else None
+        view = self._create_view_instance(
+            request_user=self.users['normal'],
+            target_user=self.users['normal'],
+            data=data,
+        )
+        _, page, _, _ = view.paginate_queryset(view.get_queryset(), page_size)
+        return page
+
+    @staticmethod
+    def _cursor_of(href):
+        return parse_qs(urlparse(href).query)['cursor'][0]
+
+    def test_cursor_first_page_is_newest_first_and_has_no_previous(self):
+        self._make_submissions(12)
+        page = self._page()
+        ids = [submission.id for submission in page.object_list]
+
+        self.assertEqual(5, len(ids))
+        self.assertEqual(sorted(ids, reverse=True), ids)
+        self.assertFalse(page.has_previous())
+        self.assertIsNone(page.previous_href)
+        self.assertTrue(page.has_next())
+
+    def test_cursor_walks_forward_then_back_to_the_same_page(self):
+        self._make_submissions(12)
+
+        page1 = self._page()
+        ids1 = [submission.id for submission in page1.object_list]
+
+        page2 = self._page(self._cursor_of(page1.next_href))
+        ids2 = [submission.id for submission in page2.object_list]
+
+        self.assertEqual(5, len(ids2))
+        self.assertEqual([], list(set(ids1) & set(ids2)))
+        self.assertLess(max(ids2), min(ids1))
+        self.assertTrue(page2.has_previous())
+
+        page1_again = self._page(self._cursor_of(page2.previous_href))
+        self.assertEqual(ids1, [submission.id for submission in page1_again.object_list])
+        self.assertFalse(page1_again.has_previous())
+
+    def test_cursor_last_page_has_no_next(self):
+        self._make_submissions(7)   # 2 existing + 7 = 9 -> two pages of 5
+
+        page2 = self._page(self._cursor_of(self._page().next_href))
+
+        self.assertFalse(page2.has_next())
+        self.assertIsNone(page2.next_href)
+        self.assertTrue(page2.has_previous())
+
+    def test_cursor_pagination_visits_every_row_exactly_once(self):
+        self._make_submissions(12)
+
+        seen, cursor = [], None
+        while True:
+            page = self._page(cursor)
+            seen.extend(submission.id for submission in page.object_list)
+            if not page.has_next():
+                break
+            cursor = self._cursor_of(page.next_href)
+
+        expected = list(
+            Submission.objects.filter(user=self.users['normal'].profile)
+            .order_by('-id').values_list('id', flat=True),
+        )
+        self.assertEqual(expected, seen)
+
+    def test_cursor_links_preserve_other_query_parameters(self):
+        self._make_submissions(12)
+        view = self._create_view_instance(
+            request_user=self.users['normal'],
+            target_user=self.users['normal'],
+            data={'language': 'PY3'},
+        )
+        _, page, _, _ = view.paginate_queryset(view.get_queryset(), 5)
+
+        self.assertEqual(['PY3'], parse_qs(urlparse(page.next_href).query)['language'])
+
+    def test_invalid_cursor_is_rejected(self):
+        self._make_submissions(12)
+
+        with self.assertRaises(BadRequest):
+            self._page('not-a-signed-cursor')
+
+    def test_cursor_page_renders_with_working_pagination_links(self):
+        self._make_submissions(60)   # 2 existing + 60, so paginate_by=50 gives two pages
+
+        response = self.client.get(reverse('all_user_submissions', kwargs={'user': 'normal'}))
+        self.assertEqual(200, response.status_code)
+
+        html = response.content.decode()
+        self.assertIn('cursor=', html)
+
+        # The rendered "next" link must itself be fetchable.
+        next_href = html.split('rel="next"')[0].rsplit('href="', 1)[1].split('"')[0]
+        follow_up = self.client.get(next_href.replace('&amp;', '&'))
+        self.assertEqual(200, follow_up.status_code)
+
+    def test_numbered_page_url_redirects_to_the_first_page(self):
+        response = self.client.get('/submissions/user/normal/3')
+
+        self.assertEqual(301, response.status_code)
+        self.assertEqual(
+            reverse('all_user_submissions', kwargs={'user': 'normal'}),
+            response['Location'],
+        )
 
     def test_filters_by_user(self):
         """Test that only target user's submissions are returned."""

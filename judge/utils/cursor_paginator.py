@@ -1,10 +1,13 @@
 """
-Signed cursor tokens for stable, seek-based list navigation.
+Seek-based list navigation with signed cursor tokens.
 
 A token carries the ordering position of a row, letting a view resume a listing
-with a lexicographic predicate (``WHERE id < :position``) instead of ``OFFSET``.
-Building and running that predicate is the caller's job; this module only
-encodes, signs, and validates the position.
+with a lexicographic predicate (``WHERE id < :position``) instead of ``OFFSET``,
+so the cost of a page stops growing with its depth.
+
+``CursorPaginator`` is the token codec: it signs, validates and decodes a
+position. ``CursorPaginationMixin`` drives an ordinary ``ListView`` with it.
+Callers that build their own SQL can use the codec alone.
 
 The ordering must end in a unique tie-breaker, usually ``id``, otherwise a
 position cannot identify a single row.
@@ -17,6 +20,8 @@ from uuid import UUID
 
 from django.core import signing
 from django.core.exceptions import BadRequest, FieldDoesNotExist, ValidationError
+from django.db.models import Q
+from django.http import Http404
 
 
 CURSOR_VERSION = 1
@@ -28,6 +33,32 @@ DEFAULT_CURSOR_SALT = 'judge.cursor_paginator'
 class Cursor:
     reverse: bool
     position: tuple
+
+
+def _reverse_ordering(ordering):
+    """``('-created', 'uuid')`` -> ``('created', '-uuid')``."""
+    def invert(order):
+        return order[1:] if order.startswith('-') else '-' + order
+
+    return tuple(invert(order) for order in ordering)
+
+
+def _seek_filter(ordering, position):
+    """Lexicographic "strictly past this position" predicate for ``ordering``.
+
+    For a single field this is just ``id__lt=...``; for a composite ordering it
+    expands to the usual ``a < x OR (a = x AND b < y)`` chain.
+    """
+    query = Q()
+    equal_prefix = Q()
+
+    for order, value in zip(ordering, position):
+        field_name = order.lstrip('-')
+        lookup = 'lt' if order.startswith('-') else 'gt'
+        query |= equal_prefix & Q(**{'%s__%s' % (field_name, lookup): value})
+        equal_prefix &= Q(**{field_name: value})
+
+    return query
 
 
 class CursorPaginator:
@@ -148,3 +179,128 @@ class CursorPaginator:
             field = self._model_field(field_name)
             if field is not None and field.null:
                 raise ValueError('Cursor ordering does not support nullable fields.')
+
+
+class CursorPage:
+    """Page object for cursor pagination, shaped like ``django.core.paginator.Page``.
+
+    ``number`` is 1 on the first page and 2 everywhere else. Seek pagination cannot
+    know a page's true ordinal without counting, and the point of it is to avoid
+    counting. It exists so that existing ``page_obj.number == 1`` checks -- live
+    submission updates, for instance -- keep working.
+    """
+
+    is_cursor = True
+    page_range = ()
+
+    def __init__(self, object_list, previous_href=None, next_href=None):
+        self.object_list = object_list
+        self.previous_href = previous_href
+        self.next_href = next_href
+        self.number = 1 if previous_href is None else 2
+
+    def __len__(self):
+        return len(self.object_list)
+
+    def __iter__(self):
+        return iter(self.object_list)
+
+    def __getitem__(self, index):
+        return self.object_list[index]
+
+    def has_previous(self):
+        return self.previous_href is not None
+
+    def has_next(self):
+        return self.next_href is not None
+
+    def has_other_pages(self):
+        return self.has_previous() or self.has_next()
+
+
+class CursorListPaginator:
+    """Stand-in for the paginator a ``ListView`` normally supplies.
+
+    Templates only ever read ``per_page`` off it; there is no page count to give.
+    """
+
+    def __init__(self, per_page):
+        self.per_page = per_page
+
+
+class CursorPaginationMixin:
+    """Seek pagination for a ``ListView``.
+
+    Pagination links are ordinary URLs carrying a ``cursor`` query parameter, so
+    pages stay shareable, the back button works, and the list degrades gracefully
+    without JavaScript.
+
+    ``cursor_ordering`` must end in a unique field and is applied to the queryset,
+    replacing whatever ordering it already carries.
+    """
+
+    cursor_ordering = ('-id',)
+    cursor_query_param = 'cursor'
+    cursor_salt = DEFAULT_CURSOR_SALT
+
+    def get_cursor_salt(self):
+        return self.cursor_salt
+
+    def get_cursor_paginator(self, queryset):
+        return CursorPaginator(
+            model=queryset.model,
+            ordering=self.cursor_ordering,
+            cursor_salt=self.get_cursor_salt(),
+        )
+
+    def get_cursor_href(self, token):
+        """Current URL with ``cursor`` swapped out, so filters survive paging."""
+        params = self.request.GET.copy()
+        params.pop(self.cursor_query_param, None)
+        if token is not None:
+            params[self.cursor_query_param] = token
+        encoded = params.urlencode()
+        return '%s?%s' % (self.request.path, encoded) if encoded else self.request.path
+
+    def get_cursor_position(self, instance):
+        return tuple(getattr(instance, order.lstrip('-')) for order in self.cursor_ordering)
+
+    def paginate_queryset(self, queryset, page_size):
+        paginator = self.get_cursor_paginator(queryset)
+        cursor = paginator.decode_cursor(self.request.GET.get(self.cursor_query_param) or None)
+
+        backwards = bool(cursor and cursor.reverse)
+        ordering = _reverse_ordering(self.cursor_ordering) if backwards else self.cursor_ordering
+
+        page_queryset = queryset.order_by(*ordering)
+        if cursor is not None:
+            page_queryset = page_queryset.filter(_seek_filter(ordering, cursor.position))
+
+        # One extra row answers "is there a next page?" without a second query.
+        rows = list(page_queryset[:page_size + 1])
+        has_more = len(rows) > page_size
+        rows = rows[:page_size]
+        if backwards:
+            rows.reverse()
+
+        if cursor is not None and not rows:
+            raise Http404('That page contains no results.')
+
+        if backwards:
+            # Arriving from a later page, so there is always something ahead of us.
+            has_previous, has_next = has_more, True
+        else:
+            has_previous, has_next = cursor is not None, has_more
+
+        def href(reverse, instance):
+            return self.get_cursor_href(paginator.encode_cursor(Cursor(
+                reverse=reverse,
+                position=self.get_cursor_position(instance),
+            )))
+
+        page = CursorPage(
+            object_list=rows,
+            previous_href=href(True, rows[0]) if has_previous and rows else None,
+            next_href=href(False, rows[-1]) if has_next and rows else None,
+        )
+        return CursorListPaginator(page_size), page, page.object_list, page.has_other_pages()

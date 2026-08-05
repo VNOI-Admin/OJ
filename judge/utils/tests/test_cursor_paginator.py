@@ -2,6 +2,7 @@ from dataclasses import FrozenInstanceError
 
 from django.core import signing
 from django.core.exceptions import BadRequest
+from django.db.models import Q
 from django.test import SimpleTestCase
 
 from judge.models import BlogPost, BlogPostTag
@@ -10,7 +11,35 @@ from judge.utils.cursor_paginator import (
     Cursor,
     CursorPaginator,
     DEFAULT_CURSOR_SALT,
+    _reverse_ordering,
+    _seek_filter,
 )
+
+
+class ReverseOrderingTestCase(SimpleTestCase):
+    def test_reverse_ascending(self):
+        self.assertEqual(('-created',), _reverse_ordering(('created',)))
+
+    def test_reverse_descending(self):
+        self.assertEqual(('created',), _reverse_ordering(('-created',)))
+
+    def test_reverse_multiple_fields(self):
+        self.assertEqual(('created', '-uuid'), _reverse_ordering(('-created', 'uuid')))
+
+
+class SeekFilterTestCase(SimpleTestCase):
+    def test_descending_single_field(self):
+        self.assertEqual(Q(id__lt=10), _seek_filter(('-id',), (10,)))
+
+    def test_ascending_single_field(self):
+        self.assertEqual(Q(id__gt=10), _seek_filter(('id',), (10,)))
+
+    def test_composite_ordering_is_lexicographic(self):
+        # score < 7 OR (score = 7 AND id < 10)
+        self.assertEqual(
+            Q(score__lt=7) | (Q(score=7) & Q(id__lt=10)),
+            _seek_filter(('-score', '-id'), (7, 10)),
+        )
 
 
 class CursorTestCase(SimpleTestCase):

@@ -100,6 +100,19 @@ def paged_list_view(view, name):
     ])
 
 
+def cursor_list_view(view, name):
+    """Like paged_list_view, for views that page by cursor.
+
+    Cursor pagination has no numbered pages, so existing /2 links redirect to the
+    first page rather than 404ing or silently rendering something else.
+    """
+    return include([
+        path('', view.as_view(), name=name),
+        path('<int:page>', lambda request, page, **kwargs:
+             HttpResponsePermanentRedirect(reverse(name, kwargs=kwargs))),
+    ])
+
+
 urlpatterns = [
     path('', blog.PostList.as_view(template_name='home.html', title=_('Home')), kwargs={'page': 1}, name='home'),
     path('500/', exception),
@@ -181,7 +194,7 @@ urlpatterns = [
 
     path('submissions/', paged_list_view(submission.AllSubmissions, 'all_submissions')),
     path('submissions/diff', submission.SubmissionSourceDiff, name='diff_submissions'),
-    path('submissions/user/<str:user>/', paged_list_view(submission.AllUserSubmissions, 'all_user_submissions')),
+    path('submissions/user/<str:user>/', cursor_list_view(submission.AllUserSubmissions, 'all_user_submissions')),
 
     path('src/<int:submission>', submission.SubmissionSource.as_view(), name='submission_source'),
     path('src/<int:submission>/raw', submission.SubmissionSourceRaw.as_view(), name='submission_source_raw'),
@@ -215,7 +228,7 @@ urlpatterns = [
             path('', user.UserProblemsPage.as_view(), name='user_problems'),
             path('ajax', user.UserPerformancePointsAjax.as_view(), name='user_pp_ajax'),
         ])),
-        path('/submissions/', paged_list_view(submission.AllUserSubmissions, 'all_user_submissions_old')),
+        path('/submissions/', cursor_list_view(submission.AllUserSubmissions, 'all_user_submissions_old')),
         path('/submissions/', lambda _, user:
              HttpResponsePermanentRedirect(reverse('all_user_submissions', args=[user]))),
 
