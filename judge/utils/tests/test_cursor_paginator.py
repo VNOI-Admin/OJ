@@ -8,9 +8,9 @@ from django.utils import timezone
 from judge.models import BlogPost
 from judge.utils.cursor_paginator import (
     CURSOR_VERSION,
-    DEFAULT_CURSOR_SALT,
     Cursor,
     CursorPaginator,
+    DEFAULT_CURSOR_SALT,
     _reverse_ordering,
 )
 
