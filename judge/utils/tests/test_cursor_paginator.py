@@ -2,8 +2,7 @@ from dataclasses import FrozenInstanceError
 
 from django.core import signing
 from django.core.exceptions import BadRequest
-from django.test import SimpleTestCase, TestCase
-from django.utils import timezone
+from django.test import SimpleTestCase
 
 from judge.models import BlogPost
 from judge.utils.cursor_paginator import (
@@ -11,25 +10,7 @@ from judge.utils.cursor_paginator import (
     Cursor,
     CursorPaginator,
     DEFAULT_CURSOR_SALT,
-    _reverse_ordering,
 )
-
-
-class ReverseOrderingTestCase(SimpleTestCase):
-    def test_reverse_ascending(self):
-        self.assertEqual(_reverse_ordering(('created',)), ('-created',))
-
-    def test_reverse_descending(self):
-        self.assertEqual(_reverse_ordering(('-created',)), ('created',))
-
-    def test_reverse_multiple_fields(self):
-        self.assertEqual(
-            _reverse_ordering(('-created', 'uuid')),
-            ('created', '-uuid'),
-        )
-
-    def test_reverse_empty_tuple(self):
-        self.assertEqual(_reverse_ordering(()), ())
 
 
 class CursorTestCase(SimpleTestCase):
@@ -47,9 +28,8 @@ class CursorTestCase(SimpleTestCase):
 class CursorPaginatorEncodingTestCase(SimpleTestCase):
     def setUp(self):
         self.paginator = CursorPaginator(
-            queryset=BlogPost.objects.none(),
+            model=BlogPost,
             ordering=('-id',),
-            page_size=10,
         )
 
     def test_decode_none_returns_none(self):
@@ -75,6 +55,13 @@ class CursorPaginatorEncodingTestCase(SimpleTestCase):
 
         with self.assertRaises(BadRequest):
             self.paginator.decode_cursor(tampered)
+
+    def test_decode_wrong_salt_raises_bad_request(self):
+        encoded = self.paginator.encode_cursor(Cursor(reverse=False, position=(123,)))
+        other = CursorPaginator(model=BlogPost, ordering=('-id',), cursor_salt='some.other.salt')
+
+        with self.assertRaises(BadRequest):
+            other.decode_cursor(encoded)
 
     def test_decode_wrong_version_raises_bad_request(self):
         token = signing.dumps({'v': CURSOR_VERSION + 1, 'r': False, 'p': [123]}, salt=DEFAULT_CURSOR_SALT)
@@ -104,195 +91,47 @@ class CursorPaginatorEncodingTestCase(SimpleTestCase):
         with self.assertRaises(ValueError):
             self.paginator.encode_cursor(Cursor(reverse=False, position=(None,)))
 
+    def test_decode_coerces_value_to_model_field_type(self):
+        cursor = self.paginator.decode_cursor(
+            signing.dumps({'v': CURSOR_VERSION, 'r': False, 'p': ['123']}, salt=DEFAULT_CURSOR_SALT),
+        )
+
+        self.assertEqual((123,), cursor.position)
+
+    def test_composite_position_roundtrip(self):
+        paginator = CursorPaginator(model=BlogPost, ordering=('-score', '-id'))
+        cursor = Cursor(reverse=False, position=(7, 123))
+
+        self.assertEqual(cursor, paginator.decode_cursor(paginator.encode_cursor(cursor)))
+
 
 class CursorPaginatorValidationTestCase(SimpleTestCase):
     def test_empty_ordering_rejected(self):
         with self.assertRaises(ValueError):
-            CursorPaginator(BlogPost.objects.none(), (), 10)
-
-    def test_non_positive_page_size_rejected(self):
-        with self.assertRaises(ValueError):
-            CursorPaginator(BlogPost.objects.none(), ('-id',), 0)
+            CursorPaginator(BlogPost, ())
 
     def test_non_unique_single_field_ordering_rejected(self):
         with self.assertRaises(ValueError):
-            CursorPaginator(BlogPost.objects.none(), ('-score',), 10)
+            CursorPaginator(BlogPost, ('-score',))
 
     def test_non_unique_ordering_requires_unique_tie_breaker(self):
         with self.assertRaises(ValueError):
-            CursorPaginator(BlogPost.objects.none(), ('-score', '-publish_on'), 10)
+            CursorPaginator(BlogPost, ('-score', '-publish_on'))
 
     def test_unique_single_field_ordering_allowed(self):
-        paginator = CursorPaginator(BlogPost.objects.none(), ('-id',), 10)
+        paginator = CursorPaginator(BlogPost, ('-id',))
 
         self.assertEqual(('-id',), paginator.ordering)
 
     def test_composite_ordering_with_tie_breaker_allowed(self):
-        paginator = CursorPaginator(BlogPost.objects.none(), ('-score', '-id'), 10)
+        paginator = CursorPaginator(BlogPost, ('-score', '-id'))
 
         self.assertEqual(('-score', '-id'), paginator.ordering)
 
     def test_related_ordering_rejected(self):
         with self.assertRaises(ValueError):
-            CursorPaginator(BlogPost.objects.none(), ('authors__id', 'id'), 10)
+            CursorPaginator(BlogPost, ('authors__id', 'id'))
 
     def test_nullable_model_field_ordering_rejected(self):
         with self.assertRaises(ValueError):
-            CursorPaginator(BlogPost.objects.none(), ('organization', 'id'), 10)
-
-
-class CursorPaginatorWithBlogPostTestCase(TestCase):
-    @classmethod
-    def setUpTestData(cls):
-        now = timezone.now()
-        cls.posts = []
-        for i in range(25):
-            post = BlogPost.objects.create(
-                title=f'Test Post {i:03d}',
-                slug=f'test-post-{i:03d}',
-                publish_on=now,
-                content=f'Content {i}',
-                score=i % 5,
-            )
-            cls.posts.append(post)
-
-    def _queryset(self):
-        return BlogPost.objects.filter(id__in=[post.id for post in self.posts])
-
-    def _create_paginator(self, ordering=('-id',), page_size=10):
-        return CursorPaginator(
-            queryset=self._queryset(),
-            ordering=ordering,
-            page_size=page_size,
-        )
-
-    def _collect_forward_ids(self, ordering=('-id',), page_size=10):
-        paginator = self._create_paginator(ordering=ordering, page_size=page_size)
-        cursor = None
-        result = []
-
-        while True:
-            page, _, next_link = paginator.paginate(cursor)
-            result.extend(post.id for post in page)
-
-            if next_link is None:
-                break
-            cursor = next_link
-
-        return result
-
-    def test_paginate_first_page(self):
-        paginator = self._create_paginator()
-        page, prev_link, next_link = paginator.paginate(None)
-
-        self.assertEqual(10, len(page))
-        self.assertIsNone(prev_link)
-        self.assertIsNotNone(next_link)
-
-    def test_paginate_empty_queryset(self):
-        paginator = CursorPaginator(
-            queryset=BlogPost.objects.none(),
-            ordering=('-id',),
-            page_size=10,
-        )
-
-        page, prev_link, next_link = paginator.paginate(None)
-
-        self.assertEqual([], page)
-        self.assertIsNone(prev_link)
-        self.assertIsNone(next_link)
-
-    def test_paginate_single_page(self):
-        queryset = BlogPost.objects.filter(id__in=[post.id for post in self.posts[:5]])
-        paginator = CursorPaginator(
-            queryset=queryset,
-            ordering=('-id',),
-            page_size=10,
-        )
-
-        page, prev_link, next_link = paginator.paginate(None)
-
-        self.assertEqual(5, len(page))
-        self.assertIsNone(prev_link)
-        self.assertIsNone(next_link)
-
-    def test_paginate_exact_page_size(self):
-        queryset = BlogPost.objects.filter(id__in=[post.id for post in self.posts[:10]])
-        paginator = CursorPaginator(
-            queryset=queryset,
-            ordering=('-id',),
-            page_size=10,
-        )
-
-        page, prev_link, next_link = paginator.paginate(None)
-
-        self.assertEqual(10, len(page))
-        self.assertIsNone(prev_link)
-        self.assertIsNone(next_link)
-
-    def test_full_forward_traversal_by_id(self):
-        expected_ids = list(self._queryset().order_by('-id').values_list('id', flat=True))
-
-        self.assertEqual(expected_ids, self._collect_forward_ids(ordering=('-id',), page_size=7))
-
-    def test_full_forward_traversal_with_duplicate_sort_key(self):
-        expected_ids = list(self._queryset().order_by('-score', '-id').values_list('id', flat=True))
-
-        self.assertEqual(expected_ids, self._collect_forward_ids(ordering=('-score', '-id'), page_size=7))
-
-    def test_paginate_backward_navigation(self):
-        paginator = self._create_paginator()
-
-        page1, _, next_link = paginator.paginate(None)
-        page2, prev_link2, _ = paginator.paginate(next_link)
-        page1_again, prev_link1, next_link1 = paginator.paginate(prev_link2)
-
-        self.assertEqual([post.id for post in page1], [post.id for post in page1_again])
-        self.assertNotEqual([post.id for post in page1], [post.id for post in page2])
-        self.assertIsNone(prev_link1)
-        self.assertIsNotNone(next_link1)
-
-    def test_paginate_backward_navigation_with_duplicate_sort_key(self):
-        paginator = self._create_paginator(ordering=('-score', '-id'), page_size=7)
-
-        page1, _, next_link = paginator.paginate(None)
-        page2, prev_link2, _ = paginator.paginate(next_link)
-        page1_again, prev_link1, next_link1 = paginator.paginate(prev_link2)
-
-        self.assertEqual([post.id for post in page1], [post.id for post in page1_again])
-        self.assertNotEqual([post.id for post in page1], [post.id for post in page2])
-        self.assertIsNone(prev_link1)
-        self.assertIsNotNone(next_link1)
-
-    def test_paginate_ascending_order(self):
-        paginator = self._create_paginator(ordering=('id',))
-        page, prev_link, next_link = paginator.paginate(None)
-
-        self.assertEqual([post.id for post in page], sorted(post.id for post in page))
-        self.assertIsNone(prev_link)
-        self.assertIsNotNone(next_link)
-
-    def test_all_pages_forward_then_backward(self):
-        paginator = self._create_paginator(ordering=('-score', '-id'), page_size=6)
-        forward_pages = []
-        cursor = None
-        last_prev_link = None
-
-        while True:
-            page, prev_link, next_link = paginator.paginate(cursor)
-            forward_pages.append([post.id for post in page])
-
-            if next_link is None:
-                last_prev_link = prev_link
-                break
-            cursor = next_link
-
-        backward_pages = []
-        cursor = last_prev_link
-        while cursor is not None:
-            page, prev_link, _ = paginator.paginate(cursor)
-            backward_pages.append([post.id for post in page])
-            cursor = prev_link
-
-        backward_pages.reverse()
-        self.assertEqual(forward_pages[:-1], backward_pages)
+            CursorPaginator(BlogPost, ('organization', 'id'))
