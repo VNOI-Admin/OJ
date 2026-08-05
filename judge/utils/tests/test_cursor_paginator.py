@@ -4,7 +4,7 @@ from django.core import signing
 from django.core.exceptions import BadRequest
 from django.test import SimpleTestCase
 
-from judge.models import BlogPost
+from judge.models import BlogPost, BlogPostTag
 from judge.utils.cursor_paginator import (
     CURSOR_VERSION,
     Cursor,
@@ -91,6 +91,16 @@ class CursorPaginatorEncodingTestCase(SimpleTestCase):
         with self.assertRaises(ValueError):
             self.paginator.encode_cursor(Cursor(reverse=False, position=(None,)))
 
+    def test_encode_short_position_rejected(self):
+        paginator = CursorPaginator(model=BlogPost, ordering=('-score', '-id'))
+
+        with self.assertRaises(ValueError):
+            paginator.encode_cursor(Cursor(reverse=False, position=(123,)))
+
+    def test_encode_long_position_rejected(self):
+        with self.assertRaises(ValueError):
+            self.paginator.encode_cursor(Cursor(reverse=False, position=(123, 456)))
+
     def test_decode_coerces_value_to_model_field_type(self):
         cursor = self.paginator.decode_cursor(
             signing.dumps({'v': CURSOR_VERSION, 'r': False, 'p': ['123']}, salt=DEFAULT_CURSOR_SALT),
@@ -135,3 +145,14 @@ class CursorPaginatorValidationTestCase(SimpleTestCase):
     def test_nullable_model_field_ordering_rejected(self):
         with self.assertRaises(ValueError):
             CursorPaginator(BlogPost, ('organization', 'id'))
+
+    def test_non_unique_tie_breaker_rejected(self):
+        # BlogPost.score is not unique, so it cannot identify a single row.
+        with self.assertRaises(ValueError):
+            CursorPaginator(BlogPost, ('score',), unique_field='score')
+
+    def test_unique_non_pk_tie_breaker_allowed(self):
+        # BlogPostTag.slug carries unique=True, so it is a valid tie-breaker.
+        paginator = CursorPaginator(BlogPostTag, ('slug',), unique_field='slug')
+
+        self.assertEqual(('slug',), paginator.ordering)

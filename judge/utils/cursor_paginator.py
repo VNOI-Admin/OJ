@@ -85,6 +85,9 @@ class CursorPaginator:
             raise BadRequest('Invalid cursor')
 
     def encode_cursor(self, cursor: Cursor):
+        if len(cursor.position) != len(self.ordering):
+            raise ValueError('Cursor position must hold one value per ordering field.')
+
         if any(value is None for value in cursor.position):
             raise ValueError('Cursor positions cannot contain None.')
 
@@ -133,6 +136,11 @@ class CursorPaginator:
 
         if self._field_names[-1] != self.unique_field:
             raise ValueError('Cursor ordering must end with a unique field.')
+
+        tie_breaker = self._model_field(self.unique_field)
+        if tie_breaker is not None and not (tie_breaker.primary_key or tie_breaker.unique):
+            raise ValueError('Cursor unique_field must be unique: a tie-breaker that repeats can skip or '
+                             'duplicate rows across pages.')
 
         for field_name in self._field_names:
             if '__' in field_name:
