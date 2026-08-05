@@ -148,8 +148,8 @@ urlpatterns = [
         path('/update-polygon', problem.ProblemUpdatePolygon.as_view(), name='problem_update_polygon'),
 
         path('/rank/', paged_list_view(ranked_submission.RankedSubmissions, 'ranked_submissions')),
-        path('/submissions/', paged_list_view(submission.ProblemSubmissions, 'chronological_submissions')),
-        path('/submissions/<str:user>/', paged_list_view(submission.UserProblemSubmissions, 'user_submissions')),
+        path('/submissions/', cursor_list_view(submission.ProblemSubmissions, 'chronological_submissions')),
+        path('/submissions/<str:user>/', cursor_list_view(submission.UserProblemSubmissions, 'user_submissions')),
 
         path('/', lambda _, problem: HttpResponsePermanentRedirect(reverse('problem_detail', args=[problem]))),
 
@@ -283,9 +283,9 @@ urlpatterns = [
         path('/submissions/',
              paged_list_view(submission.AllContestSubmissions, 'contest_all_submissions')),
         path('/submissions/<str:user>/',
-             paged_list_view(submission.UserAllContestSubmissions, 'contest_all_user_submissions')),
+             cursor_list_view(submission.UserAllContestSubmissions, 'contest_all_user_submissions')),
         path('/submissions/<str:user>/<str:problem>/',
-             paged_list_view(submission.UserContestSubmissions, 'contest_user_submissions')),
+             cursor_list_view(submission.UserContestSubmissions, 'contest_user_submissions')),
 
         path('/participation/disqualify', contests.ContestParticipationDisqualify.as_view(),
              name='contest_participation_disqualify'),
@@ -324,7 +324,7 @@ urlpatterns = [
              name='organization_problems_bulk_delete'),
         path('/contests/', organization.ContestListOrganization.as_view(), name='contest_list_organization'),
         path('/submissions/',
-             paged_list_view(organization.SubmissionListOrganization, 'submission_list_organization')),
+             cursor_list_view(organization.SubmissionListOrganization, 'submission_list_organization')),
         path('/problem-create', organization.ProblemCreateOrganization.as_view(), name='problem_create_organization'),
         path('/contest-create', organization.ContestCreateOrganization.as_view(), name='contest_create_organization'),
 

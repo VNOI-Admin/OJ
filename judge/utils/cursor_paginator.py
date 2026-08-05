@@ -19,7 +19,7 @@ from decimal import Decimal
 from uuid import UUID
 
 from django.core import signing
-from django.core.exceptions import BadRequest, FieldDoesNotExist, ValidationError
+from django.core.exceptions import BadRequest, FieldDoesNotExist, ImproperlyConfigured, ValidationError
 from django.db.models import Q
 from django.http import Http404
 
@@ -266,6 +266,17 @@ class CursorPaginationMixin:
         return tuple(getattr(instance, order.lstrip('-')) for order in self.cursor_ordering)
 
     def paginate_queryset(self, queryset, page_size):
+        # Seeking only works against the ordering the cursor was minted for, and the
+        # order_by below would otherwise silently replace whatever the view asked for.
+        # A subclass that re-sorts (RankedSubmissions, say) must not inherit this.
+        existing = tuple(queryset.query.order_by)
+        if existing and existing != tuple(self.cursor_ordering):
+            raise ImproperlyConfigured(
+                '%s orders by %r but cursor_ordering is %r. Set cursor_ordering to match, '
+                'or page this view some other way.'
+                % (type(self).__name__, existing, tuple(self.cursor_ordering)),
+            )
+
         paginator = self.get_cursor_paginator(queryset)
         cursor = paginator.decode_cursor(self.request.GET.get(self.cursor_query_param) or None)
 

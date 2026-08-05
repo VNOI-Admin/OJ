@@ -655,7 +655,9 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         return context
 
 
-class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
+class ProblemSubmissions(CursorPaginationMixin, ProblemSubmissionsBase):
+    cursor_salt = 'judge.problem_submissions.cursor'
+
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
             if hasattr(self, 'contest'):

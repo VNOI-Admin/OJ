@@ -17,6 +17,8 @@ from judge.models.tests.util import (
     create_problem,
     create_user,
 )
+from judge.utils.infinite_paginator import InfinitePaginationMixin
+from judge.views.ranked_submission import RankedSubmissions
 from judge.views.submission import (
     AllContestSubmissions,
     AllSubmissions,
@@ -1020,6 +1022,14 @@ class AllUserSubmissionsTestCase(CommonDataMixin, TestCase):
         next_href = html.split('rel="next"')[0].rsplit('href="', 1)[1].split('"')[0]
         follow_up = self.client.get(next_href.replace('&amp;', '&'))
         self.assertEqual(200, follow_up.status_code)
+
+    def test_ranked_submissions_keep_offset_pagination(self):
+        # RankedSubmissions sorts by points, which is not unique, so it must not
+        # inherit cursor pagination from ProblemSubmissions.
+        self.assertIs(
+            InfinitePaginationMixin.paginate_queryset,
+            RankedSubmissions.paginate_queryset,
+        )
 
     def test_numbered_page_url_redirects_to_the_first_page(self):
         response = self.client.get('/submissions/user/normal/3')

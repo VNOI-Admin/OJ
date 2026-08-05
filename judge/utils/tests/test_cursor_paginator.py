@@ -1,14 +1,15 @@
 from dataclasses import FrozenInstanceError
 
 from django.core import signing
-from django.core.exceptions import BadRequest
+from django.core.exceptions import BadRequest, ImproperlyConfigured
 from django.db.models import Q
-from django.test import SimpleTestCase
+from django.test import RequestFactory, SimpleTestCase
 
 from judge.models import BlogPost, BlogPostTag
 from judge.utils.cursor_paginator import (
     CURSOR_VERSION,
     Cursor,
+    CursorPaginationMixin,
     CursorPaginator,
     DEFAULT_CURSOR_SALT,
     _reverse_ordering,
@@ -185,3 +186,29 @@ class CursorPaginatorValidationTestCase(SimpleTestCase):
         paginator = CursorPaginator(BlogPostTag, ('slug',), unique_field='slug')
 
         self.assertEqual(('slug',), paginator.ordering)
+
+
+class CursorPaginationMixinTestCase(SimpleTestCase):
+    class _View(CursorPaginationMixin):
+        cursor_ordering = ('-id',)
+
+        def __init__(self, request):
+            self.request = request
+
+    def _view(self):
+        return self._View(RequestFactory().get('/'))
+
+    def test_ordering_mismatch_is_rejected(self):
+        # Seeking against an ordering the cursor was not minted for would silently
+        # re-sort the page, so it must fail loudly instead.
+        with self.assertRaises(ImproperlyConfigured):
+            self._view().paginate_queryset(BlogPost.objects.order_by('-score'), 10)
+
+    def test_matching_ordering_is_accepted(self):
+        # Reaches the database, so only assert that the guard let it through.
+        try:
+            self._view().paginate_queryset(BlogPost.objects.order_by('-id'), 10)
+        except ImproperlyConfigured:
+            self.fail('guard rejected an ordering that matches cursor_ordering')
+        except Exception:
+            pass
