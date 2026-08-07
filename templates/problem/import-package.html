@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block body %}
+    <h2>{{ _('Import problem package') }}</h2>
+    <form action="" method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <table class="django-as-table">{{ form.as_table() }}</table>
+        <button class="button" type="submit">{{ _('Import') }}</button>
+    </form>
+{% endblock %}

@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 import datetime
 import os
+import tempfile
 
 from django.utils.translation import gettext_lazy as _
 from django_jinja.builtins import DEFAULT_EXTENSIONS
@@ -259,6 +260,12 @@ DMOJ_CAMO_HTTPS = False
 DMOJ_CAMO_EXCLUDE = ()
 
 DMOJ_PROBLEM_DATA_ROOT = None
+
+# Problem package import/export is restricted to superusers and disabled by default.
+VNOJ_PROBLEM_PACKAGE_ENABLED = False
+VNOJ_PROBLEM_PACKAGE_ROOT = os.path.join(tempfile.gettempdir(), 'vnoj-problem-packages')
+VNOJ_PROBLEM_PACKAGE_DOWNLOAD_TIMEOUT = (10, 300)
+VNOJ_PROBLEM_PACKAGE_DOWNLOAD_CHUNK_SIZE = 64 * 1024
 
 DMOJ_PROBLEM_MIN_TIME_LIMIT = 0.01  # seconds
 DMOJ_PROBLEM_MAX_TIME_LIMIT = 60  # seconds

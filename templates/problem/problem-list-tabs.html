@@ -4,6 +4,9 @@
     {% if request.user.has_perm('judge.add_problem') %}
         {{ make_tab('create', 'fa-plus', url('problem_create'), _('Create new problem')) }}
     {% endif %}
+    {% if can_use_problem_packages %}
+        {{ make_tab('import-package', 'fa-upload', url('problem_package_import'), _('Import package')) }}
+    {% endif %}
     {{ make_tab('list', 'fa-list', url('problem_list'), _('List')) }}
     {% if request.user.is_superuser %}
         {{ make_tab('admin', 'fa-edit', url('admin:judge_problem_changelist'), _('Admin')) }}
