@@ -263,7 +263,9 @@ DMOJ_PROBLEM_DATA_ROOT = None
 
 # Problem package import/export is restricted to superusers and disabled by default.
 VNOJ_PROBLEM_PACKAGE_ENABLED = False
+# The web process and Celery workers must access this directory through the same filesystem and Unix user.
 VNOJ_PROBLEM_PACKAGE_ROOT = os.path.join(tempfile.gettempdir(), 'vnoj-problem-packages')
+VNOJ_PROBLEM_PACKAGE_SESSION_TASK_LIMIT = 20
 VNOJ_PROBLEM_PACKAGE_DOWNLOAD_TIMEOUT = (10, 300)
 VNOJ_PROBLEM_PACKAGE_DOWNLOAD_CHUNK_SIZE = 64 * 1024
 

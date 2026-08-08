@@ -49,7 +49,7 @@
             }
 
             function do_ajax(backoff) {
-                $.get('{{ url('task_status_ajax') }}', {
+                $.get('{{ task_status_ajax_url }}', {
                     id: task_id
                 }).done(function (data) {
                     show_status(data);

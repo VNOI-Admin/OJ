@@ -2,10 +2,10 @@ import json
 import os
 import shutil
 import tempfile
+import uuid
 import zipfile
 
 from django.conf import settings
-from django.core.exceptions import ValidationError
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -30,6 +30,19 @@ MANIFEST_FIELDS = (
 
 class ProblemPackageError(ValueError):
     pass
+
+
+def get_problem_package_staging_path(staged_token):
+    try:
+        token = uuid.UUID(str(staged_token)).hex
+    except (AttributeError, TypeError, ValueError) as error:
+        raise ProblemPackageError('The problem package staging token is invalid.') from error
+
+    staging_root = os.path.realpath(settings.VNOJ_PROBLEM_PACKAGE_ROOT)
+    staging_path = os.path.realpath(os.path.join(staging_root, 'upload-%s' % token))
+    if os.path.dirname(staging_path) != staging_root:
+        raise ProblemPackageError('The problem package staging token is invalid.')
+    return staging_path
 
 
 def can_use_problem_packages(user):
@@ -57,36 +70,20 @@ def export_problem(problem, destination, export_code=None, prefix_name=''):
 
 
 def _read_package(package_path, destination):
-    try:
-        with zipfile.ZipFile(package_path) as package:
-            package.extractall(destination)
-    except (OSError, zipfile.BadZipFile) as error:
-        raise ProblemPackageError('The package is not a valid ZIP file.') from error
-
-    manifest_path = os.path.join(destination, 'problem.json')
-    try:
-        with open(manifest_path, encoding='utf-8') as manifest_file:
-            manifest = json.load(manifest_file)
-        if not isinstance(manifest, dict):
-            raise TypeError
-        return {field: manifest[field] for field in MANIFEST_FIELDS}
-    except (KeyError, OSError, TypeError, ValueError) as error:
-        raise ProblemPackageError('The package must contain a valid problem.json file.') from error
+    with zipfile.ZipFile(package_path) as package:
+        package.extractall(destination)
+    with open(os.path.join(destination, 'problem.json'), encoding='utf-8') as manifest_file:
+        manifest = json.load(manifest_file)
+    return {field: manifest[field] for field in MANIFEST_FIELDS}
 
 
 def import_problem(package_path, code, user, temporary_root=None):
     """Import one problem; bulk import can call this once for each package."""
-    try:
-        Problem._meta.get_field('code').run_validators(code)
-    except ValidationError as error:
-        raise ProblemPackageError('The new problem code is invalid.') from error
     if Problem.objects.filter(code=code).exists():
         raise ProblemPackageError('A problem with this code already exists.')
 
     group = ProblemGroup.objects.order_by('pk').first()
     problem_type = ProblemType.objects.order_by('pk').first()
-    if group is None or problem_type is None:
-        raise ProblemPackageError('A default problem group and type must exist before importing.')
 
     with tempfile.TemporaryDirectory(dir=temporary_root) as extracted_directory:
         data = _read_package(package_path, extracted_directory)
@@ -98,10 +95,6 @@ def import_problem(package_path, code, user, temporary_root=None):
             'date': timezone.now(),
         })
         problem = Problem(**data)
-        try:
-            problem.full_clean(exclude=('deleted_at',))
-        except ValidationError as error:
-            raise ProblemPackageError('problem.json contains invalid problem configuration.') from error
 
         data_directory = problem_data_storage.path(code)
         os.makedirs(os.path.dirname(data_directory), exist_ok=True)

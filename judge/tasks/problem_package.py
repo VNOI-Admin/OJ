@@ -8,7 +8,9 @@ from celery import shared_task
 from django.conf import settings
 from django.contrib.auth import get_user_model
 
-from judge.utils.problem_package import ProblemPackageError, can_use_problem_packages, import_problem
+from judge.utils.problem_package import (
+    ProblemPackageError, get_problem_package_staging_path, import_problem,
+)
 
 __all__ = ('import_problem_package',)
 
@@ -25,13 +27,12 @@ def _download(package_url, destination):
 
 
 @shared_task
-def import_problem_package(user_id, code, package_url=None, staged_directory=None):
+def import_problem_package(user_id, code, package_url=None, staged_token=None):
+    staged_directory = None
     try:
+        if staged_token:
+            staged_directory = get_problem_package_staging_path(staged_token)
         user = get_user_model().objects.get(pk=user_id)
-        if not can_use_problem_packages(user):
-            raise ProblemPackageError('Problem package import is not available.')
-        if bool(package_url) == bool(staged_directory):
-            raise ProblemPackageError('Exactly one package source is required.')
 
         os.makedirs(settings.VNOJ_PROBLEM_PACKAGE_ROOT, exist_ok=True)
         if package_url:
