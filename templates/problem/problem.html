@@ -339,7 +339,7 @@
         </div>
     {% endif %}
 
-    {% if not contest_problem or not contest_problem.contest.hide_problem_tags %}
+    {% if not problem.organization_id and (not contest_problem or not contest_problem.contest.hide_problem_tags) %}
         <div id="problem-types">
             {% with types=problem.types_list %}
                 <div class="toggle closed unselectable">

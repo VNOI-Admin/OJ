@@ -1,5 +1,6 @@
 import datetime
 from functools import cached_property
+from random import randrange
 
 from django import forms
 from django.conf import settings
@@ -742,6 +743,10 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
     def get_context_data(self, **kwargs):
         context = super(ProblemListOrganization, self).get_context_data(**kwargs)
         context['show_org_tags'] = True
+        context['org_tags_filter'] = self.organization.problem_tags.all()
+        raw_tags = self.request.GET.getlist('tag')
+        context['selected_tags'] = [int(t) for t in raw_tags if t.isdigit()]
+        context['untagged_selected'] = 'untagged' in raw_tags or self.request.GET.get('untagged') == '1'
         if not self.is_in_organization_subdomain():
             context['title'] = self.organization.name
         return context
@@ -771,14 +776,33 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
 
             _filter &= Q(organization=self.organization)
 
-        if self.request.GET.get('untagged') == '1':
-            _filter &= Q(tags__isnull=True)
+        # The tag filter is a multi-select whose values are tag ids plus an
+        # 'untagged' sentinel; ?untagged=1 is the equivalent single-purpose link.
+        raw_tags = self.request.GET.getlist('tag')
+        tag_ids = [t for t in raw_tags if t.isdigit()]
+        want_untagged = 'untagged' in raw_tags or self.request.GET.get('untagged') == '1'
 
-        tag_id = self.request.GET.get('tag')
-        if tag_id and tag_id.isdigit():
-            _filter &= Q(tags__id=tag_id)
+        tag_filter = Q()
+        if tag_ids:
+            tag_filter |= Q(tags__id__in=tag_ids)
+        if want_untagged:
+            tag_filter |= Q(tags__isnull=True)
+        if tag_filter:
+            _filter &= tag_filter
 
         return _filter
+
+
+class RandomProblemOrganization(ProblemListOrganization):
+    def get(self, request, *args, **kwargs):
+        self.setup_problem_list(request)
+        if self.in_contest:
+            raise Http404()
+        queryset = self.get_normal_queryset()
+        count = queryset.count()
+        if not count:
+            return HttpResponseRedirect(reverse('problem_list_organization', args=[self.organization.slug]))
+        return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
 
 
 class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin, View):
