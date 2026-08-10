@@ -9103,6 +9103,11 @@ msgstr "Không tìm thấy URL rút gọn."
 msgid "This shortened URL is not active."
 msgstr "URL rút gọn này không hoạt động."
 
+#: templates/organization/tags.html templates/problem/problem.html
+#: templates/problem/list.html
+msgid "Uncategorized"
+msgstr "Chưa phân loại"
+
 #~ msgid "Suggest new problem"
 #~ msgstr "Đề xuất bài mới"
 

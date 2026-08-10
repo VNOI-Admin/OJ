@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title_row %}
+    {% set tab = 'tags' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+
+{% block body %}
+    <form action="" method="post" class="form-area"
+          style="display: flex; justify-content: center; flex-direction: column;">
+        {% csrf_token %}
+        <p>{{ _('Are you sure you want to delete the tag "%(name)s"?', name=tag.name) }}</p>
+        {% set problem_count = tag.problems.count() %}
+        {% if problem_count %}
+            <p>{{ _('It will be removed from %(count)d problem(s).', count=problem_count) }}</p>
+        {% endif %}
+        <div style="display: flex; justify-content: flex-end;">
+            <a href="{{ url('organization_tag_list', organization.slug) }}" class="button">{{ _('Cancel') }}</a>
+            <button class="submit-bar" type="submit" style="margin-left: 0.5em;">{{ _('Delete') }}</button>
+        </div>
+    </form>
+{% endblock %}
