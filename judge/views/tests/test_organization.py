@@ -1,8 +1,10 @@
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
-from judge.models import Problem
-from judge.models.tests.util import CommonDataMixin, create_organization, create_problem, create_user
+from judge.models import Language, Problem, Submission
+from judge.models.tests.util import CommonDataMixin, create_organization, create_problem, create_problem_type, \
+    create_user
 from judge.views.organization import get_organization_problem_filter
 
 
@@ -92,3 +94,109 @@ class OrganizationUserSolvedAccessTestCase(CommonDataMixin, TestCase):
         self.client.force_login(self.users['staff_organization_admin'])
         url = reverse('organization_user_solved', args=[self.organization.slug, 'nobody'])
         self.assertEqual(self.client.get(url).status_code, 404)
+
+
+class OrganizationUserSolvedContextTestCase(CommonDataMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.organization = create_organization(
+            name='solvedorg',
+            is_unlisted=False,
+            admins=('staff_organization_admin',),
+        )
+        cls.member = create_user(username='solver')
+        cls.member.profile.organizations.add(cls.organization)
+
+        create_problem_type(name='dp', full_name='Dynamic Programming')
+        create_problem_type(name='graph', full_name='Graph Theory')
+
+        cls.solved_two_types = create_problem(
+            code='two_types',
+            is_public=True,
+            organization=cls.organization,
+            types=('dp', 'graph'),
+        )
+        cls.solved_no_type = create_problem(
+            code='no_type',
+            is_public=True,
+            organization=cls.organization,
+        )
+        cls.unsolved = create_problem(
+            code='unsolved',
+            is_public=True,
+            organization=cls.organization,
+            types=('dp',),
+        )
+        cls.outside_org = create_problem(
+            code='outside_org',
+            is_public=True,
+            types=('dp',),
+        )
+
+        cls._now = timezone.now()
+        cls.create_ac(cls.solved_two_types, cls._now - timezone.timedelta(days=5))
+        cls.create_ac(cls.solved_two_types, cls._now - timezone.timedelta(days=1))
+        cls.create_ac(cls.solved_no_type, cls._now - timezone.timedelta(days=3))
+        cls.create_ac(cls.outside_org, cls._now - timezone.timedelta(days=2))
+        cls.create_submission(cls.unsolved, cls._now, result='WA')
+
+        cls.url = reverse('organization_user_solved', args=[cls.organization.slug, 'solver'])
+
+    @classmethod
+    def create_submission(cls, problem, date, result):
+        submission = Submission.objects.create(
+            user=cls.member.profile,
+            problem=problem,
+            language=Language.get_python3(),
+            result=result,
+            status='D',
+        )
+        # `date` is auto_now_add, so it can only be set after the row exists.
+        Submission.objects.filter(pk=submission.pk).update(date=date)
+        return submission
+
+    @classmethod
+    def create_ac(cls, problem, date):
+        return cls.create_submission(problem, date, result='AC')
+
+    def get_context(self):
+        self.client.force_login(self.users['staff_organization_admin'])
+        return self.client.get(self.url).context
+
+    def sections_by_name(self):
+        return {section['name']: section for section in self.get_context()['type_sections']}
+
+    def test_only_solved_organization_problems_are_listed(self):
+        codes = {
+            problem['code']
+            for section in self.get_context()['type_sections']
+            for problem in section['problems']
+        }
+        self.assertEqual(codes, {'two_types', 'no_type'})
+
+    def test_problem_with_two_types_appears_once_under_the_first_type(self):
+        sections = self.sections_by_name()
+        self.assertIn('Dynamic Programming', sections)
+        self.assertNotIn('Graph Theory', sections)
+        self.assertEqual([problem['code'] for problem in sections['Dynamic Programming']['problems']], ['two_types'])
+
+    def test_problem_without_type_is_uncategorized(self):
+        sections = self.sections_by_name()
+        self.assertEqual([problem['code'] for problem in sections['Uncategorized']['problems']], ['no_type'])
+
+    def test_uncategorized_section_sorts_last(self):
+        names = [section['name'] for section in self.get_context()['type_sections']]
+        self.assertEqual(names[-1], 'Uncategorized')
+
+    def test_first_solved_is_the_earliest_accepted_submission(self):
+        sections = self.sections_by_name()
+        problem = sections['Dynamic Programming']['problems'][0]
+        self.assertEqual(problem['first_solved'], self._now - timezone.timedelta(days=5))
+
+    def test_counts(self):
+        context = self.get_context()
+        self.assertEqual(context['solved_count'], 2)
+        self.assertEqual(context['total_count'], 3)
+        self.assertEqual(self.sections_by_name()['Dynamic Programming']['count'], 1)

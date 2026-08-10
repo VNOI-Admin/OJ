@@ -1,5 +1,7 @@
 import datetime
+from collections import defaultdict
 from functools import cached_property
+from operator import itemgetter
 from random import randrange
 
 from django import forms
@@ -8,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import IntegrityError, transaction
-from django.db.models import Count, FilteredRelation, OuterRef, Q, Subquery, Sum
+from django.db.models import Count, FilteredRelation, Min, OuterRef, Q, Subquery, Sum
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
@@ -50,6 +52,7 @@ __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'Organiz
 
 
 MAX_BULK_DELETE_PROBLEMS = 200
+SOLVED_PROBLEMS_PAGE_SIZE = 10
 
 
 class OrganizationMixin(object):
@@ -822,7 +825,40 @@ class OrganizationUserSolvedProblems(AdminOrganizationMixin, TitleMixin, Templat
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationUserSolvedProblems, self).get_context_data(**kwargs)
+
+        problems = Problem.get_visible_problems(self.request.user) \
+            .filter(get_organization_problem_filter(self.organization, self.request.user, self.request.profile)) \
+            .distinct()
+
+        first_solved = dict(
+            Submission.objects.filter(user=self.member, result='AC', problem__in=problems)
+            .values_list('problem_id')
+            .annotate(first_solved=Min('date'))
+            .values_list('problem_id', 'first_solved'),
+        )
+
+        uncategorized = _('Uncategorized')
+        sections = defaultdict(list)
+        for problem in problems.filter(id__in=first_solved).prefetch_related('types'):
+            types = problem.types_list
+            sections[types[0] if types else uncategorized].append({
+                'code': problem.code,
+                'name': problem.name,
+                'points': problem.points,
+                'first_solved': first_solved[problem.id],
+            })
+
+        type_sections = []
+        for name, solved_problems in sections.items():
+            solved_problems.sort(key=itemgetter('first_solved'))
+            type_sections.append({'name': name, 'count': len(solved_problems), 'problems': solved_problems})
+        type_sections.sort(key=lambda section: (section['name'] == uncategorized, -section['count'], section['name']))
+
         context['member'] = self.member
+        context['solved_count'] = len(first_solved)
+        context['total_count'] = problems.count()
+        context['page_size'] = SOLVED_PROBLEMS_PAGE_SIZE
+        context['type_sections'] = type_sections
         return context
 
 
