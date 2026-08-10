@@ -4,7 +4,7 @@ from django.urls import reverse
 
 from judge.forms import ProblemEditForm
 from judge.models import OrganizationProblemTag
-from judge.models.tests.util import CommonDataMixin, create_organization
+from judge.models.tests.util import CommonDataMixin, create_organization, create_problem
 
 
 class OrganizationProblemTagTestCase(CommonDataMixin, TestCase):
@@ -97,3 +97,39 @@ class OrganizationProblemTagTestCase(CommonDataMixin, TestCase):
         url = reverse('problem_list_organization', args=[self.org.slug])
         response = self.client.get(url, {'order': 'solved'})
         self.assertEqual(response.status_code, 200)
+
+    def test_org_problem_list_tag_filter(self):
+        """The org problem list filters by tag id, by ?untagged=1, and by the 'untagged' sentinel."""
+        tag = OrganizationProblemTag.objects.create(name='dp', organization=self.org)
+        tagged = create_problem(code='open_tagged', organization=self.org,
+                                is_organization_private=True, is_public=True)
+        tagged.tags.add(tag)
+        create_problem(code='open_untagged', organization=self.org,
+                       is_organization_private=True, is_public=True)
+
+        self.client.force_login(self.users['staff_problem_see_organization'])
+        url = reverse('problem_list_organization', args=[self.org.slug])
+
+        codes = {p.code for p in self.client.get(url, {'tag': tag.id}).context['problems']}
+        self.assertEqual(codes, {'open_tagged'})
+
+        codes = {p.code for p in self.client.get(url, {'untagged': '1'}).context['problems']}
+        self.assertEqual(codes, {'open_untagged'})
+
+        codes = {p.code for p in self.client.get(url, {'tag': 'untagged'}).context['problems']}
+        self.assertEqual(codes, {'open_untagged'})
+
+    def test_org_random_respects_tag_filter(self):
+        """Random on the org list honors the tag filter and stays within the org."""
+        tag = OrganizationProblemTag.objects.create(name='dp', organization=self.org)
+        tagged = create_problem(code='open_rand_tagged', organization=self.org,
+                                is_organization_private=True, is_public=True)
+        tagged.tags.add(tag)
+        create_problem(code='open_rand_untagged', organization=self.org,
+                       is_organization_private=True, is_public=True)
+
+        self.client.force_login(self.users['staff_problem_see_organization'])
+        url = reverse('problem_random_organization', args=[self.org.slug])
+        response = self.client.get(url, {'tag': tag.id})
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('open_rand_tagged', response.url)

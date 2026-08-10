@@ -311,6 +311,8 @@ urlpatterns = [
         path('/kick', organization.KickUserWidgetView.as_view(), name='organization_user_kick'),
         path('/usage', organization.OrganizationStorageDashboard.as_view(), name='organization_monthly_usage'),
         path('/problems/', organization.ProblemListOrganization.as_view(), name='problem_list_organization'),
+        path('/problems/random/', organization.RandomProblemOrganization.as_view(),
+             name='problem_random_organization'),
         path('/problems/bulk-delete', organization.BulkDeleteOrganizationProblems.as_view(),
              name='organization_problems_bulk_delete'),
         path('/contests/', organization.ContestListOrganization.as_view(), name='contest_list_organization'),

@@ -26,11 +26,13 @@
                         {% if has_public_editorial %} checked{% endif %}>
                 <label for="has_public_editorial">{{ _('Has editorial') }}</label>
             </div>
+            {% if not show_org_tags %}
             <div>
                 <input id="show_types" type="checkbox" name="show_types" value="1"
                         {% if show_types %} checked{% endif %}>
                 <label for="show_types">{{ _('Show problem types') }}</label>
             </div>
+            {% endif %}
             <div class="filter-form-group">
                 <label for="category"><i>{{ _('Category') }}</i></label>
                 <select id="category" name="category">
@@ -46,6 +48,19 @@
                     {% endfor %}
                 </select>
             </div>
+            {% if show_org_tags %}
+            <div class="filter-form-group">
+                <label for="org-tags"><i>{{ _('Tags') }}</i></label>
+                <select id="org-tags" name="tag" multiple>
+                    <option value="untagged"{% if untagged_selected %} selected{% endif %}>{{ _('Uncategorized') }}</option>
+                    {% for tag in org_tags_filter %}
+                        <option value="{{ tag.id }}"{% if tag.id in selected_tags %} selected{% endif %}>
+                            {{ tag.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
             <div class="filter-form-group">
                 <label for="type"><i>{{ _('Problem types') }}</i></label>
                 <select id="types" name="type" multiple>
@@ -56,6 +71,7 @@
                     {% endfor %}
                 </select>
             </div>
+            {% endif %}
             {% if point_values %}
                 <div class="form-label">{{ _('Point range') }}</div>
                 <div id="point-slider"></div>
