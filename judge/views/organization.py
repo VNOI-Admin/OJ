@@ -20,7 +20,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
-from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
+from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
@@ -45,7 +45,8 @@ __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'Organiz
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
            'KickUserWidgetView', 'OrganizationStorageDashboard',
-           'OrganizationQuotaAdd', 'OrganizationQuotaDelete', 'get_organization_problem_filter']
+           'OrganizationQuotaAdd', 'OrganizationQuotaDelete', 'get_organization_problem_filter',
+           'OrganizationUserSolvedProblems']
 
 
 MAX_BULK_DELETE_PROBLEMS = 200
@@ -789,6 +790,40 @@ class RandomProblemOrganization(ProblemListOrganization):
         if not count:
             return HttpResponseRedirect(reverse('problem_list_organization', args=[self.organization.slug]))
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
+
+
+class OrganizationUserSolvedProblems(AdminOrganizationMixin, TitleMixin, TemplateView):
+    template_name = 'organization/user-solved.html'
+
+    def get_member(self):
+        member = get_object_or_404(Profile, user__username=self.kwargs['user'])
+        if member not in self.organization:
+            raise Http404()
+        return member
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.member = self.get_member()
+        except Http404:
+            return generic_message(
+                request, _('No such member'),
+                _('Could not find a member with the username "%s" in this organization.') % self.kwargs['user'],
+                status=404,
+            )
+        return super(OrganizationUserSolvedProblems, self).get(request, *args, **kwargs)
+
+    def get_title(self):
+        return _('Problems solved by %s') % self.member.user.username
+
+    def get_content_title(self):
+        if self.is_in_organization_subdomain():
+            return self.get_title()
+        return format_html('{} - {}', self.organization.name, self.get_title())
+
+    def get_context_data(self, **kwargs):
+        context = super(OrganizationUserSolvedProblems, self).get_context_data(**kwargs)
+        context['member'] = self.member
+        return context
 
 
 class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin, View):
