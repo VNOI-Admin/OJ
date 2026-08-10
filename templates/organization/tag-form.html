@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title_row %}
+    {% set tab = 'tags' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+
+{% block media %}
+    <style>
+        .django-as-table th {
+            width: 10em;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <form action="" method="post" class="form-area"
+          style="display: flex; justify-content: center; flex-direction: column;">
+        {% csrf_token %}
+        <table border="0" class="django-as-table">{{ form.as_table() }}</table>
+        <div style="display: flex; justify-content: flex-end;">
+            <button class="submit-bar" type="submit">
+                {% if request.resolver_match.url_name == 'organization_tag_add' %}
+                    {{ _('Create') }}
+                {% else %}
+                    {{ _('Update') }}
+                {% endif %}
+            </button>
+        </div>
+    </form>
+{% endblock %}

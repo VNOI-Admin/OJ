@@ -169,6 +169,9 @@
                             <a href="{{ sort_links.type }}">{{ _('Types') }}{{ sort_order.type }}</a>
                         </th>
                     {% endif %}
+                    {% if show_org_tags %}
+                        <th class="org-tags">{{ _('Tags') }}</th>
+                    {% endif %}
                     <th class="points">
                         <a href="{{ sort_links.points }}">{{ _('Points') }}{{ sort_order.points }}</a>
                     </th>
@@ -231,6 +234,17 @@
                                 {% for type in problem.types_list %}
                                     <span class="type-tag">{{ type }}</span>{% if not loop.last %}, {% endif %}
                                 {% endfor %}
+                            </td>
+                        {% endif %}
+                        {% if show_org_tags %}
+                            <td class="org-tags">
+                                {% if problem.tags_list %}
+                                    {% for tag in problem.tags_list %}
+                                        <span class="type-tag">{{ tag }}</span>{% if not loop.last %}, {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <span class="type-tag">{{ _('Uncategorized') }}</span>
+                                {% endif %}
                             </td>
                         {% endif %}
                         <td class="p">{{ problem.points|floatformat(2) }}</td>

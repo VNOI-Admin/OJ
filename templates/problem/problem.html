@@ -39,7 +39,7 @@
             min-width: 12.5em;
         }
 
-        #problem-types, #allowed-langs, #available-judges {
+        #problem-types, #problem-tags, #allowed-langs, #available-judges {
             padding-top: 1em;
         }
 
@@ -350,6 +350,20 @@
                 {% endtrans %}
                 </div>
                 <div style="display:none" class="toggled">{{ problem.types_list|join(", ") }}</div>
+            {% endwith %}
+        </div>
+    {% endif %}
+    {% if problem.organization_id and (not contest_problem or not contest_problem.contest.hide_problem_tags) %}
+        <div id="problem-tags">
+            {% with tags=problem.tags_list %}
+                <div class="toggle closed unselectable">
+                    <i class="fa fa-chevron-right fa-fw"></i>{% trans trimmed count=tags|length %}
+                    Problem tag
+                    {% pluralize count %}
+                    Problem tags
+                {% endtrans %}
+                </div>
+                <div style="display:none" class="toggled">{{ tags|join(", ") if tags else _('Uncategorized') }}</div>
             {% endwith %}
         </div>
     {% endif %}
