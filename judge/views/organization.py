@@ -45,7 +45,7 @@ __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'Organiz
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
            'KickUserWidgetView', 'OrganizationStorageDashboard',
-           'OrganizationQuotaAdd', 'OrganizationQuotaDelete']
+           'OrganizationQuotaAdd', 'OrganizationQuotaDelete', 'get_organization_problem_filter']
 
 
 MAX_BULK_DELETE_PROBLEMS = 200
@@ -711,6 +711,32 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
         return context
 
 
+def get_organization_problem_filter(organization, user, profile):
+    """Get filter for visible problems in an organization
+
+    The logic of this is:
+        - If user has perm `see_private_problem`, they
+        can view all org's problem (including private problems)
+        - Otherwise, they can view all public problems and
+        problems that they are authors/curators/testers
+
+    With that logic, Organization admins cannot view private
+    problems of other admins unless they are authors/curators/testers
+    """
+    if user.has_perm('judge.see_private_problem'):
+        return Q(organization=organization)
+
+    _filter = Q(is_public=True)
+
+    # Authors, curators, and testers should always have access, so OR at the very end.
+    if profile is not None:
+        _filter |= Q(authors=profile)
+        _filter |= Q(curators=profile)
+        _filter |= Q(testers=profile)
+
+    return _filter & Q(organization=organization)
+
+
 class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
     context_object_name = 'problems'
     template_name = 'organization/problem-list.html'
@@ -734,29 +760,7 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         return context
 
     def get_filter(self):
-        """Get filter for visible problems in an organization
-
-        The logic of this is:
-            - If user has perm `see_private_problem`, they
-            can view all org's problem (including private problems)
-            - Otherwise, they can view all public problems and
-            problems that they are authors/curators/testers
-
-        With that logic, Organization admins cannot view private
-        problems of other admins unless they are authors/curators/testers
-        """
-        if self.request.user.has_perm('judge.see_private_problem'):
-            _filter = Q(organization=self.organization)
-        else:
-            _filter = Q(is_public=True)
-
-            # Authors, curators, and testers should always have access, so OR at the very end.
-            if self.profile is not None:
-                _filter |= Q(authors=self.profile)
-                _filter |= Q(curators=self.profile)
-                _filter |= Q(testers=self.profile)
-
-            _filter &= Q(organization=self.organization)
+        _filter = get_organization_problem_filter(self.organization, self.request.user, self.profile)
 
         # The tag filter is a multi-select whose values are tag ids plus an
         # 'untagged' sentinel; ?untagged=1 is the equivalent single-purpose link.
