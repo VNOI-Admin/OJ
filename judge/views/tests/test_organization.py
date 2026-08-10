@@ -200,3 +200,54 @@ class OrganizationUserSolvedContextTestCase(CommonDataMixin, TestCase):
         self.assertEqual(context['solved_count'], 2)
         self.assertEqual(context['total_count'], 3)
         self.assertEqual(self.sections_by_name()['Dynamic Programming']['count'], 1)
+
+
+class OrganizationUserSolvedTemplateTestCase(CommonDataMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.organization = create_organization(
+            name='templateorg',
+            is_unlisted=False,
+            admins=('staff_organization_admin',),
+        )
+        cls.member = create_user(username='renderer')
+        cls.member.profile.organizations.add(cls.organization)
+        cls.empty_member = create_user(username='idler')
+        cls.empty_member.profile.organizations.add(cls.organization)
+
+        create_problem_type(name='dp', full_name='Dynamic Programming')
+        cls.problem = create_problem(
+            code='render_me',
+            name='Render Me',
+            is_public=True,
+            organization=cls.organization,
+            types=('dp',),
+        )
+        submission = Submission.objects.create(
+            user=cls.member.profile,
+            problem=cls.problem,
+            language=Language.get_python3(),
+            result='AC',
+            status='D',
+        )
+        Submission.objects.filter(pk=submission.pk).update(date=timezone.now())
+
+    def get_page(self, username):
+        self.client.force_login(self.users['staff_organization_admin'])
+        return self.client.get(reverse('organization_user_solved', args=[self.organization.slug, username]))
+
+    def test_page_renders_the_solved_problem_row(self):
+        response = self.get_page('renderer')
+        self.assertTemplateUsed(response, 'organization/user-solved.html')
+        self.assertContains(response, 'Render Me')
+        self.assertContains(response, reverse('problem_detail', args=['render_me']))
+        self.assertContains(response, reverse('user_submissions', args=['render_me', 'renderer']))
+        self.assertContains(response, 'Dynamic Programming')
+
+    def test_section_exposes_the_page_size_to_the_script(self):
+        self.assertContains(self.get_page('renderer'), 'data-page-size="10"')
+
+    def test_member_with_no_solved_problems_sees_the_empty_state(self):
+        self.assertContains(self.get_page('idler'), "hasn&#x27;t solved any problems")
