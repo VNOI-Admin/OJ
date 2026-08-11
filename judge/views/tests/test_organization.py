@@ -272,7 +272,7 @@ class OrganizationUserSolvedTemplateTestCase(CommonDataMixin, TestCase):
         self.assertContains(self.get_page('renderer'), 'data-page-size="10"')
 
     def test_member_with_no_solved_problems_sees_the_empty_state(self):
-        self.assertContains(self.get_page('idler'), "hasn&#x27;t solved any problems")
+        self.assertContains(self.get_page('idler'), 'hasn&#x27;t solved any problems')
 
 
 class OrganizationUsersSolvedLinkTestCase(CommonDataMixin, TestCase):
