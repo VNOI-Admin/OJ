@@ -26,6 +26,12 @@
         tr:hover td.organization-user-actions > a.solved-link {
             visibility: visible;
         }
+
+        td.organization-user-actions > a.solved-link,
+        td.organization-user-actions > form.kick-form {
+            display: inline-block;
+            vertical-align: middle;
+        }
     </style>
 
     {% if is_admin %}

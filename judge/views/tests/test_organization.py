@@ -115,17 +115,20 @@ class OrganizationUserSolvedContextTestCase(CommonDataMixin, TestCase):
         cls.solved_two_types = create_problem(
             code='two_types',
             is_public=True,
+            is_organization_private=True,
             organization=cls.organization,
             types=('dp', 'graph'),
         )
         cls.solved_no_type = create_problem(
             code='no_type',
             is_public=True,
+            is_organization_private=True,
             organization=cls.organization,
         )
         cls.unsolved = create_problem(
             code='unsolved',
             is_public=True,
+            is_organization_private=True,
             organization=cls.organization,
             types=('dp',),
         )
@@ -134,6 +137,14 @@ class OrganizationUserSolvedContextTestCase(CommonDataMixin, TestCase):
             is_public=True,
             types=('dp',),
         )
+        cls.private_other_admin = create_problem(
+            code='private_other_admin',
+            is_public=False,
+            is_organization_private=True,
+            organization=cls.organization,
+            types=('dp',),
+            authors=('normal',),
+        )
 
         cls._now = timezone.now()
         cls.create_ac(cls.solved_two_types, cls._now - timezone.timedelta(days=5))
@@ -141,6 +152,7 @@ class OrganizationUserSolvedContextTestCase(CommonDataMixin, TestCase):
         cls.create_ac(cls.solved_no_type, cls._now - timezone.timedelta(days=3))
         cls.create_ac(cls.outside_org, cls._now - timezone.timedelta(days=2))
         cls.create_submission(cls.unsolved, cls._now, result='WA')
+        cls.create_ac(cls.private_other_admin, cls._now - timezone.timedelta(days=4))
 
         cls.url = reverse('organization_user_solved', args=[cls.organization.slug, 'solver'])
 
@@ -201,6 +213,15 @@ class OrganizationUserSolvedContextTestCase(CommonDataMixin, TestCase):
         self.assertEqual(context['total_count'], 3)
         self.assertEqual(self.sections_by_name()['Dynamic Programming']['count'], 1)
 
+    def test_organization_private_problem_hidden_from_other_admin_is_excluded(self):
+        codes = {
+            problem['code']
+            for section in self.get_context()['type_sections']
+            for problem in section['problems']
+        }
+        self.assertNotIn('private_other_admin', codes)
+        self.assertEqual(self.get_context()['total_count'], 3)
+
 
 class OrganizationUserSolvedTemplateTestCase(CommonDataMixin, TestCase):
     @classmethod
@@ -222,6 +243,7 @@ class OrganizationUserSolvedTemplateTestCase(CommonDataMixin, TestCase):
             code='render_me',
             name='Render Me',
             is_public=True,
+            is_organization_private=True,
             organization=cls.organization,
             types=('dp',),
         )

@@ -25,7 +25,6 @@
         .solved-table td.solved-mark {
             width: 1.5em;
             text-align: center;
-            color: #00a900;
         }
 
         .solved-table td.solved-points,
@@ -105,7 +104,7 @@
 
     {% for section in type_sections %}
         <div class="solved-type-block" data-page-size="{{ page_size }}">
-            <div class="solved-type-header toggled">
+            <div class="solved-type-header">
                 <span>{{ section.name }}</span>
                 <span>{{ _('%(count)d solved', count=section.count) }}</span>
             </div>
@@ -113,11 +112,11 @@
                 <tbody>
                     {% for problem in section.problems %}
                         <tr>
-                            <td class="solved-mark"><i class="fa fa-check"></i></td>
+                            <td class="solved-mark"><i class="solved-problem-color fa fa-check"></i></td>
                             <td class="solved-name">
                                 <a href="{{ url('problem_detail', problem.code) }}">{{ problem.name }}</a>
                             </td>
-                            <td class="solved-points">{{ problem.points|floatformat(0) }}</td>
+                            <td class="solved-points">{{ problem.points|floatformat(-2) }}</td>
                             <td class="solved-date">{{ problem.first_solved|date(_("M j, Y")) }}</td>
                             <td class="solved-submissions">
                                 <a href="{{ url('user_submissions', problem.code, member.user.username) }}"
