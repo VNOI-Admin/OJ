@@ -8,7 +8,9 @@
 
 {% block before_point %}
     {% if is_admin %}
-        <td>
+        <td class="organization-user-actions">
+            <a href="{{ url('organization_user_solved', organization.slug, user.user.username) }}"
+               class="button solved-link">{{ _('Solved') }}</a>
             <form action="{{ kick_url }}" method="POST" class="kick-form">
                 {% csrf_token %}
                 <input type="hidden" name="user" value="{{ user.id }}">

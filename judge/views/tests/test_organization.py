@@ -251,3 +251,27 @@ class OrganizationUserSolvedTemplateTestCase(CommonDataMixin, TestCase):
 
     def test_member_with_no_solved_problems_sees_the_empty_state(self):
         self.assertContains(self.get_page('idler'), "hasn&#x27;t solved any problems")
+
+
+class OrganizationUsersSolvedLinkTestCase(CommonDataMixin, TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        super().setUpTestData()
+
+        cls.organization = create_organization(
+            name='linkorg',
+            is_unlisted=False,
+            admins=('staff_organization_admin',),
+        )
+        cls.member = create_user(username='linked')
+        cls.member.profile.organizations.add(cls.organization)
+        cls.url = reverse('organization_users', args=[cls.organization.slug])
+        cls.solved_url = reverse('organization_user_solved', args=[cls.organization.slug, 'linked'])
+
+    def test_admin_sees_the_solved_link(self):
+        self.client.force_login(self.users['staff_organization_admin'])
+        self.assertContains(self.client.get(self.url), self.solved_url)
+
+    def test_plain_member_does_not_see_the_solved_link(self):
+        self.client.force_login(self.member)
+        self.assertNotContains(self.client.get(self.url), self.solved_url)
