@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
-from django.db.models import Count, FilteredRelation, OuterRef, Q, Subquery, Sum, Prefetch
+from django.db.models import Count, FilteredRelation, OuterRef, Q, Subquery, Sum
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
@@ -26,7 +26,6 @@ from reversion import revisions
 from judge.forms import OrganizationForm, QuotaGrantForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
     Problem, Profile, Submission
-from judge.models.problem import ProblemTranslation
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.models.submission import Submission
 from judge.tasks import on_new_problem
@@ -35,13 +34,12 @@ from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart, get_pie_chart
-from judge.utils.raw_sql import use_straight_join
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message, \
     paginate_query_context
 from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
-from judge.views.submission import SubmissionsListBase, submission_related
+from judge.views.submission import SubmissionsListBase
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
@@ -768,13 +766,7 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
     permission_bypass = ['judge.view_all_submission']
 
     def _get_queryset(self):
-        queryset = Submission.objects.all()
-        use_straight_join(queryset)
-        queryset = submission_related(queryset.order_by('-id'))
-        if self.show_problem:
-            queryset = queryset.prefetch_related(Prefetch('problem__translations',
-                                                          queryset=ProblemTranslation.objects.filter(
-                                                              language=self.request.LANGUAGE_CODE), to_attr='_trans'))
+        queryset = self.base_queryset()
         # if not org admin -> only view submissions to public problems
         if not self.object.is_admin(self.request.profile) and not self.request.user.is_superuser:
             queryset = queryset.filter(

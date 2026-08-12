@@ -23,7 +23,20 @@ from judge.views.submission import (
     UserAllContestSubmissions,
     UserContestSubmissions,
     UserProblemSubmissions,
+    filter_submissions_by_visible_problems,
 )
+
+
+class _AllSubmissionsListView(SubmissionsListBase):
+    """Minimal concrete view mirroring the shared non-user submission-list queryset
+    (base rows + contest visibility + UI filters + visible-problem gating), used to
+    exercise SubmissionsListBase's primitives directly."""
+
+    def get_queryset(self):
+        queryset = self._do_filter_queryset(self.filter_by_contest_visibility(self.base_queryset()))
+        if not self.is_contest_scoped:
+            filter_submissions_by_visible_problems(queryset, self.request.user)
+        return queryset
 
 
 class SubmissionsListBaseQuerysetTestCase(CommonDataMixin, TestCase):
@@ -359,7 +372,7 @@ class SubmissionsListBaseQuerysetTestCase(CommonDataMixin, TestCase):
         request.profile = user.profile if hasattr(user, 'profile') else None
         request.LANGUAGE_CODE = 'en'
 
-        view = SubmissionsListBase()
+        view = _AllSubmissionsListView()
         view.request = request
         view.show_problem = show_problem
         view.selected_languages = selected_languages or set()

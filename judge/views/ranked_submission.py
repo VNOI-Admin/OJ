@@ -81,6 +81,8 @@ class RankedSubmissions(ProblemSubmissions):
 
 
 class ContestRankedSubmission(ForceContestMixin, RankedSubmissions):
+    reuse_parent_queryset = True  # uses RankedSubmissions.get_queryset (contest-scoped)
+
     def get_title(self):
         if self.problem.is_accessible_by(self.request.user):
             return _('Best solutions for %(problem)s in %(contest)s') % {

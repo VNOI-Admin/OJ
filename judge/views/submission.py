@@ -359,6 +359,21 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
     paginated_model = Submission
     ordering = '-id'
 
+    # A subclass must define its own get_queryset(), or set
+    # reuse_parent_queryset = True to inherit the parent's on purpose.
+    # ponytail: guards only get_queryset; generalize if another method needs it.
+    reuse_parent_queryset = False
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        # Check cls.__dict__ (not getattr) so both the method and the opt-in
+        # require an explicit per-class decision — neither is inherited.
+        if 'get_queryset' not in cls.__dict__ and not cls.__dict__.get('reuse_parent_queryset'):
+            raise TypeError(
+                f'{cls.__name__} must define its own get_queryset(), or set '
+                'reuse_parent_queryset = True to reuse the parent one explicitly.',
+            )
+
     def get_result_data(self):
         result = self._get_result_data()
         for category in result['categories']:
@@ -408,7 +423,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
         return (queryset.select_related('user__user', 'user__display_badge', 'problem', 'language')
                         .prefetch_related('contest_object__authors', 'contest_object__curators'))
 
-    def _get_queryset(self):
+    def base_queryset(self):
         queryset = Submission.objects.all()
         use_straight_join(queryset)
         queryset = submission_related(queryset.order_by('-id'))
@@ -416,6 +431,9 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
             queryset = queryset.prefetch_related(Prefetch('problem__translations',
                                                           queryset=ProblemTranslation.objects.filter(
                                                               language=self.request.LANGUAGE_CODE), to_attr='_trans'))
+        return queryset
+
+    def filter_by_contest_visibility(self, queryset):
         if self.is_contest_scoped:
             # Show submissions only for this contest
             queryset = queryset.filter(contest_object=self.contest)
@@ -433,16 +451,6 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
                 queryset = queryset.filter(Q(user=self.request.profile) |
                                            Q(contest_object__in=contest_queryset) |
                                            Q(contest_object__isnull=True))
-
-        queryset = self._do_filter_queryset(queryset)
-
-        return queryset
-
-    def get_queryset(self):
-        queryset = self._get_queryset()
-        if not self.is_contest_scoped:
-            filter_submissions_by_visible_problems(queryset, self.request.user)
-
         return queryset
 
     def get_my_submissions_page(self):
@@ -567,7 +575,10 @@ class ConditionalUserTabMixin(object):
 
 class AllUserSubmissions(InfinitePaginationMixin, ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
     def get_queryset(self):
-        return super(AllUserSubmissions, self).get_queryset().filter(user_id=self.profile.id)
+        queryset = self._do_filter_queryset(self.filter_by_contest_visibility(self.base_queryset()))
+        if not self.is_contest_scoped:
+            filter_submissions_by_visible_problems(queryset, self.request.user)
+        return queryset.filter(user_id=self.profile.id)
 
     def get_title(self):
         if self.is_own:
@@ -607,10 +618,14 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         # return true if user is accessing a problem inside a contest
         return self.contest.problems.filter(id=self.problem.id).exists()
 
-    def get_queryset(self):
+    def _check_contest_problem(self):
         if self.is_contest_scoped and not self.contest.contest_problems.filter(problem_id=self.problem.id).exists():
             raise Http404()
-        return super(ProblemSubmissionsBase, self)._get_queryset().filter(problem_id=self.problem.id)
+
+    def get_queryset(self):
+        self._check_contest_problem()
+        queryset = self._do_filter_queryset(self.filter_by_contest_visibility(self.base_queryset()))
+        return queryset.filter(problem_id=self.problem.id)
 
     def get_title(self):
         return _('All submissions for %s') % self.problem_name
@@ -665,6 +680,8 @@ class ProblemSubmissionsBase(SubmissionsListBase):
 
 
 class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
+    reuse_parent_queryset = True  # uses ProblemSubmissionsBase.get_queryset
+
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
             if hasattr(self, 'contest'):
@@ -685,7 +702,9 @@ class UserProblemSubmissions(ConditionalUserTabMixin, UserMixin, ProblemSubmissi
             self.access_check_contest(request)
 
     def get_queryset(self):
-        return super(UserProblemSubmissions, self).get_queryset().filter(user_id=self.profile.id)
+        self._check_contest_problem()
+        queryset = self._do_filter_queryset(self.filter_by_contest_visibility(self.base_queryset()))
+        return queryset.filter(problem_id=self.problem.id, user_id=self.profile.id)
 
     def get_title(self):
         if self.is_own:
@@ -758,13 +777,7 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
     stats_update_interval = 3600
 
     def public_problem_queryset(self):
-        queryset = Submission.objects.all()
-        use_straight_join(queryset)
-        queryset = submission_related(queryset.order_by('-id'))
-        if self.show_problem:
-            queryset = queryset.prefetch_related(Prefetch('problem__translations',
-                                                          queryset=ProblemTranslation.objects.filter(
-                                                              language=self.request.LANGUAGE_CODE), to_attr='_trans'))
+        queryset = self.base_queryset()
         # show all submissions for superusers
         if not self.request.user.is_superuser:
             queryset = queryset.filter(contest_object__isnull=True)
@@ -777,7 +790,7 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
             if not self.request.user.is_superuser:
                 filter_submissions_by_visible_problems(queryset, AnonymousUser())
         else:
-            queryset = self._get_queryset()
+            queryset = self._do_filter_queryset(self.filter_by_contest_visibility(self.base_queryset()))
 
         return queryset
 
@@ -836,6 +849,8 @@ class ForceContestMixin(object):
 
 
 class AllContestSubmissions(ForceContestMixin, AllSubmissions):
+    reuse_parent_queryset = True  # uses AllSubmissions.get_queryset (contest-scoped)
+
     def is_in_low_power_mode(self):
         return False
 
@@ -850,6 +865,8 @@ class AllContestSubmissions(ForceContestMixin, AllSubmissions):
 
 
 class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
+    reuse_parent_queryset = True  # uses AllUserSubmissions.get_queryset (contest-scoped)
+
     def is_in_low_power_mode(self):
         return False
 
@@ -886,6 +903,8 @@ class UserAllContestSubmissions(ForceContestMixin, AllUserSubmissions):
 
 
 class UserContestSubmissions(ForceContestMixin, UserProblemSubmissions):
+    reuse_parent_queryset = True  # uses UserProblemSubmissions.get_queryset (contest-scoped)
+
     def get_title(self):
         if self.problem.is_accessible_by(self.request.user):
             return _("{user}'s submissions for {problem} in {contest}").format(
