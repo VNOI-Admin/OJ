@@ -182,6 +182,8 @@ class ProblemEditForm(ModelForm):
             self.fields.pop('tags')
         else:
             self.fields['tags'].queryset = OrganizationProblemTag.objects.filter(organization_id=org_pk)
+            self.fields.pop('types')
+            self.fields['group'].widget = forms.HiddenInput()
             self.fields['testers'].label = _('Private users')
             self.fields['testers'].help_text = _('If private, only these users may see the problem.')
             self.fields['testers'].widget.data_view = None
@@ -232,7 +234,7 @@ class ProblemEditForm(ModelForm):
                   'testcase_visibility_mode', 'description', 'testers']
         widgets = {
             'types': Select2MultipleWidget,
-            'tags': Select2MultipleWidget(attrs={'data-allow-clear': 'false'}),
+            'tags': Select2MultipleWidget(),
             'group': Select2Widget,
             'submission_source_visibility_mode': Select2Widget,
             'testcase_visibility_mode': Select2Widget,
