@@ -20,12 +20,12 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
-from django.views.generic import CreateView, DeleteView, DetailView, FormView, ListView, UpdateView, View
+from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
 from judge.forms import OrganizationForm, OrganizationProblemTagForm, QuotaGrantForm
-from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationProblemTag, \
+from judge.models import BlogPost, Comment, Contest, Language, Organization, \
     OrganizationRequest, Problem, Profile, Submission
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
@@ -565,77 +565,53 @@ class OrganizationTagList(AdminOrganizationMixin, TitleMixin, ListView):
         return context
 
 
-class OrganizationTagCreate(AdminOrganizationMixin, TitleMixin, CreateView):
-    model = OrganizationProblemTag
+class OrganizationTagCreate(AdminOrganizationMixin, View):
     form_class = OrganizationProblemTagForm
-
-    def get(self, request, *args, **kwargs):
-        return HttpResponseRedirect(self.get_success_url())
-
-    def form_valid(self, form):
-        form.instance.organization = self.organization
-        try:
-            with transaction.atomic():
-                self.object = form.save()
-        except IntegrityError:
-            # Only the unique_together(organization, name) constraint can trip here.
-            form.add_error('name', _('A tag with this name already exists.'))
-            return self.form_invalid(form)
-
-        return JsonResponse({'id': self.object.id, 'name': self.object.name})
-
-    def form_invalid(self, form):
-        return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
-
-    def get_success_url(self):
-        return reverse('organization_tag_list', args=[self.organization.slug])
-
-
-class OrganizationTagUpdate(AdminOrganizationMixin, TitleMixin, UpdateView):
-    model = OrganizationProblemTag
-    form_class = OrganizationProblemTagForm
-
-    def get(self, request, *args, **kwargs):
-        return HttpResponseRedirect(self.get_success_url())
-
-    def get_queryset(self):
-        return self.organization.problem_tags.all()
-
-    def form_valid(self, form):
-        try:
-            with transaction.atomic():
-                self.object = form.save()
-        except IntegrityError:
-            # Only the unique_together(organization, name) constraint can trip here.
-            form.add_error('name', _('A tag with this name already exists.'))
-            return self.form_invalid(form)
-
-        return JsonResponse({'id': self.object.id, 'name': self.object.name})
-
-    def form_invalid(self, form):
-        return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
-
-    def get_success_url(self):
-        return reverse('organization_tag_list', args=[self.organization.slug])
-
-
-class OrganizationTagDelete(AdminOrganizationMixin, TitleMixin, DeleteView):
-    model = OrganizationProblemTag
-
-    def get(self, request, *args, **kwargs):
-        return HttpResponseRedirect(self.get_success_url())
-
-    def get_queryset(self):
-        return self.organization.problem_tags.all()
 
     def post(self, request, *args, **kwargs):
-        tag = self.get_object()
+        form = self.form_class(request.POST)
+        if not form.is_valid():
+            return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+
+        tag = form.save(commit=False)
+        tag.organization = self.organization
+        try:
+            with transaction.atomic():
+                tag.save()
+        except IntegrityError:
+            # Only the unique_together(organization, name) constraint can trip here.
+            form.add_error('name', _('A tag with this name already exists.'))
+            return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+
+        return JsonResponse({'id': tag.id, 'name': tag.name})
+
+
+class OrganizationTagUpdate(AdminOrganizationMixin, View):
+    form_class = OrganizationProblemTagForm
+
+    def post(self, request, *args, **kwargs):
+        tag = get_object_or_404(self.organization.problem_tags.all(), pk=kwargs.get('pk'))
+        form = self.form_class(request.POST, instance=tag)
+        if not form.is_valid():
+            return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+
+        try:
+            with transaction.atomic():
+                tag = form.save()
+        except IntegrityError:
+            # Only the unique_together(organization, name) constraint can trip here.
+            form.add_error('name', _('A tag with this name already exists.'))
+            return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+
+        return JsonResponse({'id': tag.id, 'name': tag.name})
+
+
+class OrganizationTagDelete(AdminOrganizationMixin, View):
+    def post(self, request, *args, **kwargs):
+        tag = get_object_or_404(self.organization.problem_tags.all(), pk=kwargs.get('pk'))
         tag_id = tag.id
         tag.delete()
         return JsonResponse({'id': tag_id, 'deleted': True})
-
-    def get_success_url(self):
-        return reverse('organization_tag_list', args=[self.organization.slug])
 
 
 class KickUserWidgetView(LoginRequiredMixin, AdminOrganizationMixin, SingleObjectMixin, View):
