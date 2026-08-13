@@ -26,13 +26,11 @@
                         {% if has_public_editorial %} checked{% endif %}>
                 <label for="has_public_editorial">{{ _('Has editorial') }}</label>
             </div>
-            {% if not show_org_tags %}
             <div>
                 <input id="show_types" type="checkbox" name="show_types" value="1"
                         {% if show_types %} checked{% endif %}>
                 <label for="show_types">{{ _('Show problem types') }}</label>
             </div>
-            {% endif %}
             <div class="filter-form-group">
                 <label for="category"><i>{{ _('Category') }}</i></label>
                 <select id="category" name="category">
