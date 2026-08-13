@@ -113,16 +113,10 @@
 
 {% block body %}
 <div class="tag-manager">
-    <p class="tm-subtitle">
-        {{ _('Tags group problems by topic.') }}
-        {% trans trimmed count=tag_count %}{{ count }} tag{% pluralize %}{{ count }} tags{% endtrans %}
-        {%- if unused_count %} &middot; {{ _('%(count)d unused', count=unused_count) }}{% endif %}
-    </p>
-
     <div class="tm-toolbar">
         <input type="text" id="tm-search" placeholder="{{ _('Search tags') }}">
-        <a href="{{ url('organization_tag_add', organization.slug) }}" class="button">
-            <i class="fa fa-plus"></i> {{ _('Add tag') }}
+        <a href="{{ url('organization_tag_add', organization.slug) }}" class="button" id="tm-add-tag">
+            <i class="fa fa-plus"></i> {{ _('Create new tag') }}
         </a>
     </div>
 
@@ -152,7 +146,7 @@
         </tbody>
         <tbody id="tm-tag-rows">
             {% for tag in tags %}
-            <tr data-name="{{ tag.name|lower }}" data-count="{{ tag.problem_count }}">
+            <tr data-name="{{ tag.name|lower }}" data-display-name="{{ tag.name }}" data-count="{{ tag.problem_count }}">
                 <td class="tm-cell-tag">
                     <span class="tm-chip">{{ tag.name }}</span>
                 </td>
@@ -164,7 +158,7 @@
                     {% endif %}
                 </td>
                 <td class="tm-cell-actions">
-                    <a class="tm-action" href="{{ url('organization_tag_edit', organization.slug, tag.id) }}">
+                    <a class="tm-action tm-action-edit" href="{{ url('organization_tag_edit', organization.slug, tag.id) }}">
                         <i class="fa fa-pencil"></i> {{ _('Edit') }}
                     </a>
                     <a class="tm-action tm-action-delete" href="{{ url('organization_tag_delete', organization.slug, tag.id) }}">
@@ -181,12 +175,165 @@
 {% block js_media %}
 <script type="text/javascript">
     $(function () {
-        var $rows = $('#tm-tag-rows tr');
+        var $tagRows = $('#tm-tag-rows');
+        var editUrlTemplate = {{ url('organization_tag_edit', organization.slug, 0)|htmltojs }};
+        var deleteUrlTemplate = {{ url('organization_tag_delete', organization.slug, 0)|htmltojs }};
+
+        function getRows() {
+            return $('#tm-tag-rows tr');
+        }
+
+        function getCsrfToken() {
+            var match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
+
+        function addTagRow(tag) {
+            var editUrl = editUrlTemplate.replace('/0/edit', '/' + tag.id + '/edit');
+            var deleteUrl = deleteUrlTemplate.replace('/0/delete', '/' + tag.id + '/delete');
+
+            var $row = $('<tr>', {
+                'data-name': tag.name.toLowerCase(),
+                'data-display-name': tag.name,
+                'data-count': 0,
+            });
+
+            var $tagCell = $('<td>', { class: 'tm-cell-tag' });
+            $tagCell.append($('<span>', { class: 'tm-chip', text: tag.name }));
+
+            var $countCell = $('<td>');
+            $countCell.append($('<span>', { class: 'tm-count-zero', text: '0' }));
+            $countCell.append($('<span>', { class: 'tm-pill-unused', text: {{ _('unused')|htmltojs }} }));
+
+            var $actionsCell = $('<td>', { class: 'tm-cell-actions' });
+            var $edit = $('<a>', { class: 'tm-action tm-action-edit', href: editUrl });
+            $edit.append($('<i>', { class: 'fa fa-pencil' })).append(' ' + {{ _('Edit')|htmltojs }});
+
+            var $delete = $('<a>', { class: 'tm-action tm-action-delete', href: deleteUrl });
+            $delete.append($('<i>', { class: 'fa fa-trash' })).append(' ' + {{ _('Delete')|htmltojs }});
+
+            $actionsCell.append($edit).append($delete);
+            $row.append($tagCell).append($countCell).append($actionsCell);
+            $tagRows.append($row);
+        }
 
         $('#tm-search').on('input', function () {
             var query = $(this).val().toLowerCase();
-            $rows.each(function () {
+            getRows().each(function () {
                 $(this).toggle($(this).attr('data-name').indexOf(query) !== -1);
+            });
+        });
+
+        $('#tm-add-tag').on('click', function (e) {
+            e.preventDefault();
+
+            var name = window.prompt({{ _('New tag name')|htmltojs }});
+            if (name === null) {
+                return;
+            }
+
+            name = $.trim(name);
+            if (!name) {
+                alert({{ _('Tag name is required.')|htmltojs }});
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: $(this).attr('href'),
+                data: {
+                    name: name,
+                    csrfmiddlewaretoken: getCsrfToken(),
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                success: function (tag) {
+                    addTagRow(tag);
+                    $('#tm-search').trigger('input');
+                },
+                error: function (xhr) {
+                    var message = {{ _('Could not create tag.')|htmltojs }};
+                    var errors = xhr.responseJSON && xhr.responseJSON.errors;
+                    if (errors && errors.name && errors.name.length && errors.name[0].message) {
+                        message = errors.name[0].message;
+                    }
+                    alert(message);
+                },
+            });
+        });
+
+        $(document).on('click', '.tm-action-edit', function (e) {
+            e.preventDefault();
+
+            var $link = $(this);
+            var $row = $link.closest('tr');
+            var oldName = $row.attr('data-display-name') || $.trim($row.find('.tm-chip').text());
+            var name = window.prompt({{ _('Edit tag name')|htmltojs }}, oldName);
+            if (name === null) {
+                return;
+            }
+
+            name = $.trim(name);
+            if (!name) {
+                alert({{ _('Tag name is required.')|htmltojs }});
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: $link.attr('href'),
+                data: {
+                    name: name,
+                    csrfmiddlewaretoken: getCsrfToken(),
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                success: function (tag) {
+                    $row.attr('data-name', tag.name.toLowerCase());
+                    $row.attr('data-display-name', tag.name);
+                    $row.find('.tm-chip').text(tag.name);
+                    $('#tm-search').trigger('input');
+                },
+                error: function (xhr) {
+                    var message = {{ _('Could not update tag.')|htmltojs }};
+                    var errors = xhr.responseJSON && xhr.responseJSON.errors;
+                    if (errors && errors.name && errors.name.length && errors.name[0].message) {
+                        message = errors.name[0].message;
+                    }
+                    alert(message);
+                },
+            });
+        });
+
+        $(document).on('click', '.tm-action-delete', function (e) {
+            e.preventDefault();
+
+            var $link = $(this);
+            var $row = $link.closest('tr');
+            var tagName = $row.attr('data-display-name') || $.trim($row.find('.tm-chip').text());
+
+            if (!window.confirm({{ _('Delete tag "%(name)s"?', name='__name__')|htmltojs }}.replace('__name__', tagName))) {
+                return;
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: $link.attr('href'),
+                data: {
+                    csrfmiddlewaretoken: getCsrfToken(),
+                },
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                success: function () {
+                    $row.remove();
+                    $('#tm-search').trigger('input');
+                },
+                error: function () {
+                    alert({{ _('Could not delete tag.')|htmltojs }});
+                },
             });
         });
 
@@ -197,7 +344,7 @@
             $('.tag-manager .table th').removeClass('asc desc');
             $th.addClass(asc ? 'asc' : 'desc');
 
-            var rows = $rows.get();
+            var rows = getRows().get();
             rows.sort(function (a, b) {
                 var va, vb;
                 if (key === 'count') {

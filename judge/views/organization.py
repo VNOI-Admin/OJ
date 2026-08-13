@@ -12,7 +12,7 @@ from django.db.models import Count, FilteredRelation, OuterRef, Q, Subquery, Sum
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
@@ -568,20 +568,24 @@ class OrganizationTagList(AdminOrganizationMixin, TitleMixin, ListView):
 class OrganizationTagCreate(AdminOrganizationMixin, TitleMixin, CreateView):
     model = OrganizationProblemTag
     form_class = OrganizationProblemTagForm
-    template_name = 'organization/tag-form.html'
 
-    def get_title(self):
-        return _('Add tag')
+    def get(self, request, *args, **kwargs):
+        return HttpResponseRedirect(self.get_success_url())
 
     def form_valid(self, form):
         form.instance.organization = self.organization
         try:
             with transaction.atomic():
-                return super().form_valid(form)
+                self.object = form.save()
         except IntegrityError:
             # Only the unique_together(organization, name) constraint can trip here.
             form.add_error('name', _('A tag with this name already exists.'))
             return self.form_invalid(form)
+
+        return JsonResponse({'id': self.object.id, 'name': self.object.name})
+
+    def form_invalid(self, form):
+        return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
 
     def get_success_url(self):
         return reverse('organization_tag_list', args=[self.organization.slug])
@@ -590,11 +594,9 @@ class OrganizationTagCreate(AdminOrganizationMixin, TitleMixin, CreateView):
 class OrganizationTagUpdate(AdminOrganizationMixin, TitleMixin, UpdateView):
     model = OrganizationProblemTag
     form_class = OrganizationProblemTagForm
-    template_name = 'organization/tag-form.html'
-    context_object_name = 'tag'
 
-    def get_title(self):
-        return _('Edit tag')
+    def get(self, request, *args, **kwargs):
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_queryset(self):
         return self.organization.problem_tags.all()
@@ -602,11 +604,16 @@ class OrganizationTagUpdate(AdminOrganizationMixin, TitleMixin, UpdateView):
     def form_valid(self, form):
         try:
             with transaction.atomic():
-                return super().form_valid(form)
+                self.object = form.save()
         except IntegrityError:
             # Only the unique_together(organization, name) constraint can trip here.
             form.add_error('name', _('A tag with this name already exists.'))
             return self.form_invalid(form)
+
+        return JsonResponse({'id': self.object.id, 'name': self.object.name})
+
+    def form_invalid(self, form):
+        return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
 
     def get_success_url(self):
         return reverse('organization_tag_list', args=[self.organization.slug])
@@ -614,14 +621,18 @@ class OrganizationTagUpdate(AdminOrganizationMixin, TitleMixin, UpdateView):
 
 class OrganizationTagDelete(AdminOrganizationMixin, TitleMixin, DeleteView):
     model = OrganizationProblemTag
-    template_name = 'organization/tag-confirm-delete.html'
-    context_object_name = 'tag'
 
-    def get_title(self):
-        return _('Delete tag')
+    def get(self, request, *args, **kwargs):
+        return HttpResponseRedirect(self.get_success_url())
 
     def get_queryset(self):
         return self.organization.problem_tags.all()
+
+    def post(self, request, *args, **kwargs):
+        tag = self.get_object()
+        tag_id = tag.id
+        tag.delete()
+        return JsonResponse({'id': tag_id, 'deleted': True})
 
     def get_success_url(self):
         return reverse('organization_tag_list', args=[self.organization.slug])
