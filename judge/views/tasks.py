@@ -27,7 +27,7 @@ def get_task_status(task_id):
         return {'code': 'WORKING'}
 
 
-def task_status(request, task_id):
+def task_status(request, task_id, ajax_url=None):
     try:
         UUID(task_id)
     except ValueError:
@@ -44,6 +44,7 @@ def task_status(request, task_id):
     return render(request, 'task_status.html', {
         'task_id': task_id, 'task_status': json.dumps(status),
         'message': request.GET.get('message', ''), 'redirect': redirect or '',
+        'task_status_ajax_url': ajax_url or reverse('task_status_ajax'),
     })
 
 

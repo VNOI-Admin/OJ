@@ -2,6 +2,7 @@ import json
 import os
 import zipfile
 from operator import attrgetter, itemgetter
+from urllib.parse import urlsplit
 
 import pyotp
 import webauthn
@@ -286,6 +287,45 @@ class ProblemImportPolygonForm(Form):
             self.fields['code'].initial = code
             self.fields['code'].disabled = True
             self.fields['do_update'].initial = True
+
+
+class ProblemPackageImportForm(Form):
+    SOURCE_UPLOAD = 'upload'
+    SOURCE_URL = 'url'
+    source = forms.ChoiceField(
+        choices=((SOURCE_UPLOAD, _('Upload')), (SOURCE_URL, _('URL'))),
+        widget=forms.RadioSelect,
+    )
+    package = forms.FileField(required=False, label=_('Problem package'))
+    package_url = forms.URLField(required=False, label=_('Package URL'))
+    code = CharField(
+        max_length=Problem._meta.get_field('code').max_length,
+        label=_('New problem code'),
+        validators=Problem._meta.get_field('code').validators,
+    )
+
+    def clean(self):
+        cleaned_data = super().clean()
+        source = cleaned_data.get('source')
+        package = cleaned_data.get('package')
+        package_url = cleaned_data.get('package_url')
+        if source == self.SOURCE_UPLOAD:
+            if not package:
+                self.add_error('package', _('Choose a ZIP package to upload.'))
+            if package_url:
+                self.add_error('package_url', _('Choose only one package source.'))
+        elif source == self.SOURCE_URL:
+            if not package_url:
+                self.add_error('package_url', _('Enter a package URL.'))
+            elif urlsplit(package_url).scheme.casefold() not in ('http', 'https'):
+                self.add_error('package_url', _('Only HTTP and HTTPS URLs are accepted.'))
+            if package:
+                self.add_error('package', _('Choose only one package source.'))
+
+        code = cleaned_data.get('code')
+        if code and Problem.objects.filter(code=code).exists():
+            self.add_error('code', _('This problem code already exists.'))
+        return cleaned_data
 
 
 class ProblemImportPolygonStatementForm(Form):

@@ -12,8 +12,8 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, notification, \
-    organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
-    submission, tag, tasks, ticket, two_factor, user, widgets
+    organization, preview, problem, problem_download, problem_manage, problem_package, ranked_submission, register, \
+    stats, status, submission, tag, tasks, ticket, two_factor, user, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -116,6 +116,13 @@ urlpatterns = [
         path('/random/', problem.RandomProblem.as_view(), name='problem_random'),
         path('/create', problem.ProblemCreate.as_view(), name='problem_create'),
         path('/import-polygon', problem.ProblemImportPolygon.as_view(), name='problem_import_polygon'),
+        path('/import-package', problem_package.import_problem_package_view, name='problem_package_import'),
+        path('/import-package/status/<uuid:task_id>', problem_package.import_problem_package_status,
+             name='problem_package_import_status'),
+        path('/import-package/status', problem_package.import_problem_package_status_ajax,
+             name='problem_package_import_status_ajax'),
+        path('/import-package/success/<uuid:task_id>', problem_package.import_problem_package_success,
+             name='problem_package_import_success'),
     ])),
 
     path('problem/<str:problem>', include([
@@ -147,6 +154,7 @@ urlpatterns = [
 
         path('/download/package', problem_download.DownloadProblemFullPackage.as_view(),
              name='problem_download_full_package'),
+        path('/export-package', problem_package.export_problem_package_view, name='problem_package_export'),
 
         path('/tickets/', ticket.ProblemTicketListView.as_view(), name='problem_ticket_list'),
         path('/tickets/new', ticket.NewProblemTicketView.as_view(), name='new_problem_ticket'),

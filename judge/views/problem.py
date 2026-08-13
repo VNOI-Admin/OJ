@@ -36,6 +36,7 @@ from judge.utils.codeforces_polygon import ImportPolygonError, PolygonImporter
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.opengraph import generate_opengraph
 from judge.utils.pdfoid import PDF_RENDERING_ENABLED, render_pdf
+from judge.utils.problem_package import can_use_problem_packages
 from judge.utils.problems import hot_problems, user_attempted_ids, \
     user_completed_ids
 from judge.utils.strings import safe_float_or_none, safe_int_or_none
@@ -470,6 +471,7 @@ class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin
 
         can_edit = self.object.is_editable_by(user)
         context['can_edit_problem'] = can_edit
+        context['can_use_problem_packages'] = can_use_problem_packages(user)
         if user.is_authenticated:
             tickets = self.object.tickets
             if not can_edit:
@@ -715,6 +717,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         context['selected_types'] = self.selected_types
         context['problem_types'] = ProblemType.objects.all()
         context['has_fts'] = settings.ENABLE_FTS
+        context['can_use_problem_packages'] = can_use_problem_packages(self.request.user)
         context['search_query'] = self.search_query
         context['completed_problem_ids'] = self.get_completed_problems()
         context['attempted_problems'] = self.get_attempted_problems()
