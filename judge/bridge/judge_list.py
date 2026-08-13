@@ -18,13 +18,6 @@ logger = logging.getLogger('judge.bridge')
 
 PriorityMarker = namedtuple('PriorityMarker', 'priority')
 
-# Every judge carries a dispatch score, starting at zero. Failing to hand a submission over costs a
-# point, succeeding gives one back, and dispatch always prefers the judges with the highest score.
-# That way a judge failing for a transient reason is merely walked around instead of being dropped
-# from the pool, which used to leave it connected but unusable until it happened to reconnect.
-# A judge that runs out of score is disconnected, so it can come back with a clean slate.
-MIN_JUDGE_SCORE = -3
-
 
 class JudgeList(object):
     priorities = 4
@@ -39,40 +32,6 @@ class JudgeList(object):
         self.min_tier = None
         self.problems = set()
         self.problem_ids = set()
-
-    def _try_dispatch(self, judge, id, problem, language, source):
-        with self.lock:
-            try:
-                judge.submit(id, problem, language, source)
-            except SubmissionUnavailable:
-                raise
-            except Exception:
-                logger.exception('Failed to dispatch %d (%s, %s) to %s', id, problem, language, judge.name)
-                self._penalize_judge(judge)
-                return False
-
-            self.submission_map[id] = judge
-            self._reward_judge(judge)
-            return True
-
-    def _reward_judge(self, judge):
-        if judge.dispatch_score < 0:
-            judge.dispatch_score += 1
-            logger.info('Judge %s dispatched successfully, score is now %d', judge.name, judge.dispatch_score)
-
-    def _penalize_judge(self, judge):
-        with self.lock:
-            judge.dispatch_score -= 1
-            logger.warning('Lowered score of judge %s to %d', judge.name, judge.dispatch_score)
-            if judge.dispatch_score > MIN_JUDGE_SCORE:
-                return
-
-            logger.error('Judge %s failed too many dispatches, disconnecting it', judge.name)
-            self.remove(judge)
-            try:
-                judge.disconnect(force=True)
-            except Exception:
-                logger.exception('Failed to disconnect judge %s', judge.name)
 
     def _handle_free_judge(self, judge):
         with self.lock:
@@ -90,16 +49,18 @@ class JudgeList(object):
                     id, problem, language, source, judge_id, banned_judges = node.value
                     if judge.name not in banned_judges and judge.can_judge(problem, language, judge_id):
                         try:
-                            dispatched = self._try_dispatch(judge, id, problem, language, source)
+                            judge.submit(id, problem, language, source)
                         except SubmissionUnavailable:
                             logger.error('Dropping queued submission %d, it is no longer available', id)
                             self.queue.remove(node)
                             del self.node_map[id]
+                            # The judge is fine, so let it pick up the next queued submission.
+                            return self._handle_free_judge(judge)
+                        except Exception:
+                            logger.exception('Failed to dispatch %d (%s, %s) to %s', id, problem, language, judge.name)
+                            self.judges.remove(judge)
                             return
-                        if not dispatched:
-                            # Leave the submission queued: the judge has been penalized, and whichever
-                            # judge frees up next will pick this up instead.
-                            return
+                        self.submission_map[id] = judge
                         logger.info('Dispatched queued submission %d: %s', id, judge.name)
                         self.queue.remove(node)
                         del self.node_map[id]
@@ -212,8 +173,7 @@ class JudgeList(object):
     def on_judge_free(self, judge, submission):
         logger.info('Judge available after grading %d: %s', submission, judge.name)
         with self.lock:
-            # The submission may be missing if the judge picked it up despite the dispatch failing.
-            self.submission_map.pop(submission, None)
+            del self.submission_map[submission]
             judge._working = False
             self._handle_free_judge(judge)
 
@@ -257,28 +217,25 @@ class JudgeList(object):
             if len(candidates) > 1 and len(available) == 1 and priority >= REJUDGE_PRIORITY:
                 available = []
 
-            # Schedule the submission on the healthiest judge reporting least load, walking to the
-            # next one every time a dispatch fails, and queueing it if every judge refused it.
-            while available:
-                judge = min(available, key=lambda judge: (-judge.dispatch_score, judge.load, random()))
-                available.remove(judge)
-
-                if judge not in self.judges or judge.working:
-                    continue
-
+            if available:
+                # Schedule the submission on the judge reporting least load.
+                judge = min(available, key=lambda judge: (judge.load, random()))
+                logger.info('Dispatched submission %d to: %s', id, judge.name)
                 try:
-                    dispatched = self._try_dispatch(judge, id, problem, language, source)
+                    judge.submit(id, problem, language, source)
                 except SubmissionUnavailable:
                     logger.error('Dropping submission %d, it is no longer available', id)
                     return
-                if dispatched:
-                    logger.info('Dispatched submission %d to: %s', id, judge.name)
-                    return
-
-            self.node_map[id] = self.queue.insert(
-                (id, problem, language, source, judge_id, banned_judges),
-                self.priority[priority],
-            )
-            logger.info('Queued submission: %d', id)
-            if self.queue.size == settings.VNOJ_LONG_QUEUE_ALERT_THRESHOLD + self.priorities:
-                on_long_queue.delay()
+                except Exception:
+                    logger.exception('Failed to dispatch %d (%s, %s) to %s', id, problem, language, judge.name)
+                    self.judges.discard(judge)
+                    return self.judge(id, problem, language, source, judge_id, priority, banned_judges)
+                self.submission_map[id] = judge
+            else:
+                self.node_map[id] = self.queue.insert(
+                    (id, problem, language, source, judge_id, banned_judges),
+                    self.priority[priority],
+                )
+                logger.info('Queued submission: %d', id)
+                if self.queue.size == settings.VNOJ_LONG_QUEUE_ALERT_THRESHOLD + self.priorities:
+                    on_long_queue.delay()
