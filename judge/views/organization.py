@@ -557,11 +557,6 @@ class OrganizationTagList(AdminOrganizationMixin, TitleMixin, ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['tab'] = 'tags'
-        tags = context['tags']
-        context['tag_count'] = len(tags)
-        context['unused_count'] = sum(1 for tag in tags if tag.problem_count == 0)
-        context['untagged_count'] = Problem.available.filter(
-            organization=self.organization, tags__isnull=True).count()
         return context
 
 
