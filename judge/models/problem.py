@@ -278,11 +278,10 @@ class Problem(models.Model):
 
     @cached_property
     def types_list(self):
+        # if problem is in an organization, we show the tags instead of types
+        if self.is_organization_private:
+            return list(map(attrgetter('name'), self.tags.all()))
         return list(map(user_gettext, map(attrgetter('full_name'), self.types.all())))
-
-    @cached_property
-    def tags_list(self):
-        return list(map(attrgetter('name'), self.tags.all()))
 
     def languages_list(self):
         return self.allowed_languages.values_list('common_name', flat=True).distinct().order_by('common_name')
