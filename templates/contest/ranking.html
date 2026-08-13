@@ -39,6 +39,22 @@
         .filter-checklist-button {
             float: right;
         }
+
+        .replay-blocked {
+            cursor: not-allowed;
+        }
+
+        .replay-tooltip {
+            position: fixed;
+            z-index: 1000;
+            white-space: nowrap;
+            background: #333;
+            color: #fff;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            pointer-events: none;
+        }
     </style>
 {% endblock %}
 
@@ -50,6 +66,8 @@
     <script type="text/javascript">
         window.RANKING_DATA = {{ ranking_json|safe }};
         window.CONTEST_CAN_SEE_SUBMISSIONS = {{ 'true' if can_see_full_submission_list else 'false' }};
+        window.CONTEST_SHOW_VIRTUAL = {{ 'true' if show_virtual else 'false' }};
+        window.CONTEST_REPLAY_VIRTUAL_TOOLTIP = {{ _("Virtual participations aren't supported in replay, turn it off first.")|htmltojs }};
     </script>
     {% if not contest.ended %}
         <script type="text/javascript">
@@ -470,6 +488,12 @@ $('#show-personal-info-checkbox').click(function () {
         {% if tab == 'ranking' %}
             <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
             <label for="show-virtual-participations-checkbox" style="vertical-align: bottom">{{ _('Show virtual participations') }}</label>
+            {% if has_ghosts %}
+            <span id="show-ghosts-wrap">
+                <input id="show-ghosts-checkbox" type="checkbox" style="vertical-align: bottom">
+                <label for="show-ghosts-checkbox" style="vertical-align: bottom">{{ _('Show ghost participations') }}</label>
+            </span>
+            {% endif %}
             {% if not is_ICPC_format %}
             <a href="#" onclick="download_table_as_csv()" style="float: right;">{{ _('Download as CSV') }}</a>
             {% endif %}

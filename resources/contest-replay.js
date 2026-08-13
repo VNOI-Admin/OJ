@@ -269,7 +269,7 @@
                 id: p.id, score: scored.score, cumtime: scored.cumtime,
                 tiebreaker: scored.tiebreaker, format_data: scored.format_data,
                 is_disqualified: p.is_disqualified, virtual: p.virtual,
-                rating: p.rating, user: p.user,
+                rating: p.rating, user: p.user, ghost: p.ghost,
             };
         });
 
@@ -311,6 +311,15 @@
         return (h ? h + ':' : '') + (h && m < 10 ? '0' : '') + m + ':' + (sec < 10 ? '0' : '') + sec;
     }
 
+    // Grey out and disable a control that can't be used while virtual is showing.
+    // Children (not $el itself) are greyed and get pointer-events:none, so mouse
+    // events fall through to $el and fire the delegated .replay-blocked tooltip.
+    function blockForVirtual($el, tooltip) {
+        $el.addClass('replay-blocked').attr('data-tooltip', tooltip);
+        $el.children().css({ 'opacity': 0.5, 'pointer-events': 'none' });
+        $el.find('input, button').prop('disabled', true);
+    }
+
     // ─── Public entry point ───────────────────────────────────────────────────
 
     window.initContestRanking = function (rankingData) {
@@ -318,6 +327,48 @@
 
         var replayUrl = rankingData.contest && rankingData.contest.replay_url;
         if (!replayUrl) return;
+
+        // Virtual participations have no replay subs, so virtual and ghost/replay
+        // are mutually exclusive in the UI.
+        var showVirtual = window.CONTEST_SHOW_VIRTUAL;
+        var virtualTooltip = window.CONTEST_REPLAY_VIRTUAL_TOOLTIP;
+
+        if (showVirtual) {
+            // Floating tooltip that follows the cursor over greyed (replay-blocked) controls.
+            var $tip = null;
+            $(document)
+                .on('mouseenter', '.replay-blocked', function () {
+                    if (!$tip) $tip = $('<div class="replay-tooltip"></div>').appendTo('body');
+                    $tip.text($(this).attr('data-tooltip')).show();
+                })
+                .on('mousemove', '.replay-blocked', function (e) {
+                    if ($tip) $tip.css({ left: (e.clientX + 12) + 'px', top: (e.clientY + 12) + 'px' });
+                })
+                .on('mouseleave', '.replay-blocked', function () {
+                    if ($tip) $tip.hide();
+                });
+        }
+
+        // Ghost toggle: swap between the backend ranking and end-of-contest
+        // standings (A's live participants + ghosts) computed from the replay file.
+        var $ghost = $('#show-ghosts-checkbox');
+        if ($ghost.length && showVirtual) {
+            // Virtual can't be replayed: grey out the ghost toggle with an explanatory tooltip.
+            blockForVirtual($('#show-ghosts-wrap'), virtualTooltip);
+        } else if ($ghost.length) {
+            $ghost.on('change', function () {
+                if (this.checked) {
+                    fetchReplayData(replayUrl, function (data) {
+                        if (!data) return;
+                        window.renderRankingTable(computeVirtualRanking(data, rankingData, data.duration));
+                    });
+                } else {
+                    window.renderRankingTable(rankingData);
+                }
+            });
+            // Show ghosts by default when available (and virtual isn't active).
+            $ghost.prop('checked', true).trigger('change');
+        }
 
         var isVirtual      = !!rankingData.own;
         var virtualSubsData = null;
@@ -444,14 +495,19 @@
             });
         } else {
             _endBtn = createBar(rankingData.contest.replay_duration);
-            wireFreezeInput();
             updateBar(rankingData.contest.replay_duration, rankingData.contest.replay_duration);
-            if (frozenOverride !== null) {
-                fetchReplayData(replayUrl, onReplayLoaded);
+            if (showVirtual) {
+                // Grey out and disable the replay bar; virtual can't be replayed.
+                blockForVirtual($slider.parent(), virtualTooltip);
             } else {
-                $slider.one('mousedown touchstart', function () {
+                wireFreezeInput();
+                if (frozenOverride !== null) {
                     fetchReplayData(replayUrl, onReplayLoaded);
-                });
+                } else {
+                    $slider.one('mousedown touchstart', function () {
+                        fetchReplayData(replayUrl, onReplayLoaded);
+                    });
+                }
             }
         }
     };

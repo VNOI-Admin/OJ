@@ -59,6 +59,18 @@ def get_contest_submission_count(problem, profile, virtual):
                   .filter(problem__problem=problem, participation__virtual=virtual).count()
 
 
+def get_accessible_solution(problem, request):
+    """Fetch the editorial for `problem`, or 404 if the requesting user can't see it.
+
+    Shared by ProblemSolution and ProblemSolutionComments so the comments AJAX
+    endpoint can't leak editorial comments to someone who can't see the editorial.
+    """
+    solution = get_object_or_404(Solution, problem=problem)
+    if not solution.is_accessible_by(request.user) or request.in_contest:
+        raise Http404()
+    return solution
+
+
 class ProblemDeleted(Exception):
     def __init__(self, problem_name):
         self.problem_name = problem_name
@@ -132,11 +144,7 @@ class ProblemSolution(SolvedProblemMixin, ProblemMixin, TitleMixin, CommentedDet
     def get_context_data(self, **kwargs):
         context = super(ProblemSolution, self).get_context_data(**kwargs)
 
-        solution = get_object_or_404(Solution, problem=self.object)
-
-        if not solution.is_accessible_by(self.request.user) or self.request.in_contest:
-            raise Http404()
-        context['solution'] = solution
+        context['solution'] = get_accessible_solution(self.object, self.request)
         context['has_solved_problem'] = self.object.id in self.get_completed_problems()
         return context
 
@@ -147,6 +155,64 @@ class ProblemSolution(SolvedProblemMixin, ProblemMixin, TitleMixin, CommentedDet
         code = self.kwargs.get(self.slug_url_kwarg, None)
         return generic_message(self.request, _('No such editorial'),
                                _('Could not find an editorial with the code "%s".') % code, status=404)
+
+
+class ProblemSolutionComments(ProblemMixin, CommentedDetailView):
+    context_object_name = 'problem'
+    template_name = 'problem/editorial-comments-tab.html'
+    skip_comment_list = False
+
+    def get_comment_page(self):
+        return 's:' + self.object.code
+
+    def get_context_data(self, **kwargs):
+        # Enforce the same access rule as the editorial page itself, so this AJAX
+        # endpoint can't leak editorial comments to someone who can't see it.
+        get_accessible_solution(self.object, self.request)
+        return super(ProblemSolutionComments, self).get_context_data(**kwargs)
+
+
+class ProblemClarificationsMixin(object):
+    """Shared contest-problem/clarifications detection, used by both the main
+    problem page and its lazy-loaded comments fragment."""
+
+    contest_problem = None
+
+    def get_object(self, queryset=None):
+        problem = super(ProblemClarificationsMixin, self).get_object(queryset)
+        user = self.request.user
+        authed = user.is_authenticated
+        self.contest_problem = (None if not authed or user.profile.current_contest is None else
+                                get_contest_problem(problem, user.profile))
+        return problem
+
+    def is_comment_locked(self):
+        if self.contest_problem and self.contest_problem.contest.use_clarifications:
+            return True
+        return super(ProblemClarificationsMixin, self).is_comment_locked()
+
+    def get_comment_page(self):
+        return 'p:%s' % self.object.code
+
+    def get_clarifications_context(self):
+        if self.contest_problem and self.contest_problem.contest.use_clarifications:
+            clarifications = self.object.clarifications
+            return {
+                'has_clarifications': clarifications.count() > 0,
+                'clarifications': clarifications.order_by('-date'),
+            }
+        return {}
+
+
+class ProblemComments(ProblemMixin, ProblemClarificationsMixin, CommentedDetailView):
+    context_object_name = 'problem'
+    template_name = 'problem/comments-tab.html'
+    skip_comment_list = False
+
+    def get_context_data(self, **kwargs):
+        context = super(ProblemComments, self).get_context_data(**kwargs)
+        context.update(self.get_clarifications_context())
+        return context
 
 
 class ProblemRaw(ProblemMixin, TitleMixin, TemplateResponseMixin, SingleObjectMixin, View):
@@ -375,28 +441,10 @@ class ProblemSubmitMixin:
         return HttpResponseRedirect(reverse('submission_status', args=(new_submission.id,))), None
 
 
-class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, CommentedDetailView):
+class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin, ProblemSubmitMixin,
+                    CommentedDetailView):
     context_object_name = 'problem'
     template_name = 'problem/problem.html'
-
-    def get_object(self, queryset=None):
-        problem = super(ProblemDetail, self).get_object(queryset)
-
-        user = self.request.user
-        authed = user.is_authenticated
-        self.contest_problem = (None if not authed or user.profile.current_contest is None else
-                                get_contest_problem(problem, user.profile))
-
-        return problem
-
-    def is_comment_locked(self):
-        if self.contest_problem and self.contest_problem.contest.use_clarifications:
-            return True
-
-        return super(ProblemDetail, self).is_comment_locked()
-
-    def get_comment_page(self):
-        return 'p:%s' % self.object.code
 
     def get_context_data(self, **kwargs):
         context = super(ProblemDetail, self).get_context_data(**kwargs)
@@ -406,10 +454,8 @@ class ProblemDetail(ProblemMixin, SolvedProblemMixin, ProblemSubmitMixin, Commen
         context['has_submissions'] = authed and Submission.objects.filter(user=user.profile,
                                                                           problem=self.object).exists()
         context['contest_problem'] = contest_problem
+        context.update(self.get_clarifications_context())
         if contest_problem:
-            clarifications = self.object.clarifications
-            context['has_clarifications'] = clarifications.count() > 0
-            context['clarifications'] = clarifications.order_by('-date')
             context['submission_limit'] = contest_problem.max_submissions
             if contest_problem.max_submissions:
                 context['submissions_left'] = max(contest_problem.max_submissions -

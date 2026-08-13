@@ -131,14 +131,14 @@
     // ─── Shared rendering helpers ────────────────────────────────────────────
 
     function makeSubmissionUrl(meta, problemCode) {
-        if (!meta.contest.url_templates) return null;
+        if (meta.ghost || !meta.contest.url_templates) return null;
         return meta.contest.url_templates.problem_submissions
             .replace('__USERNAME__', meta.username)
             .replace('__PROBLEM__', problemCode);
     }
 
     function makeAllSubmissionsUrl(meta) {
-        if (!meta.contest.url_templates) return null;
+        if (meta.ghost || !meta.contest.url_templates) return null;
         return meta.contest.url_templates.all_submissions
             .replace('__USERNAME__', meta.username);
     }
@@ -408,10 +408,15 @@
         return html;
     }
 
-    function buildUserLink(u) {
-        var html = '<span class="' + escapeHtml(u.css_class) + '">' +
-            '<a href="' + escapeHtml(u.url) + '" style="display: inline-block;">' +
-            escapeHtml(u.display_name) + '</a>';
+    function buildUserLink(u, isGhost) {
+        // Ghosts keep their rating color but get a ghost icon prefix and no link
+        // (they come from another server, so any URL here would be broken).
+        var spanClass = u.css_class + (isGhost ? ' ghost-user' : '');
+        var name = escapeHtml(u.display_name);
+        var inner = isGhost
+            ? '<span style="display: inline-block;">' + name + '</span>'
+            : '<a href="' + escapeHtml(u.url) + '" style="display: inline-block;">' + name + '</a>';
+        var html = '<span class="' + escapeHtml(spanClass) + '">' + inner;
         if (u.badge) {
             html += '<img src="' + escapeHtml(u.badge.mini) + '"' +
                 ' title="' + escapeHtml(u.badge.name) + '"' +
@@ -425,7 +430,10 @@
         var p = participation;
         var u = p.user;
 
-        var rowClass = p.is_disqualified ? ' class="disqualified"' : '';
+        var classes = [];
+        if (p.is_disqualified) classes.push('disqualified');
+        if (p.ghost) classes.push('ghost');
+        var rowClass = classes.length ? ' class="' + classes.join(' ') + '"' : '';
         var html = '<tr id="user-' + escapeHtml(u.username) + '"' + rowClass + '>';
 
         // Rank cell
@@ -445,7 +453,7 @@
         // Username cell
         html += '<td class="user-name"><div>';
         html += '<div style="float:left">';
-        html += buildUserLink(u);
+        html += buildUserLink(u, p.ghost);
 
         if (p.virtual > 0) {
             var virtualTitle = p.virtual + ' virtual participation' + (p.virtual > 1 ? 's' : '') + ' of this user';
@@ -456,22 +464,26 @@
         html += '<div class="personal-info"><span>' + escapeHtml(u.name || '') + '</span></div>';
         html += '</div>';
 
-        // Right float (admin ops, org)
+        // Right float (admin ops, org). Ghosts get no admin ops and a plain-text org.
         html += '<div style="float:right">';
-        html += buildAdminOps(p, contest);
+        if (!p.ghost) html += buildAdminOps(p, contest);
         html += '<div class="personal-info" style="text-align: right;">';
         if (u.organization) {
+            var orgName = escapeHtml(u.organization.short_name);
             html += '<span class="organization">' +
-                '<a href="' + escapeHtml(u.organization.url) + '">' +
-                escapeHtml(u.organization.short_name) + '</a></span>';
+                (p.ghost ? orgName
+                         : '<a href="' + escapeHtml(u.organization.url) + '">' + orgName + '</a>') +
+                '</span>';
         }
         html += '</div></div>';
         html += '</div></td>';
 
-        // Build meta for renderer
+        // Build meta for renderer. Ghosts have no valid submission URLs on this
+        // server, so the url helpers render every problem cell as plain text.
         var meta = {
             contest: contest,
             username: u.username,
+            ghost: p.ghost,
         };
 
         // Result cell(s)

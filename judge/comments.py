@@ -20,6 +20,7 @@ from reversion.models import Revision, Version
 
 from judge.dblock import LockModel
 from judge.models import Comment, CommentLock
+from judge.utils.diggpaginator import DiggPaginator
 from judge.widgets import MartorWidget
 
 
@@ -84,6 +85,13 @@ class CommentForm(ModelForm):
 
 class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
     comment_page = None
+    comments_per_page = 20
+    # True by default: most CommentedDetailView subclasses are host pages whose
+    # template doesn't render comment_list/comment_form directly (comments are
+    # lazy-loaded through a separate fragment view), so skip building the comment
+    # queryset on GET. Still built when a comment_form with errors needs to be
+    # redisplayed. The fragment views themselves set this back to False.
+    skip_comment_list = True
 
     def get_comment_page(self):
         if self.comment_page is None:
@@ -130,7 +138,7 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
                 revisions.set_user(request.user)
                 revisions.set_comment(_('Posted comment'))
                 comment.save()
-            return HttpResponseRedirect(request.path)
+            return HttpResponseRedirect(request.path + '#comments')
 
         context = self.get_context_data(object=self.object, comment_form=form)
         return self.render_to_response(context)
@@ -144,9 +152,38 @@ class CommentedDetailView(TemplateResponseMixin, SingleObjectMixin, View):
 
     def get_context_data(self, **kwargs):
         context = super(CommentedDetailView, self).get_context_data(**kwargs)
+        context['comment_lock'] = self.is_comment_locked()
+
+        # A comment_form with errors must always be redisplayed with the full
+        # comment list around it (see the comment-error fallback in templates),
+        # so only skip the query when there's nothing to redisplay.
+        comment_form = kwargs.get('comment_form')
+        if comment_form and comment_form.errors:
+            # A failed reply is bound with its parent id, so the error can be
+            # surfaced next to the comment being replied to (see reply_comment()
+            # in base-media-js.html) instead of only in the page-bottom "New
+            # comment" box, which is easy to miss.
+            raw_parent = comment_form.data.get('parent')
+            if raw_parent:
+                try:
+                    context['reply_parent_id'] = int(raw_parent)
+                except (TypeError, ValueError):
+                    pass
+        elif self.skip_comment_list:
+            return context
+
         queryset = Comment.objects.filter(hidden=False, page=self.get_comment_page())
         context['has_comments'] = queryset.exists()
-        context['comment_lock'] = self.is_comment_locked()
+
+        if self.comments_per_page:
+            root_tree_ids = queryset.filter(parent=None).values_list('tree_id', flat=True)
+            paginator = DiggPaginator(root_tree_ids, self.comments_per_page, body=6, padding=2, orphans=5)
+            page = paginator.get_page(self.request.GET.get('page'))
+            queryset = queryset.filter(tree_id__in=list(page.object_list))
+            context['comments_page_obj'] = page
+            context['page_prefix'] = '?page='
+            context['first_page_href'] = '?page=1'
+
         queryset = queryset.select_related('author__user', 'author__display_badge').defer('author__about')
 
         if self.request.user.is_authenticated:
