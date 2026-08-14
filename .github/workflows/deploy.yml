@@ -17,15 +17,39 @@ env:
   IMAGE_NAME: ${{ github.repository }}   # -> ghcr.io/hiulaptop/thinkcode-oj
 
 jobs:
-  # Re-run the same checks as build.yml before deploying. Belt-and-suspenders:
-  # even though branch protection on `deploy` should already require build.yml
-  # to pass before a merge is allowed, this guarantees a broken commit can
-  # never reach the deploy step even if branch protection is misconfigured.
-  test:
-    uses: ./.github/workflows/build.yml
+  # build.yml (name: "build") triggers on the same push (on: [push,
+  # pull_request], no branch filter) and runs in parallel with this
+  # workflow. Rather than duplicating its lint/unit/style jobs here, wait
+  # for that separate workflow run to finish and require it to have
+  # succeeded before proceeding -- this is belt-and-suspenders on top of
+  # branch protection on `deploy` (which should also require build.yml to
+  # pass before a merge is allowed), so a broken commit can never reach the
+  # deploy step even if branch protection is misconfigured.
+  wait-for-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wait for build.yml to succeed on this commit
+        uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          check-name: 'lint'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+      - uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          check-name: 'unit'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
+      - uses: lewagon/wait-on-check-action@v1.3.4
+        with:
+          ref: ${{ github.sha }}
+          check-name: 'styles'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 10
 
   build-and-push:
-    needs: test
+    needs: wait-for-build
     runs-on: ubuntu-latest
     permissions:
       contents: read
