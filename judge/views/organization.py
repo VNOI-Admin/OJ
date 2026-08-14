@@ -884,6 +884,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         add_quota_context(self.organization, context)
+        context['organization'] = self.organization
         return context
 
     def get(self, request, *args, **kwargs):
