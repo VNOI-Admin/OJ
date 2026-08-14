@@ -63,7 +63,12 @@ services:
       --harakiri 600
       --need-app
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/"]
+      # ALLOWED_HOSTS only contains oj.thinkcode.vn (see
+      # local_settings.docker.py.example / .env), so a bare
+      # http://127.0.0.1:8000/ request 400s with DisallowedHost -- explicitly
+      # send the right Host header, matching how deploy.sh's own
+      # verify_healthy() and nginx both already do this.
+      test: ["CMD", "curl", "-f", "-H", "Host: oj.thinkcode.vn", "http://127.0.0.1:8000/"]
       interval: 10s
       timeout: 5s
       retries: 5
