@@ -34,6 +34,14 @@ CACHES = {
         'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            # The server's Redis is version 5.0.7 (native apt install, see
+            # OVERVIEW.md), which predates RESP3/the HELLO command (added in
+            # Redis 6.0). The Docker image's redis-py client is newer and
+            # defaults to negotiating RESP3 via HELLO on every connection,
+            # which a 5.0.7 server rejects with "unknown command `HELLO`" --
+            # explicitly pin protocol=2 (RESP2) to match what this Redis
+            # version actually understands.
+            'CONNECTION_POOL_KWARGS': {'protocol': 2},
         },
     },
 }
