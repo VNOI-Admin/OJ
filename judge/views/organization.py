@@ -817,12 +817,7 @@ class OrganizationUserSolvedProblems(AdminOrganizationMixin, TitleMixin, Templat
         return super(OrganizationUserSolvedProblems, self).get(request, *args, **kwargs)
 
     def get_title(self):
-        return _('Problems solved by %s') % self.member.user.username
-
-    def get_content_title(self):
-        if self.is_in_organization_subdomain():
-            return self.get_title()
-        return format_html('{} - {}', self.organization.name, self.get_title())
+        return self.organization.name
 
     def get_context_data(self, **kwargs):
         context = super(OrganizationUserSolvedProblems, self).get_context_data(**kwargs)
