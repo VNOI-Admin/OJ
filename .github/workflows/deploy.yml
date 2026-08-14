@@ -14,7 +14,6 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}   # -> ghcr.io/hiulaptop/thinkcode-oj
 
 jobs:
   # build.yml (name: "build") triggers on the same push (on: [push,
@@ -72,8 +71,15 @@ jobs:
       - name: Compute image tag
         id: meta
         run: |
-          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:sha-${GITHUB_SHA::7}"
+          # ghcr.io (and Docker registries generally) require lowercase
+          # repository names, but github.repository preserves the owner's
+          # actual casing (e.g. "Hiulaptop/thinkcode-oj") -- lowercase it
+          # explicitly rather than relying on the owner/repo name already
+          # being lowercase.
+          REPO_LOWER="$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+          IMAGE="${{ env.REGISTRY }}/${REPO_LOWER}:sha-${GITHUB_SHA::7}"
           echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "repo_lower=${REPO_LOWER}" >> "$GITHUB_OUTPUT"
 
       - name: Build and push image
         uses: docker/build-push-action@v5
@@ -82,7 +88,7 @@ jobs:
           push: true
           tags: |
             ${{ steps.meta.outputs.image }}
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+            ${{ env.REGISTRY }}/${{ steps.meta.outputs.repo_lower }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
