@@ -20,6 +20,7 @@
 
         .solved-table {
             width: 100%;
+            table-layout: fixed;
         }
 
         .solved-table td.solved-mark {
@@ -27,9 +28,16 @@
             text-align: center;
         }
 
-        .solved-table td.solved-points,
-        .solved-table td.solved-date {
-            text-align: right;
+        .solved-table td.solved-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .solved-table td.solved-code {
+            width: 10em;
+            overflow: hidden;
+            text-overflow: ellipsis;
             white-space: nowrap;
         }
 
@@ -98,11 +106,11 @@
 
 {% block body %}
     <div class="solved-summary">
-        {{ _('%(user)s has solved %(solved)d of %(total)d problems in this organization.',
-             user=link_user(member), solved=solved_count, total=total_count) }}
+        {{ _('%(user)s has solved %(solved)d problems in this organization.',
+             user=link_user(member), solved=solved_count) }}
     </div>
 
-    {% for section in type_sections %}
+    {% for section in tag_sections %}
         <div class="solved-type-block" data-page-size="{{ page_size }}">
             <div class="solved-type-header">
                 <span>{{ section.name }}</span>
@@ -116,8 +124,7 @@
                             <td class="solved-name">
                                 <a href="{{ url('problem_detail', problem.code) }}">{{ problem.name }}</a>
                             </td>
-                            <td class="solved-points">{{ problem.points|floatformat(-2) }}</td>
-                            <td class="solved-date">{{ problem.first_solved|date(_("M j, Y")) }}</td>
+                            <td class="solved-code">{{ problem.code }}</td>
                             <td class="solved-submissions">
                                 <a href="{{ url('user_submissions', problem.code, member.user.username) }}"
                                    title="{{ _('Submissions') }}"><i class="fa fa-external-link"></i></a>

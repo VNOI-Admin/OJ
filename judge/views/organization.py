@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import IntegrityError, transaction
-from django.db.models import Count, FilteredRelation, Min, OuterRef, Q, Subquery, Sum
+from django.db.models import Count, FilteredRelation, OuterRef, Q, Subquery, Sum
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
@@ -34,6 +34,7 @@ from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context
+from judge.utils.problems import user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart, get_pie_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message, \
@@ -826,39 +827,31 @@ class OrganizationUserSolvedProblems(AdminOrganizationMixin, TitleMixin, Templat
     def get_context_data(self, **kwargs):
         context = super(OrganizationUserSolvedProblems, self).get_context_data(**kwargs)
 
-        problems = Problem.get_visible_problems(self.request.user) \
-            .filter(get_organization_problem_filter(self.organization, self.request.user, self.request.profile)) \
-            .distinct()
-
-        first_solved = dict(
-            Submission.objects.filter(user=self.member, result='AC', problem__in=problems)
-            .values_list('problem_id')
-            .annotate(first_solved=Min('date'))
-            .values_list('problem_id', 'first_solved'),
+        problems = Problem.objects.filter(
+            get_organization_problem_filter(self.organization, self.request.user, self.request.profile),
         )
 
-        uncategorized = _('Uncategorized')
-        sections = defaultdict(list)
-        for problem in problems.filter(id__in=first_solved).prefetch_related('types'):
-            types = problem.types_list
-            sections[types[0] if types else uncategorized].append({
-                'code': problem.code,
-                'name': problem.name,
-                'points': problem.points,
-                'first_solved': first_solved[problem.id],
-            })
+        solved_ids = user_completed_ids(self.member)
 
-        type_sections = []
+        untagged = _('Untagged')
+        sections = defaultdict(list)
+        solved = set()
+        # The tags join yields one row per (problem, tag); untagged problems come through as tags__name=None.
+        for row in problems.filter(id__in=solved_ids).values('id', 'code', 'name', 'tags__name'):
+            solved.add(row['id'])
+            sections[row['tags__name'] or untagged].append({'code': row['code'], 'name': row['name']})
+        solved_cnt = len(solved)
+
+        tag_sections = []
         for name, solved_problems in sections.items():
-            solved_problems.sort(key=itemgetter('first_solved'))
-            type_sections.append({'name': name, 'count': len(solved_problems), 'problems': solved_problems})
-        type_sections.sort(key=lambda section: (section['name'] == uncategorized, -section['count'], section['name']))
+            solved_problems.sort(key=itemgetter('name'))
+            tag_sections.append({'name': name, 'count': len(solved_problems), 'problems': solved_problems})
+        tag_sections.sort(key=lambda section: (section['name'] == untagged, -section['count'], section['name']))
 
         context['member'] = self.member
-        context['solved_count'] = len(first_solved)
-        context['total_count'] = problems.count()
+        context['solved_count'] = solved_cnt
         context['page_size'] = SOLVED_PROBLEMS_PAGE_SIZE
-        context['type_sections'] = type_sections
+        context['tag_sections'] = tag_sections
         return context
 
 
