@@ -139,13 +139,8 @@ class ProblemSelect2View(Select2View):
         return f'[{obj.code}] {obj.name}'
 
 
-class PublicProblemSelect2View(Select2View):
-    def get_queryset(self):
-        return Problem.get_public_problems() \
-                      .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term))
-
-    def get_name(self, obj):
-        return f'[{obj.code}] {obj.name}'
+class PublicProblemSelect2View(ProblemSelect2View):
+    pass
 
 
 class OrganizationProblemSelect2View(Select2View):
