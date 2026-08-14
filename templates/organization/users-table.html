@@ -8,13 +8,25 @@
 
 {% block before_point %}
     {% if is_admin %}
-        <td>
+        <td class="organization-user-actions">
             <form action="{{ kick_url }}" method="POST" class="kick-form">
                 {% csrf_token %}
                 <input type="hidden" name="user" value="{{ user.id }}">
                 <a href="#" class="button">{{ _('Kick') }}</a>
             </form>
         </td>
+    {% endif %}
+{% endblock %}
+
+{% block after_point_head %}
+    {% if is_admin %}
+        <th class="problems">{{ _('Solved problems') }}</th>
+    {% endif %}
+{% endblock %}
+
+{% block after_point %}
+    {% if is_admin %}
+        <td><a href="{{ url('organization_user_solved', organization.slug, user.user.username) }}"><i class="fa fa-list-ul"></i> {{ _('View') }}</a></td>
     {% endif %}
 {% endblock %}
 
