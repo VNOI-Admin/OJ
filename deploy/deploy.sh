@@ -49,16 +49,18 @@ STATIC_ROOT_HOST="/var/www/thinkcodeoj/static"
 PASSTHROUGH_HOST="/var/www/thinkcodeoj/static-passthrough"
 ICONS_HOST="/var/www/thinkcodeoj/icons"
 DOMAIN="oj.thinkcode.vn"
-VERIFY_TIMEOUT=90          # seconds to wait for judge to reconnect + site to answer
-                            # (found via a real deploy: with docker compose
-                            # up -d recreating all 4 containers together,
-                            # 60s was occasionally too tight for the judge
-                            # worker to notice bridged's connection drop and
-                            # fully reconnect+re-authenticate -- confirmed
-                            # site_ok=true/judge_ok=false timeouts on 2
-                            # consecutive real runs, while the judge in fact
-                            # reconnected successfully ~10-20s after the
-                            # timeout fired both times)
+VERIFY_TIMEOUT=60          # seconds to wait for judge to reconnect + site to answer
+                            # (originally bumped to 90 suspecting the judge
+                            # needed more time to reconnect after all 4
+                            # containers got recreated together -- turned out
+                            # the REAL cause of both prior "timeouts" was an
+                            # unrelated bug: IMAGE_TAG wasn't exported, so
+                            # verify_healthy()'s judge check failed
+                            # immediately every time regardless of timeout,
+                            # see the `export IMAGE_TAG` comment below. Once
+                            # actually fixed, judge reconnect + verification
+                            # completes in a few seconds, so reverted back to
+                            # 60s.)
 VERIFY_POLL_INTERVAL=3
 
 NEW_IMAGE="${1:?Usage: deploy.sh <image-ref>}"
