@@ -1,5 +1,20 @@
 {% extends "base.html" %}
 
+{% block title_row %}
+    <h2 style="display: inline-block">
+        {% if content_title %}{{ content_title }}{% else %}{{ title }}{% endif %}
+    </h2>
+    {% if organization %}
+        <span class="organization-tags">
+            <span class="organization-tag">
+                <a href="{{ organization.get_absolute_url() }}">
+                    <i class="fa fa-lock"></i> {{ organization.name }}
+                </a>
+            </span>
+        </span>
+    {% endif %}
+{% endblock %}
+
 {% block js_media %}
     {{ form.media.js }}
     {% include "leave-warning.html" %}
@@ -55,6 +70,62 @@
                     });
                 }
             });
+
+            {% if organization %}
+            var $problemTags = $('#id_tags');
+            if ($problemTags.length) {
+                var $target = $problemTags.next('.select2');
+                if (!$target.length) {
+                    $target = $problemTags;
+                }
+
+                $('<a>', {
+                    href: {{ url('organization_tag_add', organization.slug)|htmltojs }},
+                    class: 'related-widget-wrapper-link js-add-org-tag',
+                    text: {{ _('Create new tag')|htmltojs }},
+                    title: {{ _('Create new tag')|htmltojs }},
+                }).prepend($('<i>', { class: 'fa fa-plus', 'aria-hidden': 'true' })).appendTo($target.parent());
+            }
+
+            $(document).on('click', '.js-add-org-tag', function (e) {
+                e.preventDefault();
+
+                var name = window.prompt({{ _('New tag name')|htmltojs }});
+                if (name === null) {
+                    return;
+                }
+
+                name = $.trim(name);
+                if (!name) {
+                    alert({{ _('Tag name is required.')|htmltojs }});
+                    return;
+                }
+
+                $.ajax({
+                    type: 'POST',
+                    url: $(this).attr('href'),
+                    data: {
+                        name: name,
+                        csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                    },
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    },
+                    success: function (tag) {
+                        var option = new Option(tag.name, tag.id, true, true);
+                        $problemTags.append(option).trigger('change');
+                    },
+                    error: function (xhr) {
+                        var message = {{ _('Could not create tag.')|htmltojs }};
+                        var errors = xhr.responseJSON && xhr.responseJSON.errors;
+                        if (errors && errors.name && errors.name.length && errors.name[0].message) {
+                            message = errors.name[0].message;
+                        }
+                        alert(message);
+                    },
+                });
+            });
+            {% endif %}
         })
     </script>
 {% endblock %}
@@ -65,6 +136,19 @@
     <style>
         .hidden {
             display: none;
+        }
+
+        .related-widget-wrapper-link {
+            margin-left: 0.75em;
+            white-space: nowrap;
+        }
+
+        .related-widget-wrapper-link .fa {
+            margin-right: 0.3em;
+        }
+
+        #id_tags + .select2 {
+            min-width: 16em;
         }
     </style>
 {% endblock %}

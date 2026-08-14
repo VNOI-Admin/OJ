@@ -1,16 +1,18 @@
 import datetime
 from functools import cached_property
+from random import randrange
 
 from django import forms
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
+from django.db import IntegrityError, transaction
 from django.db.models import Count, FilteredRelation, OuterRef, Q, Subquery, Sum
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
-from django.http import Http404, HttpResponseRedirect
+from django.http import Http404, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404, render
 from django.template.defaultfilters import filesizeformat
 from django.urls import reverse
@@ -22,9 +24,9 @@ from django.views.generic import CreateView, DetailView, FormView, ListView, Upd
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
-from judge.forms import OrganizationForm, QuotaGrantForm
-from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
-    Problem, Profile, Submission
+from judge.forms import OrganizationForm, OrganizationProblemTagForm, QuotaGrantForm
+from judge.models import BlogPost, Comment, Contest, Language, Organization, \
+    OrganizationRequest, Problem, Profile, Submission
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
@@ -541,6 +543,72 @@ class OrganizationQuotaDelete(LoginRequiredMixin, AdminOrganizationMixin, View):
         return HttpResponseRedirect(reverse('edit_organization', args=[self.organization.slug]))
 
 
+class OrganizationTagList(AdminOrganizationMixin, TitleMixin, ListView):
+    template_name = 'organization/tags.html'
+    context_object_name = 'tags'
+
+    def get_title(self):
+        return _('Tags of %s') % self.organization.name
+
+    def get_queryset(self):
+        return self.organization.problem_tags.annotate(
+            problem_count=Count('problems', filter=Q(problems__deleted_at__isnull=True)))
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['tab'] = 'tags'
+        return context
+
+
+class OrganizationTagCreate(AdminOrganizationMixin, View):
+    form_class = OrganizationProblemTagForm
+
+    def post(self, request, *args, **kwargs):
+        form = self.form_class(request.POST)
+        if not form.is_valid():
+            return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+
+        tag = form.save(commit=False)
+        tag.organization = self.organization
+        try:
+            with transaction.atomic():
+                tag.save()
+        except IntegrityError:
+            # Only the unique_together(organization, name) constraint can trip here.
+            form.add_error('name', _('A tag with this name already exists.'))
+            return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+
+        return JsonResponse({'id': tag.id, 'name': tag.name})
+
+
+class OrganizationTagUpdate(AdminOrganizationMixin, View):
+    form_class = OrganizationProblemTagForm
+
+    def post(self, request, *args, **kwargs):
+        tag = get_object_or_404(self.organization.problem_tags.all(), pk=kwargs.get('pk'))
+        form = self.form_class(request.POST, instance=tag)
+        if not form.is_valid():
+            return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+
+        try:
+            with transaction.atomic():
+                tag = form.save()
+        except IntegrityError:
+            # Only the unique_together(organization, name) constraint can trip here.
+            form.add_error('name', _('A tag with this name already exists.'))
+            return JsonResponse({'errors': form.errors.get_json_data()}, status=400)
+
+        return JsonResponse({'id': tag.id, 'name': tag.name})
+
+
+class OrganizationTagDelete(AdminOrganizationMixin, View):
+    def post(self, request, *args, **kwargs):
+        tag = get_object_or_404(self.organization.problem_tags.all(), pk=kwargs.get('pk'))
+        tag_id = tag.id
+        tag.delete()
+        return JsonResponse({'id': tag_id, 'deleted': True})
+
+
 class KickUserWidgetView(LoginRequiredMixin, AdminOrganizationMixin, SingleObjectMixin, View):
     def post(self, request, *args, **kwargs):
         organization = self.organization
@@ -651,8 +719,16 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
     def get_hot_problems(self):
         return None
 
+    def get_normal_queryset(self):
+        return super().get_normal_queryset().prefetch_related('tags')
+
     def get_context_data(self, **kwargs):
         context = super(ProblemListOrganization, self).get_context_data(**kwargs)
+        context['show_org_tags'] = True
+        context['org_tags_filter'] = self.organization.problem_tags.all()
+        raw_tags = self.request.GET.getlist('tag')
+        context['selected_tags'] = [int(t) for t in raw_tags if t.isdigit()]
+        context['untagged_selected'] = 'untagged' in raw_tags or self.request.GET.get('untagged') == '1'
         if not self.is_in_organization_subdomain():
             context['title'] = self.organization.name
         return context
@@ -670,17 +746,45 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         problems of other admins unless they are authors/curators/testers
         """
         if self.request.user.has_perm('judge.see_private_problem'):
-            return Q(organization=self.organization)
+            _filter = Q(organization=self.organization)
+        else:
+            _filter = Q(is_public=True)
 
-        _filter = Q(is_public=True)
+            # Authors, curators, and testers should always have access, so OR at the very end.
+            if self.profile is not None:
+                _filter |= Q(authors=self.profile)
+                _filter |= Q(curators=self.profile)
+                _filter |= Q(testers=self.profile)
 
-        # Authors, curators, and testers should always have access, so OR at the very end.
-        if self.profile is not None:
-            _filter |= Q(authors=self.profile)
-            _filter |= Q(curators=self.profile)
-            _filter |= Q(testers=self.profile)
+            _filter &= Q(organization=self.organization)
 
-        return _filter & Q(organization=self.organization)
+        # The tag filter is a multi-select whose values are tag ids plus an
+        # 'untagged' sentinel; ?untagged=1 is the equivalent single-purpose link.
+        raw_tags = self.request.GET.getlist('tag')
+        tag_ids = [t for t in raw_tags if t.isdigit()]
+        want_untagged = 'untagged' in raw_tags or self.request.GET.get('untagged') == '1'
+
+        tag_filter = Q()
+        if tag_ids:
+            tag_filter |= Q(tags__id__in=tag_ids)
+        if want_untagged:
+            tag_filter |= Q(tags__isnull=True)
+        if tag_filter:
+            _filter &= tag_filter
+
+        return _filter
+
+
+class RandomProblemOrganization(ProblemListOrganization):
+    def get(self, request, *args, **kwargs):
+        self.setup_problem_list(request)
+        if self.in_contest:
+            raise Http404()
+        queryset = self.get_normal_queryset()
+        count = queryset.count()
+        if not count:
+            return HttpResponseRedirect(reverse('problem_list_organization', args=[self.organization.slug]))
+        return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
 
 
 class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin, View):
@@ -780,6 +884,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         add_quota_context(self.organization, context)
+        context['organization'] = self.organization
         return context
 
     def get(self, request, *args, **kwargs):

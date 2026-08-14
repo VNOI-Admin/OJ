@@ -46,6 +46,19 @@
                     {% endfor %}
                 </select>
             </div>
+            {% if show_org_tags %}
+            <div class="filter-form-group">
+                <label for="org-tags"><i>{{ _('Tags') }}</i></label>
+                <select id="org-tags" name="tag" multiple>
+                    <option value="untagged"{% if untagged_selected %} selected{% endif %}>{{ _('Uncategorized') }}</option>
+                    {% for tag in org_tags_filter %}
+                        <option value="{{ tag.id }}"{% if tag.id in selected_tags %} selected{% endif %}>
+                            {{ tag.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            {% else %}
             <div class="filter-form-group">
                 <label for="type"><i>{{ _('Problem types') }}</i></label>
                 <select id="types" name="type" multiple>
@@ -56,6 +69,7 @@
                     {% endfor %}
                 </select>
             </div>
+            {% endif %}
             {% if point_values %}
                 <div class="form-label">{{ _('Point range') }}</div>
                 <div id="point-slider"></div>
