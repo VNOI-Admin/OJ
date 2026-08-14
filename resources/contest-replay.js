@@ -1,6 +1,7 @@
 /* Contest replay engine.
  * Scoring functions for all contest formats + virtual ranking computation.
- * Depends on window.renderRankingTable defined in contest-ranking.js.
+ * Depends on window.renderRankingTable and window.sortAndRankParticipations
+ * defined in contest-ranking.js.
  *
  * Entry point: window.initContestRanking(rankingData)
  */
@@ -193,27 +194,6 @@
         },
     };
 
-    // ─── Ranking helpers ──────────────────────────────────────────────────────
-
-    function sortAndRankParticipations(parts) {
-        parts.sort(function (a, b) {
-            var aDq = a.is_disqualified ? 1 : 0, bDq = b.is_disqualified ? 1 : 0;
-            if (aDq !== bDq) return aDq - bDq;
-            if (b.score !== a.score) return b.score - a.score;
-            if (a.cumtime !== b.cumtime) return a.cumtime - b.cumtime;
-            return a.tiebreaker - b.tiebreaker;
-        });
-        var rank = 0, delta = 1, lastKey = null;
-        for (var i = 0; i < parts.length; i++) {
-            var p = parts[i];
-            var key = (p.is_disqualified ? 1 : 0) + '|' + p.score + '|' + p.cumtime + '|' + p.tiebreaker;
-            if (key !== lastKey) { rank += delta; delta = 0; }
-            delta++;
-            p.rank = rank;
-            lastKey = key;
-        }
-    }
-
     // ─── Core replay engine ───────────────────────────────────────────────────
 
     function computeVirtualRanking(virtualSubsData, rankingData, elapsed) {
@@ -284,7 +264,8 @@
             });
         }
 
-        sortAndRankParticipations(newParts);
+        // Defined in contest-ranking.js, which this file depends on.
+        window.sortAndRankParticipations(newParts);
         var isFrozenNow = frozenSec > 0 && cutoff > freezePoint;
         return { contest: Object.assign({}, contest, { is_frozen: isFrozenNow }), problems: problems, participations: newParts };
     }

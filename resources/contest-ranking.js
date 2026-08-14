@@ -46,6 +46,111 @@
         return 'partial-score';
     }
 
+    function roundTo(value, precision) {
+        var factor = Math.pow(10, precision || 0);
+        return Math.round(value * factor) / factor;
+    }
+
+    // ─── Ranking order ────────────────────────────────────────────────────────
+    // Client-side mirror of _add_ranks_to_participation_json in judge/views/contests.py.
+    // Sorts in place and assigns .rank, sharing a rank between tied participations.
+
+    function sortAndRankParticipations(parts) {
+        parts.sort(function (a, b) {
+            var aDq = a.is_disqualified ? 1 : 0, bDq = b.is_disqualified ? 1 : 0;
+            if (aDq !== bDq) return aDq - bDq;
+            if (b.score !== a.score) return b.score - a.score;
+            if (a.cumtime !== b.cumtime) return a.cumtime - b.cumtime;
+            return a.tiebreaker - b.tiebreaker;
+        });
+        var rank = 0, delta = 1, lastKey = null;
+        for (var i = 0; i < parts.length; i++) {
+            var p = parts[i];
+            var key = (p.is_disqualified ? 1 : 0) + '|' + p.score + '|' + p.cumtime + '|' + p.tiebreaker;
+            if (key !== lastKey) { rank += delta; delta = 0; }
+            delta++;
+            p.rank = rank;
+            lastKey = key;
+        }
+    }
+
+    window.sortAndRankParticipations = sortAndRankParticipations;
+
+    // ─── Score scaling ────────────────────────────────────────────────────────
+    // With "scale": true in the contest's format_config, every problem is scaled so the
+    // highest score anyone achieved on it becomes the problem's full points:
+    //     scaled = raw / maxRaw * problem.points
+    // This is display-only — the scores stored server-side stay raw.
+    //
+    // Returns a new data object; `data` is never mutated, because contest-replay.js
+    // re-renders the same object repeatedly (ghost toggle, replay scrubber) and scaling
+    // in place would compound on every render.
+
+    function computeScaleFactors(problems, participations) {
+        var factors = {}, maxima = {};
+        for (var pi = 0; pi < problems.length; pi++) {
+            var prob = problems[pi], pid = String(prob.id);
+            var maxRaw = 0;
+            for (var ri = 0; ri < participations.length; ri++) {
+                var p = participations[ri];
+                if (p.is_disqualified) continue;
+                var entry = (p.format_data || {})[pid];
+                if (entry && entry.points > maxRaw) maxRaw = entry.points;
+            }
+            maxima[pid] = maxRaw;
+            factors[pid] = maxRaw > 0 ? prob.points / maxRaw : 1;
+        }
+        return { factors: factors, maxima: maxima };
+    }
+
+    function scaleParticipation(p, problems, scale, precision) {
+        var formatData = $.extend({}, p.format_data);
+        var delta = 0;
+        for (var pi = 0; pi < problems.length; pi++) {
+            var prob = problems[pi], pid = String(prob.id);
+            var entry = formatData[pid];
+            if (!entry || scale.factors[pid] === 1) continue;
+            // Snap the best score onto the problem's full points rather than trusting
+            // float arithmetic, so it reliably renders as a full score. Everyone else is
+            // capped there too: disqualified participations are left out of the maximum
+            // but still scaled, so they could otherwise overshoot it.
+            var scaled = entry.points >= scale.maxima[pid]
+                ? prob.points
+                : roundTo(entry.points * scale.factors[pid], precision);
+            delta += scaled - entry.points;
+            formatData[pid] = $.extend({}, entry, { points: scaled });
+        }
+        // The total is a linear sum that includes these points in every format that
+        // supports scaling, so shifting it by the delta is enough.
+        return $.extend({}, p, { format_data: formatData, score: roundTo(p.score + delta, precision) });
+    }
+
+    function applyScaling(data) {
+        var contest = data.contest;
+        var cfg = contest.format_config || {};
+        // ICPC scores by problems solved, so scaling means nothing there. A partial payload
+        // (one row, rank '???') has no field to take a maximum over.
+        if (!cfg.scale || contest.format === 'icpc' || contest.full_ranking === false) return data;
+
+        var problems = data.problems || [];
+        var participations = data.participations || [];
+        var scale = computeScaleFactors(problems, participations);
+
+        var scaledProblems = problems.map(function (prob) {
+            return $.extend({}, prob, { scale_max: scale.maxima[String(prob.id)] });
+        });
+        var scaledParticipations = participations.map(function (p) {
+            return scaleParticipation(p, problems, scale, contest.points_precision);
+        });
+        sortAndRankParticipations(scaledParticipations);
+
+        return $.extend({}, data, {
+            problems: scaledProblems,
+            participations: scaledParticipations,
+            scaled: true,
+        });
+    }
+
     // ─── Rating helpers ───────────────────────────────────────────────────────
     // Constants are loaded from backend via contest.rating_config to stay in sync
     // with judge/ratings.py.
@@ -374,7 +479,13 @@
                 '<a href="' + escapeHtml(prob.url) + '">' +
                 escapeHtml(prob.label);
             if (!isICPC) {
-                html += '<div class="point-denominator">' + escapeHtml(String(prob.points)) + '</div>';
+                // On a scaled board, show what the raw maximum was that got mapped to full points.
+                var denomTitle = (prob.scale_max !== undefined && prob.scale_max < prob.points)
+                    ? ' title="Scaled: best raw score ' + escapeHtml(String(prob.scale_max)) +
+                      ' / ' + escapeHtml(String(prob.points)) + '"'
+                    : '';
+                html += '<div class="point-denominator"' + denomTitle + '>' +
+                    escapeHtml(String(prob.points)) + '</div>';
             }
             html += '<div class="problem-code" style="display:none;">' + escapeHtml(prob.code) + '</div>';
             html += '</a></th>';
@@ -523,6 +634,7 @@
     // ─── Public entry point ───────────────────────────────────────────────────
 
     window.renderRankingTable = function (data, isNewDataFromBackend) {
+        data = applyScaling(data);
         var contest = data.contest;
         if (!window.CONTEST_CAN_SEE_SUBMISSIONS) contest.url_templates = null;
         var problems = data.problems;
@@ -537,7 +649,12 @@
         var firstSolves = result.firstSolves;
         var totalAC = result.totalAC;
 
-        var html = '<table id="ranking-table" class="users-table table striped">';
+        var html = '';
+        if (data.scaled && window.CONTEST_SCALED_RANKING_NOTE) {
+            html += '<div class="scaled-ranking-note">' +
+                escapeHtml(window.CONTEST_SCALED_RANKING_NOTE) + '</div>';
+        }
+        html += '<table id="ranking-table" class="users-table table striped">';
         html += buildHeader(contest, problems, renderer);
         html += '<tbody>';
 

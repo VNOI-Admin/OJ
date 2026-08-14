@@ -44,6 +44,11 @@
             cursor: not-allowed;
         }
 
+        .scaled-ranking-note {
+            margin-bottom: 0.5em;
+            font-style: italic;
+        }
+
         .replay-tooltip {
             position: fixed;
             z-index: 1000;
@@ -68,6 +73,7 @@
         window.CONTEST_CAN_SEE_SUBMISSIONS = {{ 'true' if can_see_full_submission_list else 'false' }};
         window.CONTEST_SHOW_VIRTUAL = {{ 'true' if show_virtual else 'false' }};
         window.CONTEST_REPLAY_VIRTUAL_TOOLTIP = {{ _("Virtual participations aren't supported in replay, turn it off first.")|htmltojs }};
+        window.CONTEST_SCALED_RANKING_NOTE = {{ _("Scores are scaled: on each problem, the highest score achieved is worth the problem's full points.")|htmltojs }};
     </script>
     {% if not contest.ended %}
         <script type="text/javascript">

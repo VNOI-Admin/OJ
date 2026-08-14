@@ -9,14 +9,35 @@ from judge.contest_format.registry import register_contest_format
 @register_contest_format('default')
 class DefaultContestFormat(BaseContestFormat):
     name = gettext_lazy('Default')
+    config_defaults = {'scale': False}
+    config_validators = {'scale': lambda x: isinstance(x, bool)}
+    """
+        scale: Specify True to scale the scoreboard, so that on every problem the highest score achieved is worth
+        the problem's full points. This only affects how the ranking is displayed; stored scores are unchanged.
+        Defaults to False.
+    """
 
     @classmethod
     def validate(cls, config):
-        if config is not None and (not isinstance(config, dict) or config):
-            raise ValidationError('default contest expects no config or empty dict as config')
+        if config is None:
+            return
+
+        if not isinstance(config, dict):
+            raise ValidationError('default contest expects no config or dict as config')
+
+        for key, value in config.items():
+            if key not in cls.config_defaults:
+                raise ValidationError('unknown config key "%s"' % key)
+            if not isinstance(value, type(cls.config_defaults[key])):
+                raise ValidationError('invalid type for config key "%s"' % key)
+            validator = cls.config_validators.get(key)
+            if validator is not None and not validator(value):
+                raise ValidationError('invalid value "%s" for config key "%s"' % (value, key))
 
     def __init__(self, contest, config):
-        super(DefaultContestFormat, self).__init__(contest, config)
+        self.config = self.config_defaults.copy()
+        self.config.update(config or {})
+        self.contest = contest
 
     def update_participation(self, participation):
         cumtime = 0
@@ -44,7 +65,14 @@ class DefaultContestFormat(BaseContestFormat):
     def get_label_for_problem(self, index):
         return str(index + 1)
 
+    def get_scale_display(self):
+        """Formats supporting the `scale` config key should chain this onto get_short_form_display()."""
+        if self.config.get('scale'):
+            yield _('Scores are scaled: on each problem, the highest score achieved is worth the '
+                    "problem's full points.")
+
     def get_short_form_display(self):
         yield _('The maximum score submission for each problem will be used.')
         yield _('Ties will be broken by the sum of the last submission time on problems with '
                 'a non-zero score.')
+        yield from self.get_scale_display()

@@ -9,13 +9,15 @@ from judge.contest_format.registry import register_contest_format
 @register_contest_format('ecoo')
 class ECOOContestFormat(DefaultContestFormat):
     name = gettext_lazy('ECOO')
-    config_defaults = {'cumtime': False, 'first_ac_bonus': 10, 'time_bonus': 5}
-    config_validators = {'cumtime': lambda x: True, 'first_ac_bonus': lambda x: x >= 0, 'time_bonus': lambda x: x >= 0}
+    config_defaults = {'cumtime': False, 'first_ac_bonus': 10, 'time_bonus': 5, 'scale': False}
+    config_validators = {'cumtime': lambda x: True, 'first_ac_bonus': lambda x: x >= 0, 'time_bonus': lambda x: x >= 0,
+                         'scale': lambda x: isinstance(x, bool)}
     """
         cumtime: Specify True if cumulative time is to be used in breaking ties. Defaults to False.
         first_ac_bonus: The number of points to award if a solution gets AC on its first non-IE/CE run. Defaults to 10.
         time_bonus: Number of minutes to award an extra point for submitting before the contest end.
                     Specify 0 to disable. Defaults to 5.
+        scale: Specify True to scale the scoreboard. See DefaultContestFormat. Defaults to False.
     """
 
     @classmethod
@@ -112,3 +114,5 @@ class ECOOContestFormat(DefaultContestFormat):
             yield _('Ties will be broken by the sum of the last submission time on **all** problems.')
         else:
             yield _('Ties by score will **not** be broken.')
+
+        yield from self.get_scale_display()

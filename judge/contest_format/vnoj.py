@@ -41,12 +41,17 @@ GROUP BY cp.id
 @register_contest_format('vnoj')
 class VNOJContestFormat(DefaultContestFormat):
     name = gettext_lazy('VNOJ')
-    config_defaults = {'penalty': 5, 'LSO': False}
-    config_validators = {'penalty': lambda x: x >= 0, 'LSO': lambda x: isinstance(x, bool)}
+    config_defaults = {'penalty': 5, 'LSO': False, 'scale': False}
+    config_validators = {
+        'penalty': lambda x: x >= 0,
+        'LSO': lambda x: isinstance(x, bool),
+        'scale': lambda x: isinstance(x, bool),
+    }
     """
         penalty: Number of penalty minutes each incorrect submission adds. Defaults to 5.
         LSO: Last submission only. If true, cumtime will used the last submission time, not the total time of
         all submissions.
+        scale: Specify True to scale the scoreboard. See DefaultContestFormat. Defaults to False.
     """
 
     @classmethod
@@ -206,3 +211,5 @@ class VNOJContestFormat(DefaultContestFormat):
                 'The scoreboard will be frozen in the **last %d minutes**.',
                 self.contest.frozen_last_minutes,
             ) % self.contest.frozen_last_minutes
+
+        yield from self.get_scale_display()

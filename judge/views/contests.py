@@ -983,6 +983,9 @@ class ContestRankingBase(ContestMixin, TitleMixin, DetailView):
             'points_precision': contest.points_precision,
             'run_pretests_only': contest.run_pretests_only,
             'ended': contest.ended,
+            # Whether every participation is present in this payload. Score scaling needs the whole
+            # list to find each problem's highest score, so it is skipped when this is False.
+            'full_ranking': True,
             'url_templates': {
                 'all_submissions': reverse('contest_all_user_submissions', args=[contest.key, '__USERNAME__']),
                 'problem_submissions': reverse(
@@ -1075,6 +1078,7 @@ class ContestRanking(ContestRankingBase):
 
         contest_data['is_frozen'] = self.is_frozen
         contest_data['has_rating'] = contest.ratings.exists()
+        contest_data['full_ranking'] = self._show_full_ranking
 
         return {'contest': contest_data, 'problems': problems_data, 'participations': participations}
 

@@ -761,7 +761,7 @@ class ContestTestCase(CommonDataMixin, TestCase):
         with self.assertRaisesRegex(ValidationError, 'ended before it starts'):
             contest.full_clean()
         contest.end_time = _now + timezone.timedelta(days=1)
-        with self.assertRaisesRegex(ValidationError, 'default contest expects'):
+        with self.assertRaisesRegex(ValidationError, 'unknown config key'):
             contest.full_clean()
         contest.format_config = {}
         with self.assertRaisesRegex(ValidationError, 'Contest problem label script'):
@@ -780,6 +780,40 @@ class ContestTestCase(CommonDataMixin, TestCase):
         contest.problem_label_script = ''
         del contest.get_label_for_problem
         contest.full_clean()
+
+    def test_scale_format_config(self):
+        _now = timezone.now()
+        contest = create_contest(
+            key='scaled_contest',
+            start_time=_now,
+            end_time=_now + timezone.timedelta(days=1),
+        )
+
+        def set_format(format_name, format_config):
+            contest.format_name = format_name
+            contest.format_config = format_config
+            # Both are cached_property, so they must be dropped when the format changes.
+            contest.__dict__.pop('format_class', None)
+            contest.__dict__.pop('format', None)
+
+        for format_name in ('default', 'ioi', 'ioi16', 'vnoj', 'atcoder', 'ecoo'):
+            with self.subTest(format_name=format_name):
+                set_format(format_name, {'scale': True})
+                contest.full_clean()
+                self.assertTrue(contest.format.config['scale'])
+
+                set_format(format_name, {})
+                contest.full_clean()
+                self.assertFalse(contest.format.config['scale'])
+
+                set_format(format_name, {'scale': 'yes'})
+                with self.assertRaisesRegex(ValidationError, 'invalid type for config key'):
+                    contest.full_clean()
+
+        # ICPC ranks by problems solved, so there is nothing to scale.
+        set_format('icpc', {'scale': True})
+        with self.assertRaisesRegex(ValidationError, 'unknown config key'):
+            contest.full_clean()
 
     def test_normal_user_current_contest(self):
         current_contest = self.users['normal'].profile.current_contest

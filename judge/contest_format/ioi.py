@@ -9,9 +9,10 @@ from judge.timezone import from_database_time
 @register_contest_format('ioi16')
 class IOIContestFormat(LegacyIOIContestFormat):
     name = gettext_lazy('IOI')
-    config_defaults = {'cumtime': False}
+    config_defaults = {'cumtime': False, 'scale': False}
     """
         cumtime: Specify True if time penalties are to be computed. Defaults to False.
+        scale: Specify True to scale the scoreboard. See DefaultContestFormat. Defaults to False.
     """
 
     def update_participation(self, participation):
@@ -100,3 +101,5 @@ class IOIContestFormat(LegacyIOIContestFormat):
                     'non-zero score.')
         else:
             yield _('Ties by score will **not** be broken.')
+
+        yield from self.get_scale_display()

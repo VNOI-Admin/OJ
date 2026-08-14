@@ -10,10 +10,11 @@ from judge.timezone import from_database_time
 @register_contest_format('atcoder')
 class AtCoderContestFormat(DefaultContestFormat):
     name = gettext_lazy('AtCoder')
-    config_defaults = {'penalty': 5}
-    config_validators = {'penalty': lambda x: x >= 0}
+    config_defaults = {'penalty': 5, 'scale': False}
+    config_validators = {'penalty': lambda x: x >= 0, 'scale': lambda x: isinstance(x, bool)}
     """
         penalty: Number of penalty minutes each incorrect submission adds. Defaults to 5.
+        scale: Specify True to scale the scoreboard. See DefaultContestFormat. Defaults to False.
     """
 
     @classmethod
@@ -101,3 +102,5 @@ class AtCoderContestFormat(DefaultContestFormat):
             yield _('Ties will be broken by the time of the last score altering submission (including penalty).')
         else:
             yield _('Ties will be broken by the time of the last score altering submission.')
+
+        yield from self.get_scale_display()

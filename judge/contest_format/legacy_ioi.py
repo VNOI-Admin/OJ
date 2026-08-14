@@ -9,11 +9,12 @@ from judge.contest_format.registry import register_contest_format
 @register_contest_format('ioi')
 class LegacyIOIContestFormat(DefaultContestFormat):
     name = gettext_lazy('IOI (pre-2016)')
-    config_defaults = {'cumtime': False, 'last_score_altering': False}
+    config_defaults = {'cumtime': False, 'last_score_altering': False, 'scale': False}
     """
         cumtime: Specify True if time penalties are to be computed. Defaults to False.
         last_score_altering: Specify True if ties are to be broken by the time of the last score altering submission.
         Defaults to False.
+        scale: Specify True to scale the scoreboard. See DefaultContestFormat. Defaults to False.
     """
 
     @classmethod
@@ -81,3 +82,5 @@ class LegacyIOIContestFormat(DefaultContestFormat):
                     'non-zero score.')
         else:
             yield _('Ties by score will **not** be broken.')
+
+        yield from self.get_scale_display()
