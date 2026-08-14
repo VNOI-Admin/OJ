@@ -96,6 +96,11 @@
     .tm-action-disabled { color: var(--tm-muted); opacity: 0.55; cursor: not-allowed; }
 
     .tm-empty { padding: 1.5em 1em; text-align: center; color: var(--tm-muted); }
+
+    .tag-dialog h3 { margin: 0 0 0.75em; }
+    .tag-dialog input[name=name] { width: 100%; box-sizing: border-box; }
+    .tag-dialog .submit { margin-top: 1em; }
+    .tag-dialog-actions { margin-top: 1em; display: flex; gap: 0.5em; justify-content: flex-end; }
 </style>
 {% endblock %}
 
@@ -141,12 +146,32 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <form id="tm-tag-form" class="tag-dialog" style="display: none;" method="post">
+        <h3></h3>
+        <input type="text" name="name" placeholder="{{ _('Tag name') }}" autocomplete="off">
+        <p class="tag-dialog-error errornote" style="display: none;"></p>
+        <button type="submit" class="button submit">{{ _('Save') }}</button>
+    </form>
+
+    <div id="tm-confirm" class="tag-dialog" style="display: none;">
+        <h3>{{ _('Delete tag') }}</h3>
+        <p class="tm-confirm-message"></p>
+        <p class="tag-dialog-error errornote" style="display: none;"></p>
+        <div class="tag-dialog-actions">
+            <a class="button tm-confirm-cancel">{{ _('Cancel') }}</a>
+            <a class="button tm-confirm-ok">{{ _('Delete') }}</a>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
 {% block js_media %}
+<script src="{{ static('libs/featherlight/featherlight.min.js') }}" type="text/javascript"></script>
 <script type="text/javascript">
     $(function () {
+        // Open instantly instead of fading in an empty box first.
+        $.featherlight.defaults.openSpeed = 0;
         var $tagRows = $('#tm-tag-rows');
         var editUrlTemplate = {{ url('organization_tag_edit', organization.slug, 0)|htmltojs }};
         var deleteUrlTemplate = {{ url('organization_tag_delete', organization.slug, 0)|htmltojs }};
@@ -196,85 +221,78 @@
             });
         });
 
+        function openTagForm(options) {
+            $.featherlight($('#tm-tag-form'), {
+                afterOpen: function () {
+                    var $form = $.featherlight.current().$content.show();
+                    var $error = $form.find('.tag-dialog-error');
+                    $form.find('h3').text(options.title);
+                    $form.find('input[name=name]').val(options.value || '').focus();
+                    $error.hide();
+
+                    $form.off('submit').on('submit', function (ev) {
+                        ev.preventDefault();
+
+                        var name = $.trim($form.find('input[name=name]').val());
+                        if (!name) {
+                            $error.text({{ _('Tag name is required.')|htmltojs }}).show();
+                            return;
+                        }
+
+                        $.ajax({
+                            type: 'POST',
+                            url: options.action,
+                            data: {
+                                name: name,
+                                csrfmiddlewaretoken: getCsrfToken(),
+                            },
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            success: function (tag) {
+                                options.onSuccess(tag);
+                                $('#tm-search').trigger('input');
+                                $.featherlight.current().close();
+                            },
+                            error: function (xhr) {
+                                var message = options.errorMessage;
+                                var errors = xhr.responseJSON && xhr.responseJSON.errors;
+                                if (errors && errors.name && errors.name.length && errors.name[0].message) {
+                                    message = errors.name[0].message;
+                                }
+                                $error.text(message).show();
+                            },
+                        });
+                    });
+                }
+            });
+        }
+
         $('#tm-add-tag').on('click', function (e) {
             e.preventDefault();
-
-            var name = window.prompt({{ _('New tag name')|htmltojs }});
-            if (name === null) {
-                return;
-            }
-
-            name = $.trim(name);
-            if (!name) {
-                alert({{ _('Tag name is required.')|htmltojs }});
-                return;
-            }
-
-            $.ajax({
-                type: 'POST',
-                url: $(this).attr('href'),
-                data: {
-                    name: name,
-                    csrfmiddlewaretoken: getCsrfToken(),
-                },
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                success: function (tag) {
+            openTagForm({
+                title: {{ _('Create new tag')|htmltojs }},
+                action: $(this).attr('href'),
+                value: '',
+                errorMessage: {{ _('Could not create tag.')|htmltojs }},
+                onSuccess: function (tag) {
                     addTagRow(tag);
-                    $('#tm-search').trigger('input');
-                },
-                error: function (xhr) {
-                    var message = {{ _('Could not create tag.')|htmltojs }};
-                    var errors = xhr.responseJSON && xhr.responseJSON.errors;
-                    if (errors && errors.name && errors.name.length && errors.name[0].message) {
-                        message = errors.name[0].message;
-                    }
-                    alert(message);
                 },
             });
         });
 
         $(document).on('click', '.tm-action-edit', function (e) {
             e.preventDefault();
-
-            var $link = $(this);
-            var $row = $link.closest('tr');
-            var oldName = $row.attr('data-display-name') || $.trim($row.find('.tm-chip').text());
-            var name = window.prompt({{ _('Edit tag name')|htmltojs }}, oldName);
-            if (name === null) {
-                return;
-            }
-
-            name = $.trim(name);
-            if (!name) {
-                alert({{ _('Tag name is required.')|htmltojs }});
-                return;
-            }
-
-            $.ajax({
-                type: 'POST',
-                url: $link.attr('href'),
-                data: {
-                    name: name,
-                    csrfmiddlewaretoken: getCsrfToken(),
-                },
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                success: function (tag) {
+            var $row = $(this).closest('tr');
+            openTagForm({
+                title: {{ _('Edit tag name')|htmltojs }},
+                action: $(this).attr('href'),
+                value: $row.attr('data-display-name') || $.trim($row.find('.tm-chip').text()),
+                errorMessage: {{ _('Could not update tag.')|htmltojs }},
+                onSuccess: function (tag) {
                     $row.attr('data-name', tag.name.toLowerCase());
                     $row.attr('data-display-name', tag.name);
                     $row.find('.tm-chip').text(tag.name);
-                    $('#tm-search').trigger('input');
-                },
-                error: function (xhr) {
-                    var message = {{ _('Could not update tag.')|htmltojs }};
-                    var errors = xhr.responseJSON && xhr.responseJSON.errors;
-                    if (errors && errors.name && errors.name.length && errors.name[0].message) {
-                        message = errors.name[0].message;
-                    }
-                    alert(message);
                 },
             });
         });
@@ -282,30 +300,42 @@
         $(document).on('click', '.tm-action-delete', function (e) {
             e.preventDefault();
 
-            var $link = $(this);
-            var $row = $link.closest('tr');
+            var $row = $(this).closest('tr');
+            var url = $(this).attr('href');
             var tagName = $row.attr('data-display-name') || $.trim($row.find('.tm-chip').text());
 
-            if (!window.confirm({{ _('Delete tag "%(name)s"?', name='__name__')|htmltojs }}.replace('__name__', tagName))) {
-                return;
-            }
+            $.featherlight($('#tm-confirm'), {
+                afterOpen: function () {
+                    var $dialog = $.featherlight.current().$content.show();
+                    var $error = $dialog.find('.tag-dialog-error').hide();
+                    $dialog.find('.tm-confirm-message').text(
+                        {{ _('Delete tag "%(name)s"?', name='__name__')|htmltojs }}.replace('__name__', tagName));
 
-            $.ajax({
-                type: 'POST',
-                url: $link.attr('href'),
-                data: {
-                    csrfmiddlewaretoken: getCsrfToken(),
-                },
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                success: function () {
-                    $row.remove();
-                    $('#tm-search').trigger('input');
-                },
-                error: function () {
-                    alert({{ _('Could not delete tag.')|htmltojs }});
-                },
+                    $dialog.find('.tm-confirm-cancel').off('click').on('click', function () {
+                        $.featherlight.current().close();
+                    });
+
+                    $dialog.find('.tm-confirm-ok').off('click').on('click', function () {
+                        $.ajax({
+                            type: 'POST',
+                            url: url,
+                            data: {
+                                csrfmiddlewaretoken: getCsrfToken(),
+                            },
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            success: function () {
+                                $row.remove();
+                                $('#tm-search').trigger('input');
+                                $.featherlight.current().close();
+                            },
+                            error: function () {
+                                $error.text({{ _('Could not delete tag.')|htmltojs }}).show();
+                            },
+                        });
+                    });
+                }
             });
         });
 
