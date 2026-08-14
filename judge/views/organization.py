@@ -1,5 +1,7 @@
 import datetime
+from collections import defaultdict
 from functools import cached_property
+from operator import itemgetter
 from random import randrange
 
 from django import forms
@@ -20,7 +22,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.html import format_html
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
-from django.views.generic import CreateView, DetailView, FormView, ListView, UpdateView, View
+from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
@@ -32,6 +34,7 @@ from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context
+from judge.utils.problems import user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart, get_pie_chart
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, TitleMixin, generic_message, \
@@ -45,10 +48,12 @@ __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'Organiz
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
            'KickUserWidgetView', 'OrganizationStorageDashboard',
-           'OrganizationQuotaAdd', 'OrganizationQuotaDelete']
+           'OrganizationQuotaAdd', 'OrganizationQuotaDelete', 'get_organization_problem_filter',
+           'OrganizationUserSolvedProblems']
 
 
 MAX_BULK_DELETE_PROBLEMS = 200
+SOLVED_PROBLEMS_PAGE_SIZE = 10
 
 
 class OrganizationMixin(object):
@@ -711,6 +716,32 @@ class OrganizationHome(TitleMixin, PublicOrganizationMixin, PostListBase):
         return context
 
 
+def get_organization_problem_filter(organization, user, profile):
+    """Get filter for visible problems in an organization
+
+    The logic of this is:
+        - If user has perm `see_private_problem`, they
+        can view all org's problem (including private problems)
+        - Otherwise, they can view all public problems and
+        problems that they are authors/curators/testers
+
+    With that logic, Organization admins cannot view private
+    problems of other admins unless they are authors/curators/testers
+    """
+    if user.has_perm('judge.see_private_problem'):
+        return Q(organization=organization)
+
+    _filter = Q(is_public=True)
+
+    # Authors, curators, and testers should always have access, so OR at the very end.
+    if profile is not None:
+        _filter |= Q(authors=profile)
+        _filter |= Q(curators=profile)
+        _filter |= Q(testers=profile)
+
+    return _filter & Q(organization=organization)
+
+
 class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
     context_object_name = 'problems'
     template_name = 'organization/problem-list.html'
@@ -734,29 +765,7 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
         return context
 
     def get_filter(self):
-        """Get filter for visible problems in an organization
-
-        The logic of this is:
-            - If user has perm `see_private_problem`, they
-            can view all org's problem (including private problems)
-            - Otherwise, they can view all public problems and
-            problems that they are authors/curators/testers
-
-        With that logic, Organization admins cannot view private
-        problems of other admins unless they are authors/curators/testers
-        """
-        if self.request.user.has_perm('judge.see_private_problem'):
-            _filter = Q(organization=self.organization)
-        else:
-            _filter = Q(is_public=True)
-
-            # Authors, curators, and testers should always have access, so OR at the very end.
-            if self.profile is not None:
-                _filter |= Q(authors=self.profile)
-                _filter |= Q(curators=self.profile)
-                _filter |= Q(testers=self.profile)
-
-            _filter &= Q(organization=self.organization)
+        _filter = get_organization_problem_filter(self.organization, self.request.user, self.profile)
 
         # The tag filter is a multi-select whose values are tag ids plus an
         # 'untagged' sentinel; ?untagged=1 is the equivalent single-purpose link.
@@ -785,6 +794,60 @@ class RandomProblemOrganization(ProblemListOrganization):
         if not count:
             return HttpResponseRedirect(reverse('problem_list_organization', args=[self.organization.slug]))
         return HttpResponseRedirect(queryset[randrange(count)].get_absolute_url())
+
+
+class OrganizationUserSolvedProblems(AdminOrganizationMixin, TitleMixin, TemplateView):
+    template_name = 'organization/user-solved.html'
+
+    def get_member(self):
+        member = get_object_or_404(Profile, user__username=self.kwargs['user'])
+        if member not in self.organization:
+            raise Http404()
+        return member
+
+    def get(self, request, *args, **kwargs):
+        try:
+            self.member = self.get_member()
+        except Http404:
+            return generic_message(
+                request, _('No such member'),
+                _('Could not find a member with the username "%s" in this organization.') % self.kwargs['user'],
+                status=404,
+            )
+        return super(OrganizationUserSolvedProblems, self).get(request, *args, **kwargs)
+
+    def get_title(self):
+        return self.organization.name
+
+    def get_context_data(self, **kwargs):
+        context = super(OrganizationUserSolvedProblems, self).get_context_data(**kwargs)
+
+        problems = Problem.objects.filter(
+            get_organization_problem_filter(self.organization, self.request.user, self.request.profile),
+        )
+
+        solved_ids = user_completed_ids(self.member)
+
+        untagged = _('Untagged')
+        sections = defaultdict(list)
+        solved = set()
+        # The tags join yields one row per (problem, tag); untagged problems come through as tags__name=None.
+        for row in problems.filter(id__in=solved_ids).values('id', 'code', 'name', 'tags__name'):
+            solved.add(row['id'])
+            sections[row['tags__name'] or untagged].append({'code': row['code'], 'name': row['name']})
+        solved_cnt = len(solved)
+
+        tag_sections = []
+        for name, solved_problems in sections.items():
+            solved_problems.sort(key=itemgetter('name'))
+            tag_sections.append({'name': name, 'count': len(solved_problems), 'problems': solved_problems})
+        tag_sections.sort(key=lambda section: (section['name'] == untagged, -section['count'], section['name']))
+
+        context['member'] = self.member
+        context['solved_count'] = solved_cnt
+        context['page_size'] = SOLVED_PROBLEMS_PAGE_SIZE
+        context['tag_sections'] = tag_sections
+        return context
 
 
 class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin, View):

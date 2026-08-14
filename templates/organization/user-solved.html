@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block media %}
+    <style>
+        .solved-summary {
+            margin-bottom: 1em;
+        }
+
+        .solved-type-block {
+            margin-bottom: 1.5em;
+        }
+
+        .solved-type-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            font-weight: bold;
+            padding: 0.4em 0.6em;
+        }
+
+        .solved-table {
+            width: 100%;
+            table-layout: fixed;
+        }
+
+        .solved-table td.solved-mark {
+            width: 1.5em;
+            text-align: center;
+        }
+
+        .solved-table td.solved-name {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .solved-table td.solved-code {
+            width: 10em;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .solved-table td.solved-submissions {
+            width: 1.5em;
+            text-align: center;
+        }
+
+        .solved-pagination {
+            margin-top: 0.4em;
+            text-align: center;
+        }
+
+        .solved-pagination a {
+            padding: 0 0.4em;
+            cursor: pointer;
+        }
+
+        .solved-pagination a.active-page {
+            font-weight: bold;
+            text-decoration: underline;
+        }
+    </style>
+{% endblock %}
+
+{% block js_media %}
+    <script type="text/javascript">
+        $(function () {
+            $('.solved-type-block').each(function () {
+                var $block = $(this);
+                var pageSize = parseInt($block.data('page-size'), 10);
+                var $rows = $block.find('tbody tr');
+                var $pagination = $block.find('.solved-pagination');
+                var pageCount = Math.ceil($rows.length / pageSize);
+
+                if (pageCount <= 1)
+                    return;
+
+                function showPage(page) {
+                    $rows.each(function (index) {
+                        $(this).toggle(Math.floor(index / pageSize) === page);
+                    });
+                    $pagination.find('a').each(function (index) {
+                        $(this).toggleClass('active-page', index === page);
+                    });
+                }
+
+                for (var page = 0; page < pageCount; page++)
+                    $('<a>').text(page + 1).data('page', page).appendTo($pagination);
+
+                $pagination.on('click', 'a', function () {
+                    showPage($(this).data('page'));
+                });
+
+                showPage(0);
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'users' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+    <div class="solved-summary">
+        {{ _('%(user)s has solved %(solved)d problems in this organization.',
+             user=link_user(member), solved=solved_count) }}
+    </div>
+
+    {% for section in tag_sections %}
+        <div class="solved-type-block" data-page-size="{{ page_size }}">
+            <div class="solved-type-header">
+                <span>{{ section.name }}</span>
+                <span>{{ _('%(count)d solved', count=section.count) }}</span>
+            </div>
+            <table class="solved-table table striped">
+                <tbody>
+                    {% for problem in section.problems %}
+                        <tr>
+                            <td class="solved-mark"><i class="solved-problem-color fa fa-check"></i></td>
+                            <td class="solved-name">
+                                <a href="{{ url('problem_detail', problem.code) }}">{{ problem.name }}</a>
+                            </td>
+                            <td class="solved-code">{{ problem.code }}</td>
+                            <td class="solved-submissions">
+                                <a href="{{ url('user_submissions', problem.code, member.user.username) }}"
+                                   title="{{ _('Submissions') }}"><i class="fa fa-external-link"></i></a>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            <div class="solved-pagination"></div>
+        </div>
+    {% else %}
+        <p>{{ _("This user hasn't solved any problems in this organization yet.") }}</p>
+    {% endfor %}
+{% endblock %}

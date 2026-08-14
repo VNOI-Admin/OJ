@@ -298,6 +298,8 @@ urlpatterns = [
             path('', organization.OrganizationUsers.as_view(), name='organization_users'),
             path('find', organization.org_user_ranking_redirect, name='org_user_ranking_redirect'),
         ])),
+        path('/user/<str:user>/solved', organization.OrganizationUserSolvedProblems.as_view(),
+             name='organization_user_solved'),
         path('/join', organization.JoinOrganization.as_view(), name='join_organization'),
         path('/leave', organization.LeaveOrganization.as_view(), name='leave_organization'),
         path('/edit', organization.EditOrganization.as_view(), name='edit_organization'),
