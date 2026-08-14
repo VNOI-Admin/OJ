@@ -32,7 +32,7 @@ deploy.sh trên server:
   2. migrate (container tạm, DB thật, TRƯỚC khi đụng service đang chạy)
   3. sync static assets ra /var/www/thinkcodeoj (nginx đọc trực tiếp)
   4. docker compose up -d (cutover site/bridged/celery/wsevent)
-  5. verify: site HTTP 200 + judge worker online=True (poll tối đa 60s)
+  5. verify: site HTTP 200 + judge worker online=True (poll tối đa 90s)
   6a. verify OK -> ghi lại image hiện tại, deploy thành công
   6b. verify FAIL -> tự động rollback về image cũ, verify lại, báo lỗi
 ```
@@ -52,8 +52,8 @@ deploy.sh trên server:
 Vì vậy quy trình thực tế là **cutover rồi verify ngay, tự động rollback nếu hỏng**:
 
 1. `docker compose up -d` thay thế container `bridged` cũ bằng bản mới → có khoảng trống vài giây khi port 9999 được giải phóng và bind lại → judge worker phát hiện mất kết nối, tự động thử kết nối lại (đây là hành vi mặc định của DMOJ judge, không cần can thiệp gì thêm).
-2. `deploy.sh` poll tối đa 60 giây, kiểm tra 2 điều kiện: site trả HTTP 200, và có ít nhất 1 row `Judge.online=True` trong DB.
-3. Nếu cả 2 đạt trong 60 giây → deploy thành công.
+2. `deploy.sh` poll tối đa 90 giây, kiểm tra 2 điều kiện: site trả HTTP 200, và có ít nhất 1 row `Judge.online=True` trong DB. (Ban đầu để 60s, nhưng deploy thật đầu tiên cho thấy đôi khi không đủ -- `docker compose up -d` recreate cả 4 container cùng lúc vì chúng dùng chung 1 image, nên judge cần thêm ~10-20s để phát hiện mất kết nối và reconnect/xác thực lại; đã tăng lên 90s sau khi quan sát 2 lần deploy thật liên tiếp đều timeout ở ranh giới 60s dù judge trên thực tế vẫn reconnect thành công ngay sau đó.)
+3. Nếu cả 2 đạt trong 90 giây → deploy thành công.
 4. Nếu không → tự động `docker compose up -d` lại với **image cũ** (ghi lại trước đó trong `current_image.txt`), verify lại, rồi báo lỗi cho GitHub Actions (job fail) dù rollback có thành công hay không — để luôn có người biết và kiểm tra.
 
 **Downtime thực tế ước tính**: vài giây tới ~10-15 giây cho phần chấm bài (bridged restart + judge reconnect), site có thể có 1-2 request lỗi trong lúc container `site` restart (uwsgi worker cần vài giây khởi động lại). Đây là đánh đổi hợp lý cho một single-judge-worker setup — nếu cần zero-downtime thật cho judge, xem mục 7 (hướng mở rộng).

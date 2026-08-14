@@ -49,7 +49,16 @@ STATIC_ROOT_HOST="/var/www/thinkcodeoj/static"
 PASSTHROUGH_HOST="/var/www/thinkcodeoj/static-passthrough"
 ICONS_HOST="/var/www/thinkcodeoj/icons"
 DOMAIN="oj.thinkcode.vn"
-VERIFY_TIMEOUT=60          # seconds to wait for judge to reconnect + site to answer
+VERIFY_TIMEOUT=90          # seconds to wait for judge to reconnect + site to answer
+                            # (found via a real deploy: with docker compose
+                            # up -d recreating all 4 containers together,
+                            # 60s was occasionally too tight for the judge
+                            # worker to notice bridged's connection drop and
+                            # fully reconnect+re-authenticate -- confirmed
+                            # site_ok=true/judge_ok=false timeouts on 2
+                            # consecutive real runs, while the judge in fact
+                            # reconnected successfully ~10-20s after the
+                            # timeout fired both times)
 VERIFY_POLL_INTERVAL=3
 
 NEW_IMAGE="${1:?Usage: deploy.sh <image-ref>}"
