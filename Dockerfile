@@ -54,6 +54,13 @@ RUN cp .ci.settings.py dmoj/local_settings.py && \
     python3 manage.py compilejsi18n && \
     rm dmoj/local_settings.py
 
+# websocket/config.js is gitignored (generated per-server in the native
+# deployment) -- bake the checked-in Docker template in its place. These
+# are internal container ports, not secrets, so they're fine to fix at
+# build time rather than reading from the environment like
+# dmoj/local_settings.py does.
+COPY websocket/config.docker.js websocket/config.js
+
 RUN useradd --create-home --shell /bin/bash dmoj && \
     chown -R dmoj:dmoj /site
 USER dmoj
