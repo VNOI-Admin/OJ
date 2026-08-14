@@ -1,0 +1,16 @@
+.git
+.github
+node_modules
+__pycache__
+*.pyc
+*.pyo
+*.sqlite3
+dmoj/local_settings.py
+dmoj-site.pid
+dmoj-site.sock
+uwsgi.ini
+.idea
+.vscode
+.sass-cache
+sass_processed
+static

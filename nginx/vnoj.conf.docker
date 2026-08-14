@@ -1,0 +1,104 @@
+# ThinkCode OJ -- nginx config for the Dockerized deployment.
+#
+# Replaces /etc/nginx/conf.d/vnoj.conf on the server (which currently proxies
+# to unix:///tmp/dmoj-site.sock, the native uwsgi socket). Only difference
+# from the original: `uwsgi_pass unix:///tmp/dmoj-site.sock` becomes
+# `proxy_pass http://127.0.0.1:8000` (the site container's published port),
+# using the http protocol instead of the uwsgi protocol since the container
+# runs uwsgi in --http-socket mode rather than the raw uwsgi protocol used by
+# a unix socket + nginx's uwsgi_pass module.
+#
+# Static/media locations are unchanged -- they still read directly from
+# /var/www/thinkcodeoj on the host. Since collectstatic now runs INSIDE the
+# image at build time (not on the host), deploy.sh syncs the image's baked-in
+# /site/static out to /var/www/thinkcodeoj/static on every deploy, BEFORE
+# cutting traffic over -- so nginx keeps serving static files directly from
+# disk (gzip_static, expires max) without proxying through a container.
+#
+# 502.html/robots.txt/logo.png must stay servable even if every app
+# container is down (that's the whole point of a custom 502 page), so they
+# also get synced out to /var/www/thinkcodeoj/static-passthrough by
+# deploy.sh and are served directly here, independent of the app.
+#
+# This file is applied ONCE during the native->Docker cutover (see
+# CI-CD.md), not on every deploy.
+
+# Cloudflare Flexible SSL: only plain HTTP here, Cloudflare handles HTTPS to visitors.
+server {
+    listen       80;
+    listen       [::]:80;
+
+    server_name oj.thinkcode.vn;
+
+    proxy_set_header X-Forwarded-Proto $scheme;
+
+    add_header X-UA-Compatible "IE=Edge,chrome=1";
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection "1; mode=block";
+
+    charset utf-8;
+    try_files $uri @icons;
+    error_page 502 504 /502.html;
+
+    location ~ ^/502\.html$|^/robots\.txt$ {
+        root /var/www/thinkcodeoj/static-passthrough;
+        try_files $uri @proxy;
+    }
+
+    location @icons {
+        root /var/www/thinkcodeoj/icons;
+        error_page 403 = @proxy;
+        error_page 404 = @proxy;
+    }
+
+    location @proxy {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_read_timeout 600;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_http_version 1.1;
+        proxy_read_timeout 600;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    location /static {
+        gzip_static on;
+        expires max;
+        root /var/www/thinkcodeoj;
+    }
+
+    location /martor {
+        root /var/www/thinkcodeoj/media;
+    }
+
+    location /pdf {
+        root /var/www/thinkcodeoj/media;
+    }
+
+    location /submission_file {
+        root /var/www/thinkcodeoj/media;
+    }
+
+    location /event/ {
+        proxy_pass http://127.0.0.1:15100/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_read_timeout 86400;
+    }
+
+    location /channels/ {
+        proxy_read_timeout          120;
+        proxy_pass http://127.0.0.1:15102;
+    }
+}

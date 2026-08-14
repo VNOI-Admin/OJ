@@ -1,0 +1,75 @@
+# ThinkCode OJ -- production docker-compose (site/bridged/celery/wsevent only)
+#
+# Lives on the server at /home/opencode/thinkcode-deploy/docker-compose.production.yml
+# (NOT inside the git checkout -- see CI-CD.md). Deployed by deploy.sh, which
+# only ever changes the `image:` tag (pulled from GHCR); this file itself is
+# only touched during initial server setup or when the compose topology
+# changes (rare, manual).
+#
+# MariaDB and Redis are NOT containerized -- they keep running natively on
+# the host exactly as they do today (see OVERVIEW.md), so there's zero risk
+# to the existing production data/backups from this migration to Docker.
+# All 4 app containers use network_mode: host specifically so they can reach
+# 127.0.0.1:3306 (MariaDB) and 127.0.0.1:6379 (Redis) exactly like the
+# native uwsgi/supervisor processes do today -- no docker network/bridge
+# translation needed, no docker-compose `depends_on` ordering issues with
+# services that live outside compose entirely.
+#
+# nginx also stays native (untouched) and reverse-proxies to
+# 127.0.0.1:8000 (site) instead of the old unix socket
+# /tmp/dmoj-site.sock -- see nginx/vnoj.conf.docker in this repo for the
+# updated config, and CI-CD.md for the one-time cutover steps.
+
+x-image: &image
+  image: ${IMAGE_TAG:?IMAGE_TAG must be set, e.g. ghcr.io/hiulaptop/thinkcode-oj:sha-abc1234}
+
+x-common: &common
+  <<: *image
+  network_mode: host
+  restart: unless-stopped
+  env_file: /home/opencode/thinkcode-deploy/.env
+  volumes:
+    - /home/opencode/thinkcode-deploy/local_settings.py:/site/dmoj/local_settings.py:ro
+    - /var/www/thinkcodeoj/media:/media
+    - /var/www/thinkcodeoj/problem_data:/problems
+    - /var/log/thinkcodeoj:/site/log
+  logging:
+    driver: json-file
+    options:
+      max-size: "20m"
+      max-file: "5"
+
+services:
+  site:
+    <<: *common
+    container_name: thinkcode-site
+    command: >
+      uwsgi
+      --module dmoj.wsgi:application
+      --http-socket 127.0.0.1:8000
+      --master
+      --workers 2
+      --harakiri 600
+      --need-app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  bridged:
+    <<: *common
+    container_name: thinkcode-bridged
+    command: python3 manage.py runbridged
+    stop_signal: SIGINT
+
+  celery:
+    <<: *common
+    container_name: thinkcode-celery
+    command: celery -A dmoj_celery worker -l info --concurrency=2
+
+  wsevent:
+    <<: *common
+    container_name: thinkcode-wsevent
+    command: node websocket/daemon.js

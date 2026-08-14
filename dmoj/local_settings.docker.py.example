@@ -1,0 +1,146 @@
+# Template for the REAL dmoj/local_settings.py used in the Dockerized
+# production deployment of ThinkCode OJ.
+#
+# This file itself is checked into git (it has no secrets -- it just reads
+# environment variables). The actual file used in production lives ONLY on
+# the server, at /home/opencode/thinkcode-deploy/local_settings.py, and is
+# bind-mounted read-only into every container (site/bridged/celery/wsevent)
+# at /site/dmoj/local_settings.py by docker-compose.production.yml.
+#
+# It is copied from this template once during initial server setup and then
+# never touched by deploys again -- deploys only ever change the Docker
+# image (source code), never this file or the secrets it reads.
+#
+# All values come from environment variables passed via docker-compose's
+# `env_file: /home/opencode/thinkcode-deploy/.env` (see .env.example next to
+# this file, or thinkcode/.env.production for the actual values currently
+# in use).
+
+import os
+
+SECRET_KEY = os.environ['DJANGO_SECRET_KEY']
+DEBUG = os.environ.get('DJANGO_DEBUG', 'False') == 'True'
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '').split(',') if os.environ.get('ALLOWED_HOSTS') else []
+
+# Cloudflare Flexible SSL: Cloudflare talks HTTPS to visitors and plain HTTP
+# to this server. Trust the X-Forwarded-Proto header nginx forwards so
+# Django knows the original request was HTTPS.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+CSRF_TRUSTED_ORIGINS = os.environ.get('CSRF_TRUSTED_ORIGINS', '').split(',') if os.environ.get('CSRF_TRUSTED_ORIGINS') else []
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+    },
+}
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.environ['DB_NAME'],
+        'USER': os.environ['DB_USER'],
+        'PASSWORD': os.environ['DB_PASSWORD'],
+        'HOST': os.environ.get('DB_HOST', '127.0.0.1'),
+        'PORT': os.environ.get('DB_PORT', '3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'sql_mode': 'STRICT_TRANS_TABLES,NO_ENGINE_SUBSTITUTION',
+        },
+    },
+}
+
+LANGUAGE_CODE = 'vi'
+DEFAULT_USER_TIME_ZONE = 'Asia/Ho_Chi_Minh'
+USE_I18N = True
+USE_L10N = True
+USE_TZ = True
+
+COMPRESS_OUTPUT_DIR = 'cache'
+COMPRESS_CSS_FILTERS = [
+    'compressor.filters.css_default.CssAbsoluteFilter',
+    'compressor.filters.cssmin.CSSMinFilter',
+]
+COMPRESS_JS_FILTERS = ['compressor.filters.jsmin.JSMinFilter']
+COMPRESS_STORAGE = 'compressor.storage.GzipCompressorFileStorage'
+STATICFILES_FINDERS += ('compressor.finders.CompressorFinder',)
+
+ADMINS = (
+    ('Admin', os.environ.get('SITE_ADMIN_EMAIL', 'admin@thinkcode.vn')),
+)
+SERVER_EMAIL = f"{os.environ.get('SITE_LONG_NAME', 'ThinkCode')} <vnoj@localhost>"
+
+STATIC_ROOT = os.environ.get('STATIC_ROOT', '/site/static')
+
+SITE_NAME = os.environ.get('SITE_NAME', 'ThinkCode')
+SITE_FULL_URL = os.environ.get('SITE_FULL_URL', 'https://oj.thinkcode.vn')
+SITE_LONG_NAME = os.environ.get('SITE_LONG_NAME', 'ThinkCode')
+SITE_ADMIN_EMAIL = os.environ.get('SITE_ADMIN_EMAIL', 'admin@thinkcode.vn')
+TERMS_OF_SERVICE_URL = '/tos/'
+DMOJ_CANONICAL = os.environ.get('DMOJ_CANONICAL', 'oj.thinkcode.vn')
+
+MEDIA_ROOT = os.environ.get('MEDIA_ROOT', '/media')
+DMOJ_PROBLEM_DATA_ROOT = os.environ.get('DMOJ_PROBLEM_DATA_ROOT', '/problems')
+
+# bridged runs in its own container; site/celery talk to it over the Docker
+# host network (see docker-compose.production.yml, network_mode: host).
+BRIDGED_JUDGE_ADDRESS = [(os.environ.get('BRIDGED_JUDGE_HOST', '0.0.0.0'), int(os.environ.get('BRIDGED_JUDGE_PORT', '9999')))]
+BRIDGED_DJANGO_ADDRESS = [(os.environ.get('BRIDGED_DJANGO_HOST', 'localhost'), int(os.environ.get('BRIDGED_DJANGO_PORT', '9998')))]
+
+ENABLE_FTS = False
+BAD_MAIL_PROVIDERS = set()
+
+EVENT_DAEMON_USE = True
+EVENT_DAEMON_POST = f"ws://127.0.0.1:{os.environ.get('WSEVENT_POST_PORT', '15101')}/"
+EVENT_DAEMON_GET = f"wss://{os.environ.get('DMOJ_CANONICAL', 'oj.thinkcode.vn')}/event/"
+EVENT_DAEMON_POLL = '/channels/'
+
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://127.0.0.1:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://127.0.0.1:6379/0')
+
+ACE_URL = '//cdnjs.cloudflare.com/ajax/libs/ace/1.2.3/'
+JQUERY_JS = '//cdnjs.cloudflare.com/ajax/libs/jquery/2.2.4/jquery.min.js'
+SELECT2_JS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/js/select2.min.js'
+SELECT2_CSS_URL = '//cdnjs.cloudflare.com/ajax/libs/select2/4.0.3/css/select2.min.css'
+TIMEZONE_MAP = 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/1024px-Blue_Marble_2002.png'
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'file': {'format': '%(levelname)s %(asctime)s %(module)s %(message)s'},
+        'simple': {'format': '%(levelname)s %(message)s'},
+    },
+    'handlers': {
+        'bridge': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',   # containers log to stdout, captured by `docker logs`
+            'formatter': 'file',
+        },
+        'mail_admins': {
+            'level': 'ERROR',
+            'class': 'dmoj.throttle_mail.ThrottledEmailHandler',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+            'formatter': 'file',
+        },
+    },
+    'loggers': {
+        'django.request': {'handlers': ['mail_admins'], 'level': 'ERROR', 'propagate': False},
+        'judge.bridge': {'handlers': ['bridge', 'mail_admins'], 'level': 'INFO', 'propagate': True},
+        '': {'handlers': ['console']},
+    },
+}
+
+EMAIL_BACKEND = os.environ.get('EMAIL_BACKEND', 'django.core.mail.backends.smtp.EmailBackend')
+EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp-relay.brevo.com')
+EMAIL_PORT = int(os.environ.get('EMAIL_PORT', '587'))
+EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS', 'True') == 'True'
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')
+DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'ThinkCode <no-reply@thinkcode.vn>')
