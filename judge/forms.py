@@ -22,7 +22,8 @@ from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, Language, \
-    LanguageLimit, Organization, Problem, Profile, Solution, Submission, Tag, WebAuthnCredential
+    LanguageLimit, Organization, OrganizationProblemTag, Problem, Profile, Solution, Submission, Tag, \
+    WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -178,7 +179,11 @@ class ProblemEditForm(ModelForm):
         # Only allow to public/private problem in organization
         if org_pk is None:
             self.fields.pop('is_public')
+            self.fields.pop('tags')
         else:
+            self.fields['tags'].queryset = OrganizationProblemTag.objects.filter(organization_id=org_pk)
+            self.fields.pop('types')
+            self.fields['group'].widget = forms.HiddenInput()
             self.fields['testers'].label = _('Private users')
             self.fields['testers'].help_text = _('If private, only these users may see the problem.')
             self.fields['testers'].widget.data_view = None
@@ -225,10 +230,11 @@ class ProblemEditForm(ModelForm):
     class Meta:
         model = Problem
         fields = ['is_public', 'code', 'name', 'time_limit', 'memory_limit', 'points', 'partial',
-                  'statement_file', 'source', 'types', 'group', 'submission_source_visibility_mode',
+                  'statement_file', 'source', 'types', 'group', 'tags', 'submission_source_visibility_mode',
                   'testcase_visibility_mode', 'description', 'testers']
         widgets = {
             'types': Select2MultipleWidget,
+            'tags': Select2MultipleWidget(),
             'group': Select2Widget,
             'submission_source_visibility_mode': Select2Widget,
             'testcase_visibility_mode': Select2Widget,
@@ -500,6 +506,12 @@ class OrganizationForm(ModelForm):
             self.fields.pop('admins')
             self.fields.pop('paid_credit')
             self.fields.pop('monthly_free_credit_limit')
+
+
+class OrganizationProblemTagForm(ModelForm):
+    class Meta:
+        model = OrganizationProblemTag
+        fields = ['name']
 
 
 class QuotaGrantForm(Form):

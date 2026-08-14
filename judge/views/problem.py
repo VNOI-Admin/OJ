@@ -1091,6 +1091,7 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         data = super().get_context_data(**kwargs)
         data['lang_limit_formset'] = self.get_language_limit_formset()
         data['solution_formset'] = self.get_solution_formset()
+        data['organization'] = self.object.organization
         return data
 
     def get_form_kwargs(self):

@@ -31,6 +31,7 @@
                 {% if request.user.has_perm('judge.create_private_contest') %}
                     {{ make_tab('create', 'fa-plus', url('contest_create_organization', organization.slug), _('Create new contest')) }}
                 {% endif %}
+                {{ make_tab('tags', 'fa-tags', url('organization_tag_list', organization.slug), _('Manage tags')) }}
             {% endif %}
         </ul>
     </div>

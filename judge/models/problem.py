@@ -22,8 +22,8 @@ from judge.models.runtime import Language
 from judge.user_translations import gettext as user_gettext
 from judge.utils.url import get_absolute_pdf_url
 
-__all__ = ['ProblemGroup', 'ProblemType', 'Problem', 'ProblemTranslation', 'ProblemClarification', 'License',
-           'Solution', 'SubmissionSourceAccess', 'TranslatedProblemQuerySet']
+__all__ = ['ProblemGroup', 'ProblemType', 'OrganizationProblemTag', 'Problem', 'ProblemTranslation',
+           'ProblemClarification', 'License', 'Solution', 'SubmissionSourceAccess', 'TranslatedProblemQuerySet']
 
 
 def disallowed_characters_validator(text):
@@ -57,6 +57,21 @@ class ProblemGroup(models.Model):
         ordering = ['full_name']
         verbose_name = _('problem group')
         verbose_name_plural = _('problem groups')
+
+
+class OrganizationProblemTag(models.Model):
+    name = models.CharField(max_length=50, verbose_name=_('problem tag'))
+    organization = models.ForeignKey(Organization, related_name='problem_tags', on_delete=CASCADE,
+                                     verbose_name=_('organization'))
+
+    def __str__(self):
+        return self.name
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ('organization', 'name')
+        verbose_name = _('organization problem tag')
+        verbose_name_plural = _('organization problem tags')
 
 
 class License(models.Model):
@@ -178,6 +193,9 @@ class Problem(models.Model):
                                    help_text=_("The type of problem, as shown on the problem's page."))
     group = models.ForeignKey(ProblemGroup, verbose_name=_('problem group'), on_delete=CASCADE,
                               help_text=_('The group of problem, shown under Category in the problem list.'))
+    tags = models.ManyToManyField(OrganizationProblemTag, blank=True, related_name='problems',
+                                  verbose_name=_('problem tags'),
+                                  help_text=_("Tags from this problem's organization."))
     time_limit = models.FloatField(verbose_name=_('time limit'),
                                    help_text=_('The time limit for this problem, in seconds. '
                                                'Fractional seconds (e.g. 1.5) are supported.'),
@@ -260,6 +278,9 @@ class Problem(models.Model):
 
     @cached_property
     def types_list(self):
+        # if problem is in an organization, we show the tags instead of types
+        if self.is_organization_private:
+            return list(map(attrgetter('name'), self.tags.all()))
         return list(map(user_gettext, map(attrgetter('full_name'), self.types.all())))
 
     def languages_list(self):
