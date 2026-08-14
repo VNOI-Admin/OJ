@@ -7,6 +7,7 @@ name: deploy
 on:
   push:
     branches: [deploy]
+  workflow_dispatch:   # allow manually re-running a deploy without a new commit
 
 concurrency:
   group: deploy-production
