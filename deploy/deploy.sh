@@ -181,7 +181,16 @@ docker rm -f "$tmp_container" >/dev/null
 #    (with auto-rollback) rather than before, as originally discussed.
 # ----------------------------------------------------------------------
 log "Cutting over to ${NEW_IMAGE}"
-IMAGE_TAG="$NEW_IMAGE" docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans \
+# IMAGE_TAG must be `export`ed (not just prefixed on this one command) --
+# verify_healthy() below also runs `docker compose ... exec`, which parses
+# the whole compose file (including the x-image anchor's ${IMAGE_TAG:?...}
+# interpolation) even just to exec into an already-running container. A
+# real deploy run caught this: verify_healthy()'s judge check silently
+# failed every single time with "IMAGE_TAG must be set" (not a judge
+# reconnect problem at all), causing spurious rollbacks even though the
+# judge worker and site were both actually healthy the whole time.
+export IMAGE_TAG="$NEW_IMAGE"
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans \
     || die "docker compose up failed. Services may be in a partially-updated state -- check 'docker compose -f ${COMPOSE_FILE} ps' manually."
 
 # ----------------------------------------------------------------------
@@ -209,7 +218,8 @@ if [ -z "$PREV_IMAGE" ]; then
 fi
 
 log "Rolling back to ${PREV_IMAGE}"
-IMAGE_TAG="$PREV_IMAGE" docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
+export IMAGE_TAG="$PREV_IMAGE"   # see the export IMAGE_TAG comment above -- same reason
+docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
 
 log "Re-verifying after rollback (timeout ${VERIFY_TIMEOUT}s)"
 if verify_healthy; then
