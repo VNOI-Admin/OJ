@@ -28,6 +28,17 @@ x-common: &common
   network_mode: host
   restart: unless-stopped
   env_file: /home/opencode/thinkcode-deploy/.env
+  environment:
+    # dmoj/__init__.py imports dmoj.celery at module load time, which
+    # touches Django settings before dmoj/wsgi.py's own
+    # os.environ.setdefault(...) call gets a chance to run (that line only
+    # executes once wsgi.py itself is imported, which is AFTER
+    # dmoj/__init__.py already ran) -- so DJANGO_SETTINGS_MODULE must be set
+    # here, in the container's environment, not left to wsgi.py/manage.py to
+    # set it themselves. The native uwsgi.ini deployment does this via its
+    # own `env = DJANGO_SETTINGS_MODULE=dmoj.settings` line; this is the
+    # container equivalent.
+    DJANGO_SETTINGS_MODULE: dmoj.settings
   volumes:
     - /home/opencode/thinkcode-deploy/local_settings.py:/site/dmoj/local_settings.py:ro
     - /var/www/thinkcodeoj/media:/media

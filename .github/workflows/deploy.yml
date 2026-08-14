@@ -58,6 +58,17 @@ jobs:
       image: ${{ steps.meta.outputs.image }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          # resources/libs and resources/vnoj are git submodules containing
+          # static assets (fontawesome, jquery-ui, etc.) that
+          # collectstatic/compressor need at build time. actions/checkout
+          # does NOT fetch submodules by default -- without this, the image
+          # builds "successfully" but every page 500s at runtime with
+          # compressor.exceptions.UncompressableFileError (found the hard
+          # way: first deploy attempt built fine, passed migrations, but the
+          # site container crashed on every request once traffic was cut
+          # over to it).
+          submodules: recursive
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
