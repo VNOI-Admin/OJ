@@ -26,6 +26,7 @@ from django.views.generic import DetailView, ListView
 from judge.highlight_code import highlight_code
 from judge.models import Contest, Language, Organization, Problem, ProblemTranslation, Profile, Submission
 from judge.models.problem import ProblemTestcaseResultAccess, SubmissionSourceAccess
+from judge.utils.cursor_paginator import CursorPaginationMixin
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.lazy import memo_lazy
 from judge.utils.problem_data import get_problem_testcases_data
@@ -553,7 +554,11 @@ class ConditionalUserTabMixin(object):
         return context
 
 
-class AllUserSubmissions(InfinitePaginationMixin, ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+class AllUserSubmissions(CursorPaginationMixin, ConditionalUserTabMixin, UserMixin, SubmissionsListBase):
+    # Submissions are listed newest-first by id, which is unique, so this list seeks
+    # instead of counting past every earlier page.
+    cursor_salt = 'judge.all_user_submissions.cursor'
+
     def get_queryset(self):
         return super(AllUserSubmissions, self).get_queryset().filter(user_id=self.profile.id)
 
@@ -650,7 +655,9 @@ class ProblemSubmissionsBase(SubmissionsListBase):
         return context
 
 
-class ProblemSubmissions(InfinitePaginationMixin, ProblemSubmissionsBase):
+class ProblemSubmissions(CursorPaginationMixin, ProblemSubmissionsBase):
+    cursor_salt = 'judge.problem_submissions.cursor'
+
     def get_my_submissions_page(self):
         if self.request.user.is_authenticated:
             if hasattr(self, 'contest'):
