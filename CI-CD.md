@@ -32,7 +32,7 @@ deploy.sh trên server:
   2. migrate (container tạm, DB thật, TRƯỚC khi đụng service đang chạy)
   3. sync static assets ra /var/www/thinkcodeoj (nginx đọc trực tiếp)
   4. docker compose up -d (cutover site/bridged/celery/wsevent)
-  5. verify: site HTTP 200 + judge worker online=True (poll tối đa 90s)
+  5. verify: site HTTP 200 + judge worker online=True (poll tối đa 60s)
   6a. verify OK -> ghi lại image hiện tại, deploy thành công
   6b. verify FAIL -> tự động rollback về image cũ, verify lại, báo lỗi
 ```
@@ -118,6 +118,24 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 
 **Chỉ thực hiện bước này SAU KHI** đã chạy thành công deploy đầu tiên qua CD (để `/var/www/thinkcodeoj/static` đã có static assets mới từ image, tránh nginx trỏ vào file rỗng/thiếu).
+
+---
+
+## 3.4. Static assets + django-compressor: vì sao `/site/static` phải bind-mount, không chỉ copy-1-lần
+
+Bug thật gặp phải ngày 15/08/2026: sau khi cutover, site load được nhưng **mất toàn bộ CSS** (404 trên mọi `/static/cache/css/output.<hash>.css`).
+
+**Nguyên nhân**: `django-compressor` mặc định chạy ở chế độ **online** (`COMPRESS_OFFLINE` không set = `False`). Nghĩa là mỗi khi 1 trang có block `{% compress css %}` được render lần đầu trong 1 container, compressor tự tính hash (dựa trên mtime file nguồn) rồi **ghi file CSS đã minify vào `STATIC_ROOT/cache/css/` ngay lúc đó** -- không phải cố định sẵn từ lúc build image.
+
+`deploy.sh` (bước 3) chỉ `docker cp` static assets ra host **một lần, trước cutover** -- coi `STATIC_ROOT` như dữ liệu tĩnh bất biến. Nhưng compressor online-mode không tĩnh: khi container `site` khởi động và xử lý request đầu tiên, nó tính ra một hash CSS khác (mtime các file trong image lệch theo thời điểm build), ghi vào bản `/site/static` **riêng của chính nó**. HTML trả về tham chiếu hash đó, nhưng file thật lại chỉ nằm trong container, không có trên host -- nginx (đọc thẳng từ đĩa) trả 404.
+
+**Đã cân nhắc và loại bỏ**: bật `COMPRESS_OFFLINE = True` + chạy `manage.py compress` lúc build image (giống style cách CI hiện dùng để build CSS). Bị revert vì block `{% compress css %}` trong `templates/base.html` chọn CSS sáng/dark **tuỳ theo user** (`request.profile.site_theme` / cookie `site_theme`) -- nội dung block phụ thuộc request, không cố định, nên `manage.py compress` (chạy 1 lần, không có request thật) không đủ context để render đúng, hoặc phải enumerate thủ công mọi tổ hợp theme -- phức tạp và dễ vỡ khi thêm theme mới.
+
+**Giải pháp đã áp dụng**: bind-mount thẳng `/var/www/thinkcodeoj/static` (thư mục host mà nginx `location /static` đọc trực tiếp) vào `/site/static` bên trong container `site` (xem `docker-compose.production.yml`). Đây chính là cách bản native cũ (site + nginx cùng máy, cùng ổ đĩa) và `thinkcode-docker` (named volume `assets:` mount chung cả site lẫn nginx container) vẫn luôn hoạt động đúng -- nguyên tắc chung: **compressor phải ghi runtime cache vào đúng chỗ mà web server đọc, không phải một bản sao riêng**. `deploy.sh` bước 3 (`docker cp` static ra host trước cutover) vẫn giữ nguyên -- nó vẫn cần thiết để đưa các asset KHÔNG qua compressor (JS lib, ảnh, icon, font, admin static) từ image mới ra host trước khi container mới lên; chỉ riêng phần compressor tự sinh (`cache/css/`, `cache/js/`) giờ không còn phụ thuộc bước copy đó nữa.
+
+**Bug thứ hai gặp phải khi test fix trên** (cùng ngày): sau khi thêm bind-mount, request đầu tiên vẫn 500 với `PermissionError: [Errno 13] Permission denied: '/site/static/cache/css/output.<hash>.css'`. Nguyên nhân: `docker cp` (chạy dưới quyền root qua docker daemon) **không kế thừa permission `777` của thư mục cha** khi tạo thư mục con mới -- `cache/` và `cache/css/` từng được tạo thủ công lúc debug trước đó với quyền `755`, còn container `site` chạy dưới uid 1000 (`dmoj`, không phải root) nên không ghi được. Đã sửa bằng 2 việc:
+1. `deploy.sh` bước 3 giờ chạy `chmod -R 777 "$STATIC_ROOT_HOST"` sau mỗi lần sync, để bất kỳ thư mục con mới nào (compressor tự tạo, hoặc app mới thêm static dir ở upstream) đều luôn world-writable, không phụ thuộc umask của `docker cp`.
+2. Vì `deploy.sh` chạy dưới user `opencode` (không có NOPASSWD sudo, và cũng không nên có để giảm attack surface của deploy key), toàn bộ cây `/var/www/thinkcodeoj/static` phải **thuộc sở hữu `opencode`** để lệnh `chmod` ở bước 1 tự chạy được mà không cần `sudo`. Một số thư mục con còn sót lại quyền sở hữu `dmoj-uwsgi` (uid 998, từ thời native) đã được `sudo chown -R opencode:opencode /var/www/thinkcodeoj/static` một lần thủ công để dọn sạch -- **bước này cần lặp lại thủ công (1 lần) khi setup server mới** nếu thư mục `static/` được tạo trước đó bởi user/process khác `opencode` (ví dụ site native cũ đã từng chạy ở đó).
 
 ---
 

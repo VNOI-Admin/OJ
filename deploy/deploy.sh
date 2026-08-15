@@ -172,6 +172,26 @@ docker cp "${tmp_container}:/site/robots.txt" "$PASSTHROUGH_HOST/robots.txt" 2>/
 docker cp "${tmp_container}:/site/resources/icons/." "$ICONS_HOST/" 2>/dev/null || true
 docker rm -f "$tmp_container" >/dev/null
 
+# `docker cp` runs as root (via the docker daemon) and does NOT inherit the
+# permissions of an already-existing parent directory for anything it
+# creates -- new subdirectories land with root's umask (typically 755), not
+# world-writable. This matters because STATIC_ROOT_HOST is also
+# bind-mounted straight into the `site` container (see
+# docker-compose.production.yml), which runs as uid 1000 (dmoj) and needs
+# to WRITE into it at runtime -- django-compressor (running in online mode)
+# writes freshly-compiled/hashed CSS/JS bundles to
+# STATIC_ROOT_HOST/cache/{css,js}/ the first time each request renders a
+# {% compress %} block. If any directory under STATIC_ROOT_HOST isn't
+# world-writable, that write fails with PermissionError and the whole page
+# 500s. This bit us for real in production on 2026-08-15 -- cache/ and
+# cache/css/ happened to pre-date this bind-mount setup (leftover from an
+# earlier manual docker cp while debugging) and were 755, not 777.
+# Force the whole tree world-writable after every sync so this can't
+# silently regress on a future deploy that happens to create a new
+# subdirectory under static/ (compressor cache dirs, new static app dirs
+# added upstream, etc).
+chmod -R 777 "$STATIC_ROOT_HOST"
+
 # ----------------------------------------------------------------------
 # 4. Cut over. NOTE: bridged uses a single fixed port (9999) that the one
 #    real judge worker is pinned to in its own judge.yml config -- Docker

@@ -54,6 +54,43 @@ services:
   site:
     <<: *common
     container_name: thinkcode-site
+    # NOTE: this list REPLACES (does not merge with) x-common's `volumes:`
+    # -- YAML anchors/merge keys don't deep-merge lists -- so every mount
+    # from x-common must be repeated here explicitly in addition to the
+    # static/ mount below.
+    volumes:
+      - /home/opencode/thinkcode-deploy/local_settings.py:/site/dmoj/local_settings.py:ro
+      - /var/www/thinkcodeoj/media:/media
+      - /var/www/thinkcodeoj/problem_data:/problems
+      - /var/log/thinkcodeoj:/site/log
+      # django-compressor runs in ONLINE mode (COMPRESS_OFFLINE unset ->
+      # default False): it computes CSS/JS bundle hashes from source-file
+      # mtimes and writes the compiled+hashed output to
+      # STATIC_ROOT/cache/{css,js}/ the first time each {% compress %}
+      # block is rendered per container -- NOT once at image build time.
+      # (Offline mode was tried and reverted: the {% compress %} block in
+      # base.html picks light/dark CSS per-request based on
+      # request.profile.site_theme / a cookie, i.e. its rendered content
+      # differs per user, which doesn't fit offline compression's
+      # render-once-at-build-time model without non-trivial extra work
+      # enumerating every context combination.)
+      #
+      # Bind-mounting the exact host directory that nginx serves /static
+      # from (see nginx/vnoj.conf.docker) as this container's STATIC_ROOT
+      # means the site process now writes its runtime-generated
+      # cache/{css,js}/ files directly into the same directory nginx reads
+      # from -- so whatever hash ends up in the HTML a request generates is
+      # guaranteed to have a matching file on disk. This replaces the
+      # previous approach (deploy.sh docker-cp'ing the image's baked-in
+      # static/ out to the host once, before cutover): that left the
+      # container's own STATIC_ROOT as private-to-the-container storage, so
+      # its compressor cache diverged from the host copy the moment a real
+      # request compressed anything -- CSS 404s in production on
+      # 2026-08-15. deploy.sh's existing static sync step still runs before
+      # cutover (for the non-compressed assets: JS libs, images, fonts,
+      # etc. -- see STATIC_ROOT_HOST there), it's just no longer the only
+      # source of truth for the compressor's own output.
+      - /var/www/thinkcodeoj/static:/site/static
     command: >
       uwsgi
       --module dmoj.wsgi:application
