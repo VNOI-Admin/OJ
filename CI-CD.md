@@ -200,7 +200,9 @@ docker compose -f docker-compose.production.yml --env-file .env exec site \
   python3 manage.py shell -c "from judge.models import Judge; print(list(Judge.objects.values('name', 'online')))"
 ```
 
-Nếu Docker hoàn toàn không cứu được (ví dụ lỗi hạ tầng nghiêm trọng), phương án cuối cùng là quay lại cách cài native cũ -- `vnoi_setup.sh`/service supervisor vẫn còn nguyên trên server (không bị xoá bởi việc setup Docker), có thể `sudo supervisorctl start site bridged celery wsevent` sau khi `docker compose down` và trỏ nginx `vnoj.conf.native.bak` lại.
+**Không còn phương án rollback native tức thời.** Trước 15/08/2026, `/home/opencode/vnojsite/` (source code + venv Python 3.8 native) và 4 file config supervisor (`bridged.conf`, `celery.conf`, `site.conf`, `wsevent.conf`) vẫn còn nguyên trên server, cho phép `sudo supervisorctl start site bridged celery wsevent` khôi phục ngay trong vài giây nếu Docker gặp sự cố không cứu được. Theo yêu cầu "server không giữ source code gì cả, chỉ pull image về chạy", toàn bộ đã bị xoá (config supervisor backup tại `/root/supervisor-native-backup/` trên server chỉ để tham khảo, KHÔNG dùng để chạy lại trực tiếp -- venv/node_modules đã mất).
+
+Nếu Docker hoàn toàn không cứu được (lỗi hạ tầng nghiêm trọng, không phải lỗi image/code -- những trường hợp đó dùng rollback qua `deploy.sh`/`current_image.txt` ở trên), phương án duy nhất còn lại là cài native từ đầu bằng `vnoi_setup.sh`/`dmoj_judge_setup.sh` -- 2 script này **không nằm trong repo `thinkcode-oj`** (chưa từng được commit vào git nào), chỉ tồn tại local tại `/home/hlt/Documents/Projects/` trên máy phát triển; cần lấy lại từ đó trước khi chạy trên server. Toàn bộ quá trình mất khoảng 15-30 phút thay vì vài giây. `vnoj.conf.native.bak` (config nginx trỏ unix socket, không phải TCP) vẫn còn trên server tại `/etc/nginx/conf.d/`, có thể dùng lại sau khi site native được cài đặt lại.
 
 ---
 
