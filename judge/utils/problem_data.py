@@ -116,15 +116,6 @@ class ProblemDataCompiler(object):
         self.generator = data.generator
 
     def make_init(self):
-        # The judge server has an ability to find the testcase
-        # even if we don't specify it.
-        # That is a good behavior, however, the zip file
-        # could contain a very large number of testcases
-        # and that is not what we want. So in case of user
-        # did not specify testcases, we will not create the init
-        if self.cases.count() == 0:
-            return {}
-
         cases = []
         batch = None
 
@@ -304,8 +295,8 @@ class ProblemDataCompiler(object):
                 case.save()
                 end_batch()
                 batch = None
-        if total_points <= 0:
-            raise ProblemDataError(_('Total points must be greater than 0.'))
+        # if total_points <= 0:
+        #     raise ProblemDataError(_('Total points must be greater than 0.'))
         if batch:
             end_batch()
 
