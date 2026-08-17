@@ -1,9 +1,9 @@
+import csv
 import datetime
 import itertools
 import json
 import os
 import tempfile
-from datetime import datetime, timedelta
 from operator import attrgetter, itemgetter
 
 import pytz
@@ -34,8 +34,8 @@ from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, FormView, ListView, TemplateView, View
 from reversion import revisions
 
-from judge.forms import BulkUserCreateForm, CustomAuthenticationForm, ProfileForm, UserBanForm, UserDownloadDataForm, UserForm, \
-    newsletter_id
+from judge.forms import BulkUserCreateForm, CustomAuthenticationForm, ProfileForm, UserBanForm, \
+    UserDownloadDataForm, UserForm, newsletter_id
 from judge.models import BlogPost, Organization, Profile, Submission
 from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
@@ -55,7 +55,7 @@ from judge.views.blog import PostListBase
 from .contests import ContestRanking
 
 __all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserCommentPage', 'UserDownloadData', 'UserPrepareData',
-           'users', 'edit_profile', 'BulkUserCreate', 'BulkUserDownload']
+           'users', 'edit_profile', 'BulkUserCreate', 'BulkUserResult']
 
 
 def remap_keys(iterable, mapping):
@@ -752,7 +752,7 @@ class BulkUserCreate(LoginRequiredMixin, TitleMixin, FormView):
 
     def build_task_url(self, status_id):
         return task_status_url_by_id(
-            status_id, message=_('Creating user accounts...'), redirect=reverse('bulk_user_download', args=[status_id]),
+            status_id, message=_('Creating user accounts...'), redirect=reverse('bulk_user_result', args=[status_id]),
         )
 
     def get_context_data(self, **kwargs):
@@ -776,48 +776,31 @@ class BulkUserCreate(LoginRequiredMixin, TitleMixin, FormView):
         return status == 'SUCCESS'
 
     def form_valid(self, form):
-        # Save uploaded file temporarily
-        uploaded_file = form.cleaned_data['excel_file']
-
-        # Create a temporary file
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
-        for chunk in uploaded_file.chunks():
-            temp_file.write(chunk)
-        temp_file.close()
-
-        # Start the Celery task
-        status = bulk_create_users.delay(temp_file.name, self.request.user.id)
+        rows = form.cleaned_data['rows_json']  # validated list of dicts
+        status = bulk_create_users.delay(rows, self.request.user.id)
         cache.set(self.data_cache_key, status.id, 3600)  # 1 hour
-
         return HttpResponseRedirect(self.build_task_url(status.id))
 
 
-class BulkUserDownload(LoginRequiredMixin, View):
+class BulkUserResult(LoginRequiredMixin, TitleMixin, TemplateView):
+    template_name = 'user/bulk-result.html'
+
+    def get_title(self):
+        return _('Bulk Create Users')
+
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_superuser:
-            raise PermissionDenied(_('Only superusers can download bulk user results'))
+            raise PermissionDenied(_('Only superusers can view bulk user results'))
         return super().dispatch(request, *args, **kwargs)
 
-    def get(self, request, task_id):
-        # Check if the file exists
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
         file_path = os.path.join(
             settings.DMOJ_USER_DATA_CACHE or tempfile.gettempdir(),
-            f'bulk_users_{task_id}.xlsx'
+            f'bulk_users_{self.kwargs["task_id"]}.csv',
         )
-
         if not os.path.exists(file_path):
-            raise Http404(_('Download file not found or expired'))
-
-        response = HttpResponse()
-        add_file_response(request, response, None, file_path)
-
-        response['Content-Type'] = 'text/xlsx'
-        response['Content-Disposition'] = f'attachment; filename=bulk_users_{task_id}.xlsx'
-
-        # Clean up file after download
-        try:
-            os.remove(file_path)
-        except OSError:
-            pass
-
-        return response
+            raise Http404(_('Result not found or expired'))
+        with open(file_path, newline='') as f:
+            context['users'] = list(csv.DictReader(f))
+        return context

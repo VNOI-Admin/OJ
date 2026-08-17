@@ -1,10 +1,7 @@
 import json
 import os
-import re
 import zipfile
 from operator import attrgetter, itemgetter
-
-import openpyxl
 
 import pyotp
 import webauthn
@@ -28,6 +25,7 @@ from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticip
     LanguageLimit, Organization, OrganizationProblemTag, Problem, Profile, Solution, Submission, Tag, \
     WebAuthnCredential
 from judge.utils.subscription import newsletter_id
+from judge.utils.users import validate_user_rows
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
 
@@ -912,108 +910,18 @@ class CompareSubmissionsForm(Form):
 
 
 class BulkUserCreateForm(Form):
-    excel_file = forms.FileField(
-        label=_('Excel file'),
-        validators=[FileExtensionValidator(allowed_extensions=['xlsx', 'xls'])],
-        widget=forms.FileInput(attrs={'accept': '.xlsx,.xls'}),
-    )
+    # Rows are built client-side by the editable grid and submitted as a JSON string:
+    # a list of dicts keyed by field name (username, fullname, organization, ...).
+    rows_json = forms.CharField(widget=forms.HiddenInput)
 
-    def clean_excel_file(self):
-        file = self.cleaned_data.get('excel_file')
-        if file:
-            if file.size > 10 * 1024 * 1024:  # 10MB limit
-                raise ValidationError(_('File size too large. Maximum size is 10MB.'))
-            # read the file using openpyxl
-            workbook = openpyxl.load_workbook(file)
-            worksheet = workbook.active
-            # Get headers from first row
-            headers = []
-            for cell in worksheet[1]:
-                if cell.value:
-                    headers.append(cell.value.lower().strip())
-                else:
-                    headers.append('')
-
-            # Check required columns
-            required_columns = ['username', 'name', 'email']
-            missing_columns = [col for col in required_columns if col not in headers]
-            if missing_columns:
-                raise ValidationError(_('Missing required columns: %s') % ', '.join(missing_columns))
-
-            # Get column indices for required columns
-            column_indices = {}
-            for i, header in enumerate(headers):
-                if header in required_columns:
-                    column_indices[header] = i
-
-            # Read data rows
-            users_data = []
-            for row in worksheet.iter_rows(min_row=2, values_only=True):
-                if not any(row):  # Skip empty rows
-                    continue
-
-                user_data = {}
-                for col_name, col_index in column_indices.items():
-                    value = row[col_index] if col_index < len(row) and row[col_index] is not None else ''
-                    user_data[col_name] = str(value).strip()
-
-                # Only add row if it has at least one non-empty value
-                if any(user_data.values()):
-                    users_data.append(user_data)
-            errors = self.validate_user_data(users_data)
-            if errors:
-                raise ValidationError(errors)
-        return file
-
-    def validate_user_data(self, users_data):
-        """Validate user data and check for existing users"""
-        errors = []
-        seen_usernames = set()
-        seen_emails = set()
-
-        # Check for existing users in database
-        usernames = [user['username'] for user in users_data]
-
-        existing_users = User.objects.filter(username__in=usernames)
-        if existing_users.exists():
-            return 'Username already exists:' + ', '.join(existing_users.values_list('username', flat=True))
-
-        for i, user in enumerate(users_data):
-            row_num = i + 2  # Excel rows start from 1, plus header row
-            username = user.get('username', '').strip()
-            name = user.get('name', '').strip()
-            email = user.get('email', '').strip()
-
-            if not username:
-                return _('Row %d: Username is required') % row_num
-            if not name:
-                return _('Row %d: Name is required') % row_num
-            if not email:
-                return _('Row %d: Email is required') % row_num
-
-            if not username or not name or not email:
-                continue
-
-            # Check username format
-            if not re.match(r'^[a-zA-Z0-9_.-]+$', username):
-                return _('Row %d: Username can only contain letters, numbers, dots, hyphens, and underscores') % row_num
-            # cannot be > 20 length
-            if len(username) > 20:
-                return _('Row %d: Username cannot be longer than 20 characters') % row_num
-
-            # Check email format
-            if '@' not in email or '.' not in email.split('@')[1]:
-                return _('Row %d: Invalid email format') % row_num
-
-            # Check for duplicates in file
-            if username in seen_usernames:
-                return _('Row %d: Username "%s" appears multiple times in the file') % (row_num, username)
-            else:
-                seen_usernames.add(username)
-
-            if email in seen_emails:
-                errors.append(_('Row %d: Email "%s" appears multiple times in the file') % (row_num, email))
-            else:
-                seen_emails.add(email)
-
-        return None
+    def clean_rows_json(self):
+        try:
+            rows = json.loads(self.cleaned_data['rows_json'])
+        except (ValueError, TypeError):
+            raise ValidationError(_('Invalid data submitted.'))
+        if not isinstance(rows, list):
+            raise ValidationError(_('Invalid data submitted.'))
+        error = validate_user_rows(rows)
+        if error:
+            raise ValidationError(error)
+        return rows
