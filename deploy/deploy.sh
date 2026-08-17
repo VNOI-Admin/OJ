@@ -24,11 +24,16 @@
 #      the port/socket is released and rebound -- see CI-CD.md for why true
 #      zero-downtime blue-green isn't possible with a single judge worker
 #      pinned to one bridge port).
-#   5. Verify:
+#   5. Verify, all within VERIFY_TIMEOUT seconds:
 #      a. site container healthcheck passes (HTTP 200 on 127.0.0.1:8000)
 #      b. the judge worker reconnects to bridged and shows online=True in
-#         the DB within VERIFY_TIMEOUT seconds (does NOT submit a real test
-#         problem -- connection-level check only)
+#         the DB (does NOT submit a real test problem -- connection-level
+#         check only)
+#      c. celery can round-trip a real task through the broker + result
+#         backend (judge.tasks.demo.success, dispatched and awaited) --
+#         added 2026-08-17 after an incident where celery restart-looped
+#         (broker protocol incompatibility) for hours undetected because
+#         nothing here checked it and the container just showed "Up"
 #   6. If verification fails at any point, AUTOMATICALLY roll back to the
 #      previously running image tag and re-verify. The old image tag is
 #      recorded before step 4 specifically to make this possible.
@@ -73,13 +78,24 @@ cd "$DEPLOY_DIR" || die "deploy dir ${DEPLOY_DIR} does not exist -- run initial 
 
 # ----------------------------------------------------------------------
 # Helper: check a) site answers HTTP 200, b) judge worker is online=True
-# in the DB. Used both for post-deploy verification and post-rollback
-# re-verification.
+# in the DB, c) Celery can actually round-trip a task through the broker
+# and result backend. Used both for post-deploy verification and
+# post-rollback re-verification.
+#
+# The Celery check was added on 2026-08-17 after a production incident
+# where thinkcode-celery restart-looped (64 restarts) because Redis 5.0.7
+# didn't support the HELLO command the newer redis-py client sends -- the
+# container showed as "Up" the whole time and every deploy since then had
+# been reported successful, because nothing here checked Celery at all.
+# Redis was upgraded to 8.x to fix the root cause; this check exists so
+# that class of regression (or celery/kombu/redis version-compat breakage
+# in general) fails the deploy loudly instead of silently.
 # ----------------------------------------------------------------------
 verify_healthy() {
     local elapsed=0
     local site_ok=false
     local judge_ok=false
+    local celery_ok=false
 
     while [ "$elapsed" -lt "$VERIFY_TIMEOUT" ]; do
         if [ "$site_ok" = false ]; then
@@ -100,8 +116,28 @@ sys.exit(0 if online else 1)
             [ "$result" = "OK" ] && judge_ok=true
         fi
 
-        if [ "$site_ok" = true ] && [ "$judge_ok" = true ]; then
-            echo "Verified: site HTTP 200, judge worker online=True (after ${elapsed}s)"
+        if [ "$celery_ok" = false ]; then
+            # Dispatch judge.tasks.demo.success (a no-op task that exists
+            # in-repo specifically for this kind of smoke test) through the
+            # real broker/result-backend and block for the result. This
+            # proves the whole round trip -- broker connectivity, a worker
+            # actually consuming from the queue, task execution, and the
+            # result backend -- not just "the container process is up".
+            result="$(docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" exec -T site \
+                python3 manage.py shell -c "
+from judge.tasks.demo import success
+import sys
+try:
+    ok = success.apply_async().get(timeout=8) is None
+except Exception:
+    ok = False
+sys.exit(0 if ok else 1)
+" 2>/dev/null && echo OK || echo FAIL)"
+            [ "$result" = "OK" ] && celery_ok=true
+        fi
+
+        if [ "$site_ok" = true ] && [ "$judge_ok" = true ] && [ "$celery_ok" = true ]; then
+            echo "Verified: site HTTP 200, judge worker online=True, celery task round-trip OK (after ${elapsed}s)"
             return 0
         fi
 
@@ -109,7 +145,7 @@ sys.exit(0 if online else 1)
         elapsed=$((elapsed + VERIFY_POLL_INTERVAL))
     done
 
-    echo "Verification timed out after ${VERIFY_TIMEOUT}s: site_ok=${site_ok} judge_ok=${judge_ok}" >&2
+    echo "Verification timed out after ${VERIFY_TIMEOUT}s: site_ok=${site_ok} judge_ok=${judge_ok} celery_ok=${celery_ok}" >&2
     return 1
 }
 

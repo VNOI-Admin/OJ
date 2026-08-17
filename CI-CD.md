@@ -79,12 +79,53 @@ Các file đã đặt tại `/home/opencode/thinkcode-deploy/`:
 
 | File | Nguồn | Ghi chú |
 |---|---|---|
-| `deploy.sh` | `deploy/deploy.sh` trong repo | Copy thủ công lúc setup, sau đó **không đổi qua CD** -- chỉ cập nhật thủ công khi logic deploy thay đổi |
-| `ssh-deploy-wrapper.sh` | `deploy/ssh-deploy-wrapper.sh` trong repo | Forced command cho SSH deploy key (xem mục 4) |
-| `docker-compose.production.yml` | `docker-compose.production.yml` trong repo | Topology container, hiếm khi đổi |
+| `deploy.sh` | `deploy/deploy.sh` trong repo | Copy thủ công lúc setup, sau đó **không đổi qua CD** -- chỉ cập nhật thủ công khi logic deploy thay đổi. **Từ 2026-08-17: owned by `root`, `chattr +i` (immutable) -- xem mục 3.3** |
+| `ssh-deploy-wrapper.sh` | `deploy/ssh-deploy-wrapper.sh` trong repo | Forced command cho SSH deploy key (xem mục 4). **Từ 2026-08-17: owned by `root`, `chattr +i`** |
+| `docker-compose.production.yml` | `docker-compose.production.yml` trong repo | Topology container, hiếm khi đổi. **Từ 2026-08-17: owned by `root`, `chattr +i`** |
 | `.env` | Điền thủ công từ `thinkcode/.env.production` | **Chứa secret thật** -- `chmod 600`, KHÔNG có trong git |
 | `local_settings.py` | Copy từ `dmoj/local_settings.docker.py.example`, không sửa gì (chỉ đọc `os.environ`) | **Chứa secret gián tiếp qua `.env`** -- `chmod 600` |
-| `current_image.txt` | Tự tạo bởi `deploy.sh` sau lần deploy thành công đầu tiên | Dùng để rollback |
+| `current_image.txt` | Tự tạo bởi `deploy.sh` sau lần deploy thành công đầu tiên | Dùng để rollback -- KHÔNG immutable, `deploy.sh` cần ghi được file này mỗi lần deploy thành công |
+
+### 3.3. Bảo vệ `deploy.sh`/`ssh-deploy-wrapper.sh`/`docker-compose.production.yml` khỏi bị sửa ngoài ý muốn
+
+Ba file này quyết định **CD được phép làm gì** trên server -- nếu bị sửa (vô tình, qua compromise của một GitHub Action bên thứ ba đang chạy trong cùng job, hay bất kỳ nguyên nhân nào khác), kẻ tấn công/lỗi có thể kiểm soát toàn bộ quy trình deploy. SSH deploy key (mục 3.2) đã bị khoá bằng forced-command nên **không có shell**, nhưng đó là lớp bảo vệ ở phía SSH -- lớp này bổ sung bảo vệ ở phía filesystem, độc lập với SSH key có bị lộ hay không:
+
+```bash
+# Trên server, thực hiện 1 lần (đã làm 2026-08-17):
+sudo chown root:root deploy.sh ssh-deploy-wrapper.sh docker-compose.production.yml
+sudo chattr +i deploy.sh ssh-deploy-wrapper.sh docker-compose.production.yml
+```
+
+`chattr +i` (immutable) chặn **mọi** thao tác ghi/xoá/đổi tên/đổi quyền lên các file này, kể cả bởi `root`, cho tới khi có ai đó chủ động chạy `sudo chattr -i <file>` trước. User `opencode` (chạy `deploy.sh` qua SSH forced-command, và cũng là user CD dùng) **không tự gỡ được khoá này** dù có `sudo` -- vì `ssh-deploy-wrapper.sh` không gọi `sudo` ở bất kỳ đâu, nên kể cả SSH deploy key bị lộ hoàn toàn, kẻ tấn công cũng chỉ trigger được `deploy <image-ref>` như thiết kế ban đầu, không có đường nào chạm tới `chattr`.
+
+`opencode` vẫn đọc + thực thi các file này bình thường (`chattr +i` không ảnh hưởng quyền đọc/exec, chỉ chặn ghi) -- deploy vẫn hoạt động y hệt, không cần thay đổi gì ở `ssh-deploy-wrapper.sh` hay workflow.
+
+**Quy trình thay đổi 3 file này trong tương lai** (khi logic deploy thật sự cần đổi, ví dụ thêm health check mới):
+
+1. Sửa file trong repo (`deploy/deploy.sh`, `deploy/ssh-deploy-wrapper.sh`, hoặc `docker-compose.production.yml`), mở PR vào `deploy`.
+2. PR bắt buộc phải qua `lint`/`unit`/`styles` (branch protection, xem mục 3.4) trước khi merge được.
+3. Sau khi merge, SSH vào server bằng **key cá nhân thật** (không phải CD key), có shell đầy đủ:
+   ```bash
+   ssh opencode@14.225.254.134
+   cd /home/opencode/thinkcode-deploy
+   sudo chattr -i deploy.sh                      # mở khoá đúng file cần sửa
+   # copy nội dung file mới từ repo (scp, hoặc dán tay), rồi:
+   sha256sum deploy.sh                            # đối chiếu với `sha256sum deploy/deploy.sh` trong repo local
+   sudo chattr +i deploy.sh                        # khoá lại ngay
+   ```
+4. Không bao giờ để file ở trạng thái unlocked (`-i` gỡ) lâu hơn thời gian cần thiết để copy + verify checksum.
+
+### 3.4. Branch protection cho nhánh `deploy`
+
+Bật từ 2026-08-17 (GitHub Settings → Branches, hoặc qua `gh api --method PUT repos/{owner}/{repo}/branches/deploy/protection`):
+
+- **Bắt buộc PR**: không push thẳng được vào `deploy`, kể cả bởi admin (`enforce_admins: true`). Đã test xác nhận: `git push origin deploy` trực tiếp bị từ chối với lỗi rule violation.
+- **Bắt buộc status check**: `lint`, `unit`, `styles` (từ `build.yml`) phải pass trên đúng commit, kèm `strict: true` (branch phải up-to-date với `deploy` trước khi merge).
+- **Không yêu cầu approval** (`required_approving_review_count: 0`): repo hiện chỉ có 1 collaborator (chủ repo), và GitHub không cho phép tác giả PR tự approve PR của chính mình -- đặt required approval > 0 trong tình huống này sẽ khiến mọi PR bị kẹt vĩnh viễn. Nếu sau này có thêm collaborator/reviewer, nên tăng `required_approving_review_count` lên ít nhất 1.
+- **Chặn force-push và chặn xoá branch** (`allow_force_pushes: false`, `allow_deletions: false`).
+- **Yêu cầu resolve mọi conversation** trước khi merge (`required_conversation_resolution: true`).
+
+Lưu ý: branch protection bảo vệ **code trong repo** (đường vào `build-and-push` job, tức là image được build ra sao). Nó **không** tự động đồng bộ với 3 file immutable trên server (mục 3.3) -- hai lớp bảo vệ này độc lập nhau và cần cả hai: PR review ngăn code xấu lọt vào `deploy` branch, immutable flag ngăn ai đó bỏ qua toàn bộ Git/CI để sửa trực tiếp file đang chạy trên server.
 
 ### 3.2. SSH deploy key (giới hạn tối đa)
 

@@ -34,13 +34,17 @@ CACHES = {
         'LOCATION': os.environ.get('REDIS_URL', 'redis://127.0.0.1:6379/0'),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            # The server's Redis is version 5.0.7 (native apt install, see
-            # OVERVIEW.md), which predates RESP3/the HELLO command (added in
-            # Redis 6.0). The Docker image's redis-py client is newer and
+            # Historical note: the server originally ran Redis 5.0.7 (native
+            # apt install), which predates RESP3/the HELLO command (added in
+            # Redis 6.0) -- the newer redis-py client in the Docker image
             # defaults to negotiating RESP3 via HELLO on every connection,
-            # which a 5.0.7 server rejects with "unknown command `HELLO`" --
-            # explicitly pin protocol=2 (RESP2) to match what this Redis
-            # version actually understands.
+            # which a 5.0.7 server rejected with "unknown command `HELLO`".
+            # Redis was upgraded to 8.x on 2026-08-17 (via the official
+            # packages.redis.io apt repo) specifically to fix this -- RESP3
+            # is now fully supported. protocol=2 is kept pinned anyway as an
+            # explicit, deliberate choice (RESP2 is simpler to reason about
+            # and matches what django-redis has been tested against here),
+            # not because the server requires it anymore.
             'CONNECTION_POOL_KWARGS': {'protocol': 2},
         },
     },
