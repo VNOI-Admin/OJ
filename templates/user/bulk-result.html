@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block js_media %}
+    <script type="text/javascript" src="{{ static('vnoj/xlsx/xlsx.full.min.js') }}"></script>
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            function buildCsv() {
+                var rows = [['username', 'fullname', 'password']];
+                document.querySelectorAll('#bulk-result-table tbody tr').forEach(function (tr) {
+                    rows.push(Array.prototype.map.call(tr.cells, function (td) { return td.textContent; }));
+                });
+                return rows.map(function (r) {
+                    return r.map(function (v) {
+                        v = v == null ? '' : String(v);
+                        return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v;
+                    }).join(',');
+                }).join('\r\n');
+            }
+            document.getElementById('bulk-download-csv').addEventListener('click', function () {
+                var a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([buildCsv()], {type: 'text/csv'}));
+                a.download = 'bulk_users.csv';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(a.href);
+            });
+            document.getElementById('bulk-download-xlsx').addEventListener('click', function () {
+                var wb = XLSX.utils.table_to_book(document.getElementById('bulk-result-table'));
+                XLSX.writeFile(wb, 'bulk_users.xlsx');
+            });
+            document.getElementById('bulk-copy').addEventListener('click', function () {
+                var btn = this, original = btn.textContent;
+                navigator.clipboard.writeText(buildCsv()).then(function () {
+                    btn.textContent = '{{ _('Copied!') }}';
+                    setTimeout(function () { btn.textContent = original; }, 1500);
+                });
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <div class="alert alert-success">{{ _('Users created:') }} {{ users|length }}</div>
+
+    <p>
+        <button type="button" class="button" id="bulk-download-csv">{{ _('Download CSV') }}</button>
+        <button type="button" class="button" id="bulk-download-xlsx">{{ _('Download Excel') }}</button>
+        <button type="button" class="button" id="bulk-copy">{{ _('Copy to clipboard') }}</button>
+        <a class="button" href="{{ url('bulk_user_create') }}">{{ _('Create more') }}</a>
+    </p>
+
+    <table id="bulk-result-table" class="table striped">
+        <thead>
+            <tr>
+                <th>{{ _('Username') }}</th>
+                <th>{{ _('Full name') }}</th>
+                <th>{{ _('Password') }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in users %}
+                <tr>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.fullname }}</td>
+                    <td>{{ u.password }}</td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}
