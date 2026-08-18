@@ -15,7 +15,7 @@ from registration.signals import user_registered
 from judge.caching import finished_submission
 from judge.models import BlogPost, Comment, Contest, ContestAnnouncement, ContestProblem, ContestSubmission, \
     EFFECTIVE_MATH_ENGINES, Judge, Language, License, MiscConfig, Organization, Problem, Profile, Submission, \
-    WebAuthnCredential
+    WebAuthnCredential, problem_data_storage
 from judge.tasks import on_new_comment
 from judge.views.register import RegistrationView
 
@@ -55,6 +55,16 @@ def problem_update(sender, instance, **kwargs):
         cached_pdf_filename = get_pdf_path('%s.%s.pdf' % (instance.code, lang))
         if cached_pdf_filename is not None:
             unlink_if_exists(cached_pdf_filename)
+
+
+@receiver(post_delete, sender=Problem)
+def problem_delete(sender, instance, **kwargs):
+    # The test data files, including init.yml, are not tracked by the database alone:
+    # init.yml is written straight to storage, and Django never unlinks FileFields.
+    # Judges pick up problems by globbing for init.yml, so a leftover directory keeps
+    # a deleted problem alive on the judges. Only drop it once the deletion commits.
+    code = instance.code
+    transaction.on_commit(lambda: problem_data_storage.delete_directory(code))
 
 
 @receiver(post_save, sender=Profile)
