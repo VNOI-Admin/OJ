@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title_row %}
+    {% set tab = 'tags' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block media %}
+<style>
+    /* Reuse site classes (.table.striped, .button, plain <a>) for the themed
+       bulk; only the genuinely-new elements below carry custom colors, with
+       dark overrides mirroring the site's vars-dark tokens. */
+    .tag-manager {
+        --tm-muted: #8a8a8a;
+        --tm-chip-bg: #f2f2f2;
+        --tm-chip-border: #cfcfcf;
+        --tm-chip-text: #555;
+        --tm-badge-border: #c4c4c4;
+        --tm-badge-text: #8a8a8a;
+        --tm-unused-bg: #fbf0d9;
+        --tm-unused-text: #8a6d1b;
+        --tm-delete: #994444;
+        --tm-delete-hover: #bb5555;
+    }
+    body[data-theme="dark"] .tag-manager {
+        --tm-muted: #9a9a9a;
+        --tm-chip-bg: #333;
+        --tm-chip-border: #555;
+        --tm-chip-text: #ccc;
+        --tm-badge-border: #555;
+        --tm-badge-text: #a8a8a8;
+        --tm-unused-bg: #453714;
+        --tm-unused-text: #e6c775;
+        --tm-delete: #ff9999;
+        --tm-delete-hover: #ffbbbb;
+    }
+    @media (prefers-color-scheme: dark) {
+        body[data-theme="auto"] .tag-manager {
+            --tm-muted: #9a9a9a;
+            --tm-chip-bg: #333;
+            --tm-chip-border: #555;
+            --tm-chip-text: #ccc;
+            --tm-badge-border: #555;
+            --tm-badge-text: #a8a8a8;
+            --tm-unused-bg: #453714;
+            --tm-unused-text: #e6c775;
+            --tm-delete: #ff9999;
+            --tm-delete-hover: #ffbbbb;
+        }
+    }
+
+    .tm-subtitle { color: var(--tm-muted); margin: 0.2em 0 1em; }
+
+    .tm-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 0.75em;
+        margin-bottom: 1em;
+    }
+    .tm-toolbar input#tm-search { flex: 1 1 auto; max-width: 24em; margin: 0; }
+    .tm-toolbar .button { display: inline-block; }
+
+    /* Left-align the tag name column like problem names; keep actions tidy. */
+    .tag-manager .table td.tm-cell-tag { text-align: left; }
+    .tag-manager .table td.tm-cell-actions { white-space: nowrap; }
+    .tag-manager .table th.tm-sortable { cursor: pointer; }
+    .tag-manager .table th.asc .tm-arrow::after { content: " \25b2"; }
+    .tag-manager .table th.desc .tm-arrow::after { content: " \25bc"; }
+
+    .tm-chip {
+        display: inline-block;
+        padding: 0.1em 0.6em;
+        border: 1px solid var(--tm-chip-border);
+        border-radius: 999px;
+        background: var(--tm-chip-bg);
+        color: var(--tm-chip-text);
+    }
+
+    .tm-count-zero { color: var(--tm-muted); }
+    .tm-pill-unused {
+        display: inline-block;
+        margin-left: 0.5em;
+        padding: 0.05em 0.5em;
+        border-radius: 999px;
+        background: var(--tm-unused-bg);
+        color: var(--tm-unused-text);
+        font-size: 0.78em;
+        font-weight: 600;
+    }
+
+    .tm-action { margin: 0 0.35em; white-space: nowrap; }
+    .tm-action-delete { color: var(--tm-delete); }
+    .tm-action-delete:hover { color: var(--tm-delete-hover); }
+    .tm-action-disabled { color: var(--tm-muted); opacity: 0.55; cursor: not-allowed; }
+
+    .tm-empty { padding: 1.5em 1em; text-align: center; color: var(--tm-muted); }
+
+    .tag-dialog h3 { margin: 0 0 0.75em; }
+    .tag-dialog input[name=name] { width: 100%; box-sizing: border-box; }
+    .tag-dialog .submit { margin-top: 1em; }
+    .tag-dialog-actions { margin-top: 1em; display: flex; gap: 0.5em; justify-content: flex-end; }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="tag-manager">
+    <div class="tm-toolbar">
+        <input type="text" id="tm-search" placeholder="{{ _('Search tags') }}">
+        <a href="{{ url('organization_tag_add', organization.slug) }}" class="button" id="tm-add-tag">
+            <i class="fa fa-plus"></i> {{ _('Create new tag') }}
+        </a>
+    </div>
+
+    <table class="table striped">
+        <thead>
+            <tr>
+                <th class="tm-sortable" data-sort="name">{{ _('Tag') }}<span class="tm-arrow"></span></th>
+                <th class="tm-sortable" data-sort="count">{{ _('Problems') }}<span class="tm-arrow"></span></th>
+                <th>{{ _('Actions') }}</th>
+            </tr>
+        </thead>
+        <tbody id="tm-tag-rows">
+            {% for tag in tags %}
+            <tr data-name="{{ tag.name|lower }}" data-display-name="{{ tag.name }}" data-count="{{ tag.problem_count }}">
+                <td class="tm-cell-tag">
+                    <span class="tm-chip">{{ tag.name }}</span>
+                </td>
+                <td>
+                    {% if tag.problem_count %}
+                        <a href="{{ url('problem_list_organization', organization.slug) }}?tag={{ tag.id }}">{{ tag.problem_count }}</a>
+                    {% else %}
+                        <span class="tm-count-zero">0</span><span class="tm-pill-unused">{{ _('unused') }}</span>
+                    {% endif %}
+                </td>
+                <td class="tm-cell-actions">
+                    <a class="tm-action tm-action-edit" href="{{ url('organization_tag_edit', organization.slug, tag.id) }}">
+                        <i class="fa fa-pencil"></i> {{ _('Edit') }}
+                    </a>
+                    <a class="tm-action tm-action-delete" href="{{ url('organization_tag_delete', organization.slug, tag.id) }}">
+                        <i class="fa fa-trash"></i> {{ _('Delete') }}
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <form id="tm-tag-form" class="tag-dialog" style="display: none;" method="post">
+        <h3></h3>
+        <input type="text" name="name" placeholder="{{ _('Tag name') }}" autocomplete="off">
+        <p class="tag-dialog-error errornote" style="display: none;"></p>
+        <button type="submit" class="button submit">{{ _('Save') }}</button>
+    </form>
+
+    <div id="tm-confirm" class="tag-dialog" style="display: none;">
+        <h3>{{ _('Delete tag') }}</h3>
+        <p class="tm-confirm-message"></p>
+        <p class="tag-dialog-error errornote" style="display: none;"></p>
+        <div class="tag-dialog-actions">
+            <a class="button tm-confirm-cancel">{{ _('Cancel') }}</a>
+            <a class="button tm-confirm-ok">{{ _('Delete') }}</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js_media %}
+<script src="{{ static('libs/featherlight/featherlight.min.js') }}" type="text/javascript"></script>
+<script type="text/javascript">
+    $(function () {
+        // Open instantly instead of fading in an empty box first.
+        $.featherlight.defaults.openSpeed = 0;
+        var $tagRows = $('#tm-tag-rows');
+        var editUrlTemplate = {{ url('organization_tag_edit', organization.slug, 0)|htmltojs }};
+        var deleteUrlTemplate = {{ url('organization_tag_delete', organization.slug, 0)|htmltojs }};
+
+        function getRows() {
+            return $('#tm-tag-rows tr');
+        }
+
+        function getCsrfToken() {
+            var match = document.cookie.match(/(?:^|; )csrftoken=([^;]+)/);
+            return match ? decodeURIComponent(match[1]) : '';
+        }
+
+        function addTagRow(tag) {
+            var editUrl = editUrlTemplate.replace('/0/edit', '/' + tag.id + '/edit');
+            var deleteUrl = deleteUrlTemplate.replace('/0/delete', '/' + tag.id + '/delete');
+
+            var $row = $('<tr>', {
+                'data-name': tag.name.toLowerCase(),
+                'data-display-name': tag.name,
+                'data-count': 0,
+            });
+
+            var $tagCell = $('<td>', { class: 'tm-cell-tag' });
+            $tagCell.append($('<span>', { class: 'tm-chip', text: tag.name }));
+
+            var $countCell = $('<td>');
+            $countCell.append($('<span>', { class: 'tm-count-zero', text: '0' }));
+            $countCell.append($('<span>', { class: 'tm-pill-unused', text: {{ _('unused')|htmltojs }} }));
+
+            var $actionsCell = $('<td>', { class: 'tm-cell-actions' });
+            var $edit = $('<a>', { class: 'tm-action tm-action-edit', href: editUrl });
+            $edit.append($('<i>', { class: 'fa fa-pencil' })).append(' ' + {{ _('Edit')|htmltojs }});
+
+            var $delete = $('<a>', { class: 'tm-action tm-action-delete', href: deleteUrl });
+            $delete.append($('<i>', { class: 'fa fa-trash' })).append(' ' + {{ _('Delete')|htmltojs }});
+
+            $actionsCell.append($edit).append($delete);
+            $row.append($tagCell).append($countCell).append($actionsCell);
+            $tagRows.append($row);
+        }
+
+        $('#tm-search').on('input', function () {
+            var query = $(this).val().toLowerCase();
+            getRows().each(function () {
+                $(this).toggle($(this).attr('data-name').indexOf(query) !== -1);
+            });
+        });
+
+        function openTagForm(options) {
+            $.featherlight($('#tm-tag-form'), {
+                afterOpen: function () {
+                    var $form = $.featherlight.current().$content.show();
+                    var $error = $form.find('.tag-dialog-error');
+                    $form.find('h3').text(options.title);
+                    $form.find('input[name=name]').val(options.value || '').focus();
+                    $error.hide();
+
+                    $form.off('submit').on('submit', function (ev) {
+                        ev.preventDefault();
+
+                        var name = $.trim($form.find('input[name=name]').val());
+                        if (!name) {
+                            $error.text({{ _('Tag name is required.')|htmltojs }}).show();
+                            return;
+                        }
+
+                        $.ajax({
+                            type: 'POST',
+                            url: options.action,
+                            data: {
+                                name: name,
+                                csrfmiddlewaretoken: getCsrfToken(),
+                            },
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            success: function (tag) {
+                                options.onSuccess(tag);
+                                $('#tm-search').trigger('input');
+                                $.featherlight.current().close();
+                            },
+                            error: function (xhr) {
+                                var message = options.errorMessage;
+                                var errors = xhr.responseJSON && xhr.responseJSON.errors;
+                                if (errors && errors.name && errors.name.length && errors.name[0].message) {
+                                    message = errors.name[0].message;
+                                }
+                                $error.text(message).show();
+                            },
+                        });
+                    });
+                }
+            });
+        }
+
+        $('#tm-add-tag').on('click', function (e) {
+            e.preventDefault();
+            openTagForm({
+                title: {{ _('Create new tag')|htmltojs }},
+                action: $(this).attr('href'),
+                value: '',
+                errorMessage: {{ _('Could not create tag.')|htmltojs }},
+                onSuccess: function (tag) {
+                    addTagRow(tag);
+                },
+            });
+        });
+
+        $(document).on('click', '.tm-action-edit', function (e) {
+            e.preventDefault();
+            var $row = $(this).closest('tr');
+            openTagForm({
+                title: {{ _('Edit tag name')|htmltojs }},
+                action: $(this).attr('href'),
+                value: $row.attr('data-display-name') || $.trim($row.find('.tm-chip').text()),
+                errorMessage: {{ _('Could not update tag.')|htmltojs }},
+                onSuccess: function (tag) {
+                    $row.attr('data-name', tag.name.toLowerCase());
+                    $row.attr('data-display-name', tag.name);
+                    $row.find('.tm-chip').text(tag.name);
+                },
+            });
+        });
+
+        $(document).on('click', '.tm-action-delete', function (e) {
+            e.preventDefault();
+
+            var $row = $(this).closest('tr');
+            var url = $(this).attr('href');
+            var tagName = $row.attr('data-display-name') || $.trim($row.find('.tm-chip').text());
+
+            $.featherlight($('#tm-confirm'), {
+                afterOpen: function () {
+                    var $dialog = $.featherlight.current().$content.show();
+                    var $error = $dialog.find('.tag-dialog-error').hide();
+                    $dialog.find('.tm-confirm-message').text(
+                        {{ _('Delete tag "%(name)s"?', name='__name__')|htmltojs }}.replace('__name__', tagName));
+
+                    $dialog.find('.tm-confirm-cancel').off('click').on('click', function () {
+                        $.featherlight.current().close();
+                    });
+
+                    $dialog.find('.tm-confirm-ok').off('click').on('click', function () {
+                        $.ajax({
+                            type: 'POST',
+                            url: url,
+                            data: {
+                                csrfmiddlewaretoken: getCsrfToken(),
+                            },
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            success: function () {
+                                $row.remove();
+                                $('#tm-search').trigger('input');
+                                $.featherlight.current().close();
+                            },
+                            error: function () {
+                                $error.text({{ _('Could not delete tag.')|htmltojs }}).show();
+                            },
+                        });
+                    });
+                }
+            });
+        });
+
+        $('.tag-manager .table th.tm-sortable').on('click', function () {
+            var $th = $(this);
+            var key = $th.data('sort');
+            var asc = !$th.hasClass('asc');
+            $('.tag-manager .table th').removeClass('asc desc');
+            $th.addClass(asc ? 'asc' : 'desc');
+
+            var rows = getRows().get();
+            rows.sort(function (a, b) {
+                var va, vb;
+                if (key === 'count') {
+                    va = parseInt($(a).attr('data-count'), 10);
+                    vb = parseInt($(b).attr('data-count'), 10);
+                } else {
+                    va = $(a).attr('data-name');
+                    vb = $(b).attr('data-name');
+                }
+                if (va < vb) return asc ? -1 : 1;
+                if (va > vb) return asc ? 1 : -1;
+                return 0;
+            });
+
+            var $tbody = $('#tm-tag-rows');
+            $.each(rows, function (i, row) { $tbody.append(row); });
+        });
+    });
+</script>
+{% endblock %}

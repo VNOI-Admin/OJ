@@ -1,5 +1,20 @@
 {% extends "base.html" %}
 
+{% block title_row %}
+    <h2 style="display: inline-block">
+        {% if content_title %}{{ content_title }}{% else %}{{ title }}{% endif %}
+    </h2>
+    {% if organization %}
+        <span class="organization-tags">
+            <span class="organization-tag">
+                <a href="{{ organization.get_absolute_url() }}">
+                    <i class="fa fa-lock"></i> {{ organization.name }}
+                </a>
+            </span>
+        </span>
+    {% endif %}
+{% endblock %}
+
 {% block js_media %}
     {{ form.media.js }}
     {% include "leave-warning.html" %}
@@ -55,6 +70,73 @@
                     });
                 }
             });
+
+            {% if organization %}
+            // Open instantly instead of fading in an empty box first.
+            $.featherlight.defaults.openSpeed = 0;
+            var $problemTags = $('#id_tags');
+            if ($problemTags.length) {
+                var $target = $problemTags.next('.select2');
+                if (!$target.length) {
+                    $target = $problemTags;
+                }
+
+                $('<a>', {
+                    href: {{ url('organization_tag_add', organization.slug)|htmltojs }},
+                    class: 'related-widget-wrapper-link js-add-org-tag',
+                    text: {{ _('Create new tag')|htmltojs }},
+                    title: {{ _('Create new tag')|htmltojs }},
+                }).prepend($('<i>', { class: 'fa fa-plus', 'aria-hidden': 'true' })).appendTo($target.parent());
+            }
+
+            $(document).on('click', '.js-add-org-tag', function (e) {
+                e.preventDefault();
+
+                $.featherlight($('#add-org-tag-form'), {
+                    afterOpen: function () {
+                        var $form = $.featherlight.current().$content.show();
+                        var $error = $form.find('.tag-dialog-error');
+                        $form.find('input[name=name]').val('').focus();
+                        $error.hide();
+
+                        $form.off('submit').on('submit', function (ev) {
+                            ev.preventDefault();
+
+                            var name = $.trim($form.find('input[name=name]').val());
+                            if (!name) {
+                                $error.text({{ _('Tag name is required.')|htmltojs }}).show();
+                                return;
+                            }
+
+                            $.ajax({
+                                type: 'POST',
+                                url: $form.attr('action'),
+                                data: {
+                                    name: name,
+                                    csrfmiddlewaretoken: $('input[name=csrfmiddlewaretoken]').val(),
+                                },
+                                headers: {
+                                    'X-Requested-With': 'XMLHttpRequest',
+                                },
+                                success: function (tag) {
+                                    var option = new Option(tag.name, tag.id, true, true);
+                                    $problemTags.append(option).trigger('change');
+                                    $.featherlight.current().close();
+                                },
+                                error: function (xhr) {
+                                    var message = {{ _('Could not create tag.')|htmltojs }};
+                                    var errors = xhr.responseJSON && xhr.responseJSON.errors;
+                                    if (errors && errors.name && errors.name.length && errors.name[0].message) {
+                                        message = errors.name[0].message;
+                                    }
+                                    $error.text(message).show();
+                                },
+                            });
+                        });
+                    }
+                });
+            });
+            {% endif %}
         })
     </script>
 {% endblock %}
@@ -65,6 +147,32 @@
     <style>
         .hidden {
             display: none;
+        }
+
+        .related-widget-wrapper-link {
+            margin-left: 0.75em;
+            white-space: nowrap;
+        }
+
+        .related-widget-wrapper-link .fa {
+            margin-right: 0.3em;
+        }
+
+        #id_tags + .select2 {
+            min-width: 16em;
+        }
+
+        .tag-dialog h3 {
+            margin: 0 0 0.75em;
+        }
+
+        .tag-dialog input[name=name] {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .tag-dialog .submit {
+            margin-top: 1em;
         }
     </style>
 {% endblock %}
@@ -139,5 +247,14 @@
             <td style="float: right;"><input type="submit" value="{{ _('Update') }}" class="button"></td></tr>
         </table>
     </form>
+    {% if organization %}
+    <form id="add-org-tag-form" class="tag-dialog" style="display: none;"
+          action="{{ url('organization_tag_add', organization.slug) }}" method="post">
+        <h3>{{ _('Create new tag') }}</h3>
+        <input type="text" name="name" placeholder="{{ _('New tag name') }}" autocomplete="off">
+        <p class="tag-dialog-error errornote" style="display: none;"></p>
+        <button type="submit" class="button submit">{{ _('Create') }}</button>
+    </form>
+    {% endif %}
 </div>
 {% endblock %}
