@@ -59,10 +59,6 @@ def problem_update(sender, instance, **kwargs):
 
 @receiver(post_delete, sender=Problem)
 def problem_delete(sender, instance, **kwargs):
-    # The test data files, including init.yml, are not tracked by the database alone:
-    # init.yml is written straight to storage, and Django never unlinks FileFields.
-    # Judges pick up problems by globbing for init.yml, so a leftover directory keeps
-    # a deleted problem alive on the judges. Only drop it once the deletion commits.
     code = instance.code
     transaction.on_commit(lambda: problem_data_storage.delete_directory(code))
 
