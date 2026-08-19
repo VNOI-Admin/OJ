@@ -884,7 +884,7 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
     ).order_by('name')
 
     queryset = queryset.annotate(
-        _org_short_name=Subquery(_org_qs.values('short_name')[:1]),
+        _org_short_name=Subquery(_org_qs.values('name')[:1]),
         _org_slug=Subquery(_org_qs.values('slug')[:1]),
         _badge_mini=F('user__display_badge__mini'),
         _badge_name=F('user__display_badge__name'),

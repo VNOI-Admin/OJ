@@ -572,7 +572,10 @@
                 '[' + p.virtual + ']</sup>';
         }
 
-        html += '<div class="personal-info"><span>' + escapeHtml(u.name || '') + '</span></div>';
+        // Skip the full name when it just repeats the displayed username.
+        var fullName = u.name || '';
+        if (fullName.trim().toLowerCase() === (u.display_name || '').trim().toLowerCase()) fullName = '';
+        html += '<div class="personal-info"><span>' + escapeHtml(fullName) + '</span></div>';
         html += '</div>';
 
         // Right float (admin ops, org). Ghosts get no admin ops and a plain-text org.
