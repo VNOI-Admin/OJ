@@ -114,7 +114,7 @@ $('#show-personal-info-checkbox').click(function () {
                 localStorage.setItem('show-personal-info', $('.personal-info').is(':visible') ? 'true' : 'false');
             });
 
-            if (localStorage.getItem('show-personal-info') == 'true') {
+            if (localStorage.getItem('show-personal-info') == 'true' || localStorage.getItem('show-personal-info') === null) {
                 $('.personal-info').show();
                 $('#show-personal-info-checkbox').prop('checked', true);
             }
