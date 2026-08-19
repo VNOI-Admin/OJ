@@ -10,7 +10,7 @@ import judge.models.user_upload
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('judge', '0231_contest_replay_version'),
+        ('judge', '0232_organization_problem_tag'),
     ]
 
     operations = [
