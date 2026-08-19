@@ -27,8 +27,8 @@ from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateR
 from reversion import revisions
 
 from judge.forms import OrganizationForm, OrganizationProblemTagForm, QuotaGrantForm
-from judge.models import BlogPost, Comment, Contest, Language, Organization, \
-    OrganizationRequest, Problem, Profile, Submission
+from judge.models import BlogPost, Comment, Contest, Language, Organization, OrganizationRequest, \
+    Problem, Profile, Submission
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
