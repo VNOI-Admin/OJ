@@ -202,7 +202,7 @@
             <i class="fa fa-paperclip fa-fw"></i><span class="pi-name">{{ _('Attachments:') }}</span>
             <div class="pi-value">
                 {% for att in attachments %}
-                    <div><a href="{{ url('attachment_access', att.uuid) }}">{{ att.get_display_name() }}</a>
+                    <div><a href="{{ url('attachment_access', att.uuid) }}" target="_blank">{{ att.get_display_name() }}</a>
                         <span class="filesize" style="color: #888; font-size: 0.9em;">({{ att.file.size|filesizeformat }})</span>
                     </div>
                 {% endfor %}
