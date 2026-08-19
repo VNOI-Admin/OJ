@@ -653,10 +653,6 @@
         var totalAC = result.totalAC;
 
         var html = '';
-        if (data.scaled && window.CONTEST_SCALED_RANKING_NOTE) {
-            html += '<div class="scaled-ranking-note">' +
-                escapeHtml(window.CONTEST_SCALED_RANKING_NOTE) + '</div>';
-        }
         html += '<table id="ranking-table" class="users-table table striped">';
         html += buildHeader(contest, problems, renderer);
         html += '<tbody>';
