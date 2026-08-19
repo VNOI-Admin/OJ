@@ -746,6 +746,14 @@ SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission_file'
 STATIC_UPLOAD_URL_PREFIX = '/static-upload'
 STATIC_UPLOAD_MEDIA_DIR = 'static-upload'
 
+USER_UPLOAD_STORAGE_MEDIA_DIR = 'user_upload'
+USER_UPLOAD_STORAGE_INTERNAL = None
+USER_UPLOAD_ATTACHMENT_MAX_SIZE = 10 * 1024 * 1024  # 10 MB
+USER_UPLOAD_ATTACHMENT_SAFE_EXTS = {
+    'pdf', 'txt', 'zip', 'png', 'jpg', 'jpeg', 'gif', 'java', 'cpp', 'pas', 'py',
+}
+
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
