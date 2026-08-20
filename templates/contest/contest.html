@@ -310,7 +310,7 @@
                             {{ announcement.title }}
                         </td>
                         <td style="text-align: left; padding-left: 2em;">
-                            {{ announcement.description|markdown('announcement', MATH_ENGINE)|reference }}
+                            {{ announcement.description|linebreaksbr }}
                         </td>
                     </tr>
                 {% endfor %}
