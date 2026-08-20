@@ -1,0 +1,38 @@
+{# Inner tab bar of the organization usage page.
+   Storage and Credit live on the same page and are toggled client-side; Archived has its own URL.
+   Set `inner_tab` to 'archived' before including to render it from the archived page. #}
+<div class="tabs" id="inner-page-tabs" style="margin-top: 0.5em;">
+    <ul>
+        {% if inner_tab == 'archived' %}
+            <li class="tab">
+                <a href="{{ url('organization_monthly_usage', organization.slug) }}">
+                    <i class="tab-icon fa fa-hdd-o"></i>{{ _('Storage usage') }}
+                </a>
+            </li>
+            <li class="tab">
+                <a href="{{ url('organization_monthly_usage', organization.slug) }}#credit">
+                    <i class="tab-icon fa fa-line-chart"></i>{{ _('Credit usage') }}
+                </a>
+            </li>
+            <li class="tab active">
+                <span><i class="tab-icon fa fa-archive"></i>{{ _('Archived problems') }}</span>
+            </li>
+        {% else %}
+            <li class="tab">
+                <a href="#" data-tab="storage">
+                    <i class="tab-icon fa fa-hdd-o"></i>{{ _('Storage usage') }}
+                </a>
+            </li>
+            <li class="tab">
+                <a href="#" data-tab="credit">
+                    <i class="tab-icon fa fa-line-chart"></i>{{ _('Credit usage') }}
+                </a>
+            </li>
+            <li class="tab">
+                <a href="{{ url('organization_archived_problems', organization.slug) }}">
+                    <i class="tab-icon fa fa-archive"></i>{{ _('Archived problems') }}
+                </a>
+            </li>
+        {% endif %}
+    </ul>
+</div>
