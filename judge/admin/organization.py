@@ -16,6 +16,7 @@ class OrganizationForm(ModelForm):
         widgets = {
             'admins': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'about': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('organization_preview')}),
+            'notice': AdminMartorWidget(attrs={'data-markdownfy-url': reverse_lazy('organization_preview')}),
         }
 
 
@@ -59,7 +60,7 @@ class OrganizationQuotaInline(admin.TabularInline):
 class OrganizationAdmin(VersionAdmin):
     readonly_fields = ('creation_date', 'current_consumed_credit')
     fields = ('name', 'slug', 'short_name', 'is_open', 'is_unlisted', 'paid_credit', 'current_consumed_credit',
-              'about', 'logo_override_image', 'slots', 'creation_date', 'admins')
+              'about', 'notice', 'logo_override_image', 'slots', 'creation_date', 'admins')
     list_display = ('name', 'short_name', 'is_open', 'is_unlisted', 'slots', 'show_public')
     prepopulated_fields = {'slug': ('name',)}
     actions = ('recalculate_points',)
@@ -76,7 +77,7 @@ class OrganizationAdmin(VersionAdmin):
     def get_readonly_fields(self, request, obj=None):
         fields = self.readonly_fields
         if not request.user.has_perm('judge.organization_admin'):
-            return fields + ('admins', 'is_open', 'slots')
+            return fields + ('admins', 'is_open', 'slots', 'notice')
         return fields
 
     def get_queryset(self, request):

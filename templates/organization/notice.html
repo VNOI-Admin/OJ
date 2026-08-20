@@ -1,0 +1,5 @@
+{% if organization.notice %}
+    <div class="alert alert-warning organization-notice" style="margin-top: 1em;">
+        {{ organization.notice|markdown('organization-about', MATH_ENGINE)|reference|str|safe }}
+    </div>
+{% endif %}
