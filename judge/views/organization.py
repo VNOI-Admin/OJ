@@ -21,6 +21,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
@@ -34,6 +35,7 @@ from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context
+from judge.utils.problem_archive import ARCHIVE_DOWNLOAD_ENABLED
 from judge.utils.problems import user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart, get_pie_chart
@@ -47,7 +49,7 @@ from judge.views.submission import SubmissionsListBase
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
-           'KickUserWidgetView', 'OrganizationStorageDashboard',
+           'KickUserWidgetView', 'OrganizationStorageDashboard', 'OrganizationArchivedProblems',
            'OrganizationQuotaAdd', 'OrganizationQuotaDelete', 'get_organization_problem_filter',
            'OrganizationUserSolvedProblems']
 
@@ -851,16 +853,25 @@ class OrganizationUserSolvedProblems(AdminOrganizationMixin, TitleMixin, Templat
 
 
 class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin, View):
+    def get_next_url(self):
+        """The table that submitted the form, so we return to it instead of always to the storage tab."""
+        next_url = self.request.POST.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={self.request.get_host()},
+                                                        require_https=self.request.is_secure()):
+            return next_url
+        return reverse('organization_monthly_usage', args=[self.organization.slug])
+
     def post(self, request, *args, **kwargs):
         org = self.organization
+        next_url = self.get_next_url()
         problem_ids = request.POST.getlist('problem_ids')
         if not problem_ids:
             messages.warning(request, _('No problems selected for deletion.'))
-            return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
+            return HttpResponseRedirect(next_url)
 
         if len(problem_ids) > MAX_BULK_DELETE_PROBLEMS:
             messages.error(request, _('Cannot delete more than %d problems at once.') % MAX_BULK_DELETE_PROBLEMS)
-            return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
+            return HttpResponseRedirect(next_url)
 
         problems = Problem.available.filter(
             id__in=problem_ids,
@@ -895,7 +906,7 @@ class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin,
         else:
             messages.error(request, _('No valid problems could be deleted.'))
 
-        return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
+        return HttpResponseRedirect(next_url)
 
 
 class ContestListOrganization(PrivateOrganizationMixin, ContestList):
@@ -1201,4 +1212,34 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
 
         context.update(paginate_query_context(self.request))
 
+        return context
+
+
+class OrganizationArchivedProblems(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
+                                   InfinitePaginationMixin, ListView):
+    """List of problems whose data has been moved to cold storage by the archiving cron job."""
+    template_name = 'organization/archived.html'
+    context_object_name = 'problems'
+    paginate_by = MAX_BULK_DELETE_PROBLEMS
+
+    def get_title(self):
+        return _('Archived problems - %s') % self.organization.name
+
+    def get_queryset(self):
+        queryset = Problem.available.filter(
+            organization=self.organization,
+            archived_at__isnull=False,
+        ).annotate(
+            data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
+        ).prefetch_related('authors__user', 'curators__user')
+
+        last_sub_query = Submission.objects.filter(problem=OuterRef('pk')).order_by('-date').values('date')[:1]
+        queryset = queryset.annotate(last_submission_date=Subquery(last_sub_query))
+
+        return queryset.order_by('-archived_at', 'id')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['archive_enabled'] = ARCHIVE_DOWNLOAD_ENABLED
+        context.update(paginate_query_context(self.request))
         return context

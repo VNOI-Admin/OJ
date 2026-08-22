@@ -147,6 +147,8 @@ urlpatterns = [
 
         path('/download/package', problem_download.DownloadProblemFullPackage.as_view(),
              name='problem_download_full_package'),
+        path('/download/archive', problem_download.DownloadArchivedProblemData.as_view(),
+             name='problem_download_archived_data'),
 
         path('/tickets/', ticket.ProblemTicketListView.as_view(), name='problem_ticket_list'),
         path('/tickets/new', ticket.NewProblemTicketView.as_view(), name='new_problem_ticket'),
@@ -312,6 +314,8 @@ urlpatterns = [
         path('/tags/<int:pk>/delete', organization.OrganizationTagDelete.as_view(), name='organization_tag_delete'),
         path('/kick', organization.KickUserWidgetView.as_view(), name='organization_user_kick'),
         path('/usage', organization.OrganizationStorageDashboard.as_view(), name='organization_monthly_usage'),
+        path('/usage/archived', organization.OrganizationArchivedProblems.as_view(),
+             name='organization_archived_problems'),
         path('/problems/', organization.ProblemListOrganization.as_view(), name='problem_list_organization'),
         path('/problems/random/', organization.RandomProblemOrganization.as_view(),
              name='problem_random_organization'),

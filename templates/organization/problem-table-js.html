@@ -1,0 +1,89 @@
+{# Behaviour shared by the organization problem tables (usage + archived tabs). #}
+<script type="text/javascript">
+    $(document).ready(function () {
+        var currentProfileId = {{ request.profile.id if request.profile else 'null' }};
+        var isSuperuser = {{ 'true' if request.user.is_superuser else 'false' }};
+
+        function canDelete($el) {
+            var authorIds = $el.data('author-ids');
+            return isSuperuser || (currentProfileId && authorIds.indexOf(currentProfileId) !== -1);
+        }
+
+        // Disable checkboxes for problems the user cannot delete
+        $('.problem-select-checkbox').each(function () {
+            if (!canDelete($(this))) {
+                $(this).prop('disabled', true).css('opacity', '0.4');
+                $(this).wrap('<span style="position:relative;display:inline-block;">');
+                $(this).after($('<span class="no-delete-overlay" style="position:absolute;inset:0;cursor:not-allowed;">')
+                              .attr('title', {{ _('Cannot delete problems from other authors.')|htmltojs }}));
+            }
+        });
+
+        $(document).on('click', '.no-delete-overlay', function () {
+            alert({{ _('Cannot delete problems from other authors.')|htmltojs }});
+        });
+
+        // Select All — skips disabled checkboxes
+        $('#select-all-checkbox').change(function () {
+            var checked = this.checked;
+            $('.problem-select-checkbox:not(:disabled)').each(function () {
+                this.checked = checked;
+            });
+            updateDeleteButtonState();
+        });
+
+        $('.problem-select-checkbox').change(function () {
+            var selectable = $('.problem-select-checkbox:not(:disabled)');
+            var allChecked = selectable.filter(':checked').length === selectable.length && selectable.length > 0;
+            $('#select-all-checkbox').prop('checked', allChecked);
+            updateDeleteButtonState();
+        });
+
+        function updateDeleteButtonState() {
+            var checkedCount = $('.problem-select-checkbox:checked').length;
+            $('#bulk-delete-btn').prop('disabled', checkedCount === 0);
+            $('#selected-count-badge').text(checkedCount);
+        }
+
+        // Submitting bulk delete with confirmation
+        $('#bulk-delete-btn').click(function (e) {
+            e.preventDefault();
+            var checkedCount = $('.problem-select-checkbox:checked').length;
+            if (checkedCount === 0) return;
+
+            if (confirm({{ _('Are you sure you want to delete the selected problems? This action cannot be undone.')|htmltojs }})) {
+                var $form = $('<form>')
+                    .attr('method', 'POST')
+                    .attr('action', "{{ url('organization_problems_bulk_delete', organization.slug) }}");
+
+                $form.append($('<input>')
+                    .attr('type', 'hidden')
+                    .attr('name', 'csrfmiddlewaretoken')
+                    .attr('value', $.cookie('csrftoken')));
+
+                // Come back to whichever table submitted the form.
+                $form.append($('<input>')
+                    .attr('type', 'hidden')
+                    .attr('name', 'next')
+                    .attr('value', window.location.pathname + window.location.search));
+
+                $('.problem-select-checkbox:checked').each(function () {
+                    $form.append($('<input>')
+                        .attr('type', 'hidden')
+                        .attr('name', 'problem_ids')
+                        .attr('value', $(this).val()));
+                });
+
+                $('body').append($form);
+                $form.submit();
+            }
+        });
+
+        // Show download/delete buttons only for authors and superusers
+        $('.delete-btn').each(function () {
+            if (canDelete($(this))) {
+                $(this).show();
+            }
+        });
+    });
+</script>

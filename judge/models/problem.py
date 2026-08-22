@@ -244,6 +244,8 @@ class Problem(models.Model):
                                                        help_text=_('What testcase result should be showed to users?'))
 
     deleted_at = models.DateTimeField(verbose_name=_('deleted at'), null=True, db_index=True)
+    archived_at = models.DateTimeField(verbose_name=_('archived at'), null=True, blank=True,
+                                       help_text=_("When set, this problem's data has been moved to cold storage."))
 
     objects = ProblemManager()
     tickets = GenericRelation('Ticket')
@@ -632,6 +634,10 @@ class Problem(models.Model):
     def is_deleted(self):
         return self.deleted_at is not None
 
+    @property
+    def is_archived(self):
+        return self.archived_at is not None
+
     def mark_as_deleted(self, invalidate_storage_cache=True):
         """Soft-delete this problem. Use the garbage collector to permanently remove it after the grace period."""
         self.deleted_at = timezone.now()
@@ -660,6 +666,8 @@ class Problem(models.Model):
         )
         indexes = [
             models.Index(fields=['is_public', 'is_organization_private', '-date']),
+            # The archived problem list is always scoped to one organization.
+            models.Index(fields=['organization', '-archived_at']),
         ]
         verbose_name = _('problem')
         verbose_name_plural = _('problems')

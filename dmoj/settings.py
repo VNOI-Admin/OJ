@@ -232,6 +232,11 @@ OJ_REQUESTS_TIMEOUT = 5  # in seconds
 
 OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
 
+# External service holding the archived data of problems that were moved to cold storage.
+# GET <URL>?problem=<code> is expected to return a presigned S3 URL for that problem's archive.
+VNOJ_PROBLEM_ARCHIVE_SERVICE_URL = None
+VNOJ_PROBLEM_ARCHIVE_SERVICE_TOKEN = None
+
 # Urls of discord webhook.
 # https://support.discord.com/hc/en-us/articles/228383668-Intro-to-Webhooks
 DISCORD_WEBHOOK = {
