@@ -1226,11 +1226,10 @@ class OrganizationArchivedProblems(LoginRequiredMixin, TitleMixin, AdminOrganiza
         return _('Archived problems - %s') % self.organization.name
 
     def get_queryset(self):
+        # No data_size annotation: the test data of an archived problem is gone from local storage.
         queryset = Problem.available.filter(
             organization=self.organization,
             archived_at__isnull=False,
-        ).annotate(
-            data_size=Coalesce(F('data_files__zipfile_size'), Value(0)),
         ).prefetch_related('authors__user', 'curators__user')
 
         last_sub_query = Submission.objects.filter(problem=OuterRef('pk')).order_by('-date').values('date')[:1]

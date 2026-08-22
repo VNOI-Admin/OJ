@@ -21,7 +21,7 @@
             <th>{{ _('Problem Code') }}</th>
             <th>{{ _('Problem Name') }}</th>
             <th>{{ _('Authors') }}</th>
-            <th>{{ _('Total Size') }}</th>
+            {% if not archived %}<th>{{ _('Total Size') }}</th>{% endif %}
             <th>{{ _('Last Submission') }}</th>
             {% if archived %}<th>{{ _('Archived At') }}</th>{% endif %}
             <th>{{ _('Download') }}</th>
@@ -45,15 +45,23 @@
             <td>
                 {{ link_users((problem.authors.all()|list + problem.curators.all()|list)|unique(attribute='id')) }}
             </td>
+            {% if not archived %}
             <td class="size-cell">
                 {{ problem.data_size|filesizeformat }}
             </td>
+            {% endif %}
             <td>
-                {{ problem.last_submission_date|date("Y-m-d H:i:s") if problem.last_submission_date else '—' }}
+                {% if problem.last_submission_date %}
+                    <span title="{{ problem.last_submission_date|date("Y-m-d H:i:s") }}">
+                        {{ problem.last_submission_date|time_ago }}
+                    </span>
+                {% else %}—{% endif %}
             </td>
             {% if archived %}
             <td>
-                {{ problem.archived_at|date("Y-m-d H:i:s") }}
+                <span title="{{ problem.archived_at|date("Y-m-d H:i:s") }}">
+                    {{ problem.archived_at|time_ago }}
+                </span>
             </td>
             {% endif %}
             <td>
@@ -94,7 +102,7 @@
         </tr>
         {% else %}
         <tr>
-            <td colspan="{{ 9 if archived else 8 }}" style="text-align: center; padding: 2em; color: #999;">
+            <td colspan="8" style="text-align: center; padding: 2em; color: #999;">
                 {% if archived %}
                     {{ _('No archived problems for this organization.') }}
                 {% else %}
