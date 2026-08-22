@@ -10,7 +10,7 @@ import boto3
 
 # Allow direct execution from a source checkout.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from judge.utils.problem_releases import activate_release, release_key, verify_sha256
+from judge.utils.problem_releases import activate_release, release_key, verify_sha256  # noqa: E402
 
 
 def main():
