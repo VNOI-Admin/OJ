@@ -337,8 +337,7 @@ class PolygonImporter:
         except Exception:
             # Remove imported images
             for image_url in self.meta['image_cache'].values():
-                path = default_storage.path(os.path.join(settings.MARTOR_UPLOAD_MEDIA_DIR, os.path.basename(image_url)))
-                os.remove(path)
+                default_storage.delete(os.path.join(settings.MARTOR_UPLOAD_MEDIA_DIR, os.path.basename(image_url)))
 
             raise
         finally:

@@ -313,10 +313,11 @@ class SubmissionSourceDownload(SubmissionDetailBase):
             response['Content-Type'] = 'application/octet-stream'
             response['Content-Disposition'] = 'attachment; filename=%s_%s_%s.%s' % (problem_code, username, id, ext)
 
-            url_path = submission.source.source
-            file_path = default_storage.path(os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, problem_code,
-                                                          str(user_id), os.path.basename(url_path)))
-            add_file_response(request, response, url_path, file_path)
+            source_name = submission.source.source
+            url_path = None if getattr(settings, 'USE_R2_MEDIA', False) else source_name
+            file_path = os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR, problem_code,
+                                     str(user_id), os.path.basename(source_name))
+            add_file_response(request, response, url_path, file_path, default_storage)
 
             return response
         except PermissionDenied:

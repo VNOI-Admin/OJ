@@ -8,6 +8,7 @@ django-social-share
 django-sortedm2m>=3.1.0
 django-impersonate
 django-redis
+django-storages[s3]>=1.14
 mysqlclient
 dmoj-wpadmin @ git+https://github.com/DMOJ/dmoj-wpadmin.git
 lxml

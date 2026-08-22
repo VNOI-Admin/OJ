@@ -1,0 +1,163 @@
+name: cd
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+    branches: [deploy]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  build:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.meta.outputs.image }}
+    steps:
+      - name: Checkout tested commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          submodules: recursive
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/setup-buildx-action@v3
+      - name: Set image tag
+        id: meta
+        shell: bash
+        run: |
+          repo="${GITHUB_REPOSITORY,,}"
+          sha="${{ github.event.workflow_run.head_sha || github.sha }}"
+          echo "image=${REGISTRY}/${repo}:sha-${sha:0:7}" >> "$GITHUB_OUTPUT"
+          echo "latest=${REGISTRY}/${repo}:latest" >> "$GITHUB_OUTPUT"
+      - name: Build and push image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.meta.outputs.image }}
+            ${{ steps.meta.outputs.latest }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - name: Checkout deployment config
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Install SSH key
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H '${{ secrets.DEPLOY_HOST }}' >> ~/.ssh/known_hosts
+      - name: Deploy image
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ${{ needs.build.outputs.image }}
+          PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ vars.R2_ACCOUNT_ID }}
+          R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
+          R2_MEDIA_BUCKET: ${{ vars.R2_MEDIA_BUCKET }}
+          R2_PROBLEMS_BUCKET: ${{ vars.R2_PROBLEMS_BUCKET }}
+          R2_BACKUPS_BUCKET: ${{ vars.R2_BACKUPS_BUCKET }}
+          R2_MEDIA_CUSTOM_DOMAIN: ${{ vars.R2_MEDIA_CUSTOM_DOMAIN }}
+          R2_MEDIA_PRIVATE: ${{ vars.R2_MEDIA_PRIVATE }}
+          USE_R2_MEDIA: ${{ vars.USE_R2_MEDIA }}
+        run: |
+          R2_ENV="$(printf '%s\n' \
+            "R2_ACCESS_KEY_ID=$R2_ACCESS_KEY_ID" \
+            "R2_SECRET_ACCESS_KEY=$R2_SECRET_ACCESS_KEY" \
+            "R2_ACCOUNT_ID=$R2_ACCOUNT_ID" \
+            "R2_ENDPOINT_URL=$R2_ENDPOINT_URL" \
+            "R2_MEDIA_BUCKET=$R2_MEDIA_BUCKET" \
+            "R2_PROBLEMS_BUCKET=$R2_PROBLEMS_BUCKET" \
+            "R2_BACKUPS_BUCKET=$R2_BACKUPS_BUCKET" \
+            "R2_MEDIA_CUSTOM_DOMAIN=$R2_MEDIA_CUSTOM_DOMAIN" \
+            "R2_MEDIA_PRIVATE=$R2_MEDIA_PRIVATE" \
+            "USE_R2_MEDIA=$USE_R2_MEDIA")"
+          ENV_B64="$(printf '%s\n%s' "$PRODUCTION_ENV" "$R2_ENV" | base64 -w0)"
+          COMPOSE_B64="$(base64 -w0 docker-compose.production.yml)"
+          {
+            printf '%s\n' "$GHCR_TOKEN"
+            printf '%s\n' "$ENV_B64"
+            printf '%s\n' "$COMPOSE_B64"
+            cat <<'REMOTE_SCRIPT'
+          set -euo pipefail
+
+          DEPLOY_DIR=/tmp/thinkcode-deploy
+          COMPOSE_FILE="$DEPLOY_DIR/docker-compose.production.yml"
+          ENV_FILE="$DEPLOY_DIR/production.env"
+          STATIC_DIR=/var/www/thinkcodeoj/static
+          PASSTHROUGH_DIR=/var/www/thinkcodeoj/static-passthrough
+          ICONS_DIR=/var/www/thinkcodeoj/icons
+          container=""
+
+          cleanup() {
+            if [ -n "$container" ]; then
+              docker rm -f "$container" >/dev/null 2>&1 || true
+            fi
+            rm -rf "$DEPLOY_DIR"
+          }
+
+          mkdir -p "$DEPLOY_DIR"
+          chmod 700 "$DEPLOY_DIR"
+          printf '%s' "$COMPOSE_B64" | base64 -d > "$COMPOSE_FILE"
+          printf '%s' "$ENV_B64" | base64 -d > "$ENV_FILE"
+          chmod 600 "$ENV_FILE"
+          trap cleanup EXIT
+
+          export IMAGE_TAG="$1"
+          export DEPLOY_ENV_FILE="$ENV_FILE"
+
+          docker pull "$IMAGE_TAG"
+          docker run --rm --network host --env-file "$ENV_FILE" \
+            "$IMAGE_TAG" python3 manage.py check --deploy --fail-level ERROR
+          docker run --rm --network host --env-file "$ENV_FILE" \
+            "$IMAGE_TAG" python3 manage.py migrate --noinput
+
+          mkdir -p "$STATIC_DIR" "$PASSTHROUGH_DIR" "$ICONS_DIR"
+          container="$(docker create "$IMAGE_TAG")"
+          docker cp "$container:/site/static/." "$STATIC_DIR/"
+          docker cp "$container:/site/502.html" "$PASSTHROUGH_DIR/502.html"
+          docker cp "$container:/site/robots.txt" "$PASSTHROUGH_DIR/robots.txt"
+          docker cp "$container:/site/resources/icons/." "$ICONS_DIR/"
+          docker rm -f "$container" >/dev/null
+          container=""
+          chmod -R 777 "$STATIC_DIR"
+
+          docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" down --remove-orphans
+          docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" up -d --remove-orphans
+          docker compose -f "$COMPOSE_FILE" --env-file "$ENV_FILE" ps
+          REMOTE_SCRIPT
+          } | ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes \
+            '${{ secrets.DEPLOY_USER }}@${{ secrets.DEPLOY_HOST }}' \
+            "read -r token; read -r ENV_B64; read -r COMPOSE_B64; printf '%s\\n' \"\$token\" | docker login ghcr.io -u '${{ github.actor }}' --password-stdin; export ENV_B64 COMPOSE_B64; bash -se -- '$IMAGE'"
+      - name: Remove SSH key
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
