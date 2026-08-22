@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import re
+import shutil
 import zipfile
 
 from celery import shared_task
@@ -132,11 +133,10 @@ def prepare_contest_data(self, contest_id, options):
             if file_only:
                 # Get the basename of the source as it is an URL
                 filename = os.path.basename(source)
-                data_file.write(
-                    default_storage.path(os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR,
-                                         problem, str(user_id), filename)),
-                    path,
-                )
+                source_name = os.path.join(settings.SUBMISSION_FILE_UPLOAD_MEDIA_DIR,
+                                           problem, str(user_id), filename)
+                with default_storage.open(source_name, 'rb') as source, data_file.open(path, 'w') as target:
+                    shutil.copyfileobj(source, target)
                 pass
             else:
                 data_file.writestr(path, source)

@@ -1,0 +1,8 @@
+[Unit]
+Description=Upload ThinkCode MariaDB backup to Cloudflare R2
+After=mariadb.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=/etc/thinkcode/r2-backup.env
+ExecStart=/usr/local/bin/thinkcode-backup-mariadb-to-r2

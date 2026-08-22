@@ -79,8 +79,29 @@ jobs:
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE: ${{ needs.build.outputs.image }}
           PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_ACCOUNT_ID: ${{ vars.R2_ACCOUNT_ID }}
+          R2_ENDPOINT_URL: ${{ vars.R2_ENDPOINT_URL }}
+          R2_MEDIA_BUCKET: ${{ vars.R2_MEDIA_BUCKET }}
+          R2_PROBLEMS_BUCKET: ${{ vars.R2_PROBLEMS_BUCKET }}
+          R2_BACKUPS_BUCKET: ${{ vars.R2_BACKUPS_BUCKET }}
+          R2_MEDIA_CUSTOM_DOMAIN: ${{ vars.R2_MEDIA_CUSTOM_DOMAIN }}
+          R2_MEDIA_PRIVATE: ${{ vars.R2_MEDIA_PRIVATE }}
+          USE_R2_MEDIA: ${{ vars.USE_R2_MEDIA }}
         run: |
-          ENV_B64="$(printf '%s' "$PRODUCTION_ENV" | base64 -w0)"
+          R2_ENV="$(printf '%s\n' \
+            "R2_ACCESS_KEY_ID=$R2_ACCESS_KEY_ID" \
+            "R2_SECRET_ACCESS_KEY=$R2_SECRET_ACCESS_KEY" \
+            "R2_ACCOUNT_ID=$R2_ACCOUNT_ID" \
+            "R2_ENDPOINT_URL=$R2_ENDPOINT_URL" \
+            "R2_MEDIA_BUCKET=$R2_MEDIA_BUCKET" \
+            "R2_PROBLEMS_BUCKET=$R2_PROBLEMS_BUCKET" \
+            "R2_BACKUPS_BUCKET=$R2_BACKUPS_BUCKET" \
+            "R2_MEDIA_CUSTOM_DOMAIN=$R2_MEDIA_CUSTOM_DOMAIN" \
+            "R2_MEDIA_PRIVATE=$R2_MEDIA_PRIVATE" \
+            "USE_R2_MEDIA=$USE_R2_MEDIA")"
+          ENV_B64="$(printf '%s\n%s' "$PRODUCTION_ENV" "$R2_ENV" | base64 -w0)"
           COMPOSE_B64="$(base64 -w0 docker-compose.production.yml)"
           {
             printf '%s\n' "$GHCR_TOKEN"

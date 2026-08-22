@@ -86,6 +86,28 @@ DMOJ_CANONICAL = os.environ.get('DMOJ_CANONICAL', 'oj.thinkcode.vn')
 MEDIA_ROOT = os.environ.get('MEDIA_ROOT', '/media')
 DMOJ_PROBLEM_DATA_ROOT = os.environ.get('DMOJ_PROBLEM_DATA_ROOT', '/problems')
 
+USE_R2_MEDIA = os.environ.get('USE_R2_MEDIA', 'False') == 'True'
+if USE_R2_MEDIA:
+    STORAGES = {
+        'default': {
+            'BACKEND': 'storages.backends.s3.S3Storage',
+            'OPTIONS': {
+                'access_key': os.environ['R2_ACCESS_KEY_ID'],
+                'secret_key': os.environ['R2_SECRET_ACCESS_KEY'],
+                'bucket_name': os.environ['R2_MEDIA_BUCKET'],
+                'endpoint_url': os.environ['R2_ENDPOINT_URL'],
+                'region_name': 'auto',
+                'addressing_style': 'path',
+                'custom_domain': os.environ.get('R2_MEDIA_CUSTOM_DOMAIN') or None,
+                'querystring_auth': os.environ.get('R2_MEDIA_PRIVATE', 'False') == 'True',
+                'default_acl': None,
+            },
+        },
+        'staticfiles': {
+            'BACKEND': 'django.contrib.staticfiles.storage.StaticFilesStorage',
+        },
+    }
+
 # bridged runs in its own container; site/celery talk to it over the Docker
 # host network (see docker-compose.production.yml, network_mode: host).
 BRIDGED_JUDGE_ADDRESS = [(os.environ.get('BRIDGED_JUDGE_HOST', '0.0.0.0'), int(os.environ.get('BRIDGED_JUDGE_PORT', '9999')))]

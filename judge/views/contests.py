@@ -12,6 +12,8 @@ from django.contrib.auth.context_processors import PermWrapper
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
+from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage
 from django.db import IntegrityError
 from django.db.models import BooleanField, Case, Count, F, FloatField, IntegerField, Max, Min, OuterRef, Q, Subquery, \
     Sum, Value, When
@@ -1267,10 +1269,9 @@ class ContestParticipationDisqualify(ContestMixin, SingleObjectMixin, View):
         return HttpResponseRedirect(reverse('contest_ranking', args=(self.object.key,)))
 
 
-def contest_replay_data_path(contest):
-    replay_dir = os.path.join(settings.MEDIA_ROOT, settings.CONTEST_REPLAY_MEDIA_DIR)
+def contest_replay_data_name(contest):
     filename = f'{contest.key}_v{contest.replay_version}.json'
-    return os.path.join(replay_dir, filename), filename
+    return os.path.join(settings.CONTEST_REPLAY_MEDIA_DIR, filename), filename
 
 
 def build_contest_replay_data(contest):
@@ -1314,13 +1315,12 @@ def build_contest_replay_data(contest):
 
 
 def write_contest_replay_data(contest, data):
-    filepath, filename = contest_replay_data_path(contest)
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    tmp = filepath + '.tmp'
-    with open(tmp, 'w') as f:
-        json.dump(data, f, separators=(',', ':'))
-    os.replace(tmp, filepath)
-    return filepath, filename
+    storage_name, filename = contest_replay_data_name(contest)
+    content = json.dumps(data, separators=(',', ':')).encode()
+    if default_storage.exists(storage_name):
+        default_storage.delete(storage_name)
+    default_storage.save(storage_name, ContentFile(content))
+    return storage_name, filename
 
 
 class ContestReplayData(ContestMixin, SingleObjectMixin, View):
@@ -1334,23 +1334,23 @@ class ContestReplayData(ContestMixin, SingleObjectMixin, View):
         if version != contest.replay_version:
             raise Http404()
 
-        filepath, filename = self.prepare_replay_data(contest)
+        storage_name, filename = self.prepare_replay_data(contest)
 
-        if getattr(settings, 'DMOJ_CONTEST_REPLAY_INTERNAL', None):
+        if not getattr(settings, 'USE_R2_MEDIA', False) and getattr(settings, 'DMOJ_CONTEST_REPLAY_INTERNAL', None):
             url_path = '%s/%s' % (settings.DMOJ_CONTEST_REPLAY_INTERNAL, filename)
         else:
             url_path = None
 
         response = HttpResponse(content_type='application/json')
         response['Cache-Control'] = 'public, max-age=31536000, immutable'
-        add_file_response(request, response, url_path, filepath)
+        add_file_response(request, response, url_path, storage_name, default_storage)
         return response
 
     def prepare_replay_data(self, contest):
-        filepath, filename = contest_replay_data_path(contest)
-        if not os.path.exists(filepath):
-            write_contest_replay_data(contest, build_contest_replay_data(contest))
-        return filepath, filename
+        storage_name, filename = contest_replay_data_name(contest)
+        if not default_storage.exists(storage_name):
+            return write_contest_replay_data(contest, build_contest_replay_data(contest))
+        return storage_name, filename
 
 
 class ContestMossMixin(ContestMixin, PermissionRequiredMixin):

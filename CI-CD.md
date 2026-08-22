@@ -101,6 +101,36 @@ no-port-forwarding,no-X11-forwarding,no-agent-forwarding,no-pty ssh-ed25519 AAAA
 Private key chi ton tai trong GitHub Secret. Workflow tao file key tam tren
 runner va xoa file nay sau deploy.
 
+## R2 Storage
+
+R2 credentials are runtime-only. Do not put them in the Dockerfile, image,
+repository, or a persistent server compose file. The application reads the
+following variables from `PRODUCTION_ENV` when `USE_R2_MEDIA=True`:
+
+```dotenv
+USE_R2_MEDIA=False
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
+R2_ENDPOINT_URL=https://<account-id>.r2.cloudflarestorage.com
+R2_MEDIA_BUCKET=thinkcode-media
+R2_MEDIA_CUSTOM_DOMAIN=media.oj.thinkcode.vn
+R2_MEDIA_PRIVATE=False
+R2_PROBLEMS_BUCKET=thinkcode-problems
+```
+
+MariaDB backups use a separate, backup-only R2 credential and the
+`deploy/thinkcode-r2-backup.service` and `.timer` templates. The live database
+remains on MariaDB; the backup job only runs `mariadb-dump --single-transaction`
+and uploads a compressed copy.
+
+Problem releases use `python manage.py publish_problem_release CODE VERSION`.
+Judges use `scripts/sync_problem_release.py` with a read-only problems-bucket
+credential. R2 is never mounted as the judge filesystem.
+
+Rollback for media is `USE_R2_MEDIA=False` followed by a normal CD deployment.
+The judge rollback is to keep the last verified local `/problems/<code>` tree;
+the sync script refuses checksum failures before replacing it.
+
 ## Runtime Config Tam
 
 Moi lan deploy, `cd.yml`:
