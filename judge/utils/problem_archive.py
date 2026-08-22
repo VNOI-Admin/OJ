@@ -9,7 +9,6 @@ logger = logging.getLogger('judge.problem.archive')
 
 
 ARCHIVE_SERVICE_URL = settings.VNOJ_PROBLEM_ARCHIVE_SERVICE_URL
-ARCHIVE_DOWNLOAD_ENABLED = ARCHIVE_SERVICE_URL is not None
 
 # The archive service is not part of this codebase and its exact response shape is not pinned down yet,
 # so every assumption about it lives in `_extract_url` and nowhere else.
@@ -35,7 +34,7 @@ def _extract_url(data):
 
 def get_archive_download_url(problem_code: str) -> str:
     """Ask the archive service for a presigned URL to the archived data of `problem_code`."""
-    if not ARCHIVE_DOWNLOAD_ENABLED:
+    if not ARCHIVE_SERVICE_URL:
         raise ArchiveServiceError('the problem archive service is not configured')
 
     headers = {}

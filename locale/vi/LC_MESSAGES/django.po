@@ -1103,40 +1103,6 @@ msgstr "{time}"
 msgid "on {time}"
 msgstr "vào lúc {time}"
 
-#: judge/jinja2/datetime.py:39
-#, python-format
-msgid "%(count)d year ago"
-msgid_plural "%(count)d years ago"
-msgstr[0] "%(count)d năm trước"
-
-#: judge/jinja2/datetime.py:40
-#, python-format
-msgid "%(count)d month ago"
-msgid_plural "%(count)d months ago"
-msgstr[0] "%(count)d tháng trước"
-
-#: judge/jinja2/datetime.py:41
-#, python-format
-msgid "%(count)d day ago"
-msgid_plural "%(count)d days ago"
-msgstr[0] "%(count)d ngày trước"
-
-#: judge/jinja2/datetime.py:42
-#, python-format
-msgid "%(count)d hour ago"
-msgid_plural "%(count)d hours ago"
-msgstr[0] "%(count)d giờ trước"
-
-#: judge/jinja2/datetime.py:43
-#, python-format
-msgid "%(count)d minute ago"
-msgid_plural "%(count)d minutes ago"
-msgstr[0] "%(count)d phút trước"
-
-#: judge/jinja2/datetime.py:59
-msgid "just now"
-msgstr "vừa xong"
-
 #: judge/jinja2/filesize.py:33
 #, python-format
 msgid "%s B"
@@ -7212,6 +7178,18 @@ msgstr "Tổng kích thước"
 #: templates/organization/usage.html:417
 msgid "Last Submission"
 msgstr "Lần nộp cuối"
+
+#: templates/organization/problem-table.html:27
+msgid "Archived"
+msgstr "Đã lưu trữ"
+
+#: templates/organization/problem-table.html:28
+msgid "Deletes In"
+msgstr "Xoá sau"
+
+#: templates/organization/problem-table-js.html:99
+msgid "any moment now"
+msgstr "bất cứ lúc nào"
 
 #: templates/organization/usage.html:418 templates/submission/status.html:74
 msgid "Download"

@@ -35,7 +35,6 @@ from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context
-from judge.utils.problem_archive import ARCHIVE_DOWNLOAD_ENABLED
 from judge.utils.problems import user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart, get_pie_chart
@@ -1235,10 +1234,10 @@ class OrganizationArchivedProblems(LoginRequiredMixin, TitleMixin, AdminOrganiza
         last_sub_query = Submission.objects.filter(problem=OuterRef('pk')).order_by('-date').values('date')[:1]
         queryset = queryset.annotate(last_submission_date=Subquery(last_sub_query))
 
-        return queryset.order_by('-archived_at', 'id')
+        return queryset.order_by('archived_at', 'id')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['archive_enabled'] = ARCHIVE_DOWNLOAD_ENABLED
+        context['archive_retention_days'] = settings.VNOJ_PROBLEM_ARCHIVE_RETENTION.days
         context.update(paginate_query_context(self.request))
         return context

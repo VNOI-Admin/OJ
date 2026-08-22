@@ -274,6 +274,9 @@ DMOJ_PROBLEM_HOT_PROBLEM_COUNT = 7
 
 # Grace period before a soft-deleted problem is permanently removed
 VNOJ_PROBLEM_DELETION_GRACE_PERIOD = datetime.timedelta(days=7)
+# How long archived data is kept in cold storage before the archiving job drops it for good.
+# Only used to tell users when their archived problems are due to expire; the job owns the real schedule.
+VNOJ_PROBLEM_ARCHIVE_RETENTION = datetime.timedelta(days=180)
 # Maximum time the garbage collection task is allowed to run per invocation
 VNOJ_PROBLEM_GARBAGE_COLLECTOR_TIME_LIMIT = datetime.timedelta(hours=1)
 VNOJ_PROBLEM_GARBAGE_COLLECTOR_CRONTAB_KWARGS = {'minute': 0, 'hour': 0}

@@ -14,7 +14,7 @@
     </button>
 </div>
 
-<table class="storage-table table">
+<table class="storage-table table"{% if archived %} data-archive-retention-days="{{ archive_retention_days }}"{% endif %}>
     <thead>
         <tr>
             <th style="width: 30px; text-align: center;"></th>
@@ -23,7 +23,10 @@
             <th>{{ _('Authors') }}</th>
             {% if not archived %}<th>{{ _('Total Size') }}</th>{% endif %}
             <th>{{ _('Last Submission') }}</th>
-            {% if archived %}<th>{{ _('Archived At') }}</th>{% endif %}
+            {% if archived %}
+                <th>{{ _('Archived') }}</th>
+                <th>{{ _('Deletes In') }}</th>
+            {% endif %}
             <th>{{ _('Download') }}</th>
             <th>{{ _('Delete') }}</th>
         </tr>
@@ -50,38 +53,31 @@
                 {{ problem.data_size|filesizeformat }}
             </td>
             {% endif %}
+            {# Timestamps are rendered absolute and rewritten to "3 days ago" by the shared table JS. #}
             <td>
                 {% if problem.last_submission_date %}
-                    <span title="{{ problem.last_submission_date|date("Y-m-d H:i:s") }}">
-                        {{ problem.last_submission_date|time_ago }}
-                    </span>
+                    <span class="time-rel time-ago" data-iso="{{ problem.last_submission_date|date("c") }}"
+                    >{{ problem.last_submission_date|date("Y-m-d H:i:s") }}</span>
                 {% else %}—{% endif %}
             </td>
             {% if archived %}
             <td>
-                <span title="{{ problem.archived_at|date("Y-m-d H:i:s") }}">
-                    {{ problem.archived_at|time_ago }}
-                </span>
+                <span class="time-rel time-ago" data-iso="{{ problem.archived_at|date("c") }}"
+                >{{ problem.archived_at|date("Y-m-d H:i:s") }}</span>
+            </td>
+            <td>
+                {# Filled in by the table JS: archived_at plus the retention window on the table element. #}
+                <span class="time-rel time-left" data-iso="{{ problem.archived_at|date("c") }}"></span>
             </td>
             {% endif %}
             <td>
-                {# The download anchor carries `delete-btn` too: one JS loop reveals both action buttons. #}
                 {% if archived %}
-                    {% if archive_enabled %}
-                        <a href="{{ url('problem_download_archived_data', problem.code) }}"
-                           class="btn btn-xs delete-btn"
-                           data-author-ids="{{ author_ids(problem) }}"
-                           style="display:none;">
-                            <i class="fa fa-download"></i> {{ _('Download archived data') }}
-                        </a>
-                    {% else %}
-                        <span class="btn btn-xs delete-btn btn-archive-disabled"
-                              data-author-ids="{{ author_ids(problem) }}"
-                              title="{{ _('The problem archive service is not configured.') }}"
-                              style="display:none;">
-                            <i class="fa fa-download"></i> {{ _('Download archived data') }}
-                        </span>
-                    {% endif %}
+                    <a href="{{ url('problem_download_archived_data', problem.code) }}"
+                        class="btn btn-xs delete-btn"
+                        data-author-ids="{{ author_ids(problem) }}"
+                        style="display:none;">
+                        <i class="fa fa-download"></i> {{ _('Download archived data') }}
+                    </a>
                 {% else %}
                     <a href="{{ url('problem_download_full_package', problem.code) }}"
                        class="btn btn-xs delete-btn"
@@ -102,7 +98,7 @@
         </tr>
         {% else %}
         <tr>
-            <td colspan="8" style="text-align: center; padding: 2em; color: #999;">
+            <td colspan="{{ 9 if archived else 8 }}" style="text-align: center; padding: 2em; color: #999;">
                 {% if archived %}
                     {{ _('No archived problems for this organization.') }}
                 {% else %}
