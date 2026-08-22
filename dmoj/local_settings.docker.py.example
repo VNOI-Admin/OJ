@@ -1,20 +1,9 @@
-# Template for the REAL dmoj/local_settings.py used in the Dockerized
-# production deployment of ThinkCode OJ.
+# Production dmoj/local_settings.py template for the Docker image.
 #
-# This file itself is checked into git (it has no secrets -- it just reads
-# environment variables). The actual file used in production lives ONLY on
-# the server, at /home/opencode/thinkcode-deploy/local_settings.py, and is
-# bind-mounted read-only into every container (site/bridged/celery/wsevent)
-# at /site/dmoj/local_settings.py by docker-compose.production.yml.
-#
-# It is copied from this template once during initial server setup and then
-# never touched by deploys again -- deploys only ever change the Docker
-# image (source code), never this file or the secrets it reads.
-#
-# All values come from environment variables passed via docker-compose's
-# `env_file: /home/opencode/thinkcode-deploy/.env` (see .env.example next to
-# this file, or thinkcode/.env.production for the actual values currently
-# in use).
+# Checked into git with no secrets -- it only reads environment variables.
+# Dockerfile copies this file to dmoj/local_settings.py at build time.
+# Runtime values come from PRODUCTION_ENV (GitHub Actions secret), written
+# to a temporary env file on each deploy and passed through Compose.
 
 import os
 

@@ -1,0 +1,62 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install lint dependencies
+        run: pip install "setuptools<82" flake8 flake8-import-order flake8-future-import flake8-commas flake8-logging-format flake8-quotes
+      - name: Run flake8
+        run: flake8
+      - name: Check Python syntax
+        run: python -m compileall -q .
+
+  unit:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: dmoj
+        ports:
+          - 13306:3306
+        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependencies
+        run: |
+          pip install wheel
+          pip install -r requirements.txt
+          pip install coverage
+          cp .ci.settings.py dmoj/local_settings.py
+      - name: Compile JavaScript translations
+        run: python manage.py compilejsi18n
+      - name: Run Django checks
+        run: |
+          python manage.py check
+          python manage.py check --deploy --fail-level ERROR
+      - name: Run tests
+        run: coverage run --source=. manage.py test judge urlshortener
+
+  styles:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+      - run: npm ci
+      - name: Build styles
+        run: ./make_style.sh

@@ -7,7 +7,7 @@
 # Dockerfiles, but collapsed into one image to keep the CI build simple and
 # the image cache shared across all 4 services.
 #
-# Build context: repo root. Built by GitHub Actions (.github/workflows/deploy.yml),
+# Build context: repo root. Built by GitHub Actions (.github/workflows/build.yml),
 # NOT on the production server (2 vCPU / 2GB RAM is too small to build
 # comfortably alongside the live site).
 
@@ -53,6 +53,10 @@ RUN cp .ci.settings.py dmoj/local_settings.py && \
     python3 manage.py compilemessages && \
     python3 manage.py compilejsi18n && \
     rm dmoj/local_settings.py
+
+# Production settings contain no secrets. They read all environment-specific
+# values from the runtime environment supplied by GitHub Actions.
+COPY dmoj/local_settings.docker.py.example dmoj/local_settings.py
 
 # websocket/config.js is gitignored (generated per-server in the native
 # deployment) -- bake the checked-in Docker template in its place. These
