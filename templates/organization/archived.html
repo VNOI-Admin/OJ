@@ -31,6 +31,14 @@
              days=archive_retention_days) }}
     </div>
 
+    {% if problem_filter %}
+        <p>
+            <a href="{{ url('organization_archived_problems', organization.slug) }}">
+                <i class="fa fa-arrow-left"></i> {{ _('Show all archived problems') }}
+            </a>
+        </p>
+    {% endif %}
+
     {% set archived = true %}
     {% include "organization/problem-table.html" %}
 

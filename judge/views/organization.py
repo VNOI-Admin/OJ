@@ -57,6 +57,15 @@ MAX_BULK_DELETE_PROBLEMS = 200
 SOLVED_PROBLEMS_PAGE_SIZE = 10
 
 
+def archived_problems_queryset(organization):
+    """The problems listed on the Archived problems tab, before annotation and ordering.
+
+    The permalink ranks over this same set to work out which page a problem lands on, so the two
+    must not be allowed to drift apart.
+    """
+    return Problem.available.filter(organization=organization, archived_at__isnull=False)
+
+
 class OrganizationMixin(object):
     model = Organization
 
@@ -1226,18 +1235,26 @@ class OrganizationArchivedProblems(LoginRequiredMixin, TitleMixin, AdminOrganiza
 
     def get_queryset(self):
         # No data_size annotation: the test data of an archived problem is gone from local storage.
-        queryset = Problem.available.filter(
-            organization=self.organization,
-            archived_at__isnull=False,
-        ).prefetch_related('authors__user', 'curators__user')
+        queryset = archived_problems_queryset(self.organization) \
+            .prefetch_related('authors__user', 'curators__user')
+
+        # `?problem=<code>` is a permalink to one row. Narrowing the queryset keeps a permalink at
+        # a single-row lookup, instead of working out which page the row is on and building it.
+        if self.problem_filter:
+            queryset = queryset.filter(code=self.problem_filter)
 
         last_sub_query = Submission.objects.filter(problem=OuterRef('pk')).order_by('-date').values('date')[:1]
         queryset = queryset.annotate(last_submission_date=Subquery(last_sub_query))
 
         return queryset.order_by('archived_at', 'id')
 
+    @cached_property
+    def problem_filter(self):
+        return self.request.GET.get('problem') or ''
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context['archive_retention_days'] = settings.VNOJ_PROBLEM_ARCHIVE_RETENTION.days
+        context['problem_filter'] = self.problem_filter
         context.update(paginate_query_context(self.request))
         return context

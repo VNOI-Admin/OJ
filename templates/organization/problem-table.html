@@ -100,7 +100,11 @@
         <tr>
             <td colspan="{{ 9 if archived else 8 }}" style="text-align: center; padding: 2em; color: #999;">
                 {% if archived %}
-                    {{ _('No archived problems for this organization.') }}
+                    {% if problem_filter %}
+                        {{ _('No archived problem with code "%(code)s".', code=problem_filter) }}
+                    {% else %}
+                        {{ _('No archived problems for this organization.') }}
+                    {% endif %}
                 {% else %}
                     {{ _('No problems found for this organization.') }}
                 {% endif %}
