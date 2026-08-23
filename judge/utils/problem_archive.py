@@ -40,8 +40,8 @@ class ArchiveService:
         try:
             data = response.json()
             return data.get('url')
-        except ValueError as e:
-            logger.error('archive service returned an invalid URL for problem %s', problem_code, exc_info=e)
+        except ValueError:
+            logger.exception('archive service returned an invalid URL for problem %s', problem_code)
             raise ArchiveServiceError('archive service returned an invalid URL')
 
     def restore(self, problem_code: str) -> None:

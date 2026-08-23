@@ -25,12 +25,12 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
-from judge.models.problem_data import ProblemData
 from reversion import revisions
 
 from judge.forms import OrganizationForm, OrganizationProblemTagForm, QuotaGrantForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, \
     OrganizationRequest, Problem, Profile, Submission
+from judge.models.problem_data import ProblemData
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
