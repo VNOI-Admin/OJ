@@ -35,6 +35,7 @@ from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context, quota_error_response
+from judge.utils.problem_archive import ArchiveServiceError, archive_service
 from judge.utils.problems import user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart, get_pie_chart
@@ -1264,6 +1265,13 @@ class RestoreArchivedProblem(LoginRequiredMixin, AdminOrganizationMixin, View):
         # Same gate as creating a problem in the organization.
         if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
             return quota_error_response(request, self.organization)
+
+        try:
+            archive_service.restore(problem.code)
+        except ArchiveServiceError:
+            messages.error(request, _('Could not restore %s from the archive. Please try again later.')
+                           % problem.code)
+            return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))
 
         problem.archived_at = None
         problem.save(update_fields=['archived_at'])

@@ -1,8 +1,8 @@
 from django.conf import settings
 from django.contrib.auth.models import Group
 from django.shortcuts import render
-from django.utils.translation import gettext as _
 from django.template.defaultfilters import filesizeformat
+from django.utils.translation import gettext as _
 
 
 def quota_error_response(request, organization):

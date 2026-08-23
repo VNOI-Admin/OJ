@@ -13,7 +13,7 @@ from django.views.generic import View
 from django.views.generic.detail import SingleObjectMixin
 
 from judge.models import Problem, problem_data_storage
-from judge.utils.problem_archive import ArchiveServiceError, get_archive_download_url
+from judge.utils.problem_archive import ArchiveServiceError, archive_service
 from judge.utils.url import get_absolute_pdf_url
 from judge.views.problem import ProblemMixin
 
@@ -114,7 +114,7 @@ class DownloadArchivedProblemData(LoginRequiredMixin, ProblemDownloadMixin, Sing
             raise Http404()
 
         try:
-            url = get_archive_download_url(problem.code)
+            url = archive_service.get_download_url(problem.code)
         except ArchiveServiceError:
             messages.error(request, _('Could not fetch the archived data of %s. Please try again later.')
                            % problem.code)
