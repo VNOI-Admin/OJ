@@ -1,20 +1,8 @@
 {% extends "base.html" %}
 
 {% block media %}
+    {% include "organization/problem-table-css.html" %}
     <style>
-        .storage-table {
-            td, th {
-                &.problem-code, &.problem-name {
-                    text-align: left;
-                    padding: 0 10px;
-                }
-
-                &.problem-code {
-                    word-break: break-all;
-                }
-            }
-        }
-
         .page-tab-content {
             display: none;
         }
@@ -43,32 +31,12 @@
             margin-bottom: 5px;
             font-weight: bold;
         }
-
-        .bulk-actions {
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .btn-danger-bulk {
-            background: #d9534f;
-            color: #fff;
-            border: 1px solid #d43f3a;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .btn-danger-bulk:disabled {
-            background: #e6e6e6;
-            color: #ababab;
-            border-color: #dcdcdc;
-            cursor: not-allowed;
-        }
     </style>
 {% endblock %}
 
 {% block js_media %}
     {% include "stats/media-js.html" %}
+    {% include "organization/problem-table-js.html" %}
     <script type="text/javascript">
         $(document).ready(function() {
             var chartsInitialized = false;
@@ -81,7 +49,8 @@
                 }
             }
 
-            $('#inner-page-tabs .tab a').on('click', function(e) {
+            // Only the storage/credit tabs live on this page; the archived tab is a plain link.
+            $('#inner-page-tabs .tab a[data-tab]').on('click', function(e) {
                 e.preventDefault();
                 var target = $(this).data('tab');
                 $('#inner-page-tabs .tab').removeClass('active');
@@ -93,8 +62,9 @@
                 }
             });
 
-            // Activate default tab
-            $('#inner-page-tabs .tab a[data-tab="storage"]').click();
+            // Activate default tab, honouring #credit so the archived page can link straight to it
+            var initialTab = window.location.hash === '#credit' ? 'credit' : 'storage';
+            $('#inner-page-tabs .tab a[data-tab="' + initialTab + '"]').click();
 
             if (window.location.hash === '#preset-filter') {
                 var offset = $('#preset-filter').offset().top - 60;
@@ -119,73 +89,8 @@
                 minimumResultsForSearch: Infinity
             });
 
-            // Disable checkboxes for problems the user cannot delete
             var currentProfileId = {{ request.profile.id if request.profile else 'null' }};
             var isSuperuser = {{ 'true' if request.user.is_superuser else 'false' }};
-
-            $('.problem-select-checkbox').each(function () {
-                var authorIds = $(this).data('author-ids');
-                if (!isSuperuser && !(currentProfileId && authorIds.indexOf(currentProfileId) !== -1)) {
-                    $(this).prop('disabled', true).css('opacity', '0.4');
-                    $(this).wrap('<span style="position:relative;display:inline-block;">');
-                    $(this).after('<span class="no-delete-overlay" style="position:absolute;inset:0;cursor:not-allowed;" title="{{ _("Cannot delete problems from other authors.") }}"></span>');
-                }
-            });
-
-            $(document).on('click', '.no-delete-overlay', function () {
-                alert("{{ _('Cannot delete problems from other authors.') }}");
-            });
-
-            // Select All — skips disabled checkboxes
-            $('#select-all-checkbox').change(function () {
-                var checked = this.checked;
-                $('.problem-select-checkbox:not(:disabled)').each(function () {
-                    this.checked = checked;
-                });
-                updateDeleteButtonState();
-            });
-
-            $('.problem-select-checkbox').change(function () {
-                var selectable = $('.problem-select-checkbox:not(:disabled)');
-                var allChecked = selectable.filter(':checked').length === selectable.length && selectable.length > 0;
-                $('#select-all-checkbox').prop('checked', allChecked);
-                updateDeleteButtonState();
-            });
-
-            function updateDeleteButtonState() {
-                var checkedCount = $('.problem-select-checkbox:checked').length;
-                $('#bulk-delete-btn').prop('disabled', checkedCount === 0);
-                $('#selected-count-badge').text(checkedCount);
-            }
-
-            // Submitting bulk delete with confirmation
-            $('#bulk-delete-btn').click(function (e) {
-                e.preventDefault();
-                var checkedCount = $('.problem-select-checkbox:checked').length;
-                if (checkedCount === 0) return;
-
-                if (confirm("{{ _('Are you sure you want to delete the selected problems? This action cannot be undone.') }}")) {
-                    var $form = $('<form>')
-                        .attr('method', 'POST')
-                        .attr('action', "{{ url('organization_problems_bulk_delete', organization.slug) }}");
-
-                    $form.append($('<input>')
-                        .attr('type', 'hidden')
-                        .attr('name', 'csrfmiddlewaretoken')
-                        .attr('value', $.cookie('csrftoken')));
-
-                    $('.problem-select-checkbox:checked').each(function () {
-                        $form.append($('<input>')
-                            .attr('type', 'hidden')
-                            .attr('name', 'problem_ids')
-                            .attr('value', $(this).val()));
-                    });
-
-                    $('body').append($form);
-                    $form.submit();
-                }
-            });
-
 
             // Quick filter select
             $('#quick-filter-select').change(function () {
@@ -229,14 +134,6 @@
                 $('#preset-filter').hide();
                 $('#advanced-filter').show();
             });
-
-            // Show delete buttons only for authors and superusers
-            $('.delete-btn').each(function() {
-                var authorIds = $(this).data('author-ids');
-                if (isSuperuser || (currentProfileId && authorIds.indexOf(currentProfileId) !== -1)) {
-                    $(this).show();
-                }
-            });
         });
     </script>
 {% endblock %}
@@ -248,20 +145,7 @@
 {% block title_ruler %}{% endblock %}
 
 {% block body %}
-    <div class="tabs" id="inner-page-tabs" style="margin-top: 0.5em;">
-        <ul>
-            <li class="tab">
-                <a href="#" data-tab="storage">
-                    <i class="tab-icon fa fa-hdd-o"></i>{{ _('Storage usage') }}
-                </a>
-            </li>
-            <li class="tab">
-                <a href="#" data-tab="credit">
-                    <i class="tab-icon fa fa-line-chart"></i>{{ _('Credit usage') }}
-                </a>
-            </li>
-        </ul>
-    </div>
+    {% include "organization/usage-inner-tabs.html" %}
 
     {% include "messages.html" %}
 
@@ -395,79 +279,8 @@
             </div>
         </div>
 
-        <!-- Bulk Actions -->
-        <div class="bulk-actions">
-            <input type="checkbox" id="select-all-checkbox" style="transform: scale(1.2); margin-right: 5px; cursor: pointer;">
-            <label for="select-all-checkbox" style="margin-bottom: 0; cursor: pointer; font-weight: normal;">
-                {{ _('Select All (Current Page)') }}
-            </label>
-            <button id="bulk-delete-btn" class="btn-danger-bulk" disabled>
-                <i class="fa fa-trash"></i> {{ _('Delete Selected') }} (<span id="selected-count-badge">0</span>)
-            </button>
-        </div>
-
-        <table class="storage-table table">
-            <thead>
-                <tr>
-                    <th style="width: 30px; text-align: center;"></th>
-                    <th>{{ _('Problem Code') }}</th>
-                    <th>{{ _('Problem Name') }}</th>
-                    <th>{{ _('Authors') }}</th>
-                    <th>{{ _('Total Size') }}</th>
-                    <th>{{ _('Last Submission') }}</th>
-                    <th>{{ _('Download') }}</th>
-                    <th>{{ _('Delete') }}</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for problem in problems %}
-                <tr>
-                    <td style="text-align: center; vertical-align: middle;">
-                        <input type="checkbox" class="problem-select-checkbox" value="{{ problem.id }}"
-                               data-author-ids="{{ (problem.authors.all()|map(attribute='id')|list + problem.curators.all()|map(attribute='id')|list)|tojson }}"
-                               style="transform: scale(1.2); cursor: pointer;">
-                    </td>
-                    <td class="problem-code">
-                        <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code }}</a>
-                    </td>
-                    <td class="problem-name">
-                        <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
-                    </td>
-                    <td>
-                        {{ link_users((problem.authors.all()|list + problem.curators.all()|list)|unique(attribute='id')) }}
-                    </td>
-                    <td class="size-cell">
-                        {{ problem.data_size|filesizeformat }}
-                    </td>
-                    <td>
-                        {{ problem.last_submission_date|date("Y-m-d H:i:s") if problem.last_submission_date else '—' }}
-                    </td>
-                    <td>
-                        <a href="{{ url('problem_download_full_package', problem.code) }}"
-                           class="btn btn-xs delete-btn"
-                           data-author-ids="{{ (problem.authors.all()|map(attribute='id')|list + problem.curators.all()|map(attribute='id')|list)|tojson }}"
-                           style="display:none;">
-                            <i class="fa fa-download"></i> {{ _('Test data') }}
-                        </a>
-                    </td>
-                    <td>
-                        <a href="{{ url('problem_delete', problem.code) }}?next={{ request.path }}"
-                           class="btn btn-xs btn-danger delete-btn"
-                           data-author-ids="{{ (problem.authors.all()|map(attribute='id')|list + problem.curators.all()|map(attribute='id')|list)|tojson }}"
-                           style="display:none;">
-                            <i class="fa fa-trash"></i> {{ _('Delete') }}
-                        </a>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="8" style="text-align: center; padding: 2em; color: #999;">
-                        {{ _('No problems found for this organization.') }}
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        {% set archived = false %}
+        {% include "organization/problem-table.html" %}
 
         {% if page_obj.has_other_pages() %}
             <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>

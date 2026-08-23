@@ -23,11 +23,16 @@ def rejudge_submission(request):
         return HttpResponseBadRequest()
 
     try:
-        submission = Submission.objects.get(id=request.POST['id'])
+        submission = Submission.objects.select_related('problem').get(id=request.POST['id'])
     except Submission.DoesNotExist:
         return HttpResponseBadRequest()
 
-    if not submission.problem.is_rejudgeable_by(request.user):
+    problem = submission.problem
+
+    if problem.is_archived or problem.is_deleted:
+        return HttpResponseForbidden()
+
+    if not problem.is_rejudgeable_by(request.user):
         return HttpResponseForbidden()
 
     submission.judge(rejudge=True, rejudge_user=request.user)

@@ -21,6 +21,7 @@ from django.urls import reverse
 from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
@@ -29,11 +30,13 @@ from reversion import revisions
 from judge.forms import OrganizationForm, OrganizationProblemTagForm, QuotaGrantForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, \
     OrganizationRequest, Problem, Profile, Submission
+from judge.models.problem_data import ProblemData
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
 from judge.utils.infinite_paginator import InfinitePaginationMixin
-from judge.utils.organization import add_admin_to_group, add_quota_context
+from judge.utils.organization import add_admin_to_group, add_quota_context, quota_error_response
+from judge.utils.problem_archive import ArchiveServiceError, archive_service
 from judge.utils.problems import user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart, get_pie_chart
@@ -47,13 +50,23 @@ from judge.views.submission import SubmissionsListBase
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
-           'KickUserWidgetView', 'OrganizationStorageDashboard',
+           'KickUserWidgetView', 'OrganizationStorageDashboard', 'OrganizationArchivedProblems',
+           'RestoreArchivedProblem',
            'OrganizationQuotaAdd', 'OrganizationQuotaDelete', 'get_organization_problem_filter',
            'OrganizationUserSolvedProblems']
 
 
 MAX_BULK_DELETE_PROBLEMS = 200
 SOLVED_PROBLEMS_PAGE_SIZE = 10
+
+
+def archived_problems_queryset(organization):
+    """The problems listed on the Archived problems tab, before annotation and ordering.
+
+    The permalink ranks over this same set to work out which page a problem lands on, so the two
+    must not be allowed to drift apart.
+    """
+    return Problem.available.filter(organization=organization, archived_at__isnull=False)
 
 
 class OrganizationMixin(object):
@@ -851,16 +864,25 @@ class OrganizationUserSolvedProblems(AdminOrganizationMixin, TitleMixin, Templat
 
 
 class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin, View):
+    def get_next_url(self):
+        """The table that submitted the form, so we return to it instead of always to the storage tab."""
+        next_url = self.request.POST.get('next')
+        if next_url and url_has_allowed_host_and_scheme(next_url, allowed_hosts={self.request.get_host()},
+                                                        require_https=self.request.is_secure()):
+            return next_url
+        return reverse('organization_monthly_usage', args=[self.organization.slug])
+
     def post(self, request, *args, **kwargs):
         org = self.organization
+        next_url = self.get_next_url()
         problem_ids = request.POST.getlist('problem_ids')
         if not problem_ids:
             messages.warning(request, _('No problems selected for deletion.'))
-            return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
+            return HttpResponseRedirect(next_url)
 
         if len(problem_ids) > MAX_BULK_DELETE_PROBLEMS:
             messages.error(request, _('Cannot delete more than %d problems at once.') % MAX_BULK_DELETE_PROBLEMS)
-            return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
+            return HttpResponseRedirect(next_url)
 
         problems = Problem.available.filter(
             id__in=problem_ids,
@@ -895,7 +917,7 @@ class BulkDeleteOrganizationProblems(LoginRequiredMixin, AdminOrganizationMixin,
         else:
             messages.error(request, _('No valid problems could be deleted.'))
 
-        return HttpResponseRedirect(reverse('organization_monthly_usage', args=[org.slug]))
+        return HttpResponseRedirect(next_url)
 
 
 class ContestListOrganization(PrivateOrganizationMixin, ContestList):
@@ -935,15 +957,6 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
 class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
     permission_required = 'judge.create_organization_problem'
 
-    def _quota_error_response(self):
-        return render(self.request, 'organization/quota-error.html', {
-            'title': _('Problem limit reached'),
-            'message': _('This organization has reached its maximum number of problems (%d). '
-                         'Please delete some problems before creating new ones.')
-            % self.organization.max_problems,
-            'quota_warning_suffix': settings.VNOJ_QUOTA_WARNING_SUFFIX,
-        })
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         add_quota_context(self.organization, context)
@@ -952,7 +965,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
 
     def get(self, request, *args, **kwargs):
         if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
-            return self._quota_error_response()
+            return quota_error_response(request, self.organization)
         return super().get(request, *args, **kwargs)
 
     def get_initial(self):
@@ -968,7 +981,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
 
     def form_valid(self, form):
         if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
-            return self._quota_error_response()
+            return quota_error_response(self.request, self.organization)
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()
             problem.authors.add(self.request.user.profile)
@@ -1202,3 +1215,74 @@ class OrganizationStorageDashboard(LoginRequiredMixin, TitleMixin, AdminOrganiza
         context.update(paginate_query_context(self.request))
 
         return context
+
+
+class OrganizationArchivedProblems(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin,
+                                   InfinitePaginationMixin, ListView):
+    """List of problems whose data has been moved to cold storage by the archiving cron job."""
+    template_name = 'organization/archived.html'
+    context_object_name = 'problems'
+    paginate_by = MAX_BULK_DELETE_PROBLEMS
+
+    def get_title(self):
+        return _('Archived problems - %s') % self.organization.name
+
+    def get_queryset(self):
+        # No data_size annotation: the test data of an archived problem is gone from local storage.
+        queryset = archived_problems_queryset(self.organization) \
+            .prefetch_related('authors__user', 'curators__user')
+
+        # `?problem=<code>` is a permalink to one row. Narrowing the queryset keeps a permalink at
+        # a single-row lookup, instead of working out which page the row is on and building it.
+        if self.problem_filter:
+            queryset = queryset.filter(code=self.problem_filter)
+
+        last_sub_query = Submission.objects.filter(problem=OuterRef('pk')).order_by('-date').values('date')[:1]
+        queryset = queryset.annotate(last_submission_date=Subquery(last_sub_query))
+
+        return queryset.order_by('archived_at', 'id')
+
+    @cached_property
+    def problem_filter(self):
+        return self.request.GET.get('problem') or ''
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['archive_retention_days'] = settings.VNOJ_PROBLEM_ARCHIVE_RETENTION.days
+        context['problem_filter'] = self.problem_filter
+        context.update(paginate_query_context(self.request))
+        return context
+
+
+class RestoreArchivedProblem(LoginRequiredMixin, AdminOrganizationMixin, View):
+    """Take a problem back out of cold storage by clearing its `archived_at` stamp.
+
+    Fetching the data itself back is the archiving job's business; this only marks the intent.
+    """
+
+    def post(self, request, *args, **kwargs):
+        problem = get_object_or_404(archived_problems_queryset(self.organization), code=kwargs['problem'])
+
+        # Same gate as creating a problem in the organization.
+        if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
+            return quota_error_response(request, self.organization)
+
+        try:
+            archive_service.restore(problem.code)
+        except ArchiveServiceError:
+            messages.error(request, _('Could not restore %s from the archive. Please try again later.')
+                           % problem.code)
+            return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))
+
+        problem.archived_at = None
+        problem.save(update_fields=['archived_at'])
+
+        try:
+            problem_data = problem.data_files
+            problem_data.archived_size = 0
+            problem_data.save(update_fields=['archived_size'])
+        except ProblemData.DoesNotExist:
+            pass
+
+        messages.success(request, _('%s has been restored from the archive.') % problem.code)
+        return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))

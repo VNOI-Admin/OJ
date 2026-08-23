@@ -178,7 +178,7 @@ class Organization(models.Model):
         return result['total'] or 0
 
     def can_create_problem(self):
-        return self.current_problem_count < self.max_problems
+        return self.current_problem_count < self.max_problems and self.current_storage < self.max_storage
 
     def can_upload_data(self):
         return self.current_storage < self.max_storage

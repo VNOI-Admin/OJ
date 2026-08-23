@@ -1,0 +1,44 @@
+<style>
+    /* The navbar is fixed, so an anchor jump to #problem-<code> must clear it. */
+    .storage-table tr {
+        scroll-margin-top: 70px;
+    }
+
+    .storage-table {
+        td, th {
+            &.problem-code, &.problem-name {
+                text-align: left;
+                padding: 0 10px;
+            }
+
+            &.problem-code {
+                word-break: break-all;
+            }
+        }
+    }
+
+    .bulk-actions {
+        margin-bottom: 15px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    .btn-danger-bulk {
+        background: #d9534f;
+        color: #fff;
+        border: 1px solid #d43f3a;
+        padding: 6px 12px;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    .btn-danger-bulk:disabled {
+        background: #e6e6e6;
+        color: #ababab;
+        border-color: #dcdcdc;
+        cursor: not-allowed;
+    }
+    .btn-archive-disabled {
+        cursor: not-allowed;
+        opacity: 0.6;
+    }
+</style>

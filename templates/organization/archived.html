@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block media %}
+    {% include "organization/problem-table-css.html" %}
+{% endblock %}
+
+{% block js_media %}
+    {% include "organization/problem-table-js.html" %}
+{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'usage' %}
+    {% include "organization/tabs.html" %}
+{% endblock %}
+{% block title_ruler %}{% endblock %}
+
+{% block body %}
+    {% set inner_tab = 'archived' %}
+    {% include "organization/usage-inner-tabs.html" %}
+
+    {% include "messages.html" %}
+
+    <div class="alert alert-warning">
+        {{ _('Archived problems are permanently deleted %(days)d days after they were archived, along with their data. Download anything you still need before then.', days=archive_retention_days) }}
+    </div>
+
+    {% if problem_filter %}
+        <p>
+            <a href="{{ url('organization_archived_problems', organization.slug) }}">
+                <i class="fa fa-arrow-left"></i> {{ _('Show all archived problems') }}
+            </a>
+        </p>
+    {% endif %}
+
+    {% set archived = true %}
+    {% include "organization/problem-table.html" %}
+
+    {% if page_obj.has_other_pages() %}
+        <div class="bottom-pagination-bar">{% include "list-pages.html" %}</div>
+    {% endif %}
+{% endblock %}

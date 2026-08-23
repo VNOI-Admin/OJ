@@ -5,6 +5,7 @@ from itertools import chain
 from zipfile import BadZipfile, ZipFile
 
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
@@ -14,6 +15,7 @@ from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.html import escape, format_html
+from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.generic import DetailView
@@ -182,8 +184,47 @@ class ProblemSubmissionDiff(TitleMixin, ProblemMixin, DetailView):
             return generic_message(self.request, _('No such submissions'), _('Could not find any submissions.'))
 
 
+class ProblemArchived(Exception):
+    def __init__(self, problem):
+        self.problem = problem
+
+
 class ProblemDataView(TitleMixin, ProblemManagerMixin):
     template_name = 'problem/data.html'
+
+    def get_object(self, queryset=None):
+        problem = super().get_object(queryset)
+        # There is nothing left on disk to edit once the data has gone to cold storage.
+        if problem.is_archived:
+            raise ProblemArchived(problem)
+        return problem
+
+    def dispatch(self, request, *args, **kwargs):
+        # Mirrors how ProblemMixin handles ProblemDeleted: raise from get_object and handle it here,
+        # so the login and permission checks below still run first.
+        try:
+            return super().dispatch(request, *args, **kwargs)
+        except ProblemArchived as e:
+            return self.archived_response(e.problem)
+
+    def archived_response(self, problem):
+        request = self.request
+        message = _('Problem %s has been archived, so it can no longer be edited. '
+                    'Restore it from the archive if needed.') % problem.code
+
+        organization = problem.organization
+        if organization is not None and request.profile is not None and (
+                organization.is_admin(request.profile) or
+                request.user.has_perm('judge.edit_all_organization')):
+            messages.error(request, message)
+            return HttpResponseRedirect('%s?%s' % (
+                reverse('organization_archived_problems', args=[organization.slug]),
+                urlencode({'problem': problem.code})))
+
+        # The archived list is org-admin only and problem editors are not necessarily org admins,
+        # so anyone else would land on a 403. No other page renders `messages` either, so the
+        # explanation has to be a page of its own.
+        return generic_message(request, _('Problem data archived'), message)
 
     def get_title(self):
         return _('Editing data for {0}').format(self.object.name)

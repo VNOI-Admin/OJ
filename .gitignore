@@ -45,4 +45,5 @@ celerybeat-schedule.*
 resources/blog-modern.css
 resources/blog-post.css
 resources/theme-toggle.css
+.DS_Store
 .review/

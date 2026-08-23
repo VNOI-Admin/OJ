@@ -1,0 +1,129 @@
+{# Problem table shared by the organization usage tabs.
+   Set `archived` to true before including to render the archived-data variant. #}
+{% macro author_ids(problem) -%}
+{{ (problem.authors.all()|map(attribute='id')|list + problem.curators.all()|map(attribute='id')|list)|tojson }}
+{%- endmacro %}
+
+<div class="bulk-actions">
+    <input type="checkbox" id="select-all-checkbox" style="transform: scale(1.2); margin-right: 5px; cursor: pointer;">
+    <label for="select-all-checkbox" style="margin-bottom: 0; cursor: pointer; font-weight: normal;">
+        {{ _('Select All (Current Page)') }}
+    </label>
+    <button id="bulk-delete-btn" class="btn-danger-bulk" disabled>
+        <i class="fa fa-trash"></i> {{ _('Delete Selected') }} (<span id="selected-count-badge">0</span>)
+    </button>
+</div>
+
+<table class="storage-table table"{% if archived %} data-archive-retention-days="{{ archive_retention_days }}"{% endif %}>
+    <thead>
+        <tr>
+            <th style="width: 30px; text-align: center;"></th>
+            <th>{{ _('Problem Code') }}</th>
+            <th>{{ _('Problem Name') }}</th>
+            <th>{{ _('Authors') }}</th>
+            {% if not archived %}<th>{{ _('Total Size') }}</th>{% endif %}
+            <th>{{ _('Last Submission') }}</th>
+            {% if archived %}
+                <th>{{ _('Archived') }}</th>
+                <th>{{ _('Deletes In') }}</th>
+            {% endif %}
+            <th>{{ _('Download') }}</th>
+            {% if archived %}<th>{{ _('Restore') }}</th>{% endif %}
+            <th>{{ _('Delete') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for problem in problems %}
+        <tr>
+            <td style="text-align: center; vertical-align: middle;">
+                <input type="checkbox" class="problem-select-checkbox" value="{{ problem.id }}"
+                       data-author-ids="{{ author_ids(problem) }}"
+                       style="transform: scale(1.2); cursor: pointer;">
+            </td>
+            <td class="problem-code">
+                <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code }}</a>
+            </td>
+            <td class="problem-name">
+                <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+            </td>
+            <td>
+                {{ link_users((problem.authors.all()|list + problem.curators.all()|list)|unique(attribute='id')) }}
+            </td>
+            {% if not archived %}
+            <td class="size-cell">
+                {{ problem.data_size|filesizeformat }}
+            </td>
+            {% endif %}
+            {# Timestamps are rendered absolute and rewritten to "3 days ago" by the shared table JS. #}
+            <td>
+                {% if problem.last_submission_date %}
+                    <span class="time-rel time-ago" data-iso="{{ problem.last_submission_date|date("c") }}"
+                    >{{ problem.last_submission_date|date("Y-m-d H:i:s") }}</span>
+                {% else %}—{% endif %}
+            </td>
+            {% if archived %}
+            <td>
+                <span class="time-rel time-ago" data-iso="{{ problem.archived_at|date("c") }}"
+                >{{ problem.archived_at|date("Y-m-d H:i:s") }}</span>
+            </td>
+            <td>
+                {# Filled in by the table JS: archived_at plus the retention window on the table element. #}
+                <span class="time-rel time-left" data-iso="{{ problem.archived_at|date("c") }}"></span>
+            </td>
+            {% endif %}
+            <td>
+                {% if archived %}
+                    <a href="{{ url('problem_download_archived_data', problem.code) }}"
+                        class="btn btn-xs delete-btn"
+                        data-author-ids="{{ author_ids(problem) }}"
+                        style="display:none;">
+                        <i class="fa fa-download"></i> {{ _('Download archived data') }}
+                    </a>
+                {% else %}
+                    <a href="{{ url('problem_download_full_package', problem.code) }}"
+                       class="btn btn-xs delete-btn"
+                       data-author-ids="{{ author_ids(problem) }}"
+                       style="display:none;">
+                        <i class="fa fa-download"></i> {{ _('Test data') }}
+                    </a>
+                {% endif %}
+            </td>
+            {% if archived %}
+            <td>
+                <form method="post" style="margin: 0;"
+                      action="{{ url('organization_archived_problem_restore', organization.slug, problem.code) }}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-xs delete-btn"
+                            data-author-ids="{{ author_ids(problem) }}"
+                            style="display:none;">
+                        <i class="fa fa-undo"></i> {{ _('Restore') }}
+                    </button>
+                </form>
+            </td>
+            {% endif %}
+            <td>
+                <a href="{{ url('problem_delete', problem.code) }}?next={{ request.get_full_path()|urlencode }}"
+                   class="btn btn-xs btn-danger delete-btn"
+                   data-author-ids="{{ author_ids(problem) }}"
+                   style="display:none;">
+                    <i class="fa fa-trash"></i> {{ _('Delete') }}
+                </a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="{{ 10 if archived else 8 }}" style="text-align: center; padding: 2em; color: #999;">
+                {% if archived %}
+                    {% if problem_filter %}
+                        {{ _('No archived problem with code "%(code)s".', code=problem_filter) }}
+                    {% else %}
+                        {{ _('No archived problems for this organization.') }}
+                    {% endif %}
+                {% else %}
+                    {{ _('No problems found for this organization.') }}
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>

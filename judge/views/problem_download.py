@@ -3,12 +3,17 @@ import zipfile
 from io import BytesIO
 
 import requests
+from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import Http404, HttpResponse, JsonResponse
+from django.http import Http404, HttpResponse, HttpResponseRedirect, JsonResponse
+from django.urls import reverse
+from django.utils.http import url_has_allowed_host_and_scheme
+from django.utils.translation import gettext as _
 from django.views.generic import View
 from django.views.generic.detail import SingleObjectMixin
 
 from judge.models import Problem, problem_data_storage
+from judge.utils.problem_archive import ArchiveServiceError, archive_service
 from judge.utils.url import get_absolute_pdf_url
 from judge.views.problem import ProblemMixin
 
@@ -91,3 +96,28 @@ class DownloadProblemFullPackage(LoginRequiredMixin, ProblemDownloadMixin, Singl
                 zip_file.writestr('statement.md', statement)
         except Exception as e:
             zip_file.writestr('statement_md_error.txt', f'Error processing statement: {str(e)}')
+
+
+class DownloadArchivedProblemData(LoginRequiredMixin, ProblemDownloadMixin, SingleObjectMixin, View):
+    """Redirect to a presigned URL for the archived data of a problem that was moved to cold storage."""
+
+    def _back_url(self, problem: Problem):
+        referer = self.request.META.get('HTTP_REFERER')
+        if referer and url_has_allowed_host_and_scheme(referer, allowed_hosts={self.request.get_host()},
+                                                       require_https=self.request.is_secure()):
+            return referer
+        return reverse('problem_detail', args=[problem.code])
+
+    def get(self, request, *args, **kwargs):
+        problem = self.get_object()
+        if not problem.is_archived:
+            raise Http404()
+
+        try:
+            url = archive_service.get_download_url(problem.code)
+        except ArchiveServiceError:
+            messages.error(request, _('Could not fetch the archived data of %s. Please try again later.')
+                           % problem.code)
+            return HttpResponseRedirect(self._back_url(problem))
+
+        return HttpResponseRedirect(url)

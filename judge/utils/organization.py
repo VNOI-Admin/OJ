@@ -1,5 +1,18 @@
 from django.conf import settings
 from django.contrib.auth.models import Group
+from django.shortcuts import render
+from django.template.defaultfilters import filesizeformat
+from django.utils.translation import gettext as _
+
+
+def quota_error_response(request, organization):
+    return render(request, 'organization/quota-error.html', {
+        'title': _('Problem limit reached'),
+        'message': _('This organization has reached its maximum number of problems (%d) and/or storage (%s). '
+                     'Please delete some problems or free up storage before creating new ones.')
+        % (organization.max_problems, filesizeformat(organization.max_storage)),
+        'quota_warning_suffix': settings.VNOJ_QUOTA_WARNING_SUFFIX,
+    })
 
 
 def add_quota_context(org, context, total_storage=None):
