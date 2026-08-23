@@ -25,6 +25,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.utils.translation import gettext as _, gettext_lazy, ngettext
 from django.views.generic import CreateView, DetailView, FormView, ListView, TemplateView, UpdateView, View
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
+from judge.models.problem_data import ProblemData
 from reversion import revisions
 
 from judge.forms import OrganizationForm, OrganizationProblemTagForm, QuotaGrantForm
@@ -1275,5 +1276,13 @@ class RestoreArchivedProblem(LoginRequiredMixin, AdminOrganizationMixin, View):
 
         problem.archived_at = None
         problem.save(update_fields=['archived_at'])
+
+        try:
+            problem_data = problem.data_files
+            problem_data.archived_size = 0
+            problem_data.save(update_fields=['archived_size'])
+        except ProblemData.DoesNotExist:
+            pass
+
         messages.success(request, _('%s has been restored from the archive.') % problem.code)
         return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))

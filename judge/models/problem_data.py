@@ -93,12 +93,19 @@ class ProblemData(models.Model):
                                    help_text=_('grader arguments as a JSON object'))
     zipfile_size = models.BigIntegerField(verbose_name=_('test data storage size'), default=0,
                                           help_text=_('Size of the test data zip file in bytes.'))
+    # the logic to set this field is outside of this codebase,
+    # it will be set by our archive service when the problem is archived
+    archived_size = models.BigIntegerField(verbose_name=_('archived test data storage size'), default=0,
+                                           help_text=_('Size of the test data zip file in bytes when archived.'))
 
     def has_yml(self):
         return problem_data_storage.exists('%s/init.yml' % self.problem.code)
 
     def update_zipfile_size(self):
         """Update the zipfile_size field based on the actual size of all attached files."""
+        if self.archived_size > 0:
+            self.zipfile_size = self.archived_size
+            return
         total_size = 0
         for field in [self.zipfile, self.generator, self.custom_checker, self.custom_grader, self.custom_header]:
             if field:
