@@ -1,0 +1,20 @@
+{% if organization.notice and organization.is_admin(request.profile) %}
+    <div class="alert alert-warning alert-dismissable organization-notice" id="organization-notice"
+         style="margin-top: 1em;">
+        <a class="close" title="{{ _('Dismiss until this notice changes') }}">x</a>
+        {{ organization.notice|markdown('organization-about', MATH_ENGINE)|reference|str|safe }}
+    </div>
+    <script>
+        (function () {
+            var key = 'org-notice-dismissed:{{ organization.id }}:{{ request.profile.id }}';
+            var hash = '{{ organization.notice_hash }}';
+            var $notice = $('#organization-notice');
+            try {
+                if (localStorage.getItem(key) === hash) $notice.hide();
+            } catch (e) {}
+            $notice.find('a.close').on('click', function () {
+                try { localStorage.setItem(key, hash); } catch (e) {}
+            });
+        })();
+    </script>
+{% endif %}
