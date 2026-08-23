@@ -34,7 +34,7 @@ from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
 from judge.utils.infinite_paginator import InfinitePaginationMixin
-from judge.utils.organization import add_admin_to_group, add_quota_context
+from judge.utils.organization import add_admin_to_group, add_quota_context, quota_error_response
 from judge.utils.problems import user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart, get_pie_chart
@@ -955,15 +955,6 @@ class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMix
 class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
     permission_required = 'judge.create_organization_problem'
 
-    def _quota_error_response(self):
-        return render(self.request, 'organization/quota-error.html', {
-            'title': _('Problem limit reached'),
-            'message': _('This organization has reached its maximum number of problems (%d). '
-                         'Please delete some problems before creating new ones.')
-            % self.organization.max_problems,
-            'quota_warning_suffix': settings.VNOJ_QUOTA_WARNING_SUFFIX,
-        })
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         add_quota_context(self.organization, context)
@@ -972,7 +963,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
 
     def get(self, request, *args, **kwargs):
         if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
-            return self._quota_error_response()
+            return quota_error_response(request, self.organization)
         return super().get(request, *args, **kwargs)
 
     def get_initial(self):
@@ -988,7 +979,7 @@ class ProblemCreateOrganization(AdminOrganizationMixin, ProblemCreate):
 
     def form_valid(self, form):
         if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
-            return self._quota_error_response()
+            return quota_error_response(self.request, self.organization)
         with revisions.create_revision(atomic=True):
             self.object = problem = form.save()
             problem.authors.add(self.request.user.profile)
@@ -1272,13 +1263,7 @@ class RestoreArchivedProblem(LoginRequiredMixin, AdminOrganizationMixin, View):
 
         # Same gate as creating a problem in the organization.
         if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
-            return render(request, 'organization/quota-error.html', {
-                'title': _('Problem limit reached'),
-                'message': _('This organization has reached its maximum number of problems (%d). '
-                             'Please delete some problems before creating new ones.')
-                % self.organization.max_problems,
-                'quota_warning_suffix': settings.VNOJ_QUOTA_WARNING_SUFFIX,
-            })
+            return quota_error_response(request, self.organization)
 
         problem.archived_at = None
         problem.save(update_fields=['archived_at'])

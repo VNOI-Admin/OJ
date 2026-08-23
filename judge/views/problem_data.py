@@ -209,8 +209,8 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
 
     def archived_response(self, problem):
         request = self.request
-        message = _('The test data of %s has been archived, so it can no longer be edited. '
-                    'Download it from the archive if you still need it.') % problem.code
+        message = _('Problem %s has been archived, so it can no longer be edited. '
+                    'Restore it from the archive if needed.') % problem.code
 
         organization = problem.organization
         if organization is not None and request.profile is not None and (
