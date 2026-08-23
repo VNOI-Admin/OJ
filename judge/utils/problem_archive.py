@@ -2,32 +2,12 @@ import logging
 
 import requests
 from django.conf import settings
-from django.core.exceptions import ValidationError
-from django.core.validators import URLValidator
 
 logger = logging.getLogger('judge.problem.archive')
 
 
-# The archive service is not part of this codebase and its exact response shape is not pinned down yet,
-# so every assumption about it lives in `_extract_url` and nowhere else.
-_URL_KEYS = ('url', 'download_url', 'presigned_url')
-
-validate_archive_url = URLValidator(schemes=['http', 'https'])
-
-
 class ArchiveServiceError(Exception):
     """Raised when the archive service could not be reached or gave an unusable answer."""
-
-
-def _extract_url(data):
-    if isinstance(data, str):
-        return data.strip()
-    if isinstance(data, dict):
-        for key in _URL_KEYS:
-            value = data.get(key)
-            if isinstance(value, str) and value.strip():
-                return value.strip()
-    raise ArchiveServiceError('archive service response did not contain a download URL')
 
 
 class ArchiveService:
@@ -59,19 +39,10 @@ class ArchiveService:
 
         try:
             data = response.json()
-        except ValueError:
-            data = response.text
-
-        url = _extract_url(data)
-
-        # We redirect the browser to whatever comes back, so never trust it unvalidated.
-        try:
-            validate_archive_url(url)
-        except ValidationError:
-            logger.error('archive service returned an invalid URL for problem %s', problem_code)
+            return data.get('url')
+        except ValueError as e:
+            logger.error('archive service returned an invalid URL for problem %s', problem_code, exc_info=e)
             raise ArchiveServiceError('archive service returned an invalid URL')
-
-        return url
 
     def restore(self, problem_code: str) -> None:
         """Ask the archive service to move `problem_code`'s data back to local storage."""
