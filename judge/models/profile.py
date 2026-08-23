@@ -52,8 +52,7 @@ class Organization(models.Model):
                                   help_text=_('Displayed beside user name during contests.'))
     about = models.TextField(verbose_name=_('organization description'))
     notice = models.TextField(verbose_name=_('organization notice'), blank=True, default='',
-                              help_text=_('Warning banner shown at the top of every page of this '
-                                          'organization. Leave blank to hide it.'))
+                              help_text=_('Warning banner shown to the administrators of this organization.'))
     admins = models.ManyToManyField('Profile', verbose_name=_('administrators'), related_name='admin_of',
                                     help_text=_('Those who can edit this organization.'))
     creation_date = models.DateTimeField(verbose_name=_('creation date'), auto_now_add=True)
@@ -107,6 +106,10 @@ class Organization(models.Model):
 
     def is_admin(self, user):
         return user in self.admins_list
+
+    @cached_property
+    def notice_hash(self):
+        return hashlib.sha256(utf8bytes(self.notice)).hexdigest()[:16]
 
     def __contains__(self, item):
         if item is None:
