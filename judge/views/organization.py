@@ -49,6 +49,7 @@ __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'Organiz
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
            'OrganizationRequestDetail', 'OrganizationRequestView', 'OrganizationRequestLog',
            'KickUserWidgetView', 'OrganizationStorageDashboard', 'OrganizationArchivedProblems',
+           'RestoreArchivedProblem',
            'OrganizationQuotaAdd', 'OrganizationQuotaDelete', 'get_organization_problem_filter',
            'OrganizationUserSolvedProblems']
 
@@ -1258,3 +1259,28 @@ class OrganizationArchivedProblems(LoginRequiredMixin, TitleMixin, AdminOrganiza
         context['problem_filter'] = self.problem_filter
         context.update(paginate_query_context(self.request))
         return context
+
+
+class RestoreArchivedProblem(LoginRequiredMixin, AdminOrganizationMixin, View):
+    """Take a problem back out of cold storage by clearing its `archived_at` stamp.
+
+    Fetching the data itself back is the archiving job's business; this only marks the intent.
+    """
+
+    def post(self, request, *args, **kwargs):
+        problem = get_object_or_404(archived_problems_queryset(self.organization), code=kwargs['problem'])
+
+        # Same gate as creating a problem in the organization.
+        if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
+            return render(request, 'organization/quota-error.html', {
+                'title': _('Problem limit reached'),
+                'message': _('This organization has reached its maximum number of problems (%d). '
+                             'Please delete some problems before creating new ones.')
+                % self.organization.max_problems,
+                'quota_warning_suffix': settings.VNOJ_QUOTA_WARNING_SUFFIX,
+            })
+
+        problem.archived_at = None
+        problem.save(update_fields=['archived_at'])
+        messages.success(request, _('%s has been restored from the archive.') % problem.code)
+        return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))

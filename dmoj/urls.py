@@ -316,6 +316,8 @@ urlpatterns = [
         path('/usage', organization.OrganizationStorageDashboard.as_view(), name='organization_monthly_usage'),
         path('/usage/archived', organization.OrganizationArchivedProblems.as_view(),
              name='organization_archived_problems'),
+        path('/usage/archived/<str:problem>/restore', organization.RestoreArchivedProblem.as_view(),
+             name='organization_archived_problem_restore'),
         path('/problems/', organization.ProblemListOrganization.as_view(), name='problem_list_organization'),
         path('/problems/random/', organization.RandomProblemOrganization.as_view(),
              name='problem_random_organization'),

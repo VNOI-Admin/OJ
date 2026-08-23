@@ -28,6 +28,7 @@
                 <th>{{ _('Deletes In') }}</th>
             {% endif %}
             <th>{{ _('Download') }}</th>
+            {% if archived %}<th>{{ _('Restore') }}</th>{% endif %}
             <th>{{ _('Delete') }}</th>
         </tr>
     </thead>
@@ -87,6 +88,19 @@
                     </a>
                 {% endif %}
             </td>
+            {% if archived %}
+            <td>
+                <form method="post" style="margin: 0;"
+                      action="{{ url('organization_archived_problem_restore', organization.slug, problem.code) }}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-xs delete-btn"
+                            data-author-ids="{{ author_ids(problem) }}"
+                            style="display:none;">
+                        <i class="fa fa-undo"></i> {{ _('Restore') }}
+                    </button>
+                </form>
+            </td>
+            {% endif %}
             <td>
                 <a href="{{ url('problem_delete', problem.code) }}?next={{ request.get_full_path()|urlencode }}"
                    class="btn btn-xs btn-danger delete-btn"
@@ -98,7 +112,7 @@
         </tr>
         {% else %}
         <tr>
-            <td colspan="{{ 9 if archived else 8 }}" style="text-align: center; padding: 2em; color: #999;">
+            <td colspan="{{ 10 if archived else 8 }}" style="text-align: center; padding: 2em; color: #999;">
                 {% if archived %}
                     {% if problem_filter %}
                         {{ _('No archived problem with code "%(code)s".', code=problem_filter) }}
