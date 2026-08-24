@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-23 16:15+0000\n"
+"POT-Creation-Date: 2026-08-24 17:47+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -5495,7 +5495,8 @@ msgstr "Xem các bài nộp"
 msgid "Edit user"
 msgstr "Cập nhật người dùng"
 
-#: templates/base.html:102 templates/blog/modern-list.html:155
+#: templates/base.html:102 templates/base.html:412
+#: templates/blog/modern-list.html:155
 #: templates/organization/users-table.html:29
 #: templates/urlshortener/list.html:67
 msgid "View"
@@ -5580,12 +5581,16 @@ msgstr "Tới bảng xếp hạng"
 msgid "This site works best with JavaScript enabled."
 msgstr "Trang web này hoạt động tốt nhất khi JavaScript được cho phép."
 
-#: templates/base.html:431
+#: templates/base.html:411
+msgid "You have unread notifications."
+msgstr "Bạn có thông báo chưa đọc."
+
+#: templates/base.html:438
 #, python-format
 msgid "proudly powered by %(dmoj)s"
 msgstr "dựa trên nền tảng %(dmoj)s"
 
-#: templates/base.html:432
+#: templates/base.html:439
 #, python-format
 msgid "follow us on %(github)s and %(facebook)s"
 msgstr "theo dõi VNOI trên %(github)s và %(facebook)s"
@@ -6830,8 +6835,9 @@ msgid ""
 "archived, along with their data. Download anything you still need before "
 "then."
 msgstr ""
-"Các bài tập đã lưu trữ sẽ bị xóa vĩnh viễn sau %(days)d ngày kể từ khi được lưu trữ, "
-"cùng với dữ liệu của chúng. Hãy tải xuống những gì bạn cần trước thời hạn đó."
+"Các bài tập đã lưu trữ sẽ bị xóa vĩnh viễn sau %(days)d ngày kể từ khi được "
+"lưu trữ, cùng với dữ liệu của chúng. Hãy tải xuống những gì bạn cần trước "
+"thời hạn đó."
 
 #: templates/organization/archived.html:30
 msgid "Show all archived problems"
