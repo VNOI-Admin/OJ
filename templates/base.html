@@ -405,8 +405,8 @@
         {% if misc_config.top_notification %}
             {{ render_django(misc_config.top_notification) }}
         {% endif %}
-        {% if request.user.is_authenticated and UNREAD_NOTIFICATION_COUNT %}
-            <div class="alert alert-warning unread-notification-banner">
+        {% if request.user.is_authenticated %}
+            <div class="alert alert-warning unread-notification-banner{% if not UNREAD_NOTIFICATION_COUNT %} hidden{% endif %}">
                 <i class="fa fa-bell" style="color:#e6a817;"></i>
                 <span>{{ _('You have unread notifications.') }}</span>
                 <a href="#" class="banner-open-notifications">{{ _('View') }}</a>

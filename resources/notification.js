@@ -9,11 +9,13 @@ $(function () {
     var $badge = $nav.find('.notification-badge');
     var $items = $nav.find('.notification-items');
     var $empty = $nav.find('.notification-empty');
+    var $banner = $('.unread-notification-banner');
 
     function setBadge(count) {
         count = parseInt(count, 10) || 0;
         $badge.text(count);
         $badge.toggleClass('hidden', count === 0);
+        $banner.toggleClass('hidden', count === 0);
     }
 
     function readCache() {
