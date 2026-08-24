@@ -130,6 +130,14 @@
     }
 }
 
+.unread-notification-banner {
+    position: sticky;
+    top: 52px;
+    z-index: 499;
+    text-align: center;
+    &.hidden { display: none; }
+}
+
 .notification-page {
     .notification-page-tabs {
         display: flex;
