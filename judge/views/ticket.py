@@ -56,47 +56,46 @@ class TicketForm(forms.Form):
         return super(TicketForm, self).clean()
 
 
-class NewTicketView(LoginRequiredMixin, SingleObjectFormView):
+class TicketCreationMixin:
     form_class = TicketForm
-    template_name = 'ticket/new.html'
 
     def get_assignees(self):
         return []
 
     def get_form_kwargs(self):
-        kwargs = super(NewTicketView, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
         kwargs['request'] = self.request
         return kwargs
 
-    def form_valid(self, form):
+    def save_new_ticket(self, form, linked_item):
+        assignees = self.get_assignees()
         ticket = Ticket(user=self.request.profile, title=form.cleaned_data['title'])
-        ticket.linked_item = self.object
+        ticket.linked_item = linked_item
         ticket.save()
         message = TicketMessage(ticket=ticket, user=ticket.user, body=form.cleaned_data['body'])
         message.save()
-        ticket.assignees.set(self.get_assignees())
+        ticket.assignees.set(assignees)
         if event.real:
             event.post('tickets', {
                 'type': 'new-ticket', 'id': ticket.id,
                 'message': message.id, 'user': ticket.user_id,
-                'assignees': list(ticket.assignees.values_list('id', flat=True)),
+                'assignees': [assignee.id for assignee in assignees],
             })
-        make_notification(
-            ticket.assignees.all(), title=_('New ticket: %s') % ticket.title, body=message.body,
-            url=reverse('ticket', args=[ticket.id]), popup=True,
-            priority=Notification.Priority.TICKET,
-        )
+        if assignees:
+            make_notification(
+                assignees, title=_('New ticket: %s') % ticket.title, body=message.body,
+                url=reverse('ticket', args=[ticket.id]), popup=True,
+                priority=Notification.Priority.TICKET,
+            )
         on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, form.cleaned_data['body'])
-        return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
+        return ticket
 
 
-class NewIssueTicketView(LoginRequiredMixin, TitleMixin, FormView):
-    form_class = TicketForm
+class NewIssueTicketView(LoginRequiredMixin, TitleMixin, TicketCreationMixin, FormView):
     template_name = 'ticket/new_issue.html'
 
     def get_form_kwargs(self):
-        kwargs = super(NewIssueTicketView, self).get_form_kwargs()
-        kwargs['request'] = self.request
+        kwargs = super().get_form_kwargs()
         kwargs['issue_url'] = self.request.GET.get('issue_url', '')
         return kwargs
 
@@ -107,24 +106,13 @@ class NewIssueTicketView(LoginRequiredMixin, TitleMixin, FormView):
         return _('Open new issue')
 
     def form_valid(self, form):
-        ticket = Ticket(user=self.request.profile, title=form.cleaned_data['title'])
-        issue_object = GeneralIssue(issue_url=form.cleaned_data['issue_url'])
-        issue_object.save()
-        ticket.linked_item = issue_object
-        ticket.save()
-        message = TicketMessage(ticket=ticket, user=ticket.user, body=form.cleaned_data['body'])
-        message.save()
-        if event.real:
-            event.post('tickets', {
-                'type': 'new-ticket', 'id': ticket.id,
-                'message': message.id, 'user': ticket.user_id,
-                'assignees': [],
-            })
-        on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, form.cleaned_data['body'])
+        issue = GeneralIssue(issue_url=form.cleaned_data['issue_url'])
+        issue.save()
+        ticket = self.save_new_ticket(form, issue)
         return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
 
-class NewProblemTicketView(ProblemMixin, TitleMixin, NewTicketView):
+class NewProblemTicketView(LoginRequiredMixin, ProblemMixin, TitleMixin, TicketCreationMixin, SingleObjectFormView):
     template_name = 'ticket/new_problem.html'
 
     def get_assignees(self):
@@ -145,7 +133,8 @@ class NewProblemTicketView(ProblemMixin, TitleMixin, NewTicketView):
     def form_valid(self, form):
         if not self.object.is_accessible_by(self.request.user):
             raise Http404()
-        return super().form_valid(form)
+        ticket = self.save_new_ticket(form, self.object)
+        return HttpResponseRedirect(reverse('ticket', args=[ticket.id]))
 
 
 class TicketCommentForm(forms.Form):
