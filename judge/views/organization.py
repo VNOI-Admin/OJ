@@ -1228,7 +1228,6 @@ class OrganizationArchivedProblems(LoginRequiredMixin, TitleMixin, AdminOrganiza
         return _('Archived problems - %s') % self.organization.name
 
     def get_queryset(self):
-        # No data_size annotation: the test data of an archived problem is gone from local storage.
         queryset = archived_problems_queryset(self.organization) \
             .prefetch_related('authors__user', 'curators__user')
 
@@ -1238,7 +1237,10 @@ class OrganizationArchivedProblems(LoginRequiredMixin, TitleMixin, AdminOrganiza
             queryset = queryset.filter(code=self.problem_filter)
 
         last_sub_query = Submission.objects.filter(problem=OuterRef('pk')).order_by('-date').values('date')[:1]
-        queryset = queryset.annotate(last_submission_date=Subquery(last_sub_query))
+        queryset = queryset.annotate(
+            last_submission_date=Subquery(last_sub_query),
+            archived_size=Coalesce(F('data_files__archived_size'), Value(0)),
+        )
 
         return queryset.order_by('archived_at', 'id')
 
@@ -1268,21 +1270,26 @@ class RestoreArchivedProblem(LoginRequiredMixin, AdminOrganizationMixin, View):
             return quota_error_response(request, self.organization)
 
         try:
-            archive_service.restore(problem.code)
-        except ArchiveServiceError:
-            messages.error(request, _('Could not restore %s from the archive. Please try again later.')
-                           % problem.code)
-            return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))
+            problem_data = problem.data_files
+            has_archived_data = problem_data.archived_size > 0
+        except ProblemData.DoesNotExist:
+            problem_data = None
+            has_archived_data = False
+
+        if has_archived_data:
+            try:
+                archive_service.restore(problem.code)
+            except ArchiveServiceError:
+                messages.error(request, _('Could not restore %s from the archive. Please try again later.')
+                               % problem.code)
+                return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))
 
         problem.archived_at = None
         problem.save(update_fields=['archived_at'])
 
-        try:
-            problem_data = problem.data_files
+        if problem_data is not None:
             problem_data.archived_size = 0
             problem_data.save(update_fields=['archived_size'])
-        except ProblemData.DoesNotExist:
-            pass
 
         messages.success(request, _('%s has been restored from the archive.') % problem.code)
         return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))

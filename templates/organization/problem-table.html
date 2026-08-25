@@ -26,6 +26,7 @@
             {% if archived %}
                 <th>{{ _('Archived') }}</th>
                 <th>{{ _('Deletes In') }}</th>
+                <th>{{ _('Archived Size') }}</th>
             {% endif %}
             <th>{{ _('Download') }}</th>
             {% if archived %}<th>{{ _('Restore') }}</th>{% endif %}
@@ -70,15 +71,20 @@
                 {# Filled in by the table JS: archived_at plus the retention window on the table element. #}
                 <span class="time-rel time-left" data-iso="{{ problem.archived_at|date("c") }}"></span>
             </td>
+            <td class="size-cell">
+                {% if problem.archived_size %}{{ problem.archived_size|filesizeformat }}{% else %}—{% endif %}
+            </td>
             {% endif %}
             <td>
                 {% if archived %}
+                    {% if problem.archived_size %}
                     <a href="{{ url('problem_download_archived_data', problem.code) }}"
                         class="btn btn-xs delete-btn"
                         data-author-ids="{{ author_ids(problem) }}"
                         style="display:none;">
                         <i class="fa fa-download"></i> {{ _('Download archived data') }}
                     </a>
+                    {% endif %}
                 {% else %}
                     <a href="{{ url('problem_download_full_package', problem.code) }}"
                        class="btn btn-xs delete-btn"
@@ -112,7 +118,7 @@
         </tr>
         {% else %}
         <tr>
-            <td colspan="{{ 10 if archived else 8 }}" style="text-align: center; padding: 2em; color: #999;">
+            <td colspan="{{ 11 if archived else 8 }}" style="text-align: center; padding: 2em; color: #999;">
                 {% if archived %}
                     {% if problem_filter %}
                         {{ _('No archived problem with code "%(code)s".', code=problem_filter) }}
