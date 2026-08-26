@@ -85,7 +85,10 @@ class ProblemDataForm(ModelForm):
             'output_limit',
         ]
         widgets = {
-            'zipfile': S3PresignedUploadWidget(max_size=500 * 1024 * 1024, prefix='zipfiles/'),
+            'zipfile': S3PresignedUploadWidget(
+                max_size=500 * 1024 * 1024,
+                prefix='zipfiles/',
+                fallback_threshold=99 * 1024 * 1024),
             'checker_args': HiddenInput,
             'checker': Select2Widget(attrs={'style': 'width: 200px'}),
             'grader': Select2Widget(attrs={'style': 'width: 200px'}),
