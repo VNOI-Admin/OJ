@@ -124,8 +124,7 @@ def s3_presign_put(request):
     except (BadSignature, ValueError):
         return JsonResponse({'error': 'Invalid token'}, status=400)
 
-    ext = os.path.splitext(filename)[1]
-    key = prefix + str(uuid.uuid4()) + ext
+    key = f'{prefix}{uuid.uuid4()}/{os.path.basename(filename)}'
 
     s3 = make_s3_client()
     url = s3.generate_presigned_url(
