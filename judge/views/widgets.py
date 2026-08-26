@@ -114,15 +114,18 @@ def s3_presign_put(request):
     try:
         body = json.loads(request.body)
         token, filename, content_type = body['token'], body['filename'], body['content_type']
-    except (ValueError, KeyError):
+        size = int(body['size'])
+    except (ValueError, KeyError, TypeError):
         return JsonResponse({'error': 'Invalid request'}, status=400)
 
     try:
-        # R2 doesn't support the S3 POST-with-policy upload API (returns 501), so the max size
-        # here can't be enforced server-side the way `content-length-range` conditions would.
-        _, prefix = Signer().unsign(token).split(':', 1)
+        max_size_str, prefix = Signer().unsign(token).split(':', 1)
+        max_size = int(max_size_str)
     except (BadSignature, ValueError):
         return JsonResponse({'error': 'Invalid token'}, status=400)
+
+    if size < 0 or size > max_size:
+        return JsonResponse({'error': 'File too large'}, status=400)
 
     key = f'{prefix}{uuid.uuid4()}/{os.path.basename(filename)}'
 
@@ -133,6 +136,11 @@ def s3_presign_put(request):
             'Bucket': settings.S3_PRESIGNED_UPLOAD_BUCKET,
             'Key': key,
             'ContentType': content_type,
+            # Signing the exact ContentLength (rather than a range, which R2's PutObject presigning
+            # doesn't support) forces the PUT to carry this exact Content-Length or the signature
+            # won't match; browsers always set Content-Length to the real body size, so a client
+            # can't upload more bytes than it declared here.
+            'ContentLength': size,
         },
         ExpiresIn=getattr(settings, 'S3_PRESIGNED_UPLOAD_EXPIRY', 3600),
     )

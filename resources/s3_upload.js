@@ -27,7 +27,7 @@ $(function () {
                 var resp = await fetch(widget.dataset.presignUrl, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json', 'X-CSRFToken': $.cookie('csrftoken')},
-                    body: JSON.stringify({token: widget.dataset.token, filename: file.name,
+                    body: JSON.stringify({token: widget.dataset.token, filename: file.name, size: file.size,
                                          content_type: file.type || 'application/octet-stream'}),
                 });
                 var data = await resp.json();
