@@ -109,6 +109,8 @@ def static_uploader(static_file):
 @login_required
 @require_POST
 def s3_presign_put(request):
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Forbidden'}, status=403)
     if not getattr(settings, 'S3_PRESIGNED_UPLOAD_BUCKET', None):
         return JsonResponse({'error': 'S3 upload not configured'}, status=503)
     try:

@@ -37,10 +37,11 @@ class S3PresignedUploadWidget(forms.Widget):
         self.fallback_threshold = fallback_threshold  # bytes; files below this go through Django
         self.prefix = prefix.rstrip('/') + '/'
         self.accept = accept
+        self.s3_enabled = True  # callers can flip this off per-request (e.g. non-superusers)
         super().__init__(attrs)
 
     def _s3_configured(self):
-        return bool(getattr(settings, 'S3_PRESIGNED_UPLOAD_BUCKET', None))
+        return self.s3_enabled and bool(getattr(settings, 'S3_PRESIGNED_UPLOAD_BUCKET', None))
 
     @property
     def media(self):
@@ -54,6 +55,9 @@ class S3PresignedUploadWidget(forms.Widget):
             fi_attrs = dict(attrs or {})
             if self.accept:
                 fi_attrs['accept'] = self.accept
+            # Same data-max-size attribute the S3 branch below stamps on its file input, so any
+            # JS reading the file input's size limit doesn't need to know which branch rendered.
+            fi_attrs['data-max-size'] = str(self.fallback_threshold or self.max_size)
             return forms.ClearableFileInput().render(name, value, fi_attrs, renderer)
         final_attrs = self.build_attrs(attrs or {})
         wid = final_attrs.get('id', f'id_{name}')
@@ -72,17 +76,17 @@ class S3PresignedUploadWidget(forms.Widget):
             )
 
         return format_html(
-            '{}<span class="s3-upload-widget" data-presign-url="{}" data-token="{}" data-max-size="{}"{}>'
-            '<input type="file" name="{}" id="{}"{}>'
+            '{}<span class="s3-upload-widget" data-presign-url="{}" data-token="{}"{}>'
+            '<input type="file" name="{}" id="{}" data-max-size="{}"{}>'
             '<input type="hidden" name="{}" id="{}">'
             '<span class="s3-upload-status"></span>'
             '</span>',
             current_html,
-            reverse('s3_presign_put'), self._token(), str(self.max_size), threshold_html,
+            reverse('s3_presign_put'), self._token(), threshold_html,
             # The visible file input keeps Django's usual id (id_<name>) so existing page JS
             # written against ClearableFileInput's markup (e.g. $('#id_problem-data-zipfile'))
             # keeps working; the S3 reference value is the one that gets the extra suffix.
-            name, wid, accept_html,
+            name, wid, str(self.max_size), accept_html,
             name, f'{wid}_s3ref',
         )
 

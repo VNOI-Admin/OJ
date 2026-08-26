@@ -16,7 +16,7 @@ $(function () {
                 return;
             }
 
-            var maxSize = parseInt(widget.dataset.maxSize);
+            var maxSize = parseInt(picker.dataset.maxSize);
             if (file.size > maxSize) {
                 status.textContent = 'File too large (max ' + Math.round(maxSize / 1048576) + ' MB)';
                 return;
