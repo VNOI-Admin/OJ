@@ -1,0 +1,51 @@
+$(function () {
+    document.querySelectorAll('.s3-upload-widget').forEach(function (widget) {
+        var picker = widget.querySelector('input[type=file]');
+        var hidden = widget.querySelector('input[type=hidden]');
+        var status = widget.querySelector('.s3-upload-status');
+        var threshold = parseInt(widget.dataset.fallbackThreshold || '0');
+
+        picker.addEventListener('change', async function () {
+            var file = this.files[0];
+            if (!file) return;
+
+            // Below threshold: let the native file input submit as a regular upload.
+            if (threshold > 0 && file.size <= threshold) {
+                hidden.value = '';
+                status.textContent = '';
+                return;
+            }
+
+            var maxSize = parseInt(widget.dataset.maxSize);
+            if (file.size > maxSize) {
+                status.textContent = 'File too large (max ' + Math.round(maxSize / 1048576) + ' MB)';
+                return;
+            }
+            status.textContent = 'Uploading…';
+            hidden.value = '';
+            try {
+                var resp = await fetch(widget.dataset.presignUrl, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': $.cookie('csrftoken')},
+                    body: JSON.stringify({token: widget.dataset.token, filename: file.name,
+                                         content_type: file.type || 'application/octet-stream'}),
+                });
+                var data = await resp.json();
+                if (data.error) throw new Error(data.error);
+                var form = new FormData();
+                Object.entries(data.fields).forEach(([k, v]) => form.append(k, v));
+                form.append('file', file);
+                var up = await fetch(data.url, {method: 'POST', body: form});
+                if (!up.ok) throw new Error('S3 error ' + up.status);
+                hidden.value = data.file_url;
+                picker.disabled = true;  // ponytail: prevents double-submit of the file body
+                status.textContent = '✓ ' + file.name;
+            } catch (e) {
+                // S3 failed: fall back to regular upload via the file input.
+                hidden.value = '';
+                picker.disabled = false;
+                status.textContent = 'Direct upload failed, uploading via server…';
+            }
+        });
+    });
+});

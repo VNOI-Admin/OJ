@@ -6,12 +6,14 @@ from urllib.parse import urljoin
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
+from django.core.signing import BadSignature, Signer
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, \
-    HttpResponseRedirect
+    HttpResponseRedirect, JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from judge.models import Submission
+from judge.widgets.s3_upload import make_s3_client
 
 __all__ = ['rejudge_submission']
 
@@ -102,6 +104,42 @@ def static_uploader(static_file):
     if not url_base.endswith('/'):
         url_base += '/'
     return urljoin(url_base, name)
+
+
+@login_required
+@require_POST
+def s3_presign_post(request):
+    if not getattr(settings, 'S3_PRESIGNED_UPLOAD_BUCKET', None):
+        return JsonResponse({'error': 'S3 upload not configured'}, status=503)
+    try:
+        body = json.loads(request.body)
+        token, filename, content_type = body['token'], body['filename'], body['content_type']
+    except (ValueError, KeyError):
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    try:
+        value = Signer().unsign(token)
+        max_size_str, prefix = value.split(':', 1)
+        max_size = int(max_size_str)
+    except (BadSignature, ValueError):
+        return JsonResponse({'error': 'Invalid token'}, status=400)
+
+    ext = os.path.splitext(filename)[1]
+    key = prefix + str(uuid.uuid4()) + ext
+
+    s3 = make_s3_client()
+    presigned = s3.generate_presigned_post(
+        Bucket=settings.S3_PRESIGNED_UPLOAD_BUCKET,
+        Key=key,
+        Fields={'Content-Type': content_type},
+        Conditions=[
+            {'Content-Type': content_type},
+            ['content-length-range', 0, max_size],  # enforced by S3, not JS
+        ],
+        ExpiresIn=getattr(settings, 'S3_PRESIGNED_UPLOAD_EXPIRY', 3600),
+    )
+    presigned['file_url'] = 's3:' + key
+    return JsonResponse(presigned)
 
 
 def csrf_failure(request: HttpRequest, reason=''):

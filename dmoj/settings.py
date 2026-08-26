@@ -753,6 +753,14 @@ SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission_file'
 STATIC_UPLOAD_URL_PREFIX = '/static-upload'
 STATIC_UPLOAD_MEDIA_DIR = 'static-upload'
 
+# S3 presigned POST uploads (opt-in; set S3_PRESIGNED_UPLOAD_BUCKET to enable)
+S3_PRESIGNED_UPLOAD_BUCKET = None             # bucket name
+S3_PRESIGNED_UPLOAD_REGION = 'auto'           # 'auto' works for R2; use your AWS region for S3
+S3_PRESIGNED_UPLOAD_ENDPOINT_URL = None       # e.g. 'https://<account>.r2.cloudflarestorage.com'
+S3_PRESIGNED_UPLOAD_ACCESS_KEY_ID = None      # R2/S3 access key ID
+S3_PRESIGNED_UPLOAD_SECRET_ACCESS_KEY = None  # R2/S3 secret access key
+S3_PRESIGNED_UPLOAD_EXPIRY = 3600             # presigned URL lifetime in seconds
+
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
