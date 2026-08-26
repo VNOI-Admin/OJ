@@ -373,7 +373,7 @@ urlpatterns = [
 
     path('widgets/', include([
         path('rejudge', widgets.rejudge_submission, name='submission_rejudge'),
-        path('s3-presign', widgets.s3_presign_post, name='s3_presign_post'),
+        path('s3-presign', widgets.s3_presign_put, name='s3_presign_put'),
         path('single_submission', submission.single_submission, name='submission_single_query'),
         path('submission_testcases', submission.SubmissionTestCaseQuery.as_view(), name='submission_testcases_query'),
         path('status-table', status.status_table, name='status_table'),

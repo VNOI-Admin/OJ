@@ -32,10 +32,11 @@ $(function () {
                 });
                 var data = await resp.json();
                 if (data.error) throw new Error(data.error);
-                var form = new FormData();
-                Object.entries(data.fields).forEach(([k, v]) => form.append(k, v));
-                form.append('file', file);
-                var up = await fetch(data.url, {method: 'POST', body: form});
+                var up = await fetch(data.url, {
+                    method: 'PUT',
+                    headers: {'Content-Type': data.content_type},
+                    body: file,
+                });
                 if (!up.ok) throw new Error('S3 error ' + up.status);
                 hidden.value = data.file_url;
                 picker.disabled = true;  // ponytail: prevents double-submit of the file body

@@ -108,7 +108,7 @@ def static_uploader(static_file):
 
 @login_required
 @require_POST
-def s3_presign_post(request):
+def s3_presign_put(request):
     if not getattr(settings, 'S3_PRESIGNED_UPLOAD_BUCKET', None):
         return JsonResponse({'error': 'S3 upload not configured'}, status=503)
     try:
@@ -118,9 +118,9 @@ def s3_presign_post(request):
         return JsonResponse({'error': 'Invalid request'}, status=400)
 
     try:
-        value = Signer().unsign(token)
-        max_size_str, prefix = value.split(':', 1)
-        max_size = int(max_size_str)
+        # R2 doesn't support the S3 POST-with-policy upload API (returns 501), so the max size
+        # here can't be enforced server-side the way `content-length-range` conditions would.
+        _, prefix = Signer().unsign(token).split(':', 1)
     except (BadSignature, ValueError):
         return JsonResponse({'error': 'Invalid token'}, status=400)
 
@@ -128,18 +128,16 @@ def s3_presign_post(request):
     key = prefix + str(uuid.uuid4()) + ext
 
     s3 = make_s3_client()
-    presigned = s3.generate_presigned_post(
-        Bucket=settings.S3_PRESIGNED_UPLOAD_BUCKET,
-        Key=key,
-        Fields={'Content-Type': content_type},
-        Conditions=[
-            {'Content-Type': content_type},
-            ['content-length-range', 0, max_size],  # enforced by S3, not JS
-        ],
+    url = s3.generate_presigned_url(
+        'put_object',
+        Params={
+            'Bucket': settings.S3_PRESIGNED_UPLOAD_BUCKET,
+            'Key': key,
+            'ContentType': content_type,
+        },
         ExpiresIn=getattr(settings, 'S3_PRESIGNED_UPLOAD_EXPIRY', 3600),
     )
-    presigned['file_url'] = 's3:' + key
-    return JsonResponse(presigned)
+    return JsonResponse({'url': url, 'content_type': content_type, 'file_url': 's3:' + key})
 
 
 def csrf_failure(request: HttpRequest, reason=''):
