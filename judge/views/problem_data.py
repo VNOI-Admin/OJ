@@ -1,6 +1,7 @@
 import json
 import mimetypes
 import os
+from io import BytesIO
 from itertools import chain
 from zipfile import BadZipfile, ZipFile
 
@@ -28,7 +29,8 @@ from judge.utils.problem_data import ProblemDataCompiler
 from judge.utils.unicode import utf8text
 from judge.utils.views import TitleMixin, add_file_response, generic_message
 from judge.views.problem import ProblemMixin
-from judge.widgets import Select2Widget
+from judge.widgets import S3PresignedUploadWidget, Select2Widget
+from judge.widgets.s3_upload import make_s3_client
 
 mimetypes.init()
 mimetypes.add_type('application/x-yaml', '.yml')
@@ -65,6 +67,14 @@ class ProblemDataForm(ModelForm):
     io_output_file = CharField(max_length=100, label=gettext_lazy('Output to file'), required=False)
     checker_type = ChoiceField(choices=CUSTOM_CHECKERS, widget=Select2Widget(attrs={'style': 'width: 200px'}))
 
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        # Direct S3 upload bypasses the origin's normal request-size limit, so restrict it to
+        # superusers; everyone else falls back to the regular Django upload path (see
+        # S3PresignedUploadWidget._s3_configured and s3_presign_put's matching server-side check).
+        self.fields['zipfile'].widget.s3_enabled = bool(user and user.is_superuser)
+
     def clean_zipfile(self):
         if hasattr(self, 'zip_valid') and not self.zip_valid:
             raise ValidationError(_('Your zip file is invalid!'))
@@ -83,6 +93,11 @@ class ProblemDataForm(ModelForm):
             'output_limit',
         ]
         widgets = {
+            'zipfile': S3PresignedUploadWidget(
+                max_size=500 * 1024 * 1024,
+                prefix='zipfiles/',
+                # Also the hard cap for users who can't use direct S3 upload (see get_data_form).
+                fallback_threshold=99 * 1024 * 1024),
             'checker_args': HiddenInput,
             'checker': Select2Widget(attrs={'style': 'width: 200px'}),
             'grader': Select2Widget(attrs={'style': 'width: 200px'}),
@@ -237,7 +252,8 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
     def get_data_form(self, post=False):
         return ProblemDataForm(data=self.request.POST if post else None, prefix='problem-data',
                                files=self.request.FILES if post else None,
-                               instance=ProblemData.objects.get_or_create(problem=self.object)[0])
+                               instance=ProblemData.objects.get_or_create(problem=self.object)[0],
+                               user=self.request.user)
 
     def get_case_formset(self, files, post=False):
         return ProblemCaseFormSet(data=self.request.POST if post else None, prefix='cases', valid_files=files,
@@ -249,6 +265,15 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
                 return []
             elif post and 'problem-data-zipfile' in self.request.FILES:
                 return ZipFile(self.request.FILES['problem-data-zipfile']).namelist()
+            elif post and self.request.user.is_superuser and \
+                    self.request.POST.get('problem-data-zipfile', '').startswith('s3:'):
+                # S3 direct upload: download the zip to list its contents for the case editor.
+                # value_from_datadict will download it again when saving; two fetches is the
+                # cost of the drop-in approach without wiring caching through to the widget.
+                key = self.request.POST['problem-data-zipfile'][len('s3:'):]
+                s3 = make_s3_client()
+                obj = s3.get_object(Bucket=settings.S3_PRESIGNED_UPLOAD_BUCKET, Key=key)
+                return ZipFile(BytesIO(obj['Body'].read())).namelist()
             elif data.zipfile:
                 return ZipFile(data.zipfile.path).namelist()
         except (BadZipfile, FileNotFoundError):

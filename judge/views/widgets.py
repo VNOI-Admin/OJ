@@ -6,12 +6,14 @@ from urllib.parse import urljoin
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
+from django.core.signing import BadSignature, Signer
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, \
-    HttpResponseRedirect
+    HttpResponseRedirect, JsonResponse
 from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_POST
 
 from judge.models import Submission
+from judge.widgets.s3_upload import make_s3_client
 
 __all__ = ['rejudge_submission']
 
@@ -102,6 +104,49 @@ def static_uploader(static_file):
     if not url_base.endswith('/'):
         url_base += '/'
     return urljoin(url_base, name)
+
+
+@login_required
+@require_POST
+def s3_presign_put(request):
+    if not request.user.is_superuser:
+        return JsonResponse({'error': 'Forbidden'}, status=403)
+    if not getattr(settings, 'S3_PRESIGNED_UPLOAD_BUCKET', None):
+        return JsonResponse({'error': 'S3 upload not configured'}, status=503)
+    try:
+        body = json.loads(request.body)
+        token, filename, content_type = body['token'], body['filename'], body['content_type']
+        size = int(body['size'])
+    except (ValueError, KeyError, TypeError):
+        return JsonResponse({'error': 'Invalid request'}, status=400)
+
+    try:
+        max_size_str, prefix = Signer().unsign(token).split(':', 1)
+        max_size = int(max_size_str)
+    except (BadSignature, ValueError):
+        return JsonResponse({'error': 'Invalid token'}, status=400)
+
+    if size < 0 or size > max_size:
+        return JsonResponse({'error': 'File too large'}, status=400)
+
+    key = f'{prefix}{uuid.uuid4()}/{os.path.basename(filename)}'
+
+    s3 = make_s3_client()
+    url = s3.generate_presigned_url(
+        'put_object',
+        Params={
+            'Bucket': settings.S3_PRESIGNED_UPLOAD_BUCKET,
+            'Key': key,
+            'ContentType': content_type,
+            # Signing the exact ContentLength (rather than a range, which R2's PutObject presigning
+            # doesn't support) forces the PUT to carry this exact Content-Length or the signature
+            # won't match; browsers always set Content-Length to the real body size, so a client
+            # can't upload more bytes than it declared here.
+            'ContentLength': size,
+        },
+        ExpiresIn=getattr(settings, 'S3_PRESIGNED_UPLOAD_EXPIRY', 3600),
+    )
+    return JsonResponse({'url': url, 'content_type': content_type, 'file_url': 's3:' + key})
 
 
 def csrf_failure(request: HttpRequest, reason=''):
