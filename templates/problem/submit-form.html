@@ -1,3 +1,16 @@
+{% if problem.is_archived %}
+    <div class="alert alert-warning">
+        <b>{{ _('Archived problem') }}</b> </br>
+        {{ _('This problem has been archived because it has had no submissions in the past 6 months.') }}
+        {% if problem.organization and (problem.organization.is_admin(request.profile) or request.user.has_perm('judge.edit_all_organization')) %}
+            {{ _('You can restore it') }}
+            <a href="{{ url('organization_archived_problems', problem.organization.slug) }}?problem={{ problem.code }}">{{ _('here') }}</a>.
+        {% else %}
+            {{ _('Please contact your organization admin to restore it.') }}
+        {% endif %}
+    </div>
+{% endif %}
+
 {% if not no_judges %}
     {% if default_lang not in form.fields.language.queryset %}
         <div class="alert alert-warning alert-dismissable">
