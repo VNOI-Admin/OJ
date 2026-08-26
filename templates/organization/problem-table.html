@@ -99,9 +99,7 @@
                 <form method="post" style="margin: 0;"
                       action="{{ url('organization_archived_problem_restore', organization.slug, problem.code) }}">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-xs delete-btn"
-                            data-author-ids="{{ author_ids(problem) }}"
-                            style="display:none;">
+                    <button type="submit" class="btn btn-xs">
                         <i class="fa fa-undo"></i> {{ _('Restore') }}
                     </button>
                 </form>
