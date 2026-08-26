@@ -64,7 +64,7 @@ class S3PresignedUploadWidget(forms.Widget):
         current_html = ''
         if value and getattr(value, 'url', None):
             clear_name = f'{name}-clear'
-            clear_id = f'{wid}-clear-id'
+            clear_id = f'{clear_name}_id'  # matches Django's ClearableFileInput id convention
             current_html = format_html(
                 '<p class="file-upload">Currently: <a href="{}">{}</a> '
                 '&nbsp;<label for="{}">Clear: <input type="checkbox" name="{}" id="{}"></label></p>',
@@ -78,9 +78,12 @@ class S3PresignedUploadWidget(forms.Widget):
             '<span class="s3-upload-status"></span>'
             '</span>',
             current_html,
-            reverse('s3_presign_post'), self._token(), str(self.max_size), threshold_html,
-            name, f'{wid}_picker', accept_html,
-            name, wid,
+            reverse('s3_presign_put'), self._token(), str(self.max_size), threshold_html,
+            # The visible file input keeps Django's usual id (id_<name>) so existing page JS
+            # written against ClearableFileInput's markup (e.g. $('#id_problem-data-zipfile'))
+            # keeps working; the S3 reference value is the one that gets the extra suffix.
+            name, wid, accept_html,
+            name, f'{wid}_s3ref',
         )
 
     def value_from_datadict(self, data, files, name):
