@@ -2,7 +2,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: dmoj\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-08-24 17:47+0000\n"
+"POT-Creation-Date: 2026-08-26 11:48+0000\n"
 "PO-Revision-Date: 2020-08-23 18:59\n"
 "Last-Translator: \n"
 "Language-Team: Vietnamese\n"
@@ -4595,12 +4595,12 @@ msgstr "chi phí (nghìn đồng)"
 msgid "Archived problems - %s"
 msgstr "Bài tập đã lưu trữ - %s"
 
-#: judge/views/organization.py:1273
+#: judge/views/organization.py:1283
 #, python-format
 msgid "Could not restore %s from the archive. Please try again later."
 msgstr "Không thể khôi phục %s từ kho lưu trữ. Vui lòng thử lại sau."
 
-#: judge/views/organization.py:1287
+#: judge/views/organization.py:1294
 #, python-format
 msgid "%s has been restored from the archive."
 msgstr "%s đã được khôi phục từ kho lưu trữ."
@@ -5070,63 +5070,63 @@ msgstr "URL tới vấn đề"
 msgid "Issue description"
 msgstr "Mô tả vấn đề"
 
-#: judge/views/ticket.py:85
+#: judge/views/ticket.py:86
 #, python-format
 msgid "New ticket: %s"
 msgstr "Ticket mới: %s"
 
-#: judge/views/ticket.py:104 judge/views/ticket.py:107
+#: judge/views/ticket.py:103 judge/views/ticket.py:106
 msgid "Open new issue"
 msgstr "Báo cáo vấn đề"
 
-#: judge/views/ticket.py:138 judge/views/ticket.py:141
+#: judge/views/ticket.py:126 judge/views/ticket.py:129
 #, python-format
 msgid "New ticket for %s"
 msgstr "Báo cáo vấn đề cho %s"
 
-#: judge/views/ticket.py:199
+#: judge/views/ticket.py:188
 #, python-format
 msgid "New reply on ticket: %s"
 msgstr "Phản hồi mới trên ticket: %s"
 
-#: judge/views/ticket.py:208
+#: judge/views/ticket.py:197
 #, python-format
 msgid "%(title)s - Ticket %(id)d"
 msgstr "%(title)s - Vấn đề %(id)d"
 
-#: judge/views/ticket.py:246
+#: judge/views/ticket.py:235
 msgid "You cannot vote your own ticket."
 msgstr "Bạn không thể tự đánh giá"
 
-#: judge/views/ticket.py:328
+#: judge/views/ticket.py:317
 #, python-format
 msgid "Tickets - Page %(number)d of %(total)d"
 msgstr "Các tickets - Trang %(number)d / %(total)d"
 
-#: judge/views/ticket.py:379
+#: judge/views/ticket.py:368
 #, python-format
 msgid "New Ticket: %s"
 msgstr "Ticket mới: %s"
 
-#: judge/views/ticket.py:380
+#: judge/views/ticket.py:369
 #, python-format
 msgid "#%(id)d, assigned to: %(users)s"
 msgstr "#%(id)d, phân công cho: %(users)s"
 
-#: judge/views/ticket.py:382
+#: judge/views/ticket.py:371
 msgid ", "
 msgstr ", "
 
-#: judge/views/ticket.py:382
+#: judge/views/ticket.py:371
 msgid "no one"
 msgstr "không ai cả"
 
-#: judge/views/ticket.py:402
+#: judge/views/ticket.py:391
 #, python-format
 msgid "New Ticket Message For: %s"
 msgstr "Tin nhắn mới cho ticket: %s"
 
-#: judge/views/ticket.py:404
+#: judge/views/ticket.py:393
 msgid "Status changed"
 msgstr "Trạng thái đã thay đổi"
 
@@ -5414,8 +5414,8 @@ msgid "Change"
 msgstr "Thay đổi"
 
 #: templates/admin/judge/app_index.html:23 templates/blog/edit.html:55
-#: templates/contest/edit.html:390 templates/organization/problem-table.html:32
-#: templates/organization/problem-table.html:109
+#: templates/contest/edit.html:390 templates/organization/problem-table.html:33
+#: templates/organization/problem-table.html:115
 #: templates/organization/tag-confirm-delete.html:19
 #: templates/organization/tags.html:142 templates/organization/tags.html:163
 #: templates/organization/tags.html:210
@@ -7034,34 +7034,38 @@ msgstr "Đã lưu trữ"
 msgid "Deletes In"
 msgstr "Xoá sau"
 
-#: templates/organization/problem-table.html:30
+#: templates/organization/problem-table.html:29
+msgid "Archived Size"
+msgstr "Kích thước lưu trữ"
+
+#: templates/organization/problem-table.html:31
 #: templates/submission/status.html:74
 msgid "Download"
 msgstr "Tải về"
 
-#: templates/organization/problem-table.html:31
-#: templates/organization/problem-table.html:99
+#: templates/organization/problem-table.html:32
+#: templates/organization/problem-table.html:105
 msgid "Restore"
 msgstr "Khôi phục"
 
-#: templates/organization/problem-table.html:80
+#: templates/organization/problem-table.html:85
 msgid "Download archived data"
 msgstr "Tải dữ liệu đã lưu trữ"
 
-#: templates/organization/problem-table.html:87
+#: templates/organization/problem-table.html:93
 msgid "Test data"
 msgstr "Dữ liệu test"
 
-#: templates/organization/problem-table.html:118
+#: templates/organization/problem-table.html:124
 #, python-format
 msgid "No archived problem with code \"%(code)s\"."
 msgstr "Không tìm thấy bài lưu trữ với mã \"%(code)s\"."
 
-#: templates/organization/problem-table.html:120
+#: templates/organization/problem-table.html:126
 msgid "No archived problems for this organization."
 msgstr "Không có bài tập lưu trữ nào cho tổ chức này."
 
-#: templates/organization/problem-table.html:123
+#: templates/organization/problem-table.html:129
 msgid "No problems found for this organization."
 msgstr "Không tìm thấy bài nào cho tổ chức này."
 
@@ -7966,40 +7970,62 @@ msgstr "Ngày"
 msgid "Diff source code"
 msgstr "So sánh mã nguồn"
 
+#: templates/problem/submit-form.html:4
+msgid "Archived problem"
+msgstr "Bài tập đã lưu trữ"
+
 #: templates/problem/submit-form.html:5
+msgid ""
+"This problem has been archived because it has had no submissions in the past "
+"6 months."
+msgstr "Bài tập này đã được lưu trữ vì không có lần nộp bài nào trong 6 tháng qua."
+
+#: templates/problem/submit-form.html:7
+msgid "You can restore it"
+msgstr "Bạn có thể khôi phục nó tại"
+
+#: templates/problem/submit-form.html:8
+msgid "here"
+msgstr "đây"
+
+#: templates/problem/submit-form.html:10
+msgid "Please contact your organization admin to restore it."
+msgstr "Vui lòng liên hệ với admin của tổ chức để khôi phục bài tập này."
+
+#: templates/problem/submit-form.html:19
 msgid "Warning!"
 msgstr "Cảnh báo!"
 
-#: templates/problem/submit-form.html:6
+#: templates/problem/submit-form.html:20
 #, python-format
 msgid ""
 "Your default language, %(language)s, is unavailable for this problem and has "
 "been deselected."
 msgstr "Ngôn ngữ mặc định của bạn, %(language)s, không chấm được ở bài này."
 
-#: templates/problem/submit-form.html:14
+#: templates/problem/submit-form.html:28
 #, python-format
 msgid "You have %(left)s submission left"
 msgid_plural "You have %(left)s submissions left"
 msgstr[0] "Bạn còn %(left)s lần nộp"
 
-#: templates/problem/submit-form.html:19
+#: templates/problem/submit-form.html:33
 msgid "You have 0 submissions left"
 msgstr "Bạn còn 0 lần nộp"
 
-#: templates/problem/submit-form.html:31
+#: templates/problem/submit-form.html:45
 msgid "Paste your source code here or load it from a file:"
 msgstr "Dán bài làm của bạn ở đây hoặc nhập từ file:"
 
-#: templates/problem/submit-form.html:40
+#: templates/problem/submit-form.html:54
 msgid "You can only submit file for this language."
 msgstr "Ngôn ngữ này chỉ chấp nhận nộp bằng file."
 
-#: templates/problem/submit-form.html:68
+#: templates/problem/submit-form.html:82
 msgid "No judge is available for this problem."
 msgstr "Bài tập này hiện tại không chấm."
 
-#: templates/problem/submit-form.html:72
+#: templates/problem/submit-form.html:86
 msgid "Submit!"
 msgstr "Nộp bài!"
 
