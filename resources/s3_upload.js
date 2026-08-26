@@ -1,8 +1,26 @@
+function putWithProgress(url, contentType, file, onProgress) {
+    return new Promise(function (resolve, reject) {
+        var xhr = new XMLHttpRequest();
+        xhr.open('PUT', url);
+        xhr.setRequestHeader('Content-Type', contentType);
+        xhr.upload.onprogress = function (e) {
+            if (e.lengthComputable) onProgress(e.loaded / e.total);
+        };
+        xhr.onload = function () {
+            if (xhr.status >= 200 && xhr.status < 300) resolve();
+            else reject(new Error('S3 error ' + xhr.status));
+        };
+        xhr.onerror = function () { reject(new Error('S3 network error')); };
+        xhr.send(file);
+    });
+}
+
 $(function () {
     document.querySelectorAll('.s3-upload-widget').forEach(function (widget) {
         var picker = widget.querySelector('input[type=file]');
         var hidden = widget.querySelector('input[type=hidden]');
         var status = widget.querySelector('.s3-upload-status');
+        var progress = widget.querySelector('.s3-upload-progress');
         var threshold = parseInt(widget.dataset.fallbackThreshold || '0');
 
         picker.addEventListener('change', async function () {
@@ -23,6 +41,8 @@ $(function () {
             }
             status.textContent = 'Uploading…';
             hidden.value = '';
+            progress.value = 0;
+            progress.style.display = '';
             try {
                 var resp = await fetch(widget.dataset.presignUrl, {
                     method: 'POST',
@@ -32,12 +52,10 @@ $(function () {
                 });
                 var data = await resp.json();
                 if (data.error) throw new Error(data.error);
-                var up = await fetch(data.url, {
-                    method: 'PUT',
-                    headers: {'Content-Type': data.content_type},
-                    body: file,
+                await putWithProgress(data.url, data.content_type, file, function (fraction) {
+                    progress.value = Math.round(fraction * 100);
+                    status.textContent = 'Uploading… ' + progress.value + '%';
                 });
-                if (!up.ok) throw new Error('S3 error ' + up.status);
                 hidden.value = data.file_url;
                 picker.disabled = true;  // ponytail: prevents double-submit of the file body
                 status.textContent = '✓ ' + file.name;
@@ -46,6 +64,8 @@ $(function () {
                 hidden.value = '';
                 picker.disabled = false;
                 status.textContent = 'Direct upload failed, uploading via server…';
+            } finally {
+                progress.style.display = 'none';
             }
         });
     });

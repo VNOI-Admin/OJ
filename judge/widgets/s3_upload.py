@@ -79,6 +79,8 @@ class S3PresignedUploadWidget(forms.Widget):
             '{}<span class="s3-upload-widget" data-presign-url="{}" data-token="{}"{}>'
             '<input type="file" name="{}" id="{}" data-max-size="{}"{}>'
             '<input type="hidden" name="{}" id="{}">'
+            '<progress class="s3-upload-progress" value="0" max="100" '
+            'style="display:none; vertical-align:middle;"></progress>'
             '<span class="s3-upload-status"></span>'
             '</span>',
             current_html,
