@@ -1,6 +1,8 @@
+import errno
 import json
 import os
 import re
+import shutil
 import zipfile
 
 import yaml
@@ -39,6 +41,13 @@ class ProblemDataStorage(FileSystemStorage):
 
     def rename(self, old, new):
         return os.rename(self.path(old), self.path(new))
+
+    def delete_directory(self, name):
+        try:
+            shutil.rmtree(self.path(name))
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
 
 
 class ProblemDataError(Exception):
