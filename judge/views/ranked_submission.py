@@ -4,6 +4,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from judge.models import Language, Submission
+from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.problems import get_result_data
 from judge.utils.raw_sql import join_sql_subquery
 from judge.views.submission import ForceContestMixin, ProblemSubmissions
@@ -11,7 +12,9 @@ from judge.views.submission import ForceContestMixin, ProblemSubmissions
 __all__ = ['RankedSubmissions', 'ContestRankedSubmission']
 
 
-class RankedSubmissions(ProblemSubmissions):
+# Ranked by points rather than id, which is not a unique ordering, so this keeps
+# the OFFSET paginator instead of inheriting ProblemSubmissions' cursor one.
+class RankedSubmissions(InfinitePaginationMixin, ProblemSubmissions):
     tab = 'best_submissions_list'
     dynamic_update = False
 

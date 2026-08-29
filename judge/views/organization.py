@@ -34,6 +34,7 @@ from judge.models.problem_data import ProblemData
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem
 from judge.utils.cache_helper import storage_pie_cache_factory
+from judge.utils.cursor_paginator import CursorPaginationMixin
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.organization import add_admin_to_group, add_quota_context, quota_error_response
 from judge.utils.problem_archive import ArchiveServiceError, archive_service
@@ -937,7 +938,9 @@ class ContestListOrganization(PrivateOrganizationMixin, ContestList):
         return context
 
 
-class SubmissionListOrganization(InfinitePaginationMixin, PrivateOrganizationMixin, SubmissionsListBase):
+class SubmissionListOrganization(CursorPaginationMixin, PrivateOrganizationMixin, SubmissionsListBase):
+    cursor_salt = 'judge.organization_submissions.cursor'
+
     template_name = 'organization/submission-list.html'
     permission_bypass = ['judge.view_all_submission']
 
