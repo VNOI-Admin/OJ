@@ -13,9 +13,17 @@ from reversion.admin import VersionAdmin
 from judge.admin.utils import AdminFastPaginationMixin
 from judge.models import LanguageLimit, OrganizationProblemTag, Problem, ProblemClarification, ProblemTranslation, \
     Profile, Solution
+from judge.utils.problem_data import StorageManager
 from judge.utils.views import NoBatchDeleteMixin
 from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, AdminMartorWidget, \
     AdminSelect2MultipleWidget, AdminSelect2Widget, CheckboxSelectMultipleWithSelectAll
+
+
+def _storage_choices():
+    manager = StorageManager.get_instance()
+    return [('', _('Default (%s)') % manager.default_name)] + [
+        (name, name) for name in manager._backends
+    ]
 
 
 class ProblemForm(ModelForm):
@@ -30,6 +38,12 @@ class ProblemForm(ModelForm):
         self.fields['change_message'].widget.attrs.update({
             'placeholder': gettext('Describe the changes you made (optional)'),
         })
+        self.fields['storage'] = forms.ChoiceField(
+            choices=_storage_choices(),
+            required=False,
+            label=_('Storage backend'),
+            help_text=_('Storage backend identifier from config. Leave blank to use the default.'),
+        )
 
     class Meta:
         widgets = {
@@ -135,6 +149,7 @@ class ProblemAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, VersionAdmin):
         (_('Limits'), {'fields': ('time_limit', 'memory_limit')}),
         (_('Language'), {'fields': ('allowed_languages',)}),
         (_('Justice'), {'fields': ('banned_users',)}),
+        (_('Storage'), {'fields': ('storage',)}),
         (_('History'), {'fields': ('change_message',)}),
     )
     list_display = ['code', 'name', 'show_authors', 'points', 'is_public', 'show_public']

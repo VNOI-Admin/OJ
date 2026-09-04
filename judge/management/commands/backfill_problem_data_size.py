@@ -1,9 +1,6 @@
-import os
-
-from django.conf import settings
 from django.core.management.base import BaseCommand
 
-from judge.models import ProblemData
+from judge.models import ProblemData, problem_data_storage
 
 
 class Command(BaseCommand):
@@ -27,7 +24,6 @@ class Command(BaseCommand):
         updated_count = 0
         batch_size = 1000
         batch = []
-        root = settings.DMOJ_PROBLEM_DATA_ROOT
 
         self.stdout.write(f'Processing {total_count} problems...\n')
 
@@ -35,13 +31,11 @@ class Command(BaseCommand):
             old_zipfile_size = problem_data.zipfile_size
             total_size = 0
 
-            # Calculate new sizes directly via OS to bypass Storage abstractions overhead
             for field in ['zipfile', 'generator', 'custom_checker', 'custom_grader', 'custom_header']:
                 val = getattr(problem_data, field)
                 if val and val.name:
-                    path = os.path.join(root, val.name)
                     try:
-                        total_size += os.path.getsize(path)
+                        total_size += problem_data_storage.size(val.name)
                     except (OSError, FileNotFoundError):
                         pass
 
