@@ -38,7 +38,7 @@ class StorageManager:
             }
         else:
             raise ImproperlyConfigured(
-                'Set DMOJ_STORAGE_CONFIG_PATH (YAML path) or DMOJ_PROBLEM_DATA_ROOT in settings.'
+                'Set DMOJ_STORAGE_CONFIG_PATH (YAML path) or DMOJ_PROBLEM_DATA_ROOT in settings.',
             )
 
         storages_conf = config.get('storages', {})
