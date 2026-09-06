@@ -266,6 +266,11 @@ class Problem(models.Model):
         help_text=_('Storage backend identifier from config. Leave blank to use the default.'),
     )
 
+    @property
+    def effective_storage(self):
+        from judge.utils.problem_data_storage import StorageManager
+        return self.storage or StorageManager.get_instance().default_name
+
     __original_points = None
 
     def __init__(self, *args, **kwargs):

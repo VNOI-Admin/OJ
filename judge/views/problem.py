@@ -306,7 +306,9 @@ class ProblemSubmitMixin:
         # Set judge choices
         if self.object.is_editable_by(self.request.user):
             form.fields['judge'].choices = tuple(
-                Judge.objects.filter(online=True, problems=self.object).values_list('name', 'name'),
+                Judge.objects.filter(
+                    online=True, storages__contains=[self.object.effective_storage],
+                ).values_list('name', 'name'),
             )
         else:
             form.fields['judge'].choices = ()
@@ -462,7 +464,10 @@ class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin
                                                   get_contest_submission_count(self.object, user.profile,
                                                                                user.profile.current_contest.virtual), 0)
 
-        context['available_judges'] = Judge.objects.filter(online=True, problems=self.object)
+        context['available_judges'] = Judge.objects.filter(
+            online=True,
+            storages__contains=[self.object.effective_storage],
+        )
         context['show_languages'] = self.object.allowed_languages.count() != Language.objects.count()
         context['has_pdf_render'] = PDF_RENDERING_ENABLED
         context['completed_problem_ids'] = self.get_completed_problems()
