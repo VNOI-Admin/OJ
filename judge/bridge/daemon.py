@@ -18,25 +18,18 @@ def reset_judges():
     Judge.objects.update(online=False, ping=None, load=None)
 
 
-def judge_daemon(run_monitor=False, problem_storage_globs=None):
+def judge_daemon():
     reset_judges()
     Submission.objects.filter(status__in=Submission.IN_PROGRESS_GRADING_STATUS) \
         .update(status='IE', result='IE', error=None)
     judges = JudgeList()
 
-    monitor = None
-    if run_monitor:
-        from judge.bridge.monitor import Monitor
-        monitor = Monitor(judges, problem_storage_globs or [])
-
     judge_server = Server(
         settings.BRIDGED_JUDGE_ADDRESS,
-        partial(JudgeHandler, judges=judges, ignore_problems_packet=run_monitor),
+        partial(JudgeHandler, judges=judges),
     )
     django_server = Server(settings.BRIDGED_DJANGO_ADDRESS, partial(DjangoHandler, judges=judges))
 
-    if monitor is not None:
-        monitor.start()
     threading.Thread(target=django_server.serve_forever).start()
     threading.Thread(target=judge_server.serve_forever).start()
 
@@ -53,7 +46,5 @@ def judge_daemon(run_monitor=False, problem_storage_globs=None):
     try:
         stop.wait()
     finally:
-        if monitor is not None:
-            monitor.stop()
         django_server.shutdown()
         judge_server.shutdown()

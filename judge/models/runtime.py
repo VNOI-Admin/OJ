@@ -150,7 +150,7 @@ class Judge(models.Model):
                              help_text=_('Load for the last minute, divided by processors to be fair.'))
     description = models.TextField(blank=True, verbose_name=_('description'))
     last_ip = models.GenericIPAddressField(verbose_name=_('last connected IP'), blank=True, null=True)
-    problems = models.ManyToManyField('Problem', verbose_name=_('problems'), related_name='judges')
+    storages = models.JSONField(default=list, blank=True, verbose_name=_('storage backends'))
     runtimes = models.ManyToManyField(Language, verbose_name=_('judges'), related_name='judges')
 
     def __str__(self):

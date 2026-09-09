@@ -266,6 +266,11 @@ class Problem(models.Model):
         help_text=_('Storage backend identifier from config. Leave blank to use the default.'),
     )
 
+    @property
+    def effective_storage(self):
+        from judge.utils.problem_data_storage import StorageManager
+        return self.storage or StorageManager.get_instance().default_name
+
     __original_points = None
 
     def __init__(self, *args, **kwargs):
@@ -472,7 +477,10 @@ class Problem(models.Model):
 
     @property
     def usable_languages(self):
-        return self.allowed_languages.filter(judges__in=self.judges.filter(online=True)).distinct()
+        from judge.models.runtime import Judge
+        return self.allowed_languages.filter(
+            judges__in=Judge.objects.filter(online=True, storages__contains=[self.effective_storage]),
+        ).distinct()
 
     def translated_name(self, language):
         if language in self._translated_name_cache:

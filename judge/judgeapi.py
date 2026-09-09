@@ -95,6 +95,7 @@ def judge_submission(submission, rejudge=False, batch_rejudge=False, judge_id=No
             'name': 'submission-request',
             'submission-id': submission.id,
             'problem-id': submission.problem.code,
+            'storage': submission.problem.effective_storage,
             'language': submission.language.key,
             'source': submission.source.source,
             'judge-id': judge_id,

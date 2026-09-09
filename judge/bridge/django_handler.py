@@ -38,6 +38,7 @@ class DjangoHandler(ZlibPacketHandler):
     def on_submission(self, data):
         id = data['submission-id']
         problem = data['problem-id']
+        storage = data['storage']
         language = data['language']
         source = data['source']
         judge_id = data['judge-id']
@@ -45,7 +46,7 @@ class DjangoHandler(ZlibPacketHandler):
         banned_judges = data['banned-judges']
         if not self.judges.check_priority(priority):
             return {'name': 'bad-request'}
-        self.judges.judge(id, problem, language, source, judge_id, priority, banned_judges)
+        self.judges.judge(id, problem, storage, language, source, judge_id, priority, banned_judges)
         return {'name': 'submission-received', 'submission-id': id}
 
     def on_termination(self, data):
