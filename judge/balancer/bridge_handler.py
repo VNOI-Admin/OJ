@@ -35,6 +35,8 @@ class BridgeHandler:
         secure: bool = False,
         no_cert_check: bool = False,
         cert_store: Optional[str] = None,
+        glob_ids: Optional[str] = None,
+        judge_version: int = 1,
         **kwargs,
     ):
         self.host = host
@@ -68,6 +70,9 @@ class BridgeHandler:
         self.no_cert_check = no_cert_check
         self.cert_store = cert_store
 
+        self.glob_ids = glob_ids
+        self.judge_version = judge_version
+
         self._lock = threading.RLock()
         self.shutdown_requested = False
 
@@ -80,6 +85,7 @@ class BridgeHandler:
 
     def _connect(self):
         problems = []  # should be handled by bridged's monitor
+        storages = [{'id': self.glob_ids}] if self.glob_ids else []
         versions = self.balancer.get_runtime_versions()
 
         log.info('Opening connection to: [%s]:%s', self.host, self.port)
@@ -102,7 +108,7 @@ class BridgeHandler:
 
         log.info('Starting handshake with: [%s]:%s', self.host, self.port)
         self.input = self.conn.makefile('rb')
-        self.handshake(problems, versions, self.name, self.key)
+        self.handshake(problems, storages, versions, self.name, self.key)
         log.info('Judge "%s" online: [%s]:%s', self.name, self.host, self.port)
 
     def _reconnect(self):
@@ -215,8 +221,16 @@ class BridgeHandler:
         else:
             log.error('Unknown packet %s, payload %s', name, packet)
 
-    def handshake(self, problems: str, runtimes, id: str, key: str):
-        self.send_packet({'name': 'handshake', 'problems': problems, 'executors': runtimes, 'id': id, 'key': key})
+    def handshake(self, problems: list, storages: list, runtimes, id: str, key: str):
+        self.send_packet({
+            'name': 'handshake',
+            'storages': storages,
+            'problems': problems,
+            'executors': runtimes,
+            'id': id,
+            'key': key,
+            'version': self.judge_version,
+        })
         log.info('Awaiting handshake response: [%s]:%s', self.host, self.port)
         try:
             data = self.input.read(BridgeHandler.SIZE_PACK.size)
