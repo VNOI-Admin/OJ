@@ -11,7 +11,7 @@
     </div>
 {% endif %}
 
-{% if not no_judges %}
+{% if not no_judges and has_test_data %}
     {% if default_lang not in form.fields.language.queryset %}
         <div class="alert alert-warning alert-dismissable">
             <a class="close">x</a>
@@ -61,7 +61,7 @@
             <label for="file_upload" id="file_drag"></label>
         </div>
         <hr>
-        {% if not no_judges %}
+        {% if not no_judges and has_test_data %}
             <div id="language">
                 {{ form.language.errors }}
                 <div id="language-select">
@@ -81,7 +81,9 @@
 
     <hr>
 
-    {% if no_judges %}
+    {% if not has_test_data %}
+        <span style="color: red">{{ _('This problem does not have test data.') }}</span>
+    {% elif no_judges %}
         <span style="color: red">{{ _('No judge is available for this problem.') }}</span>
     {% else %}
         <div class="submit-bar">

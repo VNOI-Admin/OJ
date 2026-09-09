@@ -329,7 +329,13 @@ class ProblemSubmitMixin:
         return form
 
     def get_submit_context(self):
+        try:
+            has_test_data = self.object.data_files.has_yml()
+        except ObjectDoesNotExist:
+            has_test_data = self.object.is_manually_managed
+
         return {
+            'has_test_data': has_test_data,
             'form': self.get_submit_form(),
             'langs': Language.objects.all(),
             'submission_limit': self.contest_problem and self.contest_problem.max_submissions,
