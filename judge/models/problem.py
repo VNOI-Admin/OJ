@@ -477,7 +477,10 @@ class Problem(models.Model):
 
     @property
     def usable_languages(self):
-        return self.allowed_languages.filter(judges__in=self.judges.filter(online=True)).distinct()
+        from judge.models.runtime import Judge
+        return self.allowed_languages.filter(
+            judges__in=Judge.objects.filter(online=True, storages__contains=[self.effective_storage]),
+        ).distinct()
 
     def translated_name(self, language):
         if language in self._translated_name_cache:

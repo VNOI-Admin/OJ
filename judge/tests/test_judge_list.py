@@ -11,7 +11,7 @@ class MockJudge:
         self.tier = 0
         self.load = 0
         self.is_disabled = False
-        self.problems = {'problem'}
+        self.storages = {'storage'}
         self.executors = {'lang'}
         self.submissions = []
         self._working = False
@@ -21,8 +21,8 @@ class MockJudge:
     def working(self):
         return bool(self._working)
 
-    def can_judge(self, problem, executor, judge_id=None):
-        return problem in self.problems and executor in self.executors and \
+    def can_judge(self, storage, executor, judge_id=None):
+        return storage in self.storages and executor in self.executors and \
             ((not judge_id and not self.is_disabled) or self.name == judge_id)
 
     def get_current_submission(self):
@@ -43,7 +43,7 @@ class JudgeListVanishedSubmissionTestCase(SimpleTestCase):
         self.judges = JudgeList()
 
     def submit(self, id):
-        self.judges.judge(id, 'problem', 'lang', 'source', None, DEFAULT_PRIORITY)
+        self.judges.judge(id, 'problem', 'storage', 'lang', 'source', None, DEFAULT_PRIORITY)
 
     def test_vanished_submission_is_dropped_without_blaming_the_judge(self):
         judge = MockJudge('judge', vanished={1})
