@@ -1,44 +1,14 @@
 import json
-import os
-import re
 import zipfile
 
 import yaml
 from django.conf import settings
 from django.core.files.base import ContentFile
-from django.core.files.storage import FileSystemStorage
-from django.urls import reverse
 from django.utils.translation import gettext as _
 
+from judge.utils.problem_data_storage import ProblemDataStorage, StorageManager, split_path_first
 
-if os.altsep:
-    def split_path_first(path, repath=re.compile('[%s]' % re.escape(os.sep + os.altsep))):
-        return repath.split(path, 1)
-else:
-    def split_path_first(path):
-        return path.split(os.sep, 1)
-
-
-class ProblemDataStorage(FileSystemStorage):
-    def __init__(self):
-        super(ProblemDataStorage, self).__init__(settings.DMOJ_PROBLEM_DATA_ROOT)
-
-    def url(self, name):
-        path = split_path_first(name)
-        if len(path) != 2:
-            raise ValueError('This file is not accessible via a URL.')
-        return reverse('problem_data_file', args=path)
-
-    def _save(self, name, content):
-        if self.exists(name):
-            self.delete(name)
-        return super(ProblemDataStorage, self)._save(name, content)
-
-    def get_available_name(self, name, max_length=None):
-        return name
-
-    def rename(self, old, new):
-        return os.rename(self.path(old), self.path(new))
+__all__ = ['ProblemDataStorage', 'StorageManager']
 
 
 class ProblemDataError(Exception):

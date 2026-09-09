@@ -261,6 +261,10 @@ class Problem(models.Model):
         help_text=_('Allow user to view checker feedback.'),
         default=False,
     )
+    storage = models.CharField(
+        max_length=100, verbose_name=_('storage backend'), blank=True, default='',
+        help_text=_('Storage backend identifier from config. Leave blank to use the default.'),
+    )
 
     __original_points = None
 
