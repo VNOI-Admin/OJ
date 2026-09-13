@@ -4,6 +4,17 @@ from django.shortcuts import render
 from django.template.defaultfilters import filesizeformat
 from django.utils.translation import gettext as _
 
+from judge.models import Problem
+
+
+def archived_problems_queryset(organization):
+    """The problems listed on the Archived problems tab, before annotation and ordering.
+
+    The permalink ranks over this same set to work out which page a problem lands on, so the two
+    must not be allowed to drift apart.
+    """
+    return Problem.available.filter(organization=organization, archived_at__isnull=False)
+
 
 def quota_error_response(request, organization):
     return render(request, 'organization/quota-error.html', {
