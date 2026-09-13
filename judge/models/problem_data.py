@@ -1,4 +1,3 @@
-import errno
 import os
 
 from django.core.validators import FileExtensionValidator
@@ -111,7 +110,7 @@ class ProblemData(models.Model):
             if field:
                 try:
                     total_size += field.size
-                except (OSError, IOError, ValueError):
+                except Exception:
                     pass
         self.zipfile_size = total_size
 
@@ -121,11 +120,7 @@ class ProblemData(models.Model):
         super(ProblemData, self).save(*args, **kwargs)
 
     def _update_code(self, original, new):
-        try:
-            problem_data_storage.rename(original, new)
-        except OSError as e:
-            if e.errno != errno.ENOENT:
-                raise
+        problem_data_storage.rename(original, new)
         if self.zipfile:
             self.zipfile.name = _problem_directory_file(new, self.zipfile.name)
         if self.generator:
