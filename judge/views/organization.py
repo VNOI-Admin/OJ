@@ -30,13 +30,14 @@ from reversion import revisions
 from judge.forms import OrganizationForm, OrganizationProblemTagForm, QuotaGrantForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, \
     OrganizationRequest, Problem, Profile, Submission
-from judge.models.problem_data import ProblemData
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
-from judge.tasks import on_new_problem
+from judge.tasks import on_new_problem, restore_organization_archived_problems
 from judge.utils.cache_helper import storage_pie_cache_factory
+from judge.utils.celery import redirect_to_task_status
 from judge.utils.infinite_paginator import InfinitePaginationMixin
-from judge.utils.organization import add_admin_to_group, add_quota_context, quota_error_response
-from judge.utils.problem_archive import ArchiveServiceError, archive_service
+from judge.utils.organization import add_admin_to_group, add_quota_context, archived_problems_queryset, \
+    quota_error_response
+from judge.utils.problem_archive import restore_problem_from_archive
 from judge.utils.problems import user_completed_ids
 from judge.utils.ranker import ranker
 from judge.utils.stats import get_lines_chart, get_pie_chart
@@ -58,15 +59,6 @@ __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'Organiz
 
 MAX_BULK_DELETE_PROBLEMS = 200
 SOLVED_PROBLEMS_PAGE_SIZE = 10
-
-
-def archived_problems_queryset(organization):
-    """The problems listed on the Archived problems tab, before annotation and ordering.
-
-    The permalink ranks over this same set to work out which page a problem lands on, so the two
-    must not be allowed to drift apart.
-    """
-    return Problem.available.filter(organization=organization, archived_at__isnull=False)
 
 
 class OrganizationMixin(object):
@@ -546,6 +538,11 @@ class OrganizationQuotaAdd(LoginRequiredMixin, AdminOrganizationMixin, View):
                 end_date=form.cleaned_data['end_date'],
                 added_problems=packages * settings.VNOJ_QUOTA_PACKAGE_PROBLEMS,
                 added_storage=packages * settings.VNOJ_QUOTA_PACKAGE_STORAGE,
+            )
+            status = restore_organization_archived_problems.delay(self.organization.id)
+            return redirect_to_task_status(
+                status, message=_('Restoring archived problems for %s...') % self.organization.name,
+                redirect=reverse('edit_organization', args=[self.organization.slug]),
             )
         return HttpResponseRedirect(reverse('edit_organization', args=[self.organization.slug]))
 
@@ -1269,27 +1266,9 @@ class RestoreArchivedProblem(LoginRequiredMixin, AdminOrganizationMixin, View):
         if settings.VNOJ_QUOTA_ENFORCEMENT_ENABLED and not self.organization.can_create_problem():
             return quota_error_response(request, self.organization)
 
-        try:
-            problem_data = problem.data_files
-            has_archived_data = problem_data.archived_size > 0
-        except ProblemData.DoesNotExist:
-            problem_data = None
-            has_archived_data = False
-
-        if has_archived_data:
-            try:
-                archive_service.restore(problem.code)
-            except ArchiveServiceError:
-                messages.error(request, _('Could not restore %s from the archive. Please try again later.')
-                               % problem.code)
-                return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))
-
-        problem.archived_at = None
-        problem.save(update_fields=['archived_at'])
-
-        if problem_data is not None:
-            problem_data.archived_size = 0
-            problem_data.save(update_fields=['archived_size'])
-
-        messages.success(request, _('%s has been restored from the archive.') % problem.code)
+        if restore_problem_from_archive(problem):
+            messages.success(request, _('%s has been restored from the archive.') % problem.code)
+        else:
+            messages.error(request, _('Could not restore %s from the archive. Please try again later.')
+                           % problem.code)
         return HttpResponseRedirect(reverse('organization_archived_problems', args=[self.organization.slug]))

@@ -3,6 +3,8 @@ import logging
 import requests
 from django.conf import settings
 
+from judge.models.problem_data import ProblemData
+
 logger = logging.getLogger('judge.problem.archive')
 
 
@@ -54,3 +56,32 @@ class ArchiveService:
 
 
 archive_service = ArchiveService()
+
+
+def restore_problem_from_archive(problem) -> bool:
+    """Take `problem` back out of cold storage, restoring its data if any was archived.
+
+    Returns False (leaving `problem` untouched) if the archive service call failed, so the
+    caller can tell a problem still needs a retry apart from one that was actually restored.
+    """
+    try:
+        problem_data = problem.data_files
+        has_archived_data = problem_data.archived_size > 0
+    except ProblemData.DoesNotExist:
+        problem_data = None
+        has_archived_data = False
+
+    if has_archived_data:
+        try:
+            archive_service.restore(problem.code)
+        except ArchiveServiceError:
+            return False
+
+    problem.archived_at = None
+    problem.save(update_fields=['archived_at'])
+
+    if problem_data is not None:
+        problem_data.archived_size = 0
+        problem_data.save(update_fields=['archived_size'])
+
+    return True
