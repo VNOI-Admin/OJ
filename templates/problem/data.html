@@ -579,12 +579,13 @@
 
             $("#id_problem-data-zipfile").change((event) => {
                 let fileInput = event.target.files[0];
+                let sizeLimit = parseInt(event.target.dataset.maxSize, 10);
 
-                // 100 MB limit (Cloudflare's request body size limit)
-                if (fileInput && fileInput.size > 100 * 1024 * 1024) {
+                if (fileInput && sizeLimit && fileInput.size > sizeLimit) {
                     alert({{ _('File too large!')|htmltojs }} + ' ' +
                         {{ _('Your file is')|htmltojs }} + ' ' + (fileInput.size / (1024 * 1024)).toFixed(2) + ' MB. ' +
-                        {{ _('Maximum allowed is 100 MB.')|htmltojs }});
+                        {{ _('Maximum allowed is')|htmltojs }} + ' ' +
+                        Math.round(sizeLimit / (1024 * 1024)) + ' MB.');
                     event.target.value = "";
                     return;
                 }
