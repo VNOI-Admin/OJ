@@ -367,14 +367,15 @@ $c_rated: #d64137;
 .c-actions { margin-top: 0.25em; }
 .c-action-form { display: inline; margin: 0; }
 .c-action, button.c-action {
-    color: $c_accent_dark;
+    /* !needed: widgets.scss pins button/.button text to white via !important */
+    color: #5ccfbe !important;
     font-weight: 600;
     font-size: 0.9em;
     background: none;
     border: none;
     padding: 0;
     cursor: pointer;
-    &:hover { color: $c_accent; text-decoration: underline; }
+    &:hover { color: #4eb0a2 !important; text-decoration: underline; }
 }
 .c-action-muted { color: $color_primary50; font-size: 0.9em; }
 
