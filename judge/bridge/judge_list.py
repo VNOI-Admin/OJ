@@ -19,12 +19,35 @@ logger = logging.getLogger('judge.bridge')
 PriorityMarker = namedtuple('PriorityMarker', 'priority')
 
 
+class SubmissionQueue(object):
+    def __init__(self, priorities):
+        self._queue = dllist()
+        self.markers = [self._queue.append(PriorityMarker(i)) for i in range(priorities)]
+        self.counts = [0] * priorities
+
+    @property
+    def first(self):
+        return self._queue.first
+
+    def insert(self, value, priority):
+        node = self._queue.insert(value + (priority,), self.markers[priority])
+        self.counts[priority] += 1
+        return node
+
+    def remove(self, node):
+        if not isinstance(node.value, PriorityMarker):
+            self.counts[node.value[-1]] -= 1
+        self._queue.remove(node)
+
+    def is_long_queue(self):
+        return sum(self.counts[:REJUDGE_PRIORITY]) >= settings.VNOJ_LONG_QUEUE_ALERT_THRESHOLD
+
+
 class JudgeList(object):
     priorities = 4
 
     def __init__(self):
-        self.queue = dllist()
-        self.priority = [self.queue.append(PriorityMarker(i)) for i in range(self.priorities)]
+        self.queue = SubmissionQueue(self.priorities)
         self.judges = set()
         self.node_map = {}
         self.submission_map = {}
@@ -44,7 +67,7 @@ class JudgeList(object):
                 elif priority >= REJUDGE_PRIORITY and self.should_reserve_judge():
                     return
                 else:
-                    id, problem, storage, language, source, judge_id, banned_judges = node.value
+                    id, problem, storage, language, source, judge_id, banned_judges, _ = node.value
                     if judge.name not in banned_judges and \
                             judge.can_judge(storage, language, judge_id):
                         try:
@@ -211,8 +234,8 @@ class JudgeList(object):
             else:
                 self.node_map[id] = self.queue.insert(
                     (id, problem, storage, language, source, judge_id, banned_judges),
-                    self.priority[priority],
+                    priority,
                 )
                 logger.info('Queued submission: %d', id)
-                if self.queue.size == settings.VNOJ_LONG_QUEUE_ALERT_THRESHOLD + self.priorities:
-                    on_long_queue.delay()
+                if self.queue.is_long_queue():
+                    on_long_queue.delay(self.queue.counts)
