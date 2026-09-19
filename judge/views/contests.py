@@ -109,16 +109,20 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
 
     def get_queryset(self):
         self.search_query = None
+        self.selected_tag = self.request.GET.get('tag') or None
+        self.show_unrated = 'show_unrated' in self.request.GET
         query_set = self._get_queryset().order_by('-end_time', 'key').filter(end_time__lt=self._now)
+        self.past_total = query_set.count()
         if 'search' in self.request.GET:
             self.search_query = search_query = ' '.join(self.request.GET.getlist('search')).strip()
             if search_query:
                 query_set = query_set.filter(Q(key__icontains=search_query) | Q(name__icontains=search_query))
+        if self.selected_tag:
+            query_set = query_set.filter(tags__name=self.selected_tag)
+        if not self.show_unrated:
+            query_set = query_set.filter(is_rated=True)
+        self.past_showing = query_set.count()
         return query_set
-
-    def get_paginator(self, queryset, per_page, orphans=0, allow_empty_first_page=True, **kwargs):
-        return super().get_paginator(queryset, per_page, orphans, allow_empty_first_page,
-                                     count=self.get_queryset().values('id').count(), **kwargs)
 
     def get_context_data(self, **kwargs):
         context = super(ContestList, self).get_context_data(**kwargs)
@@ -134,7 +138,8 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
             for participation in ContestParticipation.objects.filter(virtual=0, user=self.request.profile,
                                                                      contest_id__in=present) \
                     .select_related('contest') \
-                    .prefetch_related('contest__authors', 'contest__curators', 'contest__testers') \
+                    .prefetch_related('contest__tags', 'contest__organization',
+                                      'contest__authors', 'contest__curators', 'contest__testers') \
                     .annotate(key=F('contest__key')):
                 if participation.ended:
                     finished.add(participation.contest.key)
@@ -150,6 +155,16 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
         context['future_contests'] = future
         context['finished_contests'] = finished
         context['now'] = self._now
+
+        # Sidebar: the running contest to highlight, and the flat tag list for the filter dropdown.
+        context['running_contest'] = (active[0].contest if active else (present[0] if present else None))
+        context['contest_tags'] = list(ContestTag.objects.order_by('name'))
+        context['selected_tag'] = self.selected_tag
+        context['show_unrated'] = self.show_unrated
+        context['past_total'] = self.past_total
+        context['past_showing'] = self.past_showing
+        context['has_filter'] = bool(self.selected_tag or self.show_unrated or self.search_query)
+
         context['first_page_href'] = '.'
         context['page_suffix'] = '#past-contests'
         context['search_query'] = self.search_query
