@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block media %}
+    {{ form.media.css }}
+    <style>
+        .form-field {
+            margin-bottom: 1em;
+        }
+
+        .required-marker {
+            color: red;
+        }
+
+        .legend, .help-text {
+            color: gray;
+            font-size: 0.9em;
+        }
+    </style>
+{% endblock %}
+
+{% block js_media %}{{ form.media.js }}{% endblock %}
+
+{% block body %}
+    <p>{{ view.intro }}</p>
+    <p class="legend"><span class="required-marker">*</span> {{ _('marks a required field.') }}</p>
+
+    <form action="" method="post" enctype="multipart/form-data" class="form-area">
+        {% csrf_token %}
+        {% if form.non_field_errors() %}
+            <div class="alert alert-danger">{{ form.non_field_errors() }}</div>
+        {% endif %}
+        {% for field in form %}
+            <div class="form-field">
+                <p>
+                    <label for="{{ field.id_for_label }}"><b>{{ field.label }}</b></label>
+                    {% if field.field.required %}<span class="required-marker">*</span>{% endif %}
+                </p>
+                {% if field.help_text %}<p class="help-text">{{ field.help_text }}</p>{% endif %}
+                <p>{{ field }}</p>
+                {% if field.errors %}<div class="alert alert-danger">{{ field.errors }}</div>{% endif %}
+            </div>
+        {% endfor %}
+        <button type="submit">{{ _('Submit') }}</button>
+    </form>
+{% endblock %}

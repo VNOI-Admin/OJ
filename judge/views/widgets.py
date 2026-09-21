@@ -93,6 +93,13 @@ def martor_image_uploader(request):
     return HttpResponse(data, content_type='application/json')
 
 
+def organization_form_uploader(proof_file):
+    ext = os.path.splitext(proof_file.name)[1]
+    name = str(uuid.uuid4()) + ext
+    default_storage.save(os.path.join(settings.VNOJ_ORGANIZATION_FORM_MEDIA_DIR, name), proof_file)
+    return urljoin(settings.VNOJ_ORGANIZATION_FORM_URL_PREFIX + '/', name)
+
+
 def static_uploader(static_file):
     ext = os.path.splitext(static_file.name)[1]
     name = str(uuid.uuid4()) + ext

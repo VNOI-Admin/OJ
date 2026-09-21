@@ -27,9 +27,10 @@ from django.views.generic import CreateView, DetailView, FormView, ListView, Tem
 from django.views.generic.detail import SingleObjectMixin, SingleObjectTemplateResponseMixin
 from reversion import revisions
 
-from judge.forms import OrganizationForm, OrganizationProblemTagForm, QuotaGrantForm
+from judge.forms import OrganizationForm, OrganizationKycForm, OrganizationProblemTagForm, \
+    OrganizationRegisterForm, QuotaGrantForm
 from judge.models import BlogPost, Comment, Contest, Language, Organization, \
-    OrganizationRequest, Problem, Profile, Submission
+    OrganizationRegistrationForm, OrganizationRequest, Problem, Profile, Submission
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem, restore_organization_archived_problems
 from judge.utils.cache_helper import storage_pie_cache_factory
@@ -47,6 +48,7 @@ from judge.views.blog import BlogPostCreate, PostListBase
 from judge.views.contests import ContestList, CreateContest
 from judge.views.problem import ProblemCreate, ProblemList
 from judge.views.submission import SubmissionsListBase
+from judge.views.widgets import organization_form_uploader
 
 __all__ = ['OrganizationList', 'OrganizationHome', 'OrganizationUsers', 'OrganizationMembershipChange',
            'JoinOrganization', 'LeaveOrganization', 'EditOrganization', 'RequestJoinOrganization',
@@ -489,6 +491,56 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
         else:
             return generic_message(request, _("Can't create organization"),
                                    _('You are not allowed to create new organizations.'), status=403)
+
+
+class OrganizationProofFormView(LoginRequiredMixin, TitleMixin, CreateView):
+    """Base of the two organization forms: both store proof files against a pending submission."""
+
+    template_name = 'organization/registration/form.html'
+    model = OrganizationRegistrationForm
+    intro = None
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['request'] = self.request
+        return kwargs
+
+    def form_valid(self, form):
+        form.instance.user = self.request.profile
+        form.instance.state = OrganizationRegistrationForm.State.PENDING
+        form.instance.proof_files = [organization_form_uploader(proof_file)
+                                     for proof_file in form.cleaned_data['proof_files']]
+        return super().form_valid(form)
+
+
+class OrganizationRegister(OrganizationProofFormView):
+    form_class = OrganizationRegisterForm
+    title = gettext_lazy('Register an organization')
+    intro = gettext_lazy('Fill in this form to register a new organization. We will review it and let you know.')
+
+
+class OrganizationKyc(OrganizationProofFormView):
+    form_class = OrganizationKycForm
+    title = gettext_lazy('Verify an organization')
+    intro = gettext_lazy('Send us proof of identity for an organization you administer.')
+
+    def dispatch(self, request, *args, **kwargs):
+        if request.user.is_authenticated and not request.profile.admin_of.exists():
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
+
+class OrganizationRegisterDetail(LoginRequiredMixin, TitleMixin, DetailView):
+    template_name = 'organization/registration/detail.html'
+    model = OrganizationRegistrationForm
+    title = gettext_lazy('Organization registration form')
+
+    def get_object(self, queryset=None):
+        object = super().get_object(queryset)
+        if object.user_id != self.request.profile.id and \
+                not self.request.user.has_perm('judge.change_organizationregistrationform'):
+            raise PermissionDenied()
+        return object
 
 
 class EditOrganization(LoginRequiredMixin, TitleMixin, AdminOrganizationMixin, UpdateView):

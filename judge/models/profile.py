@@ -9,6 +9,7 @@ import pyotp
 import webauthn
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.core.validators import RegexValidator
 from django.db import models
 from django.db.models import Max, Sum
@@ -31,7 +32,7 @@ from judge.utils.two_factor import webauthn_decode
 from judge.utils.unicode import utf8bytes
 
 __all__ = ['Organization', 'OrganizationQuota', 'OrganizationMonthlyUsage', 'Profile', 'OrganizationRequest',
-           'WebAuthnCredential']
+           'OrganizationRegistrationForm', 'WebAuthnCredential']
 
 
 class EncryptedNullCharField(EncryptedCharField):
@@ -608,3 +609,82 @@ class OrganizationRequest(models.Model):
     class Meta:
         verbose_name = _('organization join request')
         verbose_name_plural = _('organization join requests')
+
+
+class OrganizationRegistrationForm(models.Model):
+    class State(models.TextChoices):
+        PENDING = 'pending', _('Pending')
+        APPROVED = 'approved', _('Approved')
+        REJECTED = 'rejected', _('Rejected')
+
+    user = models.ForeignKey(Profile, verbose_name=_('applicant'), related_name='organization_registration_forms',
+                             on_delete=models.CASCADE)
+    organization = models.ForeignKey(Organization, verbose_name=_('organization'), related_name='registration_forms',
+                                     null=True, blank=True, on_delete=models.CASCADE,
+                                     help_text=_('Leave empty to register a new organization.'))
+    state = models.CharField(max_length=10, verbose_name=_('state'), choices=State.choices, default=State.PENDING)
+    # Blank on a form submitted for an existing organization, required on one registering a new one.
+    name = models.CharField(max_length=128, verbose_name=_('organization title'), blank=True,
+                            help_text=_('Required when registering a new organization.'))
+    slug = models.SlugField(max_length=128, verbose_name=_('organization slug'), blank=True,
+                            help_text=_('Organization name shown in URLs. '
+                                        'Required when registering a new organization.'),
+                            validators=[RegexValidator(r'^[a-zA-Z]',
+                                                       _('Organization slugs must begin with a letter.'))])
+    short_name = models.CharField(max_length=20, verbose_name=_('short name'), blank=True,
+                                  help_text=_('Displayed beside user name during contests. '
+                                              'Required when registering a new organization.'))
+    about = models.TextField(verbose_name=_('organization description'), blank=True,
+                             help_text=_('Required when registering a new organization.'))
+    applicant_name = models.CharField(max_length=128, verbose_name=_('full name'),
+                                      help_text=_('Your real name, as shown on the proof you upload.'))
+    facebook = models.CharField(max_length=256, verbose_name=_('Facebook'),
+                                help_text=_('Link to the Facebook account we should contact you through.'))
+    email = models.EmailField(verbose_name=_('email address'))
+    phone = models.CharField(max_length=32, verbose_name=_('phone number'), blank=True)
+    reason = models.TextField(verbose_name=_('reason'), blank=True,
+                              help_text=_('Required when registering a new organization.'))
+    proof_files = models.JSONField(verbose_name=_('proof'), default=list, blank=True)
+    time = models.DateTimeField(verbose_name=_('request time'), auto_now_add=True)
+    review_time = models.DateTimeField(verbose_name=_('review time'), null=True, blank=True)
+    reviewer = models.ForeignKey(Profile, verbose_name=_('reviewer'), null=True, blank=True,
+                                 related_name='reviewed_organization_registration_forms', on_delete=models.SET_NULL)
+    review_note = models.TextField(verbose_name=_('review note'), blank=True)
+
+    @property
+    def is_new_organization(self):
+        return self.organization_id is None
+
+    def get_absolute_url(self):
+        return reverse('organization_register_detail', args=(self.id,))
+
+    def clean(self):
+        pending = OrganizationRegistrationForm.objects.filter(state=self.State.PENDING).exclude(pk=self.pk)
+
+        if self.is_new_organization:
+            errors = {field: _('This field is required to register a new organization.')
+                      for field in ('name', 'slug', 'short_name', 'about', 'reason') if not getattr(self, field)}
+            if errors:
+                raise ValidationError(errors)
+
+            if Organization.objects.filter(slug=self.slug).exists() or pending.filter(slug=self.slug).exists():
+                raise ValidationError({'slug': _('An organization with this slug already exists.')})
+
+            if self.user.admin_of.count() >= settings.VNOJ_ORGANIZATION_ADMIN_LIMIT and \
+                    not self.user.user.has_perm('judge.spam_organization'):
+                raise ValidationError(_('You already administer the maximum number of organizations.'))
+        else:
+            self.name = self.slug = self.short_name = self.about = self.reason = ''
+            if not self.organization.is_admin(self.user):
+                raise ValidationError({'organization': _('You are not an admin of this organization.')})
+
+        if self.state == self.State.PENDING and pending.filter(user=self.user).exists():
+            raise ValidationError(_('You already have a pending organization registration form.'))
+
+    def __str__(self):
+        return '%s: %s' % (self.user.username, self.name if self.is_new_organization else self.organization.name)
+
+    class Meta:
+        ordering = ('-time',)
+        verbose_name = _('organization registration form')
+        verbose_name_plural = _('organization registration forms')

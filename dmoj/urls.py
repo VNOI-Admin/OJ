@@ -291,6 +291,10 @@ urlpatterns = [
 
     path('organizations/', organization.OrganizationList.as_view(), name='organization_list'),
     path('organizations/create', organization.CreateOrganization.as_view(), name='organization_create'),
+    path('organizations/register', organization.OrganizationRegister.as_view(), name='organization_register'),
+    path('organizations/kyc', organization.OrganizationKyc.as_view(), name='organization_kyc'),
+    path('organizations/register/<int:pk>', organization.OrganizationRegisterDetail.as_view(),
+         name='organization_register_detail'),
     path('organization/<int:pk>-<path:suffix>',
          lambda _, pk, suffix: HttpResponsePermanentRedirect('/organization/%s' % suffix)),
     path('organization/<slug:slug>', include([

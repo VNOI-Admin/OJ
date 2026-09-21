@@ -22,8 +22,8 @@ from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _, ngettext_lazy
 
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, Language, \
-    LanguageLimit, Organization, OrganizationProblemTag, Problem, Profile, Solution, Submission, Tag, \
-    WebAuthnCredential
+    LanguageLimit, Organization, OrganizationProblemTag, OrganizationRegistrationForm, Problem, Profile, Solution, \
+    Submission, Tag, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
 from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
@@ -506,6 +506,83 @@ class OrganizationForm(ModelForm):
             self.fields.pop('admins')
             self.fields.pop('paid_credit')
             self.fields.pop('monthly_free_credit_limit')
+
+
+class MultipleFileInput(forms.ClearableFileInput):
+    allow_multiple_selected = True
+
+
+class MultipleFileField(forms.FileField):
+    """A file field accepting several files at once, which cleans to a list of uploaded files."""
+
+    def __init__(self, *args, **kwargs):
+        kwargs.setdefault('widget', MultipleFileInput())
+        super().__init__(*args, **kwargs)
+
+    def clean(self, data, initial=None):
+        if not data and self.required:
+            raise ValidationError(self.error_messages['required'], code='required')
+        clean_one = super().clean
+        return [clean_one(item, initial) for item in data]
+
+
+class OrganizationProofForm(ModelForm):
+    """Base of the two organization forms: both collect proof files from their applicant."""
+
+    proof_files = MultipleFileField(
+        label=_('Proof'),
+        help_text=_('Upload documents proving you are a real person, e.g. your citizen identity card.'),
+    )
+
+    def __init__(self, *args, **kwargs):
+        self.request = kwargs.pop('request')
+        super().__init__(*args, **kwargs)
+        self.instance.user = self.request.profile
+
+    def clean_proof_files(self):
+        files = self.cleaned_data['proof_files']
+        max_files = settings.VNOJ_ORGANIZATION_FORM_MAX_FILES
+        if len(files) > max_files:
+            raise ValidationError(ngettext_lazy('You may upload at most %d file.',
+                                                'You may upload at most %d files.', max_files) % max_files)
+
+        max_size = settings.VNOJ_ORGANIZATION_FORM_MAX_FILE_SIZE
+        for proof_file in files:
+            if proof_file.size > max_size:
+                raise ValidationError(_('%(name)s is larger than %(limit)s.') % {
+                    'name': proof_file.name, 'limit': filesizeformat(max_size),
+                })
+            if os.path.splitext(proof_file.name)[1].lower() not in settings.VNOJ_ORGANIZATION_FORM_SAFE_EXTS:
+                raise ValidationError(_('%(name)s is not an accepted file type.') % {'name': proof_file.name})
+        return files
+
+
+class OrganizationRegisterForm(OrganizationProofForm):
+    class Meta:
+        model = OrganizationRegistrationForm
+        fields = ['name', 'slug', 'short_name', 'about', 'applicant_name', 'facebook', 'email', 'phone', 'reason']
+        widgets = {'about': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('organization_preview')})}
+
+
+class OrganizationKycForm(OrganizationProofForm):
+    class Meta:
+        model = OrganizationRegistrationForm
+        fields = ['organization', 'applicant_name', 'facebook', 'email', 'phone']
+        widgets = {'organization': Select2Widget(attrs={'style': 'width: 100%'})}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        organization = self.fields['organization']
+        organization.queryset = self.request.profile.admin_of.all()
+        organization.required = True
+        organization.empty_label = None
+
+    def _post_clean(self):
+        # Without an organization the model validates the submission as if it registered a new one,
+        # reporting errors on fields this form does not have.
+        if self.cleaned_data.get('organization') is None:
+            return
+        super()._post_clean()
 
 
 class OrganizationProblemTagForm(ModelForm):

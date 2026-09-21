@@ -753,6 +753,13 @@ PDF_STATEMENT_MAX_FILE_SIZE = 5242880
 SUBMISSION_FILE_UPLOAD_URL_PREFIX = '/submission_file'
 SUBMISSION_FILE_UPLOAD_MEDIA_DIR = 'submission_file'
 
+# Proof files uploaded with an organization registration form
+VNOJ_ORGANIZATION_FORM_URL_PREFIX = '/organization_form'
+VNOJ_ORGANIZATION_FORM_MEDIA_DIR = 'organization_form'
+VNOJ_ORGANIZATION_FORM_MAX_FILES = 5
+VNOJ_ORGANIZATION_FORM_MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB per file
+VNOJ_ORGANIZATION_FORM_SAFE_EXTS = {'.jpg', '.jpeg', '.png', '.webp', '.pdf'}
+
 STATIC_UPLOAD_URL_PREFIX = '/static-upload'
 STATIC_UPLOAD_MEDIA_DIR = 'static-upload'
 

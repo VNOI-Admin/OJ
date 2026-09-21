@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block media %}
+    <style>
+        th {
+            text-align: left;
+            padding-right: 1em;
+            vertical-align: top;
+        }
+
+        .proof-preview {
+            max-width: 20em;
+            display: block;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    {% include "organization/registration/summary.html" %}
+
+{% endblock %}

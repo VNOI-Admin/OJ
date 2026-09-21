@@ -11,7 +11,7 @@ from judge.models.problem import LanguageLimit, License, OrganizationProblemTag,
 from judge.models.problem_data import CHECKERS, ProblemData, ProblemTestCase, problem_data_storage, \
     problem_directory_file
 from judge.models.profile import Badge, Organization, OrganizationMonthlyUsage, OrganizationQuota, \
-    OrganizationRequest, Profile, WebAuthnCredential
+    OrganizationRegistrationForm, OrganizationRequest, Profile, WebAuthnCredential
 from judge.models.runtime import Judge, Language, RuntimeVersion
 from judge.models.submission import SUBMISSION_RESULT, Submission, SubmissionSource, SubmissionTestCase
 from judge.models.tag import Tag, TagData, TagGroup, TagProblem

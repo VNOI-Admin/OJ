@@ -2,9 +2,11 @@ from django.conf import settings
 from django.contrib.auth.models import Group
 from django.shortcuts import render
 from django.template.defaultfilters import filesizeformat
+from django.utils import timezone
 from django.utils.translation import gettext as _
+from reversion import revisions
 
-from judge.models import Problem
+from judge.models import Organization, OrganizationRegistrationForm, Problem, make_notification
 
 
 def archived_problems_queryset(organization):
@@ -61,3 +63,53 @@ def add_admin_to_group(form):
     g = Group.objects.get(name=settings.GROUP_PERMISSION_FOR_ORG_ADMIN)
     for admin in all_admins:
         admin.user.groups.add(g)
+
+
+def approve_organization_registration(registration, reviewer):
+    """Approve a pending registration form, creating its organization when it asks for a new one."""
+    if registration.state != OrganizationRegistrationForm.State.PENDING:
+        return
+
+    with revisions.create_revision(atomic=True):
+        revisions.set_comment(_('Created from an organization registration form'))
+        revisions.set_user(reviewer.user)
+
+        if registration.is_new_organization:
+            organization = Organization(
+                name=registration.name,
+                slug=registration.slug,
+                short_name=registration.short_name,
+                about=registration.about,
+            )
+            organization.free_credit = organization.monthly_free_credit_limit
+            organization.save()
+            organization.admins.add(registration.user)
+            org_admin_group, _created = Group.objects.get_or_create(name=settings.GROUP_PERMISSION_FOR_ORG_ADMIN)
+            registration.user.user.groups.add(org_admin_group)
+            registration.organization = organization
+
+        registration.state = OrganizationRegistrationForm.State.APPROVED
+        registration.reviewer = reviewer
+        registration.review_time = timezone.now()
+        registration.save(update_fields=['organization', 'state', 'reviewer', 'review_time', 'review_note'])
+
+    make_notification(
+        [registration.user], _('Organization registration approved'), registration.review_note,
+        registration.organization.get_absolute_url(),
+    )
+
+
+def reject_organization_registration(registration, reviewer, note=''):
+    """Reject a pending registration form, telling the applicant why."""
+    if registration.state != OrganizationRegistrationForm.State.PENDING:
+        return
+
+    registration.state = OrganizationRegistrationForm.State.REJECTED
+    registration.reviewer = reviewer
+    registration.review_time = timezone.now()
+    registration.review_note = note
+    registration.save(update_fields=['state', 'reviewer', 'review_time', 'review_note'])
+
+    make_notification(
+        [registration.user], _('Organization registration rejected'), note, registration.get_absolute_url(),
+    )

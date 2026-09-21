@@ -1,0 +1,62 @@
+<table>
+    <tr>
+        <th>{{ _('User:') }}</th>
+        <td>{{ link_user(object.user) }}</td>
+    </tr>
+    <tr>
+        <th>{{ _('Organization:') }}</th>
+        <td>
+            {% if object.is_new_organization %}
+                {{ object.name }} ({{ object.slug }})
+            {% else %}
+                <a href="{{ object.organization.get_absolute_url() }}">{{ object.organization.name }}</a>
+            {% endif %}
+        </td>
+    </tr>
+    <tr>
+        <th>{{ _('Time:') }}</th>
+        <td>{{ object.time|date(_("N j, Y, g:i a")) }}</td>
+    </tr>
+    <tr>
+        <th>{{ _('State:') }}</th>
+        <td>{{ object.get_state_display() }}</td>
+    </tr>
+    <tr>
+        <th>{{ _('Full name:') }}</th>
+        <td>{{ object.applicant_name }}</td>
+    </tr>
+    <tr>
+        <th>{{ _('Facebook:') }}</th>
+        <td>{{ object.facebook }}</td>
+    </tr>
+    <tr>
+        <th>{{ _('Email:') }}</th>
+        <td>{{ object.email }}</td>
+    </tr>
+    {% if object.phone %}
+        <tr>
+            <th>{{ _('Phone number:') }}</th>
+            <td>{{ object.phone }}</td>
+        </tr>
+    {% endif %}
+    {% if object.reason %}
+        <tr>
+            <th>{{ _('Reason:') }}</th>
+            <td>{{ object.reason|linebreaks }}</td>
+        </tr>
+    {% endif %}
+    <tr>
+        <th>{{ _('Proof:') }}</th>
+        <td>
+            {% for url in object.proof_files %}
+                <a href="{{ url }}">{{ url }}</a>
+            {% endfor %}
+        </td>
+    </tr>
+    {% if object.review_note %}
+        <tr>
+            <th>{{ _('Review note:') }}</th>
+            <td>{{ object.review_note|linebreaks }}</td>
+        </tr>
+    {% endif %}
+</table>

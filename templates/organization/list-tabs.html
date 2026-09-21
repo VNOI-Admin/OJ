@@ -8,8 +8,17 @@
             <label for="show_all_orgs">{{ _('Show all orgs') }}</label>
         </form>
     {% endif %}
+    {% set my_form = request.profile.organization_registration_forms.first() if request.user.is_authenticated else none %}
     {% if perms.judge.add_organization %}
         {{ make_tab('create', 'fa-plus', url('organization_create'), _('Create new organization')) }}
+    {% elif request.user.is_authenticated and not (my_form and my_form.state == 'pending') %}
+        {{ make_tab('register', 'fa-plus', url('organization_register'), _('Register an organization')) }}
+    {% endif %}
+    {% if my_form %}
+        {{ make_tab('my_form', 'fa-file-text-o', my_form.get_absolute_url(), _('My registration form')) }}
+    {% endif %}
+    {% if request.user.is_authenticated and request.profile.admin_of.exists() %}
+        {{ make_tab('kyc', 'fa-id-card', url('organization_kyc'), _('Verify an organization')) }}
     {% endif %}
     {{ super() }}
 {% endblock %}

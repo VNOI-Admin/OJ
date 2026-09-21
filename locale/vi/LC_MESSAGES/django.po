@@ -6604,9 +6604,6 @@ msgid "Are you sure you want to un-disqualify this participation?"
 msgstr "Bạn có chắc muốn hủy truất quyền tham dự này không?"
 
 #: templates/contest/ranking.html:472 templates/organization/usage.html:271
-msgid "Filter"
-msgstr "Lọc"
-
 #: templates/contest/ranking.html:477 templates/status/oj-status.html:74
 msgid "Apply"
 msgstr "Chọn"
@@ -6813,9 +6810,6 @@ msgstr ""
 #: templates/problem/search-form.html:40 templates/submission/list.html:326
 #: templates/submission/list.html:339 templates/submission/list.html:352
 #: templates/submission/submission-list-tabs.html:4
-msgid "All"
-msgstr "Tất cả"
-
 #: templates/notification/list.html:56
 msgid "Read"
 msgstr "Đã đọc"
@@ -9586,6 +9580,156 @@ msgstr "URL rút gọn này không hoạt động."
 
 #~ msgid "Update preview"
 #~ msgstr "Cập nhật preview"
+
+msgid "applicant"
+msgstr "người đăng ký"
+
+msgid "organization registration form"
+msgstr "đơn đăng ký tổ chức"
+
+msgid "organization registration forms"
+msgstr "đơn đăng ký tổ chức"
+
+msgid "proof"
+msgstr "minh chứng"
+
+msgid "review time"
+msgstr "thời gian duyệt"
+
+msgid "reviewer"
+msgstr "người duyệt"
+
+msgid "review note"
+msgstr "ghi chú của người duyệt"
+
+msgid "Leave empty to register a new organization."
+msgstr "Để trống để đăng ký một tổ chức mới."
+
+msgid "Your real name, as shown on the proof you upload."
+msgstr "Tên thật của bạn, trùng với minh chứng bạn tải lên."
+
+msgid "This field is required to register a new organization."
+msgstr "Trường này là bắt buộc khi đăng ký một tổ chức mới."
+
+msgid "An organization with this slug already exists."
+msgstr "Đã có tổ chức sử dụng slug này."
+
+msgid "You already administer the maximum number of organizations."
+msgstr "Bạn đã quản lý số tổ chức tối đa được cho phép."
+
+msgid "You are not an admin of this organization."
+msgstr "Bạn không phải quản trị viên của tổ chức này."
+
+msgid "You already have a pending organization registration form."
+msgstr "Bạn đã có một đơn đăng ký tổ chức đang chờ duyệt."
+
+msgid "Proof"
+msgstr "Minh chứng"
+
+msgid "Upload documents proving you are a real person, e.g. your citizen identity card."
+msgstr "Tải lên giấy tờ chứng minh bạn là người thật, ví dụ căn cước công dân."
+
+msgid "Register a new organization"
+msgstr "Đăng ký tổ chức mới"
+
+msgid "Register an organization"
+msgstr "Đăng ký tổ chức"
+
+msgid "Organization registration form"
+msgstr "Đơn đăng ký tổ chức"
+
+msgid "Organization registration approved"
+msgstr "Đơn đăng ký tổ chức đã được duyệt"
+
+msgid "Organization registration rejected"
+msgstr "Đơn đăng ký tổ chức đã bị từ chối"
+
+msgid "Created from an organization registration form"
+msgstr "Được tạo từ đơn đăng ký tổ chức"
+
+msgid "Approve selected registration forms"
+msgstr "Duyệt các đơn đăng ký đã chọn"
+
+msgid "Reject selected registration forms"
+msgstr "Từ chối các đơn đăng ký đã chọn"
+
+msgid "%(name)s is larger than %(limit)s."
+msgstr "%(name)s lớn hơn %(limit)s."
+
+msgid "%(name)s is not an accepted file type."
+msgstr "%(name)s không thuộc định dạng được chấp nhận."
+
+msgid "Full name:"
+msgstr "Họ và tên:"
+
+msgid "Contact:"
+msgstr "Liên hệ:"
+
+msgid "Proof:"
+msgstr "Minh chứng:"
+
+msgid "Review note:"
+msgstr "Ghi chú của người duyệt:"
+
+msgid "You may upload at most %d file."
+msgid_plural "You may upload at most %d files."
+msgstr[0] "Bạn chỉ được tải lên tối đa %d tệp."
+
+msgid "%d registration form was approved."
+msgid_plural "%d registration forms were approved."
+msgstr[0] "Đã duyệt %d đơn đăng ký."
+
+msgid "%d registration form was rejected."
+msgid_plural "%d registration forms were rejected."
+msgstr[0] "Đã từ chối %d đơn đăng ký."
+
+msgid "Facebook"
+msgstr "Facebook"
+
+msgid "email address"
+msgstr "địa chỉ email"
+
+msgid "phone number"
+msgstr "số điện thoại"
+
+msgid "Link to the Facebook account we should contact you through."
+msgstr "Đường dẫn tới tài khoản Facebook để chúng tôi liên hệ với bạn."
+
+msgid "Required when registering a new organization."
+msgstr "Bắt buộc khi đăng ký một tổ chức mới."
+
+msgid "marks a required field."
+msgstr "là trường bắt buộc."
+
+msgid "Verify an organization"
+msgstr "Xác minh tổ chức"
+
+msgid "Fill in this form to register a new organization. We will review it and let you know."
+msgstr "Điền đơn này để đăng ký một tổ chức mới. Chúng tôi sẽ duyệt đơn và phản hồi cho bạn."
+
+msgid "Send us proof of identity for an organization you administer."
+msgstr "Gửi cho chúng tôi minh chứng danh tính cho tổ chức bạn đang quản lý."
+
+msgid "Facebook:"
+msgstr "Facebook:"
+
+msgid "Phone number:"
+msgstr "Số điện thoại:"
+
+msgid "Organization registration forms"
+msgstr "Đơn đăng ký tổ chức"
+
+msgid "Tell the applicant why their form was rejected."
+msgstr "Hãy cho người đăng ký biết lý do đơn bị từ chối."
+
+msgid "Approve"
+msgstr "Duyệt"
+
+msgid "Reject"
+msgstr "Từ chối"
+
+msgid "My registration form"
+msgstr "Đơn của tôi"
 
 #~ msgid "Version Matrix"
 #~ msgstr "Phiên bản của trình chấm"
