@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 from lxml import html
 
-from . import fragment_tree_to_str, fragments_to_tree, get_cleaner, markdown
+from . import fragment_tree_to_str, fragments_to_tree, get_cleaner, markdown, markdown_client, markdown_client_configs
 
 MATHML_N = """\
 <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -130,6 +130,52 @@ class TestMarkdown(SimpleTestCase):
         self.assertHTMLEqual(markdown('<img src="test.png">', self.UNBLEACHED_STYLE, lazy_load=True),
                              '<p><noscript><img src="test.png"></noscript>'
                              '<img src="/static/blank.gif" data-src="test.png" class="unveil"></p>')
+
+
+class TestMarkdownClient(SimpleTestCase):
+    BLEACHED_STYLE = 'problem'
+    UNBLEACHED_STYLE = 'problem-full'
+
+    def test_placeholder_escapes_raw_markdown(self):
+        out = str(markdown_client('# Hi <script>alert(1)</script>\nline2 & "quotes"', 'comment'))
+        self.assertHTMLEqual(
+            out,
+            '<div class="md-content" data-md-style="comment">'
+            '# Hi &lt;script&gt;alert(1)&lt;/script&gt;\nline2 &amp; &quot;quotes&quot;</div>',
+        )
+
+    def test_none_input(self):
+        self.assertHTMLEqual(str(markdown_client(None, 'comment')),
+                             '<div class="md-content" data-md-style="comment"></div>')
+
+    def test_unknown_style_wraps(self):
+        out = str(markdown_client('**b**', 'no-such-style'))
+        self.assertHTMLEqual(out, '<div class="md-content" data-md-style="no-such-style">**b**</div>')
+
+    def test_admin_style_falls_back_to_server_render(self):
+        self.assertHTMLEqual(str(markdown_client('# Title', self.UNBLEACHED_STYLE)), '<h3>Title</h3>')
+
+    def test_configs(self):
+        configs = markdown_client_configs()
+        self.assertNotIn(self.UNBLEACHED_STYLE, configs)
+        self.assertNotIn('flatpage', configs)
+        self.assertIn('comment', configs)
+        self.assertEqual(configs['comment']['html'], False)
+        self.assertEqual(configs['comment']['allowStyle'], False)
+        self.assertEqual(configs[self.BLEACHED_STYLE]['html'], True)
+        self.assertEqual(configs[self.BLEACHED_STYLE]['allowStyle'], True)
+        self.assertIn('img', configs['comment']['tags'])
+        self.assertIn('href', configs['comment']['attrs'])
+        self.assertEqual(configs['comment']['attrs'], sorted(configs['comment']['attrs']))
+
+    def test_get_cleaner_does_not_mutate_styles(self):
+        # Regression: get_cleaner used to mutate the shared MARKDOWN_STYLES dict, which
+        # corrupted markdown_client_configs() output (allowStyle False, MathML-baked tags)
+        # for any style read after a staff server-side render.
+        markdown('**x**', self.BLEACHED_STYLE)
+        configs = markdown_client_configs()
+        self.assertEqual(configs[self.BLEACHED_STYLE]['allowStyle'], True)
+        self.assertNotIn('math', configs[self.BLEACHED_STYLE]['tags'])
 
 
 class TestFragmentUtils(SimpleTestCase):

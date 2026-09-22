@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import uuid
 from urllib.parse import urljoin
 
@@ -7,13 +8,15 @@ from django.conf import settings
 from django.contrib.auth.decorators import login_required
 from django.core.files.storage import default_storage
 from django.http import HttpRequest, HttpResponse, HttpResponseBadRequest, HttpResponseForbidden, \
-    HttpResponseRedirect
+    HttpResponseRedirect, JsonResponse
 from django.utils.translation import gettext_lazy as _
-from django.views.decorators.http import require_POST
+from django.views.decorators.http import require_GET, require_POST
+from lxml.html import tostring
 
+from judge.jinja2.reference import reference_map
 from judge.models import Submission
 
-__all__ = ['rejudge_submission']
+__all__ = ['rejudge_submission', 'resolve_references']
 
 
 @login_required
@@ -40,6 +43,38 @@ def rejudge_submission(request):
     redirect = request.POST.get('path', None)
 
     return HttpResponseRedirect(redirect) if redirect else HttpResponse('success', content_type='text/plain')
+
+
+MAX_REFERENCES = 500
+_reference_name_re = re.compile(r'\w+$')
+
+
+@require_GET
+def resolve_references(request):
+    """Batch-resolve [user:name]/[ruser:name] tokens to their rendered link HTML.
+
+    The client (resources/markdown-client.js) collects every reference on the page after
+    client-side markdown rendering and requests them all here in one round-trip. `refs` is a
+    comma-separated list of `type:name` tokens; the response maps each token back to its HTML.
+    Read-only public data (username -> rating link), so no auth/CSRF is required.
+    """
+    tokens = request.GET.get('refs', '').split(',')
+    if len(tokens) > MAX_REFERENCES:
+        return HttpResponseBadRequest('too many references')
+
+    by_type = {}
+    for token in tokens:
+        rtype, sep, name = token.strip().partition(':')
+        if sep and rtype in reference_map and _reference_name_re.match(name):
+            by_type.setdefault(rtype, set()).add(name)
+
+    result = {}
+    for rtype, names in by_type.items():
+        render_fn, info_fn = reference_map[rtype]
+        info = info_fn(names)  # one DB query per reference type
+        for name in names:
+            result['%s:%s' % (rtype, name)] = tostring(render_fn(name, info.get(name)), encoding='unicode')
+    return JsonResponse(result)
 
 
 def django_uploader(image):

@@ -55,6 +55,7 @@
         <link rel="stylesheet" href="{{ static('source_sans_pro.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ static('libs/clipboard/tooltip.css') }}">
         <link rel="stylesheet" type="text/css" href="{{ static('libs/select2/select2.css') }}">
+        <link rel="stylesheet" type="text/css" href="{{ static('vendor/highlight-github.min.css') }}">
     {% endcompress %}
     <link rel="canonical"
           href="{{ DMOJ_SCHEME }}://{{ DMOJ_CANONICAL|default(site.domain) }}{{ request.get_full_path() }}">
@@ -70,6 +71,8 @@
         <script src="{{ JQUERY_JS }}"></script>
     {% endif %}
 
+    <script id="md-sanitizer-configs" type="application/json">{{ markdown_client_configs()|json|safe }}</script>
+
     {% compress js %}
         <script>{{ inlinei18n(LANGUAGE_CODE)|safe }}</script>
         {% if INLINE_JQUERY %}
@@ -83,6 +86,10 @@
         {% include "extra_js.html" %}
         <script src="{{ static('common.js') }}"></script>
         <script src="{{ static('event.js') }}"></script>
+        <script src="{{ static('vendor/markdown-it.min.js') }}"></script>
+        <script src="{{ static('vendor/purify.min.js') }}"></script>
+        <script src="{{ static('vendor/highlight.min.js') }}"></script>
+        <script src="{{ static('markdown-client.js') }}"></script>
         <script>
             moment.locale('{{ LANGUAGE_CODE }}');
             $(function () {
