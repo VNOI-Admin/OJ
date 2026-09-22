@@ -12,9 +12,9 @@ from django.db.models.functions import Cast
 
 
 from judge.jinja2.gravatar import gravatar
-from judge.models import BlogPost, Comment, Contest, Problem, Submission, Tag, TagProblem, Ticket, TicketMessage
+from judge.models import BlogPost, Comment, Contest, Problem, Submission, Ticket, TicketMessage
 
-__all__ = ('on_new_ticket', 'on_new_comment', 'on_new_problem', 'on_new_tag_problem', 'on_new_tag', 'on_new_contest',
+__all__ = ('on_new_ticket', 'on_new_comment', 'on_new_problem', 'on_new_contest',
            'on_new_blogpost', 'on_new_ticket_message', 'on_long_queue')
 
 
@@ -124,40 +124,6 @@ def on_new_problem(problem_code):
     description = '\n'.join(f'{opt}: {val}' for opt, val in description)
 
     send_webhook(webhook_config, title, description, author)
-
-
-@shared_task
-def on_new_tag_problem(problem_code):
-    webhook_config = get_webhook_config('on_new_tag_problem')
-    if webhook_config is None or settings.SITE_FULL_URL is None:
-        return
-
-    problem = TagProblem.objects.get(code=problem_code)
-    url = settings.SITE_FULL_URL + problem.get_absolute_url()
-    description = f'Title: {problem.name}\n'
-    description += f'Judge: {problem.judge}'
-
-    send_webhook(webhook_config, f'New tag problem {url}', description, None)
-
-
-@shared_task
-def on_new_tag(problem_code, tag_list):
-    webhook_config = get_webhook_config('on_new_tag')
-    if webhook_config is None or settings.SITE_FULL_URL is None:
-        return
-
-    problem = TagProblem.objects.get(code=problem_code)
-
-    tags = []
-    for tag in tag_list:
-        tags.append(Tag.objects.get(code=tag).name)
-
-    url = settings.SITE_FULL_URL + problem.get_absolute_url()
-
-    description = f'Title: {problem.name}\n'
-    description += f'New tag: {", ".join(tags)}'
-
-    send_webhook(webhook_config, f'New tag added for problem {url}', description, None)
 
 
 @shared_task

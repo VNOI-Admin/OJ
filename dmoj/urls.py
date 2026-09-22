@@ -13,7 +13,7 @@ from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed,
 from judge.sitemap import sitemaps
 from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, notification, \
     organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
-    submission, tag, tasks, ticket, two_factor, user, widgets
+    submission, tasks, ticket, two_factor, user, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -22,8 +22,7 @@ from judge.views.register import ActivationView, RegistrationView
 from judge.views.select2 import AssigneeSelect2View, CommentSelect2View, ContestSelect2View, \
     OrganizationProblemSelect2View, OrganizationSelect2View, \
     OrganizationUserSearchSelect2View, OrganizationUserSelect2View, ProblemSelect2View, \
-    PublicProblemSelect2View, TagGroupSelect2View, TagSelect2View, TicketUserSelect2View, \
-    UserSearchSelect2View, UserSelect2View
+    PublicProblemSelect2View, TicketUserSelect2View, UserSearchSelect2View, UserSelect2View
 from judge.views.widgets import martor_image_uploader
 from martor.views import markdown_search_user
 
@@ -165,20 +164,6 @@ urlpatterns = [
             path('/rescore/success/<slug:task_id>', problem_manage.rescore_success,
                  name='problem_submissions_rescore_success'),
         ])),
-    ])),
-
-    path('tags', include([
-        path('/', tag.TagProblemList.as_view(), name='tagproblem_list'),
-        path('/create', tag.TagProblemCreate.as_view(), name='tagproblem_create'),
-        path('/random/', tag.TagRandomProblem.as_view(), name='tagproblem_random'),
-        path('/find', tag.TagFindProblem.as_view(), name='tagproblem_find'),
-    ])),
-
-    path('tag/<str:tagproblem>', include([
-        path('', tag.TagProblemDetail.as_view(), name='tagproblem_detail'),
-        path('/comments', tag.TagProblemComments.as_view(), name='tagproblem_comments'),
-        path('/assign', tag.TagProblemAssign.as_view(), name='tagproblem_assign'),
-        path('/', lambda _, tagproblem: HttpResponsePermanentRedirect(reverse('tagproblem_detail', args=[tagproblem]))),
     ])),
 
     path('submissions/', paged_list_view(submission.AllSubmissions, 'all_submissions')),
@@ -452,8 +437,6 @@ urlpatterns = [
         path('problem/org/<int:org_pk>/', OrganizationProblemSelect2View.as_view(), name='org_problem_select2'),
         path('contest/', ContestSelect2View.as_view(), name='contest_select2'),
         path('comment/', CommentSelect2View.as_view(), name='comment_select2'),
-        path('tag/', TagSelect2View.as_view(), name='tag_select2'),
-        path('taggroup/', TagGroupSelect2View.as_view(), name='taggroup_select2'),
     ])),
 
     path('tasks/', include([
