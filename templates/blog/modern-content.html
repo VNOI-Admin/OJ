@@ -116,7 +116,7 @@
         </aside>
         <article class="blog-post-content">
             {% cache 86400 'post_content' post.id MATH_ENGINE %}
-                {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}
+                {{ post.content|markdown_client('blog') }}
             {% endcache %}
         </article>
     </div>

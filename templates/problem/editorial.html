@@ -41,7 +41,7 @@
                 </p>
             {% endif %}
         {% endwith %}
-        {{ solution.content|markdown('solution', MATH_ENGINE)|reference|str|safe }}
+        {{ solution.content|markdown_client('solution') }}
     </div>
     <hr>
     <div id="comments" data-comments-url="{{ url('problem_editorial_comments', problem.code) }}"
