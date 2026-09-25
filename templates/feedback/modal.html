@@ -1,0 +1,94 @@
+<div id="utc-feedback-modal" class="utc-feedback-modal" aria-hidden="true">
+    <button class="utc-feedback-backdrop" type="button" data-feedback-close aria-label="{{ _('Close') }}"></button>
+    <section class="utc-feedback-dialog" role="dialog" aria-modal="true" aria-labelledby="utc-feedback-title">
+        <header class="utc-feedback-header">
+            <div>
+                <span class="utc-feedback-eyebrow">UTCOJ SUPPORT</span>
+                <h2 id="utc-feedback-title">Báo lỗi hoặc góp ý</h2>
+            </div>
+            <button class="utc-feedback-close" type="button" data-feedback-close aria-label="{{ _('Close') }}">&times;</button>
+        </header>
+
+        <form id="utc-feedback-form" action="{{ url('feedback_ticket') }}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="kind" value="report">
+            <input type="hidden" name="issue_url" value="{{ request.build_absolute_uri() }}">
+            <input type="hidden" name="page_title" value="">
+            <input type="hidden" name="user_agent" value="">
+            <input type="hidden" name="viewport" value="">
+
+            <div class="utc-feedback-tabs" role="tablist" aria-label="Loại phản hồi">
+                <button class="is-active" type="button" role="tab" aria-selected="true" data-feedback-kind="report">
+                    <i class="fa fa-bug"></i> Báo lỗi
+                </button>
+                <button type="button" role="tab" aria-selected="false" data-feedback-kind="suggestion">
+                    <i class="fa fa-lightbulb-o"></i> Góp ý
+                </button>
+            </div>
+
+            <div class="utc-feedback-field">
+                <label for="utc-feedback-subject">Tiêu đề</label>
+                <input id="utc-feedback-subject" name="title" maxlength="80" required
+                       placeholder="Ví dụ: Nút nộp bài không bấm được">
+            </div>
+
+            <div class="utc-feedback-field">
+                <label id="utc-feedback-description-label" for="utc-feedback-description">Chuyện gì đã xảy ra?</label>
+                <textarea id="utc-feedback-description" name="description" maxlength="10000" required
+                          placeholder="Mô tả lỗi bạn gặp phải."></textarea>
+            </div>
+
+            <div class="utc-feedback-report-fields">
+                <div class="utc-feedback-field">
+                    <label for="utc-feedback-steps">Các bước tái hiện</label>
+                    <textarea id="utc-feedback-steps" name="steps" maxlength="6000" required
+                              placeholder="1. Mở trang...&#10;2. Bấm vào...&#10;3. Lỗi xuất hiện."></textarea>
+                </div>
+
+                <fieldset class="utc-feedback-impact">
+                    <legend>Lỗi này ảnh hưởng thế nào? <span>(không bắt buộc)</span></legend>
+                    <label><input type="radio" name="impact" value="blocked"><span>Không làm tiếp được</span></label>
+                    <label><input type="radio" name="impact" value="workaround"><span>Có cách xử lý tạm</span></label>
+                    <label><input type="radio" name="impact" value="minor"><span>Chỉ hơi khó chịu</span></label>
+                </fieldset>
+            </div>
+
+            <div class="utc-feedback-field">
+                <label for="utc-feedback-contact">Thông tin liên lạc <span>(không bắt buộc)</span></label>
+                <input id="utc-feedback-contact" name="contact" maxlength="300"
+                       placeholder="SĐT, email, Discord hoặc kênh liên lạc khác">
+                <small>Chỉ dùng để đội ngũ UTCOJ liên hệ khi cần làm rõ phản hồi của bạn.</small>
+            </div>
+
+            <details class="utc-feedback-technical">
+                <summary>Thông tin kỹ thuật gửi kèm</summary>
+                <label>
+                    <input type="checkbox" name="include_technical" value="1">
+                    Gửi kèm địa chỉ trang, loại trình duyệt và kích thước màn hình.
+                </label>
+            </details>
+
+            <div class="utc-feedback-privacy">
+                <i class="fa fa-shield"></i>
+                Phản hồi được lưu dưới dạng ticket để quản trị viên UTCOJ xử lý. Thông tin liên lạc và dữ liệu kỹ thuật đều không bắt buộc.
+            </div>
+
+            <div class="utc-feedback-error" role="alert" hidden></div>
+
+            <div class="utc-feedback-actions">
+                <button class="utc-feedback-cancel" type="button" data-feedback-close>Hủy</button>
+                <button class="utc-feedback-submit" type="submit">Gửi phản hồi</button>
+            </div>
+        </form>
+
+        <div class="utc-feedback-success" hidden>
+            <span class="utc-feedback-success-icon"><i class="fa fa-check"></i></span>
+            <h3>Đã gửi phản hồi</h3>
+            <p>Cảm ơn bạn đã giúp UTCOJ tốt hơn. Phản hồi đã được tạo thành ticket.</p>
+            <div>
+                <a class="utc-feedback-ticket-link" href="#">Xem ticket</a>
+                <button type="button" data-feedback-close>Đóng</button>
+            </div>
+        </div>
+    </section>
+</div>

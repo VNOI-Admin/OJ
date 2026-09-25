@@ -422,6 +422,7 @@ urlpatterns = [
         path('', ticket.TicketList.as_view(), name='ticket_list'),
         path('ajax', ticket.TicketListDataAjax.as_view(), name='ticket_ajax'),
         path('new', ticket.NewIssueTicketView.as_view(), name='new_issue_ticket'),
+        path('feedback', ticket.FeedbackTicketView.as_view(), name='feedback_ticket'),
     ])),
 
     path('notifications/', include([

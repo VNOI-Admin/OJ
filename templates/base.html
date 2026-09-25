@@ -106,6 +106,7 @@
             };
         </script>
         <script src="{{ static('notification.js') }}"></script>
+        <script src="{{ static('feedback.js') }}"></script>
     {% endif %}
     {% if EVENT_LAST_MSG %}
         <script>
@@ -335,11 +336,17 @@
                                 <span>{{ _('Hello, %(username)s.', username=bold(request.user.first_name or request.profile.display_name)) }}</span>
                             </span>
                         </a>
-                        <ul style="width: 150px; right: 0; left: auto;">
+                        <ul class="utc-user-menu" style="width: 205px; right: 0; left: auto;">
                             {% if request.user.is_staff or request.user.is_superuser %}
                                 <li><a href="{{ url('admin:index') }}">{{ _('Admin') }}</a></li>
                             {% endif %}
                             <li><a href="{{ url('user_edit_profile') }}">{{ _('Edit profile') }}</a></li>
+                            <li class="utc-user-menu-separator"></li>
+                            <li>
+                                <a href="#utc-feedback-modal" class="utc-feedback-open">
+                                    <i class="fa fa-commenting-o"></i> Báo lỗi &amp; góp ý
+                                </a>
+                            </li>
                             {% if request.user.is_impersonate %}
                                 <li><a href="{{ url('impersonate-stop') }}">{{ _('Stop impersonating') }}</a></li>
                             {% else %}
@@ -365,6 +372,9 @@
     </div>
     <div id="nav-shadow"></div>
 </nav>
+{% if request.user.is_authenticated %}
+    {% include "feedback/modal.html" %}
+{% endif %}
 {% if request.in_contest %}
     {% set current_contest = request.participation.contest %}
     <div id="contest-info">

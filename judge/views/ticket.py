@@ -4,6 +4,7 @@ from django import forms
 from django.conf import settings
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
+from django.db import transaction
 from django.http import Http404, HttpResponse, HttpResponseBadRequest, HttpResponseRedirect, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.template.defaultfilters import truncatechars
@@ -56,6 +57,38 @@ class TicketForm(forms.Form):
         return super(TicketForm, self).clean()
 
 
+class FeedbackForm(forms.Form):
+    KIND_REPORT = 'report'
+    KIND_SUGGESTION = 'suggestion'
+    KIND_CHOICES = (
+        (KIND_REPORT, gettext_lazy('Report an issue')),
+        (KIND_SUGGESTION, gettext_lazy('Suggestion')),
+    )
+    IMPACT_CHOICES = (
+        ('blocked', gettext_lazy('Cannot continue')),
+        ('workaround', gettext_lazy('Has a workaround')),
+        ('minor', gettext_lazy('Minor inconvenience')),
+    )
+
+    kind = forms.ChoiceField(choices=KIND_CHOICES)
+    title = forms.CharField(max_length=80)
+    description = forms.CharField(max_length=10000)
+    steps = forms.CharField(max_length=6000, required=False)
+    impact = forms.ChoiceField(choices=IMPACT_CHOICES, required=False)
+    contact = forms.CharField(max_length=300, required=False)
+    issue_url = forms.URLField(max_length=500)
+    page_title = forms.CharField(max_length=300, required=False)
+    include_technical = forms.BooleanField(required=False)
+    user_agent = forms.CharField(max_length=1000, required=False)
+    viewport = forms.CharField(max_length=50, required=False)
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get('kind') == self.KIND_REPORT and not cleaned.get('steps', '').strip():
+            self.add_error('steps', gettext_lazy('Please describe the steps to reproduce the issue.'))
+        return cleaned
+
+
 class TicketCreationMixin:
     form_class = TicketForm
 
@@ -67,12 +100,12 @@ class TicketCreationMixin:
         kwargs['request'] = self.request
         return kwargs
 
-    def save_new_ticket(self, form, linked_item):
+    def save_new_ticket_data(self, title, body, linked_item):
         assignees = self.get_assignees()
-        ticket = Ticket(user=self.request.profile, title=form.cleaned_data['title'])
+        ticket = Ticket(user=self.request.profile, title=title)
         ticket.linked_item = linked_item
         ticket.save()
-        message = TicketMessage(ticket=ticket, user=ticket.user, body=form.cleaned_data['body'])
+        message = TicketMessage(ticket=ticket, user=ticket.user, body=body)
         message.save()
         ticket.assignees.set(assignees)
         if event.real:
@@ -87,8 +120,71 @@ class TicketCreationMixin:
                 url=reverse('ticket', args=[ticket.id]), popup=True,
                 priority=Notification.Priority.TICKET,
             )
-        on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, form.cleaned_data['body'])
+        on_new_ticket.delay(ticket.pk, ticket.content_type.pk, ticket.object_id, body)
         return ticket
+
+    def save_new_ticket(self, form, linked_item):
+        return self.save_new_ticket_data(form.cleaned_data['title'], form.cleaned_data['body'], linked_item)
+
+
+class FeedbackTicketView(LoginRequiredMixin, TicketCreationMixin, View):
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        if request.profile.mute:
+            return JsonResponse({'ok': False, 'error': _('You cannot submit feedback at this time.')}, status=403)
+
+        form = FeedbackForm(request.POST)
+        if not form.is_valid():
+            errors = {field: [str(error) for error in field_errors]
+                      for field, field_errors in form.errors.items()}
+            return JsonResponse({'ok': False, 'errors': errors}, status=400)
+
+        data = form.cleaned_data
+        is_report = data['kind'] == FeedbackForm.KIND_REPORT
+        kind_label = _('Issue report') if is_report else _('Suggestion')
+        impact_labels = dict(FeedbackForm.IMPACT_CHOICES)
+        body = [
+            '**%s:** %s' % (_('Type'), kind_label),
+            '**%s:** [%s](%s)' % (_('Page'), data.get('page_title') or data['issue_url'], data['issue_url']),
+            '',
+            '## %s' % (_('What happened?') if is_report else _('Suggestion details')),
+            data['description'].strip(),
+        ]
+
+        if is_report:
+            body.extend([
+                '',
+                '## %s' % _('Steps to reproduce'),
+                data['steps'].strip(),
+            ])
+            if data.get('impact'):
+                impact_label = impact_labels[data['impact']]
+                body.extend(['', '**%s:** %s' % (_('Impact'), impact_label)])
+
+        if data.get('contact'):
+            body.extend(['', '**%s:** %s' % (_('Optional contact information'), data['contact'].strip())])
+
+        if data.get('include_technical'):
+            body.extend([
+                '',
+                '## %s' % _('Technical information'),
+                '- **URL:** %s' % data['issue_url'],
+                '- **%s:** %s' % (_('Viewport'), data.get('viewport') or _('Unknown')),
+                '- **User agent:** %s' % (data.get('user_agent') or _('Unknown')),
+            ])
+
+        ticket_title = '[%s] %s' % (kind_label, data['title'].strip())
+        with transaction.atomic():
+            issue = GeneralIssue(issue_url=data['issue_url'][:200])
+            issue.save()
+            ticket = self.save_new_ticket_data(ticket_title[:100], '\n'.join(body), issue)
+
+        return JsonResponse({
+            'ok': True,
+            'ticket_id': ticket.id,
+            'ticket_url': reverse('ticket', args=[ticket.id]),
+        })
 
 
 class NewIssueTicketView(LoginRequiredMixin, TitleMixin, TicketCreationMixin, FormView):

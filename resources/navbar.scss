@@ -55,6 +55,23 @@
     }
 }
 
+.utc-user-menu-separator {
+    border-top: 1px solid rgba($color_text_inverted, 0.12);
+    height: 0;
+    margin: 3px 8px;
+}
+
+nav .utc-user-menu .utc-feedback-open {
+    align-items: center;
+    display: flex;
+    gap: 8px;
+
+    i {
+        color: $highlight_blue;
+        width: 15px;
+    }
+}
+
 #nav-background {
     position: absolute;
     z-index: 3;
