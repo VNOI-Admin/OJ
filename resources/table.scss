@@ -10,18 +10,18 @@
     margin-left: auto;
     margin-right: auto;
     margin-bottom: 0.5em;
-    background: rgba($color_primary100, 0.01);
+    background: $color_primary0;
     backdrop-filter: blur(3px);
 
     &.striped tr:nth-child(2n) {
-        background: rgba($color_primary100, 0.03);
+        background: rgba($color_primary10, 0.55);
     }
 
     th {
         height: 2em;
-        color: $color_primary0;
-        background-color: $color_primary75;
-        border-color: $color_primary50;
+        color: $color_primary75;
+        background-color: $color_primary10;
+        border-color: $color_primary25;
         border-width: 0 1px 1px 0;
         border-style: solid;
         padding: 4px 10px;

@@ -3,8 +3,11 @@
 {% elif logo_override_image is defined and logo_override_image %}
     <img src="{{ logo_override_image|camo }}" alt="{{ SITE_NAME }}" height="40" style="border: none; padding-top: 4px">
 {% else %}
-    {% with logo_url=misc_config.site_logo|default(static('icons/logo.svg'), true) %}
-    	<img src="{{ logo_url }}" alt="{{ SITE_NAME }}" width="130" height="40"
-             onerror="this.src=&quot;{{ logo_url }}&quot;; this.onerror=null" style="border: none; padding-top: 4px">
+    {% with logo_url=misc_config.site_logo|default(static('icons/utc-logo.svg'), true) %}
+        <span class="utc-site-logo">
+            <img src="{{ logo_url }}" alt="UTCOJ" width="46" height="46"
+                 onerror="this.src=&quot;{{ static('icons/utc-logo.svg') }}&quot;; this.onerror=null">
+            <strong>UTCOJ</strong>
+        </span>
     {% endwith %}
 {% endif %}

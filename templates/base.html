@@ -235,21 +235,10 @@
         <ul id="nav-list">
             {% if request.organization is not defined %}
                 <li class="home-nav-element"><a href="{{ url('home') }}">{% include "site-logo-fragment.html" %}</a></li>
-                <li class="home-nav-element"><span class="nav-divider"></span></li>
-                <li class="home-menu-item"><a href="{{ url('home') }}" class="nav-home">{{ _('Home') }}</a></li>
-                {% for node in mptt_tree(nav_bar) recursive %}
-                    <li>
-                        <a href="{{ node.path }}" class="nav-{{ node.key }}{% if node.key in nav_tab %} active{% endif %}">
-                            {{ _(node.label) }}
-                            {% if not node.is_leaf_node() %}
-                                <div class="nav-expand">&gt;</div>
-                            {% endif %}
-                        </a>
-                        {% with children=node.get_children() %}
-                            {% if children %}<ul>{{ loop(children) }}</ul>{% endif %}
-                        {% endwith %}
-                    </li>
-                {% endfor %}
+                <li><a href="{{ url('problem_list') }}" class="nav-problem-list{% if request.resolver_match.url_name == 'problem_list' %} active{% endif %}">Problems</a></li>
+                <li><a href="{{ url('all_submissions') }}" class="nav-submission-list{% if request.resolver_match.url_name == 'all_submissions' %} active{% endif %}">Submissions</a></li>
+                <li><a href="{{ url('user_list') }}" class="nav-users{% if request.resolver_match.url_name == 'user_list' %} active{% endif %}">Users</a></li>
+                <li><a href="{{ url('contest_list') }}" class="nav-contest-list{% if request.resolver_match.url_name == 'contest_list' %} active{% endif %}">Contests</a></li>
             {% else %}
                 {% macro make_navbar_item(key, url, text) %}
                     <li>
@@ -269,6 +258,7 @@
         </ul>
 
         <span id="user-links">
+            {% if request.user.is_authenticated %}
             <ul>
                 <li>
                     {% if request.user.is_superuser %}
@@ -302,6 +292,7 @@
                     </ul>
                 </li>
             </ul>
+            {% endif %}
             {% if request.user.is_authenticated %}
                 <a href=
                     {% if request.resolver_match.view_name == "problem_detail" and problem %}
@@ -363,10 +354,9 @@
                 </ul>
             {% else %}
                 <span class="anon">
-                    <a href="{{ url('auth_login') }}?next={{ LOGIN_RETURN_PATH|urlencode }}"><b>{{ _('Log in') }}</b></a>
+                    <a class="utc-login-link" href="{{ url('auth_login') }}?next={{ LOGIN_RETURN_PATH|urlencode }}"><b>{{ _('Log in') }}</b></a>
                     {% if REGISTRATION_OPEN %}
-                        &nbsp;{{ _('or') }}&nbsp;
-                        <a href="{{ url('registration_register') }}"><b>{{ _('Sign up') }}</b></a>
+                        <a class="utc-register-link" href="{{ url('registration_register') }}"><b>{{ _('Sign up') }}</b></a>
                     {% endif %}
                 </span>
             {% endif %}
@@ -434,12 +424,7 @@
 
     <footer>
         <span id="footer-content">
-            <br>
-            {{_('proudly powered by %(dmoj)s', dmoj=safe('<a style="color: #808080" href="https://dmoj.ca"><b>DMOJ</b></a>'))}} |
-            {{_('follow us on %(github)s and %(facebook)s', github=safe('<a style="color: #808080" href="https://github.com/VNOI-Admin/OJ"><b>Github</b></a>'), facebook=safe('<a style="color: #808080" href="https://www.facebook.com/vnoi.wiki"><b>Facebook</b></a>'))}}
-            {% if misc_config.footer %}
-                {{ misc_config.footer|safe }} |
-            {% endif %}
+            &copy; 2026 UTCOJ. Khoa Công nghệ Thông tin - Trường Đại học Giao thông Vận tải.
             <form id="set_language" action="{{ url('set_language') }}" method="post" style="display: inline">
                 {% csrf_token %}
             <input name="next" type="hidden" value="{{ request.get_full_path() }}">

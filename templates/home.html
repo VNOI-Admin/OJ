@@ -1,23 +1,131 @@
-{% extends "blog/list.html" %}
-{% block before_posts %}
-    {% if misc_config.home_page_top %}
-        {{ render_django(misc_config.home_page_top, request=request, user_count=user_count, problem_count=problem_count, submission_count=submission_count, language_count=language_count, perms=perms) }}
-    {% endif %}
-{% endblock %}
+{% extends "base.html" %}
+
+{% block title %}UTCOJ: UTC Online Judge{% endblock %}
+{% block title_row %}{% endblock %}
+{% block title_ruler %}{% endblock %}
+
 {% block meta %}
-    {% if misc_config.meta_description %}
-        <meta name="description" property="og:description" content="{{ misc_config.meta_description }}">
-    {% endif %}
-    <script type="application/ld+json">
-        {
-            "@context": "https://schema.org",
-            "@type": "WebSite",
-            "url": "{{ DMOJ_SCHEME }}://{{ site.domain }}/",
-            "potentialAction": {
-                "@type": "SearchAction",
-                "target": "{{ DMOJ_SCHEME }}://{{ site.domain }}/problems/?search={search_term_string}",
-                "query-input": "required name=search_term_string"
-            }
-        }
-    </script>
+    <meta name="description" property="og:description"
+          content="Nền tảng luyện tập lập trình thi đấu của Khoa Công nghệ Thông tin, Trường Đại học Giao thông Vận tải.">
+{% endblock %}
+
+{% macro code_icon() %}
+    <svg class="utc-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m8 9-4 3 4 3M16 9l4 3-4 3M14 5l-4 14"></path>
+    </svg>
+{% endmacro %}
+
+{% macro trophy_icon() %}
+    <svg class="utc-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4ZM7 6H4v2a4 4 0 0 0 4 4M17 6h3v2a4 4 0 0 1-4 4"></path>
+    </svg>
+{% endmacro %}
+
+{% macro users_icon() %}
+    <svg class="utc-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"></path>
+    </svg>
+{% endmacro %}
+
+{% block body %}
+    <div class="utc-home">
+        <section class="utc-hero">
+            <div class="utc-hero-content">
+                <h1>UTCOJ: UTC Online Judge</h1>
+                <p class="utc-hero-description">
+                    Nền tảng luyện tập lập trình thi đấu của Khoa Công nghệ Thông tin,<br class="desktop-only">
+                    Trường Đại học Giao thông Vận tải.
+                </p>
+
+                <div class="utc-hero-actions">
+                    <a class="utc-button utc-button-primary" href="{{ url('problem_list') }}">
+                        {{ code_icon() }} Giải bài
+                    </a>
+                    <a class="utc-button utc-button-outline" href="{{ url('contest_list') }}">
+                        {{ trophy_icon() }} Tham gia kỳ thi
+                    </a>
+                </div>
+
+                <div class="utc-stats" aria-label="Thống kê hệ thống">
+                    <div class="utc-stat-card">
+                        <strong>{{ user_count() }}</strong>
+                        <span>Người dùng</span>
+                    </div>
+                    <div class="utc-stat-card">
+                        <strong>{{ problem_count() }}</strong>
+                        <span>Bài tập</span>
+                    </div>
+                    <div class="utc-stat-card">
+                        <strong>{{ submission_count() }}</strong>
+                        <span>Bài nộp</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="utc-contests" aria-labelledby="utc-contests-title">
+            <div class="utc-section-heading">
+                <h2 id="utc-contests-title">{{ trophy_icon() }} Kỳ thi</h2>
+                <a href="{{ url('contest_list') }}">Xem tất cả <span aria-hidden="true">›</span></a>
+            </div>
+
+            {% if homepage_contests %}
+                <div class="utc-contest-grid">
+                    {% for contest in homepage_contests %}
+                        <article class="utc-contest-card">
+                            <div class="utc-contest-card-top">
+                                {% if contest.ended %}
+                                    <span class="utc-contest-status is-ended">Đã kết thúc</span>
+                                {% elif contest.can_join %}
+                                    <span class="utc-contest-status is-live"><i></i> Đang diễn ra</span>
+                                {% else %}
+                                    <span class="utc-contest-status is-upcoming">Sắp diễn ra</span>
+                                {% endif %}
+                                {% if contest.is_rated %}<span class="utc-contest-rated">Rated</span>{% endif %}
+                            </div>
+
+                            <h3>
+                                <a href="{{ url('contest_view', contest.key) }}">
+                                    {{ trophy_icon() }} {{ contest.name }}
+                                </a>
+                            </h3>
+
+                            <div class="utc-contest-meta">
+                                <span>{{ contest.start_time|date("H:i d/m/Y") }}</span>
+                                <span>
+                                    {% if contest.time_limit %}
+                                        {{ contest.time_limit|timedelta('localized-no-seconds') }}
+                                    {% else %}
+                                        {{ contest.contest_window_length|timedelta('localized-no-seconds') }}
+                                    {% endif %}
+                                </span>
+                                <span>{{ users_icon() }} {{ contest.user_count }}</span>
+                            </div>
+
+                            <p class="utc-contest-note">
+                                {% if contest.ended %}
+                                    Kỳ thi đã kết thúc
+                                {% elif contest.can_join %}
+                                    Đang diễn ra
+                                {% else %}
+                                    Mở đăng ký sớm
+                                {% endif %}
+                            </p>
+
+                            <a class="utc-contest-action{% if not contest.can_join and not contest.ended %} is-secondary{% endif %}"
+                               href="{{ url('contest_view', contest.key) }}">
+                                {% if contest.ended %}Xem kỳ thi{% elif contest.can_join %}Vào thi{% else %}Đăng ký{% endif %}
+                            </a>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="utc-contest-empty">
+                    {{ trophy_icon() }}
+                    <p>Hiện chưa có kỳ thi nào được lên lịch.</p>
+                    <a href="{{ url('contest_list') }}">Xem danh sách kỳ thi</a>
+                </div>
+            {% endif %}
+        </section>
+    </div>
 {% endblock %}

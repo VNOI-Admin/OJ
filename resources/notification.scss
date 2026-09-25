@@ -28,8 +28,8 @@
         height: 16px;
         padding: 0 4px;
         border-radius: 8px;
-        background: #e74c3c;
-        color: #fff;
+        background: $color_danger100;
+        color: $color_text_inverted;
         font-size: 0.65em;
         line-height: 16px;
         text-align: center;
@@ -53,7 +53,7 @@
             white-space: nowrap;
 
             .notification-panel-title {
-                color: #fff;
+                color: $color_text_inverted;
                 font-weight: bold;
             }
 
@@ -61,7 +61,7 @@
                 padding: 0 !important;
                 border: none !important;
                 font-size: 0.75em;
-                color: #4db7fe;
+                color: $highlight_blue;
 
                 &:hover {
                     background: none;
@@ -81,7 +81,7 @@
 
                 &.unread {
                     border-left-color: $highlight_blue !important;
-                    background: rgba(77, 183, 254, 0.08);
+                    background: rgba($highlight_blue, 0.12);
                 }
 
                 .notification-item-title {
@@ -90,7 +90,7 @@
                 }
 
                 .notification-item-body {
-                    color: #ccc;
+                    color: #c1c7e0;
                     overflow: hidden;
                     text-overflow: ellipsis;
                     display: -webkit-box;
@@ -99,7 +99,7 @@
                 }
 
                 .notification-item-time {
-                    color: #999;
+                    color: #9da4c3;
                     font-size: 0.75em;
                     margin-top: 2px;
                 }
@@ -107,7 +107,7 @@
 
             .notification-empty {
                 padding: 16px 12px;
-                color: #999;
+                color: #9da4c3;
                 text-align: center;
 
                 &.hidden {
@@ -152,7 +152,7 @@
 
             &.active {
                 background: $highlight_blue;
-                color: #fff;
+                color: $color_text_inverted;
             }
         }
 
@@ -167,18 +167,18 @@
             text-decoration: none;
             color: inherit;
             padding: 12px 16px;
-            border: 1px solid #ccc;
+            border: 1px solid $color_primary25;
             border-radius: 4px;
             margin-bottom: 8px;
             cursor: pointer;
 
             &:hover {
-                background: rgba(0, 0, 0, 0.03);
+                background: rgba($color_primary10, 0.55);
             }
 
             &.unread {
                 border-left: 4px solid $highlight_blue;
-                background: rgba(77, 183, 254, 0.08);
+                background: $color_accent_soft;
             }
 
             .notification-page-item-title {
@@ -187,17 +187,17 @@
             }
 
             .notification-page-item-body {
-                color: #555;
+                color: $color_primary66;
                 margin-bottom: 4px;
             }
 
             .notification-page-item-time {
-                color: #999;
+                color: $color_primary50;
                 font-size: 0.85em;
             }
 
             .notification-page-item-url {
-                color: #4db7fe;
+                color: $color_link75;
                 font-size: 0.8em;
                 margin-top: 4px;
                 word-break: break-all;
@@ -207,7 +207,7 @@
         .notification-page-empty {
             padding: 24px;
             text-align: center;
-            color: #999;
+            color: $color_primary50;
         }
     }
 }
@@ -218,8 +218,8 @@
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 9999;
-    background: #3c3c3c;
-    color: #fff;
+    background: $color_navbar;
+    color: $color_text_inverted;
     padding: 28px 32px;
     border-radius: 8px;
     width: max-content;
@@ -236,7 +236,7 @@
 
     .notification-toast-body {
         margin-bottom: 20px;
-        color: #ccc;
+        color: #c1c7e0;
     }
 
     .notification-toast-actions {
@@ -252,14 +252,14 @@
         }
 
         .notification-toast-access {
-            background: #1a73e8;
-            color: #fff;
+            background: $color_link75;
+            color: $color_text_inverted;
             text-decoration: none;
         }
 
         .notification-toast-close {
-            background: #555;
-            color: #fff;
+            background: $color_navbar_soft;
+            color: $color_text_inverted;
         }
     }
 }

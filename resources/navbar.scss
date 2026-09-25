@@ -4,7 +4,7 @@
     top: 0;
     right: 0;
     position: absolute;
-    color: #5c5954;
+    color: $color_primary50;
     padding-right: 10px;
     display: inline-flex;
     min-height: 100%;
@@ -12,7 +12,7 @@
     white-space: nowrap;
 
     a {
-        color: #FFF;
+        color: $color_text_inverted;
     }
 
     li {
@@ -43,7 +43,7 @@
 
                     & > span {
                         vertical-align: middle;
-                        color: #eee;
+                        color: $color_text_inverted;
                     }
                 }
             }
@@ -62,16 +62,16 @@
     left: 0;
     width: 100%;
     height: 56px;
-    background: #231f20;
+    background: $color_navbar;
 }
 
 #nav-shadow {
     height: 3px;
-    background: linear-gradient(rgba(0, 0, 0, 0.5), transparent);
+    background: linear-gradient(rgba($color_navbar, 0.24), transparent);
 }
 
 #nav-container {
-    background: #231f20;
+    background: $color_navbar;
 
     // opacity: 0.77
     // filter: alpha(opacity=77)
@@ -92,7 +92,7 @@ nav {
 
         li {
             display: inline-block;
-            color: #FFF;
+            color: $color_text_inverted;
             text-transform: uppercase;
             position: relative;
             font-family: 'Source Sans Pro', sans-serif;
@@ -110,23 +110,23 @@ nav {
             a, button {
                 text-decoration: none;
                 vertical-align: middle;
-                color: #FFF;
+                color: $color_text_inverted;
                 padding: 14px 7px;
                 height: 20px;
                 display: inline-table;
 
                 &:link {
-                    color: #FFF;
+                    color: $color_text_inverted;
                 }
 
                 &:hover {
-                    color: #FFF;
-                    background: rgba(255, 255, 255, 0.25);
+                    color: $color_text_inverted;
+                    background: rgba($color_text_inverted, 0.1);
                     margin: 0;
                 }
 
                 &.active {
-                    color: #FFF;
+                    color: $color_text_inverted;
 
                     border: 5px solid transparent;
                     border-bottom: 5px solid $highlight_blue;
@@ -143,8 +143,8 @@ nav {
                 position: absolute;
                 left: 5px;
                 display: none;
-                color: #fff;
-                background: #231f20;
+                color: $color_text_inverted;
+                background: $color_navbar_soft;
                 margin: 0 !important;
                 box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.4);
 
@@ -216,14 +216,14 @@ nav {
         display: block;
         line-height: 26px;
         font-size: 2em;
-        color: #FFF;
+        color: $color_text_inverted;
         padding: 0 0.25em;
         margin: 4px 0.25em;
         white-space: nowrap;
         float: left;
 
         &.hover {
-            color: #4db7fe;
+            color: $highlight_blue;
             text-shadow: 0 0 5px $highlight_blue;
             transition-duration: 0.25s;
         }
@@ -235,7 +235,7 @@ nav {
         margin: 0;
         position: fixed;
         top: 36px;
-        background: #231f20;
+        background: $color_navbar;
         bottom: 0;
         width: 8em;
         left: 0;
@@ -345,5 +345,184 @@ nav .settings-popup {
     &.active {
         background: $color_primary0;
         color: $color_primary90;
+    }
+}
+
+// UTCOJ navigation shell.
+#nav-background,
+#nav-container {
+    height: 64px;
+}
+
+#nav-container {
+    box-sizing: border-box;
+    padding: 0 16px;
+}
+
+nav #nav-list {
+    align-items: center;
+    display: flex;
+    height: 64px;
+    justify-content: center;
+    margin: 0;
+    padding: 0 190px;
+
+    > li {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 13px;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+
+        > a,
+        > button {
+            box-sizing: border-box;
+            display: block;
+            height: 64px;
+            line-height: 20px;
+            padding: 22px 28px;
+
+            &:hover {
+                background: rgba($color_text_inverted, 0.07);
+            }
+
+            &.active {
+                border: 0;
+                border-bottom: 2px solid $highlight_blue;
+                padding: 22px 28px 20px;
+            }
+        }
+
+        &.home-nav-element {
+            left: 28px;
+            position: absolute;
+
+            > a {
+                align-items: center;
+                display: flex;
+                height: 64px;
+            }
+        }
+    }
+}
+
+.utc-site-logo {
+    align-items: center;
+    color: $color_text_inverted;
+    display: inline-flex;
+    font-family: "Inter", "Segoe UI", sans-serif;
+    gap: 10px;
+
+    img {
+        height: 46px;
+        object-fit: contain;
+        padding: 0;
+        width: 46px;
+    }
+
+    strong {
+        font-size: 18px;
+        letter-spacing: -0.02em;
+    }
+}
+
+#user-links {
+    box-sizing: border-box;
+    height: 64px;
+    min-height: 64px;
+    padding-right: 16px;
+
+    .anon {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+    }
+
+    .utc-login-link,
+    .utc-register-link {
+        border: 1px solid rgba($color_text_inverted, 0.3);
+        border-radius: 7px;
+        box-sizing: border-box;
+        display: inline-flex;
+        font-size: 12px;
+        height: 34px;
+        padding: 7px 12px;
+        transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    }
+
+    .utc-login-link:hover {
+        border-color: $highlight_blue;
+        color: $color_text_inverted;
+    }
+
+    .utc-register-link {
+        background: $color_primary0;
+        border-color: $color_primary0;
+        color: $color_link75;
+
+        &:link,
+        &:hover {
+            color: $color_link75;
+        }
+
+        &:hover {
+            background: $color_accent_soft;
+            border-color: $color_accent_soft;
+        }
+    }
+}
+
+@media (max-width: 900px) {
+    nav #nav-list > li > a,
+    nav #nav-list > li > button {
+        padding-left: 14px;
+        padding-right: 14px;
+
+        &.active {
+            padding-left: 14px;
+            padding-right: 14px;
+        }
+    }
+}
+
+@media (max-width: 760px) {
+    #nav-container,
+    #nav-background {
+        height: 56px;
+    }
+
+    #navicon {
+        line-height: 42px;
+    }
+
+    nav #nav-list {
+        align-items: stretch;
+        display: none;
+        height: auto;
+        justify-content: flex-start;
+        padding: 0;
+        top: 56px;
+
+        &.show-list {
+            display: block;
+        }
+
+        > li {
+            > a,
+            > button,
+            > a.active {
+                height: auto;
+                padding: 12px 14px;
+            }
+        }
+    }
+
+    #user-links {
+        height: 56px;
+        min-height: 56px;
+        padding-right: 8px;
+    }
+
+    .utc-site-logo strong {
+        display: none;
     }
 }

@@ -691,7 +691,7 @@
 
 .badge-pinned {
     background: $color_blog_hero_bg;
-    color: #1e40af;
+    color: $color_blog_accent;
 }
 
 .badge-draft {
@@ -748,12 +748,12 @@
     -webkit-box-orient: vertical;
 
     a {
-        color: #0066cc;
+        color: $color_blog_accent;
         text-decoration: none;
 
         &:hover {
             text-decoration: underline;
-            color: #0052a3;
+            color: $color_link100;
         }
     }
 
@@ -832,22 +832,22 @@
       display: flex;
       align-items: center;
       gap: 0.5rem;
-      color: #202123;
+      color: $color_blog_text_primary;
       font-size: 0.95rem;
 
       i {
-        color: #6b7280;
+        color: $color_blog_text_muted;
         font-size: 1rem;
       }
 
       .stat-label {
-        color: #6b7280;
+        color: $color_blog_text_muted;
         font-weight: 500;
       }
 
       span:not(.stat-label) {
         font-weight: 600;
-        color: #202123;
+        color: $color_blog_text_primary;
       }
 
       &.vote-stat {

@@ -246,12 +246,12 @@
     
     // Links
     a {
-        color: #0066cc;
+        color: $color_blog_accent;
         text-decoration: none;
         
         &:hover {
             text-decoration: underline;
-            color: #0052a3;
+            color: $color_link100;
         }
     }
     

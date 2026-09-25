@@ -1,30 +1,34 @@
-@use 'sass:color';
 @forward "vars-common";
 
 $is_light_theme: true;
 
-$color_primary0: #fff;
-$color_primary5: #f8f8f8;   // light background
-$color_primary10: #eee;     // background
-$color_primary25: #ccc;     // border
-$color_primary33: #aaa;     // widget
-$color_primary50: #808080;
-$color_primary66: #555;     // tabs
-$color_primary75: #231f20;  // widget
-$color_primary90: #111;
-$color_primary100: #000;
+// Blue theme shared with laptrinhonlineUTC.
+$color_primary0: #fff;       // surface
+$color_primary5: #fff;       // page background
+$color_primary10: #e9edf7;   // alternate surface
+$color_primary25: #dde1f0;   // border
+$color_primary33: #c1c7e0;   // strong border
+$color_primary50: #6d7191;   // muted text
+$color_primary66: #43486a;   // secondary text
+$color_primary75: #12142c;   // primary text
+$color_primary90: #10123f;   // navbar
+$color_primary100: #12142c;
 
-$color_link50: #5b80b9;     // default (title)
-$color_link75: #1958c1;     // default
-$color_link100: #0645ad;    // hover
-$color_link200: #faa700;    // active
+$color_link50: #24309e;      // default (title)
+$color_link75: #24309e;      // default
+$color_link100: #1a2478;     // hover
+$color_link200: #6f8cff;     // active
 
-$color_pageBg: color.adjust($color_primary5, $lightness: 10%);
+$color_pageBg: $color_primary0;
+$color_navbar: #10123f;
+$color_navbar_soft: #1b1e5c;
+$color_text_inverted: #f3f5fb;
+$color_accent_soft: #e6e9f9;
 
 // custom one-off colours
 $color_contest_ranking_disqualified: #ffa8a8;
 
-$color_martor_resize_dragger: #e8e8e8;
+$color_martor_resize_dragger: $color_primary10;
 
 $color_rating_none: #999;
 $color_rating_newbie: #808080;
@@ -43,55 +47,55 @@ $color_user_submission_activity2: #40c463;
 $color_user_submission_activity3: #2f9c4c;
 $color_user_submission_activity4: #216e39;
 
-$color_info25: #def;
-$color_info50: #bdf;
-$color_info100: #368;
-$color_success25: #ded;
-$color_success50: #adb;
-$color_success100: #173;
-$color_warning25: #ffd;
-$color_warning50: #feb;
-$color_warning100: #863;
-$color_danger25: #edd;
-$color_danger50: #dbb;
-$color_danger100: #944;
+$color_info25: #e2f3f4;
+$color_info50: #b8dfe2;
+$color_info100: #0e7c86;
+$color_success25: #e2f2ea;
+$color_success50: #b9dfca;
+$color_success100: #00a63e;
+$color_warning25: #fbf1d9;
+$color_warning50: #f2d59b;
+$color_warning100: #e17100;
+$color_danger25: #f7e6e2;
+$color_danger50: #e8b8b4;
+$color_danger100: #c10007;
 
 $color_problem_submit_select2: #757575;
 
-$color_voted_mark: #0000ff;
+$color_voted_mark: $color_link75;
 
 // Problem page inline-submit tab colors
-$color_problem_tab_bg: #f5f5f5;
-$color_problem_tab_border: #ddd;
-$color_problem_tab_text: #333;
-$color_problem_tab_hover_bg: #e8e8e8;
-$color_problem_tab_active_bg: #fff;
-$color_problem_tab_active_text: #007bff;
-$color_problem_submit_bg: #f9f9f9;
+$color_problem_tab_bg: $color_primary10;
+$color_problem_tab_border: $color_primary25;
+$color_problem_tab_text: $color_primary66;
+$color_problem_tab_hover_bg: #e6e9f9;
+$color_problem_tab_active_bg: $color_primary0;
+$color_problem_tab_active_text: $color_link75;
+$color_problem_submit_bg: #f8f9fd;
 
 // Blog-specific light mode colors
-$color_blog_bg: #ffffff;
-$color_blog_card_bg: #ffffff;
-$color_blog_sidebar_bg: #f7f7f8;
-$color_blog_border: #dee2e6;
-$color_blog_text_primary: #202123;
-$color_blog_text_secondary: #565869;
-$color_blog_text_muted: #8e8ea0;
-$color_blog_text_tertiary: #6b7280;
-$color_blog_hover_bg: #ececf1;
-$color_blog_active_bg: #202123;
-$color_blog_accent: #1958c1;
-$color_blog_code_bg: #f7f7f7;
-$color_blog_blockquote_border: #292929;
+$color_blog_bg: $color_primary0;
+$color_blog_card_bg: $color_primary0;
+$color_blog_sidebar_bg: $color_primary10;
+$color_blog_border: $color_primary25;
+$color_blog_text_primary: $color_primary75;
+$color_blog_text_secondary: $color_primary66;
+$color_blog_text_muted: $color_primary50;
+$color_blog_text_tertiary: $color_primary50;
+$color_blog_hover_bg: #e6e9f9;
+$color_blog_active_bg: $color_primary90;
+$color_blog_accent: $color_link75;
+$color_blog_code_bg: #f8f9fd;
+$color_blog_blockquote_border: $color_link75;
 $color_blog_vote_active: #1a8917;
-$color_blog_tag_bg: #f3f4f6;
-$color_blog_tag_border: #e5e7eb;
-$color_blog_tag_text: #374151;
-$color_blog_tag_hover_bg: #e5e7eb;
-$color_blog_tag_hover_border: #d1d5db;
-$color_blog_tag_hover_text: #1f2937;
-$color_blog_tag_active_bg: #3b82f6;
-$color_blog_hero_bg: #eff6ff;
+$color_blog_tag_bg: $color_primary10;
+$color_blog_tag_border: $color_primary25;
+$color_blog_tag_text: $color_primary66;
+$color_blog_tag_hover_bg: #e6e9f9;
+$color_blog_tag_hover_border: $color_primary33;
+$color_blog_tag_hover_text: $color_primary75;
+$color_blog_tag_active_bg: $color_link75;
+$color_blog_hero_bg: #e6e9f9;
 
 $path_to_root: '.';     // relative path from style.css to STATIC_ROOT
 

@@ -31,9 +31,7 @@
     white-space: nowrap;
     font-weight: 400;
     line-height: 1.4;
-    background: rgb(51, 122, 183) none repeat scroll 0 (0% / auto) padding-box border-box;
-    background: -webkit-linear-gradient(top, #337ab7 0, #265a88 100%) repeat-x;
-    background: linear-gradient(to bottom, #337ab7 0, #265a88 100%) repeat-x;
+    background: $color_link75;
     border-radius: $widget_border_radius;
     padding: 6px 12px;
     display: block;
@@ -44,12 +42,12 @@
     font-size: $base_font_size;
 
     &:hover {
-        background: #265a88;
+        background: $color_link100;
     }
 
     &:active {
-        border-color: #245580;
-        background: #265a88;
+        border-color: $color_link100;
+        background: $color_link100;
     }
 
     &.full {
@@ -85,13 +83,13 @@ input {
         font-size: $base_font_size;
 
         &:hover {
-            border-color: rgba(82, 168, 236, 0.8);
-            box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 4px rgba(82, 168, 236, 0.6);
+            border-color: $color_link75;
+            box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 0 3px rgba($color_link75, 0.12);
         }
 
         &:focus {
-            border-color: rgba(82, 168, 236, 0.8);
-            box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+            border-color: $color_link75;
+            box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 0 3px rgba($color_link75, 0.18);
             outline: 0;
         }
     }
@@ -129,13 +127,13 @@ textarea {
 }
 
 textarea:hover {
-    border-color: rgba(82, 168, 236, 0.8);
-    box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 4px rgba(82, 168, 236, 0.6);
+    border-color: $color_link75;
+    box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 0 3px rgba($color_link75, 0.12);
 }
 
 textarea:focus {
-    border-color: rgba(82, 168, 236, 0.8);
-    box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 8px rgba(82, 168, 236, 0.6);
+    border-color: $color_link75;
+    box-shadow: inset 0 1px 1px rgba($color_primary100, 0.075), 0 0 0 3px rgba($color_link75, 0.18);
     outline: 0;
 }
 
@@ -251,7 +249,7 @@ textarea:focus {
 
 // Bootstrap-y pagination
 ul.pagination a:hover {
-    background: rgba($color_primary100, 0.55);
+    background: $color_link100;
 }
 
 ul.pagination {
@@ -381,7 +379,7 @@ a.close {
 
 .close {
     &:focus, &:hover {
-        color: #000;
+        color: $color_primary100;
         text-decoration: none;
         cursor: pointer;
         filter: alpha(opacity=50);

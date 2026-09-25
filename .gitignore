@@ -2,6 +2,8 @@
 .vscode
 .sass-cache
 .python-version
+.venv/
+*.css.map
 *.sqlite3
 *.py[co]
 *.mo

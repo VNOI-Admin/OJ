@@ -249,6 +249,24 @@ class PostList(PostListBase):
         context['current_contests'] = visible_contests.filter(start_time__lte=now, end_time__gt=now)
         context['future_contests'] = visible_contests.filter(start_time__gt=now)
 
+        # Keep the homepage useful even when there are no live contests: show
+        # live contests first, then upcoming ones, then the most recent past
+        # contests, capped at three cards.
+        homepage_contests = []
+        contest_groups = (
+            context['current_contests'][:3],
+            context['future_contests'][:3],
+            visible_contests.filter(end_time__lte=now).order_by('-end_time')[:3],
+        )
+        for contests in contest_groups:
+            for contest in contests:
+                if len(homepage_contests) == 3:
+                    break
+                homepage_contests.append(contest)
+            if len(homepage_contests) == 3:
+                break
+        context['homepage_contests'] = homepage_contests
+
         context['top_rated_users'] = self.get_top_rated_users()
         context['top_contrib'] = self.get_top_contributors()
 
