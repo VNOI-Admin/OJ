@@ -172,6 +172,12 @@ class ProblemDataStorage(Storage):
         backend = self._get_backend(new)
         return backend.rename_folder(old, new)
 
+    def presigned_url(self, name, **kwargs):
+        backend = self._get_backend(name)
+        if hasattr(backend, 'presigned_url'):
+            return backend.presigned_url(name, **kwargs)
+        return None
+
     def _build_metadata(self, problem):
         from judge.models import ProblemData
 
