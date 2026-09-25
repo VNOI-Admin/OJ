@@ -3,12 +3,7 @@ import os
 
 from botocore.client import BaseClient as S3Client
 from django.core.files.storage import FileSystemStorage, Storage
-
-
-try:
-    from storages.backends.s3 import S3Storage as _S3Storage
-except ImportError:  # django-storages < 1.14
-    from storages.backends.s3boto3 import S3Boto3Storage as _S3Storage
+from storages.backends.s3 import S3Storage as _S3Storage, clean_name
 
 
 class ProblemStorage(Storage):
@@ -35,16 +30,12 @@ class ProblemFileSystemStorage(ProblemStorage, FileSystemStorage):
 
 
 class ProblemDataS3Storage(ProblemStorage, _S3Storage):
-    def __init__(self, **settings):
-        settings.setdefault('file_overwrite', True)
-        super(ProblemDataS3Storage, self).__init__(**settings)
-
     @property
     def _client(self) -> S3Client:
         return self.connection.meta.client
 
     def _key(self, name):
-        return self._normalize_name(self._clean_name(name))
+        return self._normalize_name(clean_name(name))
 
     def presigned_url(self, name, filename=None, expire=None):
         params = {'Bucket': self.bucket_name, 'Key': self._key(name)}
@@ -64,17 +55,15 @@ class ProblemDataS3Storage(ProblemStorage, _S3Storage):
 
     def copy_prefix(self, old, new):
         """Server-side copy every key under old/ to new/, returning the number of keys copied.
-
-        The bytes never transit this process. Objects over COPY_OBJECT_LIMIT would need a
-        multipart copy, which we do not implement; those raise from boto3.
         """
         old_key = self._key(old).rstrip('/')
         new_key = self._key(new).rstrip('/')
         count = 0
         for key in self._iter_keys(old_key + '/'):
-            self._client.copy_object(
-                Bucket=self.bucket_name,
+            # use .copy instead of .copy_object to handle objects over copy limit (5GB)
+            self._client.copy(
                 CopySource={'Bucket': self.bucket_name, 'Key': key},
+                Bucket=self.bucket_name,
                 Key='%s/%s' % (new_key, key[len(old_key) + 1:]),
             )
             count += 1
