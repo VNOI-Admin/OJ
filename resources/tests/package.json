@@ -1,0 +1,11 @@
+{
+  "name": "vnoj-client-markdown-tests",
+  "private": true,
+  "description": "jsdom harness for resources/markdown-client.js. Run: npm ci && npm test",
+  "scripts": {
+    "test": "node markdown-client.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.1"
+  }
+}

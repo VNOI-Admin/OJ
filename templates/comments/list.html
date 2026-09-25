@@ -116,7 +116,7 @@
                                 </div>
                                 <div class="content content-description">
                                     <div class="comment-body"{% if node.score <= vote_hide_threshold %} style="display:none"{% endif %}>
-                                        {{ node.body|markdown('comment', MATH_ENGINE, True)|reference|str|safe }}
+                                        {{ node.body|markdown_client('comment') }}
                                     </div>
                                     {% if node.score <= vote_hide_threshold %}
                                         <div class="comment-body bad-comment-body">

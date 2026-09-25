@@ -73,7 +73,7 @@
     <div class="post-full">
         <div class="body content-description">
             {% cache 86400 'post_content' post.id MATH_ENGINE %}
-                {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}
+                {{ post.content|markdown_client('blog') }}
             {% endcache %}
         </div>
     </div>
