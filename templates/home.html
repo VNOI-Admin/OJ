@@ -27,6 +27,18 @@
     </svg>
 {% endmacro %}
 
+{% macro news_icon() %}
+    <svg class="utc-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 5h16v14H4zM8 9h8M8 13h8M8 17h5"></path>
+    </svg>
+{% endmacro %}
+
+{% macro comment_icon() %}
+    <svg class="utc-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path>
+    </svg>
+{% endmacro %}
+
 {% block body %}
     <div class="utc-home">
         <section class="utc-hero">
@@ -124,6 +136,66 @@
                     {{ trophy_icon() }}
                     <p>Hiện chưa có kỳ thi nào được lên lịch.</p>
                     <a href="{{ url('contest_list') }}">Xem danh sách kỳ thi</a>
+                </div>
+            {% endif %}
+        </section>
+
+        <section class="utc-news" aria-labelledby="utc-news-title">
+            <div class="utc-section-heading">
+                <h2 id="utc-news-title">{{ news_icon() }} Tin tức &amp; Bài viết</h2>
+                <a href="{{ url('blog_post_list') }}">Xem tất cả <span aria-hidden="true">›</span></a>
+            </div>
+
+            {% if posts %}
+                <div class="utc-news-grid{% if posts|length == 1 %} is-single{% elif posts|length == 2 %} is-pair{% endif %}">
+                    {% for post in posts[:3] %}
+                        <article class="utc-news-card{% if post.sticky %} is-featured{% endif %}">
+                            <a class="utc-news-cover" href="{{ url('blog_post', post.id, post.slug) }}"
+                               aria-label="{{ post.title }}">
+                                {% if post.og_image %}
+                                    <img src="{{ post.og_image|camo }}" alt="" loading="lazy">
+                                {% else %}
+                                    <span class="utc-news-cover-pattern"></span>
+                                    <span class="utc-news-cover-brand">{{ news_icon() }} UTCOJ NEWS</span>
+                                {% endif %}
+                            </a>
+
+                            <div class="utc-news-card-body">
+                                <div class="utc-news-badges">
+                                    {% if post.sticky %}<span class="utc-news-badge is-featured">Nổi bật</span>{% endif %}
+                                    {% if post.global_post %}<span class="utc-news-badge">Thông báo</span>{% endif %}
+                                    <time datetime="{{ post.publish_on|date('c') }}">{{ post.publish_on|date("d/m/Y") }}</time>
+                                </div>
+
+                                <h3>
+                                    <a href="{{ url('blog_post', post.id, post.slug) }}">{{ post.title }}</a>
+                                </h3>
+
+                                <p class="utc-news-excerpt">
+                                    {{ post.summary|default(post.content, true)|markdown('blog', 'svg')|striptags|truncate(190, true, '…') }}
+                                </p>
+
+                                <div class="utc-news-card-footer">
+                                    <span class="utc-news-authors">
+                                        {% with authors=post.authors.all() %}
+                                            {% if authors %}{{ link_users(authors) }}{% else %}UTCOJ{% endif %}
+                                        {% endwith %}
+                                    </span>
+                                    <a class="utc-news-comments" href="{{ url('blog_post', post.id, post.slug) }}#comments">
+                                        {{ comment_icon() }} {{ post_comment_counts[post.id] or 0 }}
+                                    </a>
+                                </div>
+                            </div>
+                        </article>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="utc-news-empty">
+                    {{ news_icon() }}
+                    <div>
+                        <strong>Chưa có bài viết nào.</strong>
+                        <p>Các thông báo và tin tức mới nhất của UTCOJ sẽ xuất hiện tại đây.</p>
+                    </div>
                 </div>
             {% endif %}
         </section>
