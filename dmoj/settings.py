@@ -133,8 +133,6 @@ VNOJ_COMMENT_RATE_LIMIT_WINDOW = datetime.timedelta(seconds=600)
 
 VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
-VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem
-
 VNOJ_SHOULD_BAN_FOR_CHEATING_IN_CONTESTS = False
 VNOJ_CONTEST_CHEATING_BAN_MESSAGE = 'Banned for multiple cheating offenses during contests'
 VNOJ_MAX_DISQUALIFICATIONS_BEFORE_BANNING = 3
@@ -186,53 +184,8 @@ CELERY_TIMEZONE = 'UTC'
 # has about 5~6 fields, so we need to raise this
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 3000
 
-# List of online judge preset for OJ API
-OJ_PROBLEM_PRESET = [
-    {
-        'regex': r'^https://codeforces\.com/problemset/problem/(?P<contestid>\w+)/(?P<index>\w+)$',
-        'codename': 'CF_%s_%s',
-        'judge': 'Codeforces',
-    },
-    {
-        'regex': r'^https://codeforces\.com/contest/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
-        'codename': 'CF_%s_%s',
-        'judge': 'Codeforces',
-    },
-    {
-        'regex': r'^^https://atcoder.jp/contests/(?:\w*)/tasks/(?P<codename>\w+)$',
-        'codename': 'AC_%s',
-        'judge': 'Atcoder',
-    },
-    {
-        'regex': r'^https://oj\.vnoi\.info/problem/(?P<codename>\w+)$',
-        'codename': 'VNOJ_%s',
-        'judge': 'VNOJ',
-    },
-    {
-        'regex': r'^https://open\.kattis\.com/problems/(?P<codename>\w+)$',
-        'codename': 'KATTIS_%s',
-        'judge': 'Kattis',
-    },
-    {
-        'regex': r'^https://codeforces\.com/gym/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
-        'codename': 'CFGYM_%s_%s',
-        'judge': 'CodeforcesGym',
-    },
-]
-
-OJ_LIST = [
-    ('Atcoder', 'Atcoder'),
-    ('Codeforces', 'Codeforces'),
-    ('CodeforcesGym', 'Codeforces (Gym)'),
-    ('Kattis', 'Kattis'),
-    ('VNOJ', 'VNOJ'),
-]
-
-OJ_REQUESTS_TIMEOUT = 5  # in seconds
-
-OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
-
 # External service to handle problem archiving
+OJ_REQUESTS_TIMEOUT = 5  # in seconds
 VNOJ_PROBLEM_ARCHIVE_SERVICE_URL = None
 VNOJ_PROBLEM_ARCHIVE_SERVICE_TOKEN = None
 
@@ -243,8 +196,6 @@ DISCORD_WEBHOOK = {
     'on_new_ticket': None,
     'on_new_comment': None,
     'on_new_problem': None,
-    'on_new_tag_problem': None,
-    'on_new_tag': None,
     'on_new_blogpost': None,
     'on_error': None,
     'on_long_queue': None,
@@ -414,14 +365,6 @@ else:
                         'judge.ProblemGroup',
                         'judge.ProblemType',
                         'judge.License',
-                    ],
-                },
-                {
-                    'model': 'judge.TagProblem',
-                    'icon': 'fa-tag',
-                    'children': [
-                        'judge.TagGroup',
-                        'judge.Tag',
                     ],
                 },
                 ('judge.Submission', 'fa-check-square-o'),
