@@ -1,12 +1,14 @@
 import bisect
 from datetime import datetime, timedelta
 from io import BytesIO
+from typing import Dict
 
 import pytz
 from celery import shared_task
 from discord_webhook import DiscordEmbed, DiscordWebhook
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
+from django.core.cache import cache
 from django.db.models import F, FloatField
 from django.db.models.functions import Cast
 
@@ -171,12 +173,19 @@ def on_new_blogpost(blog_id):
 
 
 @shared_task
-def on_long_queue():
+def on_long_queue(queue_counts: Dict[int, int]):
     webhook_config = get_webhook_config('on_long_queue')
     if webhook_config is None or settings.SITE_FULL_URL is None:
         return
 
-    send_webhook(webhook_config, 'Long queue alert', None, None, url=f'{settings.SITE_FULL_URL}/submissions/?status=QU')
+    # Prevent sending multiple long queue alerts within 5 minutes
+    if not cache.add('webhook:on_long_queue', True, timeout=5 * 60):
+        return
+
+    description = f'Queue counts: {queue_counts}'
+    total_queue_count = sum(queue_counts.values())
+    send_webhook(webhook_config, f'Long queue alert ({total_queue_count})', description, None,
+                 url=f'{settings.SITE_FULL_URL}/submissions/?status=QU')
 
 
 @shared_task
