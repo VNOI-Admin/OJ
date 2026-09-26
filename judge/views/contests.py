@@ -698,29 +698,16 @@ class ContestCalendar(TitleMixin, ContestListMixin, TemplateView):
         else:
             context['title'] = _('Contests in %(month)s') % {'month': date_filter(month, _('F Y'))}
 
-        dates = Contest.objects.aggregate(min=Min('start_time'), max=Max('end_time'))
-        min_month = (self.today.year, self.today.month)
-        if dates['min'] is not None:
-            min_month = dates['min'].year, dates['min'].month
-        max_month = (self.today.year, self.today.month)
-        if dates['max'] is not None:
-            max_month = max((dates['max'].year, dates['max'].month), (self.today.year, self.today.month))
-
-        month = (self.year, self.month)
-        if month < min_month or month > max_month:
-            # 404 is valid because it merely declares the lack of existence, without any reason
-            raise Http404()
-
         context['now'] = timezone.now()
         context['calendar'] = self.get_table()
         context['curr_month'] = date(self.year, self.month, 1)
 
-        if month > min_month:
+        if self.year > 1 or self.month > 1:
             context['prev_month'] = date(self.year - (self.month == 1), 12 if self.month == 1 else self.month - 1, 1)
         else:
             context['prev_month'] = None
 
-        if month < max_month:
+        if self.year < 9999 or self.month < 12:
             context['next_month'] = date(self.year + (self.month == 12), 1 if self.month == 12 else self.month + 1, 1)
         else:
             context['next_month'] = None

@@ -2,45 +2,110 @@
 {% block title_ruler %}{% endblock %}
 
 {% block title_row %}
-    {% set tab = 'calendar' %}
-    {% include "contest/contest-list-tabs.html" %}
+    <div class="utc-calendar-header">
+        <h1>{{ title }}</h1>
+
+        <div class="utc-calendar-month-nav" role="navigation" aria-label="Điều hướng tháng">
+            {% if prev_month %}
+                <a href="{{ url('contest_calendar', prev_month.year, prev_month.month) }}" aria-label="{{ _('Previous month') }}">
+                    <i class="fa fa-angle-left"></i> {{ _('Prev') }}
+                </a>
+            {% endif %}
+            {% if not (curr_month.year == now.year and curr_month.month == now.month) %}
+                <a class="utc-calendar-today-link" href="{{ url('contest_calendar', now.year, now.month) }}">
+                    {{ _('Today') }}
+                </a>
+            {% endif %}
+            {% if next_month %}
+                <a href="{{ url('contest_calendar', next_month.year, next_month.month) }}" aria-label="{{ _('Next month') }}">
+                    {{ _('Next') }} <i class="fa fa-angle-right"></i>
+                </a>
+            {% endif %}
+            <a class="utc-calendar-export" href="{{ url('contest_ical') }}">
+                <i class="fa fa-download"></i> {{ _('Export') }}
+            </a>
+        </div>
+
+        <div class="utc-calendar-controls">
+            {% if hide_private_contests is not none %}
+                <label class="utc-calendar-private-toggle">
+                    <input id="hide-private-contests-checkbox" type="checkbox">
+                    <span>{{ _('Hide private contests') }}</span>
+                </label>
+            {% endif %}
+            <div class="utc-calendar-view-toggle">
+                <a href="{{ url('contest_list') }}"><i class="fa fa-list"></i> {{ _('List') }}</a>
+                <span class="is-active"><i class="fa fa-calendar"></i> {{ _('Calendar') }}</span>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block js_media %}
+    <script>
+        $(function () {
+            const checkbox = $('#hide-private-contests-checkbox');
+            {% if hide_private_contests %}checkbox.prop('checked', true);{% endif %}
+            checkbox.on('change', function () {
+                const parser = new URL(window.location.href);
+                parser.searchParams.set('hide_private_contests', this.checked ? 'true' : 'false');
+                window.location.href = parser.href;
+            });
+        });
+    </script>
 {% endblock %}
 
 {% block body %}
-    <table id="contest-calendar">
-        <tr>
-            <th>{{ _('Sunday') }}</th>
-            <th>{{ _('Monday') }}</th>
-            <th>{{ _('Tuesday') }}</th>
-            <th>{{ _('Wednesday') }}</th>
-            <th>{{ _('Thursday') }}</th>
-            <th>{{ _('Friday') }}</th>
-            <th>{{ _('Saturday') }}</th>
-        </tr>
-        {% for week in calendar %}
-            <tr>{% for day in week %}
-                <td class="{% if day.is_today %}today{% endif %}{% if day.is_pad %} noday{% endif %}">
-                    <span class="num">{{ day.date.day }}</span>
-                    <ul class="fa-ul">
-                        {% for contest in day.starts %}
-                            <li class="start"><i class="fa fa-li fa-lg fa-step-forward"></i>
-                                <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
-                            </li>
-                        {% endfor %}
-                        {% for contest in day.oneday %}
-                            <li class="oneday">
-                                <i class="fa fa-li fa-lg fa-play"></i>
-                                <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
-                            </li>
-                        {% endfor %}
-                        {% for contest in day.ends %}
-                            <li class="end"><i class="fa fa-li fa-lg fa-step-backward"></i>
-                                <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </td>
-            {% endfor %}</tr>
-        {% endfor %}
-    </table>
+    <div class="utc-calendar-shell">
+        <div class="utc-calendar-scroll">
+            <table id="contest-calendar">
+                <thead>
+                    <tr>
+                        <th>{{ _('Sunday') }}</th>
+                        <th>{{ _('Monday') }}</th>
+                        <th>{{ _('Tuesday') }}</th>
+                        <th>{{ _('Wednesday') }}</th>
+                        <th>{{ _('Thursday') }}</th>
+                        <th>{{ _('Friday') }}</th>
+                        <th>{{ _('Saturday') }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for week in calendar %}
+                        <tr>{% for day in week %}
+                            <td class="{% if day.is_today %}today{% endif %}{% if day.is_pad %} noday{% endif %}{% if day.starts or day.oneday or day.ends %} has-events{% endif %}">
+                                <div class="utc-calendar-day-number">
+                                    <time datetime="{{ day.date|date('Y-m-d') }}">{{ day.date.day }}</time>
+                                    {% if day.is_today %}<span>{{ _('Today') }}</span>{% endif %}
+                                </div>
+                                <ul>
+                                    {% for contest in day.starts %}
+                                        <li class="start"><i class="fa fa-step-forward"></i>
+                                            <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
+                                        </li>
+                                    {% endfor %}
+                                    {% for contest in day.oneday %}
+                                        <li class="oneday"><i class="fa fa-play"></i>
+                                            <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
+                                        </li>
+                                    {% endfor %}
+                                    {% for contest in day.ends %}
+                                        <li class="end"><i class="fa fa-step-backward"></i>
+                                            <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        {% endfor %}</tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <div class="utc-calendar-legend" aria-label="Chú thích lịch">
+            <span class="start"><i></i> {{ _('Contest starts') }}</span>
+            <span class="oneday"><i></i> {{ _('One-day contest') }}</span>
+            <span class="end"><i></i> {{ _('Contest ends') }}</span>
+        </div>
+    </div>
 {% endblock %}
