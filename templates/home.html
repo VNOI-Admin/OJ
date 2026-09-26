@@ -75,6 +75,8 @@
             </div>
         </section>
 
+        <div class="utc-home-dashboard">
+        <div class="utc-home-main">
         <section class="utc-contests" aria-labelledby="utc-contests-title">
             <div class="utc-section-heading">
                 <h2 id="utc-contests-title">{{ trophy_icon() }} Kỳ thi</h2>
@@ -199,5 +201,135 @@
                 </div>
             {% endif %}
         </section>
+        </div>
+
+        <aside class="utc-home-sidebar" aria-label="Hoạt động hệ thống">
+            <section class="utc-dashboard-widget utc-ticket-widget">
+                <header>
+                    <h3>{% if open_tickets %}Ticket mới{% else %}Ticket của tôi{% endif %}</h3>
+                    <i class="fa fa-exclamation-circle"></i>
+                </header>
+                <div class="utc-dashboard-widget-body">
+                    {% set dashboard_tickets = open_tickets if open_tickets else own_open_tickets %}
+                    {% if dashboard_tickets %}
+                        <ul class="utc-ticket-list">
+                            {% for ticket in dashboard_tickets[:5] %}
+                                <li>
+                                    <a class="utc-ticket-title" href="{{ url('ticket', ticket.id) }}">{{ ticket.title }}</a>
+                                    <div>
+                                        {% if ticket.linked_item %}
+                                            <a href="{{ ticket.linked_item.get_absolute_url() }}">
+                                                {{ ticket.linked_item|item_title|truncatechars_html(34) }}
+                                            </a>
+                                        {% endif %}
+                                        {% if open_tickets %}<span>{{ link_user(ticket.user) }}</span>{% endif %}
+                                    </div>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <a class="utc-widget-footer-link" href="{{ url('ticket_list') }}">Xem tất cả ticket <span>›</span></a>
+                    {% else %}
+                        <div class="utc-widget-empty">Chưa có ticket đang mở.</div>
+                    {% endif %}
+                </div>
+            </section>
+
+            <section class="utc-dashboard-widget utc-live-contest-widget">
+                <header>
+                    <h3>Kỳ thi đang diễn ra</h3>
+                    <i class="fa fa-trophy"></i>
+                </header>
+                <div class="utc-dashboard-widget-body">
+                    {% if current_contests %}
+                        <ul class="utc-live-contest-list">
+                            {% for contest in current_contests[:4] %}
+                                <li>
+                                    <a href="{{ url('contest_view', contest.key) }}">{{ contest.name }}</a>
+                                    <span>{{ _('Ends in %(countdown)s.', countdown=as_countdown(contest.time_before_end)) }}</span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <div class="utc-widget-empty">Chưa có kỳ thi đang diễn ra.</div>
+                    {% endif %}
+                    <a class="utc-widget-footer-link" href="{{ url('contest_list') }}">Xem các kỳ thi <span>›</span></a>
+                </div>
+            </section>
+
+            <section class="utc-dashboard-widget">
+                <header>
+                    <h3>Top người dùng</h3>
+                    <i class="fa fa-trophy"></i>
+                </header>
+                <div class="utc-dashboard-widget-body utc-ranking-body">
+                    {% if top_rated_users %}
+                        <table class="utc-ranking-table">
+                            <thead><tr><th>#</th><th>Username</th><th>Rating</th></tr></thead>
+                            <tbody>
+                                {% for user in top_rated_users[:5] %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ link_user(user) }}</td>
+                                        <td class="{{ user.css_class }}">{{ user.rating }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="utc-widget-empty">Chưa có dữ liệu xếp hạng.</div>
+                    {% endif %}
+                    <a class="utc-widget-footer-link" href="{{ url('user_list') }}">Xem bảng xếp hạng <span>›</span></a>
+                </div>
+            </section>
+
+            <section class="utc-dashboard-widget">
+                <header>
+                    <h3>Top đóng góp</h3>
+                    <i class="fa fa-star"></i>
+                </header>
+                <div class="utc-dashboard-widget-body utc-ranking-body">
+                    {% if top_contrib %}
+                        <table class="utc-ranking-table">
+                            <thead><tr><th>#</th><th>Username</th><th>Điểm</th></tr></thead>
+                            <tbody>
+                                {% for user in top_contrib[:5] %}
+                                    <tr>
+                                        <td>{{ loop.index }}</td>
+                                        <td>{{ link_user(user) }}</td>
+                                        <td>{{ user.contribution_points }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div class="utc-widget-empty">Chưa có dữ liệu đóng góp.</div>
+                    {% endif %}
+                    <a class="utc-widget-footer-link" href="{{ url('contributors_list') }}">Xem tất cả <span>›</span></a>
+                </div>
+            </section>
+
+            <section class="utc-dashboard-widget">
+                <header>
+                    <h3>Luồng bình luận</h3>
+                    <i class="fa fa-comments"></i>
+                </header>
+                <div class="utc-dashboard-widget-body">
+                    {% if comments %}
+                        <ul class="utc-comment-stream">
+                            {% for comment in comments[:7] %}
+                                <li>
+                                    <span>{{ link_user(comment.author) }}</span>
+                                    <a href="{{ comment.link }}#comment-{{ comment.id }}">{{ comment.page_title|truncatechars_html(45) }}</a>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                        <a class="utc-widget-footer-link" href="{{ url('comment_rss') }}">RSS bình luận <span>›</span></a>
+                    {% else %}
+                        <div class="utc-widget-empty">Chưa có bình luận mới.</div>
+                    {% endif %}
+                </div>
+            </section>
+        </aside>
+        </div>
     </div>
 {% endblock %}
