@@ -1,6 +1,7 @@
 import json
 import mimetypes
 import os
+import posixpath
 from itertools import chain
 from zipfile import BadZipfile, ZipFile
 
@@ -336,9 +337,14 @@ def problem_data_file(request, problem, path):
     if not object.is_editable_by(request.user):
         raise Http404()
 
-    problem_dir = problem_data_storage.path(problem)
-    if os.path.commonpath((problem_data_storage.path(os.path.join(problem, path)), problem_dir)) != problem_dir:
+    if not posixpath.normpath(problem + '/' + path).startswith(problem + '/'):
         raise Http404()
+
+    full_path = os.path.join(problem, path)
+
+    presigned = problem_data_storage.presigned_url(full_path)
+    if presigned:
+        return HttpResponseRedirect(presigned)
 
     response = HttpResponse()
 
@@ -348,7 +354,7 @@ def problem_data_file(request, problem, path):
         url_path = None
 
     try:
-        add_file_response(request, response, url_path, os.path.join(problem, path), problem_data_storage)
+        add_file_response(request, response, url_path, full_path, problem_data_storage)
     except IOError:
         raise Http404()
 

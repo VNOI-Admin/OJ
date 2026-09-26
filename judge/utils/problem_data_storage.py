@@ -6,8 +6,10 @@ import zipfile
 import yaml
 from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
-from django.core.files.storage import FileSystemStorage, Storage
+from django.core.files.storage import Storage
 from django.urls import reverse
+
+from judge.utils.storages import ProblemDataS3Storage, ProblemFileSystemStorage, ProblemStorage
 
 
 class StorageManager:
@@ -53,21 +55,25 @@ class StorageManager:
 
         backends = {}
         for name, conf in storages_conf.items():
-            backend = conf.get('backend')
+            conf = dict(conf)
+            backend = conf.pop('backend', None)
             if backend == 'filesystem':
-                backends[name] = FileSystemStorage(location=conf['location'])
+                storage = ProblemFileSystemStorage(location=conf['location'])
+            elif backend == 's3':
+                storage = ProblemDataS3Storage(**conf)
             else:
                 raise ImproperlyConfigured(f'Unknown storage backend "{backend}" for storage "{name}".')
+            backends[name] = storage
 
         return cls(backends, default_name, metadata_dir)
 
-    def get(self, name: str) -> Storage:
+    def get(self, name: str) -> ProblemStorage:
         try:
             return self._backends[name]
         except KeyError:
             raise ImproperlyConfigured(f'Storage backend "{name}" not found in config.')
 
-    def default(self) -> Storage:
+    def default(self) -> ProblemStorage:
         return self._backends[self._default_name]
 
     @property
@@ -122,7 +128,7 @@ def _read_testcases_data(problem, archive):
 
 
 class ProblemDataStorage(Storage):
-    def _get_backend(self, name):
+    def _get_backend(self, name) -> ProblemStorage:
         from judge.models.problem import Problem  # lazy import to avoid circular
         code = split_path_first(name)[0]
         try:
@@ -145,8 +151,6 @@ class ProblemDataStorage(Storage):
 
     def _save(self, name, content):
         backend = self._get_backend(name)
-        if backend.exists(name):
-            backend.delete(name)
         return backend._save(name, content)
 
     def exists(self, name):
@@ -165,8 +169,14 @@ class ProblemDataStorage(Storage):
         return ('judge.utils.problem_data.ProblemDataStorage', [], {})
 
     def rename(self, old, new):
-        backend = self._get_backend(old)
-        os.rename(backend.path(old), backend.path(new))
+        backend = self._get_backend(new)
+        return backend.rename_folder(old, new)
+
+    def presigned_url(self, name, **kwargs):
+        backend = self._get_backend(name)
+        if hasattr(backend, 'presigned_url'):
+            return backend.presigned_url(name, **kwargs)
+        return None
 
     def _build_metadata(self, problem):
         from judge.models import ProblemData
