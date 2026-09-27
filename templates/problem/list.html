@@ -158,6 +158,7 @@
             </div>
         </div>
         <div id="content-left" class="problems h-scrollable-table">
+            <div class="utc-problem-table-card">
             <table id="problem-table" class="table striped">
                 <thead>
                 <tr>
@@ -206,7 +207,7 @@
                         {% if request.user.is_authenticated %}
                             {% if problem.id in completed_problem_ids %}
                                 <td class="solved" solved="1">
-                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}" title="Đã giải">
                                         {% if problem.is_public %}
                                             <i class="solved-problem-color fa fa-check-circle"></i>
                                         {% else %}
@@ -216,9 +217,9 @@
                                 </td>
                             {% elif problem.id in attempted_problems %}
                                 <td class="solved" solved="0">
-                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}">
+                                    <a href="{{ url('user_submissions', problem.code, request.user.username) }}" title="Đang thử">
                                         {% if problem.is_public %}
-                                            <i class="attempted-problem-color fa fa-frown-o"></i>
+                                            <i class="attempted-problem-color fa fa-circle-o"></i>
                                         {% else %}
                                             <i class="attempted-problem-color fa fa-lock"></i>
                                         {% endif %}
@@ -227,7 +228,7 @@
                             {% else %}
                                 <td class="solved" solved="-1">
                                     {% if problem.is_public %}
-                                        <i class="unsolved-problem-color fa"></i>
+                                        <i class="unsolved-problem-color fa fa-circle-thin"></i>
                                     {% else %}
                                         <i class="unsolved-problem-color fa fa-lock"></i>
                                     {% endif %}
@@ -235,41 +236,55 @@
                             {% endif %}
                         {% endif %}
                         <td class="problem-code">
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.code}}</a>
+                            <a class="utc-code-pill" href="{{ url('problem_detail', problem.code) }}">{{ problem.code}}</a>
                         </td>
                         <td class="problem-name">
-                            <a href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
+                            <a class="utc-problem-title" href="{{ url('problem_detail', problem.code) }}">{{ problem.i18n_name or problem.name }}</a>
                         </td>
                         {% if not show_org_tags %}
-                        <td class="category">{{ problem.group.full_name }}</td>
+                        <td class="category">
+                            <span class="utc-category-pill">{{ problem.group.full_name }}</span>
+                        </td>
                         {% endif %}
                         {% if show_types %}
                             <td class="types">
                                 {% for type in problem.types_list %}
-                                    <span class="type-tag">{{ type }}</span>{% if not loop.last %}, {% endif %}
+                                    <span class="type-tag utc-type-tag">{{ type }}</span>{% if not loop.last %}, {% endif %}
                                 {% endfor %}
                             </td>
                         {% endif %}
-                        <td class="p">{{ problem.points|floatformat(2) }}</td>
-                        <td class="ac-rate">{{ problem.ac_rate|floatformat(1) }}%</td>
+                        <td class="p">
+                            <span class="utc-point-badge">{{ problem.points|floatformat(2) }}</span>
+                        </td>
+                        <td class="ac-rate">
+                            <div class="utc-ac-container" title="{{ problem.ac_rate|floatformat(1) }}% AC">
+                                <span class="utc-ac-text">{{ problem.ac_rate|floatformat(1) }}%</span>
+                                <div class="utc-ac-bar-track">
+                                    <div class="utc-ac-bar-fill" style="width: {{ problem.ac_rate|floatformat(1) }}%;"></div>
+                                </div>
+                            </div>
+                        </td>
                         <td class="users">
-                            <a href="{{ url('ranked_submissions', problem.code) }}">
-                                {{ problem.user_count }}
+                            <a class="utc-users-ac" href="{{ url('ranked_submissions', problem.code) }}">
+                                <i class="fa fa-user-o"></i> {{ problem.user_count }}
                             </a>
                         </td>
-                        <td>
+                        <td class="editorial">
                             {% if problem.has_public_editorial %}
-                                <a href="{{ url('problem_editorial', problem.code) }}">
-                                    <i class="has-editorial-color fa fa-check-circle"></i>
+                                <a class="utc-editorial-badge has-editorial" href="{{ url('problem_editorial', problem.code) }}" title="Có lời giải (Editorial)">
+                                    <i class="fa fa-file-text-o"></i>
                                 </a>
                             {% else %}
-                                <i class="no-editorial-color fa fa-minus-circle"></i>
+                                <span class="utc-editorial-badge no-editorial" title="Chưa có lời giải">
+                                    <i class="fa fa-minus"></i>
+                                </span>
                             {% endif %}
                         </td>
                     </tr>
                 {% endfor %}
                 </tbody>
             </table>
+            </div>
         </div>
     </div>
    {% if page_obj.has_other_pages() %}

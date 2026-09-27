@@ -1,38 +1,45 @@
-<div class="sidebox">
-    <h3>{{ _('Problem search') }} <i class="fa fa-search"></i>
-    </h3>
-    <div class="sidebox-content">
+<div class="sidebox utc-search-card">
+    <div class="utc-search-header">
+        <i class="fa fa-sliders"></i>
+        <span>{{ _('Problem search') }}</span>
+    </div>
+    <div class="sidebox-content utc-search-body">
         <form id="filter-form" name="form" action="" method="get">
-            <div>
+            <div class="utc-search-input-box">
+                <i class="fa fa-search utc-input-icon"></i>
                 <input id="search" type="text" name="search" value="{{ search_query or '' }}"
                        placeholder="{{ _('Search problems...') }}">
             </div>
-            {% if has_fts %}
-                <div>
-                    <input id="full_text" type="checkbox" name="full_text" value="1"
-                           {% if full_text %}checked{% endif %}>
-                    <label for="full_text">{{ _('Full text search') }}</label>
-                </div>
-            {% endif %}
-            {% if request.user.is_authenticated %}
-                <div>
-                    <input id="hide_solved" type="checkbox" name="hide_solved" value="1"
-                           {% if hide_solved %}checked{% endif %}>
-                    <label for="hide_solved">{{ _('Hide solved problems') }}</label>
-                </div>
-            {% endif %}
-            <div>
-                <input id="has_public_editorial" type="checkbox" name="has_public_editorial" value="1"
-                        {% if has_public_editorial %} checked{% endif %}>
-                <label for="has_public_editorial">{{ _('Has editorial') }}</label>
+            
+            <div class="utc-checkbox-group">
+                {% if has_fts %}
+                    <label class="utc-checkbox-item" for="full_text">
+                        <input id="full_text" type="checkbox" name="full_text" value="1"
+                               {% if full_text %}checked{% endif %}>
+                        <span>{{ _('Full text search') }}</span>
+                    </label>
+                {% endif %}
+                {% if request.user.is_authenticated %}
+                    <label class="utc-checkbox-item" for="hide_solved">
+                        <input id="hide_solved" type="checkbox" name="hide_solved" value="1"
+                               {% if hide_solved %}checked{% endif %}>
+                        <span>{{ _('Hide solved problems') }}</span>
+                    </label>
+                {% endif %}
+                <label class="utc-checkbox-item" for="has_public_editorial">
+                    <input id="has_public_editorial" type="checkbox" name="has_public_editorial" value="1"
+                            {% if has_public_editorial %} checked{% endif %}>
+                    <span>{{ _('Has editorial') }}</span>
+                </label>
+                <label class="utc-checkbox-item" for="show_types">
+                    <input id="show_types" type="checkbox" name="show_types" value="1"
+                            {% if show_types %} checked{% endif %}>
+                    <span>{{ _('Show problem types') }}</span>
+                </label>
             </div>
-            <div>
-                <input id="show_types" type="checkbox" name="show_types" value="1"
-                        {% if show_types %} checked{% endif %}>
-                <label for="show_types">{{ _('Show problem types') }}</label>
-            </div>
+
             <div class="filter-form-group">
-                <label for="category"><i>{{ _('Category') }}</i></label>
+                <label class="utc-field-label" for="category">{{ _('Category') }}</label>
                 <select id="category" name="category">
                     {% if category %}
                         <option value="" selected="selected">{{ _('All') }}</option>
@@ -48,7 +55,7 @@
             </div>
             {% if show_org_tags %}
             <div class="filter-form-group">
-                <label for="org-tags"><i>{{ _('Tags') }}</i></label>
+                <label class="utc-field-label" for="org-tags">{{ _('Tags') }}</label>
                 <select id="org-tags" name="tag" multiple>
                     <option value="untagged"{% if untagged_selected %} selected{% endif %}>{{ _('Uncategorized') }}</option>
                     {% for tag in org_tags_filter %}
@@ -60,7 +67,7 @@
             </div>
             {% else %}
             <div class="filter-form-group">
-                <label for="type"><i>{{ _('Problem types') }}</i></label>
+                <label class="utc-field-label" for="types">{{ _('Problem types') }}</label>
                 <select id="types" name="type" multiple>
                     {% for type in problem_types %}
                         <option value="{{ type.id }}"{% if type.id in selected_types %} selected{% endif %}>
@@ -71,14 +78,19 @@
             </div>
             {% endif %}
             {% if point_values %}
-                <div class="form-label">{{ _('Point range') }}</div>
+                <div class="utc-field-label" style="margin-top: 14px;">{{ _('Point range') }}</div>
                 <div id="point-slider"></div>
             {% endif %}
             <input id="point-start" type="hidden" name="point_start" {% if point_start and point_start != point_values.min %}value="{{ point_start }}"{% else %}disabled{% endif %}>
             <input id="point-end" type="hidden" name="point_end" {% if point_end and point_end != point_values.max %}value="{{ point_end }}"{% else %}disabled{% endif %}>
-            <div class="form-submit-group">
-                <a id="go" class="button">{{ _('Go') }}</a>
-                <a id="random" class="button">{{ _('Random') }}</a>
+            
+            <div class="utc-search-actions">
+                <a id="go" class="button utc-btn-primary">
+                    <i class="fa fa-filter"></i> {{ _('Go') }}
+                </a>
+                <a id="random" class="button utc-btn-secondary">
+                    <i class="fa fa-random"></i> {{ _('Random') }}
+                </a>
             </div>
         </form>
 

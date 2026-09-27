@@ -1,307 +1,318 @@
 @use "vars" as *;
 
-td.user-name, td.personal-info, td.organization-name {
-    padding-left: 1em;
-    text-align: left;
+td.user-name,
+td.personal-info,
+td.organization-name {
+  padding-left: 1em;
+  text-align: left;
 }
 
 tr {
-    &:target {
-        background: rgba($color_link200, 0.2);
-    }
+  &:target {
+    background: rgba($color_link200, 0.2);
+  }
 
-    td.full-score, td.failed-score, td.partial-score {
-        a {
-            font-size: 12px;
-        }
+  td.full-score,
+  td.failed-score,
+  td.partial-score {
+    a {
+      font-size: 12px;
     }
+  }
 }
 
 span.organization {
-    font-size: 12px;
+  font-size: 12px;
 }
 
 #search-handle {
-    width: 100%;
-    height: 2.3em;
+  width: 100%;
+  height: 2.3em;
 }
 
-.user-search-image, .user-search-name {
-    vertical-align: middle;
+.user-search-image,
+.user-search-name {
+  vertical-align: middle;
 }
 
 .user-search-name {
-    padding-left: 0.5em;
+  padding-left: 0.5em;
 }
 
 .users-table {
-    th.rank, th.points, th.problems, th.username {
-        white-space: nowrap;
-    }
+  th.rank,
+  th.points,
+  th.problems,
+  th.username {
+    white-space: nowrap;
+  }
 
-    th.rank {
-        padding-left: 5px;
-        padding-right: 5px;
-    }
+  th.rank {
+    padding-left: 5px;
+    padding-right: 5px;
+  }
 
-    th.username {
-        width: 100%;
-    }
+  th.username {
+    width: 100%;
+  }
 
-    .personal-info {
-        a, span {
-            color: $color_primary50;
-            font-weight: 600;
-        }
+  .personal-info {
+    a,
+    span {
+      color: $color_primary50;
+      font-weight: 600;
     }
+  }
 }
 
-.users-table, .organization-table {
-    tr {
-        transition: background-color linear .2s;
+.users-table,
+.organization-table {
+  tr {
+    transition: background-color linear 0.2s;
 
-        &:hover {
-            background: rgba($color_primary100, 0.05);
-        }
-
-        &.highlight {
-            background: rgba($color_link200, 0.2) !important;
-        }
+    &:hover {
+      background: rgba($color_primary100, 0.05);
     }
 
-    th a {
-        color: $color_primary0;
-
-        &:link,
-        &:visited {
-            color: $color_primary0;
-        }
+    &.highlight {
+      background: rgba($color_link200, 0.2) !important;
     }
+  }
+
+  th a {
+    color: $color_primary0;
+
+    &:link,
+    &:visited {
+      color: $color_primary0;
+    }
+  }
 }
 
 #search-form {
-    display: inline-block;
-    vertical-align: top;
-    width: 225px;
+  display: inline-block;
+  vertical-align: top;
+  width: 225px;
 
-    .select2-selection__arrow {
-        display: none;
-    }
+  .select2-selection__arrow {
+    display: none;
+  }
 
-    .select2-selection__rendered {
-        cursor: text;
-    }
+  .select2-selection__rendered {
+    cursor: text;
+  }
 }
 
 .user-problem-group h3 {
-    font-weight: 600;
-    font-size: 1.25em;
-    margin-bottom: -10px;
-    max-height: 20%;
-    line-height: 2.5em;
+  font-weight: 600;
+  font-size: 1.25em;
+  margin-bottom: -10px;
+  max-height: 20%;
+  line-height: 2.5em;
 }
 
 .hide-solved-problems {
-    text-align: right;
-    overflow: hidden;
+  text-align: right;
+  overflow: hidden;
 }
 
 .hide-solved-problems > span {
-    position: relative;
-    display: inline-block;
+  position: relative;
+  display: inline-block;
 }
 
 .hide-solved-problems > span:before {
-    content: "";
-    position: absolute;
-    top: 50%;
-    width: 100000px;
-    height: 1px;
-    background: $color_primary25;
-    right: 100%;
-    margin-right: 5px;
+  content: "";
+  position: absolute;
+  top: 50%;
+  width: 100000px;
+  height: 1px;
+  background: $color_primary25;
+  right: 100%;
+  margin-right: 5px;
 }
 
 .user-info-page {
-    display: flex;
+  display: flex;
 }
 
 .user-sidebar {
-    width: 150px;
-    padding-left: 15px;
+  width: 150px;
+  padding-left: 15px;
 }
 
 img.user-gravatar {
-    display: block;
-    border-radius: 6px;
-    background-color: white;
+  display: block;
+  border-radius: 6px;
+  background-color: white;
 }
 
 .user-content {
-    flex: 1 1;
-    overflow: hidden;
-    word-wrap: break-word;
+  flex: 1 1;
+  overflow: hidden;
+  word-wrap: break-word;
 }
 
 @media not all and (min-width: 600px) {
-    .user-info-page {
-        display: block;
-    }
+  .user-info-page {
+    display: block;
+  }
 
-    .user-sidebar {
-        margin: 0 auto;
-    }
+  .user-sidebar {
+    margin: 0 auto;
+  }
 
-    .user-content {
-        overflow: visible;
-    }
+  .user-content {
+    overflow: visible;
+  }
 }
 
 .pp-table {
-    .pp {
-        font-weight: 600;
-        font-size: 1.4em;
-    }
+  .pp {
+    font-weight: 600;
+    font-size: 1.4em;
+  }
 
-    .pp-weighted {
-        color: $color_primary50;
-    }
+  .pp-weighted {
+    color: $color_primary50;
+  }
 
-    div.sub-pp {
-        text-align: right;
-        min-width: unset;
-        width: unset;
-        border-left: none;
-    }
+  div.sub-pp {
+    text-align: right;
+    min-width: unset;
+    width: unset;
+    border-left: none;
+  }
 }
 
 #pp-load-link-wrapper {
-    text-align: center;
-    border: 1px solid $color_primary25;
+  text-align: center;
+  border: 1px solid $color_primary25;
 }
 
 #pp-load-more-link {
-    display: block;
-    padding: 0.5em 0;
+  display: block;
+  padding: 0.5em 0;
 }
 
 .pp-breakdown-header {
-    font-weight: 600;
-    font-size: 1.25em;
-    margin-bottom: 0.2em;
+  font-weight: 600;
+  font-size: 1.25em;
+  margin-bottom: 0.2em;
 }
 
 #rating-chart {
-    height: 400px;
-    margin-top: 1em;
+  height: 400px;
+  margin-top: 1em;
 }
 
 #rating-tooltip {
-    display: none;
-    position: absolute;
-    background: rgba(0, 0, 0, 0.7);
-    color: white;
-    padding: 3px;
-    border-radius: 3px;
-    transition: all .1s ease;
-    pointer-events: none;
-    transform: translate(-50%, 0);
+  display: none;
+  position: absolute;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: 3px;
+  border-radius: 3px;
+  transition: all 0.1s ease;
+  pointer-events: none;
+  transform: translate(-50%, 0);
 
-    .rate-group {
-        color: white;
-    }
+  .rate-group {
+    color: white;
+  }
 }
 
 #submission-activity {
-    #submission-activity-actions {
-        text-align: center;
-        #prev-year-action, #next-year-action {
-            font-size: 1.75em;
+  #submission-activity-actions {
+    text-align: center;
+    #prev-year-action,
+    #next-year-action {
+      font-size: 1.75em;
+    }
+    #year {
+      font-size: 1.25em;
+      color: $color_primary75;
+    }
+  }
+
+  #submission-activity-display {
+    border: 1px solid $color_primary25;
+    border-radius: $table_header_rounding;
+
+    .info-bar {
+      display: flex;
+      justify-content: space-between;
+
+      .info-table {
+        width: 15%;
+        min-width: 130px;
+
+        .info-table-text {
+          width: 8%;
         }
-        #year {
-            font-size: 1.25em;
-            color: $color_primary75;
-        }
+      }
     }
 
-    #submission-activity-display {
-        border: 1px solid $color_primary25;
-        border-radius: $table_header_rounding;
-
-        .info-bar {
-            display: flex;
-            justify-content: space-between;
-
-            .info-table {
-                width: 15%;
-                min-width: 130px;
-
-                .info-table-text {
-                    width: 8%;
-                }
-            }
-        }
-
-        .info-text {
-            font-size: 0.75em;
-            line-height: 1;
-            font-weight: 100;
-            color: $color_primary75;
-        }
-
-        #submission-total-count {
-            align-self: center;
-            padding-left: 8%;
-            font-size: 0.85em;
-
-            @media (max-width: 1000px) {
-                padding-left: 5px;
-            }
-        }
-
-        table {
-            width: 100%;
-            padding: 5px;
-
-            th.submission-date-col {
-                width: 8%;
-
-                @media (max-width: 1000px) {
-                    display: none;
-                }
-            }
-
-            td {
-                border-radius: 20%;
-
-                div {
-                    margin-top: 100%;
-                }
-
-                &.activity-label {
-                    position: relative;
-                    white-space: nowrap;
-                }
-
-                &.activity-blank {
-                    background-color: $color_pageBg;
-                }
-                &.activity-0 {
-                    background-color: $color_user_submission_activity0;
-                }
-                &.activity-1 {
-                    background-color: $color_user_submission_activity1;
-                }
-                &.activity-2 {
-                    background-color: $color_user_submission_activity2;
-                }
-                &.activity-3 {
-                    background-color: $color_user_submission_activity3;
-                }
-                &.activity-4 {
-                    background-color: $color_user_submission_activity4;
-                }
-            }
-        }
+    .info-text {
+      font-size: 0.75em;
+      line-height: 1;
+      font-weight: 100;
+      color: $color_primary75;
     }
+
+    #submission-total-count {
+      align-self: center;
+      padding-left: 8%;
+      font-size: 0.85em;
+
+      @media (max-width: 1000px) {
+        padding-left: 5px;
+      }
+    }
+
+    table {
+      width: 100%;
+      padding: 5px;
+
+      th.submission-date-col {
+        width: 8%;
+
+        @media (max-width: 1000px) {
+          display: none;
+        }
+      }
+
+      td {
+        border-radius: 20%;
+
+        div {
+          margin-top: 100%;
+        }
+
+        &.activity-label {
+          position: relative;
+          white-space: nowrap;
+        }
+
+        &.activity-blank {
+          background-color: $color_pageBg;
+        }
+        &.activity-0 {
+          background-color: $color_user_submission_activity0;
+        }
+        &.activity-1 {
+          background-color: $color_user_submission_activity1;
+        }
+        &.activity-2 {
+          background-color: $color_user_submission_activity2;
+        }
+        &.activity-3 {
+          background-color: $color_user_submission_activity3;
+        }
+        &.activity-4 {
+          background-color: $color_user_submission_activity4;
+        }
+      }
+    }
+  }
 }

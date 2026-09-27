@@ -264,14 +264,12 @@
             <ul>
                 <li>
                     {% if request.user.is_superuser %}
-                        <a href="{{ url('misc_config') }}" style="margin-right: 5px;">
+                        <a href="{{ url('misc_config') }}" class="nav-icon-link" title="{{ _('Settings') }}">
                     {% else %}
-                        <a href="javascript:void(0)" style="margin-right: 5px;">
+                        <a href="javascript:void(0)" class="nav-icon-link" title="{{ _('Settings') }}">
                     {% endif %}
-                        <span title="{{ _('Settings') }}">
-                            <i class="fa fa-gear" style="color: rgb(200,200,200); font-size: 1.15em"></i>
-                        </span>
-                    </a>
+                            <i class="fa fa-gear"></i>
+                        </a>
                     <ul class="settings-popup" style="min-width: 210px; right: 0; left: auto;">
                         <li>
                             <div class="nav-settings-row">
@@ -294,72 +292,66 @@
                     </ul>
                 </li>
             </ul>
-            {% endif %}
-            {% if request.user.is_authenticated %}
-                <a href=
-                    {% if request.resolver_match.view_name == "problem_detail" and problem %}
-                        "{{ url('new_problem_ticket', problem.code) }}"
-                    {% else %}
-                        "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
-                    {% endif %}
-                style="margin-right: 5px;">
-                    <span title="{{ _('Report issue') }}">
-                        <i class="fa fa-exclamation-triangle" style="color: yellow;"></i>
-                    </span>
-                </a>
-                <ul id="notification-nav">
-                    <li>
-                        <a href="{{ url('notification_list') }}" class="notification-bell" title="{{ _('Notifications') }}">
-                            <i class="fa fa-bell"></i>
-                            <span class="notification-badge{% if not UNREAD_NOTIFICATION_COUNT %} hidden{% endif %}">{{ UNREAD_NOTIFICATION_COUNT }}</span>
-                        </a>
-                        <ul class="notification-panel" style="width: 340px; right: 0; left: auto;">
-                            <li class="notification-panel-header">
-                                <span class="notification-panel-title">{{ _('Unread') }}</span>
-                                <a href="#" class="notification-mark-all">{{ _('Mark all read') }}</a>
-                            </li>
-                            <li class="notification-list-container">
-                                <div class="notification-items"></div>
-                                <div class="notification-empty hidden">{{ _('No notifications.') }}</div>
-                            </li>
-                            <li class="notification-panel-footer">
-                                <a href="{{ url('notification_list') }}">{{ _('See all notifications') }}</a>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-                <ul>
-                    <li>
-                        <a href="{{ url('user_page') }}">
-                            <span>
-                                <img src="{{ gravatar(request.user, 32) }}" height="24" width="24">{# -#}
-                                <span>{{ _('Hello, %(username)s.', username=bold(request.user.first_name or request.profile.display_name)) }}</span>
-                            </span>
-                        </a>
-                        <ul class="utc-user-menu" style="width: 205px; right: 0; left: auto;">
-                            {% if request.user.is_staff or request.user.is_superuser %}
-                                <li><a href="{{ url('admin:index') }}">{{ _('Admin') }}</a></li>
-                            {% endif %}
-                            <li><a href="{{ url('user_edit_profile') }}">{{ _('Edit profile') }}</a></li>
-                            <li class="utc-user-menu-separator"></li>
+            <a href=
+                {% if request.resolver_match.view_name == "problem_detail" and problem %}
+                    "{{ url('new_problem_ticket', problem.code) }}"
+                {% else %}
+                    "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
+                {% endif %}
+                class="nav-icon-link nav-report-btn" title="{{ _('Report issue') }}">
+                <i class="fa fa-exclamation-triangle"></i>
+            </a>
+            <ul id="notification-nav">
+                <li>
+                    <a href="{{ url('notification_list') }}" class="notification-bell nav-icon-link" title="{{ _('Notifications') }}">
+                        <i class="fa fa-bell"></i>
+                        <span class="notification-badge{% if not UNREAD_NOTIFICATION_COUNT %} hidden{% endif %}">{{ UNREAD_NOTIFICATION_COUNT }}</span>
+                    </a>
+                    <ul class="notification-panel" style="width: 340px; right: 0; left: auto;">
+                        <li class="notification-panel-header">
+                            <span class="notification-panel-title">{{ _('Unread') }}</span>
+                            <a href="#" class="notification-mark-all">{{ _('Mark all read') }}</a>
+                        </li>
+                        <li class="notification-list-container">
+                            <div class="notification-items"></div>
+                            <div class="notification-empty hidden">{{ _('No notifications.') }}</div>
+                        </li>
+                        <li class="notification-panel-footer">
+                            <a href="{{ url('notification_list') }}">{{ _('See all notifications') }}</a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+            <ul>
+                <li>
+                    <a href="{{ url('user_page') }}" class="nav-user-capsule">
+                        <img src="{{ gravatar(request.user, 32) }}" height="26" width="26">
+                        <span class="user-greeting">{{ request.user.first_name or request.profile.display_name }}</span>
+                    </a>
+                    <ul class="utc-user-menu" style="width: 205px; right: 0; left: auto;">
+                        {% if request.user.is_staff or request.user.is_superuser %}
+                            <li><a href="{{ url('admin:index') }}"><i class="fa fa-shield"></i> {{ _('Admin') }}</a></li>
+                        {% endif %}
+                        <li><a href="{{ url('user_edit_profile') }}"><i class="fa fa-user"></i> {{ _('Edit profile') }}</a></li>
+                        <li class="utc-user-menu-separator"></li>
+                        <li>
+                            <a href="#utc-feedback-modal" class="utc-feedback-open">
+                                <i class="fa fa-commenting-o"></i> Báo lỗi &amp; góp ý
+                            </a>
+                        </li>
+                        {% if request.user.is_impersonate %}
+                            <li><a href="{{ url('impersonate-stop') }}"><i class="fa fa-user-secret"></i> {{ _('Stop impersonating') }}</a></li>
+                        {% else %}
                             <li>
-                                <a href="#utc-feedback-modal" class="utc-feedback-open">
-                                    <i class="fa fa-commenting-o"></i> Báo lỗi &amp; góp ý
-                                </a>
+                                <form action="{{ url('auth_logout') }}" method="POST">
+                                    {% csrf_token %}
+                                    <button type="submit"><i class="fa fa-sign-out"></i> {{ _('Log out') }}</button>
+                                </form>
                             </li>
-                            {% if request.user.is_impersonate %}
-                                <li><a href="{{ url('impersonate-stop') }}">{{ _('Stop impersonating') }}</a></li>
-                            {% else %}
-                                <li>
-                                    <form action="{{ url('auth_logout') }}" method="POST">
-                                        {% csrf_token %}
-                                        <button type="submit">{{ _('Log out') }}</button>
-                                    </form>
-                                </li>
-                            {% endif %}
-                        </ul>
-                    </li>
-                </ul>
+                        {% endif %}
+                    </ul>
+                </li>
+            </ul>
             {% else %}
                 <span class="anon">
                     <a class="utc-login-link" href="{{ url('auth_login') }}?next={{ LOGIN_RETURN_PATH|urlencode }}"><b>{{ _('Log in') }}</b></a>
