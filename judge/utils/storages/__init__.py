@@ -21,7 +21,6 @@ class ProblemFileSystemStorage(ProblemStorage, FileSystemStorage):
         except OSError as e:
             if e.errno != errno.ENOENT:
                 raise
-        os.rename(old_path, new_path)
 
     def _save(self, name, content):
         if self.exists(name):
