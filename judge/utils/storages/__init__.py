@@ -11,6 +11,9 @@ class ProblemStorage(Storage):
     def rename_folder(self, old_name, new_name):
         raise NotImplementedError()
 
+    def rm_dir(self, name):
+        raise NotImplementedError()
+
 
 class ProblemFileSystemStorage(ProblemStorage, FileSystemStorage):
     def rename_folder(self, old_name, new_name):
@@ -26,6 +29,10 @@ class ProblemFileSystemStorage(ProblemStorage, FileSystemStorage):
         if self.exists(name):
             self.delete(name)
         return super()._save(name, content)
+
+    def rm_dir(self, name):
+        import shutil
+        shutil.rmtree(self.path(name), ignore_errors=True)
 
 
 class ProblemDataS3Storage(ProblemStorage, _S3Storage):
@@ -80,3 +87,6 @@ class ProblemDataS3Storage(ProblemStorage, _S3Storage):
     def rename_folder(self, old, new):
         self.copy_prefix(old, new)
         self.delete_prefix(old)
+
+    def rm_dir(self, name):
+        return self.delete_prefix(name)
