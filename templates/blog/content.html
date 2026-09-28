@@ -72,7 +72,7 @@
 {% block body %}
     <div class="post-full">
         <div class="body content-description">
-            {% cache 86400 'post_content' post.id MATH_ENGINE %}
+            {% cache 86400 'post_md' post.id %}
                 {{ post.content|markdown_client('blog') }}
             {% endcache %}
         </div>

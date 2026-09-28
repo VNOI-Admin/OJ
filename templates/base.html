@@ -70,7 +70,8 @@
         <script src="{{ JQUERY_JS }}"></script>
     {% endif %}
 
-    <script id="md-sanitizer-configs" type="application/json">{{ markdown_client_configs()|json|safe }}</script>
+    <script id="md-sanitizer-configs" type="application/json"
+            data-references-url="{{ url('resolve_references') }}">{{ markdown_client_configs()|json|safe }}</script>
 
     {% compress js %}
         <script>{{ inlinei18n(LANGUAGE_CODE)|safe }}</script>

@@ -1,13 +1,11 @@
 @use "vars" as *;
 
 // Token colours for client-side highlight.js (markdown rendered by
-// resources/markdown-client.js), mirroring pygment-github.scss so
-// browser-rendered code matches the old server-side Pygments output.
+// resources/markdown-client.js), using the pygment-github.scss palette.
 // Nested under `code` so these outrank plain `.hljs-*` rules vendored
 // elsewhere (e.g. martor's editor theme). highlight.js nests scopes
-// (e.g. .hljs-meta wraps .hljs-keyword), hence the `inherit` guards that
-// flat Pygments output never needed. No base .hljs background/color here:
-// those come from base-description.scss, already theme-aware.
+// (e.g. .hljs-meta wraps .hljs-keyword), hence the `inherit` guards.
+// No base .hljs background/color here: those come from base-description.scss.
 code {
     @if $is_light_theme {
         .hljs-comment, .hljs-quote, .hljs-code, .hljs-formula { color: #999988; font-style: italic } /* like .c1 */

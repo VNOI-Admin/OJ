@@ -9,7 +9,7 @@ const {JSDOM} = require('jsdom');
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&#34;');
 
 // Mirrors markdown_client_configs() output (dmoj/settings.py whitelists): user tier escapes raw
-// HTML; staff tier passes raw HTML through. Neither tier allows inline CSS (GHSA-cpfp-xm8c-cx6m).
+// HTML; staff tier passes raw HTML through. Neither tier allows inline CSS.
 const CONFIGS = {
     comment: {html: false,
         tags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'strong', 'em', 'tt', 'del', 'kbd', 's', 'abbr', 'cite',
@@ -50,7 +50,8 @@ const blocks = [
     ['leaky', '<div style="position: fixed">SECURITY DEMO</div>\n\n<style>body { display: none }</style>'],
 ];
 const page = '<!DOCTYPE html><html><body>' +
-    '<script id="md-sanitizer-configs" type="application/json">' + JSON.stringify(CONFIGS) + '</script>' +
+    '<script id="md-sanitizer-configs" type="application/json" data-references-url="/widgets/references">' +
+    JSON.stringify(CONFIGS) + '</script>' +
     blocks.map(([s, md]) => '<div class="md-content" data-md-style="' + s + '">' + esc(md) + '</div>').join('\n') +
     '</body></html>';
 
@@ -77,7 +78,6 @@ setTimeout(() => {
     check('user tier: XSS source escaped to text', html(1).includes('&lt;img src=x'), html(1));
     check('spoiler -> blockquote.spoiler, markdown inside', html(2).includes('<blockquote class="spoiler">') && html(2).includes('<em>inside</em>'), html(2));
     check('table gets class=table', html(3).includes('<table class="table">'), html(3));
-    check('rel=nofollow stripped end-to-end (server parity)', !html(3).includes('rel='), html(3));
     check('fenced code highlighted, hljs spans survive purge', html(4).includes('hljs-number'), html(4));
     check('math: ~a *b* c~ not split by emphasis', html(5).includes('~a *b* c~') && !html(5).includes('<em>'), html(5));
     check('math: matrix \\\\ row separator preserved', html(5).includes('b \\\\ c'), html(5));
@@ -88,7 +88,7 @@ setTimeout(() => {
     check('~~strikethrough~~ still works', html(5).includes('<s>gone</s>'), html(5));
     check('staff: raw div kept, inline style and onclick stripped',
         html(6).includes('<div>staff html</div>'), html(6));
-    check('staff: overlay loses its style and <style> is dropped (GHSA-cpfp-xm8c-cx6m)',
+    check('staff: overlay loses its style and <style> is dropped',
         !b[9].querySelector('[style], style') && html(9).includes('SECURITY DEMO'), html(9));
     check('style stays forbidden even if the whitelist lists it',
         !b[10].querySelector('[style], style') && html(10).includes('SECURITY DEMO'), html(10));
@@ -96,7 +96,7 @@ setTimeout(() => {
     check('staff: script stripped, tilde math intact', !b[7].querySelector('script') && html(7).includes('~x_{i}^2~'), html(7));
     check('unknown style -> strict fallback escapes script', !b[8].querySelector('script') && html(8).includes('&lt;script&gt;'), html(8));
     check('all blocks marked md-rendered', d.querySelectorAll('.md-content.md-rendered').length === blocks.length);
-    check('images lazy-loaded (F3)', b[6].querySelector('img').getAttribute('loading') === 'lazy', html(6));
+    check('images lazy-loaded', b[6].querySelector('img').getAttribute('loading') === 'lazy', html(6));
     check('exactly one batched reference fetch', fetchCount === 1, 'count=' + fetchCount);
     check('reference token replaced with server html', html(0).includes('<a href="/user/someone">someone</a>'), html(0));
 

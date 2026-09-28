@@ -163,7 +163,7 @@ class TestMarkdownClient(SimpleTestCase):
         self.assertIn('comment', configs)
         self.assertEqual(configs['comment']['html'], False)
         self.assertEqual(configs[self.BLEACHED_STYLE]['html'], True)
-        # the client never allows inline CSS, matching the server (GHSA-cpfp-xm8c-cx6m)
+        # the client never allows inline CSS, matching the server
         for config in configs.values():
             self.assertNotIn('style', config['attrs'])
             self.assertNotIn('style', config['tags'])
@@ -172,9 +172,7 @@ class TestMarkdownClient(SimpleTestCase):
         self.assertEqual(configs['comment']['attrs'], sorted(configs['comment']['attrs']))
 
     def test_get_cleaner_does_not_mutate_styles(self):
-        # Regression: get_cleaner used to mutate the shared MARKDOWN_STYLES dict, which
-        # corrupted markdown_client_configs() output (MathML-baked tags)
-        # for any style read after a staff server-side render.
+        # a server-side render must leave the shared MARKDOWN_STYLES dict unchanged
         markdown('**x**', self.BLEACHED_STYLE)
         configs = markdown_client_configs()
         self.assertNotIn('math', configs[self.BLEACHED_STYLE]['tags'])

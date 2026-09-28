@@ -13,6 +13,7 @@ from markupsafe import Markup
 
 from judge.highlight_code import highlight_code
 from judge.jinja2.markdown.lazy_load import lazy_load as lazy_load_processor
+from judge.jinja2.reference import reference
 from judge.utils.camo import client as camo_client
 from judge.utils.texoid import TEXOID_ENABLED, TexoidRenderer
 from .bleach_whitelist import all_styles, mathml_attrs, mathml_tags
@@ -30,9 +31,7 @@ def get_cleaner(name, params):
     if name in cleaner_cache:
         return cleaner_cache[name]
 
-    # Copy so pop()/reassignment below don't mutate the shared MARKDOWN_STYLES dict — that
-    # mutation (dropping 'styles'/'mathml', baking MathML tags into 'tags') would otherwise
-    # corrupt what markdown_client_configs() reads for the client sanitizer config.
+    # Copy: popping from the shared MARKDOWN_STYLES dict would corrupt markdown_client_configs().
     params = dict(params)
     styles = params.pop('styles', None)
     if styles:
@@ -131,32 +130,22 @@ def markdown(text, style, math_engine=None, lazy_load=False, strip_paragraphs=Fa
 
 @registry.filter
 def markdown_client(text, style):
-    """Emit raw markdown for the browser to render and sanitize (resources/markdown-client.js).
+    """Wrap raw markdown in an escaped placeholder for resources/markdown-client.js to render.
 
-    For styles with a Bleach whitelist (user + staff tiers), this does no rendering/sanitizing/
-    reference resolution: it wraps the raw markdown in a placeholder, HTML-escaped so it embeds
-    safely and degrades to readable text if JS fails. The style (a MARKDOWN_STYLES key) rides along
-    as data-md-style so the client picks the matching sanitizer config (see markdown_client_configs).
-
-    Admin styles (problem-full, flatpage) have NO whitelist and cannot be safely sanitized on the
-    client, so they fall back to full server-side rendering here (same output as the old
-    markdown()|reference chain). markdown() stays for server-side consumers (feeds, PDF, OpenGraph).
+    Styles without a Bleach whitelist (admin-only) are rendered on the server instead.
     """
     styles = settings.MARKDOWN_STYLES.get(style, settings.MARKDOWN_DEFAULT_STYLE)
     if not styles.get('bleach'):
-        from judge.jinja2.reference import reference
         return Markup(str(reference(markdown(text, style))))
     return Markup('<div class="md-content" data-md-style="{}">{}</div>').format(style, text or '')
 
 
 @registry.function
 def markdown_client_configs():
-    """Per-style DOMPurify config for the client renderer — the single source of truth.
+    """Per-style sanitizer config for resources/markdown-client.js, built from the Bleach settings.
 
-    Derives the client sanitizer allow-lists from the same MARKDOWN_STYLES / Bleach settings the
-    server uses, so client (DOMPurify) and server (Bleach) cannot drift. Emitted as JSON in base.html
-    and read by resources/markdown-client.js. Admin styles (no bleach) are omitted — they render
-    server-side. MathML tags are excluded: math renders via MathJax after sanitize on the client.
+    Tags follow each style's list; attributes are merged into one list for all tags. Styles without
+    a Bleach whitelist are omitted (they render on the server).
     """
     configs = {}
     for style, spec in settings.MARKDOWN_STYLES.items():

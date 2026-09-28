@@ -5,7 +5,7 @@
 {% endif %}
 {% endwith %}
 
-{% cache 86400 'problem_html' problem.id MATH_ENGINE LANGUAGE_CODE %}
+{% cache 86400 'problem_md' problem.id LANGUAGE_CODE %}
     {{ (description or problem.i18n_description or problem.description)|markdown_client(problem.markdown_style) }}
 {% endcache %}
 

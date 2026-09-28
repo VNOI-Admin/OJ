@@ -344,7 +344,7 @@
     {% endif %}
 
     <div class="content-description">
-        {% cache 3600 'contest_html' contest.id MATH_ENGINE %}
+        {% cache 3600 'contest_md' contest.id %}
             {{ contest.description|markdown_client('contest') }}
         {% endcache %}
     </div>

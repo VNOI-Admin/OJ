@@ -3,6 +3,7 @@ import json
 from django.test import SimpleTestCase, TestCase
 from django.test.client import RequestFactory
 
+from judge.models.tests.util import create_user
 from judge.views.widgets import MAX_REFERENCES, resolve_references
 
 
@@ -29,7 +30,6 @@ class TestResolveReferences(TestCase):
                              {'user:no_such_user_x': '<span class="deleted-user">no_such_user_x</span>'})
 
     def test_existing_user(self):
-        from judge.models.tests.util import create_user
         create_user(username='refcheck_user')
         response = self.client.get('/widgets/references', {'refs': 'user:refcheck_user,ruser:refcheck_user'})
         self.assertEqual(response.status_code, 200)

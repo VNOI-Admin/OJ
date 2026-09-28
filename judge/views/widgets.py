@@ -46,18 +46,12 @@ def rejudge_submission(request):
 
 
 MAX_REFERENCES = 500
-_reference_name_re = re.compile(r'\w+$')
+_reference_name_re = re.compile(r'\w+')
 
 
 @require_GET
 def resolve_references(request):
-    """Batch-resolve [user:name]/[ruser:name] tokens to their rendered link HTML.
-
-    The client (resources/markdown-client.js) collects every reference on the page after
-    client-side markdown rendering and requests them all here in one round-trip. `refs` is a
-    comma-separated list of `type:name` tokens; the response maps each token back to its HTML.
-    Read-only public data (username -> rating link), so no auth/CSRF is required.
-    """
+    """Map comma-separated `type:name` reference tokens (e.g. user:admin) to their link HTML."""
     tokens = request.GET.get('refs', '').split(',')
     if len(tokens) > MAX_REFERENCES:
         return HttpResponseBadRequest('too many references')
@@ -65,7 +59,7 @@ def resolve_references(request):
     by_type = {}
     for token in tokens:
         rtype, sep, name = token.strip().partition(':')
-        if sep and rtype in reference_map and _reference_name_re.match(name):
+        if sep and rtype in reference_map and _reference_name_re.fullmatch(name):
             by_type.setdefault(rtype, set()).add(name)
 
     result = {}

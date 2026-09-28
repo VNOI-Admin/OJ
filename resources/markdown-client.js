@@ -2,14 +2,10 @@
 // Jinja filter (judge/jinja2/markdown/__init__.py). Renders raw markdown with markdown-it and
 // sanitizes with DOMPurify per trust tier, then replaces the placeholder content.
 //
-// Per-tier sanitizer configs come from the server (single source of truth): base.html emits
-// `#md-sanitizer-configs` JSON via markdown_client_configs(), derived from the same Bleach settings
-// the server uses, so client and server allow-lists cannot drift. If that JSON is missing/malformed,
-// each block falls back to the strict user-tier config below (fail toward strict, never toward XSS).
-//
-// Deferred (see .review/client-side-markdown-rendering-analysis.md): anti-flash; exact per-tag
-// attribute parity; per-domain nofollow exclusion. (Math-span protect for ~..~/$$..$$ IS implemented
-// in applyDialectRules — it keeps LaTeX contents raw so \\, *, _ aren't mangled by markdown.)
+// Per-tier sanitizer configs come from `#md-sanitizer-configs` (markdown_client_configs(), built from
+// the server's Bleach settings). Tags follow the server list; attributes are one list for all tags,
+// where Bleach allows them per tag. If the JSON is missing/malformed, every block uses the strict
+// user-tier FALLBACK below.
 
 (function () {
     'use strict';
@@ -20,8 +16,7 @@
         return;
     }
 
-    // Syntax-highlight fenced code with highlight.js (server used Pygments; classes differ, so the
-    // highlight.js theme CSS is loaded alongside). Falls back to plain escaped code when the language
+    // Syntax-highlight fenced code with highlight.js. Falls back to plain escaped code when the language
     // is unknown or highlight.js isn't loaded.
     function highlight(code, lang) {
         var hljs = window.hljs;
@@ -53,15 +48,6 @@
         md.renderer.rules.table_open = function (tokens, idx, options, env, self) {
             tokens[idx].attrJoin('class', 'table');
             return defaultTableOpen(tokens, idx, options, env, self);
-        };
-
-        // nofollow: add rel="nofollow" to links. NOTE: the server excludes settings.NOFOLLOW_EXCLUDED
-        // domains; here we nofollow all links (stricter) — refine later if needed.
-        var defaultLinkOpen = md.renderer.rules.link_open ||
-            function (tokens, idx, options, env, self) { return self.renderToken(tokens, idx, options); };
-        md.renderer.rules.link_open = function (tokens, idx, options, env, self) {
-            tokens[idx].attrSet('rel', 'nofollow');
-            return defaultLinkOpen(tokens, idx, options, env, self);
         };
 
         // spoiler: a blockquote whose lines start with `>!` becomes <blockquote class="spoiler">
@@ -178,7 +164,7 @@
         },
     };
 
-    // Build per-style {md, purify} from the server-emitted whitelist (single source of truth).
+    // Build per-style {md, purify} from the server-emitted whitelist.
     function buildStyles() {
         var styles = {};
         try {
@@ -190,7 +176,7 @@
                 var purify = {
                     ALLOWED_TAGS: c.tags,
                     ALLOWED_ATTR: c.attrs,
-                    // Inline CSS is never allowed, like the server (GHSA-cpfp-xm8c-cx6m).
+                    // Never allow inline CSS or <style>: they let content overlay the whole page (GHSA-cpfp-xm8c-cx6m).
                     FORBID_ATTR: ['style'],
                     FORBID_TAGS: ['style'],
                     ALLOW_DATA_ATTR: true,
@@ -213,7 +199,6 @@
             // textContent decodes the entity-escaped markdown back to its original source.
             // Sanitize BEFORE it touches the live DOM.
             el.innerHTML = window.DOMPurify.sanitize(conf.md.render(el.textContent), conf.purify);
-            // Post-sanitize replacement for the old server-side lazy_load (unveil) step.
             var imgs = el.querySelectorAll('img:not([loading])');
             for (var i = 0; i < imgs.length; i++) {
                 imgs[i].setAttribute('loading', 'lazy');
@@ -229,7 +214,7 @@
 
     // References: after rendering, resolve [user:x]/[ruser:x] tokens across all freshly-rendered
     // blocks in ONE batched request, then replace them together (no per-token round-trips).
-    var REFERENCE_URL = '/widgets/references';
+    var REFERENCE_URL = document.getElementById('md-sanitizer-configs').getAttribute('data-references-url');
     var REFERENCE_RE = /\[(r?user):(\w+)\]/g;
 
     function collectReferences(elements) {
@@ -307,7 +292,7 @@
 
     // Exposed so AJAX-injected content (e.g. the lazy-loaded comment list) can be rendered
     // after insertion — the DOMContentLoaded pass only covers markup in the original page.
-    window.MarkdownClient = {renderAll: renderAll, render: renderOne};
+    window.MarkdownClient = {renderAll: renderAll};
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function () { renderAll(); });
