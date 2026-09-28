@@ -7,7 +7,7 @@
     <script type="text/javascript" src="{{ static('libs/featherlight/featherlight.min.js') }}"></script>
     <script type="text/javascript" src="{{ static('vnoj/jszip/jszip.min.js') }}"></script>
     <script type="text/javascript">
-        window.valid_files = {{valid_files_json}}.sort();
+        window.valid_files = {{valid_files_json}}.sort().filter(function(f) { return !f.endsWith('/'); });
         window.testcase_limit = {{testcase_limit}};
         window.testcase_soft_limit = {{testcase_soft_limit}};
 

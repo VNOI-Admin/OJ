@@ -249,7 +249,8 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
             if post and 'problem-data-zipfile-clear' in self.request.POST:
                 return []
             elif post and 'problem-data-zipfile' in self.request.FILES:
-                return ZipFile(self.request.FILES['problem-data-zipfile']).namelist()
+                return [f for f in ZipFile(self.request.FILES['problem-data-zipfile']).namelist()
+                        if not f.endswith('/')]
             elif data.zipfile:
                 return problem_data_storage.get_problem_metadata(self.object)['files']
         except (BadZipfile, FileNotFoundError):
