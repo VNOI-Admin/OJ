@@ -3,7 +3,8 @@
   "type": "module",
   "scripts": {
     "format": "prettier --write websocket",
-    "format:check": "prettier --check websocket"
+    "format:check": "prettier --check websocket",
+    "test:markdown": "node tests/markdown-client.test.cjs"
   },
   "dependencies": {
     "@commander-js/extra-typings": "11.0.0",
@@ -13,6 +14,7 @@
   "devDependencies": {
     "@types/ws": "8.5.5",
     "autoprefixer": "10.4.15",
+    "jsdom": "^29.1.1",
     "postcss": "8.4.29",
     "postcss-cli": "10.1.0",
     "prettier": "3.0.3",

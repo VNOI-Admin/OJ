@@ -1,6 +1,6 @@
-// jsdom harness for ../markdown-client.js. Loads the actual shipped file plus the vendored libs
-// from ../vendor (window.eval = top-level script semantics, so no npm copies are involved and
-// the test cannot drift from production). Run: npm ci && npm test. Exits non-zero on failure.
+// jsdom harness for resources/markdown-client.js. Loads the actual shipped file plus the vendored libs
+// from resources/vendor (window.eval = top-level script semantics, so no npm copies are involved and
+// the test cannot drift from production). Run: npm ci && npm run test:markdown. Exits non-zero on failure.
 
 const fs = require('fs');
 const path = require('path');
@@ -56,7 +56,7 @@ const page = '<!DOCTYPE html><html><body>' +
 
 const {window} = new JSDOM(page, {runScripts: 'outside-only'});
 for (const f of ['vendor/markdown-it.min.js', 'vendor/purify.min.js', 'vendor/highlight.min.js', 'markdown-client.js']) {
-    window.eval(fs.readFileSync(path.join(__dirname, '..', f), 'utf8'));
+    window.eval(fs.readFileSync(path.join(__dirname, '../resources', f), 'utf8'));
 }
 let fetchCount = 0;
 window.fetch = () => {
