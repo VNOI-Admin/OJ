@@ -170,6 +170,5 @@ def markdown_client_configs():
             'html': not spec.get('safe_mode', True),
             'tags': list(bleach_params.get('tags', [])),
             'attrs': sorted(attrs),
-            'allowStyle': bool(bleach_params.get('styles', False)),
         }
     return configs

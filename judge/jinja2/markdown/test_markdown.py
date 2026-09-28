@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.test import SimpleTestCase
 from lxml import html
 
@@ -161,21 +162,23 @@ class TestMarkdownClient(SimpleTestCase):
         self.assertNotIn('flatpage', configs)
         self.assertIn('comment', configs)
         self.assertEqual(configs['comment']['html'], False)
-        self.assertEqual(configs['comment']['allowStyle'], False)
         self.assertEqual(configs[self.BLEACHED_STYLE]['html'], True)
-        self.assertEqual(configs[self.BLEACHED_STYLE]['allowStyle'], True)
+        # the client never allows inline CSS, matching the server (GHSA-cpfp-xm8c-cx6m)
+        for config in configs.values():
+            self.assertNotIn('style', config['attrs'])
+            self.assertNotIn('style', config['tags'])
         self.assertIn('img', configs['comment']['tags'])
         self.assertIn('href', configs['comment']['attrs'])
         self.assertEqual(configs['comment']['attrs'], sorted(configs['comment']['attrs']))
 
     def test_get_cleaner_does_not_mutate_styles(self):
         # Regression: get_cleaner used to mutate the shared MARKDOWN_STYLES dict, which
-        # corrupted markdown_client_configs() output (allowStyle False, MathML-baked tags)
+        # corrupted markdown_client_configs() output (MathML-baked tags)
         # for any style read after a staff server-side render.
         markdown('**x**', self.BLEACHED_STYLE)
         configs = markdown_client_configs()
-        self.assertEqual(configs[self.BLEACHED_STYLE]['allowStyle'], True)
         self.assertNotIn('math', configs[self.BLEACHED_STYLE]['tags'])
+        self.assertIn('styles', settings.MARKDOWN_STYLES[self.BLEACHED_STYLE]['bleach'])
 
 
 class TestFragmentUtils(SimpleTestCase):

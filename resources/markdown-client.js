@@ -189,14 +189,12 @@
                 var c = raw[name];
                 var purify = {
                     ALLOWED_TAGS: c.tags,
-                    ALLOWED_ATTR: c.attrs.slice(),
+                    ALLOWED_ATTR: c.attrs,
+                    // Inline CSS is never allowed, like the server (GHSA-cpfp-xm8c-cx6m).
+                    FORBID_ATTR: ['style'],
+                    FORBID_TAGS: ['style'],
                     ALLOW_DATA_ATTR: true,
                 };
-                if (c.allowStyle) {
-                    purify.ALLOWED_ATTR.push('style');   // staff tier: inline CSS allowed (styles:True)
-                } else {
-                    purify.FORBID_ATTR = ['style'];      // user tier: no inline CSS
-                }
                 styles[name] = {md: c.html ? mdStaff : mdUser, purify: purify};
             });
         } catch (e) { /* fall back to FALLBACK for every style */ }

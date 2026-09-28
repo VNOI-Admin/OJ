@@ -9,9 +9,9 @@ const {JSDOM} = require('jsdom');
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&#34;');
 
 // Mirrors markdown_client_configs() output (dmoj/settings.py whitelists): user tier escapes raw
-// HTML and forbids inline style; staff tier passes raw HTML through and allows inline style.
+// HTML; staff tier passes raw HTML through. Neither tier allows inline CSS (GHSA-cpfp-xm8c-cx6m).
 const CONFIGS = {
-    comment: {html: false, allowStyle: false,
+    comment: {html: false,
         tags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'b', 'i', 'strong', 'em', 'tt', 'del', 'kbd', 's', 'abbr', 'cite',
             'mark', 'q', 'samp', 'small', 'u', 'var', 'wbr', 'dfn', 'ruby', 'rb', 'rp', 'rt', 'rtc', 'sub', 'sup',
             'time', 'data', 'p', 'br', 'pre', 'span', 'div', 'blockquote', 'code', 'hr', 'ul', 'ol', 'li', 'dd',
@@ -21,11 +21,13 @@ const CONFIGS = {
         attrs: ['align', 'allow', 'alt', 'autoplay', 'class', 'colspan', 'controls', 'crossorigin', 'data',
             'data-src', 'datetime', 'height', 'href', 'id', 'loop', 'muted', 'poster', 'preload', 'rowspan', 'src',
             'srcset', 'title', 'type', 'value', 'width']},
-    problem: {html: true, allowStyle: true,
+    problem: {html: true,
         tags: null, attrs: null},
 };
 CONFIGS.problem.tags = CONFIGS.comment.tags;
 CONFIGS.problem.attrs = CONFIGS.comment.attrs;
+// A whitelist that wrongly lists 'style': the client must still strip it (fail-safe).
+CONFIGS.leaky = {html: true, tags: [...CONFIGS.comment.tags, 'style'], attrs: [...CONFIGS.comment.attrs, 'style']};
 
 const results = [];
 function check(name, ok, ctx) {
@@ -43,6 +45,9 @@ const blocks = [
     ['problem', '<div style="color:green" onclick="alert(3)">staff html</div>\n\n![pic](http://img)'],
     ['problem', '<script>alert(4)</script> ~x_{i}^2~'],
     ['nonexistent-style', '<script>alert(5)</script> **bold**'],
+    ['problem', '<div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; ' +
+                'z-index: 2147483647">SECURITY DEMO</div>\n\n<style>body { display: none }</style>'],
+    ['leaky', '<div style="position: fixed">SECURITY DEMO</div>\n\n<style>body { display: none }</style>'],
 ];
 const page = '<!DOCTYPE html><html><body>' +
     '<script id="md-sanitizer-configs" type="application/json">' + JSON.stringify(CONFIGS) + '</script>' +
@@ -81,8 +86,12 @@ setTimeout(() => {
         return n.nodeType === 3 && n.nodeValue.includes('~a *b* c~') && n.nodeValue.includes('\\\\');
     })(), '');
     check('~~strikethrough~~ still works', html(5).includes('<s>gone</s>'), html(5));
-    check('staff: raw div + inline style kept, onclick stripped',
-        html(6).includes('<div style="color:green">staff html</div>') && !html(6).includes('onclick'), html(6));
+    check('staff: raw div kept, inline style and onclick stripped',
+        html(6).includes('<div>staff html</div>'), html(6));
+    check('staff: overlay loses its style and <style> is dropped (GHSA-cpfp-xm8c-cx6m)',
+        !b[9].querySelector('[style], style') && html(9).includes('SECURITY DEMO'), html(9));
+    check('style stays forbidden even if the whitelist lists it',
+        !b[10].querySelector('[style], style') && html(10).includes('SECURITY DEMO'), html(10));
     check('staff: img kept', !!b[6].querySelector('img[src="http://img"]'), html(6));
     check('staff: script stripped, tilde math intact', !b[7].querySelector('script') && html(7).includes('~x_{i}^2~'), html(7));
     check('unknown style -> strict fallback escapes script', !b[8].querySelector('script') && html(8).includes('&lt;script&gt;'), html(8));
