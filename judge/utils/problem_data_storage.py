@@ -128,13 +128,14 @@ def _read_testcases_data(problem, archive):
 
 
 class ProblemDataStorage(Storage):
-    def _get_backend(self, name) -> ProblemStorage:
-        from judge.models.problem import Problem  # lazy import to avoid circular
-        code = split_path_first(name)[0]
-        try:
-            sid = Problem.objects.values_list('storage', flat=True).get(code=code)
-        except Exception:
-            sid = ''
+    def _get_backend(self, path=None, sid=None) -> ProblemStorage:
+        if sid is None:
+            from judge.models.problem import Problem  # lazy import to avoid circular
+            code = split_path_first(path)[0]
+            try:
+                sid = Problem.objects.values_list('storage', flat=True).get(code=code)
+            except Exception:
+                sid = ''
         return StorageManager.get_instance().get(sid or StorageManager.get_instance().default_name)
 
     def url(self, name):
@@ -171,6 +172,13 @@ class ProblemDataStorage(Storage):
     def rename(self, old, new):
         backend = self._get_backend(new)
         return backend.rename_folder(old, new)
+
+    def delete_problem(self, problem):
+        self.invalidate_problem_metadata(problem)
+        # must explicitly pass the problem's storage because the problem is
+        # no longer in the database at this moment
+        backend = self._get_backend(sid=problem.storage)
+        return backend.rm_dir(problem.code)
 
     def presigned_url(self, name, **kwargs):
         backend = self._get_backend(name)
