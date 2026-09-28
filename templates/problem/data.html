@@ -369,6 +369,48 @@
                 });
             });
 
+            $('form').on('submit.progress', function (e) {
+                var hasFile = ($file_test[0].files && $file_test[0].files.length) ||
+                              ($custom_checker_file[0].files && $custom_checker_file[0].files.length);
+                if (!hasFile) return;
+
+                e.preventDefault();
+
+                var $overlay = $('#upload-overlay').css('display', 'flex');
+                var $bar = $('#upload-bar');
+                var $status = $('#upload-status');
+                var $pct = $('#upload-pct');
+
+                var xhr = new XMLHttpRequest();
+                xhr.open('POST', location.href);
+
+                xhr.upload.addEventListener('progress', function (ev) {
+                    if (!ev.lengthComputable) return;
+                    var pct = Math.round(ev.loaded / ev.total * 100);
+                    $bar.css('width', pct + '%');
+                    $pct.text(pct + '%');
+                    if (pct === 100) $status.text({{ _('Processing...')|htmltojs }});
+                });
+
+                xhr.onload = function () {
+                    $('form').dirty('disable');
+                    if (xhr.responseURL && xhr.responseURL !== location.href) {
+                        window.location.href = xhr.responseURL;
+                    } else {
+                        document.open();
+                        document.write(xhr.responseText);
+                        document.close();
+                    }
+                };
+
+                xhr.onerror = function () {
+                    $overlay.hide();
+                    alert({{ _('Upload failed. Please try again.')|htmltojs }});
+                };
+
+                xhr.send(new FormData(this));
+            });
+
             var $total = $('#id_cases-TOTAL_FORMS');
             var alerted = false;
 
@@ -455,7 +497,7 @@
                 ];
 
                 var out_re = [
-                    new RegExp(/^(.+\.out|.+\.ok|.+\.ans|out|ok|ans)$/),
+                    new RegExp(/^(.+\.out|.+\.ok|.+\.ans|.+\.ou|out|ok|ans)$/),
                     new RegExp(/^output.(.+\d+)$/),
                     new RegExp(/^(.+\d+\.a)$/),
                     new RegExp(/^(?=.*?\.out|out).*?(?:(?:^|\W)(?<batch>\d+)[^\d\s]+)?(?<case>\d+)[^\d\s]*$/),
@@ -976,6 +1018,48 @@
             gap: 0.5em;
             margin-top: auto;
         }
+
+        #upload-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 10000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #upload-dialog {
+            background: var(--body-bg, #fff);
+            color: var(--body-fg, #333);
+            border-radius: 6px;
+            padding: 2em;
+            width: 320px;
+            text-align: center;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+        }
+
+        #upload-bar-track {
+            background: #e0e0e0;
+            border-radius: 4px;
+            height: 12px;
+            margin-top: 1em;
+            overflow: hidden;
+        }
+
+        #upload-bar {
+            background: #0078ff;
+            height: 100%;
+            width: 0;
+            border-radius: 4px;
+            transition: width 0.2s ease;
+        }
+
+        #upload-pct {
+            margin-top: 0.5em;
+            font-size: 0.9em;
+        }
     </style>
 {% endblock %}
 
@@ -1097,6 +1181,14 @@
         <a id="add-case-row" href="#" style="display: None;"><i class="fa fa-plus"></i> {{ _('Add new case') }}</a>
     </form>
     <div style="display: none" class="generator-args-editor"><textarea></textarea><a class="button">{{ _('Save') }}</a></div>
+
+    <div id="upload-overlay" style="display: none;">
+        <div id="upload-dialog">
+            <div id="upload-status">{{ _('Uploading...') }}</div>
+            <div id="upload-bar-track"><div id="upload-bar"></div></div>
+            <div id="upload-pct">0%</div>
+        </div>
+    </div>
 
     <div id="build-test-data-modal" style="display: none;">
         <div id="build-test-data-overlay"></div>
