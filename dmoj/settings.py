@@ -516,6 +516,7 @@ INSTALLED_APPS += (
     'martor',
     'adminsortable2',
     'django_cleanup.apps.CleanupConfig',
+    'oauth2_provider',
 )
 
 MIDDLEWARE = (

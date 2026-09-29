@@ -153,7 +153,7 @@ class APIMiddleware(object):
 
     def __call__(self, request):
         full_token = request.headers.get('authorization', '')
-        if not full_token:
+        if not full_token or request.path.startswith('/o/'):
             return self.get_response(request)
 
         token = self.header_pattern.match(full_token)
