@@ -880,6 +880,18 @@ ACE_DEFAULT_DARK_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['dark']
 # Only allow OAuth login
 OAUTH_ONLY = False
 
+OAUTH2_PROVIDER = {
+    'PKCE_REQUIRED': False,
+    'OIDC_ENABLED': True,
+    'OIDC_RSA_PRIVATE_KEY': '',  # set in local_settings: openssl genrsa 4096
+    'OAUTH2_VALIDATOR_CLASS': 'judge.oauth_validator.VNOIOAuthValidator',
+    'SCOPES': {
+        'openid': 'OpenID Connect',
+        'profile': 'Your profile',
+        'email': 'Your email address',
+    },
+}
+
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
         exec(f.read(), globals())
