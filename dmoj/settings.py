@@ -880,11 +880,13 @@ ACE_DEFAULT_DARK_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['dark']
 # Only allow OAuth login
 OAUTH_ONLY = False
 
+# https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#settings
 OAUTH2_PROVIDER = {
-    'PKCE_REQUIRED': False,
-    'OIDC_ENABLED': True,
-    'OIDC_RSA_PRIVATE_KEY': '',  # set in local_settings: openssl genrsa 4096
     'OAUTH2_VALIDATOR_CLASS': 'judge.oauth_validator.VNOIOAuthValidator',
+    'PKCE_REQUIRED': False,
+    # only required if using OpenID Connect
+    # 'OIDC_ENABLED': True,
+    # 'OIDC_RSA_PRIVATE_KEY': '',
     'SCOPES': {
         'openid': 'OpenID Connect',
         'profile': 'Your profile',
