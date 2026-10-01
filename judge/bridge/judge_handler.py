@@ -161,17 +161,12 @@ class JudgeHandler(ZlibPacketHandler):
             self.close()
             return
 
-        if packet.get('version', 1) == 1:
-            logger.warning('Rejected old judge protocol (version 1): %s', packet.get('id'))
-            self.close()
-            return
-
         if not self._authenticate(packet['id'], packet['key']):
             self.close()
             return
 
         self.timeout = 60
-        self.storages = {s['id'] for s in packet.get('storages', [])}
+        self.storages = {s['id'] for s in (packet.get('storages', []) or [{'id': 'local'}])}
         self.executors = packet['executors']
         self.name = packet['id']
 
