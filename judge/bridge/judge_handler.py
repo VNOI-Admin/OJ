@@ -56,6 +56,7 @@ class JudgeHandler(ZlibPacketHandler):
             'submission-terminated': self.on_submission_terminated,
             'submission-acknowledged': self.on_submission_acknowledged,
             'ping-response': self.on_ping_response,
+            'supported-problems': self.ignore_packet,
             'executors': self.on_executors,
             'handshake': self.on_handshake,
         }
@@ -161,17 +162,12 @@ class JudgeHandler(ZlibPacketHandler):
             self.close()
             return
 
-        if packet.get('version', 1) == 1:
-            logger.warning('Rejected old judge protocol (version 1): %s', packet.get('id'))
-            self.close()
-            return
-
         if not self._authenticate(packet['id'], packet['key']):
             self.close()
             return
 
         self.timeout = 60
-        self.storages = {s['id'] for s in packet.get('storages', [])}
+        self.storages = {s['id'] for s in (packet.get('storages', []) or [{'id': 'local'}])}
         self.executors = packet['executors']
         self.name = packet['id']
 
@@ -614,6 +610,9 @@ class JudgeHandler(ZlibPacketHandler):
         self.time_delta = sum(self._time_delta) / len(self._time_delta)
         self.load = packet['load']
         self._update_ping()
+
+    def ignore_packet(self, packet):
+        pass
 
     def _free_self(self, packet):
         self.judges.on_judge_free(self, packet['submission-id'])
