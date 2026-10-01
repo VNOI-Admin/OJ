@@ -516,6 +516,7 @@ INSTALLED_APPS += (
     'martor',
     'adminsortable2',
     'django_cleanup.apps.CleanupConfig',
+    'oauth2_provider',
 )
 
 MIDDLEWARE = (
@@ -878,6 +879,20 @@ ACE_DEFAULT_LIGHT_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['light']
 ACE_DEFAULT_DARK_THEME = DMOJ_THEME_DEFAULT_ACE_THEME['dark']
 # Only allow OAuth login
 OAUTH_ONLY = False
+
+# https://django-oauth-toolkit.readthedocs.io/en/latest/settings.html#settings
+OAUTH2_PROVIDER = {
+    'OAUTH2_VALIDATOR_CLASS': 'judge.oauth_validator.VNOIOAuthValidator',
+    'PKCE_REQUIRED': False,
+    # only required if using OpenID Connect
+    # 'OIDC_ENABLED': True,
+    # 'OIDC_RSA_PRIVATE_KEY': '',
+    'SCOPES': {
+        'openid': 'OpenID Connect',
+        'profile': 'Your profile',
+        'email': 'Your email address',
+    },
+}
 
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_settings.py')) as f:
