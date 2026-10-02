@@ -199,9 +199,9 @@ class ProblemDataStorage(Storage):
 
         try:
             with zipfile.ZipFile(self.open(data.zipfile.name)) as archive:
-                metadata['files'] = archive.namelist()
+                metadata['files'] = [f for f in archive.namelist() if not f.endswith('/')]
                 metadata['testcases'] = _read_testcases_data(problem, archive)
-        except zipfile.BadZipfile:
+        except Exception:  # ZipFile could throw a lot of different errors
             pass
         return metadata
 
