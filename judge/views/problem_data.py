@@ -67,8 +67,9 @@ class ProblemDataForm(ModelForm):
     checker_type = ChoiceField(choices=CUSTOM_CHECKERS, widget=Select2Widget(attrs={'style': 'width: 200px'}))
 
     def clean_zipfile(self):
-        if hasattr(self, 'zip_valid') and not self.zip_valid:
-            raise ValidationError(_('Your zip file is invalid!'))
+        if hasattr(self, 'zip_valid_err'):
+            err_str = str(self.zip_valid_err)
+            raise ValidationError(_('Your zip file is invalid!') + ' Error: ' + err_str)
         return self.cleaned_data['zipfile']
 
     clean_checker_args = checker_args_cleaner
@@ -244,16 +245,21 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         return ProblemCaseFormSet(data=self.request.POST if post else None, prefix='cases', valid_files=files,
                                   queryset=ProblemTestCase.objects.filter(dataset_id=self.object.pk).order_by('order'))
 
-    def get_valid_files(self, data, post=False):
+    def get_valid_files(self, data_form, post=False):
+        data = data_form.instance
         try:
             if post and 'problem-data-zipfile-clear' in self.request.POST:
                 return []
             elif post and 'problem-data-zipfile' in self.request.FILES:
-                return [f for f in ZipFile(self.request.FILES['problem-data-zipfile']).namelist()
-                        if not f.endswith('/')]
+                zipfile = ZipFile(self.request.FILES['problem-data-zipfile'])
+                invalid_file = zipfile.testzip()
+                if invalid_file:
+                    raise BadZipfile(invalid_file)
+                return [f for f in zipfile.namelist() if not f.endswith('/')]
             elif data.zipfile:
                 return problem_data_storage.get_problem_metadata(self.object)['files']
-        except (BadZipfile, FileNotFoundError):
+        except Exception as e:  # ZipFile could throw a lot of different errors, using BadZipfile is not enough
+            data_form.zip_valid_err = e
             return []
         return []
 
@@ -261,8 +267,7 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
         context = super(ProblemDataView, self).get_context_data(**kwargs)
         if 'data_form' not in context:
             context['data_form'] = self.get_data_form()
-            valid_files = context['valid_files'] = self.get_valid_files(context['data_form'].instance)
-            context['data_form'].zip_valid = valid_files is not False
+            valid_files = context['valid_files'] = self.get_valid_files(context['data_form'])
             context['cases_formset'] = self.get_case_formset(valid_files)
         context['valid_files_json'] = mark_safe(json.dumps(context['valid_files']))
         context['valid_files'] = set(context['valid_files'])
@@ -314,8 +319,7 @@ class ProblemDataView(TitleMixin, ProblemManagerMixin):
     def post(self, request, *args, **kwargs):
         self.object = problem = self.get_object()
         data_form = self.get_data_form(post=True)
-        valid_files = self.get_valid_files(data_form.instance, post=True)
-        data_form.zip_valid = valid_files is not False
+        valid_files = self.get_valid_files(data_form, post=True)
         cases_formset = self.get_case_formset(valid_files, post=True)
         if self.check_valid(data_form, cases_formset):
             data = data_form.save()
