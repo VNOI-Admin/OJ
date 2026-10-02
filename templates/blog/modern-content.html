@@ -115,8 +115,8 @@
         <aside class="blog-toc-sidebar-container">
         </aside>
         <article class="blog-post-content">
-            {% cache 86400 'post_content' post.id MATH_ENGINE %}
-                {{ post.content|markdown('blog', MATH_ENGINE)|reference|str|safe}}
+            {% cache 86400 'post_md' post.id %}
+                {{ post.content|markdown_client('blog') }}
             {% endcache %}
         </article>
     </div>

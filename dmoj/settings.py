@@ -674,7 +674,7 @@ MARKDOWN_STAFF_EDITABLE_STYLE = {
     'bleach': {
         'tags': BLEACH_USER_SAFE_TAGS,
         'attributes': BLEACH_USER_SAFE_ATTRS,
-        'styles': True,
+        'styles': False,  # inline CSS stays off for every tier (GHSA-cpfp-xm8c-cx6m)
         'mathml': True,
     },
 }

@@ -1,0 +1,67 @@
+@use "vars" as *;
+
+// Token colours for client-side highlight.js (markdown rendered by
+// resources/markdown-client.js), using the pygment-github.scss palette.
+// Nested under `code` so these outrank plain `.hljs-*` rules vendored
+// elsewhere (e.g. martor's editor theme). highlight.js nests scopes
+// (e.g. .hljs-meta wraps .hljs-keyword), hence the `inherit` guards.
+// No base .hljs background/color here: those come from base-description.scss.
+code {
+    @if $is_light_theme {
+        .hljs-comment, .hljs-quote, .hljs-code, .hljs-formula { color: #999988; font-style: italic } /* like .c1 */
+        .hljs-doctag { color: #999999; font-weight: bold; font-style: italic } /* like .cs */
+        .hljs-keyword, .hljs-template-tag { color: #000000; font-weight: bold } /* like .k */
+        .hljs-operator { color: #000000; font-weight: bold } /* like .o */
+        .hljs-type { color: #445588; font-weight: bold } /* like .kt */
+        .hljs-title, .hljs-title.function_ { color: #990000; font-weight: bold } /* like .nf */
+        .hljs-title.class_ { color: #445588; font-weight: bold } /* like .nc */
+        .hljs-string, .hljs-char { color: #d01040 } /* like .s */
+        .hljs-regexp { color: #009926 } /* like .sr */
+        .hljs-number { color: #009999 } /* like .mi */
+        .hljs-literal, .hljs-built_in { color: #0086b3 } /* like .nb */
+        .hljs-symbol { color: #990073 } /* like .ss */
+        .hljs-attr, .hljs-attribute, .hljs-selector-attr { color: #008080 } /* like .na */
+        .hljs-variable, .hljs-template-variable { color: #008080 } /* like .nv */
+        .hljs-variable.language_ { color: #999999 } /* like .bp */
+        .hljs-name, .hljs-tag, .hljs-selector-tag { color: #000080 } /* like .nt */
+        .hljs-selector-class { color: #445588; font-weight: bold } /* like .nc */
+        .hljs-selector-id { color: #800080 } /* like .ni */
+        .hljs-selector-pseudo { color: #3c5d5d; font-weight: bold } /* like .nd */
+        .hljs-section { color: #999999 } /* like .gh */
+        .hljs-bullet, .hljs-link { color: #0086b3 } /* link-ish blue */
+        .hljs-meta { color: #999999; font-weight: bold; font-style: italic } /* like .cp */
+        .hljs-meta .hljs-keyword, .hljs-meta .hljs-string { color: inherit } /* keep directive one colour, like .cp/.cpf */
+        .hljs-addition { color: #000000; background-color: #ddffdd } /* like .gi */
+        .hljs-deletion { color: #000000; background-color: #ffdddd } /* like .gd */
+        .hljs-emphasis { font-style: italic } /* like .ge */
+        .hljs-strong { font-weight: bold } /* like .gs */
+    } @else {
+        .hljs-comment, .hljs-quote, .hljs-code, .hljs-formula { color: #8b949e; font-style: italic } /* like .c1 */
+        .hljs-doctag { color: #8b949e; font-weight: bold; font-style: italic } /* like .cs */
+        .hljs-keyword, .hljs-template-tag { color: #ff7b72 } /* like .k */
+        .hljs-operator { color: #ff7b72; font-weight: bold } /* like .o */
+        .hljs-type { color: #ff7b72 } /* like .kt */
+        .hljs-title, .hljs-title.function_ { color: #d2a8ff; font-weight: bold } /* like .nf */
+        .hljs-title.class_ { color: #f0883e; font-weight: bold } /* like .nc */
+        .hljs-string, .hljs-char { color: #a5d6ff } /* like .s */
+        .hljs-regexp { color: #79c0ff } /* like .sr */
+        .hljs-number { color: #a5d6ff } /* like .mi */
+        .hljs-literal, .hljs-built_in { color: #c9d1d9 } /* like .nb */
+        .hljs-symbol { color: #a5d6ff } /* like .ss */
+        .hljs-attr, .hljs-attribute, .hljs-selector-attr { color: #c9d1d9 } /* like .na */
+        .hljs-variable, .hljs-template-variable { color: #79c0ff } /* like .nv */
+        .hljs-variable.language_ { color: #c9d1d9 } /* like .bp */
+        .hljs-name, .hljs-tag, .hljs-selector-tag { color: #7ee787 } /* like .nt */
+        .hljs-selector-class { color: #f0883e; font-weight: bold } /* like .nc */
+        .hljs-selector-id { color: #ffa657 } /* like .ni */
+        .hljs-selector-pseudo { color: #d2a8ff; font-weight: bold } /* like .nd */
+        .hljs-section { color: #79c0ff; font-weight: bold } /* like .gh */
+        .hljs-bullet, .hljs-link { color: #79c0ff } /* link-ish blue */
+        .hljs-meta { color: #8b949e; font-weight: bold; font-style: italic } /* like .cp */
+        .hljs-meta .hljs-keyword, .hljs-meta .hljs-string { color: inherit } /* keep directive one colour, like .cp/.cpf */
+        .hljs-addition { color: #56d364; background-color: #0f5323 } /* like .gi */
+        .hljs-deletion { color: #ffa198; background-color: #490202 } /* like .gd */
+        .hljs-emphasis { font-style: italic } /* like .ge */
+        .hljs-strong { font-weight: bold } /* like .gs */
+    }
+}

@@ -17,8 +17,8 @@
             var fetchUrl = page ? url + '?page=' + page : url;
             $container.html('<div class="comments-loading">{{ _('Loading...') }}</div>');
             $container.load(fetchUrl, function () {
-                if (window.MathJax && MathJax.typesetPromise)
-                    MathJax.typesetPromise([$container[0]]);
+                if (window.MarkdownClient)
+                    MarkdownClient.renderAll($container[0]);   // also typesets MathJax
                 if (pendingScrollHash && $(pendingScrollHash).length) {
                     $(pendingScrollHash)[0].scrollIntoView({behavior: 'instant', block: 'start'});
                     pendingScrollHash = null;
