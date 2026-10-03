@@ -18,6 +18,7 @@ from judge.fulltext import SearchQuerySet
 from judge.models.problem_data import problem_data_storage
 from judge.models.profile import Organization, Profile
 from judge.models.runtime import Language
+from judge.models.user_upload import AttachmentMixin
 from judge.user_translations import gettext as user_gettext
 from judge.utils.url import get_absolute_pdf_url
 
@@ -145,7 +146,7 @@ class ProblemTestcaseResultAccess:
     ONLY_SUBMISSION_RESULT = 'S'
 
 
-class Problem(models.Model):
+class Problem(models.Model, AttachmentMixin):
     SUBMISSION_SOURCE_ACCESS = (
         (SubmissionSourceAccess.FOLLOW, _('Follow global setting')),
         (SubmissionSourceAccess.ALWAYS, _('Always visible')),
@@ -248,6 +249,7 @@ class Problem(models.Model):
 
     objects = ProblemManager()
     tickets = GenericRelation('Ticket')
+    attachments = GenericRelation('FileAttachment')
     expired_deletion = ExpiredProblemDeletionManager()
     available = AvailableProblemManager()
 
@@ -356,6 +358,9 @@ class Problem(models.Model):
             return True
 
         return False
+
+    def can_view_attachment_by(self, user):
+        return self.is_accessible_by(user)
 
     def is_rejudgeable_by(self, user):
         return user.has_perm('judge.rejudge_submission') and self.is_editable_by(user)

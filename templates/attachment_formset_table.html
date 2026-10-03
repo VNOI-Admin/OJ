@@ -1,0 +1,31 @@
+{% macro attachment_row(form) -%}
+    {% if form.non_field_errors() %}
+    <tr><td colspan="4">{{ form.non_field_errors() }}</td></tr>
+    {% endif %}
+    <tr class="attachment-row">
+        <td>{{ form.id }}{{ form.file.errors }}{{ form.file }}</td>
+        <td><center><button type="button" class="att-upload-btn button">{{ _('Upload') }}</button><center></center></td>
+        <td>{{ form.display_name.errors }}{{ form.display_name }}</td>
+        <td><div style="display:none;">{{ form.DELETE }}</div></td>
+    </tr>
+{%- endmacro %}
+
+{% if attachment_formset %}
+<hr>
+<center><h3> {{ _('Attachments') }} </h3></center>
+<table class="table">
+    <thead>
+        <tr>
+            <th> {{ _('File') }} </th>
+            <th></th>
+            <th> {{ _('Display name') }} </th>
+            <th> {{ _('Delete') }} </th>
+        </tr>
+    </thead>
+    <tbody id="attachment_form_set">
+        {% for attach_form in attachment_formset %}
+            {{ attachment_row(attach_form) }}
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
