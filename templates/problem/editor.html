@@ -137,6 +137,20 @@
                 });
             });
             {% endif %}
+
+            var memPresets = [
+                {label: '128 MB', kb: 131072},
+                {label: '256 MB', kb: 262144},
+                {label: '512 MB', kb: 524288},
+            ];
+            var $memInput = $('#id_memory_limit');
+            var $btnGroup = $('<span style="margin-left:6px;white-space:nowrap;"></span>');
+            memPresets.forEach(function(p) {
+                $('<button type="button" class="button" style="display:inline-block;margin-right:3px;padding:1px 7px;font-size:0.8em;">' + p.label + '</button>')
+                    .on('click', function() { $memInput.val(p.kb); })
+                    .appendTo($btnGroup);
+            });
+            $memInput.after($btnGroup);
         })
     </script>
 {% endblock %}
