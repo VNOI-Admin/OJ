@@ -35,6 +35,12 @@ def add_user(username, fullname, password, username_display=None, org=None, inte
 
 
 def get_org(name):
+    try:
+        org = Organization.objects.get(name=name)
+        return org
+    except Organization.DoesNotExist:
+        pass
+    # create a new organization if it doesn't exist
     org_id = abs(hash(name) % 1000000007)
 
     org = Organization.objects.get_or_create(
