@@ -14,21 +14,89 @@
         }
         .bulk-toolbar { margin-bottom: 8px; display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .bulk-toolbar .button { margin: 0; }
-        #bulk-grid-wrap { overflow-x: auto; border: 1px solid #ccc; border-radius: 4px; }
-        #bulk-grid { border-collapse: collapse; width: 100%; }
+        .bulk-toolbar label { display: flex; align-items: center; gap: 5px; cursor: pointer; font-size: 0.9em; }
+        #bulk-grid-wrap {
+            overflow-x: auto; border: 1px solid #ccc; border-radius: 4px;
+            transition: border-color 0.15s, background 0.15s;
+        }
+        #bulk-grid-wrap.drag-over { border-color: #007bff; background: #eef6ff; }
+        #bulk-grid { border-collapse: collapse; width: 100%; table-layout: fixed; }
         #bulk-grid th, #bulk-grid td { border: 1px solid #ddd; padding: 0; }
         #bulk-grid th { background: #f5f5f5; padding: 4px; white-space: nowrap; }
         #bulk-grid th select { width: 100%; box-sizing: border-box; }
         #bulk-grid th select.required { border-color: #007bff; font-weight: bold; }
         #bulk-grid .col-del { display: block; text-align: right; cursor: pointer; color: #c00; font-weight: bold; line-height: 1; }
-        #bulk-grid td { min-width: 120px; }
-        #bulk-grid td[contenteditable] { padding: 4px 6px; outline: none; }
+        #bulk-grid th.col-head { width: 160px; }
+        #bulk-grid td[contenteditable] { padding: 4px 6px; outline: none; word-break: break-word; white-space: normal; }
         #bulk-grid td[contenteditable]:focus { background: #eef6ff; }
-        #bulk-grid td.row-actions { min-width: 24px; text-align: center; cursor: pointer; color: #c00; }
+        #bulk-grid td.row-actions { width: 24px; text-align: center; cursor: pointer; color: #c00; }
         #bulk-grid td.row-num, #bulk-grid th.row-num-head {
-            width: 28px; min-width: 28px; text-align: center; background: #f5f5f5; color: #888; user-select: none;
+            width: 28px; text-align: center; background: #f5f5f5; color: #888; user-select: none;
         }
-        .bulk-submit-row { margin-top: 12px; }
+        /* # header doubles as an "add row" button */
+        #bulk-grid th.row-num-head { cursor: pointer; }
+        #bulk-grid th.row-num-head:hover { background: #e0e0e0; color: #333; }
+        /* + add-column button in the last column header */
+        #bulk-grid th.col-add-head { width: 32px; min-width: 32px; text-align: center; }
+        #bulk-grid .col-add { cursor: pointer; color: #090; font-weight: bold; font-size: 18px; line-height: 1; }
+        #bulk-grid .col-add:hover { color: #060; }
+        /* Column header: letter label + ×/ƒ buttons above the select */
+        #bulk-grid thead { counter-reset: col-letter; }
+        #bulk-grid .col-head-btns {
+            display: flex; justify-content: flex-end; align-items: center; gap: 8px; margin-bottom: 2px;
+        }
+        /* Column letter shown left of the buttons via CSS counter - no JS needed */
+        #bulk-grid .col-head-btns::before {
+            counter-increment: col-letter;
+            content: counter(col-letter, upper-alpha);
+            font-size: 0.75em; font-weight: bold; color: #888;
+            margin-right: auto;
+        }
+        #bulk-grid .col-del { cursor: pointer; color: #c00; font-weight: bold; line-height: 1; }
+        #bulk-grid .col-formula-btn {
+            cursor: pointer; color: #bbb; font-size: 13px; line-height: 1; font-style: italic;
+        }
+        #bulk-grid .col-formula-btn:hover, #bulk-grid .col-formula-btn.active { color: #007bff; }
+        /* Formula modal */
+        .bfm-overlay {
+            display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.45); z-index: 1000;
+            align-items: center; justify-content: center;
+        }
+        .bfm-box {
+            background: #fff; border-radius: 6px; padding: 18px 20px; width: 540px; max-width: 96vw;
+            max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.22); display: flex; flex-direction: column; gap: 10px;
+        }
+        .bfm-header h3 { margin: 0; font-size: 1em; }
+        .bfm-section { display: flex; flex-direction: column; gap: 4px; }
+        .bfm-label { font-size: 0.82em; color: #555; font-weight: bold; }
+        .bfm-chips { display: flex; flex-wrap: wrap; gap: 5px; }
+        .bfm-chip { font-size: 0.85em; white-space: nowrap; cursor: pointer; }
+        .bfm-chip-self { opacity: 0.45; cursor: default; }
+        .bfm-chip-ignored { font-style: italic; }
+        .bfm-hint { font-size: 0.78em; color: #888; font-style: italic; min-height: 1em; }
+        #bfm-input {
+            width: 100%; box-sizing: border-box; font-family: monospace; font-size: 0.9em;
+            padding: 6px 8px; border: 1px solid #ccc; border-radius: 4px; resize: vertical;
+        }
+        .bfm-preview-wrap { border: 1px solid #eee; border-radius: 4px; max-height: 160px; overflow-y: auto; }
+        #bfm-preview { border-collapse: collapse; width: 100%; font-size: 0.82em; }
+        #bfm-preview th, #bfm-preview td {
+            border: 1px solid #eee; padding: 3px 8px;
+            max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+        }
+        #bfm-preview th { background: #f5f5f5; }
+        #bfm-preview .bfm-result { background: #fffbe6; font-weight: 600; }
+        #bfm-preview .bfm-result-head { background: #fffbe6; }
+        .bfm-footer { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 4px; }
+        .bfm-footer .button { margin: 0; }
+        /* Sticky submit bar at the bottom of the viewport */
+        .bulk-submit-row {
+            position: sticky; bottom: 0;
+            background: #fff; border-top: 1px solid #ddd;
+            padding: 10px 0; margin-top: 0; z-index: 10;
+        }
     </style>
 {% endblock %}
 
@@ -42,9 +110,27 @@
             {key: 'username_display', label: '{{ _('Display name') }}', required: false}
         ];
         window.BULK_I18N = {
-            ignore: '{{ _('— ignore —') }}',
+            ignore: '{{ _('unused') }}',
             need_required: '{{ _('Please map a Username column and fill it in.') }}',
-            parse_failed: '{{ _('Could not read the file.') }}'
+            parse_failed: '{{ _('Could not read the file.') }}',
+            confirm_clear: '{{ _('Clear all data and start over?') }}',
+            add_row: '{{ _('Add row') }}',
+            add_column: '{{ _('Add column') }}',
+            delete_row: '{{ _('Delete row') }}',
+            delete_column: '{{ _('Delete column') }}',
+            nothing_to_export: '{{ _('No data to export.') }}',
+            edit_formula: '{{ _('Edit column formula') }}',
+            formula_for: '{{ _('Formula for column') }}',
+            apply_formula: '{{ _('Apply to all rows') }}',
+            clear_formula: '{{ _('Clear formula') }}',
+            cancel: '{{ _('Cancel') }}',
+            columns_label: '{{ _('Columns (click to insert):') }}',
+            formula_label: '{{ _('Formula:') }}',
+            formula_placeholder: '{{ _('e.g. ={A}.slice(0,3) + "_" + {B}') }}',
+            preview_result: '{{ _('Result') }}',
+            preview_hint: '{{ _('Type a formula starting with = to see a preview.') }}',
+            no_data_rows: '{{ _('(no data rows to preview yet)') }}',
+            ignored_col_hint: '{{ _('Ignored columns (-) can be used as formula sources - reference them by letter.') }}'
         };
     </script>
     <script type="text/javascript" src="{{ static('vnoj/xlsx/xlsx.full.min.js') }}"></script>
@@ -64,6 +150,8 @@
                     <li>{{ _('Username: letters, numbers and underscores only (max 20 characters).') }}</li>
                     <li>{{ _('Optional: Full name, Organization, Internal ID, Display name.') }}</li>
                     <li>{{ _('You can paste (Ctrl+V) rows copied from Excel or Google Sheets directly into the grid.') }}</li>
+                    <li>{{ _('Drag and drop a spreadsheet file onto the grid to load it.') }}</li>
+                    <li>{{ _('Cells starting with = support formulas: ={username}.slice(0,3) + "_" + {fullname}') }}</li>
                 </ul>
                 <p>{{ _('After creation you can download an Excel file with the generated passwords.') }}</p>
             </div>
@@ -81,9 +169,12 @@
             <div class="bulk-toolbar">
                 <input type="file" id="bulk-file" accept=".xlsx,.xls,.csv" style="display:none">
                 <button type="button" class="button" id="bulk-upload">{{ _('Upload spreadsheet') }}</button>
-                <button type="button" class="button" id="bulk-add-row">{{ _('Add row') }}</button>
-                <button type="button" class="button" id="bulk-add-col">{{ _('Add column') }}</button>
+                <button type="button" class="button" id="bulk-export">{{ _('Export draft') }}</button>
                 <button type="button" class="button" id="bulk-clear">{{ _('Clear') }}</button>
+                <label>
+                    <input type="checkbox" id="bulk-dn-fullname">
+                    {{ _('Display name = Full name') }}
+                </label>
             </div>
 
             <div id="bulk-grid-wrap">
