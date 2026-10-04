@@ -126,21 +126,6 @@
         padding-top: 0.5em;
     }
 
-    .contest-tags {
-        padding-left: 0.75em;
-        vertical-align: top;
-    }
-
-    .participate-button {
-        display: inline-block;
-        width: 90px;
-    }
-
-    .contest-block {
-        text-align: left;
-        padding: 0.5em 0.5em 0.5em 1em;
-    }
-
     a.contest-sort-link {
         color: $color_primary0;
     }
@@ -306,4 +291,168 @@ form.contest-join-pseudotab {
     .select2-selection__rendered {
         width: 260px !important;
     }
+}
+
+/* ===== Contest list redesign (two-column, tag families, filter sidebar) ===== */
+$c_accent: #3c9a40;
+$c_accent_dark: #2f7a33;
+$c_rated: #d64137;
+
+#contest-list-container {
+    display: block;
+}
+
+.contest-list-heading {
+    font-size: 1.7em;
+    font-weight: normal;
+    margin: 0.8em 0 0.5em;
+}
+
+.new-contest-list {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+
+    /* header inherits the site-standard .table th (matches the problem list) */
+    thead th.col-name, thead th.col-tags { text-align: left; }
+
+    tbody td {
+        vertical-align: middle;
+        padding: 0.7em 0.75em;
+        text-align: center;
+    }
+
+    tbody tr:hover { background: $color_primary5; }
+
+    .col-name  { width: auto; text-align: left; }
+    .col-tags  { width: 10.5em; text-align: left; }
+    .col-start { width: 7.5em; }
+    .col-length{ width: 5em; }
+    .col-users { width: 6em; }
+    tbody td.col-users { color: $color_primary50; }
+
+    .contest-list-title {
+        color: $color_link75;
+        font-size: 17px;
+        font-weight: 600;
+        &:hover { color: $color_link100; }
+    }
+
+    .c-date { font-weight: 600; }
+    .c-time { color: $color_primary50; font-size: 0.85em; }
+
+    .col-users .fa-user { color: $color_primary50; margin-right: 0.15em; }
+    .v-count { color: $color_primary50; }
+}
+
+/* status/rated badges next to the title */
+.c-badge {
+    display: inline-block;
+    padding: 0.1em 0.5em;
+    margin-left: 0.4em;
+    border-radius: 0.2em;
+    font-size: 0.72em;
+    font-weight: 700;
+    vertical-align: middle;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+.c-badge-running { background: $c_accent; color: #fff; text-transform: uppercase; }
+.c-badge-rated { background: $c_rated; color: #fff; text-transform: uppercase; }
+.c-badge-hidden  { background: #000; color: #fff; }
+.c-badge-private { background: #666; color: #fff; }
+.c-badge-org     { background: #ccc; color: #000; }
+
+/* secondary action links under the title */
+.c-actions { margin-top: 0.25em; }
+.c-action-form { display: inline; margin: 0; }
+.c-action, button.c-action {
+    /* !needed: widgets.scss pins button/.button text to white via !important */
+    color: #5ccfbe !important;
+    font-weight: 600;
+    font-size: 0.9em;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    &:hover { color: #4eb0a2 !important; text-decoration: underline; }
+}
+.c-action-muted { color: $color_primary50; font-size: 0.9em; }
+
+/* tag pills */
+.ctag-wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35em; }
+.ctag {
+    display: inline-block;
+    padding: 0.15em 0.6em;
+    border-radius: 1em;
+    font-size: 0.82em;
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1.5;
+}
+.ctag--series { border: 1px solid transparent; }
+.ctag--style  { background: $color_primary0; border: 1px solid currentColor; }
+.contest-tag-extra { display: inline-flex; flex-wrap: wrap; gap: 0.35em; }
+.contest-tag-more {
+    display: inline-block;
+    padding: 0.15em 0.55em;
+    border-radius: 1em;
+    font-size: 0.82em;
+    font-weight: 600;
+    background: $color_primary10;
+    color: $color_primary66;
+    cursor: pointer;
+    &:hover { background: $color_primary25; }
+    &.expanded { display: none; }
+}
+
+.showing-count { color: $color_primary50; font-size: 0.9em; margin: 0.6em 0; }
+.no-contests-message { padding: 1.2em 0; color: $color_primary50; }
+
+/* sidebar panels — native .sidebox styling (matches the problem list) */
+.contest-list-sidebar { margin-top: 0.8em; }
+
+.pay-attention { text-align: center; padding: 0.5em 0; }
+.pa-status { color: $c_accent; font-weight: 700; margin-bottom: 0.4em; }
+.pa-name { display: block; font-weight: 600; }
+.pa-left { color: $color_primary50; margin-top: 0.3em; }
+
+#contest-filter-form {
+    margin-top: 0.25em;
+
+    .filter-form-group { margin-top: 0.5em; }
+
+    label { vertical-align: middle; }
+
+    input[type="text"], select {
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    input[type="text"] { height: 2.3em; }
+
+    .form-submit-group {
+        margin-top: 0.9em;
+
+        .button {
+            display: inline-block;
+            padding: 4px 14px;
+            margin-right: 5px;
+        }
+
+        .reset-button {
+            background: linear-gradient(to bottom, #999 0, #777 100%) repeat-x;
+            &:hover { background: #777; }
+        }
+    }
+}
+
+@media (min-width: 900px) {
+    #contest-list-container { display: flex; align-items: flex-start; gap: 1.5em; }
+    .contest-list-main { flex: 1; min-width: 0; }
+    .contest-list-sidebar { width: 300px; flex: none; margin-top: 0; }
+}
+
+@media (max-width: 620px) {
+    .new-contest-list .col-start, .new-contest-list .col-length { display: none; }
 }
