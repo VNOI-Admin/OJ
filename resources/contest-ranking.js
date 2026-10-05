@@ -469,7 +469,8 @@
         if (!p.ghost) html += buildAdminOps(p, contest);
         html += '<div class="personal-info" style="text-align: right;">';
         if (u.organization) {
-            var orgName = escapeHtml(u.organization.short_name);
+            // Replay data saved before the switch to full names only has short_name.
+            var orgName = escapeHtml(u.organization.name || u.organization.short_name);
             html += '<span class="organization">' +
                 (p.ghost ? orgName
                          : '<a href="' + escapeHtml(u.organization.url) + '">' + orgName + '</a>') +

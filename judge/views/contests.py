@@ -840,7 +840,7 @@ def _serialize_user(row, user_url_tpl, org_url_tpl):
     """Serialize the user/profile portion of a participation row into a JSON-safe dict."""
     username = row['user__user__username']
     display_name = row['user__username_display_override'] or username
-    org_short_name = row['_org_short_name']
+    org_name = row['_org_name']
     org_slug = row['_org_slug']
     badge_mini = row['_badge_mini']
     badge_name = row['_badge_name']
@@ -852,9 +852,9 @@ def _serialize_user(row, user_url_tpl, org_url_tpl):
         'css_class': Profile.get_user_css_class(row['user__display_rank'], row['user__rating']),
         'url': user_url_tpl.replace('__USERNAME__', username),
         'organization': {
-            'short_name': org_short_name,
+            'name': org_name,
             'url': org_url_tpl.replace('__SLUG__', org_slug),
-        } if org_short_name else None,
+        } if org_name else None,
         'badge': {
             'mini': badge_mini,
             'name': badge_name,
@@ -884,7 +884,7 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
     ).order_by('name')
 
     queryset = queryset.annotate(
-        _org_short_name=Subquery(_org_qs.values('short_name')[:1]),
+        _org_name=Subquery(_org_qs.values('name')[:1]),
         _org_slug=Subquery(_org_qs.values('slug')[:1]),
         _badge_mini=F('user__display_badge__mini'),
         _badge_name=F('user__display_badge__name'),
@@ -896,7 +896,7 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
         'user__username_display_override',
         'user__user__username', 'user__user__first_name',
         'rating__rating',
-        '_org_short_name', '_org_slug', '_badge_mini', '_badge_name',
+        '_org_name', '_org_slug', '_badge_mini', '_badge_name',
     )
 
     participations_data = []
