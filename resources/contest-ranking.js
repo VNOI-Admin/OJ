@@ -451,8 +451,8 @@
         html += '<td>' + rankDisplay + '</td>';
 
         // Username cell
-        html += '<td class="user-name"><div>';
-        html += '<div style="float:left">';
+        html += '<td class="user-name"><div class="user-cell">';
+        html += '<div class="user-main">';
         html += buildUserLink(u, p.ghost);
 
         if (p.virtual > 0) {
@@ -464,16 +464,25 @@
         html += '<div class="personal-info"><span>' + escapeHtml(u.name || '') + '</span></div>';
         html += '</div>';
 
-        // Right float (admin ops, org). Ghosts get no admin ops and a plain-text org.
-        html += '<div style="float:right">';
+        // Right side (admin ops, org). Ghosts get no admin ops and a plain-text org.
+        html += '<div class="user-extra">';
         if (!p.ghost) html += buildAdminOps(p, contest);
         html += '<div class="personal-info" style="text-align: right;">';
         if (u.organization) {
             // Replay data saved before the switch to full names only has short_name.
-            var orgName = escapeHtml(u.organization.name || u.organization.short_name);
-            html += '<span class="organization">' +
-                (p.ghost ? orgName
-                         : '<a href="' + escapeHtml(u.organization.url) + '">' + orgName + '</a>') +
+            var fullOrgName = u.organization.name || u.organization.short_name;
+            var orgName = escapeHtml(fullOrgName);
+            var logo = u.organization.logo;
+            var orgInner = (logo
+                ? '<img class="org-logo" src="' + escapeHtml(logo) + '" alt="">'
+                : '<span class="org-text">' + orgName + '</span>') +
+                '<span class="org-name">' + orgName + '</span>';
+            // The organization filter in ranking.html reads data-org, since the
+            // visible text may be truncated or hidden behind a logo.
+            html += '<span class="organization' + (logo ? ' has-logo' : '') + '">' +
+                (p.ghost ? orgInner
+                         : '<a href="' + escapeHtml(u.organization.url) + '" data-org="' + orgName + '">' +
+                           orgInner + '</a>') +
                 '</span>';
         }
         html += '</div></div>';
@@ -557,5 +566,17 @@
             window.onFinishRankingRender(isNewDataFromBackend === true);
         }
     };
+
+    // A broken org logo falls back to showing the name as plain text. Image errors
+    // don't bubble, so listen in the capture phase; this also covers re-renders.
+    document.addEventListener('error', function (e) {
+        var img = e.target;
+        if (!img.classList || !img.classList.contains('org-logo')) return;
+        var $org = $(img).closest('.organization');
+        var $name = $org.find('.org-name');
+        $('<span class="org-text">').text($name.text()).insertBefore($name);
+        $org.removeClass('has-logo');
+        img.remove();
+    }, true);
 
 })(jQuery);
