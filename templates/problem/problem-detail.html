@@ -1,9 +1,13 @@
-{% with pdf_url=problem.absolute_pdf_url %}
+{% if request.official_contest_mode %}
+{% set pdf_url = problem.pdf_url %}
+{% else %}
+{% set pdf_url = problem.absolute_pdf_url %}
+{% endif %}
+
 {% if pdf_url %}
     <p>{{ _("In case the statement didn't load correctly, you can download the statement here: ") }}<a href="{{ pdf_url }}">{{ _("Statement") }}</a></p>
     <object id="pdfContainer" data="{{ pdf_url }}" type="application/pdf"></object>
 {% endif %}
-{% endwith %}
 
 {% cache 86400 'problem_html' problem.id MATH_ENGINE LANGUAGE_CODE %}
     {{ (description or problem.i18n_description or problem.description)|markdown(problem.markdown_style, MATH_ENGINE)|reference|str|safe }}
