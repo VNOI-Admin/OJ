@@ -19,7 +19,7 @@ class InfinitePage(collections.abc.Sequence):
     In low power mode, the paginator will assume there's a next page if the current page is full.
     This eliminates the need to count the next pages items.
     """
-    def __init__(self, object_list, number, unfiltered_queryset, page_size, pad_pages, paginator):
+    def __init__(self, object_list, number, unfiltered_queryset, page_size, pad_pages, paginator, has_next=None):
         self.object_list = list(object_list)
         self.number = number
         self.unfiltered_queryset = unfiltered_queryset
@@ -27,6 +27,7 @@ class InfinitePage(collections.abc.Sequence):
         self.pad_pages = pad_pages
         self.num_pages = 1e3000
         self.paginator = paginator
+        self._has_next = has_next
 
     def __repr__(self):
         return '<Page %s of many>' % self.number
@@ -48,9 +49,9 @@ class InfinitePage(collections.abc.Sequence):
         return len(queryset)
 
     def has_next(self):
+        if self._has_next is not None:
+            return self._has_next
         if settings.VNOJ_LOW_POWER_MODE:
-            # Optimized: assume there's a next page if current page is full
-            # Trade-off: will show next button on last page when total items is multiple of page_size
             return len(self.object_list) >= self.page_size
         return self._after_up_to_pad > 0
 
@@ -125,10 +126,16 @@ class DummyPaginator:
 def infinite_paginate(queryset, page, page_size, pad_pages, paginator=None):
     if page < 1:
         raise EmptyPage()
-    sliced = queryset[(page - 1) * page_size:page * page_size]
+    if settings.VNOJ_LOW_POWER_MODE:
+        sliced = list(queryset[(page - 1) * page_size:page * page_size + 1])
+        has_next = len(sliced) > page_size
+        sliced = sliced[:page_size]
+    else:
+        sliced = queryset[(page - 1) * page_size:page * page_size]
+        has_next = None
     if page > 1 and not sliced:
         raise EmptyPage()
-    return InfinitePage(sliced, page, queryset, page_size, pad_pages, paginator)
+    return InfinitePage(sliced, page, queryset, page_size, pad_pages, paginator, has_next=has_next)
 
 
 class InfinitePaginationMixin:
