@@ -32,7 +32,7 @@ ticket_widget = MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('ticket_
 
 class TicketForm(forms.Form):
     title = forms.CharField(max_length=100, label=gettext_lazy('Ticket title'))
-    issue_url = forms.URLField(max_length=200, required=False)
+    issue_url = forms.CharField(max_length=200, required=False)
     body = forms.CharField(widget=ticket_widget)
 
     def __init__(self, request, issue_url=None, *args, **kwargs):
