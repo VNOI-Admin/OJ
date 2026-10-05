@@ -54,11 +54,6 @@
             position: absolute;
             left: -999em;
         }
-
-        .button.clarify {
-            background: orange;
-            align-self: center;
-        }
     </style>
 {% endblock %}
 
@@ -176,11 +171,6 @@
             </span>
             {{ _('View as PDF') }}
         </a>
-        {% if request.user.is_authenticated and not request.profile.mute %}
-            <a href="{{ url('new_problem_ticket', problem.code) }}" class="button clarify" style="vertical-align: middle; margin-left: 0.5em;">
-                {{ _('Request clarification') }}
-            </a>
-        {% endif %}
     </div>
 {% endblock %}
 
@@ -418,7 +408,11 @@
 {% block post_description_end %}
     {% if request.user.is_authenticated and not request.profile.mute %}
         <a href="{{ url('new_problem_ticket', problem.code) }}" class="button clarify">
-            {{ _('Request clarification') }}
+            {%- if comment_lock and request.profile.current_contest.live -%}
+                {{ _('Request clarification') }}
+            {%- else -%}
+                {{ _('Report an issue') }}
+            {%- endif -%}
         </a>
     {% endif %}
 {% endblock %}
