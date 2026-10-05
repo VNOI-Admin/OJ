@@ -1,3 +1,4 @@
+import datetime
 import logging
 import traceback
 from copy import copy
@@ -74,14 +75,9 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
         webhook_config = settings.DISCORD_WEBHOOK.get('on_error', None)
         if webhook_config is None:
             return
-        
-        settings_idx = message.find('Settings:')
-        message_without_settings = message[:settings_idx] if settings_idx != -1 else message
 
-        for ignored_error in settings.IGNORED_ERRORS_FOR_DISCORD_WEBHOOK:
-            if ignored_error in message_without_settings:
-                logger.info('Ignored error for Discord webhook: %s', ignored_error)
-                return
+        if self.should_ignore_message(subject, message):
+            return
 
         if isinstance(webhook_config, str):
             webhook_config = {
@@ -93,3 +89,42 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
         # Use 7MB just for safe.
         webhook.add_file(file=message[:7 * 1024 * 1024], filename='log.txt')
         webhook.execute()
+
+    def should_ignore_message(self, subject, message):
+        try:
+            settings_idx = message.find('Settings:')
+            message_without_settings = message[:settings_idx] if settings_idx != -1 else message
+
+            for ignored_error in settings.IGNORED_ERRORS_FOR_DISCORD_WEBHOOK:
+                if ignored_error in message_without_settings:
+                    logger.info('Ignored error for Discord webhook: %s', ignored_error)
+                    return True
+
+            # ignore "failed while handling submission" if the problem data is newly updated
+            # it could come from latency in updating the problem data, in which case we can safely ignore it.
+            if 'failed while handling submission' in subject:
+                submission_id = int(subject.strip().split('submission')[-1].strip())
+                from judge.models import Submission, problem_data_storage
+                problem_code = Submission.objects.filter(id=submission_id).values_list(
+                    'problem__code',
+                    flat=True,
+                ).first()
+                if not problem_code:
+                    return False
+                try:
+                    modified_time = problem_data_storage.get_modified_time('%s/init.yml' % problem_code)
+                except Exception as e:
+                    print('[ThrottledDiscordWebhookHandler]', str(e))
+                    # file not exists -> ignore
+                    return True
+                print(
+                    '[ThrottledDiscordWebhookHandler]',
+                    datetime.datetime.now().timestamp(),
+                    modified_time.timestamp(),
+                )
+                if modified_time and (datetime.datetime.now().timestamp() - modified_time.timestamp()) < 120:
+                    return True
+        except Exception as e:
+            print('[ThrottledDiscordWebhookHandler]', str(e))
+            return False
+        return False
