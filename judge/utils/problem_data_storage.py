@@ -186,6 +186,10 @@ class ProblemDataStorage(Storage):
             return backend.presigned_url(name, **kwargs)
         return None
 
+    def get_modified_time(self, name):
+        backend = self._get_backend(name)
+        return backend.get_modified_time(name)
+
     def _build_metadata(self, problem):
         from judge.models import ProblemData
 
