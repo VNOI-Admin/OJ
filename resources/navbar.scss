@@ -1,4 +1,4 @@
-@use "vars" as *;
+@use "vars-common" as *;
 
 #user-links {
     top: 0;
@@ -297,53 +297,63 @@ nav {
     }
 }
 
-nav .settings-popup {
-    background: $color_pageBg;
-    border-radius: 12px;
-    padding: 4px;
-    border: 1px solid $color_primary25;
-    color: $color_primary90;
-    margin-top: 2px;
-}
-
-.nav-settings-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 7px 12px;
-}
-
-.nav-settings-lbl {
+#user-links #report-issue {
+    margin-right: 10px;
     font-size: 13px;
-    color: $color_primary90;
-}
+    color: #eee;
 
-.nav-seg {
-    display: inline-flex;
-    background: $color_primary10;
-    border-radius: 7px;
-    padding: 2px;
-}
-
-.nav-seg-btn {
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    padding: 5px 9px;
-    border-radius: 5px;
-    font-size: 0.8em;
-    font-weight: 600;
-    font-family: inherit;
-    color: $color_primary66;
-    line-height: 1;
-
-    &:hover {
-        color: $color_primary90;
-        margin: 0;
+    .fa {
+        color: yellow;
+        margin-right: 4px;
     }
 
-    &.active {
-        background: $color_primary0;
-        color: $color_primary90;
+    &:hover span {
+        text-decoration: underline;
     }
+}
+
+#user-links #theme-toggle {
+    display: inline-flex;
+    margin-right: 8px;
+    padding: 4px;
+
+    // The icons are black strokes; invert them to match the light-grey navbar icons.
+    img {
+        filter: invert(80%);
+    }
+
+    &:hover img {
+        filter: invert(100%);
+    }
+
+    // Show the icon of the theme a click switches to.
+    .theme-icon-light {
+        display: none;
+    }
+}
+
+@mixin theme-toggle-dark {
+    #user-links #theme-toggle {
+        .theme-icon-dark {
+            display: none;
+        }
+
+        .theme-icon-light {
+            display: inline-block;
+        }
+    }
+}
+
+body[data-theme="dark"] {
+    @include theme-toggle-dark;
+}
+
+@media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]):not([data-theme="dark"]) {
+        @include theme-toggle-dark;
+    }
+}
+
+#user-links .nav-divider {
+    margin-right: 8px;
 }
