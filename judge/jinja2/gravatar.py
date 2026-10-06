@@ -1,6 +1,8 @@
 import hashlib
 
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.templatetags.static import static
 from django.utils.http import urlencode
 
 from judge.models import Profile
@@ -10,6 +12,10 @@ from . import registry
 
 @registry.function
 def gravatar(email, size=80, default=None):
+    # avoid external requests in official contest mode
+    if settings.VNOJ_OFFICIAL_CONTEST_MODE:
+        return static('icons/icon.svg')
+
     if isinstance(email, Profile):
         if default is None:
             default = email.mute

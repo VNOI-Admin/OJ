@@ -42,10 +42,13 @@ def send_webhook(webhook_config, title, description, author, color='03b2f8', **k
     )
 
     if author is not None:
+        icon_url = gravatar(author)
+        if icon_url.startswith('/'):
+            icon_url = settings.SITE_FULL_URL + icon_url
         embed.set_author(
             name=author.user.username,
             url=settings.SITE_FULL_URL + '/user/' + author.user.username,
-            icon_url=gravatar(author),
+            icon_url=icon_url,
         )
 
     webhook.add_embed(embed)
