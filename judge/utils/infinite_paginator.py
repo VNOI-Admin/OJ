@@ -127,9 +127,11 @@ def infinite_paginate(queryset, page, page_size, pad_pages, paginator=None):
     if page < 1:
         raise EmptyPage()
     if settings.VNOJ_LOW_POWER_MODE:
-        sliced = list(queryset[(page - 1) * page_size:page * page_size + 1])
-        has_next = len(sliced) > page_size
-        sliced = sliced[:page_size]
+        sliced_data = list(queryset[(page - 1) * page_size:page * page_size + 1])
+        has_next = len(sliced_data) > page_size
+        # DeferredPagination require the object list to be a queryset
+        sliced = queryset[(page - 1) * page_size:page * page_size]
+        sliced._result_cache = sliced_data[:page_size]
     else:
         sliced = queryset[(page - 1) * page_size:page * page_size]
         has_next = None
