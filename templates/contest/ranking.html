@@ -540,8 +540,10 @@ $('#show-personal-info-checkbox').click(function () {
             <label for="show-personal-info-checkbox" style="vertical-align: bottom">{{ _('Show full name/organization') }}</label>
         {% endif %}
         {% if tab == 'ranking' %}
-            <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
-            <label for="show-virtual-participations-checkbox" style="vertical-align: bottom">{{ _('Show virtual participations') }}</label>
+            {% if can_show_virtual %}
+                <input id="show-virtual-participations-checkbox" type="checkbox" style="vertical-align: bottom">
+                <label for="show-virtual-participations-checkbox" style="vertical-align: bottom">{{ _('Show virtual participations') }}</label>
+            {% endif %}
             {% if has_ghosts %}
             <span id="show-ghosts-wrap">
                 <input id="show-ghosts-checkbox" type="checkbox" style="vertical-align: bottom">
