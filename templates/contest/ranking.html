@@ -209,8 +209,16 @@ $('#show-personal-info-checkbox').click(function () {
                 localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
             }
 
-            if (localStorage.getItem(`filter-selected-orgs-${contest_key}`) === null) {
-                localStorage.setItem(`filter-selected-orgs-${contest_key}`, []);
+            // Stored as JSON: a plain array would be saved comma-joined, which breaks
+            // on org names containing commas and makes includes() a substring match.
+            // Values saved in the old comma-joined format are treated as no filter.
+            function getSelectedOrgs() {
+                try {
+                    let selected_orgs = JSON.parse(localStorage.getItem(`filter-selected-orgs-${contest_key}`));
+                    return Array.isArray(selected_orgs) ? selected_orgs : [];
+                } catch (e) {
+                    return [];
+                }
             }
 
             $('#apply-organization-filter').click(function () {
@@ -221,7 +229,7 @@ $('#show-personal-info-checkbox').click(function () {
                 $('#org-check-list-wrapper').hide();
 
                 let selected_orgs = $('#org-check-list').val().map(x => x.trim());
-                localStorage.setItem(`filter-selected-orgs-${contest_key}`, selected_orgs);
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, JSON.stringify(selected_orgs));
                 window.applyRankingFilter();
                 window.applyFavoriteUsers();
             });
@@ -258,9 +266,7 @@ $('#show-personal-info-checkbox').click(function () {
                 org_options.empty();
 
                 org_list.forEach(function (org) {
-                    org_options.append(
-                        `<option value="${org}">${org}</option>`
-                    );
+                    org_options.append(new Option(org, org));
                 });
             };
 
@@ -290,7 +296,7 @@ $('#show-personal-info-checkbox').click(function () {
             window.applyRankingFilter = function () {
                 let counter = 0;
                 let previous_abs_rank = -1;
-                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`);
+                let selected_orgs = getSelectedOrgs();
 
                 if (!selected_orgs.length) {
                     window.clearRankingFilter();
@@ -327,8 +333,7 @@ $('#show-personal-info-checkbox').click(function () {
             };
 
             window.restoreChecklistOptions = function () {
-                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`).split(',');
-                $('#org-check-list').val(selected_orgs).trigger('change');
+                $('#org-check-list').val(getSelectedOrgs()).trigger('change');
             };
 
             function submitDisqualifyForm($a) {
@@ -363,9 +368,16 @@ $('#show-personal-info-checkbox').click(function () {
                 });
             };
 
+            // Stored as JSON so usernames containing commas survive. Older pages
+            // saved a comma-joined string, so fall back to splitting that.
             function getFavoriteUsers() {
                 let fav_users = localStorage.getItem(`favorite-users-${contest_key}`);
-                return fav_users ? fav_users.split(',') : [];
+                if (!fav_users) return [];
+                try {
+                    let parsed = JSON.parse(fav_users);
+                    if (Array.isArray(parsed)) return parsed;
+                } catch (e) {}
+                return fav_users.split(',');
             }
 
             // Pin a copy of each favorite user's row to the top of the table. The
@@ -398,7 +410,7 @@ $('#show-personal-info-checkbox').click(function () {
                 if ($(this).hasClass('fa-heart-o')) {
                     fav_users.push(user_name);
                 }
-                localStorage.setItem(`favorite-users-${contest_key}`, fav_users);
+                localStorage.setItem(`favorite-users-${contest_key}`, JSON.stringify(fav_users));
                 window.applyFavoriteUsers();
             });
 
