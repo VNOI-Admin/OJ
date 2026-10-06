@@ -77,6 +77,7 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
             return
 
         if self.should_ignore_message(subject, message):
+            logger.warning('Ignored message for Discord webhook: %s', subject, message)
             return
 
         if isinstance(webhook_config, str):
@@ -84,7 +85,11 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
                 'url': webhook_config,
                 'thread_id': None,
             }
-        webhook = DiscordWebhook(url=webhook_config['url'], content=subject, thread_id=webhook_config['thread_id'])
+        webhook = DiscordWebhook(
+            url=webhook_config['url'],
+            content=f'{subject}\n```{message[:1000]}......```',
+            thread_id=webhook_config['thread_id'],
+        )
         # Discord has a limit 8 MB file size for normal server (without boost)
         # Use 7MB just for safe.
         webhook.add_file(file=message[:7 * 1024 * 1024], filename='log.txt')
@@ -97,7 +102,6 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
 
             for ignored_error in settings.IGNORED_ERRORS_FOR_DISCORD_WEBHOOK:
                 if ignored_error in message_without_settings:
-                    logger.info('Ignored error for Discord webhook: %s', ignored_error)
                     return True
 
             # ignore "failed while handling submission" if the problem data is newly updated
@@ -105,26 +109,30 @@ class ThrottledDiscordWebhookHandler(logging.Handler):
             if 'failed while handling submission' in subject:
                 submission_id = int(subject.strip().split('submission')[-1].strip())
                 from judge.models import Submission, problem_data_storage
-                problem_code = Submission.objects.filter(id=submission_id).values_list(
-                    'problem__code',
-                    flat=True,
+                submission = Submission.objects.filter(id=submission_id).values_list(
+                    'problem__code', 'date',
                 ).first()
-                if not problem_code:
+                if not submission:
                     return False
+                problem_code, submission_date = submission
                 try:
                     modified_time = problem_data_storage.get_modified_time('%s/init.yml' % problem_code)
-                except Exception as e:
-                    print('[ThrottledDiscordWebhookHandler]', str(e))
+                except Exception:
+                    logger.exception('[ThrottledDiscordWebhookHandler] error while getting modified time')
                     # file not exists -> ignore
                     return True
-                print(
-                    '[ThrottledDiscordWebhookHandler]',
+                logger.warning(
+                    '[ThrottledDiscordWebhookHandler] %s %s %s',
                     datetime.datetime.now().timestamp(),
                     modified_time.timestamp(),
+                    submission_date.timestamp(),
                 )
-                if modified_time and (datetime.datetime.now().timestamp() - modified_time.timestamp()) < 120:
+                if modified_time and (
+                    abs(datetime.datetime.now().timestamp() - modified_time.timestamp()) < 120 or
+                    abs(submission_date.timestamp() - modified_time.timestamp()) < 120
+                ):
                     return True
-        except Exception as e:
-            print('[ThrottledDiscordWebhookHandler]', str(e))
+        except Exception:
+            logger.exception('[ThrottledDiscordWebhookHandler] error in should_ignore_message')
             return False
         return False
