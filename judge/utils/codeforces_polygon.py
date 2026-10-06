@@ -337,8 +337,7 @@ class PolygonImporter:
         except Exception:
             # Remove imported images
             for image_url in self.meta['image_cache'].values():
-                path = default_storage.path(os.path.join(settings.MARTOR_UPLOAD_MEDIA_DIR, os.path.basename(image_url)))
-                os.remove(path)
+                default_storage.delete(os.path.join(settings.MARTOR_UPLOAD_MEDIA_DIR, os.path.basename(image_url)))
 
             raise
         finally:
@@ -963,6 +962,6 @@ class PolygonImporter:
             problem=problem,
             data=problem_data,
             cases=problem.cases.order_by('order'),
-            files=zipfile.ZipFile(problem_data.zipfile.path).namelist(),
+            files=zipfile.ZipFile(self.meta['zipfile']).namelist(),
         )
         assert problem_data.feedback == '', problem_data.feedback

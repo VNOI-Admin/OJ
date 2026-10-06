@@ -469,7 +469,6 @@ class CreateOrganization(PermissionRequiredMixin, TitleMixin, CreateView):
 
             self.object = org = form.save(commit=False)
             # slug is show in url
-            # short_name is show in ranking
             org.short_name = org.slug[:20]
             org.free_credit = org.monthly_free_credit_limit
             add_admin_to_group(form)

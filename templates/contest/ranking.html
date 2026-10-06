@@ -67,6 +67,7 @@
         window.RANKING_DATA = {{ ranking_json|safe }};
         window.CONTEST_CAN_SEE_SUBMISSIONS = {{ 'true' if can_see_full_submission_list else 'false' }};
         window.CONTEST_SHOW_VIRTUAL = {{ 'true' if show_virtual else 'false' }};
+        window.OFFICIAL_CONTEST_MODE = {{ 'true' if request.official_contest_mode else 'false' }};
         window.CONTEST_REPLAY_VIRTUAL_TOOLTIP = {{ _("Virtual participations aren't supported in replay, turn it off first.")|htmltojs }};
     </script>
     {% if not contest.ended %}
@@ -109,7 +110,7 @@ $('#show-personal-info-checkbox').click(function () {
                 localStorage.setItem('show-personal-info', $('.personal-info').is(':visible') ? 'true' : 'false');
             });
 
-            if (localStorage.getItem('show-personal-info') == 'true') {
+            if (localStorage.getItem('show-personal-info') == 'true' || localStorage.getItem('show-personal-info') === null) {
                 $('.personal-info').show();
                 $('#show-personal-info-checkbox').prop('checked', true);
             }
@@ -208,8 +209,16 @@ $('#show-personal-info-checkbox').click(function () {
                 localStorage.setItem(`filter-cleared-${contest_key}`, 'true');
             }
 
-            if (localStorage.getItem(`filter-selected-orgs-${contest_key}`) === null) {
-                localStorage.setItem(`filter-selected-orgs-${contest_key}`, []);
+            // Stored as JSON: a plain array would be saved comma-joined, which breaks
+            // on org names containing commas and makes includes() a substring match.
+            // Values saved in the old comma-joined format are treated as no filter.
+            function getSelectedOrgs() {
+                try {
+                    let selected_orgs = JSON.parse(localStorage.getItem(`filter-selected-orgs-${contest_key}`));
+                    return Array.isArray(selected_orgs) ? selected_orgs : [];
+                } catch (e) {
+                    return [];
+                }
             }
 
             $('#apply-organization-filter').click(function () {
@@ -220,8 +229,9 @@ $('#show-personal-info-checkbox').click(function () {
                 $('#org-check-list-wrapper').hide();
 
                 let selected_orgs = $('#org-check-list').val().map(x => x.trim());
-                localStorage.setItem(`filter-selected-orgs-${contest_key}`, selected_orgs);
+                localStorage.setItem(`filter-selected-orgs-${contest_key}`, JSON.stringify(selected_orgs));
                 window.applyRankingFilter();
+                window.applyFavoriteUsers();
             });
 
             $('#clear-organization-filter').click(function () {
@@ -243,7 +253,7 @@ $('#show-personal-info-checkbox').click(function () {
                     let org_anchor = $(this).find("div > div > .personal-info > .organization > a")[0];
 
                     if (org_anchor) {
-                        org_list.push(org_anchor.text);
+                        org_list.push(org_anchor.dataset.org);
                     }
                 });
 
@@ -256,9 +266,7 @@ $('#show-personal-info-checkbox').click(function () {
                 org_options.empty();
 
                 org_list.forEach(function (org) {
-                    org_options.append(
-                        `<option value="${org}">${org}</option>`
-                    );
+                    org_options.append(new Option(org, org));
                 });
             };
 
@@ -288,7 +296,7 @@ $('#show-personal-info-checkbox').click(function () {
             window.applyRankingFilter = function () {
                 let counter = 0;
                 let previous_abs_rank = -1;
-                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`);
+                let selected_orgs = getSelectedOrgs();
 
                 if (!selected_orgs.length) {
                     window.clearRankingFilter();
@@ -300,7 +308,7 @@ $('#show-personal-info-checkbox').click(function () {
                     let row = $(this);
 
                     let org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
-                    let org = org_anchor ? org_anchor.text : 'Other';
+                    let org = org_anchor ? org_anchor.dataset.org : 'Other';
 
                     if (!selected_orgs.includes(org.trim())) {
                         row.hide();
@@ -325,8 +333,7 @@ $('#show-personal-info-checkbox').click(function () {
             };
 
             window.restoreChecklistOptions = function () {
-                let selected_orgs = localStorage.getItem(`filter-selected-orgs-${contest_key}`).split(',');
-                $('#org-check-list').val(selected_orgs).trigger('change');
+                $('#org-check-list').val(getSelectedOrgs()).trigger('change');
             };
 
             function submitDisqualifyForm($a) {
@@ -361,6 +368,52 @@ $('#show-personal-info-checkbox').click(function () {
                 });
             };
 
+            // Stored as JSON so usernames containing commas survive. Older pages
+            // saved a comma-joined string, so fall back to splitting that.
+            function getFavoriteUsers() {
+                let fav_users = localStorage.getItem(`favorite-users-${contest_key}`);
+                if (!fav_users) return [];
+                try {
+                    let parsed = JSON.parse(fav_users);
+                    if (Array.isArray(parsed)) return parsed;
+                } catch (e) {}
+                return fav_users.split(',');
+            }
+
+            // Pin a copy of each favorite user's row to the top of the table. The
+            // copies have no id, so the organization filter only sees the originals.
+            window.applyFavoriteUsers = function () {
+                let fav_users = getFavoriteUsers();
+                let $tbody = $('#ranking-table > tbody');
+                $tbody.children('tr.favorite').remove();
+
+                let pinned = [];
+                $tbody.children('tr[id]').each(function () {
+                    let row = $(this);
+                    let fav_button = row.find('.fav-button');
+                    let is_fav = fav_users.includes(fav_button.attr('data-username'));
+                    fav_button.toggleClass('fa-heart-o', !is_fav);
+                    if (is_fav) {
+                        pinned.push(row.clone(true).removeAttr('id').addClass('favorite').show());
+                    }
+                });
+
+                if (pinned.length) {
+                    pinned[pinned.length - 1].addClass('last-favorite');
+                    $tbody.prepend(pinned);
+                }
+            };
+
+            $('#ranking-container').on('click', '.fav-button', function () {
+                let user_name = $(this).attr('data-username');
+                let fav_users = getFavoriteUsers().filter(x => x !== user_name);
+                if ($(this).hasClass('fa-heart-o')) {
+                    fav_users.push(user_name);
+                }
+                localStorage.setItem(`favorite-users-${contest_key}`, JSON.stringify(fav_users));
+                window.applyFavoriteUsers();
+            });
+
             window.onFinishRankingRender = function (isNewDataFromBackend = false) {
                 if (localStorage.getItem('show-personal-info') == 'true') {
                     $('.personal-info').show();
@@ -374,6 +427,7 @@ $('#show-personal-info-checkbox').click(function () {
                     }
                     window.applyRankingFilter();
                 {% endif %}
+                window.applyFavoriteUsers();
             };
             window.onFinishRankingRender(true);
         });
@@ -423,8 +477,8 @@ $('#show-personal-info-checkbox').click(function () {
                 });
 
                 $('#ranking-table tbody tr').each(function () {
-                    // Skip hidden row (due to filtering)
-                    if ($(this).is(':hidden')) {
+                    // Skip hidden row (due to filtering) and pinned favorite copies
+                    if ($(this).is(':hidden') || $(this).hasClass('favorite')) {
                         return;
                     }
 

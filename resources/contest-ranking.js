@@ -408,7 +408,13 @@
         return html;
     }
 
-    function buildUserLink(u, isGhost) {
+    function buildBadge(u, attrs) {
+        if (!u.badge) return '';
+        return '<img src="' + escapeHtml(u.badge.mini) + '"' +
+            ' title="' + escapeHtml(u.badge.name) + '" ' + attrs + ' />';
+    }
+
+    function buildUserLink(u, isGhost, showBadge) {
         // Ghosts keep their rating color but get a ghost icon prefix and no link
         // (they come from another server, so any URL here would be broken).
         var spanClass = u.css_class + (isGhost ? ' ghost-user' : '');
@@ -417,11 +423,7 @@
             ? '<span style="display: inline-block;">' + name + '</span>'
             : '<a href="' + escapeHtml(u.url) + '" style="display: inline-block;">' + name + '</a>';
         var html = '<span class="' + escapeHtml(spanClass) + '">' + inner;
-        if (u.badge) {
-            html += '<img src="' + escapeHtml(u.badge.mini) + '"' +
-                ' title="' + escapeHtml(u.badge.name) + '"' +
-                ' style="height: 1em; width: auto; margin-left: 0.25em;" />';
-        }
+        if (showBadge) html += buildBadge(u, 'style="height: 1em; width: auto; margin-left: 0.25em;"');
         html += '</span>';
         return html;
     }
@@ -451,9 +453,17 @@
         html += '<td>' + rankDisplay + '</td>';
 
         // Username cell
-        html += '<td class="user-name"><div>';
-        html += '<div style="float:left">';
-        html += buildUserLink(u, p.ghost);
+        html += '<td class="user-name"><div class="user-cell">';
+        html += '<div class="user-main">';
+        // Favorite toggle; ranking.html pins favorited users to the top. Ghosts
+        // can share a username with a real user, so they don't get one.
+        if (contest.mode !== 'participation' && !p.ghost) {
+            html += '<i class="fav-button fa fa-heart fa-heart-o" data-username="' +
+                escapeHtml(u.username) + '" aria-hidden="true"></i> ';
+        }
+        // In official contest mode the badge sits next to the org instead.
+        var badgeBesideOrg = !!window.OFFICIAL_CONTEST_MODE;
+        html += buildUserLink(u, p.ghost, !badgeBesideOrg);
 
         if (p.virtual > 0) {
             var virtualTitle = p.virtual + ' virtual participation' + (p.virtual > 1 ? 's' : '') + ' of this user';
@@ -461,18 +471,32 @@
                 '[' + p.virtual + ']</sup>';
         }
 
-        html += '<div class="personal-info"><span>' + escapeHtml(u.name || '') + '</span></div>';
+        // Skip the full name when it just repeats the displayed username.
+        var fullName = u.name || '';
+        if (fullName.trim().toLowerCase() === (u.display_name || '').trim().toLowerCase()) fullName = '';
+        html += '<div class="personal-info"><span>' + escapeHtml(fullName) + '</span></div>';
         html += '</div>';
 
-        // Right float (admin ops, org). Ghosts get no admin ops and a plain-text org.
-        html += '<div style="float:right">';
+        // Right side (admin ops, org). Ghosts get no admin ops and a plain-text org.
+        html += '<div class="user-extra">';
         if (!p.ghost) html += buildAdminOps(p, contest);
+        if (badgeBesideOrg) html += buildBadge(u, 'class="org-badge"');
         html += '<div class="personal-info" style="text-align: right;">';
         if (u.organization) {
-            var orgName = escapeHtml(u.organization.short_name);
-            html += '<span class="organization">' +
-                (p.ghost ? orgName
-                         : '<a href="' + escapeHtml(u.organization.url) + '">' + orgName + '</a>') +
+            // Replay data saved before the switch to full names only has short_name.
+            var fullOrgName = u.organization.name || u.organization.short_name;
+            var orgName = escapeHtml(fullOrgName);
+            var logo = u.organization.logo;
+            var orgInner = (logo
+                ? '<img class="org-logo" src="' + escapeHtml(logo) + '" alt="">'
+                : '<span class="org-text">' + orgName + '</span>') +
+                '<span class="org-name">' + orgName + '</span>';
+            // The organization filter in ranking.html reads data-org, since the
+            // visible text may be truncated or hidden behind a logo.
+            html += '<span class="organization' + (logo ? ' has-logo' : '') + '">' +
+                (p.ghost ? orgInner
+                         : '<a href="' + escapeHtml(u.organization.url) + '" data-org="' + orgName + '">' +
+                           orgInner + '</a>') +
                 '</span>';
         }
         html += '</div></div>';
@@ -556,5 +580,17 @@
             window.onFinishRankingRender(isNewDataFromBackend === true);
         }
     };
+
+    // A broken org logo falls back to showing the name as plain text. Image errors
+    // don't bubble, so listen in the capture phase; this also covers re-renders.
+    document.addEventListener('error', function (e) {
+        var img = e.target;
+        if (!img.classList || !img.classList.contains('org-logo')) return;
+        var $org = $(img).closest('.organization');
+        var $name = $org.find('.org-name');
+        $('<span class="org-text">').text($name.text()).insertBefore($name);
+        $org.removeClass('has-logo');
+        img.remove();
+    }, true);
 
 })(jQuery);

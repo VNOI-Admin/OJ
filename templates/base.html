@@ -206,8 +206,12 @@
                 $("#set_language").submit()
             }
         }
-        function set_theme(theme) {
-            $("input[name=theme]").val(theme);
+        function toggle_theme() {
+            var current = "{{ SITE_THEME_NAME }}";
+            if (current !== 'light' && current !== 'dark') {
+                current = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            $("input[name=theme]").val(current === 'dark' ? 'light' : 'dark');
             $("#set_theme").submit();
         }
     </script>
@@ -269,51 +273,40 @@
         </ul>
 
         <span id="user-links">
-            <ul>
-                <li>
-                    {% if request.user.is_superuser %}
-                        <a href="{{ url('misc_config') }}" style="margin-right: 5px;">
-                    {% else %}
-                        <a href="javascript:void(0)" style="margin-right: 5px;">
-                    {% endif %}
-                        <span title="{{ _('Settings') }}">
-                            <i class="fa fa-gear" style="color: rgb(200,200,200); font-size: 1.15em"></i>
-                        </span>
-                    </a>
-                    <ul class="settings-popup" style="min-width: 210px; right: 0; left: auto;">
-                        <li>
-                            <div class="nav-settings-row">
-                                <span class="nav-settings-lbl">{{ _('Theme') }}</span>
-                                <span class="nav-seg">
-                                    <span onclick="set_theme('light')" class="nav-seg-btn{% if SITE_THEME_NAME != 'dark' %} active{% endif %}"><i class="fa fa-sun-o"></i></span>
-                                    <span onclick="set_theme('dark')" class="nav-seg-btn{% if SITE_THEME_NAME == 'dark' %} active{% endif %}"><i class="fa fa-moon-o"></i></span>
-                                </span>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="nav-settings-row">
-                                <span class="nav-settings-lbl">{{ _('Language') }}</span>
-                                <span class="nav-seg">
-                                    <span onclick="submmit_language('vi')" class="nav-seg-btn{% if LANGUAGE_CODE == 'vi' %} active{% endif %}">VI</span>
-                                    <span onclick="submmit_language('en')" class="nav-seg-btn{% if LANGUAGE_CODE == 'en' %} active{% endif %}">EN</span>
-                                </span>
-                            </div>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
             {% if request.user.is_authenticated %}
-                <a href=
+                <a id="report-issue" href=
                     {% if request.resolver_match.view_name == "problem_detail" and problem %}
                         "{{ url('new_problem_ticket', problem.code) }}"
                     {% else %}
-                        "/tickets/new?issue_url={{ request.build_absolute_uri()|urlencode }}"
+                        "/tickets/new?issue_url={{ request.get_full_path()|urlencode }}"
                     {% endif %}
-                style="margin-right: 5px;">
-                    <span title="{{ _('Report issue') }}">
-                        <i class="fa fa-exclamation-triangle" style="color: yellow;"></i>
+                >
+                    <i class="fa fa-exclamation-triangle"></i>
+                    <span>{{ _('Report an issue') }}</span>
+                </a>
+            {% endif %}
+            {% if request.user.is_superuser %}
+                <a href="{{ url('misc_config') }}" style="margin-right: 5px;">
+                    <span title="{{ _('Site settings') }}">
+                        <i class="fa fa-gear" style="color: rgb(200,200,200) ; font-size: 1.15em"></i>
                     </span>
                 </a>
+            {% endif %}
+            <a id="theme-toggle" href="#" onclick="toggle_theme(); return false;" title="{{ _('Toggle dark mode') }}">
+                <img class="theme-icon-dark" src="{{ static('icons/dark.svg') }}" alt="{{ _('Dark') }}" height="20" width="20">
+                <img class="theme-icon-light" src="{{ static('icons/light.svg') }}" alt="{{ _('Light') }}" height="20" width="20">
+            </a>
+            {% if LANGUAGE_CODE == 'vi' %}
+                <a id="flag_en" href="#" onclick="submmit_language('en'); return false;" title="English" style="margin-right: 5px; margin-top: 4px;">
+                    <img src="{{ static('icons/gb_flag.svg') }}" alt="EN" height="24">
+                </a>
+            {% else %}
+                <a id="flag_vi" href="#" onclick="submmit_language('vi'); return false;" title="Tiếng Việt" style="margin-right: 5px; margin-top: 4px;">
+                    <img src="{{ static('icons/vi_flag.svg') }}" alt="VI" height="24">
+                </a>
+            {% endif %}
+            <span class="nav-divider"></span>
+            {% if request.user.is_authenticated %}
                 <ul id="notification-nav">
                     <li>
                         <a href="{{ url('notification_list') }}" class="notification-bell" title="{{ _('Notifications') }}">

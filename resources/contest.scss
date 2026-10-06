@@ -263,6 +263,95 @@ form.contest-join-pseudotab {
         display: none;
     }
 
+    .user-cell {
+        display: flex;
+        justify-content: space-between;
+        gap: 0.5em;
+    }
+
+    .user-main {
+        flex: none;
+    }
+
+    .user-extra {
+        flex: 0 1 auto;
+        min-width: 0;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.25em;
+
+        > .personal-info {
+            min-width: 0;
+        }
+
+        > .contest-participation-operation {
+            order: 1;
+            flex: none;
+            display: flex;
+            flex-direction: column;
+        }
+    }
+
+    .organization:not(.has-logo) .org-text {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        overflow: hidden;
+        overflow-wrap: break-word;
+    }
+
+    .organization {
+        position: relative;
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    .organization.has-logo .org-logo, .org-badge {
+        width: 30px;
+        height: 30px;
+        object-fit: contain;
+        vertical-align: middle;
+    }
+
+    /* Full-name pop-up under the org, shown on hover. */
+    .organization .org-name {
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        margin-top: 2px;
+        z-index: 10;
+        padding: 8px;
+        border-radius: 8px;
+        background-color: rgba($color_primary0, 0.9);
+        box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+        white-space: nowrap;
+        pointer-events: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.5s;
+    }
+
+    .organization:hover .org-name {
+        opacity: 1;
+        visibility: visible;
+    }
+
+    .fav-button {
+        cursor: pointer;
+        color: red;
+
+        &.fa-heart-o {
+            color: $color_primary50;
+        }
+    }
+
+    /* Separates the pinned favorite rows from the rest of the ranking. */
+    tr.last-favorite > td {
+        border-bottom: 3px solid $color_primary75;
+    }
+
     .virtual-participation {
         color: grey;
         float: right
