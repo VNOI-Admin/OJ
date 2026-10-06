@@ -408,8 +408,25 @@
         return html;
     }
 
+    // The table is rebuilt on every refresh and replay step, so each render makes
+    // fresh <img> elements. Keeping one Image per URL lets a download carry on
+    // across re-renders instead of being cancelled and restarted, and remembers
+    // broken URLs (never cached by the browser) so they aren't requested again.
+    var imageCache = {};
+
+    // Returns false if the image at url is known to be broken.
+    function trackImage(url) {
+        if (!Object.prototype.hasOwnProperty.call(imageCache, url)) {
+            var img = new Image();
+            img.onerror = function () { imageCache[url] = false; };
+            img.src = url;
+            imageCache[url] = img;
+        }
+        return imageCache[url] !== false;
+    }
+
     function buildBadge(u, attrs) {
-        if (!u.badge) return '';
+        if (!u.badge || !trackImage(u.badge.mini)) return '';
         return '<img src="' + escapeHtml(u.badge.mini) + '"' +
             ' title="' + escapeHtml(u.badge.name) + '" ' + attrs + ' />';
     }
@@ -487,6 +504,7 @@
             var fullOrgName = u.organization.name || u.organization.short_name;
             var orgName = escapeHtml(fullOrgName);
             var logo = u.organization.logo;
+            if (logo && !trackImage(logo)) logo = null;
             var orgInner = (logo
                 ? '<img class="org-logo" src="' + escapeHtml(logo) + '" alt="">'
                 : '<span class="org-text">' + orgName + '</span>') +
