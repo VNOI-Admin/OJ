@@ -408,7 +408,13 @@
         return html;
     }
 
-    function buildUserLink(u, isGhost) {
+    function buildBadge(u, attrs) {
+        if (!u.badge) return '';
+        return '<img src="' + escapeHtml(u.badge.mini) + '"' +
+            ' title="' + escapeHtml(u.badge.name) + '" ' + attrs + ' />';
+    }
+
+    function buildUserLink(u, isGhost, showBadge) {
         // Ghosts keep their rating color but get a ghost icon prefix and no link
         // (they come from another server, so any URL here would be broken).
         var spanClass = u.css_class + (isGhost ? ' ghost-user' : '');
@@ -417,11 +423,7 @@
             ? '<span style="display: inline-block;">' + name + '</span>'
             : '<a href="' + escapeHtml(u.url) + '" style="display: inline-block;">' + name + '</a>';
         var html = '<span class="' + escapeHtml(spanClass) + '">' + inner;
-        if (u.badge) {
-            html += '<img src="' + escapeHtml(u.badge.mini) + '"' +
-                ' title="' + escapeHtml(u.badge.name) + '"' +
-                ' style="height: 1em; width: auto; margin-left: 0.25em;" />';
-        }
+        if (showBadge) html += buildBadge(u, 'style="height: 1em; width: auto; margin-left: 0.25em;"');
         html += '</span>';
         return html;
     }
@@ -453,7 +455,9 @@
         // Username cell
         html += '<td class="user-name"><div class="user-cell">';
         html += '<div class="user-main">';
-        html += buildUserLink(u, p.ghost);
+        // In official contest mode the badge sits next to the org instead.
+        var badgeBesideOrg = !!window.OFFICIAL_CONTEST_MODE;
+        html += buildUserLink(u, p.ghost, !badgeBesideOrg);
 
         if (p.virtual > 0) {
             var virtualTitle = p.virtual + ' virtual participation' + (p.virtual > 1 ? 's' : '') + ' of this user';
@@ -470,6 +474,7 @@
         // Right side (admin ops, org). Ghosts get no admin ops and a plain-text org.
         html += '<div class="user-extra">';
         if (!p.ghost) html += buildAdminOps(p, contest);
+        if (badgeBesideOrg) html += buildBadge(u, 'class="org-badge"');
         html += '<div class="personal-info" style="text-align: right;">';
         if (u.organization) {
             // Replay data saved before the switch to full names only has short_name.
