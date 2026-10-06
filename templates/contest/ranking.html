@@ -67,6 +67,7 @@
         window.RANKING_DATA = {{ ranking_json|safe }};
         window.CONTEST_CAN_SEE_SUBMISSIONS = {{ 'true' if can_see_full_submission_list else 'false' }};
         window.CONTEST_SHOW_VIRTUAL = {{ 'true' if show_virtual else 'false' }};
+        window.OFFICIAL_CONTEST_MODE = {{ 'true' if request.official_contest_mode else 'false' }};
         window.CONTEST_REPLAY_VIRTUAL_TOOLTIP = {{ _("Virtual participations aren't supported in replay, turn it off first.")|htmltojs }};
     </script>
     {% if not contest.ended %}
@@ -109,7 +110,7 @@ $('#show-personal-info-checkbox').click(function () {
                 localStorage.setItem('show-personal-info', $('.personal-info').is(':visible') ? 'true' : 'false');
             });
 
-            if (localStorage.getItem('show-personal-info') == 'true') {
+            if (localStorage.getItem('show-personal-info') == 'true' || localStorage.getItem('show-personal-info') === null) {
                 $('.personal-info').show();
                 $('#show-personal-info-checkbox').prop('checked', true);
             }
@@ -243,7 +244,7 @@ $('#show-personal-info-checkbox').click(function () {
                     let org_anchor = $(this).find("div > div > .personal-info > .organization > a")[0];
 
                     if (org_anchor) {
-                        org_list.push(org_anchor.text);
+                        org_list.push(org_anchor.dataset.org);
                     }
                 });
 
@@ -300,7 +301,7 @@ $('#show-personal-info-checkbox').click(function () {
                     let row = $(this);
 
                     let org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
-                    let org = org_anchor ? org_anchor.text : 'Other';
+                    let org = org_anchor ? org_anchor.dataset.org : 'Other';
 
                     if (!selected_orgs.includes(org.trim())) {
                         row.hide();
