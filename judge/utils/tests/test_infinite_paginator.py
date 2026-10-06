@@ -1,9 +1,53 @@
-from django.test import SimpleTestCase
+from django.core.paginator import EmptyPage
+from django.test import SimpleTestCase, override_settings
 
 from judge.utils.infinite_paginator import infinite_paginate
 
 
 class InfinitePaginatorTestCase(SimpleTestCase):
+    @override_settings(VNOJ_LOW_POWER_MODE=True)
+    def test_low_power_mode(self):
+        # Empty list
+        page_empty = infinite_paginate([], 1, 10, 1)
+        self.assertEqual(page_empty.object_list, [])
+        self.assertFalse(page_empty.has_next())
+        self.assertEqual(page_empty.page_range, [1])
+
+        # Multiple of page_size: exactly 10 items with page_size=10
+        page = infinite_paginate(range(1, 11), 1, 10, 1)
+        self.assertEqual(page.object_list, list(range(1, 11)))
+        self.assertFalse(page.has_next())
+        self.assertEqual(page.page_range, [1])
+
+        with self.assertRaises(EmptyPage):
+            infinite_paginate(range(1, 11), 2, 10, 1)
+
+        # Exactly 20 items with page_size=10:
+        # Page 1 should have next
+        page1 = infinite_paginate(range(1, 21), 1, 10, 1)
+        self.assertEqual(page1.object_list, list(range(1, 11)))
+        self.assertTrue(page1.has_next())
+        self.assertEqual(page1.page_range, [1, 2, False])
+
+        # Page 2 should not have next
+        page2 = infinite_paginate(range(1, 21), 2, 10, 1)
+        self.assertEqual(page2.object_list, list(range(11, 21)))
+        self.assertFalse(page2.has_next())
+        self.assertEqual(page2.page_range, [1, 2])
+
+        with self.assertRaises(EmptyPage):
+            infinite_paginate(range(1, 21), 3, 10, 1)
+
+        # More than multiple: 11 items with page_size=10
+        page_11 = infinite_paginate(range(1, 12), 1, 10, 1)
+        self.assertTrue(page_11.has_next())
+        self.assertEqual(page_11.page_range, [1, 2, False])
+
+        page_11_2 = infinite_paginate(range(1, 12), 2, 10, 1)
+        self.assertEqual(page_11_2.object_list, [11])
+        self.assertFalse(page_11_2.has_next())
+        self.assertEqual(page_11_2.page_range, [1, 2])
+
     def test_first_page(self):
         self.assertEqual(infinite_paginate(range(1, 101), 1, 10, 2).object_list, list(range(1, 11)))
 
