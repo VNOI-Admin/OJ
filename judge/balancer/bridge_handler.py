@@ -85,7 +85,7 @@ class BridgeHandler:
 
     def _connect(self):
         problems = []  # should be handled by bridged's monitor
-        storages = [{'id': self.glob_ids}] if self.glob_ids else []
+        storages = [{'id': glob_id} for glob_id in self.glob_ids] if self.glob_ids else []
         versions = self.balancer.get_runtime_versions()
 
         log.info('Opening connection to: [%s]:%s', self.host, self.port)
