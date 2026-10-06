@@ -607,6 +607,7 @@ class Contest(models.Model):
             ('change_contest_visibility', _('Change contest visibility')),
             ('contest_problem_label', _('Edit contest problem label script')),
             ('lock_contest', _('Change lock status of contest')),
+            ('view_contest_balloons', _('View contest balloons')),
         )
         verbose_name = _('contest')
         verbose_name_plural = _('contests')

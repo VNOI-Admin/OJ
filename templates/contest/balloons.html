@@ -1,0 +1,140 @@
+{% extends "common-content.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'detail' %}
+    {% set title = contest.name %}
+    {% include "contest/contest-tabs.html" %}
+    {% if contest.is_organization_private %}
+        <span class="organization-tags">
+            {% for org in contest.organizations.all() %}
+                <span class="organization-tag">
+                    <a href="{{ org.get_absolute_url() }}">
+                        <i class="fa fa-lock"></i> {{ org.name }}
+                    </a>
+                </span>
+            {% endfor %}
+        </span>
+    {% endif %}
+{% endblock %}
+
+{% block content_js_media %}
+    {% include "contest/media-js.html" %}
+
+    <style>
+        .marked {
+            background-color: #31c742;
+        }
+    </style>
+
+    <script>
+        // mark rows with submission id in localStorage
+        function mark_stored_ids() {
+            let marked_ids = localStorage.getItem('marked_ids');
+            marked_ids = marked_ids ? marked_ids.split(',') : [];
+
+            let rows = document.querySelectorAll('tbody > tr');
+
+            for (let row_i = 0; row_i < rows.length; row_i++) {
+                let row = rows[row_i];
+                let sub_id = row.children[1].textContent.trim();
+
+                if (marked_ids.includes(sub_id)) {
+                    row.classList.add('marked');
+                }
+            }
+        }
+
+        function mark_row() {
+            let sub_id = $(this).children()[1].textContent.trim();
+
+            let marked_ids = localStorage.getItem('marked_ids') || '';
+            marked_ids = marked_ids ? marked_ids.split(',') : [];
+
+            let pos = marked_ids.indexOf(sub_id);
+
+            if (pos == -1) {
+                marked_ids.push(sub_id);
+                $(this).addClass('marked');
+            } else {
+                marked_ids.splice(pos, 1);
+                $(this).removeClass('marked');
+            }
+
+            localStorage.setItem('marked_ids', marked_ids.join(','));
+        }
+
+        function scroll_to_unmarked() {
+            const first_unmarked = document.querySelector('tbody > tr:not(.marked)');
+            const navbar_height = document.getElementById('navigation').offsetHeight;
+            if (first_unmarked) {
+                window.scroll(0, first_unmarked.offsetTop - navbar_height);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", function() {
+            // disable scroll restoration
+            if ('scrollRestoration' in history) {
+                history.scrollRestoration = 'manual';
+            }
+
+            mark_stored_ids();
+            scroll_to_unmarked();
+            $('tr').click(mark_row);
+            $('#scroll-to-unmarked').click(scroll_to_unmarked);
+        });
+
+        // reload each 60 secs
+        setInterval(function() {
+            location.reload();
+        }, 60000);
+    </script>
+{% endblock %}
+
+
+{% block body %}
+    <div class="contest-clartifications">
+        <button class="button" id="scroll-to-unmarked">
+            Scroll to unmarked
+        </button>
+        <table id="contest-clartifications" class="table">
+            <thead>
+                <tr>
+                    <th>{{ _('NO.') }}</th>
+                    <th>{{ _('SubID.') }}</th>
+                    <th>{{ _('TEAM') }}</th>
+                    <th>{{ _('PROBLEM') }}</th>
+                    {% if color_map %}
+                        <th>{{ _('COLOR') }}</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+            {% for submission in accept_submissions %}
+                <tr>
+                    <td> {{ loop.index0 + balloons_done + 1 }}</td>
+                    <td>
+                        {{ submission.id}}
+                    </td>
+                    <td style="text-align: left; padding-left: 2em;">
+                        {{ link_user(submission.user) }}
+                        {{ submission.user.user.username }}
+                    </td>
+                    <td style="text-align: left; padding-left: 2em;">
+                        {{ submission.problem.code }}
+                    </td>
+                    {% if color_map %}
+                        <td style="text-align: left; padding-left: 2em;">
+                            {{ color_map.get(submission.problem.code, _('Unknown')) }}
+                        </td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <hr>
+{% endblock %}
+
+{% block description_end %}{% endblock %}

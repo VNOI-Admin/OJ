@@ -59,6 +59,11 @@ GLOBAL_API_KEY = 'test-api-key-123'
 
 VNOJ_OFFICIAL_CONTEST_MODE = False
 
+# Balloon color of each problem, shown in the contest balloons page.
+# Maps problem code to color name, e.g. {'icpc_a': 'red'}.
+# Leave empty to hide the color column.
+VNOJ_BALLOON_COLORS = {}
+
 # Contribution points function
 # Both should be int
 VNOJ_CP_COMMENT = 1   # Each comment vote equals 1 CP

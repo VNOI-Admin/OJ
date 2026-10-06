@@ -279,6 +279,7 @@ urlpatterns = [
 
         path('/participation/disqualify', contests.ContestParticipationDisqualify.as_view(),
              name='contest_participation_disqualify'),
+        path('/balloons', contests.ContestBalloons.as_view(), name='contest_balloons'),
 
         path('/', lambda _, contest: HttpResponsePermanentRedirect(reverse('contest_view', args=[contest]))),
     ])),
