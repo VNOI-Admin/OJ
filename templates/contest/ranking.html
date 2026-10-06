@@ -223,6 +223,7 @@ $('#show-personal-info-checkbox').click(function () {
                 let selected_orgs = $('#org-check-list').val().map(x => x.trim());
                 localStorage.setItem(`filter-selected-orgs-${contest_key}`, selected_orgs);
                 window.applyRankingFilter();
+                window.applyFavoriteUsers();
             });
 
             $('#clear-organization-filter').click(function () {
@@ -362,6 +363,45 @@ $('#show-personal-info-checkbox').click(function () {
                 });
             };
 
+            function getFavoriteUsers() {
+                let fav_users = localStorage.getItem(`favorite-users-${contest_key}`);
+                return fav_users ? fav_users.split(',') : [];
+            }
+
+            // Pin a copy of each favorite user's row to the top of the table. The
+            // copies have no id, so the organization filter only sees the originals.
+            window.applyFavoriteUsers = function () {
+                let fav_users = getFavoriteUsers();
+                let $tbody = $('#ranking-table > tbody');
+                $tbody.children('tr.favorite').remove();
+
+                let pinned = [];
+                $tbody.children('tr[id]').each(function () {
+                    let row = $(this);
+                    let fav_button = row.find('.fav-button');
+                    let is_fav = fav_users.includes(fav_button.attr('data-username'));
+                    fav_button.toggleClass('fa-heart-o', !is_fav);
+                    if (is_fav) {
+                        pinned.push(row.clone(true).removeAttr('id').addClass('favorite').show());
+                    }
+                });
+
+                if (pinned.length) {
+                    pinned[pinned.length - 1].addClass('last-favorite');
+                    $tbody.prepend(pinned);
+                }
+            };
+
+            $('#ranking-container').on('click', '.fav-button', function () {
+                let user_name = $(this).attr('data-username');
+                let fav_users = getFavoriteUsers().filter(x => x !== user_name);
+                if ($(this).hasClass('fa-heart-o')) {
+                    fav_users.push(user_name);
+                }
+                localStorage.setItem(`favorite-users-${contest_key}`, fav_users);
+                window.applyFavoriteUsers();
+            });
+
             window.onFinishRankingRender = function (isNewDataFromBackend = false) {
                 if (localStorage.getItem('show-personal-info') == 'true') {
                     $('.personal-info').show();
@@ -375,6 +415,7 @@ $('#show-personal-info-checkbox').click(function () {
                     }
                     window.applyRankingFilter();
                 {% endif %}
+                window.applyFavoriteUsers();
             };
             window.onFinishRankingRender(true);
         });
@@ -424,8 +465,8 @@ $('#show-personal-info-checkbox').click(function () {
                 });
 
                 $('#ranking-table tbody tr').each(function () {
-                    // Skip hidden row (due to filtering)
-                    if ($(this).is(':hidden')) {
+                    // Skip hidden row (due to filtering) and pinned favorite copies
+                    if ($(this).is(':hidden') || $(this).hasClass('favorite')) {
                         return;
                     }
 
