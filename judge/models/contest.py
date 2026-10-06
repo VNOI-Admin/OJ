@@ -111,7 +111,7 @@ class Contest(models.Model):
     scoreboard_visibility = models.CharField(verbose_name=_('scoreboard visibility'), default=SCOREBOARD_VISIBLE,
                                              help_text=_('Scoreboard visibility through the duration of the contest'),
                                              max_length=1, choices=SCOREBOARD_VISIBILITY)
-    scoreboard_cache_timeout = models.PositiveIntegerField(verbose_name=('scoreboard cache timeout'), default=0,
+    scoreboard_cache_timeout = models.PositiveIntegerField(verbose_name=('scoreboard cache timeout'), default=3,
                                                            help_text=_('How long should the scoreboard be cached. '
                                                                        'Set to 0 to disable caching.'))
     show_submission_list = models.BooleanField(default=False,
@@ -141,10 +141,10 @@ class Contest(models.Model):
                                                  related_name='private_contestants+')
     hide_problem_tags = models.BooleanField(verbose_name=_('hide problem tags'),
                                             help_text=_('Whether problem tags should be hidden by default.'),
-                                            default=False)
+                                            default=True)
     hide_problem_authors = models.BooleanField(verbose_name=_('hide problem authors'),
                                                help_text=_('Whether problem authors should be hidden by default.'),
-                                               default=False)
+                                               default=True)
     run_pretests_only = models.BooleanField(verbose_name=_('run pretests only'),
                                             help_text=_('Whether judges should grade pretests only, versus all '
                                                         'testcases. Commonly set during a contest, then unset '
