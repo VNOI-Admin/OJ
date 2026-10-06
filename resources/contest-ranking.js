@@ -455,6 +455,12 @@
         // Username cell
         html += '<td class="user-name"><div class="user-cell">';
         html += '<div class="user-main">';
+        // Favorite toggle; ranking.html pins favorited users to the top. Ghosts
+        // can share a username with a real user, so they don't get one.
+        if (contest.mode !== 'participation' && !p.ghost) {
+            html += '<i class="fav-button fa fa-heart fa-heart-o" data-username="' +
+                escapeHtml(u.username) + '" aria-hidden="true"></i> ';
+        }
         // In official contest mode the badge sits next to the org instead.
         var badgeBesideOrg = !!window.OFFICIAL_CONTEST_MODE;
         html += buildUserLink(u, p.ghost, !badgeBesideOrg);
