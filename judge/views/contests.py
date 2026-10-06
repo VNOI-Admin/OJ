@@ -1037,8 +1037,15 @@ class ContestRanking(ContestRankingBase):
             (self.request.user.is_authenticated and not self.object.can_see_full_scoreboard(self.request.user))
         )
 
+    @cached_property
+    def can_show_virtual(self):
+        contest = self.object
+        return contest.ended and not contest.disallow_virtual
+
     def _resolve_show_virtual(self):
-        if 'show_virtual' in self.request.GET:
+        if not self.can_show_virtual:
+            self.show_virtual = False
+        elif 'show_virtual' in self.request.GET:
             self.show_virtual = self.request.session['show_virtual'] = \
                 self.request.GET.get('show_virtual').lower() == 'true'
         else:
@@ -1162,6 +1169,7 @@ class ContestRanking(ContestRankingBase):
         context = super().get_context_data(**kwargs)
         context['has_rating'] = self.object.ratings.exists()
         context['show_virtual'] = self.show_virtual
+        context['can_show_virtual'] = self.can_show_virtual
         context['has_ghosts'] = self.object.csv_ranking == Contest.HAS_GHOST_PARTICIPATION and self.object.can_replay
         context['is_frozen'] = self.is_frozen
         context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
