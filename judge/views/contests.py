@@ -1470,6 +1470,9 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
         form = ContestForm(request.POST or None)
         form_set = self.get_contest_problem_formset()
         if form.is_valid() and form_set.is_valid():
+            if settings.VNOJ_OFFICIAL_CONTEST_MODE:
+                form.instance.push_announcements = True
+                form.instance.disallow_virtual = True
             with revisions.create_revision(atomic=True):
                 self.save_contest_form(form)
                 for problem in form_set.save(commit=False):
