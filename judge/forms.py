@@ -66,10 +66,13 @@ class ProfileForm(ModelForm):
             'site_theme': Select2Widget(attrs={'style': 'width:200px'}),
         }
 
-        # Make sure that users cannot change their `about` in contest mode
-        # because the user can put the solution in that profile
         if settings.VNOJ_OFFICIAL_CONTEST_MODE:
+            # Make sure that users cannot change their `about` in contest mode
+            # because the user can put the solution in that profile
             fields.remove('about')
+            # Organizations and badges are managed by admins in contest mode
+            fields.remove('display_badge')
+            fields.remove('organizations')
 
         has_math_config = bool(settings.MATHOID_URL)
         if has_math_config:
@@ -99,17 +102,19 @@ class ProfileForm(ModelForm):
         user = kwargs.pop('user', None)
         super(ProfileForm, self).__init__(*args, **kwargs)
 
-        self.fields['display_badge'].required = False
-        self.fields['display_badge'].queryset = self.instance.badges.all()
-        if not self.fields['display_badge'].queryset:
-            self.fields.pop('display_badge')
+        if 'display_badge' in self.fields:
+            self.fields['display_badge'].required = False
+            self.fields['display_badge'].queryset = self.instance.badges.all()
+            if not self.fields['display_badge'].queryset:
+                self.fields.pop('display_badge')
 
-        if not user.has_perm('judge.edit_all_organization'):
-            self.fields['organizations'].queryset = Organization.objects.filter(
-                Q(is_open=True, is_unlisted=False) | Q(id__in=user.profile.organizations.all()),
-            )
-        if not self.fields['organizations'].queryset:
-            self.fields.pop('organizations')
+        if 'organizations' in self.fields:
+            if not user.has_perm('judge.edit_all_organization'):
+                self.fields['organizations'].queryset = Organization.objects.filter(
+                    Q(is_open=True, is_unlisted=False) | Q(id__in=user.profile.organizations.all()),
+                )
+            if not self.fields['organizations'].queryset:
+                self.fields.pop('organizations')
 
 
 class UserForm(ModelForm):
