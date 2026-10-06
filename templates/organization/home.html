@@ -89,10 +89,12 @@
                 <div class="sidebox-content" style="padding: 1em;">
                     {% if request.user.is_authenticated %}
                         {% if is_member %}
-                            <form method="post" action="{{ url('leave_organization', organization.slug) }}">
-                                {% csrf_token %}
-                                <input type="submit" class="unselectable button full leave-organization" value="{{ _('Leave organization') }}">
-                            </form>
+                            {% if not request.official_contest_mode %}
+                                <form method="post" action="{{ url('leave_organization', organization.slug) }}">
+                                    {% csrf_token %}
+                                    <input type="submit" class="unselectable button full leave-organization" value="{{ _('Leave organization') }}">
+                                </form>
+                            {% endif %}
                         {% elif organization.is_open %}
                             <form method="post" action="{{ url('join_organization', organization.slug) }}">
                                 {% csrf_token %}
