@@ -152,6 +152,21 @@
                 $precision.change(fill_args);
                 $treat_checker_points_as_percentage.change(fill_args);
                 $custom_checker_file.change(fill_args);
+                $custom_checker_file.change(function() {
+                    var file = this.files[0];
+                    if (!file || file.name.split('.').pop().toLowerCase() !== 'cpp') return;
+                    var reader = new FileReader();
+                    var $input = $(this);
+                    reader.onload = function(e) {
+                        if (!/^[\t ]*gets\s*\(/m.test(e.target.result)) return;
+                        var msg = {{ _('Checker này sử dụng `gets()`, hàm này đã bị xóa và sẽ gây lỗi. Hãy chuyển qua dùng hàm `cin.getline()`.\nVí dụ: gets(c) chuyển thành cin.getline(c, sizeof(c))\n\nGõ "yes" để tiếp tục upload checker này (sẽ gây lỗi khi chấm):')|htmltojs }};
+                        if (prompt(msg) !== 'yes') {
+                            $input.val('');
+                            $input.change();
+                        }
+                    };
+                    reader.readAsText(file);
+                });
                 $custom_checker_type.change(function() {
                     var is_testlib_checker = $custom_checker_type.find(":selected").val() === 'testlib';
                     $treat_checker_points_as_percentage.toggle(is_testlib_checker);
