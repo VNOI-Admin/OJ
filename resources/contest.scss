@@ -362,6 +362,34 @@ form.contest-join-pseudotab {
     }
 }
 
+// The best-ranked user of each group gets the group name as a label
+// (the class is set in ranking.html).
+#ranking-table span.top-team::after {
+    content: attr(data-user-tag);
+    font-size: 0.75em;
+    padding: 0.25em;
+    margin-left: 0.5em;
+    background-color: #ffc008;
+    border-radius: 2px;
+    color: black;
+}
+
+// Users in the same group share a background on their name cell. ranking.html
+// sets group-color-N from the group's position among the ranking's groups.
+$group_hues: 210, 120, 30, 280, 0, 175, 55, 320, 90, 250;
+
+@each $hue in $group_hues {
+    $i: index($group_hues, $hue) - 1;
+
+    #ranking-table td.user-name.group-color-#{$i} {
+        @if $is_light_theme {
+            background-color: hsl($hue, 75%, 91%);
+        } @else {
+            background-color: hsl($hue, 35%, 20%);
+        }
+    }
+}
+
 #org-dropdown-check-list {
     display: inline-block;
 }
@@ -381,18 +409,92 @@ form.contest-join-pseudotab {
         margin-left: 5px;
     }
 
-    #org-check-list {
-        border-bottom: 1px solid gray;
-        color: $color_primary100;
-        text-align: left;
-        font-weight: normal;
+    .filter-checklists {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1em 2em;
+    }
 
-        li {
-            list-style: none;
+    .filter-column {
+        display: flex;
+        flex-direction: column;
+        gap: 0.25em;
+
+        label {
+            color: $color_primary50;
         }
     }
 
-    .select2-selection__rendered {
-        width: 260px !important;
+    #org-search {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 0.25em 0.5em;
+    }
+
+    #org-check-list, #tag-check-list {
+        border: 1px solid $color_primary25;
+        border-radius: 4px;
+        padding: 0.25em;
+        font-size: 1em;
+        background: $color_primary0;
+        color: $color_primary100;
+
+        option {
+            padding: 0.1em 0.4em;
+            cursor: pointer;
+            color: $color_primary100;
+        }
+
+        // The gradient stops the browser from swapping in its own focus colour.
+        option:checked {
+            background: $color_primary25 linear-gradient($color_primary25, $color_primary25);
+            color: $color_primary100;
+        }
+    }
+
+    #org-check-list {
+        width: min(26em, 80vw);
+        height: 15em;
+    }
+
+    // Groups are few: list them all. The height is set to fit in getTagNames.
+    #tag-check-list {
+        min-width: 12em;
+        overflow-y: auto;
+    }
+
+    // Selected organizations, listed under the list.
+    #org-selected {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.25em;
+        max-width: min(26em, 80vw);
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    .org-chip {
+        border: 1px solid $color_primary33;
+        border-radius: 4px;
+        background: $color_primary10;
+        color: $color_primary100;
+        padding: 0.1em 0.4em;
+
+        .remove {
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 0.3em;
+            color: $color_primary50;
+        }
+    }
+
+    .filter-checklist-buttons {
+        margin-top: 0.75em;
+
+        button {
+            margin: 0 0.5em 0 0;
+        }
     }
 }

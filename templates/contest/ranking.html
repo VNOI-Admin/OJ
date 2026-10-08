@@ -36,10 +36,6 @@
             height: 2.3em;
         }
 
-        .filter-checklist-button {
-            float: right;
-        }
-
         .replay-blocked {
             cursor: not-allowed;
         }
@@ -147,61 +143,53 @@ $('#show-personal-info-checkbox').click(function () {
                 $("a#frozen_alert").click();
             }
 
-            // hack to keep scroll position after selecting option
-            // https://stackoverflow.com/questions/55045146/select2-do-not-scroll-on-selection
-            // scrollAfterSelect is only available after v4.0.6
             $(function() {
-                $('#org-check-list').select2({
-                    theme: '{{ DMOJ_SELECT2_THEME }}',
-                    multiple: true,
-                    closeOnSelect: false,
-                    placeholder: {{ _('Search organizations')|htmltojs }},
+                // Plain list boxes: a click toggles one option without dropping the
+                // others, so no Ctrl/Cmd-click is needed to pick several.
+                $('#org-check-list, #tag-check-list').on('mousedown', 'option', function (e) {
+                    e.preventDefault();
+                    this.selected = !this.selected;
+                    $(this).parent().trigger('change');
                 });
 
-                var selection = $('#org-check-list').data().select2.selection;
-                var results = $('#org-check-list').data().select2.results;
-
-                $('#org-check-list').on('select2:selecting', function(e) {
-                    let id = e.params.args.data.id;
-                    let val = $(e.target).val().concat([id]);
-                    $(e.target).val(val).trigger('change');
-
-                    if (selection.$search.val() != '') {
-                        selection.$search.val('');
-                        selection.trigger('query', {});
-                    } else {
-                        results.setClasses();
-                    }
-
-                    return false;
-                });
-
-                $('#org-check-list').on('select2:unselecting', function(e) {
-                    let id = e.params.args.data.id;
-                    let val = $(e.target).val().filter(function(v) { return v != id; });
-                    $(e.target).val(val).trigger('change');
-
-                    if (selection.$search.val() != '') {
-                        selection.$search.val('');
-                        selection.trigger('query', {});
-                    } else {
-                        results.setClasses();
-                    }
-
-                    return false;
-                });
-
-                $('#org-check-list').data().select2.toggleDropdown = function () {
-                    selection.$search.trigger('focus');
-
-                    if (!this.isOpen()) {
-                        this.open();
-                    }
+                // Accent-insensitive, so "truong" finds "Trường".
+                function normalizeSearch(text) {
+                    return text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                        .replace(/[đĐ]/g, 'd').toLowerCase().trim();
                 }
+
+                $('#org-search').on('input', function () {
+                    let query = normalizeSearch($(this).val());
+                    $('#org-check-list option').each(function () {
+                        this.hidden = query !== '' && !normalizeSearch(this.value).includes(query);
+                    });
+                });
+
+                // Selected organizations are listed as chips under the list, so they stay
+                // visible while a search hides them. Below, not above, so adding one
+                // doesn't shift the options being clicked.
+                $('#org-check-list').on('change', function () {
+                    let $chips = $('#org-selected').empty();
+                    $(this).find('option:checked').each(function () {
+                        $('<span class="org-chip">')
+                            .append($('<span class="remove" title="{{ _('Remove') }}">&times;</span>').data('value', this.value))
+                            .append(document.createTextNode(this.value))
+                            .appendTo($chips);
+                    });
+                });
+
+                $('#org-selected').on('click', '.remove', function (e) {
+                    // The chip is gone before the click reaches document, where it
+                    // would look like a click outside the popup and close it.
+                    e.stopPropagation();
+                    let value = $(this).data('value');
+                    $('#org-check-list option').filter(function () { return this.value === value; }).prop('selected', false);
+                    $('#org-check-list').trigger('change');
+                });
 
                 $('#filter-by-organization-button').click(function () {
                     $('#org-check-list-wrapper').toggle();
-                    $('#org-check-list').select2('open');
+                    $('#org-search').trigger('focus');
                 });
             });
 
@@ -221,6 +209,36 @@ $('#show-personal-info-checkbox').click(function () {
                 }
             }
 
+            function getSelectedTags() {
+                try {
+                    let selected_tags = JSON.parse(localStorage.getItem(`filter-selected-tags-${contest_key}`));
+                    return Array.isArray(selected_tags) ? selected_tags : [];
+                } catch (e) {
+                    return [];
+                }
+            }
+
+            // ?tags=A,B selects groups so a filtered ranking can be shared as a
+            // link. It overrides whatever this browser had saved.
+            (function () {
+                let tags_param = new URLSearchParams(window.location.search).get('tags');
+                if (tags_param !== null) {
+                    let url_tags = tags_param.split(',').map(x => x.trim()).filter(x => x.length > 0);
+                    localStorage.setItem(`filter-selected-tags-${contest_key}`, JSON.stringify(url_tags));
+                }
+            })();
+
+            function updateTagsInUrl(selected_tags) {
+                let url = new URL(window.location.href);
+                if (selected_tags.length) {
+                    url.searchParams.set('tags', selected_tags.join(','));
+                } else {
+                    url.searchParams.delete('tags');
+                }
+                window.history.replaceState(null, '', url.toString());
+            }
+            updateTagsInUrl(getSelectedTags());
+
             $('#apply-organization-filter').click(function () {
                 // to avoid unnecessary re-filtering
                 if ($('#org-check-list-wrapper').is(':hidden')) {
@@ -230,18 +248,22 @@ $('#show-personal-info-checkbox').click(function () {
 
                 let selected_orgs = $('#org-check-list').val().map(x => x.trim());
                 localStorage.setItem(`filter-selected-orgs-${contest_key}`, JSON.stringify(selected_orgs));
+                let selected_tags = ($('#tag-check-list').val() || []).map(x => x.trim());
+                localStorage.setItem(`filter-selected-tags-${contest_key}`, JSON.stringify(selected_tags));
+                updateTagsInUrl(selected_tags);
                 window.applyRankingFilter();
                 window.applyFavoriteUsers();
             });
 
             $('#clear-organization-filter').click(function () {
                 $('#org-check-list').val(null).trigger('change');
+                $('#tag-check-list').val(null).trigger('change');
                 $('#apply-organization-filter').click();
             });
 
             // hide checklist by clicking outside
             $(document).on('click', function (e) {
-                if (!$(e.target).closest('#org-dropdown-check-list, #filter-by-organization-button, .select2-dropdown, .select2-selection__choice').length) {
+                if (!$(e.target).closest('#org-dropdown-check-list, #filter-by-organization-button').length) {
                     $('#apply-organization-filter').click();
                 }
             });
@@ -268,6 +290,48 @@ $('#show-personal-info-checkbox').click(function () {
                 org_list.forEach(function (org) {
                     org_options.append(new Option(org, org));
                 });
+                $('#org-search').trigger('input');
+            };
+
+            // Labels the best-ranked user of each group, and colors each user's name
+            // cell by group (group-color-N, N = the group's index among the sorted
+            // groups, wrapping around the palette in contest.scss).
+            const GROUP_COLOR_COUNT = 10;
+            window.markGroups = function () {
+                let $tags = $('#ranking-table > tbody > tr[id] span[data-user-tag]');
+                let groups = Array.from(new Set($tags.map(function () { return this.dataset.userTag; }).get())).sort();
+
+                let seen = new Set();
+                $tags.each(function () {
+                    let tag = this.dataset.userTag;
+                    $(this).toggleClass('top-team', !seen.has(tag));
+                    seen.add(tag);
+
+                    let $cell = $(this).closest('td.user-name');
+                    // Keep the disqualified colour visible.
+                    if (!$cell.closest('tr').hasClass('disqualified')) {
+                        $cell.addClass('group-color-' + (groups.indexOf(tag) % GROUP_COLOR_COUNT));
+                    }
+                });
+            };
+
+            window.getTagNames = function () {
+                let tags = new Set();
+                $('#ranking-table > tbody > tr[id] span[data-user-tag]').each(function () {
+                    tags.add(this.dataset.userTag);
+                });
+
+                // Keep selected groups listed even if nobody has them (e.g. from
+                // a ?tags= link), so they can still be seen and removed.
+                getSelectedTags().forEach(tag => tags.add(tag));
+
+                let tag_options = $('#tag-check-list');
+                tag_options.empty();
+                Array.from(tags).sort().forEach(function (tag) {
+                    tag_options.append(new Option(tag, tag));
+                });
+                tag_options.attr('size', Math.max(tags.size, 2));
+                $('#tag-check-list-wrapper').toggle(tags.size > 0);
             };
 
             function extractCurrentAbsRank(row_text) {
@@ -297,8 +361,9 @@ $('#show-personal-info-checkbox').click(function () {
                 let counter = 0;
                 let previous_abs_rank = -1;
                 let selected_orgs = getSelectedOrgs();
+                let selected_tags = getSelectedTags();
 
-                if (!selected_orgs.length) {
+                if (!selected_orgs.length && !selected_tags.length) {
                     window.clearRankingFilter();
                     return;
                 }
@@ -310,7 +375,11 @@ $('#show-personal-info-checkbox').click(function () {
                     let org_anchor = row.find("div > div > .personal-info > .organization > a")[0];
                     let org = org_anchor ? org_anchor.dataset.org : 'Other';
 
-                    if (!selected_orgs.includes(org.trim())) {
+                    let tag_span = row.find('span[data-user-tag]')[0];
+                    let tag = tag_span ? tag_span.dataset.userTag : null;
+
+                    if ((selected_orgs.length && !selected_orgs.includes(org.trim())) ||
+                        (selected_tags.length && !selected_tags.includes(tag))) {
                         row.hide();
                         return;
                     }
@@ -334,6 +403,7 @@ $('#show-personal-info-checkbox').click(function () {
 
             window.restoreChecklistOptions = function () {
                 $('#org-check-list').val(getSelectedOrgs()).trigger('change');
+                $('#tag-check-list').val(getSelectedTags()).trigger('change');
             };
 
             function submitDisqualifyForm($a) {
@@ -423,8 +493,10 @@ $('#show-personal-info-checkbox').click(function () {
                 {% if tab == 'ranking' %}
                     if (isNewDataFromBackend) {
                         window.getOrganizationCodes();
+                        window.getTagNames();
                         window.restoreChecklistOptions();
                     }
+                    window.markGroups();
                     window.applyRankingFilter();
                 {% endif %}
                 window.applyFavoriteUsers();
@@ -527,11 +599,22 @@ $('#show-personal-info-checkbox').click(function () {
                 </button>
 
                 <div id="org-check-list-wrapper">
-                    <div>
-                        <button id="apply-organization-filter" class="inline-button filter-checklist-button">{{ _('Apply') }}</button>
-                        <button id="clear-organization-filter" class="inline-button filter-checklist-button">{{ _('Clear') }}</button>
+                    <div class="filter-checklists">
+                        <div class="filter-column">
+                            <label for="org-check-list">{{ _('Organizations') }}</label>
+                            <input id="org-search" type="search" placeholder="{{ _('Search organizations') }}" autocomplete="off">
+                            <select id="org-check-list" name="orgs[]" multiple="multiple"></select>
+                            <div id="org-selected"></div>
+                        </div>
+                        <div id="tag-check-list-wrapper" class="filter-column" style="display: none;">
+                            <label for="tag-check-list">{{ _('Groups') }}</label>
+                            <select id="tag-check-list" name="tags[]" multiple="multiple"></select>
+                        </div>
                     </div>
-                    <select id="org-check-list" name="orgs[]" multiple="multiple"></select>
+                    <div class="filter-checklist-buttons">
+                        <button id="apply-organization-filter" class="inline-button">{{ _('Apply') }}</button>
+                        <button id="clear-organization-filter" class="inline-button">{{ _('Clear') }}</button>
+                    </div>
                 </div>
             </div>
         {% endif %}
