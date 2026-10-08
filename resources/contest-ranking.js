@@ -439,7 +439,9 @@
         var inner = isGhost
             ? '<span style="display: inline-block;">' + name + '</span>'
             : '<a href="' + escapeHtml(u.url) + '" style="display: inline-block;">' + name + '</a>';
-        var html = '<span class="' + escapeHtml(spanClass) + '">' + inner;
+        // ranking.html reads data-user-tag for the group filter.
+        var tagAttr = u.group ? ' data-user-tag="' + escapeHtml(u.group) + '"' : '';
+        var html = '<span class="' + escapeHtml(spanClass) + '"' + tagAttr + '>' + inner;
         if (showBadge) html += buildBadge(u, 'style="height: 1em; width: auto; margin-left: 0.25em;"');
         html += '</span>';
         return html;
