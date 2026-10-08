@@ -155,6 +155,24 @@ $(function () {
         $nav_list.removeClass('show-list');
     });
 
+    var $nav = $('#navigation');
+    var $userLinks = $('#user-links');
+    function updateNavOverflow() {
+        if (window.innerWidth <= 760) {
+            $nav.removeClass('nav-overflow');
+            return;
+        }
+        // Strip the class first so items are visible and measurable
+        $nav.removeClass('nav-overflow');
+        var lastItem = $nav_list[0].querySelector(':scope > li:last-child');
+        if (!lastItem) return;
+        var overflows = lastItem.getBoundingClientRect().right >= $userLinks[0].getBoundingClientRect().left - 8;
+        $nav.toggleClass('nav-overflow', overflows);
+        if (!overflows) $nav_list.removeClass('show-list');
+    }
+    updateNavOverflow();
+    $(window).on('resize', updateNavOverflow);
+
     $.ajaxSetup({
         beforeSend: function (xhr, settings) {
             if (!(/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type)) && !this.crossDomain)

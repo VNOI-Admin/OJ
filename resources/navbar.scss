@@ -206,9 +206,11 @@ nav {
     display: none;
 }
 
-@media (max-width: 760px) {
-    #navigation {
-        height: 36px;
+@mixin _nav-collapsed {
+    height: 36px;
+
+    .hide-on-small {
+        display: none;
     }
 
     #navicon {
@@ -276,6 +278,21 @@ nav {
 
     #user-links > ul > li > a > span {
         padding: 6px 8px;
+    }
+}
+
+@media (max-width: 760px) {
+    #navigation {
+        @include _nav-collapsed;
+    }
+}
+
+nav.nav-overflow {
+    @include _nav-collapsed;
+
+    // beats the `display: none !important` from @media not all and (max-width: 760px)
+    #nav-list li > ul.show-list {
+        display: block !important;
     }
 }
 
