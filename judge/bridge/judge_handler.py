@@ -56,6 +56,7 @@ class JudgeHandler(ZlibPacketHandler):
             'submission-terminated': self.on_submission_terminated,
             'submission-acknowledged': self.on_submission_acknowledged,
             'ping-response': self.on_ping_response,
+            'supported-problems': self.ignore_packet,
             'executors': self.on_executors,
             'handshake': self.on_handshake,
         }
@@ -609,6 +610,9 @@ class JudgeHandler(ZlibPacketHandler):
         self.time_delta = sum(self._time_delta) / len(self._time_delta)
         self.load = packet['load']
         self._update_ping()
+
+    def ignore_packet(self, packet):
+        pass
 
     def _free_self(self, packet):
         self.judges.on_judge_free(self, packet['submission-id'])
