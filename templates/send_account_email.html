@@ -1,0 +1,18 @@
+<div style="display:block;margin: 0 2px;padding: 1em;border: 3px solid #2980B9;background-color: #f8f8f8;border-radius: 6px;font-size: .95em;color: #444;">
+
+Đây là {{subject}} <br>
+
+<b>Hệ thống thi: <a href="{{domain}}">{{domain}}</a></b> <br>
+
+
+Tên trường: {{teamuni}} <br>
+Tên đội: {{teamname}} <br><br>
+Username: {{teamusername}} <br>
+Password: {{teampassword}} <br>
+
+<br>
+
+{% if is_practice %}
+<b>Đây là tài khoản thi thử, và sẽ không được sử dụng trong cuộc thi chính thức</b> <br>
+{% endif %}
+</div>
