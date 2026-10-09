@@ -101,15 +101,18 @@
                 window.initContestRanking(window.RANKING_DATA);
             }
 
-$('#show-personal-info-checkbox').click(function () {
-                $('.personal-info').toggle();
-                localStorage.setItem('show-personal-info', $('.personal-info').is(':visible') ? 'true' : 'false');
+            window.applyPersonalInfoVisibility = function () {
+                let show = localStorage.getItem('show-personal-info') !== 'false';
+                $('.personal-info').toggle(show);
+                $('#show-personal-info-checkbox').prop('checked', show);
+            };
+
+            $('#show-personal-info-checkbox').on('change', function () {
+                localStorage.setItem('show-personal-info', this.checked ? 'true' : 'false');
+                window.applyPersonalInfoVisibility();
             });
 
-            if (localStorage.getItem('show-personal-info') == 'true' || localStorage.getItem('show-personal-info') === null) {
-                $('.personal-info').show();
-                $('#show-personal-info-checkbox').prop('checked', true);
-            }
+            window.applyPersonalInfoVisibility();
 
             {% if show_virtual %}
                 $('#show-virtual-participations-checkbox').prop('checked', true);
@@ -485,10 +488,7 @@ $('#show-personal-info-checkbox').click(function () {
             });
 
             window.onFinishRankingRender = function (isNewDataFromBackend = false) {
-                if (localStorage.getItem('show-personal-info') == 'true') {
-                    $('.personal-info').show();
-                    $('#show-personal-info-checkbox').prop('checked', true);
-                }
+                window.applyPersonalInfoVisibility();
                 window.enableAdminOperations();
                 {% if tab == 'ranking' %}
                     if (isNewDataFromBackend) {
