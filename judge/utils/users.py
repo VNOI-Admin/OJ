@@ -1,9 +1,13 @@
+import csv
+import io
 import re
 import secrets
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core.mail import EmailMessage
 from django.db.models import Count
+from django.template.loader import render_to_string
 from django.utils.translation import gettext as _
 
 from judge.models import Language, Organization, Profile
@@ -134,3 +138,74 @@ def validate_user_rows(rows):
             return message % ', '.join(duplicates)
 
     return None
+
+
+ACCOUNT_EMAIL_SUBJECT = 'ICPC Contest'
+
+
+def read_account_rows(file, name):
+    """Read a .csv or .xlsx (first sheet) binary file into a list of dicts keyed by the header row."""
+    if not name.lower().endswith('.xlsx'):
+        return list(csv.DictReader(io.TextIOWrapper(file, encoding='utf-8-sig', newline='')))
+
+    try:
+        import openpyxl
+    except ImportError:
+        raise ValueError('Reading .xlsx files requires openpyxl: pip install openpyxl')
+    sheet = openpyxl.load_workbook(file, read_only=True, data_only=True).active
+    rows = [['' if cell is None else str(cell).strip() for cell in row] for row in sheet.iter_rows(values_only=True)]
+    if not rows:
+        return []
+    return [dict(zip(rows[0], row)) for row in rows[1:] if any(row)]
+
+
+def check_account_rows(rows):
+    """Check rows (dicts with username, password) can be emailed.
+
+    Returns (profiles by username, list of (username, error message)).
+    """
+    if not rows:
+        return {}, [('', 'No rows found')]
+    missing = {'username', 'password'} - rows[0].keys()
+    if missing:
+        return {}, [('', f'Missing column(s): {", ".join(sorted(missing))}')]
+
+    usernames = [row['username'] for row in rows]
+    profiles = {
+        p.user.username: p
+        for p in Profile.objects.filter(user__username__in=usernames)
+                                .select_related('user').prefetch_related('organizations')
+    }
+
+    errors = []
+    seen = set()
+    for username in usernames:
+        if username in seen:
+            errors.append((username, 'appears more than once'))
+        seen.add(username)
+        profile = profiles.get(username)
+        if profile is None:
+            errors.append((username, 'user not found'))
+            continue
+        org_count = len(profile.organizations.all())
+        if org_count != 1:
+            errors.append((username, f'belongs to {org_count} organizations (expected exactly 1)'))
+        if not profile.user.email:
+            errors.append((username, 'no email address'))
+    return profiles, errors
+
+
+def build_account_email(row, profile, subject, is_practice, domain):
+    """Returns an unsent EmailMessage with the account credentials in row."""
+    body = render_to_string('send_account_email.html', {
+        'subject': subject,
+        'domain': domain,
+        'teamuni': profile.organizations.all()[0].name,
+        'teamname': profile.user.first_name,
+        'teamusername': row['username'],
+        'teampassword': row['password'],
+        'is_practice': is_practice,
+    })
+    msg = EmailMessage(subject=f'{subject} - {profile.user.first_name}', body=body, to=[profile.user.email])
+    msg.content_subtype = 'html'
+    return msg

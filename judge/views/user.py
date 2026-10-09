@@ -14,6 +14,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.auth.models import Permission, User
 from django.contrib.auth.views import LoginView, PasswordChangeView, PasswordResetView, redirect_to_login
 from django.contrib.contenttypes.models import ContentType
+from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied, ValidationError
 from django.db.models import Count, F, FilteredRelation, Max, Min, Prefetch, Q
@@ -28,6 +29,7 @@ from django.utils import timezone
 from django.utils.decorators import method_decorator
 from django.utils.formats import date_format
 from django.utils.functional import cached_property
+from django.utils.html import escape
 from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _, gettext_lazy
 from django.views.decorators.http import require_POST
@@ -41,7 +43,7 @@ from judge.models import Comment
 from judge.performance_points import get_pp_breakdown
 from judge.ratings import rating_class, rating_progress
 from judge.tasks import prepare_user_data
-from judge.tasks.user import bulk_create_users
+from judge.tasks.user import bulk_create_users, send_account_emails
 from judge.utils.celery import task_status_by_id, task_status_url_by_id
 from judge.utils.infinite_paginator import InfinitePaginationMixin
 from judge.utils.problems import contest_completed_ids, user_completed_ids
@@ -49,13 +51,14 @@ from judge.utils.pwned import PwnedPasswordsValidator
 from judge.utils.ranker import ranker
 from judge.utils.subscription import Subscription
 from judge.utils.unicode import utf8text
+from judge.utils.users import ACCOUNT_EMAIL_SUBJECT, build_account_email, check_account_rows, read_account_rows
 from judge.utils.views import DiggPaginatorMixin, QueryStringSortMixin, SingleObjectFormView, TitleMixin, \
     add_file_response, generic_message
 from judge.views.blog import PostListBase
 from .contests import ContestRanking
 
 __all__ = ['UserPage', 'UserAboutPage', 'UserProblemsPage', 'UserCommentPage', 'UserDownloadData', 'UserPrepareData',
-           'users', 'edit_profile', 'BulkUserCreate', 'BulkUserResult']
+           'users', 'edit_profile', 'BulkUserCreate', 'BulkUserResult', 'SendAccount']
 
 
 def remap_keys(iterable, mapping):
@@ -809,3 +812,108 @@ class BulkUserResult(LoginRequiredMixin, TitleMixin, TemplateView):
             'username': _('Username'), 'fullname': _('Full name'), 'password': _('Password'), 'email': _('Email'),
         }
         return context
+
+
+class SendAccount(LoginRequiredMixin, TitleMixin, TemplateView):
+    """Upload a CSV/XLSX of username,password, review the rows and a preview email, then send."""
+    template_name = 'user/send-account.html'
+
+    def get_title(self):
+        return _('Send account emails')
+
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied(_('Only superusers can send account emails'))
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.setdefault('subject', self.request.session.get('send_account_subject', ACCOUNT_EMAIL_SUBJECT))
+        context.setdefault('is_practice', True)
+        task_id = self.request.GET.get('task')
+        if task_id and 'rows' not in context:
+            status = task_status_by_id(task_id)
+            context['task_status'] = status.status
+            context['task_result'] = status.result if status.successful() else None
+            context['task_error'] = str(status.result) if status.failed() else None
+        return context
+
+    @staticmethod
+    def pick_column(headers, chosen, key, label):
+        """The chosen header if valid, else a header that looks like key (also matching its translated label)."""
+        if chosen in headers:
+            return chosen
+        names = {key, label.lower(), _(label).lower()}
+        return next((h for h in headers if h.strip().lower() in names), '')
+
+    def post(self, request, *args, **kwargs):
+        subject = request.POST.get('subject', '').strip() or ACCOUNT_EMAIL_SUBJECT
+        request.session['send_account_subject'] = subject
+        is_practice = 'is_practice' in request.POST
+        context = {'subject': subject, 'is_practice': is_practice}
+
+        if 'send' in request.POST:
+            try:
+                rows = json.loads(request.POST.get('rows_json', ''))
+            except ValueError:
+                rows = []
+        else:
+            # The raw sheet round-trips through the page as raw_json, so columns can be re-picked without
+            # uploading again (e.g. sheets from the old result page have translated headers).
+            if 'raw_json' in request.POST:
+                try:
+                    raw = json.loads(request.POST['raw_json'])
+                except ValueError:
+                    raw = []
+            else:
+                upload = request.FILES.get('file')
+                if upload is None:
+                    return self.render_to_response(
+                        self.get_context_data(file_error=_('Please choose a file.'), **context))
+                try:
+                    raw = read_account_rows(upload, upload.name)
+                except Exception as e:
+                    return self.render_to_response(self.get_context_data(
+                        file_error=_('Could not read the file: %s') % e, **context))
+            if not raw:
+                return self.render_to_response(self.get_context_data(file_error=_('No rows found.'), **context))
+
+            headers = list(raw[0])
+            username_col = self.pick_column(headers, request.POST.get('username_col'), 'username', 'Username')
+            password_col = self.pick_column(headers, request.POST.get('password_col'), 'password', 'Password')
+            context.update(headers=headers, raw_json=json.dumps(raw),
+                           username_col=username_col, password_col=password_col)
+            if not username_col or not password_col:
+                return self.render_to_response(self.get_context_data(**context))
+            rows = [{'username': str(row.get(username_col, '')).strip(), 'password': str(row.get(password_col, ''))}
+                    for row in raw]
+
+        profiles, errors = check_account_rows(rows)
+
+        if 'send' in request.POST and not errors:
+            status = send_account_emails.delay(rows, subject, is_practice)
+            return HttpResponseRedirect(task_status_url_by_id(
+                status.id, message=_('Sending account emails...'),
+                redirect=reverse('send_account') + '?task=' + status.id,
+            ))
+
+        row_errors = {}
+        for username, error in errors:
+            row_errors.setdefault(username, []).append(error)
+        if not row_errors.get('') and rows:
+            domain = Site.objects.first().domain
+            first_valid = next((row for row in rows if row['username'] not in row_errors), None)
+            if first_valid is not None:
+                context['preview'] = build_account_email(
+                    first_valid, profiles[first_valid['username']], subject, is_practice, domain)
+                # The body is marked safe, so it must be escaped here or its quotes end the srcdoc attribute.
+                context['preview_srcdoc'] = escape(context['preview'].body)
+            context['rows'] = [{
+                'username': row['username'],
+                'password': row['password'],
+                'profile': profiles.get(row['username']),
+                'errors': row_errors.get(row['username'], []),
+            } for row in rows]
+            context['rows_json'] = json.dumps(rows)
+        context['errors'] = errors
+        return self.render_to_response(self.get_context_data(**context))

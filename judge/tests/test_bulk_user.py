@@ -1,14 +1,21 @@
 import csv
+import html
+import json
 import os
+import re
+from unittest import mock
 
 from django.conf import settings
 from django.contrib.auth.models import User
+from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
+from django.utils.translation import gettext as _
 
 from judge.models import Language, Organization, Profile
 from judge.models.profile import Badge
-from judge.tasks.user import bulk_create_users
+from judge.tasks.user import bulk_create_users, send_account_emails
 from judge.utils.users import validate_user_rows
 
 
@@ -102,3 +109,93 @@ class BulkCreateUsersTaskTest(TestCase):
         self.addCleanup(os.remove, output_file)
         with open(output_file, newline='') as f:
             self.assertEqual(csv.DictReader(f).fieldnames, ['username', 'fullname', 'password'])
+
+
+class SendAccountViewTest(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        language = Language.objects.get_or_create(key=settings.DEFAULT_USER_LANGUAGE, defaults={'name': 'C++20'})[0]
+        cls.admin = User.objects.create_superuser('root', password='root')
+        Profile.objects.create(user=cls.admin, language=language)
+        org = Organization.objects.create(name='HCMUS', slug='hcmus', short_name='hcmus')
+        for username, email in (('team1', 't1@example.com'), ('team2', '')):
+            user = User.objects.create(username=username, first_name=username.upper(), email=email)
+            Profile.objects.create(user=user, language=language).organizations.set([org])
+
+    def setUp(self):
+        self.client.force_login(self.admin)
+
+    def upload(self, content, name='accounts.csv'):
+        return self.client.post(reverse('send_account'), {
+            'file': SimpleUploadedFile(name, content.encode('utf-8-sig')), 'subject': 'VNOI Cup', 'is_practice': 'on',
+        })
+
+    def test_page_loads(self):
+        response = self.client.get(reverse('send_account'))
+        self.assertContains(response, 'name="file"')
+        self.assertContains(response, 'value="ICPC Contest"')
+        self.assertContains(response, '<input type="checkbox" name="is_practice" checked>', html=True)
+
+    def test_remembers_contest_name(self):
+        self.upload('username,password\nteam1,pw1\n')
+        self.assertContains(self.client.get(reverse('send_account')), 'value="VNOI Cup"')
+
+    def test_superuser_only(self):
+        self.client.force_login(User.objects.get(username='team1'))
+        self.assertEqual(self.client.get(reverse('send_account')).status_code, 403)
+
+    def test_review_shows_problems_and_blocks_send(self):
+        response = self.upload('username,password\nteam1,pw1\nteam2,pw2\nghost,pw3\n')
+        self.assertContains(response, 'no email address')
+        self.assertContains(response, 'user not found')
+        self.assertNotContains(response, '<input type="hidden" name="send" value="1">', html=True)
+
+    def test_pick_columns(self):
+        # Headers that match nothing: no review until the columns are picked.
+        response = self.upload('STT,Tài khoản,MK\n1,team1,pw1\n')
+        self.assertContains(response, 'Choose which columns hold the username and password.')
+        self.assertContains(response, '<option value="Tài khoản">Tài khoản</option>', html=True)
+        self.assertNotContains(response, '<input type="hidden" name="send" value="1">', html=True)
+
+        response = self.client.post(reverse('send_account'), {
+            'raw_json': response.context['raw_json'], 'subject': 'VNOI Cup',
+            'username_col': 'Tài khoản', 'password_col': 'MK',
+        })
+        self.assertContains(response, '<input type="hidden" name="send" value="1">', html=True)
+        self.assertEqual(json.loads(response.context['rows_json']), [{'username': 'team1', 'password': 'pw1'}])
+
+    def test_guess_columns(self):
+        # English labels, and the translated labels the old result page's Excel used.
+        for header in ('Username,Password', '%s,%s' % (_('Username'), _('Password'))):
+            response = self.upload(f'{header}\nteam1,pw1\n')
+            self.assertEqual(response.context['username_col'], header.split(',')[0])
+            self.assertContains(response, '<input type="hidden" name="send" value="1">', html=True)
+
+    def test_review_then_send(self):
+        response = self.upload('username,password\nteam1,pw1\n')
+        self.assertContains(response, '<input type="hidden" name="send" value="1">', html=True)
+        self.assertContains(response, 'VNOI Cup - TEAM1')  # preview subject
+        self.assertContains(response, 'srcdoc="&lt;div style=&quot;')  # preview body escaped into the attribute
+        self.assertIn('pw1', response.context['preview'].body)
+        # Post only the send form's own inputs, as a browser does (button names are not sent, see common.js).
+        send_form = re.search(r'<form[^>]*id="send-account-send".*?</form>', response.content.decode(), re.S).group()
+        data = {html.unescape(name): html.unescape(value)
+                for name, value in re.findall(r'<input type="hidden" name="([^"]+)" value="([^"]*)"', send_form)}
+
+        with mock.patch('judge.views.user.send_account_emails.delay',
+                        side_effect=lambda *args: send_account_emails.apply(args=args)):
+            response = self.client.post(reverse('send_account'), data)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, ['t1@example.com'])
+        self.assertEqual(mail.outbox[0].subject, 'VNOI Cup - TEAM1')
+        self.assertIn('pw1', mail.outbox[0].body)
+        self.assertIn('thi thử', mail.outbox[0].body)  # practice notice
+        self.assertIn('href="https://', mail.outbox[0].body)
+
+    def test_send_rechecks_rows(self):
+        with mock.patch('judge.views.user.send_account_emails.delay') as delay:
+            self.client.post(reverse('send_account'), {
+                'send': '', 'rows_json': '[{"username": "team2", "password": "x"}]', 'subject': 'VNOI Cup',
+            })
+        delay.assert_not_called()

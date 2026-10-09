@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+
+{% block media %}
+    <style>
+        .send-account-form { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; margin-bottom: 15px; }
+        .send-account-form label { display: flex; flex-direction: column; gap: 4px; }
+        .send-account-form label.inline { flex-direction: row; align-items: center; }
+        .send-account-form .button { margin: 0; }
+        #send-account-rows .row-errors { margin: 0; padding-left: 1.2em; }
+        #send-account-preview { width: 100%; height: 320px; border: 1px solid #ccc; border-radius: 4px; background: #fff; }
+    </style>
+{% endblock %}
+
+{% block js_media %}
+    <script type="text/javascript">
+        document.addEventListener('DOMContentLoaded', function () {
+            var form = document.getElementById('send-account-send');
+            if (form) form.addEventListener('submit', function (e) {
+                if (!confirm(form.dataset.confirm)) e.preventDefault();
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    {% if task_result %}
+        <div class="alert alert-success">{{ _('Emails sent:') }} {{ task_result.sent }}</div>
+        {% if task_result.failed %}
+            <div class="alert alert-danger">
+                {{ _('Failed to send:') }}
+                <ul>{% for failure in task_result.failed %}<li>{{ failure }}</li>{% endfor %}</ul>
+            </div>
+        {% endif %}
+    {% elif task_error %}
+        <div class="alert alert-danger">{{ _('Sending failed:') }} {{ task_error }}</div>
+    {% elif task_status %}
+        <div class="alert alert-warning">{{ _('Sending status:') }} {{ task_status }}</div>
+    {% endif %}
+
+    <form method="post" enctype="multipart/form-data" class="send-account-form">
+        {% csrf_token %}
+        <label>{{ _('CSV or Excel file (columns: username, password)') }}
+            <input type="file" name="file" accept=".csv,.xlsx" required>
+        </label>
+        <label>{{ _('Contest name') }}
+            <input type="text" name="subject" value="{{ subject }}" required>
+        </label>
+        <label class="inline">
+            <input type="checkbox" name="is_practice" {% if is_practice %}checked{% endif %}>
+            {{ _('Practice account') }}
+        </label>
+        <button type="submit" class="button">{{ _('Review') }}</button>
+    </form>
+
+    {% if headers %}
+        {# Pick the columns, e.g. for sheets from the old result page that have translated headers. #}
+        <form method="post" class="send-account-form">
+            {% csrf_token %}
+            <input type="hidden" name="raw_json" value="{{ raw_json }}">
+            <input type="hidden" name="subject" value="{{ subject }}">
+            {% if is_practice %}<input type="hidden" name="is_practice" value="on">{% endif %}
+            {% for name, label, chosen in (('username_col', _('Username column'), username_col),
+                                            ('password_col', _('Password column'), password_col)) %}
+                <label>{{ label }}
+                    <select name="{{ name }}" onchange="this.form.submit()">
+                        <option value="">-</option>
+                        {% for header in headers %}
+                            <option value="{{ header }}" {% if header == chosen %}selected{% endif %}>{{ header }}</option>
+                        {% endfor %}
+                    </select>
+                </label>
+            {% endfor %}
+            <button type="submit" class="button">{{ _('Apply') }}</button>
+        </form>
+        {% if not username_col or not password_col %}
+            <div class="alert alert-warning">{{ _('Choose which columns hold the username and password.') }}</div>
+        {% endif %}
+    {% endif %}
+
+    {% if file_error %}
+        <div class="alert alert-danger">{{ file_error }}</div>
+    {% endif %}
+    {% for username, error in errors if not username %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endfor %}
+
+    {% if rows %}
+        {% set problem_count = rows|selectattr('errors')|list|length %}
+        <h3>{{ _('Review') }}</h3>
+        <p>
+            {{ _('Contest name') }}: <b>{{ subject }}</b>
+            {% if is_practice %}({{ _('Practice account') }}){% endif %}
+            &middot; {{ _('%(count)d recipient(s)', count=rows|length) }}
+        </p>
+        {% if problem_count %}
+            <div class="alert alert-danger">
+                {{ _('%(count)d row(s) have problems. Fix the file and upload it again.', count=problem_count) }}
+            </div>
+        {% endif %}
+
+        <table id="send-account-rows" class="table striped">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{{ _('Username') }}</th>
+                    <th>{{ _('Team name') }}</th>
+                    <th>{{ _('Organization') }}</th>
+                    <th>{{ _('Email') }}</th>
+                    <th>{{ _('Password') }}</th>
+                    <th>{{ _('Status') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ row.username }}</td>
+                        {% if row.profile %}
+                            <td>{{ row.profile.user.first_name }}</td>
+                            <td>{{ row.profile.organizations.all()|join(', ', attribute='name') }}</td>
+                            <td>{{ row.profile.user.email }}</td>
+                        {% else %}
+                            <td></td><td></td><td></td>
+                        {% endif %}
+                        <td>{{ row.password }}</td>
+                        <td>
+                            {% if row.errors %}
+                                <i class="fa fa-times"></i>
+                                <ul class="row-errors">{% for error in row.errors %}<li>{{ error }}</li>{% endfor %}</ul>
+                            {% else %}
+                                <i class="fa fa-check"></i> {{ _('OK') }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if preview %}
+            <h3>{{ _('Email preview') }}</h3>
+            <p>{{ _('To') }}: {{ preview.to[0] }}<br>{{ _('Subject') }}: {{ preview.subject }}</p>
+            <iframe id="send-account-preview" sandbox srcdoc="{{ preview_srcdoc }}"></iframe>
+        {% endif %}
+
+        {% if not problem_count %}
+            <form method="post" id="send-account-send"
+                  data-confirm="{{ _('Send %(count)d email(s)?', count=rows|length) }}">
+                {% csrf_token %}
+                {# Not on the button: common.js disables submit buttons on submit, which drops their name. #}
+                <input type="hidden" name="send" value="1">
+                <input type="hidden" name="rows_json" value="{{ rows_json }}">
+                <input type="hidden" name="subject" value="{{ subject }}">
+                {% if is_practice %}<input type="hidden" name="is_practice" value="on">{% endif %}
+                <button type="submit" class="button">
+                    {{ _('Send %(count)d email(s)', count=rows|length) }}
+                </button>
+            </form>
+        {% endif %}
+    {% endif %}
+{% endblock %}

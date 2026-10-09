@@ -8,6 +8,7 @@ import zipfile
 
 from celery import shared_task
 from django.conf import settings
+from django.contrib.sites.models import Site
 from django.core.cache import cache
 from django.utils.translation import gettext as _
 
@@ -15,9 +16,10 @@ from judge.models import Comment, Problem, Submission
 from judge.utils.celery import Progress
 from judge.utils.raw_sql import use_straight_join
 from judge.utils.unicode import utf8bytes
-from judge.utils.users import add_user, fetch_org_logo_mapping, generate_password, get_badge, get_org, validate_user_rows
+from judge.utils.users import add_user, build_account_email, check_account_rows, fetch_org_logo_mapping, \
+    generate_password, get_badge, get_org, validate_user_rows
 
-__all__ = ('prepare_user_data', 'bulk_create_users')
+__all__ = ('prepare_user_data', 'bulk_create_users', 'send_account_emails')
 rewildcard = re.compile(r'\*+')
 
 
@@ -189,3 +191,22 @@ def bulk_create_users(self, rows, admin_user_id):
         'created_count': len(created_users),
         'output_file': output_path,
     }
+
+
+@shared_task(bind=True)
+def send_account_emails(self, rows, subject, is_practice):
+    """Email each row's username/password to its user. Failed sends are reported, not retried."""
+    profiles, errors = check_account_rows(rows)
+    if errors:
+        raise Exception('; '.join(f'{username}: {error}' if username else error for username, error in errors))
+
+    domain = Site.objects.first().domain
+    failed = []
+    with Progress(self, len(rows), stage=_('Sending emails')) as p:
+        for row in rows:
+            try:
+                build_account_email(row, profiles[row['username']], subject, is_practice, domain).send()
+            except Exception as e:
+                failed.append(f"{row['username']}: {e}")
+            p.did(1)
+    return {'sent': len(rows) - len(failed), 'failed': failed}
