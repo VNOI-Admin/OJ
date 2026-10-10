@@ -279,6 +279,12 @@
                 handle_table_reorder();
             }
 
+            function update_batch_dependencies_column() {
+                // Only show the batch dependencies column when there is at least one batch
+                $table.find('.batch-dependencies-column')
+                    .toggle($table.find('tbody:first').find('tr[data-type=S]').length > 0);
+            }
+
             $table.on('add-row', function (e, $tr) {
                 var $order = $tr.find('input').filter('[id$=order]').attr('type', 'hidden').val(++order);
                 $order.after($('<span>', {'class': 'order'}).text($order.val()))
@@ -287,6 +293,7 @@
                 var $opts = $tr.find('input').slice(2, 4);
                 var $files = $tr.find('select').slice(1, 3);
                 var $checker = $files.end().last();
+                var $batch_dependencies = $tr.find('input[id$=batch_dependencies]');
                 $tr.find('select[id$=type]').change(function () {
                     var $this = $(this), val = $this.val(), disabled;
                     switch (val) {
@@ -296,17 +303,20 @@
                             $opts.toggle(val == 'S');
                             $files.siblings('.select2').hide();
                             $checker.toggle(val == 'S');
+                            $batch_dependencies.toggle(val == 'S');
                             break;
                         default:
                             $opts.toggle(val == 'C');
                             $files.siblings('.select2').toggle(val == 'C');
                             $checker.toggle(val == 'C');
+                            $batch_dependencies.hide();
                             var $prevs = $tr.prevAll('tr[data-type=S], tr[data-type=E]');
                             disabled = $prevs.length && $prevs.get(0).getAttribute('data-type') == 'S';
                             $tr.find('input[id$=points], input[id$=pretest]').toggle(val == 'C' && !disabled);
                     }
                     $tr.attr('data-type', val).nextUntil('tr[data-type=S], tr[data-type=E], tr[data-type=""]')
                         .find('input[id$=points], input[id$=pretest]').toggle(!disabled);
+                    update_batch_dependencies_column();
                 }).change();
 
                 var tooltip_classes = 'tooltipped tooltipped-s';
@@ -343,6 +353,7 @@
             }).find('tbody:first').find('tr').each(function () {
                 $table.trigger('add-row', [$(this)]);
             });
+            update_batch_dependencies_column();
 
             $('form').submit(function () {
                 $table.find('tbody:first').find('tr').each(function () {
@@ -1128,6 +1139,7 @@
                 {% if request.user.is_staff %}
                 <th>{{ _('Pretest?') }}</th>
                 {% endif %}
+                <th class="batch-dependencies-column">{{ _('Batch dependencies') }}</th>
                 <!-- <th class="generator-args">{{ _('Generator args') }}</th> -->
                 {% if cases_formset.can_delete %}
                     <th>{{ _('Delete?') }}
@@ -1164,6 +1176,7 @@
                     {% if request.user.is_staff %}
                         <td>{{ form.is_pretest.errors }}{{ form.is_pretest }}</td>
                     {% endif %}
+                    <td class="batch-dependencies-column">{{ form.batch_dependencies.errors }}{{ form.batch_dependencies }}</td>
                     <!-- <td class="generator-args">{{ form.generator_args.errors }}{{ form.generator_args }}
                         <a href="javascript:void(0)" class="edit-generator-args">
                             <i class="fa fa-pencil"></i>
