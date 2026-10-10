@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions import ValidationError
 from django.forms import BaseModelFormSet, CharField, ChoiceField, HiddenInput, ModelForm, NumberInput, Select, \
-    formset_factory
+    TextInput, formset_factory
 from django.http import Http404, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
@@ -101,11 +101,12 @@ class ProblemCaseForm(ModelForm):
         model = ProblemTestCase
         fields = ('order', 'type', 'input_file', 'output_file', 'points',
                   'is_pretest',  # 'output_limit', 'output_prefix',
-                  'checker', 'checker_args', 'generator_args')
+                  'checker', 'checker_args', 'generator_args', 'batch_dependencies')
         widgets = {
             'generator_args': HiddenInput,
             'type': Select(attrs={'style': 'width: 100%'}),
             'points': NumberInput(attrs={'style': 'width: 4em'}),
+            'batch_dependencies': TextInput(attrs={'style': 'width: 8em'}),
             # 'output_prefix': NumberInput(attrs={'style': 'width: 4.5em'}),
             # 'output_limit': NumberInput(attrs={'style': 'width: 6em'}),
             'checker_args': HiddenInput,
