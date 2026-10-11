@@ -29,7 +29,7 @@ class Command(BaseCommand):
 
             header = ['external id', 'rank', 'prize', 'solved', 'penalty', 'last AC']
             if options['extra']:
-                header = ['team name', 'uni name'] + header
+                header = ['team name', 'uni name', 'group'] + header
 
             result_writer.writerow(header)
             for rank, p in enumerate(participations, start=1):
@@ -37,7 +37,7 @@ class Command(BaseCommand):
 
                 row = [user.notes, rank, '', int(p.score), p.cumtime, int(p.tiebreaker)]
                 if options['extra']:
-                    row = [user.display_name, user.organization.name] + row
+                    row = [user.display_name, user.organization.name, user.group] + row
 
                 result_writer.writerow(row)
 
