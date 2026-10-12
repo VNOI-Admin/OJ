@@ -59,5 +59,7 @@ jobs:
           node-version: '20.x'
       - name: Install npm packages
         run: npm ci
+      - name: Test client-side markdown
+        run: npm run test:markdown
       - name: Build style.css
         run: ./make_style.sh

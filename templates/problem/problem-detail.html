@@ -9,8 +9,8 @@
     <object id="pdfContainer" data="{{ pdf_url }}" type="application/pdf"></object>
 {% endif %}
 
-{% cache 86400 'problem_html' problem.id MATH_ENGINE LANGUAGE_CODE %}
-    {{ (description or problem.i18n_description or problem.description)|markdown(problem.markdown_style, MATH_ENGINE)|reference|str|safe }}
+{% cache 86400 'problem_md' problem.id LANGUAGE_CODE %}
+    {{ (description or problem.i18n_description or problem.description)|markdown_client(problem.markdown_style) }}
 {% endcache %}
 
 {% with license=problem.license %}
