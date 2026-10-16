@@ -22,16 +22,22 @@ class DeferredPaginationListView(ListView):
             )
 
             try:
-                query, params = queryset_pks.query.sql_with_params()
-                queryset = self.__class__.paginated_model.objects.all()
-                join_sql_subquery(
-                    queryset,
-                    subquery=query,
-                    params=list(params),
-                    join_fields=[('id', 'id')],
-                    alias='deferred_object',
-                    related_model=self.__class__.paginated_model,
-                )
+                pk_cache = getattr(queryset_pks, '_result_cache', None)
+                if pk_cache is not None:
+                    # The paginator already fetched the pks (low power mode);
+                    # joining the subquery again would re-run the expensive filter query.
+                    queryset = self.__class__.paginated_model.objects.filter(pk__in=pk_cache)
+                else:
+                    query, params = queryset_pks.query.sql_with_params()
+                    queryset = self.__class__.paginated_model.objects.all()
+                    join_sql_subquery(
+                        queryset,
+                        subquery=query,
+                        params=list(params),
+                        join_fields=[('id', 'id')],
+                        alias='deferred_object',
+                        related_model=self.__class__.paginated_model,
+                    )
                 queryset = self.deferred_paginate(queryset)
                 ordering = self.get_ordering()
                 if ordering:
