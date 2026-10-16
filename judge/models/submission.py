@@ -291,6 +291,12 @@ class Submission(models.Model):
 
             # For organization problem list: last submission time filter
             models.Index(fields=['problem', '-date']),
+
+            # For problem submission list view
+            models.Index(fields=['problem', '-id']),
+
+            # For contest submission list view
+            models.Index(fields=['contest_object', '-id']),
         ]
 
 
