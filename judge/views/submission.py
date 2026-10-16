@@ -461,9 +461,17 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
         context['show_problem'] = self.show_problem
 
         profile = self.request.profile
+
+        def page_problem_ids():
+            return {sub.problem_id for sub in context['submissions']}
+
         context['completed_problem_ids'] = memo_lazy(lambda: user_completed_ids(profile), set) if authenticated else []
-        context['editable_problem_ids'] = memo_lazy(lambda: user_editable_ids(profile), set) if authenticated else []
-        context['tester_problem_ids'] = memo_lazy(lambda: user_tester_ids(profile), set) if authenticated else []
+        context['editable_problem_ids'] = memo_lazy(
+            lambda: user_editable_ids(profile, page_problem_ids()), set,
+        ) if authenticated else []
+        context['tester_problem_ids'] = memo_lazy(
+            lambda: user_tester_ids(profile, page_problem_ids()), set,
+        ) if authenticated else []
 
         context['all_languages'] = Language.objects.all().values_list('key', 'name')
         context['selected_languages'] = self.selected_languages
