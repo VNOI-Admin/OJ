@@ -13,12 +13,13 @@ from judge.models import ContestSubmission, Problem, Submission, SubmissionTestC
 __all__ = ['contest_completed_ids', 'get_result_data', 'user_completed_ids', 'user_editable_ids', 'user_tester_ids']
 
 
-def user_tester_ids(profile):
-    return set(Problem.testers.through.objects.filter(profile=profile).values_list('problem_id', flat=True))
+def user_tester_ids(profile, problem_ids):
+    return set(Problem.testers.through.objects.filter(profile=profile, problem_id__in=problem_ids)
+               .values_list('problem_id', flat=True))
 
 
-def user_editable_ids(profile):
-    return set(Problem.get_editable_problems(profile.user).values_list('id', flat=True))
+def user_editable_ids(profile, problem_ids):
+    return set(Problem.get_editable_problems(profile.user).filter(id__in=problem_ids).values_list('id', flat=True))
 
 
 def contest_completed_ids(participation):
