@@ -163,38 +163,38 @@
                 <tr>
                     {% if request.user.is_authenticated %}
                         <th class="solved">
-                            <a href="{{ sort_links.solved }}">
+                            <a{% if sort_links.solved %} href="{{ sort_links.solved }}"{% endif %}>
                                 <i class="fa fa-check"></i>{{ sort_order.solved }}
                             </a>
                         </th>
                     {% endif %}
                     <th class="problem-code">
-                        <a href="{{ sort_links.code }}">{{ _('ID') }}{{ sort_order.code}}</a>
+                        <a{% if sort_links.code %} href="{{ sort_links.code }}"{% endif %}>{{ _('ID') }}{{ sort_order.code}}</a>
                     </th>
                     <th class="problem-name">
-                        <a href="{{ sort_links.name }}">{{ _('Problem') }}{{ sort_order.name }}</a>
+                        <a{% if sort_links.name %} href="{{ sort_links.name }}"{% endif %}>{{ _('Problem') }}{{ sort_order.name }}</a>
                     </th>
                     {% if not show_org_tags %}
                     <th class="category">
-                        <a href="{{ sort_links.group }}">{{ _('Category') }}{{ sort_order.group }}</a>
+                        <a{% if sort_links.group %} href="{{ sort_links.group }}"{% endif %}>{{ _('Category') }}{{ sort_order.group }}</a>
                     </th>
                     {% endif %}
                     {% if show_types %}
                         <th class="types">
-                            <a href="{{ sort_links.type }}">{{ _('Types') }}{{ sort_order.type }}</a>
+                            <a{% if sort_links.type %} href="{{ sort_links.type }}"{% endif %}>{{ _('Types') }}{{ sort_order.type }}</a>
                         </th>
                     {% endif %}
                     <th class="points">
-                        <a href="{{ sort_links.points }}">{{ _('Points') }}{{ sort_order.points }}</a>
+                        <a{% if sort_links.points %} href="{{ sort_links.points }}"{% endif %}>{{ _('Points') }}{{ sort_order.points }}</a>
                     </th>
                     <th class="ac-rate">
-                        <a href="{{ sort_links.ac_rate }}">{{ _('%% AC') }}{{ sort_order.ac_rate }}</a>
+                        <a{% if sort_links.ac_rate %} href="{{ sort_links.ac_rate }}"{% endif %}>{{ _('%% AC') }}{{ sort_order.ac_rate }}</a>
                     </th>
                     <th class="users">
-                        <a href="{{ sort_links.user_count }}">{{ _('# AC') }}{{ sort_order.user_count }}</a>
+                        <a{% if sort_links.user_count %} href="{{ sort_links.user_count }}"{% endif %}>{{ _('# AC') }}{{ sort_order.user_count }}</a>
                     </th>
                     <th class="editorial" title="{{ _('Editorial') }}">
-                        <a href="{{ sort_links.editorial }}">
+                        <a{% if sort_links.editorial %} href="{{ sort_links.editorial }}"{% endif %}>
                             <i class="fa fa-book"></i>{{ sort_order.editorial }}
                         </a>
                     </th>

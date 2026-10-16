@@ -776,6 +776,8 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         self.all_sorts = set(self.all_sorts)
         if not self.show_types:
             self.all_sorts.discard('type')
+        if settings.VNOJ_LOW_POWER_MODE:
+            self.all_sorts &= {'points', 'user_count'}
 
         self.category = safe_int_or_none(request.GET.get('category'))
         if 'type' in request.GET:
