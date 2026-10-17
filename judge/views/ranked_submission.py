@@ -7,7 +7,7 @@ from django.utils.safestring import mark_safe
 from django.utils.translation import gettext as _
 
 from judge.models import Profile, Submission
-from judge.views.submission import ForceContestMixin, ProblemSubmissions, submission_related
+from judge.views.submission import ForceContestMixin, ProblemSubmissions
 
 __all__ = ['RankedSubmissions', 'ContestRankedSubmission']
 
@@ -47,15 +47,7 @@ class RankedSubmissions(ProblemSubmissions):
                 order_by=[F(points).desc(), F('time').asc(nulls_last=True), F('id').asc()],
             )) \
             .filter(user_rank=1) \
-            .order_by('-' + points, 'time') \
-            .values('id')
-
-    def paginate_queryset(self, queryset, page_size):
-        paginator, page, object_list, has_other = super().paginate_queryset(queryset, page_size)
-        ids = [row['id'] for row in object_list]
-        subs = {sub.id: sub for sub in submission_related(Submission.objects.filter(id__in=ids))}
-        page.object_list = object_list = [subs[i] for i in ids]
-        return paginator, page, object_list, has_other
+            .order_by('-' + points, 'time')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
