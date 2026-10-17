@@ -2,7 +2,7 @@
     <div class="alert alert-warning alert-dismissable organization-notice" id="organization-notice"
          style="margin-top: 1em;">
         <a class="close" title="{{ _('Dismiss until this notice changes') }}">x</a>
-        {{ organization.notice|markdown('organization-about', MATH_ENGINE)|reference|str|safe }}
+        {{ organization.rendered_notice|markdown('organization-about', MATH_ENGINE)|reference|str|safe }}
     </div>
     <script>
         (function () {
