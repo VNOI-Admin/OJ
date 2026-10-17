@@ -108,6 +108,14 @@ class Organization(models.Model):
         return user in self.admins_list
 
     @cached_property
+    def rendered_notice(self):
+        notice = self.notice
+        if '{archived_count}' in notice:
+            from judge.utils.organization import archived_problems_queryset
+            notice = notice.replace('{archived_count}', str(archived_problems_queryset(self).count()))
+        return notice
+
+    @cached_property
     def notice_hash(self):
         return hashlib.sha256(utf8bytes(self.notice)).hexdigest()[:16]
 
