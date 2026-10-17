@@ -405,25 +405,27 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, DeferredPaginationList
         return queryset
 
     def deferred_paginate(self, queryset):
-        return (queryset.select_related('user__user', 'user__display_badge', 'problem', 'language')
-                        .prefetch_related('contest_object__authors', 'contest_object__curators'))
-
-    def _get_queryset(self):
-        queryset = Submission.objects.all()
-        use_straight_join(queryset)
-        queryset = submission_related(queryset.order_by('-id'))
+        # Display-only loading belongs here: the deferred paginator reduces get_queryset()
+        # to a pk list, dropping any select_related/only/prefetch_related set on it.
+        queryset = submission_related(queryset)
         if self.show_problem:
             queryset = queryset.prefetch_related(Prefetch('problem__translations',
                                                           queryset=ProblemTranslation.objects.filter(
                                                               language=self.request.LANGUAGE_CODE), to_attr='_trans'))
+        if not self.is_contest_scoped:
+            queryset = queryset.select_related('contest_object').defer('contest_object__description')
+        return queryset
+
+    def _get_queryset(self):
+        queryset = Submission.objects.all()
+        use_straight_join(queryset)
+        queryset = queryset.order_by('-id')
         if self.is_contest_scoped:
             # Show submissions only for this contest
             queryset = queryset.filter(contest_object=self.contest)
             if not self.contest.can_see_full_submission_list(self.request.user):
                 queryset = queryset.filter(user=self.request.profile)
         else:
-            queryset = queryset.select_related('contest_object').defer('contest_object__description')
-
             if not self.request.user.has_perm('judge.see_private_contest'):
                 # Show submissions for any contest you can edit or visible scoreboard
                 contest_queryset = Contest.objects.filter(Q(authors=self.request.profile) |
@@ -768,11 +770,7 @@ class AllSubmissions(InfinitePaginationMixin, SubmissionsListBase):
     def public_problem_queryset(self):
         queryset = Submission.objects.all()
         use_straight_join(queryset)
-        queryset = submission_related(queryset.order_by('-id'))
-        if self.show_problem:
-            queryset = queryset.prefetch_related(Prefetch('problem__translations',
-                                                          queryset=ProblemTranslation.objects.filter(
-                                                              language=self.request.LANGUAGE_CODE), to_attr='_trans'))
+        queryset = queryset.order_by('-id')
         # show all submissions for superusers
         if not self.request.user.is_superuser:
             queryset = queryset.filter(contest_object__isnull=True)
