@@ -12,7 +12,7 @@ from django.contrib.auth.context_processors import PermWrapper
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.cache import cache
 from django.core.exceptions import ImproperlyConfigured, ObjectDoesNotExist, PermissionDenied
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.db.models import BooleanField, Case, Count, F, FloatField, IntegerField, Max, Min, OuterRef, Q, Subquery, \
     Sum, Value, When
 from django.db.models.expressions import CombinedExpression
@@ -43,7 +43,7 @@ from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownlo
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, \
     ContestSubmission, ContestTag, Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
 from judge.ratings import RATING_CLASS, RATING_LEVELS, RATING_VALUES
-from judge.tasks import on_new_contest, prepare_contest_data, rescore_problem, run_moss
+from judge.tasks import on_new_contest, prepare_contest_data, rescore_contest, rescore_problem, run_moss
 from judge.utils.celery import redirect_to_task_status, task_status_by_id, task_status_url_by_id
 from judge.utils.cms import parse_csv_ranking
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -1511,7 +1511,7 @@ class CreateContest(PermissionRequiredMixin, TitleMixin, CreateView):
 
     def post(self, request, *args, **kwargs):
         self.object = None
-        form = ContestForm(request.POST or None)
+        form = self.get_form()
         form_set = self.get_contest_problem_formset()
         if form.is_valid() and form_set.is_valid():
             if settings.VNOJ_OFFICIAL_CONTEST_MODE:
@@ -1595,6 +1595,9 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
 
                 revisions.set_comment(_('Edited from site'))
                 revisions.set_user(self.request.user)
+
+                if any(f in form.changed_data for f in ('frozen_last_minutes', 'format_name')):
+                    transaction.on_commit(rescore_contest.s(self.object.key).delay)
 
             return HttpResponseRedirect(self.get_success_url())
         else:

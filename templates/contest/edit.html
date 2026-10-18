@@ -255,6 +255,17 @@
             {% endif %}
         })
     </script>
+    <script type="text/javascript">
+        $(function () {
+            var frozenFormats = {{ form.frozen_supported_formats|tojson }};
+            var $format = $('#id_format_name');
+            function toggleFrozen() {
+                $('#id_frozen_last_minutes').closest('tr').toggle(frozenFormats.indexOf($format.val()) !== -1);
+            }
+            $format.on('change', toggleFrozen);
+            toggleFrozen();
+        });
+    </script>
     {{ form.media.js }}
 {% endblock %}
 
