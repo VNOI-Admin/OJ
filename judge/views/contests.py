@@ -433,7 +433,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         organization = contest.organization
         private_contestants = list(contest.private_contestants.all())
         view_contest_scoreboard = list(contest.view_contest_scoreboard.all())
-        contest_problems = list(contest.contest_problems.all())
+        contest_problems = list(contest.contest_problems.all()) if form.cleaned_data['copy_problems'] else []
         old_key = contest.key
 
         contest.pk = None
