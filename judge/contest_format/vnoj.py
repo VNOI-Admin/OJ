@@ -41,6 +41,7 @@ GROUP BY cp.id
 @register_contest_format('vnoj')
 class VNOJContestFormat(DefaultContestFormat):
     name = gettext_lazy('VNOJ')
+    supports_frozen = True
     config_defaults = {'penalty': 5, 'LSO': False}
     config_validators = {'penalty': lambda x: x >= 0, 'LSO': lambda x: isinstance(x, bool)}
     """

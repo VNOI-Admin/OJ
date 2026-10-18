@@ -11,6 +11,7 @@ from judge.timezone import from_database_time
 @register_contest_format('icpc')
 class ICPCContestFormat(DefaultContestFormat):
     name = gettext_lazy('ICPC')
+    supports_frozen = True
     config_defaults = {'penalty': 20}
     config_validators = {'penalty': lambda x: x >= 0}
     """

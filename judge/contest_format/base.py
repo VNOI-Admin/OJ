@@ -10,6 +10,9 @@ class abstractclassmethod(classmethod):
 
 
 class BaseContestFormat(metaclass=ABCMeta):
+    # Whether this format computes frozen scores, i.e. supports `Contest.frozen_last_minutes`
+    supports_frozen = False
+
     @abstractmethod
     def __init__(self, contest, config):
         self.config = config
