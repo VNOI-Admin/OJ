@@ -25,4 +25,6 @@ def seconds(timedelta):
 @registry.function
 @registry.render_with('time-remaining-fragment.html')
 def as_countdown(timedelta):
-    return {'countdown': timedelta}
+    # Contest._now is evaluated at render time, later than the view's queryset `now`,
+    # so time_before_start/end can be None for a contest crossing its boundary mid-request.
+    return {'countdown': timedelta or datetime.timedelta()}
