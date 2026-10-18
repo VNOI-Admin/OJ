@@ -227,7 +227,7 @@ class OrganizationUsers(QueryStringSortMixin, DiggPaginatorMixin, BaseOrganizati
     context_object_name = 'users'
 
     def get_queryset(self):
-        return self.object.members.filter(is_unlisted=False).order_by(self.order, 'id') \
+        return self.object.members.filter(is_unlisted=False).order_by(self.order, self.id_tiebreak) \
             .select_related('user', 'display_badge').defer('about', 'user_script', 'notes')
 
     def get_context_data(self, **kwargs):

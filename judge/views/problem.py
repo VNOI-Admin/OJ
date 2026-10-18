@@ -622,7 +622,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         queryset = queryset.add_i18n_name(self.request.LANGUAGE_CODE)
         sort_key = self.order.lstrip('-')
         if sort_key in self.sql_sort:
-            queryset = queryset.order_by(self.order, 'id')
+            queryset = queryset.order_by(self.order, self.id_tiebreak)
         elif sort_key == 'name':
             queryset = queryset.order_by('i18n_name', self.order, 'name', 'id')
         elif sort_key == 'group':

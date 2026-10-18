@@ -88,6 +88,12 @@ class QueryStringSortMixin(object):
 
         return super(QueryStringSortMixin, self).get(request, *args, **kwargs)
 
+    @property
+    def id_tiebreak(self):
+        # Same direction as the sort key, to better use the index.
+        # Because mixed directions with PK force a full scan.
+        return '-id' if self.order.startswith('-') else 'id'
+
     def get_sort_context(self):
         query = self.request.GET.copy()
         query.setlist('order', [])
