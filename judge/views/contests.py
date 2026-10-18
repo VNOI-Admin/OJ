@@ -1184,9 +1184,11 @@ class ContestRanking(ContestRankingBase):
         context['is_frozen'] = self.is_frozen
         context['cache_timeout'] = 0 if self.bypass_cache_ranking else self.object.scoreboard_cache_timeout
         context['can_see_full_submission_list'] = self.object.can_see_full_submission_list(self.request.user)
-        context['ranking_json'] = json.dumps(
-            self._inject_replay_url(self.get_cached_json_ranking_data()),
-        ).translate(_json_script_escapes)
+        ranking_json = json.dumps(self._inject_replay_url(self.get_cached_json_ranking_data()))
+        # Same as ranking_json.translate(_json_script_escapes), but much much faster
+        for char, escaped in _json_script_escapes.items():
+            ranking_json = ranking_json.replace(chr(char), escaped)
+        context['ranking_json'] = ranking_json
         return context
 
 
