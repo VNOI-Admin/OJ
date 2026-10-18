@@ -297,6 +297,9 @@ class Submission(models.Model):
 
             # For contest submission list view
             models.Index(fields=['contest_object', '-id']),
+
+            # For a user's submissions in a contest
+            models.Index(fields=['contest_object', 'user', '-id']),
         ]
 
 
