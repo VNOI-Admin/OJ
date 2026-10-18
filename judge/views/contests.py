@@ -16,7 +16,7 @@ from django.db import IntegrityError, transaction
 from django.db.models import BooleanField, Case, Count, F, FloatField, IntegerField, Max, Min, OuterRef, Q, Subquery, \
     Sum, Value, When
 from django.db.models.expressions import CombinedExpression
-from django.db.models.query import Prefetch
+from django.db.models.functions import Coalesce
 from django.http import Http404, HttpResponse, HttpResponseForbidden, HttpResponseRedirect, JsonResponse
 from django.shortcuts import redirect, render
 from django.template.defaultfilters import date as date_filter, floatformat
@@ -822,29 +822,32 @@ class ContestStats(TitleMixin, ContestMixin, DetailView):
         return super().dispatch(request, *args, **kwargs)
 
 
+def _submission_count():
+    # this is faster than Count('submission') due to JOIN + GROUP BY doesn't take
+    # advantage of the index.
+    return Coalesce(Subquery(
+        ContestSubmission.objects.filter(participation=OuterRef('pk')).order_by()
+        .values('participation').annotate(c=Count('id')).values('c'),
+    ), 0)
+
+
 def base_contest_ranking_queryset(contest):
     return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
-        .prefetch_related(Prefetch('user__organizations',
-                                   queryset=Organization.objects.filter(is_unlisted=False))) \
-        .annotate(submission_count=Count('submission')) \
+        .annotate(submission_count=_submission_count()) \
         .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker', '-submission_count')
 
 
 def base_contest_frozen_ranking_queryset(contest):
     return contest.users.filter(virtual__gt=ContestParticipation.SPECTATE) \
-        .prefetch_related(Prefetch('user__organizations',
-                                   queryset=Organization.objects.filter(is_unlisted=False))) \
-        .annotate(submission_count=Count('submission')) \
+        .annotate(submission_count=_submission_count()) \
         .order_by('is_disqualified', '-frozen_score', 'frozen_cumtime', 'frozen_tiebreaker', '-submission_count')
 
 
-def _serialize_user(row, user_url_tpl, org_url_tpl):
+def _serialize_user(row, user_url_tpl, org_url_tpl, orgs):
     """Serialize the user/profile portion of a participation row into a JSON-safe dict."""
     username = row['user__user__username']
     display_name = row['user__username_display_override'] or username
-    org_name = row['_org_name']
-    org_slug = row['_org_slug']
-    org_logo = row['_org_logo']
+    org_name, org_slug, org_logo = orgs.get(row['_org_id'], (None, None, None))
     badge_mini = row['_badge_mini']
     badge_name = row['_badge_name']
 
@@ -882,15 +885,14 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
     _user_url_tpl = reverse('user_page', args=['__USERNAME__'])
     _org_url_tpl = reverse('organization_home', args=['__SLUG__'])
 
-    # Subqueries for the user's first organisation (replicates Profile.organization).
+    # The user's first organisation (replicates Profile.organization). One subquery for the id,
+    # then a single lookup of the distinct orgs.
     _org_qs = Organization.objects.filter(
         member=OuterRef('user'), is_unlisted=False,
-    ).order_by('name')
+    ).order_by('name', 'id')
 
     queryset = queryset.annotate(
-        _org_name=Subquery(_org_qs.values('name')[:1]),
-        _org_slug=Subquery(_org_qs.values('slug')[:1]),
-        _org_logo=Subquery(_org_qs.values('logo_override_image')[:1]),
+        _org_id=Subquery(_org_qs.values('id')[:1]),
         _badge_mini=F('user__display_badge__mini'),
         _badge_name=F('user__display_badge__name'),
     ).values(
@@ -901,11 +903,16 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
         'user__username_display_override',
         'user__user__username', 'user__user__first_name',
         'rating__rating',
-        '_org_name', '_org_slug', '_org_logo', '_badge_mini', '_badge_name',
+        '_org_id', '_badge_mini', '_badge_name',
     )
 
+    rows = list(queryset)
+    org_ids = {row['_org_id'] for row in rows} - {None}
+    orgs = {pk: rest for pk, *rest in Organization.objects.filter(id__in=org_ids)
+            .values_list('id', 'name', 'slug', 'logo_override_image')} if org_ids else {}
+
     participations_data = []
-    for row in queryset:
+    for row in rows:
         participations_data.append({
             'id': row['id'],
             'score': float(row['frozen_score'] if frozen else row['score']),
@@ -914,7 +921,7 @@ def make_contest_ranking_json(contest, problems, queryset, frozen=False):
             'is_disqualified': row['is_disqualified'],
             'virtual': row['virtual'],
             'rating': row['rating__rating'],
-            'user': _serialize_user(row, _user_url_tpl, _org_url_tpl),
+            'user': _serialize_user(row, _user_url_tpl, _org_url_tpl, orgs),
             'format_data': _serialize_format_data(contest, problems, row['format_data'], frozen),
         })
     return participations_data
