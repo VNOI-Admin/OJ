@@ -376,7 +376,7 @@
         var manualElapsed  = null; // null = auto mode
         var $slider = null, $timeLabel = null, $freezeInput = null;
 
-        var supportsFrozen = (rankingData.contest.format === 'icpc' || rankingData.contest.format === 'vnoj');
+        var supportsFrozen = !!rankingData.contest.supports_frozen;
         var FREEZE_KEY = 'replay_freeze_' + replayUrl;
         var _stored = supportsFrozen ? localStorage.getItem(FREEZE_KEY) : null;
         var frozenOverride = _stored !== null ? parseInt(_stored) : null; // minutes; null = use backend value

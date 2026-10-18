@@ -1155,6 +1155,7 @@ class ContestRanking(ContestRankingBase):
                 **data['contest'],
                 'replay_url': reverse('contest_replay_data', args=[contest.key, contest.replay_version]),
                 'replay_duration': int((contest.end_time - contest.start_time).total_seconds()),
+                'supports_frozen': contest.format.supports_frozen,
             },
         }
 

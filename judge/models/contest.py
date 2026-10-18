@@ -442,8 +442,7 @@ class Contest(models.Model):
     def is_frozen(self):
         if self.frozen_last_minutes == 0:
             return False
-        if self.format.name == contest_format.ICPCContestFormat.name or \
-           self.format.name == contest_format.VNOJContestFormat.name:
+        if self.format.supports_frozen:
             # Keep frozen even if the contest is ended
             return self._now >= self.frozen_time
         return False
