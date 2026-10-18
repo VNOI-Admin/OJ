@@ -141,6 +141,33 @@
                 },
             });
 
+            // Prefill points/order of a row when a problem is picked and they are still empty
+            $('#form_set').on('change', 'select[id$="-problem"]', function() {
+                if (!$(this).val()) return;
+                var $row = $(this).closest('tr.dynamic-form');
+                var $rows = $('#form_set tr.dynamic-form').not(function() {
+                    return $(this).find('input[id$="-DELETE"]').is(':checked');
+                });
+
+                var $points = $row.find('input[id$="-points"]');
+                if ($points.val() === '') {
+                    var prevPoints = $rows.slice(0, $rows.index($row)).find('input[id$="-points"]').filter(function() {
+                        return this.value !== '';
+                    }).last().val();
+                    $points.val(prevPoints || 1);
+                }
+
+                var $order = $row.find('input[id$="-order"]');
+                if ($order.val() === '') {
+                    var used = {};
+                    $rows.not($row).find('input[id$="-order"]').each(function() { used[parseInt(this.value)] = true; });
+                    var mex = 1;
+                    while (used[mex]) mex++;
+                    $order.val(mex);
+                    $row.find('span.order').text(mex);
+                }
+            });
+
             var oldSortIndex;
             $('#form_set').sortable({
                 handle: 'td.order-column',
