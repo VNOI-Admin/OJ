@@ -675,6 +675,8 @@ class Problem(models.Model):
             models.Index(fields=['is_public', 'is_organization_private', '-date']),
             # The archived problem list is always scoped to one organization.
             models.Index(fields=['organization', '-archived_at']),
+            # Org problem list view
+            models.Index(fields=['organization', 'date']),
         ]
         verbose_name = _('problem')
         verbose_name_plural = _('problems')
