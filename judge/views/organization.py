@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import IntegrityError, transaction
-from django.db.models import Count, FilteredRelation, OuterRef, Q, Subquery, Sum
+from django.db.models import Count, Exists, FilteredRelation, OuterRef, Q, Subquery, Sum
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
@@ -747,9 +747,7 @@ def get_organization_problem_filter(organization, user, profile):
 
     # Authors, curators, and testers should always have access, so OR at the very end.
     if profile is not None:
-        _filter |= Q(authors=profile)
-        _filter |= Q(curators=profile)
-        _filter |= Q(testers=profile)
+        _filter = Problem.q_add_author_curator_tester(_filter, profile)
 
     return _filter & Q(organization=organization)
 
@@ -787,9 +785,10 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
 
         tag_filter = Q()
         if tag_ids:
-            tag_filter |= Q(tags__id__in=tag_ids)
+            tag_filter |= Q(id__in=Problem.tags.through.objects.filter(organizationproblemtag__in=tag_ids)
+                            .values('problem_id'))
         if want_untagged:
-            tag_filter |= Q(tags__isnull=True)
+            tag_filter |= ~Exists(Problem.tags.through.objects.filter(problem=OuterRef('pk')))
         if tag_filter:
             _filter &= tag_filter
 

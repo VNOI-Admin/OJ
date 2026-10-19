@@ -670,7 +670,15 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
     def get_filter(self):
         _filter = Q(is_public=True) & Q(is_organization_private=False)
         if self.profile is not None:
-            _filter = Problem.q_add_author_curator_tester(_filter, self.profile)
+            # Resolve the ids up front: OR EXISTS(...) defeats the (is_public, is_organization_private, date)
+            # index and scans the whole table, a short literal id list does not.
+            through_ids = [
+                field.through.objects.filter(profile=self.profile).values_list('problem_id', flat=True)
+                for field in (Problem.authors, Problem.curators, Problem.testers)
+            ]
+            ids = list(through_ids[0].union(*through_ids[1:]))
+            if ids:
+                _filter |= Q(id__in=ids)
         return _filter
 
     def get_normal_queryset(self):
@@ -693,7 +701,8 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         if self.category is not None:
             queryset = queryset.filter(group__id=self.category)
         if self.selected_types:
-            queryset = queryset.filter(types__in=self.selected_types)
+            queryset = queryset.filter(id__in=Problem.types.through.objects
+                                       .filter(problemtype__in=self.selected_types).values('problem_id'))
         if 'search' in self.request.GET:
             self.search_query = query = ' '.join(self.request.GET.getlist('search')).strip()
             if query:
@@ -702,13 +711,15 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
                 else:
                     queryset = queryset.filter(
                         Q(code__icontains=query) | Q(name__icontains=query) | Q(source__icontains=query) |
-                        Q(translations__name__icontains=query, translations__language=self.request.LANGUAGE_CODE))
+                        Q(id__in=ProblemTranslation.objects.filter(
+                            name__icontains=query, language=self.request.LANGUAGE_CODE).values('problem_id')))
         self.prepoint_queryset = queryset
         if self.point_start is not None:
             queryset = queryset.filter(points__gte=self.point_start)
         if self.point_end is not None:
             queryset = queryset.filter(points__lte=self.point_end)
-        return queryset.distinct()
+        # No .distinct() needed: every filter above avoids multi-row joins.
+        return queryset
 
     def get_queryset(self):
         queryset = self.get_normal_queryset()
