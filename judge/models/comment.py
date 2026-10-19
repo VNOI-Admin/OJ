@@ -16,7 +16,6 @@ from judge.models.contest import Contest
 from judge.models.interface import BlogPost
 from judge.models.problem import Problem, Solution
 from judge.models.profile import Profile
-from judge.models.tag import TagProblem
 from judge.utils.cachedict import CacheDict
 
 __all__ = ['Comment', 'CommentLock', 'CommentVote']
@@ -66,7 +65,6 @@ class Comment(MPTTModel):
         solution_cache = CacheDict(lambda code: Solution.objects.defer('content').get(problem__code=code))
         contest_cache = CacheDict(lambda key: Contest.objects.defer('description').get(key=key))
         blog_cache = CacheDict(lambda id: BlogPost.objects.defer('summary', 'content').get(id=id))
-        problemtag_cache = CacheDict(lambda code: TagProblem.objects.get(code=code))
 
         problem_access = CacheDict(lambda code: problem_cache[code].is_accessible_by(viewer))
         solution_access = CacheDict(lambda code: problem_access[code] and solution_cache[code].is_accessible_by(viewer))
@@ -97,8 +95,7 @@ class Comment(MPTTModel):
                         has_access = blog_access[page_key]
                         comment.page_title = blog_cache[page_key].title
                     elif comment.page.startswith('t:'):
-                        has_access = True
-                        comment.page_title = problemtag_cache[page_key].name
+                        continue
                     else:
                         has_access = True
                 except ObjectDoesNotExist:
@@ -134,8 +131,6 @@ class Comment(MPTTModel):
                 link = reverse('blog_post', args=(self.page[2:], slug))
             elif self.page.startswith('s:'):
                 link = reverse('problem_editorial', args=(self.page[2:],))
-            elif self.page.startswith('t:'):
-                link = reverse('tagproblem_detail', args=(self.page[2:],))
         except Exception:
             link = 'invalid'
         return link
