@@ -8,6 +8,7 @@ from django.views.generic.list import BaseListView
 
 from judge.jinja2.gravatar import gravatar
 from judge.models import Comment, Contest, Organization, Problem, Profile, Tag, TagGroup
+from judge.utils.infinite_paginator import InfinitePaginationMixin
 
 
 def _get_user_queryset(term):
@@ -34,8 +35,9 @@ class Select2CacheControlMixin:
         return response
 
 
-class Select2View(Select2CacheControlMixin, BaseListView):
+class Select2View(Select2CacheControlMixin, InfinitePaginationMixin, BaseListView):
     paginate_by = 20
+    pad_pages = 0
 
     def get(self, request, *args, **kwargs):
         self.request = request
@@ -173,8 +175,9 @@ class CommentSelect2View(Select2View):
         return Comment.objects.filter(page__icontains=self.term)
 
 
-class UserSearchSelect2View(Select2CacheControlMixin, BaseListView):
+class UserSearchSelect2View(Select2CacheControlMixin, InfinitePaginationMixin, BaseListView):
     paginate_by = 20
+    pad_pages = 0
 
     def get_queryset(self):
         return _get_user_queryset(self.term).filter(is_unlisted=False)

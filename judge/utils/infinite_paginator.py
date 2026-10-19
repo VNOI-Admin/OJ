@@ -51,6 +51,8 @@ class InfinitePage(collections.abc.Sequence):
     def has_next(self):
         if self._has_next is not None:
             return self._has_next
+        if len(self.object_list) < self.page_size:
+            return False
         if settings.VNOJ_LOW_POWER_MODE:
             return len(self.object_list) >= self.page_size
         return self._after_up_to_pad > 0
