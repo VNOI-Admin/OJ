@@ -670,7 +670,7 @@ def user_ranking_redirect(request):
     else:
         rank = Profile.objects.filter(is_unlisted=False, rating__gt=user.rating).count()
     rank += Profile.objects.filter(
-        is_unlisted=False, rating__exact=user.rating, id__lt=user.id,
+        is_unlisted=False, rating__exact=user.rating, id__gt=user.id,
     ).count()
     page = rank // UserList.paginate_by
     return HttpResponseRedirect('%s%s#!%s' % (reverse('user_list'), '?page=%d' % (page + 1) if page else '', username))
@@ -684,7 +684,7 @@ def user_contributor_redirect(request):
     user = get_object_or_404(Profile, user__username=username)
     rank = Profile.objects.filter(is_unlisted=False, contribution_points__gt=user.contribution_points).count()
     rank += Profile.objects.filter(
-        is_unlisted=False, contribution_points__exact=user.contribution_points, id__lt=user.id,
+        is_unlisted=False, contribution_points__exact=user.contribution_points, id__gt=user.id,
     ).count()
     page = rank // ContribList.paginate_by
     return HttpResponseRedirect('%s%s#!%s' % (reverse('contributors_list'), '?page=%d' % (page + 1) if page else '',
