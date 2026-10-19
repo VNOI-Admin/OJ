@@ -255,7 +255,7 @@ def org_user_ranking_redirect(request, slug):
     org = get_object_or_404(Organization, slug=slug)
     rank = org.members.filter(is_unlisted=False, performance_points__gt=user.performance_points).count()
     rank += org.members.filter(
-        is_unlisted=False, performance_points__exact=user.performance_points, id__lt=user.id,
+        is_unlisted=False, performance_points__exact=user.performance_points, id__gt=user.id,
     ).count()
     page = rank // OrganizationUsers.paginate_by
     return HttpResponseRedirect('%s%s#!%s' % (reverse('organization_users', args=(org.slug,)),
