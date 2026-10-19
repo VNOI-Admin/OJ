@@ -37,6 +37,13 @@ app.conf.beat_schedule = {
             'expires': 60 * 60 * 24,
         },
     },
+    'update-hot-problems': {
+        'task': 'judge.tasks.problem.update_hot_problems',
+        'schedule': crontab(minute='*/10'),
+        'options': {
+            'expires': 10 * 60,
+        },
+    },
     'organization-monthly-reset': {
         'task': 'judge.tasks.organization.organization_monthly_reset',
         'schedule': crontab(minute=0, hour=0, day_of_month=1),
