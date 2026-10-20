@@ -145,3 +145,30 @@ class ContestProblemMakePublicTestCase(TestCase):
         self.problem_with_editorial.refresh_from_db()
         self.assertFalse(self.problem_with_editorial.is_public)
         mock_rescore.delay.assert_not_called()
+
+
+class ContestProblemSetSourceTestCase(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.superuser = create_user(username='superuser', is_superuser=True)
+        cls.normal_user = create_user(username='normal_user')
+        cls.contest = create_contest(key='origin')
+        cls.no_source = create_problem(code='no_source')
+        cls.has_source = create_problem(code='has_source', source='ICPC')
+        create_contest_problem(contest=cls.contest, problem=cls.no_source, order=1)
+        create_contest_problem(contest=cls.contest, problem=cls.has_source, order=2)
+        cls.url = reverse('contest_problems_set_source', args=[cls.contest.key])
+
+    def test_superuser_sets_empty_sources_only(self):
+        self.client.force_login(self.superuser)
+        self.assertEqual(self.client.post(self.url).status_code, 302)
+        self.no_source.refresh_from_db()
+        self.has_source.refresh_from_db()
+        self.assertEqual(self.no_source.source, 'c:origin')
+        self.assertEqual(self.has_source.source, 'ICPC')
+
+    def test_normal_user_denied(self):
+        self.client.force_login(self.normal_user)
+        self.client.post(self.url)
+        self.no_source.refresh_from_db()
+        self.assertEqual(self.no_source.source, '')

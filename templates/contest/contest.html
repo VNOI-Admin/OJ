@@ -198,6 +198,14 @@
                     </button>
                 </form>
             {% endif %}
+            {% if request.user.is_superuser %}
+                <form method="post" action="{{ url('contest_problems_set_source', contest.key) }}" style="display: inline; float:right; margin-left: 10px;">
+                    {% csrf_token %}
+                    <button type="submit" class="button" onclick="return confirm('{{ _('Set this contest as the source of all problems that have no source?') }}');">
+                        <i class="fa fa-link"></i> {{ _('Set Problems Source') }}
+                    </button>
+                </form>
+            {% endif %}
             {% if can_edit and can_download_data %}
                 <a class="button" style="float:right" href="{{ url('contest_prepare_data', contest.key) }}">{{ _('Download data') }}</a>
             {% endif %}
