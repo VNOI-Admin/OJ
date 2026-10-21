@@ -111,7 +111,11 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
 
     def get_queryset(self):
         self.search_query = None
+        tag = self.request.GET.get('tag', '')
+        self.selected_tag = int(tag) if tag.isdigit() else None
         query_set = self._get_queryset().order_by('-end_time', '-key').filter(end_time__lt=self._now)
+        if self.selected_tag:
+            query_set = query_set.filter(tags__id=self.selected_tag)
         if 'search' in self.request.GET:
             self.search_query = search_query = ' '.join(self.request.GET.getlist('search')).strip()
             if search_query:
@@ -155,6 +159,8 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
         context['first_page_href'] = '.'
         context['page_suffix'] = '#past-contests'
         context['search_query'] = self.search_query
+        context['selected_tag'] = self.selected_tag
+        context['contest_tags'] = ContestTag.objects.order_by('name')
         context.update(paginate_query_context(self.request))
         return context
 
@@ -1473,7 +1479,6 @@ class ContestMossDelete(ContestMossMixin, SingleObjectMixin, View):
 
 class ContestTagDetailAjax(DetailView):
     model = ContestTag
-    slug_field = slug_url_kwarg = 'name'
     context_object_name = 'tag'
     template_name = 'contest/tag-ajax.html'
 
