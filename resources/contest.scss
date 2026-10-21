@@ -396,3 +396,28 @@ form.contest-join-pseudotab {
         width: 260px !important;
     }
 }
+
+/* contest tag pills, tinted with the tag colour */
+.ctag-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 0.35em; }
+.ctag {
+    display: inline-block;
+    padding: 0.15em 0.6em;
+    border-radius: 1em;
+    font-size: 0.82em;
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1.5;
+}
+.contest-tag-extra { display: inline-flex; flex-wrap: wrap; gap: 0.35em; }
+.contest-tag-more {
+    display: inline-block;
+    padding: 0.15em 0.55em;
+    border-radius: 1em;
+    font-size: 0.82em;
+    font-weight: 600;
+    background: $color_primary10;
+    color: $color_primary66;
+    cursor: pointer;
+    &:hover { background: $color_primary25; }
+    &.expanded { display: none; }
+}

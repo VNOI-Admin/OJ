@@ -4,14 +4,16 @@
 {% endblock %}
 
 {% block js_media %}
-    <script src="{{ static('libs/featherlight/featherlight.min.js') }}" type="text/javascript"></script>
     <script type="text/javascript">
         $(document).ready(function () {
             $('.time-remaining').each(function () {
                 count_down($(this));
             });
 
-            $('.contest-tag').find('a[data-featherlight]').featherlight();
+            $('.contest-tag-more').click(function () {
+                $(this).siblings('.contest-tag-extra').toggle();
+                $(this).toggleClass('expanded');
+            });
 
             $('#contest-tag-filter').select2({theme: '{{ DMOJ_SELECT2_THEME }}'}).on('change', function () {
                 $('#search-form').submit();
@@ -99,17 +101,30 @@
                     <i class="fa fa-bar-chart"></i> {{ _('rated') }}
                 </span>
             {% endif %}
-            {% for tag in contest.tags.all() %}
-                <span style="background-color: {{ tag.color }}" class="contest-tag">
-                    <a href="{{ url('contest_tag', tag.name) }}"
-                       style="color: {{ tag.text_color }}"
-                       data-featherlight="{{ url('contest_tag_ajax', tag.name) }}">
-                        {{- tag.name -}}
-                    </a>
-                </span>
-            {% endfor %}
         </span>
     {% endspaceless %}
+{% endmacro %}
+
+{% macro tag_pill(tag) %}
+    <a class="ctag" href="?tag={{ tag.id }}#past-contests"
+       style="background: color-mix(in srgb, {{ tag.color }} 13%, transparent); color: {{ tag.color }};">{{ tag.name }}</a>
+{% endmacro %}
+
+{% macro tags_cell(contest) %}
+    <td>
+        {% set tl = contest.tags.all()|list %}
+        {% if tl %}
+            <div class="ctag-wrap">
+                {% for tag in tl[:2] %}{{ tag_pill(tag) }}{% endfor %}
+                {% if tl|length > 2 %}
+                    <span class="contest-tag-extra" style="display:none">
+                        {% for tag in tl[2:] %}{{ tag_pill(tag) }}{% endfor %}
+                    </span>
+                    <span class="contest-tag-more" title="{{ tl[2:]|map(attribute='name')|join(', ') }}">+{{ tl|length - 2 }}</span>
+                {% endif %}
+            </div>
+        {% endif %}
+    </td>
 {% endmacro %}
 
 {% macro time_left(contest) %}
@@ -202,7 +217,8 @@
             <table class="contest-list table striped">
                 <thead>
                 <tr>
-                    <th style="width:80%">{{ _('Contest') }}</th>
+                    <th>{{ _('Contest') }}</th>
+                    <th style="width:12em">{{ _('Tags') }}</th>
                     <th>{{ _('Users') }}</th>
                     <th style="width:20%"></th>
                 </tr>
@@ -225,6 +241,7 @@
                                     {% endif %}
                                 </div>
                             </td>
+                            {{ tags_cell(contest) }}
                             <td>
                                 {{ user_count(contest, request.user) }}
                             </td>
@@ -242,7 +259,8 @@
             <table class="contest-list table striped">
                 <thead>
                 <tr>
-                    <th style="width:80%">{{ _('Contest') }}</th>
+                    <th>{{ _('Contest') }}</th>
+                    <th style="width:12em">{{ _('Tags') }}</th>
                     <th>{{ _('Users') }}</th>
                     <th style="width:15%"></th>
                 </tr>
@@ -262,6 +280,7 @@
                                 {% endif %}
                             </div>
                         </td>
+                        {{ tags_cell(contest) }}
                         <td>
                             {{ user_count(contest, request.user) }}
                         </td>
@@ -283,6 +302,7 @@
                 <thead>
                 <tr>
                     <th>{{ _('Contest') }}</th>
+                    <th style="width:12em">{{ _('Tags') }}</th>
                     <th style="width:20%"></th>
                 </tr>
                 </thead>
@@ -301,6 +321,7 @@
                                 {% endif %}
                             </div>
                         </td>
+                        {{ tags_cell(contest) }}
                         {% if contest.require_registration %}
                             {{ contest_register(contest, request) }}
                         {% else %}
@@ -326,7 +347,7 @@
                         <select id="contest-tag-filter" name="tag" style="width: 180px;">
                             <option value="">{{ _('All tags') }}</option>
                             {% for tag in contest_tags %}
-                                <option value="{{ tag.name }}" {{ 'selected' if tag.name == selected_tag }}>{{ tag.name }}</option>
+                                <option value="{{ tag.id }}" {{ 'selected' if tag.id == selected_tag }}>{{ tag.name }}</option>
                             {% endfor %}
                         </select>
                         <input id="search" type="text" name="search" value="{{ search_query or '' }}"
@@ -339,7 +360,8 @@
             <table class="contest-list table striped">
                 <thead>
                 <tr>
-                    <th style="width:80%">{{ _('Contest') }}</th>
+                    <th>{{ _('Contest') }}</th>
+                    <th style="width:12em">{{ _('Tags') }}</th>
                     <th>{{ _('Users') }}</th>
                     {% if not request.in_contest %}
                         <th style="width:15%"></th>
@@ -355,6 +377,7 @@
                                 {{ time_left(contest) }}
                             </div>
                         </td>
+                        {{ tags_cell(contest) }}
                         <td>
                             {{ user_count(contest, request.user) }}
                         </td>
