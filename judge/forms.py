@@ -851,6 +851,9 @@ class ContestForm(ModelForm):
             del self.fields['push_announcements']
             del self.fields['disallow_virtual']
 
+        if org_pk:
+            del self.fields['tags']
+
     def clean(self):
         cleaned_data = super().clean()
         frozen = cleaned_data.get('frozen_last_minutes')
@@ -895,6 +898,7 @@ class ContestForm(ModelForm):
             'push_announcements',
             'disallow_virtual',
             'description',
+            'tags',
             'access_code',
             'is_private',
             'private_contestants',
@@ -906,6 +910,7 @@ class ContestForm(ModelForm):
             'description': MartorWidget(attrs={'data-markdownfy-url': reverse_lazy('contest_preview')}),
             'scoreboard_visibility': Select2Widget(),
             'format_name': Select2Widget(),
+            'tags': Select2MultipleWidget(attrs={'style': 'width: 100%'}),
             'private_contestants': HeavySelect2MultipleWidget(
                 data_view='profile_select2',
                 attrs={'style': 'width: 100%'},
