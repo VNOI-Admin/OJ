@@ -358,7 +358,13 @@
         <div class="problem-info-entry">
             <i class="fa fa-pencil-square-o fa-fw"></i><span
                 class="pi-name">{{ _('Problem source:') }}</span>
-            <div class="pi-value authors-value">{{ problem.source }}</div>
+            <div class="pi-value authors-value">
+                {% if origin_contest %}
+                    <a href="{{ url('contest_view', origin_contest.key) }}">{{ origin_contest.name }}</a>
+                {% else %}
+                    {{ problem.source }}
+                {% endif %}
+            </div>
         </div>
     {% endif %}
 
@@ -396,7 +402,7 @@
         </div>
     {% endif %}
 
-    {% set contest = contest_problem.contest %}
+    {% set contest = contest_problem.contest if contest_problem else origin_contest %}
     {% if contest_problems %}
     <div id="contest-problems-list">
         <div class="toggle open unselectable">

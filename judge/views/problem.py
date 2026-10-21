@@ -471,6 +471,13 @@ class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin
                                                                                user.profile.current_contest.virtual), 0)
             context['contest_problems'] = Problem.objects.filter(contests__contest=contest_problem.contest) \
                 .order_by('contests__order').only('code')
+        elif self.object.source.startswith('c:'):
+            origin = Contest.objects.filter(key=self.object.source[2:]).first()
+            # no access_check, the contest/problem pages enforce it on click
+            if origin is not None and origin.ended:
+                context['origin_contest'] = origin
+                context['contest_problems'] = Problem.objects.filter(contests__contest=origin) \
+                    .order_by('contests__order').only('code')
 
         context['available_judges'] = Judge.objects.filter(
             online=True,

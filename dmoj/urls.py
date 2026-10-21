@@ -266,6 +266,8 @@ urlpatterns = [
         path('/data/download/', contests.ContestDownloadData.as_view(), name='contest_download_data'),
         path('/make_problems_public', contests.ContestProblemMakePublic.as_view(),
              name='contest_problems_make_public'),
+        path('/set_problems_source', contests.ContestProblemSetSource.as_view(),
+             name='contest_problems_set_source'),
 
         path('/rank/<str:problem>/',
              paged_list_view(ranked_submission.ContestRankedSubmission, 'contest_ranked_submissions')),

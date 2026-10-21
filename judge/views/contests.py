@@ -58,7 +58,7 @@ from judge.views.submission import submission_related
 __all__ = ['ContestList', 'ContestDetail', 'ContestRanking', 'ContestJoin', 'ContestLeave', 'ContestCalendar',
            'ContestClone', 'ContestStats', 'ContestMossView', 'ContestMossDelete',
            'ContestBalloons', 'ContestParticipationDisqualify',
-           'ContestProblemMakePublic']
+           'ContestProblemMakePublic', 'ContestProblemSetSource']
 
 
 def _find_contest(request, key, private_check=True):
@@ -1752,4 +1752,20 @@ class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMix
             if is_editable:
                 Solution.objects.filter(problem=problem, is_public=False).update(is_public=True, publish_on=now)
 
+        return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
+
+
+class ContestProblemSetSource(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
+    def dispatch(self, request, *args, **kwargs):
+        if request.method != 'POST':
+            return HttpResponseForbidden()
+
+        return super(ContestProblemSetSource, self).dispatch(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            raise PermissionDenied()
+
+        contest = self.get_object()
+        Problem.objects.filter(contests__contest=contest, source='').update(source='c:%s' % contest.key)
         return HttpResponseRedirect(reverse('contest_view', args=(contest.key,)))
