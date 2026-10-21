@@ -434,7 +434,11 @@
                 {% endfor %}
             </tbody>
         </table>
-        <div style="display: flex; justify-content: flex-end;"><button class="submit-bar" type="submit">
+        <div style="display: flex; justify-content: flex-end; align-items: center; gap: 1em;">
+            {% if request.resolver_match.url_name == 'contest_edit' %}
+                <button type="submit" form="delete-contest-form" class="button btn-danger">{{ _('Delete contest') }}</button>
+            {% endif %}
+            <button class="submit-bar" type="submit">
             {% if request.resolver_match.url_name == 'contest_edit' %}
                 {{ _('Update') }}
             {% else %}
@@ -442,5 +446,20 @@
             {% endif %}
         </button></div>
     </form>
+    {% if request.resolver_match.url_name == 'contest_edit' %}
+        <script>
+            function confirmDeleteContest() {
+                var answer = prompt({{ _('This will permanently delete the contest with all participations, rankings and announcements. Type YES to confirm.')|tojson }});
+                if (answer === null) return false;
+                if (answer === 'YES') return true;
+                alert({{ _('You did not type YES, so the contest was not deleted.')|tojson }});
+                return false;
+            }
+        </script>
+        <form id="delete-contest-form" method="post" action="{{ url('contest_delete', contest.key) }}"
+              onsubmit="return confirmDeleteContest();">
+            {% csrf_token %}
+        </form>
+    {% endif %}
 </div>
 {% endblock %}
