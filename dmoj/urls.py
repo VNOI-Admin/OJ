@@ -250,6 +250,7 @@ urlpatterns = [
         path('/comments', contests.ContestComments.as_view(), name='contest_comments'),
         path('/all', contests.ContestAllProblems.as_view(), name='contest_all_problems'),
         path('/edit', contests.EditContest.as_view(), name='contest_edit'),
+        path('/delete', contests.ContestDelete.as_view(), name='contest_delete'),
         path('/moss', contests.ContestMossView.as_view(), name='contest_moss'),
         path('/moss/delete', contests.ContestMossDelete.as_view(), name='contest_moss_delete'),
         path('/announce', contests.ContestAnnounce.as_view(), name='contest_announce'),

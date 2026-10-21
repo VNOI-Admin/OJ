@@ -1618,6 +1618,17 @@ class EditContest(ContestMixin, LoginRequiredMixin, TitleMixin, UpdateView):
             return self.render_to_response(self.get_context_data(object=self.object))
 
 
+class ContestDelete(LoginRequiredMixin, ContestMixin, SingleObjectMixin, View):
+    def post(self, request, *args, **kwargs):
+        contest = self.get_object()
+        if not contest.is_editable_by(request.user):
+            raise PermissionDenied(_('You are not allowed to delete this contest.'))
+        if contest.ratings.exists():
+            raise PermissionDenied(_('Rated contests cannot be deleted.'))
+        contest.delete()
+        return HttpResponseRedirect(reverse('contest_list'))
+
+
 class ContestDataMixin(ContestMixin, LoginRequiredMixin):
     @cached_property
     def data_path(self):

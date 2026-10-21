@@ -251,6 +251,8 @@ $(function () {
 
     $('form').submit(function (evt) {
         // Prevent multiple submissions of forms, see #565
+        // Skip cancelled submits (e.g. a confirm/prompt returned false)
+        if (evt.isDefaultPrevented()) return;
         $("button[type=submit], input[type=submit]").prop('disabled', true);
     });
 });
