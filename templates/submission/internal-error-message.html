@@ -1,5 +1,7 @@
 <h3 style="color:red;font-weight:bold">
-    {% if request.user == submission.user.user %}
+    {% if submission.status == 'CKE' %}
+        {{ _('A checker error occurred while grading.') }}
+    {% elif request.user == submission.user.user %}
         {{ _('An internal error occurred while grading, and the %(site_name)s administrators have been notified.', site_name=SITE_NAME) }}
     {% else %}
         {{ _('An internal error occurred while grading.') }}

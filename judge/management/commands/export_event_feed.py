@@ -95,7 +95,7 @@ def fill_run(contest: Contest, root: ET.Element, problem_index: Dict[int, int], 
     solved_set = set()
     for contest_sub in ContestSubmission.objects.filter(participation__contest=contest, participation__virtual=0) \
                                         .exclude(submission__result__isnull=True) \
-                                        .exclude(submission__result__in=['IE', 'CE']) \
+                                        .exclude(submission__result__in=['IE', 'CE', 'CKE']) \
                                         .select_related('submission', 'submission__problem',
                                                         'submission__language', 'submission__user__user'):
         run = ET.SubElement(root, 'run')
