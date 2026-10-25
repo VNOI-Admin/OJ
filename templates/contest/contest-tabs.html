@@ -24,6 +24,7 @@
         {% if perms.judge.moss_contest and has_moss_api_key %}
             {{ make_tab('moss', 'fa-gavel', url('contest_moss', contest.key), _('MOSS')) }}
         {% endif %}
+        {{ make_tab('helper', 'fa-download', url('contest_helper', contest.key), _('Helper')) }}
         {{ make_tab('edit', 'fa-edit', url('contest_edit', contest.key), _('Edit')) }}
     {% endif %}
     {% if perms.judge.clone_contest and can_edit %}

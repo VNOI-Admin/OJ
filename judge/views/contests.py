@@ -22,7 +22,7 @@ from django.shortcuts import redirect, render
 from django.template.defaultfilters import date as date_filter, floatformat
 from django.template.loader import get_template
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.utils.functional import cached_property
 from django.utils.html import _json_script_escapes, escape, format_html
 from django.utils.safestring import mark_safe
@@ -33,6 +33,7 @@ from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import BaseListView
 from icalendar import Calendar as ICalendar, Event
+from lxml import etree
 from reversion import revisions
 
 
@@ -40,6 +41,8 @@ from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
+from judge.management.commands.export_event_feed import build_event_feed
+from judge.management.commands.export_icpc_result import write_icpc_result
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, \
     ContestSubmission, ContestTag, Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
 from judge.ratings import RATING_CLASS, RATING_LEVELS, RATING_VALUES
@@ -1423,6 +1426,63 @@ class ContestReplayData(ContestMixin, SingleObjectMixin, View):
         if not os.path.exists(filepath):
             write_contest_replay_data(contest, build_contest_replay_data(contest))
         return filepath, filename
+
+
+class ContestHelper(ContestMixin, TitleMixin, DetailView):
+    template_name = 'contest/helper.html'
+
+    def get_title(self):
+        return _('Helper for %s') % self.object.name
+
+    def get_object(self, queryset=None):
+        contest = super().get_object(queryset)
+        if not contest.is_editable_by(self.request.user):
+            raise Http404()
+        return contest
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        export = request.GET.get('export')
+        if export == 'icpc':
+            return self.export_icpc_result()
+        if export == 'event_feed':
+            return self.export_event_feed()
+        if export == 'replay':
+            return self.export_replay()
+        return super().get(request, *args, **kwargs)
+
+    def attachment(self, response, filename):
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    def export_icpc_result(self):
+        response = HttpResponse(content_type='text/tab-separated-values; charset=utf-8')
+        write_icpc_result(self.object, response, extra=bool(self.request.GET.get('extra')))
+        return self.attachment(response, f'{self.object.key}_result.tsv')
+
+    def export_event_feed(self):
+        try:
+            last_medals = [int(x) for x in self.request.GET.getlist('medal')]
+        except ValueError:
+            last_medals = []
+        if len(last_medals) != 3:
+            last_medals = [4, 8, 12]
+        with translation.override('en'):
+            root = build_event_feed(self.object, last_medals)
+        response = HttpResponse(etree.tostring(root, encoding='utf-8', xml_declaration=True),
+                                content_type='application/xml')
+        return self.attachment(response, f'{self.object.key}_event_feed.xml')
+
+    def export_replay(self):
+        # Prefer the stored file: it may carry ghost participations from merge_replay_data.
+        filepath, filename = contest_replay_data_path(self.object)
+        if os.path.exists(filepath):
+            with open(filepath, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/json')
+        else:
+            response = JsonResponse(build_contest_replay_data(self.object),
+                                    json_dumps_params={'separators': (',', ':')})
+        return self.attachment(response, filename)
 
 
 class ContestMossMixin(ContestMixin, PermissionRequiredMixin):

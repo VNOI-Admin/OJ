@@ -5,6 +5,29 @@ from django.core.management.base import BaseCommand, CommandError
 from judge.models import Contest, ContestParticipation
 
 
+def write_icpc_result(contest, result_file, extra=False):
+    participations = contest.users.filter(virtual=ContestParticipation.LIVE) \
+        .select_related('user').prefetch_related('user__organizations') \
+        .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker')
+
+    result_writer = csv.writer(result_file, delimiter='\t')
+
+    header = ['external id', 'rank', 'prize', 'solved', 'penalty', 'last AC']
+    if extra:
+        header = ['team name', 'uni name', 'group'] + header
+
+    result_writer.writerow(header)
+    for rank, p in enumerate(participations, start=1):
+        user = p.user
+
+        row = [user.notes, rank, '', int(p.score), p.cumtime, int(p.tiebreaker)]
+        if extra:
+            org = user.organization
+            row = [user.display_name, org.name if org else '', user.group] + row
+
+        result_writer.writerow(row)
+
+
 class Command(BaseCommand):
     help = 'export icpc result'
 
@@ -21,24 +44,7 @@ class Command(BaseCommand):
         if contest is None:
             raise CommandError('contest not found')
 
-        participations = contest.users.filter(virtual=ContestParticipation.LIVE).select_related('user') \
-            .order_by('is_disqualified', '-score', 'cumtime', 'tiebreaker')
-
         with open(output_path, mode='w') as result_file:
-            result_writer = csv.writer(result_file, delimiter='\t')
+            write_icpc_result(contest, result_file, options['extra'])
 
-            header = ['external id', 'rank', 'prize', 'solved', 'penalty', 'last AC']
-            if options['extra']:
-                header = ['team name', 'uni name', 'group'] + header
-
-            result_writer.writerow(header)
-            for rank, p in enumerate(participations, start=1):
-                user = p.user
-
-                row = [user.notes, rank, '', int(p.score), p.cumtime, int(p.tiebreaker)]
-                if options['extra']:
-                    row = [user.display_name, user.organization.name, user.group] + row
-
-                result_writer.writerow(row)
-
-            print(f'Exported result to {output_path}')
+        print(f'Exported result to {output_path}')
