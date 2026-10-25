@@ -1,0 +1,126 @@
+{% extends "common-content.html" %}
+
+{% block title_ruler %}{% endblock %}
+
+{% block title_row %}
+    {% set tab = 'helper' %}
+    {% include "contest/contest-tabs.html" %}
+{% endblock %}
+
+{% block content_media %}
+    <style>
+        .helper-preview {
+            max-height: 400px;
+            overflow: auto;
+        }
+
+        .helper-table {
+            width: 100%;
+        }
+
+        .helper-new {
+            color: #080;
+        }
+
+        .helper-form textarea {
+            width: 100%;
+        }
+    </style>
+{% endblock %}
+
+{% block content_js_media %}
+    <script>
+        $(function () {
+            $('.helper-form').each(function () {
+                var $form = $(this);
+                var $preview = $form.find('.helper-preview');
+                var timer = null, request = null;
+
+                function refresh() {
+                    if (request) request.abort();
+                    request = $.get(window.location.pathname, {
+                        preview: $form.data('preview'),
+                        prefixes: $form.find('[name=prefixes]').val(),
+                    }, function (html) {
+                        $preview.html(html);
+                    });
+                }
+
+                $form.find('[name=prefixes]').on('input', function () {
+                    clearTimeout(timer);
+                    timer = setTimeout(refresh, 300);
+                });
+            });
+        });
+    </script>
+{% endblock %}
+
+{% block body %}
+    <h3>{{ _('ICPC result') }}</h3>
+    <form method="get">
+        <input type="hidden" name="export" value="icpc">
+        <label><input type="checkbox" name="extra" value="1"> {{ _('Include team name, university and group') }}</label>
+        <input type="submit" class="button" value="{{ _('Download') }}">
+    </form>
+
+    <h3>{{ _('Event feed (ICPC Resolver)') }}</h3>
+    <form method="get">
+        <input type="hidden" name="export" value="event_feed">
+        {{ _('Last gold') }} <input type="number" name="medal" value="4" min="0" style="width: 5em">
+        {{ _('Last silver') }} <input type="number" name="medal" value="8" min="0" style="width: 5em">
+        {{ _('Last bronze') }} <input type="number" name="medal" value="12" min="0" style="width: 5em">
+        <input type="submit" class="button" value="{{ _('Download') }}">
+    </form>
+
+    {% if contest.format_name != 'ioi16' %}
+        <h3>{{ _('Replay data') }}</h3>
+        <form method="get">
+            <input type="hidden" name="export" value="replay">
+            <input type="submit" class="button" value="{{ _('Download') }}">
+        </form>
+    {% endif %}
+
+    <h3>{{ _('Add problems to contest') }}</h3>
+    {% if problem_result %}
+        {% with plan=problem_result, applied=True %}{% include "contest/helper-problems.html" %}{% endwith %}
+    {% endif %}
+    <form method="post" class="helper-form" data-preview="problems"
+          data-confirm="{{ _('Add the matched problems to this contest?') }}" onsubmit="return confirm(this.dataset.confirm)">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_problems">
+        <p>
+            <label>{{ _('Problem code prefixes (space or comma separated)') }}</label>
+            <textarea name="prefixes" rows="2" placeholder="icpc_"></textarea>
+        </p>
+        <p>
+            <label>{{ _('Points for new problems') }} <input type="number" name="points" value="1" min="0" style="width: 5em"></label>
+            <br>
+            <small>{{ _('Problems already in the contest are skipped. Afterwards all contest problems are reordered by code.') }}</small>
+        </p>
+        <div class="helper-preview"></div>
+        <input type="submit" class="button" value="{{ _('Add problems') }}">
+    </form>
+
+    <h3>{{ _('Add users to contest') }}</h3>
+    {% if profile_result %}
+        {% with plan=profile_result, applied=True %}{% include "contest/helper-profiles.html" %}{% endwith %}
+    {% endif %}
+    <form method="post" class="helper-form" data-preview="profiles"
+          data-confirm="{{ _('Add the matched users to this contest?') }}" onsubmit="return confirm(this.dataset.confirm)">
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add_profiles">
+        <p>
+            <label>{{ _('Username prefixes (space or comma separated)') }}</label>
+            <textarea name="prefixes" rows="2" placeholder="team_"></textarea>
+        </p>
+        <p>
+            <label><input type="checkbox" name="private" value="1"> {{ _('Make the contest private and add the matched users as private contestants') }}</label>
+            <br>
+            <label><input type="checkbox" name="close_registration" value="1" checked> {{ _('Close registration so nobody else can join') }}</label>
+            <br>
+            <small>{{ _('Each new participant also has this contest set as their current contest.') }}</small>
+        </p>
+        <div class="helper-preview"></div>
+        <input type="submit" class="button" value="{{ _('Add users') }}">
+    </form>
+{% endblock %}

@@ -1,5 +1,6 @@
 import json
 import os
+import re
 from calendar import Calendar, SUNDAY
 from collections import defaultdict, namedtuple
 from datetime import date, datetime, time, timedelta
@@ -22,7 +23,7 @@ from django.shortcuts import redirect, render
 from django.template.defaultfilters import date as date_filter, floatformat
 from django.template.loader import get_template
 from django.urls import reverse
-from django.utils import timezone
+from django.utils import timezone, translation
 from django.utils.functional import cached_property
 from django.utils.html import _json_script_escapes, escape, format_html
 from django.utils.safestring import mark_safe
@@ -33,6 +34,7 @@ from django.views.generic.detail import DetailView, SingleObjectMixin
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic.list import BaseListView
 from icalendar import Calendar as ICalendar, Event
+from lxml import etree
 from reversion import revisions
 
 
@@ -40,6 +42,8 @@ from judge.comments import CommentedDetailView
 from judge.contest_format import ICPCContestFormat
 from judge.forms import ContestAnnouncementForm, ContestCloneForm, ContestDownloadDataForm, ContestForm, \
     ProposeContestProblemFormSet
+from judge.management.commands.export_event_feed import build_event_feed
+from judge.management.commands.export_icpc_result import write_icpc_result
 from judge.models import Contest, ContestAnnouncement, ContestMoss, ContestParticipation, ContestProblem, \
     ContestSubmission, ContestTag, Language, Organization, Problem, ProblemClarification, Profile, Solution, Submission
 from judge.ratings import RATING_CLASS, RATING_LEVELS, RATING_VALUES
@@ -1423,6 +1427,158 @@ class ContestReplayData(ContestMixin, SingleObjectMixin, View):
         if not os.path.exists(filepath):
             write_contest_replay_data(contest, build_contest_replay_data(contest))
         return filepath, filename
+
+
+def split_prefixes(value):
+    return [prefix for prefix in re.split(r'[\s,]+', value or '') if prefix]
+
+
+def prefixes_q(field, prefixes):
+    q = Q()
+    for prefix in prefixes:
+        q |= Q(**{f'{field}__startswith': prefix})
+    return q
+
+
+def plan_add_problems(contest, prefixes):
+    # Callers must pass non-empty prefixes: an empty Q() would match every problem.
+    existing = {cp.problem_id: cp for cp in contest.contest_problems.select_related('problem')}
+    matched = list(Problem.objects.filter(prefixes_q('code', prefixes)).order_by('code').only('id', 'code', 'name'))
+    new = [problem for problem in matched if problem.id not in existing]
+    final = sorted([cp.problem for cp in existing.values()] + new, key=attrgetter('code'))
+    return {
+        'matched': matched,
+        'new': new,
+        'skipped': [problem for problem in matched if problem.id in existing],
+        'final': [(order, problem, existing[problem.id].order if problem.id in existing else None)
+                  for order, problem in enumerate(final, start=1)],
+    }
+
+
+def plan_add_profiles(contest, prefixes):
+    matched = list(Profile.objects.filter(prefixes_q('user__username', prefixes)).select_related('user')
+                   .order_by('user__username'))
+    joined = set(contest.users.filter(virtual=ContestParticipation.LIVE).values_list('user_id', flat=True))
+    return {
+        'matched': matched,
+        'new': [profile for profile in matched if profile.id not in joined],
+        'skipped': [profile for profile in matched if profile.id in joined],
+    }
+
+
+class ContestHelper(ContestMixin, TitleMixin, DetailView):
+    template_name = 'contest/helper.html'
+
+    def get_title(self):
+        return _('Helper for %s') % self.object.name
+
+    def get_object(self, queryset=None):
+        if not self.request.user.is_superuser:
+            raise Http404()
+        return super().get_object(queryset)
+
+    def get(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        preview = request.GET.get('preview')
+        if preview in ('problems', 'profiles'):
+            prefixes = split_prefixes(request.GET.get('prefixes'))
+            plan = prefixes and (plan_add_problems if preview == 'problems' else plan_add_profiles)(self.object,
+                                                                                                    prefixes)
+            return render(request, f'contest/helper-{preview}.html', {'plan': plan, 'contest': self.object})
+        export = request.GET.get('export')
+        if export == 'icpc':
+            return self.export_icpc_result()
+        if export == 'event_feed':
+            return self.export_event_feed()
+        if export == 'replay':
+            return self.export_replay()
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        prefixes = split_prefixes(request.POST.get('prefixes'))
+        action = request.POST.get('action')
+        context = self.get_context_data(object=self.object)
+        if prefixes and action == 'add_problems':
+            try:
+                points = int(request.POST.get('points') or 1)
+            except ValueError:
+                points = 1
+            context['problem_result'] = self.add_problems(prefixes, points)
+        elif prefixes and action == 'add_profiles':
+            context['profile_result'] = self.add_profiles(
+                prefixes, private=bool(request.POST.get('private')),
+                close_registration=bool(request.POST.get('close_registration')),
+            )
+        return self.render_to_response(context)
+
+    def add_problems(self, prefixes, points):
+        contest = self.object
+        with transaction.atomic():
+            plan = plan_add_problems(contest, prefixes)
+            ContestProblem.objects.bulk_create([
+                ContestProblem(contest=contest, problem=problem, points=points, order=0) for problem in plan['new']
+            ])
+            # Renumber everything by code, so existing problems shift around the newly added ones.
+            contest_problems = sorted(contest.contest_problems.select_related('problem'),
+                                      key=lambda cp: cp.problem.code)
+            for order, cp in enumerate(contest_problems, start=1):
+                cp.order = order
+            ContestProblem.objects.bulk_update(contest_problems, ['order'])
+        return plan
+
+    def add_profiles(self, prefixes, private, close_registration):
+        contest = self.object
+        with transaction.atomic():
+            plan = plan_add_profiles(contest, prefixes)
+            if private:
+                contest.private_contestants.add(*plan['matched'])
+                contest.is_private = True
+            for profile in plan['new']:
+                profile.current_contest = ContestParticipation.objects.create(
+                    contest=contest, user=profile, virtual=ContestParticipation.LIVE, real_start=contest.start_time,
+                )
+                profile.save(update_fields=['current_contest'])
+            if close_registration:
+                # Close registration so nobody else can join.
+                now = timezone.now()
+                contest.registration_start = now - timedelta(days=1)
+                contest.registration_end = now - timedelta(hours=1)
+            contest.update_user_count()
+        return plan
+
+    def attachment(self, response, filename):
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    def export_icpc_result(self):
+        response = HttpResponse(content_type='text/tab-separated-values; charset=utf-8')
+        write_icpc_result(self.object, response, extra=bool(self.request.GET.get('extra')))
+        return self.attachment(response, f'{self.object.key}_result.tsv')
+
+    def export_event_feed(self):
+        try:
+            last_medals = [int(x) for x in self.request.GET.getlist('medal')]
+        except ValueError:
+            last_medals = []
+        if len(last_medals) != 3:
+            last_medals = [4, 8, 12]
+        with translation.override('en'):
+            root = build_event_feed(self.object, last_medals)
+        response = HttpResponse(etree.tostring(root, encoding='utf-8', xml_declaration=True),
+                                content_type='application/xml')
+        return self.attachment(response, f'{self.object.key}_event_feed.xml')
+
+    def export_replay(self):
+        # Prefer the stored file: it may carry ghost participations from merge_replay_data.
+        filepath, filename = contest_replay_data_path(self.object)
+        if os.path.exists(filepath):
+            with open(filepath, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/json')
+        else:
+            response = JsonResponse(build_contest_replay_data(self.object),
+                                    json_dumps_params={'separators': (',', ':')})
+        return self.attachment(response, filename)
 
 
 class ContestMossMixin(ContestMixin, PermissionRequiredMixin):

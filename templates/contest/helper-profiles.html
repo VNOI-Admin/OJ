@@ -1,0 +1,34 @@
+{% if plan %}
+    <p>
+        {% if applied %}<strong>{{ _('Done.') }}</strong>{% endif %}
+        {{ _('Matched %(matched)s users: %(new)s to add, %(skipped)s already participating (skipped).',
+             matched=plan.matched|length, new=plan.new|length, skipped=plan.skipped|length) }}
+        {{ _('The contest will have %(count)s participants.', count=contest.user_count + (0 if applied else plan.new|length)) }}
+    </p>
+    {% if plan.matched %}
+        <table class="table helper-table">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>{{ _('Username') }}</th>
+                    <th>{{ _('Status') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for profile in plan.matched %}
+                    {% set is_new = profile in plan.new %}
+                    <tr{% if is_new %} class="helper-new"{% endif %}>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ link_user(profile) }}</td>
+                        <td>
+                            {% if is_new %}{{ _('Added') if applied else _('Will be added') }}
+                            {% else %}{{ _('Already participating') }}{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% elif plan is not none %}
+    <p>{{ _('Type at least one prefix.') }}</p>
+{% endif %}

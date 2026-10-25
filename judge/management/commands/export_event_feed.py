@@ -128,6 +128,38 @@ def fill_finalized(contest: Contest, root: ET.Element, last_medals: List[int]):
     ET.SubElement(finalized, 'timestamp').text = str(timezone.now().timestamp())
 
 
+def build_event_feed(contest: Contest, last_medals: List[int]) -> ET.Element:
+    # Create root element
+    root = ET.Element('contest')
+    root.text = '\n'
+
+    # Contest information
+    fill_info(contest, root)
+
+    # Programming languages
+    fill_language(contest, root)
+
+    # Regions
+    fill_region(contest, root)
+
+    # Judgement (AC, WA, etc.)
+    fill_judgement(contest, root)
+
+    # Problems
+    problem_index = fill_problem(contest, root)
+
+    # Teams
+    team_index = fill_team(contest, root)
+
+    # Runs (i.e. submissions)
+    fill_run(contest, root, problem_index, team_index)
+
+    # Contest finalization information
+    fill_finalized(contest, root, last_medals)
+
+    return root
+
+
 class Command(BaseCommand):
     help = 'export CLICS XML Event Feed for use in other tools (e.g. ICPC Resolver)'
 
@@ -156,34 +188,6 @@ class Command(BaseCommand):
         # Force using English
         translation.activate('en')
 
-        # Create root element
-        root = ET.Element('contest')
-        root.text = '\n'
-
-        # Contest information
-        fill_info(contest, root)
-
-        # Programming languages
-        fill_language(contest, root)
-
-        # Regions
-        fill_region(contest, root)
-
-        # Judgement (AC, WA, etc.)
-        fill_judgement(contest, root)
-
-        # Problems
-        problem_index = fill_problem(contest, root)
-
-        # Teams
-        team_index = fill_team(contest, root)
-
-        # Runs (i.e. submissions)
-        fill_run(contest, root, problem_index, team_index)
-
-        # Contest finalization information
-        fill_finalized(contest, root, last_medals)
-
         # Write to output file
-        tree = ET.ElementTree(root)
+        tree = ET.ElementTree(build_event_feed(contest, last_medals))
         tree.write(output_file, encoding='utf-8', xml_declaration=True)

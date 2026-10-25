@@ -1,0 +1,36 @@
+{% if plan %}
+    <p>
+        {% if applied %}<strong>{{ _('Done.') }}</strong>{% endif %}
+        {{ _('Matched %(matched)s problems: %(new)s to add, %(skipped)s already in the contest (skipped).',
+             matched=plan.matched|length, new=plan.new|length, skipped=plan.skipped|length) }}
+    </p>
+    {% if plan.matched %}
+        <p>{{ _('Problem order after the change:') }}</p>
+        <table class="table helper-table">
+            <thead>
+                <tr>
+                    <th>{{ _('New order') }}</th>
+                    <th>{{ _('Old order') }}</th>
+                    <th>{{ _('Problem') }}</th>
+                    <th>{{ _('Status') }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order, problem, old_order in plan.final %}
+                    <tr{% if old_order is none %} class="helper-new"{% endif %}>
+                        <td>{{ order }}</td>
+                        <td>{{ old_order if old_order is not none else '-' }}</td>
+                        <td><a href="{{ url('problem_detail', problem.code) }}">{{ problem.code }}</a> &mdash; {{ problem.name }}</td>
+                        <td>
+                            {% if old_order is none %}{{ _('Added') if applied else _('Will be added') }}
+                            {% elif old_order != order %}{{ _('Moved') if applied else _('Will be moved') }}
+                            {% else %}{{ _('Unchanged') }}{% endif %}
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+{% elif plan is not none %}
+    <p>{{ _('Type at least one prefix.') }}</p>
+{% endif %}
