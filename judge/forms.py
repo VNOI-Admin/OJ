@@ -167,12 +167,18 @@ class LanguageLimitForm(ModelForm):
         }
 
 
+class PdfStatementUrl(str):
+    @property
+    def url(self):
+        return self
+
+
 class ProblemEditForm(ModelForm):
     statement_file = forms.FileField(
         required=False,
         validators=[FileExtensionValidator(allowed_extensions=settings.PDF_STATEMENT_SAFE_EXTS)],
         help_text=_('Maximum file size is %s.') % filesizeformat(settings.PDF_STATEMENT_MAX_FILE_SIZE),
-        widget=forms.FileInput(attrs={'accept': 'application/pdf'}),
+        widget=forms.ClearableFileInput(attrs={'accept': 'application/pdf'}),
         label=_('Statement file'),
     )
     required_css_class = 'required'
@@ -181,6 +187,10 @@ class ProblemEditForm(ModelForm):
         self.org_pk = org_pk = kwargs.pop('org_pk', None)
         self.user = kwargs.pop('user', None)
         super(ProblemEditForm, self).__init__(*args, **kwargs)
+
+        if self.instance.pdf_url:
+            self.fields['statement_file'].initial = PdfStatementUrl(self.instance.pdf_url)
+        self.fields['statement_file'].widget.clear_checkbox_label = _('Delete')
 
         # Only allow to public/private problem in organization
         if org_pk is None:
@@ -212,6 +222,8 @@ class ProblemEditForm(ModelForm):
         return code
 
     def clean_statement_file(self):
+        if self.cleaned_data['statement_file'] is False:  # clear checkbox ticked
+            return False
         content = self.files.get('statement_file', None)
         if content is not None:
             if content.size > settings.PDF_STATEMENT_MAX_FILE_SIZE:
