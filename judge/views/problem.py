@@ -1136,8 +1136,10 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         return kwargs
 
     def save_statement(self, form, problem):
-        statement_file = form.files.get('statement_file', None)
-        if statement_file is not None:
+        statement_file = form.cleaned_data.get('statement_file')
+        if statement_file is False:
+            problem.pdf_url = ''
+        elif statement_file is not None:
             problem.pdf_url = pdf_statement_uploader(statement_file)
 
     def post(self, request, *args, **kwargs):
