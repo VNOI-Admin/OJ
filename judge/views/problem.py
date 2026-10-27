@@ -55,7 +55,7 @@ def get_contest_problem(problem, profile):
 
 
 def get_contest_submission_count(problem, profile, virtual):
-    return profile.current_contest.submissions.exclude(submission__status__in=['IE']) \
+    return profile.current_contest.submissions.exclude(submission__status__in=['IE', 'CKE']) \
                   .filter(problem__problem=problem, participation__virtual=virtual).count()
 
 
@@ -261,7 +261,7 @@ class ProblemSubmitMixin:
         max_subs = self.contest_problem and self.contest_problem.max_submissions
         if max_subs is None:
             return None
-        # When an IE submission is rejudged into a non-IE status, it will count towards the
+        # When an IE/CKE submission is rejudged into another status, it will count towards the
         # submission limit. We max with 0 to ensure that `remaining_submission_count` returns
         # a non-negative integer, which is required for future checks in this view.
         return max(
@@ -354,7 +354,8 @@ class ProblemSubmitMixin:
         if (
             not request.user.has_perm('judge.spam_submission') and
             Submission.objects.filter(user=request.profile, rejudged_date__isnull=True)
-                              .exclude(status__in=['D', 'IE', 'CE', 'AB']).count() >= settings.DMOJ_SUBMISSION_LIMIT
+                              .exclude(status__in=['D', 'IE', 'CE', 'AB', 'CKE'])
+                              .count() >= settings.DMOJ_SUBMISSION_LIMIT
         ):
             return HttpResponse(format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429), None
 

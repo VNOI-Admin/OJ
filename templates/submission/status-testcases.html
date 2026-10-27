@@ -24,7 +24,7 @@
 {% endif %}
 {% set is_pretest = submission.is_pretested %}
 
-{% if submission.status != 'IE' %}
+{% if submission.status not in ('IE', 'CKE') %}
     {% if submission.status == 'QU' %}
         <h4>{{ _('We are waiting for a suitable judge to process your submission...') }}</h4>
     {% elif submission.status == 'P' %}

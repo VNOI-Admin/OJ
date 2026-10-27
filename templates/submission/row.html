@@ -2,7 +2,7 @@
 <div class="sub-result {{ submission.result_class }}">
     <div class="score">
         {%- if submission.is_graded -%}
-            {%- if submission.status in ('IE', 'CE', 'AB') -%}
+            {%- if submission.status in ('IE', 'CE', 'AB', 'CKE') -%}
                 ---
             {%- else -%}
                 {{ submission.case_points|floatformat(-3) }} / {{ submission.case_total|floatformat(0) }}
@@ -93,7 +93,7 @@
 
 
 <div class="sub-usage">
-    {% if submission.status in ('QU', 'P', 'G', 'CE', 'IE', 'AB') or not can_view_testcase_status %}
+    {% if submission.status in ('QU', 'P', 'G', 'CE', 'IE', 'AB', 'CKE') or not can_view_testcase_status %}
         <div class="time">---</div>
         <div class="memory">---</div>
     {% else %}
