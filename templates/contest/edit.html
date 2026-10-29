@@ -132,12 +132,10 @@
                     if (dragDropMode) {
                         _autoFillOrder(row);
                     }
-                    {% if contest_org %}
                     var $probSel = row.find('select[data-problem-src]');
                     if ($probSel.data('select2')) $probSel.select2('destroy');
                     $probSel.val(null);
                     _initProblemPicker($probSel[0]);
-                    {% endif %}
                 },
             });
 
@@ -238,17 +236,25 @@
                 org: "{{ url('org_problem_select2', org_pk=contest_org.id) }}",
                 public: "{{ url('public_problem_select2') }}",
             };
+            {% else %}
+            var _problemSrcUrls = {
+                private: "{{ url('private_problem_select2') }}",
+                public: "{{ url('public_problem_select2') }}",
+            };
+            {% endif %}
             var _problemSrcLabels = {
                 org: {{ _('Organization problems')|tojson }},
+                private: {{ _('Private problems')|tojson }},
                 public: {{ _('Public problems')|tojson }},
             };
+            var _problemSrcDefault = Object.keys(_problemSrcUrls)[0];
 
             function _initProblemPicker(select) {
                 var $sel = $(select);
                 if ($sel.data('select2')) $sel.select2('destroy');
                 $sel.select2({
                     ajax: {
-                        url: function() { return _problemSrcUrls[$sel.data('problemSrc') || 'org']; },
+                        url: function() { return _problemSrcUrls[$sel.data('problemSrc') || _problemSrcDefault]; },
                         delay: 300,
                         data: function(p) { return { term: p.term || '', page: p.page || 1 }; },
                         processResults: function(d) { return { results: d.results, pagination: { more: d.more } }; },
@@ -263,10 +269,10 @@
                     var $tabBar = $('<div class="tab-bar"></div>');
                     Object.keys(_problemSrcUrls).forEach(function(key) {
                         var $btn = $('<button type="button" class="tab-bar-btn">' + _problemSrcLabels[key] + '</button>');
-                        if (($sel.data('problemSrc') || 'org') === key) $btn.addClass('active');
+                        if (($sel.data('problemSrc') || _problemSrcDefault) === key) $btn.addClass('active');
                         $btn.on('mousedown', function(e) {
                             e.preventDefault();
-                            if (($sel.data('problemSrc') || 'org') === key) return;
+                            if (($sel.data('problemSrc') || _problemSrcDefault) === key) return;
                             $sel.data('problemSrc', key);
                             $tabBar.find('.tab-bar-btn').removeClass('active');
                             $(this).addClass('active');
@@ -279,7 +285,6 @@
             }
 
             $('#form_set select[data-problem-src]').each(function() { _initProblemPicker(this); });
-            {% endif %}
         })
     </script>
     <script type="text/javascript">
@@ -365,18 +370,15 @@
     {% endif %}
     <tr>
         <td>{{ form.id }} {{ form.problem.errors }}
-            {% if contest_org %}
+            {% set problem = form.instance.problem if form.instance.problem_id else None %}
             <select name="{{ form.problem.html_name }}" id="{{ form.problem.auto_id }}" style="width:100%"
-                    data-problem-src="{{ 'public' if form.instance.problem_id and not form.instance.problem.is_organization_private else 'org' }}">
-                {% if form.instance.problem_id %}
-                <option value="{{ form.instance.problem_id }}" selected>
-                    [{{ form.instance.problem.code }}] {{ form.instance.problem.name }}
+                    data-problem-src="{{ 'public' if problem and problem.is_public and not problem.is_organization_private else '' }}">
+                {% if problem %}
+                <option value="{{ problem.id }}" selected>
+                    [{{ problem.code }}] {{ problem.name }}
                 </option>
                 {% endif %}
             </select>
-            {% else %}
-            {{ form.problem }}
-            {% endif %}
         </td>
         <td class="points-column">{{ form.points.errors }}{{ form.points }}</td>
         <td class="order-column">{{ form.order.errors }}{{ form.order }}</td>
