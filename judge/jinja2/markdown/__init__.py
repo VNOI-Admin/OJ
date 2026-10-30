@@ -13,6 +13,7 @@ from markupsafe import Markup
 
 from judge.highlight_code import highlight_code
 from judge.jinja2.markdown.lazy_load import lazy_load as lazy_load_processor
+from judge.jinja2.reference import reference
 from judge.utils.camo import client as camo_client
 from judge.utils.texoid import TEXOID_ENABLED, TexoidRenderer
 from .bleach_whitelist import all_styles, mathml_attrs, mathml_tags
@@ -30,6 +31,8 @@ def get_cleaner(name, params):
     if name in cleaner_cache:
         return cleaner_cache[name]
 
+    # Copy: popping from the shared MARKDOWN_STYLES dict would corrupt markdown_client_configs().
+    params = dict(params)
     styles = params.pop('styles', None)
     if styles:
         params['css_sanitizer'] = CSSSanitizer(allowed_css_properties=all_styles if styles is True else styles)
@@ -123,3 +126,38 @@ def markdown(text, style, math_engine=None, lazy_load=False, strip_paragraphs=Fa
     if bleach_params:
         result = get_cleaner(style, bleach_params).clean(result)
     return Markup(result)
+
+
+@registry.filter
+def markdown_client(text, style):
+    """Wrap raw markdown in an escaped placeholder for resources/markdown-client.js to render.
+
+    Styles without a Bleach whitelist (admin-only) are rendered on the server instead.
+    """
+    styles = settings.MARKDOWN_STYLES.get(style, settings.MARKDOWN_DEFAULT_STYLE)
+    if not styles.get('bleach'):
+        return Markup(str(reference(markdown(text, style))))
+    return Markup('<div class="md-content" data-md-style="{}">{}</div>').format(style, text or '')
+
+
+@registry.function
+def markdown_client_configs():
+    """Per-style sanitizer config for resources/markdown-client.js, built from the Bleach settings.
+
+    Tags follow each style's list; attributes are merged into one list for all tags. Styles without
+    a Bleach whitelist are omitted (they render on the server).
+    """
+    configs = {}
+    for style, spec in settings.MARKDOWN_STYLES.items():
+        bleach_params = spec.get('bleach')
+        if not bleach_params:
+            continue
+        attrs = set()
+        for tag_attrs in bleach_params.get('attributes', {}).values():
+            attrs.update(tag_attrs)
+        configs[style] = {
+            'html': not spec.get('safe_mode', True),
+            'tags': list(bleach_params.get('tags', [])),
+            'attrs': sorted(attrs),
+        }
+    return configs
