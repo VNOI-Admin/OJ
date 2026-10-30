@@ -37,8 +37,8 @@ sqlparse
 lupa
 netaddr
 webauthn<1
-bleach[css]
-markdown2 @ git+https://github.com/VNOI-Admin/python-markdown2.git@febc3a350872e9e8153c5eb65d3baa017c07f67a
+nh3
+markdown2 @ git+https://github.com/VNOI-Admin/python-markdown2.git@860966466cc394e96377bbca408df2535afbc8a5
 discord-webhook
 django-admin-sortable2
 icalendar
