@@ -105,29 +105,39 @@ MATHML_CHUDNOVSKY = r"""
 
 
 class TestMarkdown(SimpleTestCase):
-    BLEACHED_STYLE = 'problem'
-    UNBLEACHED_STYLE = 'problem-full'
+    SANITIZED_STYLE = 'problem'
+    UNSANITIZED_STYLE = 'problem-full'
 
-    def test_bleach(self):
-        self.assertHTMLEqual(markdown('<script>void(0)</script>', self.BLEACHED_STYLE),
+    def test_sanitize(self):
+        self.assertHTMLEqual(markdown('<script>void(0)</script>', self.SANITIZED_STYLE),
                              '&lt;script&gt;void(0)&lt;/script&gt;')
         #  style is not allowed
-        self.assertHTMLEqual(markdown('<img style="display: block; margin: 0 auto">', self.BLEACHED_STYLE),
+        self.assertHTMLEqual(markdown('<img style="display: block; margin: 0 auto">', self.SANITIZED_STYLE),
                              '<p><img></p>')
-        self.assertHTMLEqual(markdown('<style>a { color: red; }</style>', self.BLEACHED_STYLE),
+        self.assertHTMLEqual(markdown('<style>a { color: red; }</style>', self.SANITIZED_STYLE),
                              '&lt;style&gt;a { color: red; }&lt;/style&gt;')
 
-    def test_bleach_mathml(self):
-        self.assertHTMLEqual(markdown(MATHML_N, self.BLEACHED_STYLE), MATHML_N)
-        cleaner = get_cleaner(self.BLEACHED_STYLE, None)
+    def test_sanitize_escapes_non_tags(self):
+        style = self.SANITIZED_STYLE
+        # `<b, c>` is a tag named `b,` to an HTML parser, it is escaped rather than stripped
+        self.assertEqual(markdown('a<b, c>d', style), '<p>a&lt;b, c&gt;d</p>\n')
+        self.assertEqual(markdown('a<b', style), '<p>a&lt;b</p>\n')
+        self.assertEqual(markdown('vector<int> v;', style), '<p>vector&lt;int&gt; v;</p>\n')
+        self.assertEqual(markdown('~a<n\\le 5~.', style), '<p>~a&lt;n\\le 5~.</p>\n')
+        self.assertEqual(markdown('<p>a <b>b</b> <!-- c --></p>', style), '<p>a <b>b</b> </p>\n')
+        self.assertEqual(markdown('<a href="javascript:x" onclick="x">l</a>', style), '<p><a>l</a></p>\n')
+
+    def test_sanitize_mathml(self):
+        self.assertHTMLEqual(markdown(MATHML_N, self.SANITIZED_STYLE), MATHML_N)
+        cleaner = get_cleaner(self.SANITIZED_STYLE, None)
         self.assertHTMLEqual(cleaner.clean(MATHML_CHUDNOVSKY), MATHML_CHUDNOVSKY)
 
-    def test_no_bleach(self):
-        self.assertHTMLEqual(markdown('<script>void(0)</script>', self.UNBLEACHED_STYLE),
+    def test_no_sanitize(self):
+        self.assertHTMLEqual(markdown('<script>void(0)</script>', self.UNSANITIZED_STYLE),
                              '<script>void(0)</script>')
 
     def test_post_process(self):
-        self.assertHTMLEqual(markdown('<img src="test.png">', self.UNBLEACHED_STYLE, lazy_load=True),
+        self.assertHTMLEqual(markdown('<img src="test.png">', self.UNSANITIZED_STYLE, lazy_load=True),
                              '<p><noscript><img src="test.png"></noscript>'
                              '<img src="/static/blank.gif" data-src="test.png" class="unveil"></p>')
 

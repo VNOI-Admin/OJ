@@ -1,21 +1,17 @@
 import logging
 import re
-from html.parser import HTMLParser
-from urllib.parse import urlparse
 
 import markdown2
-from bleach.css_sanitizer import CSSSanitizer
-from bleach.sanitizer import Cleaner
+import nh3
 from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured
 from lxml import html
 from lxml.etree import ParserError, XMLSyntaxError
 from markupsafe import Markup
 
-from judge.highlight_code import highlight_code
 from judge.jinja2.markdown.lazy_load import lazy_load as lazy_load_processor
 from judge.utils.camo import client as camo_client
-from judge.utils.texoid import TEXOID_ENABLED, TexoidRenderer
-from .bleach_whitelist import all_styles, mathml_attrs, mathml_tags
+from .sanitizer_whitelist import all_styles, mathml_attrs, mathml_tags
 from .. import registry
 
 logger = logging.getLogger('judge.html')
@@ -23,24 +19,39 @@ logger = logging.getLogger('judge.html')
 NOFOLLOW_WHITELIST = settings.NOFOLLOW_EXCLUDED
 
 
+class Sanitizer:
+    """Allowlist HTML sanitizer. Tags outside the allowlist are escaped by markdown2's `html-allowlist` extra,
+    this cleans attributes and URLs of the rest."""
+
+    def __init__(self, tags=(), attributes=None, styles=None, mathml=False):
+        self.tags = set(tags)
+        # for markdown2's `html-allowlist`: MathML names like `int` and `vector` are C++ too, so only `math` is
+        # listed and markdown2 leaves what is inside it to nh3
+        self.markdown_tags = set(tags)
+        attributes = {tag: set(attrs) for tag, attrs in (attributes or {}).items()}
+        if mathml:
+            self.markdown_tags.add('math')
+            self.tags.update(mathml_tags)
+            attributes.update({tag: set(attrs) for tag, attrs in mathml_attrs.items()})
+        self.cleaner = nh3.Cleaner(
+            tags=self.tags,
+            attributes=attributes,
+            url_schemes={'http', 'https', 'mailto'},
+            link_rel=None,
+            filter_style_properties=set(all_styles if styles is True else styles) if styles else None,
+        )
+
+    def clean(self, text):
+        return self.cleaner.clean(text)
+
+
 cleaner_cache = {}
 
 
 def get_cleaner(name, params):
-    if name in cleaner_cache:
-        return cleaner_cache[name]
-
-    styles = params.pop('styles', None)
-    if styles:
-        params['css_sanitizer'] = CSSSanitizer(allowed_css_properties=all_styles if styles is True else styles)
-
-    if params.pop('mathml', False):
-        params['tags'] = params.get('tags', []) + mathml_tags
-        params['attributes'] = params.get('attributes', {}).copy()
-        params['attributes'].update(mathml_attrs)
-
-    cleaner = cleaner_cache[name] = Cleaner(**params)
-    return cleaner
+    if name not in cleaner_cache:
+        cleaner_cache[name] = Sanitizer(**params)
+    return cleaner_cache[name]
 
 
 def fragments_to_tree(fragment):
@@ -100,7 +111,14 @@ def markdown(text, style, math_engine=None, lazy_load=False, strip_paragraphs=Fa
     if styles.get('nofollow', True):
         extras.append('nofollow')
 
-    bleach_params = styles.get('bleach', {})
+    if 'bleach' in styles:
+        # renamed from 'bleach', fail loudly instead of rendering unsanitized HTML
+        raise ImproperlyConfigured("MARKDOWN_STYLES: rename the 'bleach' key to 'sanitizer'")
+    sanitizer_params = styles.get('sanitizer', {})
+    cleaner = get_cleaner(style, sanitizer_params) if sanitizer_params else None
+    if cleaner:
+        extras = dict.fromkeys(extras)
+        extras['html-allowlist'] = cleaner.markdown_tags
 
     post_processors = []
     if styles.get('use_camo', False) and camo_client is not None:
@@ -120,6 +138,6 @@ def markdown(text, style, math_engine=None, lazy_load=False, strip_paragraphs=Fa
         if strip_paragraphs:
             strip_paragraphs_tags(tree)
         result = fragment_tree_to_str(tree)
-    if bleach_params:
-        result = get_cleaner(style, bleach_params).clean(result)
+    if cleaner:
+        result = cleaner.clean(result)
     return Markup(result)
