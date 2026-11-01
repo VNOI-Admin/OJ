@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.flatpages.admin import FlatPageAdmin as OldFlatPageAdmin
 from django.contrib.flatpages.forms import FlatpageForm as OldFlatpageForm
+from django.core.cache import cache
 from django.forms import ModelForm
 from django.urls import NoReverseMatch, reverse, reverse_lazy
 from django.utils.html import format_html
@@ -11,6 +12,7 @@ from reversion.admin import VersionAdmin
 
 from judge.dblock import LockModel
 from judge.models import NavigationBar
+from judge.template_context import NAVIGATION_BAR_CACHE_KEY
 from judge.widgets import AdminHeavySelect2MultipleWidget, AdminHeavySelect2Widget, AdminMartorWidget
 
 
@@ -40,6 +42,8 @@ class NavigationBarAdmin(DraggableMPTTAdmin):
         if self.__save_model_calls:
             with LockModel(write=(NavigationBar,)):
                 NavigationBar.objects.rebuild()
+            # rebuild() uses bulk updates, which don't fire the post_save invalidation.
+            cache.delete(NAVIGATION_BAR_CACHE_KEY)
         return result
 
 

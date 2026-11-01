@@ -1,8 +1,10 @@
+import re
 from functools import partial
 
 from django.conf import settings
 from django.contrib.auth.context_processors import PermWrapper
 from django.contrib.sites.shortcuts import get_current_site
+from django.core.cache import cache
 from django.utils.functional import SimpleLazyObject, new_method_proxy
 
 from judge import event_poster as event
@@ -52,16 +54,36 @@ def comet_location(request):
             'EVENT_LAST_MSG': event.last()}
 
 
+NAVIGATION_BAR_CACHE_KEY = 'navigation_bar'
+
+
+def nav_bar_items():
+    items = cache.get(NAVIGATION_BAR_CACHE_KEY)
+    if items is None:
+        items = list(NavigationBar.objects.all())
+        cache.set(NAVIGATION_BAR_CACHE_KEY, items, 86400)
+    return items
+
+
+def nav_tab_keys(path, items):
+    by_id = {item.id: item for item in items}
+    node = next((item for item in items if re.search(item.regex, path)), None)
+    keys = []
+    while node is not None:
+        keys.append(node.key)
+        node = by_id.get(node.parent_id)
+    return keys[::-1]
+
+
 def __nav_tab(path):
-    result = list(NavigationBar.objects.extra(where=['%s REGEXP BINARY regex'], params=[path])[:1])
-    return result[0].get_ancestors(include_self=True).values_list('key', flat=True) if result else []
+    return nav_tab_keys(path, nav_bar_items())
 
 
 def general_info(request):
     path = request.get_full_path()
     info = {
         'nav_tab': FixedSimpleLazyObject(partial(__nav_tab, request.path)),
-        'nav_bar': NavigationBar.objects.all(),
+        'nav_bar': nav_bar_items(),
         'LOGIN_RETURN_PATH': '' if path.startswith('/accounts/') else path,
         'REGISTRATION_OPEN': settings.REGISTRATION_OPEN,
         'perms': PermWrapper(request.user),
