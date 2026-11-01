@@ -651,14 +651,14 @@ MARKDOWN_SAFE_TAGS = [
     'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'tfoot',
     'img', 'audio', 'video', 'source',
     'a', 'strike',
-    'noscript', 'center', 'object', 'iframe',
+    'noscript', 'center',
 ]
 
 MARKDOWN_SAFE_ATTRS = {
     '*': ['id', 'class', 'data', 'height'],
     'img': ['src', 'alt', 'title', 'width', 'height', 'data-src', 'align'],
     'a': ['href', 'alt', 'title'],
-    'iframe': ['src', 'height', 'width', 'allow'],
+    'iframe': ['src', 'height', 'width'],
     'abbr': ['title'],
     'dfn': ['title'],
     'time': ['datetime'],
@@ -671,68 +671,70 @@ MARKDOWN_SAFE_ATTRS = {
     'li': ['value'],
 }
 
-MARKDOWN_STAFF_EDITABLE_STYLE = {
+MARKDOWN_ADMIN_EDITABLE_STYLE = {
     'safe_mode': False,
     'use_camo': True,
-    'texoid': True,
-    'math': True,
+}
+
+MARKDOWN_STYLING_ALLOWED_STYLE = {
+    'safe_mode': False,
+    'use_camo': True,
+    'nofollow': True,
     'sanitizer': {
         'tags': MARKDOWN_SAFE_TAGS,
         'attributes': MARKDOWN_SAFE_ATTRS,
         'styles': True,
-        'mathml': True,
+        'mathml': False,
     },
 }
 
-MARKDOWN_ADMIN_EDITABLE_STYLE = {
+MARKDOWN_EMBEDDED_ALLOWED_STYLE = {
     'safe_mode': False,
     'use_camo': True,
-    'texoid': True,
-    'math': True,
+    'nofollow': True,
+    'sanitizer': {
+        'tags': MARKDOWN_SAFE_TAGS + ['object', 'iframe'],
+        'attributes': MARKDOWN_SAFE_ATTRS,
+        'styles': True,
+        'mathml': False,
+    },
 }
 
 MARKDOWN_DEFAULT_STYLE = {
     'safe_mode': True,
     'nofollow': True,
     'use_camo': True,
-    'math': True,
     'sanitizer': {
         'tags': MARKDOWN_SAFE_TAGS,
         'attributes': MARKDOWN_SAFE_ATTRS,
         'styles': False,
-        'mathml': True,
-    },
-}
-
-MARKDOWN_USER_LARGE_STYLE = {
-    'safe_mode': True,
-    'nofollow': True,
-    'use_camo': True,
-    'math': True,
-    'sanitizer': {
-        'tags': MARKDOWN_SAFE_TAGS,
-        'attributes': MARKDOWN_SAFE_ATTRS,
-        'styles': False,
-        'mathml': True,
+        'mathml': False,
     },
 }
 
 MARKDOWN_STYLES = {
+    # untrusted user input
     'default': MARKDOWN_DEFAULT_STYLE,
     'comment': MARKDOWN_DEFAULT_STYLE,
-    'self-description': MARKDOWN_USER_LARGE_STYLE,
-    'problem': MARKDOWN_STAFF_EDITABLE_STYLE,
+    'organization-about': MARKDOWN_DEFAULT_STYLE,
+    'ticket': MARKDOWN_DEFAULT_STYLE,
+    'self-description': MARKDOWN_DEFAULT_STYLE,
+
+    # fully trusted user input
     'problem-full': MARKDOWN_ADMIN_EDITABLE_STYLE,
-    'contest': MARKDOWN_STAFF_EDITABLE_STYLE,
     'flatpage': MARKDOWN_ADMIN_EDITABLE_STYLE,
-    'language': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'license': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'judge': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'blog': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'solution': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'contest_tag': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'organization-about': MARKDOWN_USER_LARGE_STYLE,
-    'ticket': MARKDOWN_USER_LARGE_STYLE,
+
+    # use minimal styling css
+    'contest': MARKDOWN_STYLING_ALLOWED_STYLE,
+    'language': MARKDOWN_STYLING_ALLOWED_STYLE,
+    'license': MARKDOWN_STYLING_ALLOWED_STYLE,
+    'judge': MARKDOWN_STYLING_ALLOWED_STYLE,
+    'contest_tag': MARKDOWN_STYLING_ALLOWED_STYLE,
+    'blog': MARKDOWN_STYLING_ALLOWED_STYLE,
+
+    # allow iframe and object in problem
+    'problem': MARKDOWN_EMBEDDED_ALLOWED_STYLE,
+    'solution': MARKDOWN_EMBEDDED_ALLOWED_STYLE,
 }
 
 MARTOR_ENABLE_CONFIGS = {

@@ -1,7 +1,7 @@
 from django.test import SimpleTestCase
 from lxml import html
 
-from . import fragment_tree_to_str, fragments_to_tree, get_cleaner, markdown
+from . import Sanitizer, fragment_tree_to_str, fragments_to_tree, markdown
 
 MATHML_N = """\
 <math xmlns="http://www.w3.org/1998/Math/MathML">
@@ -111,9 +111,10 @@ class TestMarkdown(SimpleTestCase):
     def test_sanitize(self):
         self.assertHTMLEqual(markdown('<script>void(0)</script>', self.SANITIZED_STYLE),
                              '&lt;script&gt;void(0)&lt;/script&gt;')
-        #  style is not allowed
-        self.assertHTMLEqual(markdown('<img style="display: block; margin: 0 auto">', self.SANITIZED_STYLE),
-                             '<p><img></p>')
+        # only the safe style properties are kept
+        self.assertHTMLEqual(markdown('<img style="color: red; position: fixed; background: url(x)">',
+                                      self.SANITIZED_STYLE),
+                             '<p><img style="color:red"></p>')
         self.assertHTMLEqual(markdown('<style>a { color: red; }</style>', self.SANITIZED_STYLE),
                              '&lt;style&gt;a { color: red; }&lt;/style&gt;')
 
@@ -127,9 +128,13 @@ class TestMarkdown(SimpleTestCase):
         self.assertEqual(markdown('<p>a <b>b</b> <!-- c --></p>', style), '<p>a <b>b</b> </p>\n')
         self.assertEqual(markdown('<a href="javascript:x" onclick="x">l</a>', style), '<p><a>l</a></p>\n')
 
+    def test_sanitize_no_styles(self):
+        cleaner = Sanitizer(tags=['p'])
+        self.assertEqual(cleaner.clean('<p style="position: fixed">x</p>'), '<p>x</p>')
+
     def test_sanitize_mathml(self):
-        self.assertHTMLEqual(markdown(MATHML_N, self.SANITIZED_STYLE), MATHML_N)
-        cleaner = get_cleaner(self.SANITIZED_STYLE, None)
+        cleaner = Sanitizer(attributes={'*': ['class']}, mathml=True)
+        self.assertHTMLEqual(cleaner.clean(MATHML_N), MATHML_N)
         self.assertHTMLEqual(cleaner.clean(MATHML_CHUDNOVSKY), MATHML_CHUDNOVSKY)
 
     def test_no_sanitize(self):

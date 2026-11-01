@@ -11,7 +11,7 @@ from markupsafe import Markup
 
 from judge.jinja2.markdown.lazy_load import lazy_load as lazy_load_processor
 from judge.utils.camo import client as camo_client
-from .sanitizer_whitelist import all_styles, mathml_attrs, mathml_tags
+from .sanitizer_whitelist import mathml_attrs, mathml_tags, safe_style_attrs
 from .. import registry
 
 logger = logging.getLogger('judge.html')
@@ -25,20 +25,20 @@ class Sanitizer:
 
     def __init__(self, tags=(), attributes=None, styles=None, mathml=False):
         self.tags = set(tags)
-        # for markdown2's `html-allowlist`: MathML names like `int` and `vector` are C++ too, so only `math` is
-        # listed and markdown2 leaves what is inside it to nh3
         self.markdown_tags = set(tags)
         attributes = {tag: set(attrs) for tag, attrs in (attributes or {}).items()}
         if mathml:
             self.markdown_tags.add('math')
             self.tags.update(mathml_tags)
             attributes.update({tag: set(attrs) for tag, attrs in mathml_attrs.items()})
+        if styles:
+            attributes.setdefault('*', set()).add('style')
         self.cleaner = nh3.Cleaner(
             tags=self.tags,
             attributes=attributes,
             url_schemes={'http', 'https', 'mailto'},
             link_rel=None,
-            filter_style_properties=set(all_styles if styles is True else styles) if styles else None,
+            filter_style_properties=set(safe_style_attrs if styles is True else styles) if styles else None,
         )
 
     def clean(self, text):
