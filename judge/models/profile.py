@@ -480,6 +480,13 @@ class Profile(models.Model):
     remove_contest.alters_data = True
 
     def update_contest(self):
+        if self.current_contest_id is None:
+            return
+        field = self._meta.get_field('current_contest')
+        if not field.is_cached(self):
+            # Fetch participation and contest in one query instead of two lazy loads.
+            self.current_contest = field.related_model.objects.select_related('contest') \
+                .filter(id=self.current_contest_id).first()
         contest = self.current_contest
         if contest is not None and (contest.ended or not contest.contest.is_accessible_by(self.user)):
             self.remove_contest()
