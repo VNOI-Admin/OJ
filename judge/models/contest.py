@@ -157,6 +157,10 @@ class Contest(models.Model):
     organization = models.ForeignKey(Organization, blank=True, null=True, verbose_name=_('organization'),
                                      on_delete=models.SET_NULL,
                                      help_text=_('If private, only this organization may see the contest'))
+    extra_organizations = models.ManyToManyField(Organization, blank=True, related_name='+',
+                                                 verbose_name=_('extra organizations'),
+                                                 help_text=_('If private, members of these organizations '
+                                                             'may also see the contest'))
     og_image = models.CharField(verbose_name=_('OpenGraph image'), default='', max_length=150, blank=True)
     logo_override_image = models.CharField(verbose_name=_('logo override image'), default='', max_length=150,
                                            blank=True,
@@ -489,7 +493,9 @@ class Contest(models.Model):
         if self.view_contest_scoreboard.filter(id=user.profile.id).exists():
             return
 
-        in_org = self.organization and user.profile.organizations.filter(id=self.organization.id).exists()
+        in_org = user.profile.organizations.filter(
+            Q(id=self.organization_id) | Q(id__in=self.extra_organizations.all()),
+        ).exists()
         in_users = self.private_contestants.filter(id=user.profile.id).exists()
 
         if not self.is_private and self.is_organization_private:
@@ -546,21 +552,21 @@ class Contest(models.Model):
                 contest_id=OuterRef('pk'),
                 profile_id=user.profile.id,
             )
+            in_org_exists = Contest.extra_organizations.through.objects.filter(
+                contest_id=OuterRef('pk'),
+                organization__in=user.profile.organizations.all(),
+            )
             queryset = queryset.annotate(
                 has_private=Exists(private_exists),
+                has_extra_org=Exists(in_org_exists),
             )
+            in_org = Q(organization__in=user.profile.organizations.all()) | Q(has_extra_org=True)
             q &= (
                 Q(view_contest_scoreboard=user.profile) |
                 Q(is_organization_private=False, is_private=False) |
                 (Q(is_organization_private=False, is_private=True) & Q(has_private=True)) |
-                Q(is_organization_private=True, is_private=False, organization__in=user.profile.organizations.all()) |
-                (
-                    Q(
-                        is_organization_private=True,
-                        is_private=True,
-                        organization__in=user.profile.organizations.all(),
-                    ) & Q(has_private=True)
-                )
+                (Q(is_organization_private=True, is_private=False) & in_org) |
+                (Q(is_organization_private=True, is_private=True) & in_org & Q(has_private=True))
             )
 
             authors_exists = Contest.authors.through.objects.filter(

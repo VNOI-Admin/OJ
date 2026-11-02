@@ -136,6 +136,7 @@ class ContestForm(ModelForm):
             'testers': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'private_contestants': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'organization': AdminHeavySelect2Widget(data_view='organization_select2'),
+            'extra_organizations': AdminHeavySelect2MultipleWidget(data_view='organization_select2'),
             'tags': AdminSelect2MultipleWidget,
             'banned_users': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
             'view_contest_scoreboard': AdminHeavySelect2MultipleWidget(data_view='profile_select2'),
@@ -160,7 +161,7 @@ class ContestAdmin(AdminFastPaginationMixin, NoBatchDeleteMixin, SortableAdminBa
         (_('Rating'), {'fields': ('is_rated', 'rate_all', 'rate_disqualified', 'rating_floor', 'rating_ceiling',
                                   'rate_exclude')}),
         (_('Access'), {'fields': ('access_code', 'is_private', 'private_contestants', 'is_organization_private',
-                                  'organization', 'view_contest_scoreboard')}),
+                                  'organization', 'extra_organizations', 'view_contest_scoreboard')}),
         (_('Justice'), {'fields': ('banned_users',)}),
         (_('Ranking'), {'fields': ('csv_ranking',)}),
     )

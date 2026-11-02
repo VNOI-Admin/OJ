@@ -166,11 +166,12 @@ class ContestList(InfinitePaginationMixin, TitleMixin, ContestListMixin, ListVie
 
 
 class PrivateContestError(PermissionDenied):
-    def __init__(self, name, is_private, is_organization_private, org):
+    def __init__(self, name, is_private, is_organization_private, org, extra_orgs=()):
         self.name = name
         self.is_private = is_private
         self.is_organization_private = is_organization_private
         self.org = org
+        self.extra_orgs = extra_orgs
 
 
 class ContestMixin(object):
@@ -254,7 +255,7 @@ class ContestMixin(object):
             contest.access_check(self.request.user)
         except Contest.PrivateContest:
             raise PrivateContestError(contest.name, contest.is_private, contest.is_organization_private,
-                                      contest.organization)
+                                      contest.organization, list(contest.extra_organizations.all()))
         except Contest.Inaccessible:
             raise Http404()
         else:
@@ -437,6 +438,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
         # Using list() to force QuerySets evaluation, as `contest.pk = None` affects these queries
         tags = list(contest.tags.all())
         organization = contest.organization
+        extra_organizations = list(contest.extra_organizations.all())
         private_contestants = list(contest.private_contestants.all())
         view_contest_scoreboard = list(contest.view_contest_scoreboard.all())
         contest_problems = list(contest.contest_problems.all()) if form.cleaned_data['copy_problems'] else []
@@ -452,6 +454,7 @@ class ContestClone(ContestMixin, PermissionRequiredMixin, TitleMixin, SingleObje
             contest.save()
             contest.tags.set(tags)
             contest.organization = organization
+            contest.extra_organizations.set(extra_organizations)
             contest.private_contestants.set(private_contestants)
             contest.view_contest_scoreboard.set(view_contest_scoreboard)
             contest.authors.add(self.request.profile)

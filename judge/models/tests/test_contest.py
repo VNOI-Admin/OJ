@@ -4,7 +4,8 @@ from django.utils import timezone
 
 from judge.models import Contest, ContestParticipation, ContestTag
 from judge.models.contest import MinValueOrNoneValidator
-from judge.models.tests.util import CommonDataMixin, create_contest, create_contest_participation, create_user
+from judge.models.tests.util import CommonDataMixin, create_contest, create_contest_participation, \
+    create_organization, create_user
 
 
 class ContestTestCase(CommonDataMixin, TestCase):
@@ -464,6 +465,27 @@ class ContestTestCase(CommonDataMixin, TestCase):
             },
         }
         self._test_object_methods_with_users(self.visible_scoreboard_contest, data)
+
+    def test_extra_organizations_access(self):
+        extra_org = create_organization(name='extra')
+        other_org = create_organization(name='other')
+        contest = create_contest(
+            key='extra_org_private',
+            start_time=timezone.now() - timezone.timedelta(days=1),
+            end_time=timezone.now() + timezone.timedelta(days=1),
+            is_visible=True,
+            is_organization_private=True,
+            organization=self.organizations['open'],
+        )
+        contest.extra_organizations.set([extra_org, other_org])
+        member = create_user(username='extra_org_member')
+        member.profile.organizations.add(extra_org, other_org)
+        outsider = create_user(username='extra_org_outsider')
+
+        self.assertTrue(contest.is_accessible_by(member))
+        self.assertFalse(contest.is_accessible_by(outsider))
+        self.assertEqual(list(Contest.get_visible_contests(member).filter(id=contest.id)), [contest])
+        self.assertFalse(Contest.get_visible_contests(outsider).filter(id=contest.id).exists())
 
     def test_private_contest_methods(self):
         with self.assertRaises(Contest.PrivateContest):
