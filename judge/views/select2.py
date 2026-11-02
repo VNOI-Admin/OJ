@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import F, Q
 from django.http import JsonResponse
@@ -122,9 +123,10 @@ class OrganizationSelect2View(Select2View):
 
 
 class ProblemSelect2View(Select2View):
-    # Searches every visible problem with a full table scan, so keep it to staff (admin contest editor).
+    # Searches every visible problem with a full table scan, so keep it to staff (admin contest editor)
+    # unless CROSS_ORGANIZATION_PROBLEM_SELECTION opts the contest editor back into it.
     def dispatch(self, request, *args, **kwargs):
-        if not request.user.is_staff:
+        if not request.user.is_staff and not settings.CROSS_ORGANIZATION_PROBLEM_SELECTION:
             raise PermissionDenied()
         return super().dispatch(request, *args, **kwargs)
 

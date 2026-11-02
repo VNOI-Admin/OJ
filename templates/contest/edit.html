@@ -231,7 +231,11 @@
                 }
             });
 
-            {% if contest_org %}
+            {% if cross_org_problem_selection %}
+            var _problemSrcUrls = {
+                all: "{{ url('problem_select2') }}",
+            };
+            {% elif contest_org %}
             var _problemSrcUrls = {
                 org: "{{ url('org_problem_select2', org_pk=contest_org.id) }}",
                 public: "{{ url('public_problem_select2') }}",
@@ -264,6 +268,7 @@
                     width: '100%',
                 });
                 $sel.on('select2:open', function() {
+                    if (Object.keys(_problemSrcUrls).length < 2) return;
                     var $dropdown = $('.select2-container--open .select2-dropdown');
                     if ($dropdown.find('.tab-bar').length) return;
                     var $tabBar = $('<div class="tab-bar"></div>');
@@ -372,7 +377,7 @@
         <td>{{ form.id }} {{ form.problem.errors }}
             {% set problem = form.instance.problem if form.instance.problem_id else None %}
             <select name="{{ form.problem.html_name }}" id="{{ form.problem.auto_id }}" style="width:100%"
-                    data-problem-src="{{ 'public' if problem and problem.is_public and not problem.is_organization_private else '' }}">
+                    data-problem-src="{{ 'public' if not cross_org_problem_selection and problem and problem.is_public and not problem.is_organization_private else '' }}">
                 {% if problem %}
                 <option value="{{ problem.id }}" selected>
                     [{{ problem.code }}] {{ problem.name }}
