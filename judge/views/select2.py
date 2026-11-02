@@ -1,4 +1,5 @@
-from django.core.exceptions import ImproperlyConfigured
+from django.conf import settings
+from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db.models import F, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
@@ -122,6 +123,13 @@ class OrganizationSelect2View(Select2View):
 
 
 class ProblemSelect2View(Select2View):
+    # Searches every visible problem with a full table scan, so keep it to staff (admin contest editor)
+    # unless CROSS_ORGANIZATION_PROBLEM_SELECTION opts the contest editor back into it.
+    def dispatch(self, request, *args, **kwargs):
+        if not request.user.is_staff and not settings.CROSS_ORGANIZATION_PROBLEM_SELECTION:
+            raise PermissionDenied()
+        return super().dispatch(request, *args, **kwargs)
+
     def get_queryset(self):
         return Problem.get_visible_problems(self.request.user) \
                       .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term))
@@ -133,6 +141,16 @@ class ProblemSelect2View(Select2View):
 class PublicProblemSelect2View(Select2View):
     def get_queryset(self):
         return Problem.get_public_problems() \
+                      .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term))
+
+    def get_name(self, obj):
+        return f'[{obj.code}] {obj.name}'
+
+
+class PrivateProblemSelect2View(Select2View):
+    def get_queryset(self):
+        return Problem.get_visible_problems(self.request.user) \
+                      .filter(is_public=False, is_organization_private=False) \
                       .filter(Q(code__icontains=self.term) | Q(name__icontains=self.term))
 
     def get_name(self, obj):

@@ -138,6 +138,10 @@ VNOJ_COMMENT_RATE_LIMIT_WINDOW = datetime.timedelta(seconds=600)
 
 VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
+# If True, the contest problem picker searches every visible problem (single search box)
+# instead of splitting into organization/private/public tabs.
+CROSS_ORGANIZATION_PROBLEM_SELECTION = False
+
 VNOJ_SHOULD_BAN_FOR_CHEATING_IN_CONTESTS = False
 VNOJ_CONTEST_CHEATING_BAN_MESSAGE = 'Banned for multiple cheating offenses during contests'
 VNOJ_MAX_DISQUALIFICATIONS_BEFORE_BANNING = 3

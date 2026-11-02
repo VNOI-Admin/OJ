@@ -25,7 +25,7 @@ from judge.contest_format import formats as contest_formats
 from judge.models import BlogPost, Contest, ContestAnnouncement, ContestParticipation, ContestProblem, Language, \
     LanguageLimit, Organization, OrganizationProblemTag, Problem, Profile, Solution, Submission, WebAuthnCredential
 from judge.utils.subscription import newsletter_id
-from judge.widgets import AceWidget, HeavySelect2MultipleWidget, HeavySelect2Widget, MartorWidget, \
+from judge.widgets import AceWidget, HeavySelect2MultipleWidget, MartorWidget, \
     Select2MultipleWidget, Select2Widget
 
 TOTP_CODE_LENGTH = 6
@@ -731,10 +731,6 @@ class ProposeContestProblemForm(ModelForm):
         fields = (
             'problem', 'points', 'order', 'max_submissions',
         )
-
-        widgets = {
-            'problem': HeavySelect2Widget(data_view='problem_select2', attrs={'style': 'width: 100%'}),
-        }
 
         error_messages = {
             'problem': {'invalid_choice': _('No such problem.')},
