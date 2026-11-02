@@ -40,6 +40,15 @@ class Progress:
         self._done = min(self._done, value)
         self._update_state()
 
+    @property
+    def stage(self):
+        return self._stage
+
+    @stage.setter
+    def stage(self, value):
+        self._stage = value
+        self._update_state()
+
     def did(self, delta):
         self._done += delta
         self._update_state()

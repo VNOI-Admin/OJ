@@ -80,6 +80,9 @@
         </form>
     {% endif %}
 
+    <h3>{{ _('ICPC problem import') }}</h3>
+    <a href="{{ url('icpc_job') }}" class="button">{{ _('Import problems') }}</a>
+
     <h3>{{ _('Add problems to contest') }}</h3>
     {% if problem_result %}
         {% with plan=problem_result, applied=True %}{% include "contest/helper-problems.html" %}{% endwith %}

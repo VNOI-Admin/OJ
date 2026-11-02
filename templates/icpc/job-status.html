@@ -1,0 +1,24 @@
+{% extends "common-content.html" %}
+
+{% block content_media %}
+    <style>
+        #icpc-job-log {
+            max-height: 500px;
+            overflow: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <p><a href="{{ url('icpc_job') }}">{{ _('Back to ICPC problem import') }}</a></p>
+    {% if error %}
+        <div class="alert alert-danger">{{ error }}</div>
+    {% endif %}
+    {% if results %}
+        {% include "icpc/job-results.html" %}
+    {% endif %}
+    <h3>{{ _('Output') }}</h3>
+    <pre id="icpc-job-log">{{ log }}</pre>
+{% endblock %}

@@ -1,9 +1,9 @@
 import os
 import json
+import subprocess
 import yaml
 import io
 
-from django.conf import settings
 from django.core.files import File
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -11,6 +11,7 @@ from django.utils import timezone
 
 from judge.models import Language, Problem, ProblemData, ProblemGroup, ProblemTestCase, ProblemType
 from judge.models.profile import Profile
+from judge.utils.icpc import get_icpc_folder, get_problem_code, list_icpc_problems
 from judge.utils.problem_data import ProblemDataCompiler
 from judge.views.widgets import pdf_statement_uploader
 
@@ -163,7 +164,7 @@ def get_problem_full_name(problem_folder):
 
 
 def create_problem(problem_name, icpc_folder):
-    problem_code = 'icpc_' + problem_name[0]
+    problem_code = get_problem_code(problem_name)
     problem_folder = os.path.join(icpc_folder, problem_name)
     test_path = os.path.join(problem_folder, 'data')
 
@@ -203,7 +204,9 @@ def create_problem(problem_name, icpc_folder):
 
     print('Creating zip file')
     test_zip_name = 'data.zip'
-    os.system(f'cd {test_path} && zip -rq {test_zip_name} .')
+    zip_result = subprocess.run(['zip', '-rq', test_zip_name, '.'], cwd=test_path, capture_output=True, text=True)
+    if zip_result.returncode != 0:
+        raise CommandError(f'Cannot create zip file: {zip_result.stderr or zip_result.stdout}')
 
     problem_setting = yaml.load(open(os.path.join(problem_folder, 'problem.yaml'), 'r'), Loader=yaml.SafeLoader)
 
@@ -258,41 +261,32 @@ def create_problem(problem_name, icpc_folder):
     return n_sample, n_secret, problem_type, float_checker
 
 
+def describe_import(n_sample, n_secret, problem_type, float_checker):
+    msg = ''
+    if problem_type == CHECKER:
+        msg = ' [custom checker]'
+    elif problem_type == INTERACTIVE:
+        msg = ' [interactive]'
+    if float_checker is not None:
+        msg = f' [float checker {float_checker[0]}, precisions: {float_checker[1]}]'
+
+    return f'{n_sample} samples, {n_secret} secrets{msg}.'
+
+
 class Command(BaseCommand):
     help = 'create icpc problem from kattis repo'
 
     def handle(self, *args, **options):
-
-        icpc_folder = getattr(settings, 'ICPC_GITHUB_FOLDER', None)
-        if icpc_folder is None:
-            raise CommandError('You should declare `ICPC_GITHUB_FOLDER` in settings')
-
-        if not os.path.exists(icpc_folder):
-            raise CommandError(f'Folder {icpc_folder} not found. Make sure to clone the repo to that folder')
+        icpc_folder = get_icpc_folder()
 
         os.system(f'cd {icpc_folder} && git pull')
 
-        blacklist = ['xx-mien-nam', 'yy-mien-nam', '6-mien-trung']
-        problems = [
-            name for name in os.listdir(icpc_folder)
-            if os.path.isdir(os.path.join(icpc_folder, name)) and
-            name not in blacklist and not name.startswith('_') and not name.startswith('.')
-        ]
-        problems.sort()
+        problems = list_icpc_problems(icpc_folder)
         messages = {}
         for problem in problems:
             try:
                 print('=============================')
-                n_sample, n_secret, problem_type, float_checker = create_problem(problem, icpc_folder)
-                msg = ''
-                if problem_type == CHECKER:
-                    msg = ' [custom checker]'
-                elif problem_type == INTERACTIVE:
-                    msg = ' [interactive]'
-                if float_checker is not None:
-                    msg = f' [float checker {float_checker[0]}, precisions: {float_checker[1]}]'
-
-                messages[problem] = f'{n_sample} samples, {n_secret} secrets{msg}.'
+                messages[problem] = describe_import(*create_problem(problem, icpc_folder))
                 print('Succeed.')
             except Exception as e:
                 print(f'Cannot import problem {problem}. Please check error message.')

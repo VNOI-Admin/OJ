@@ -1,0 +1,55 @@
+{% extends "common-content.html" %}
+
+{% block body %}
+    {% if folder_error %}
+        <div class="alert alert-danger">{{ folder_error }}</div>
+    {% else %}
+        <p>
+            {{ _('Repository commit:') }}
+            {% if last_commit %}<code>{{ last_commit }}</code>{% else %}{{ _('unknown') }}{% endif %}
+            <br>
+        </p>
+        {% if running_job_id %}
+            <div class="alert alert-info">
+                {{ _('A job is already running.') }}
+                <a href="{{ url('icpc_job_status', running_job_id) }}">{{ _('View its output') }}</a>
+            </div>
+        {% endif %}
+        <form method="post">
+            {% csrf_token %}
+            {{ form.non_field_errors() }}
+            {{ form.problem.errors }}
+            <p>
+                <label for="{{ form.problem.id_for_label }}">{{ form.problem.label }}</label>
+                {{ form.problem }}
+            </p>
+            {{ form.action.errors }}
+            <p>
+                <label for="{{ form.action.id_for_label }}">{{ form.action.label }}</label>
+                {{ form.action }}
+                <br>
+            </p>
+            <input type="submit" class="button" value="{{ _('Run job') }}">
+        </form>
+    {% endif %}
+    {% if last_job %}
+        <hr>
+        <h3>{{ _('Last job') }}</h3>
+        <p>
+            {{ _('Finished at') }} {{ last_job.finished|date('Y-m-d H:i:s') }}
+            ({{ _('%(time)s ago', time=last_job.finished|timesince) }}):
+            {{ last_job.problem or _('All problems') }},
+            {% if last_job.import_problems and last_job.submit %}{{ _('Import problems and submit solutions') }}
+            {% elif last_job.submit %}{{ _('Submit solutions only') }}
+            {% else %}{{ _('Import problems') }}{% endif %}
+            .
+            <a href="{{ url('icpc_job_status', last_job.id) }}">{{ _('Job\'s output') }}</a>
+        </p>
+        {% if last_job.error %}
+            <div class="alert alert-danger">{{ last_job.error }}</div>
+        {% endif %}
+        {% if last_job.results %}
+            {% with results = last_job.results %}{% include "icpc/job-results.html" %}{% endwith %}
+        {% endif %}
+    {% endif %}
+{% endblock %}

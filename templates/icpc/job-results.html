@@ -1,0 +1,38 @@
+<style>
+    .icpc-job-results {
+        margin-bottom: 1em;
+        width: 100%;
+    }
+
+    .icpc-job-results .failed {
+        color: #c00;
+    }
+</style>
+<table class="icpc-job-results table">
+    <thead>
+        <tr>
+            <th>{{ _('Problem') }}</th>
+            <th>{{ _('Status') }}</th>
+            <th>{{ _('Details') }}</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for name, result in results.items() %}
+            {% set failed = not result.ok or result.submit_error %}
+            <tr{% if failed %} class="failed"{% endif %}>
+                <td>
+                    {% if result.code %}
+                        <a href="{{ url('problem_detail', result.code) }}">{{ name }}</a>
+                    {% else %}
+                        {{ name }}
+                    {% endif %}
+                </td>
+                <td>{{ _('Failed') if failed else _('OK') }}</td>
+                <td>
+                    {{ result.message }}
+                    {% if result.submit_error %}{{ _('Submit error:') }} {{ result.submit_error }}{% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>

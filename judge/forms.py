@@ -935,3 +935,20 @@ class BulkUserCreateForm(Form):
         if error:
             raise ValidationError(error)
         return rows
+
+
+class ICPCJobForm(Form):
+    IMPORT = 'import'
+    IMPORT_AND_SUBMIT = 'import_submit'
+    SUBMIT = 'submit'
+
+    problem = ChoiceField(required=False, label=_('Problem'))
+    action = ChoiceField(label=_('Action'), initial=IMPORT_AND_SUBMIT, choices=(
+        (IMPORT, _('Import problems')),
+        (IMPORT_AND_SUBMIT, _('Import problems and submit solutions')),
+        (SUBMIT, _('Submit solutions only')),
+    ))
+
+    def __init__(self, *args, problems=(), **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['problem'].choices = [('', _('All problems'))] + [(name, name) for name in problems]

@@ -1,9 +1,10 @@
 import os
 
-from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 
 from judge.management.commands.create_icpc_problem import create_problem
+from judge.utils.icpc import get_icpc_folder
+
 
 class Command(BaseCommand):
     help = 'update testcase from github'
@@ -14,11 +15,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         problem_repo_name = options['name']
 
-        icpc_folder = getattr(settings, 'ICPC_GITHUB_FOLDER', None)
-        if icpc_folder is None:
-            raise CommandError('You should declare `ICPC_GITHUB_FOLDER` in settings')
-
-        if not os.path.exists(icpc_folder):
-            raise CommandError(f'Folder {icpc_folder} not found. Make sure to clone the repo to that folder')
+        icpc_folder = get_icpc_folder()
         os.system(f'cd {icpc_folder} && git pull')
         print(create_problem(problem_repo_name, icpc_folder))

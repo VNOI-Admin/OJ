@@ -1,5 +1,6 @@
 from judge.tasks.contest import *
 from judge.tasks.demo import *
+from judge.tasks.icpc import *
 from judge.tasks.organization import *
 from judge.tasks.problem import *
 from judge.tasks.submission import *

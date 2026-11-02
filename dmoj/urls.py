@@ -11,9 +11,9 @@ from django.views.decorators.clickjacking import xframe_options_sameorigin
 
 from judge.feed import AtomBlogFeed, AtomCommentFeed, AtomProblemFeed, BlogFeed, CommentFeed, ProblemFeed
 from judge.sitemap import sitemaps
-from judge.views import TitledTemplateView, api, blog, comment, contests, language, license, mailgun, notification, \
-    organization, preview, problem, problem_download, problem_manage, ranked_submission, register, stats, status, \
-    submission, tasks, ticket, two_factor, user, widgets
+from judge.views import TitledTemplateView, api, blog, comment, contests, icpc, language, license, mailgun, \
+    notification, organization, preview, problem, problem_download, problem_manage, ranked_submission, register, \
+    stats, status, submission, tasks, ticket, two_factor, user, widgets
 from judge.views.magazine import MagazinePage
 from judge.views.misc_config import MiscConfigEdit
 from judge.views.problem_data import ProblemDataView, ProblemSubmissionDiff, \
@@ -455,6 +455,11 @@ urlpatterns = [
         path('success', tasks.demo_success),
         path('failure', tasks.demo_failure),
         path('progress', tasks.demo_progress),
+    ])),
+
+    path('icpc/job/', include([
+        path('', icpc.ICPCJobView.as_view(), name='icpc_job'),
+        path('<slug:task_id>', icpc.icpc_job_status, name='icpc_job_status'),
     ])),
 
     path('magazine/', MagazinePage.as_view(), name='magazine'),

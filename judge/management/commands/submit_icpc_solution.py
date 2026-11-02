@@ -1,11 +1,11 @@
 import os
 import json
 
-from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from judge.models import Language, Problem, SubmissionSource, Submission
 from judge.models.profile import Profile
+from judge.utils.icpc import get_icpc_folder, get_problem_code, list_icpc_problems
 
 SUBMISSION_STATUS_MAP = {
     'accepted': 'admin_ac',
@@ -49,8 +49,21 @@ def get_submissions(submissions_path):
     return submissions
 
 
-def submit_submissions(problem_name, icpc_folder):
-    problem_code = 'icpc_' + problem_name[0]
+def check_submit_users():
+    for user in SUBMISSION_STATUS_MAP.values():
+        if Profile.objects.filter(user__username=user).count() == 0:
+            raise CommandError(f'User `{user}` not found. Please create the user first.')
+
+
+def delete_old_submissions(problem_name=None):
+    submissions = Submission.objects.filter(user__user__username__in=SUBMISSION_STATUS_MAP.values())
+    if problem_name is not None:
+        submissions = submissions.filter(problem__code=get_problem_code(problem_name))
+    submissions.delete()
+
+
+def submit_submissions(problem_name, icpc_folder, replace_old=False):
+    problem_code = get_problem_code(problem_name)
     problem_folder = os.path.join(icpc_folder, problem_name)
     submissions_path = os.path.join(problem_folder, 'submissions')
 
@@ -62,7 +75,13 @@ def submit_submissions(problem_name, icpc_folder):
 
     problem = Problem.objects.get(code=problem_code)
 
+    if not problem.has_test_data:
+        raise CommandError(f'Problem `{problem_code}` has no test data.')
+
     submissions = get_submissions(submissions_path)
+    if replace_old:
+        delete_old_submissions(problem_name)
+
     for [code, lang, user_to_submit] in submissions:
         submission = Submission()
         submission.problem = problem
@@ -73,36 +92,27 @@ def submit_submissions(problem_name, icpc_folder):
         source.save()
         # set batch_rejudge=True to set the lowest priority
         submission.judge(force_judge=True, batch_rejudge=True)
-        print(f'[{problem_code}] Submitted {submission.id} by {user_to_submit}')
+        submission.refresh_from_db(fields=['status'])
+        if submission.status == 'IE':
+            print(f'[{problem_code}] WARNING: submission {submission.id} by {user_to_submit} '
+                  f'could not be sent to the judge')
+        else:
+            print(f'[{problem_code}] Submitted {submission.id} by {user_to_submit}')
+    return len(submissions)
 
 
 class Command(BaseCommand):
     help = 'create icpc problem from kattis repo'
 
     def handle(self, *args, **options):
-
-        icpc_folder = getattr(settings, 'ICPC_GITHUB_FOLDER', None)
-        if icpc_folder is None:
-            raise CommandError('You should declare `ICPC_GITHUB_FOLDER` in settings')
-
-        if not os.path.exists(icpc_folder):
-            raise CommandError(f'Folder {icpc_folder} not found. Make sure to clone the repo to that folder')
+        icpc_folder = get_icpc_folder()
 
         os.system(f'cd {icpc_folder} && git pull origin master')
         # check if required users exist & delete all submissions
-        for user in SUBMISSION_STATUS_MAP.values():
-            if Profile.objects.filter(user__username=user).count() == 0:
-                raise CommandError(f'User `{user}` not found. Please create the user first.')
-            user = Profile.objects.get(user__username=user)
-            Submission.objects.filter(user=user).delete()
+        check_submit_users()
+        delete_old_submissions()
 
-        blacklist = ['xx-mien-nam', 'yy-mien-nam', '6-mien-trung']
-        problems = [
-            name for name in os.listdir(icpc_folder)
-            if os.path.isdir(os.path.join(icpc_folder, name)) and
-            name not in blacklist and not name.startswith('_') and not name.startswith('.')
-        ]
-        problems.sort()
+        problems = list_icpc_problems(icpc_folder)
         errors = {}
         for problem in problems:
             try:

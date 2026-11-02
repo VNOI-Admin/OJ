@@ -1,7 +1,7 @@
 import functools
 from datetime import timezone
 
-from django.template.defaultfilters import date, time
+from django.template.defaultfilters import date, time, timesince_filter
 from django.templatetags.tz import localtime
 from django.utils.html import escape
 from django.utils.safestring import mark_safe
@@ -22,6 +22,7 @@ def localtime_wrapper(func):
 
 registry.filter(localtime_wrapper(date))
 registry.filter(localtime_wrapper(time))
+registry.filter('timesince', timesince_filter)
 
 
 @registry.function

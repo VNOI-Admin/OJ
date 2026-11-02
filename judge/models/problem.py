@@ -4,7 +4,7 @@ from operator import attrgetter
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.cache import cache
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.core.validators import MaxValueValidator, MinValueValidator, RegexValidator
 from django.db import models, transaction
 from django.db.models import CASCADE, Exists, F, FilteredRelation, OuterRef, Q, SET_NULL
@@ -574,6 +574,13 @@ class Problem(models.Model):
     @property
     def markdown_style(self):
         return 'problem-full' if self.is_full_markup else 'problem'
+
+    @property
+    def has_test_data(self):
+        try:
+            return self.data_files.has_yml()
+        except ObjectDoesNotExist:
+            return self.is_manually_managed
 
     @cached_property
     def io_method(self):
