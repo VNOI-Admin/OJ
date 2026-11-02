@@ -720,7 +720,6 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
                         Q(code__icontains=query) | Q(name__icontains=query) | Q(source__icontains=query) |
                         Q(id__in=ProblemTranslation.objects.filter(
                             name__icontains=query, language=self.request.LANGUAGE_CODE).values('problem_id')))
-        self.prepoint_queryset = queryset
         if self.point_start is not None:
             queryset = queryset.filter(points__gte=self.point_start)
         if self.point_end is not None:
@@ -750,30 +749,14 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         context['completed_problem_ids'] = self.get_completed_problems()
         context['attempted_problems'] = self.get_attempted_problems()
         context['hot_problems'] = self.get_hot_problems()
-        context['point_start'], context['point_end'], context['point_values'] = self.get_noui_slider_points()
+        context['point_start'], context['point_end'] = self.point_start, self.point_end
+        context['point_values'] = {
+            'min': settings.DMOJ_PROBLEM_MIN_PROBLEM_POINTS,
+            'max': settings.DMOJ_PROBLEM_MAX_PROBLEM_POINTS,
+        }
         context.update(self.get_sort_context())
         context.update(self.get_sort_paginate_context())
         return context
-
-    def get_noui_slider_points(self):
-        points = sorted(self.prepoint_queryset.values_list('points', flat=True).distinct())
-        if not points:
-            return 0, 0, {}
-        if len(points) == 1:
-            return points[0] - 1, points[0] + 1, {
-                'min': points[0] - 1,
-                '50%': points[0],
-                'max': points[0] + 1,
-            }
-
-        start, end = points[0], points[-1]
-        if self.point_start is not None:
-            start = self.point_start
-        if self.point_end is not None:
-            end = self.point_end
-        points_map = {0.0: 'min', 1.0: 'max'}
-        size = len(points) - 1
-        return start, end, {points_map.get(i / size, '%.2f%%' % (100 * i / size,)): j for i, j in enumerate(points)}
 
     def GET_with_session(self, request, key):
         if not request.GET:
