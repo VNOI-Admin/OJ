@@ -679,11 +679,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         if self.profile is not None:
             # Resolve the ids up front: OR EXISTS(...) defeats the (is_public, is_organization_private, date)
             # index and scans the whole table, a short literal id list does not.
-            through_ids = [
-                field.through.objects.filter(profile=self.profile).values_list('problem_id', flat=True)
-                for field in (Problem.authors, Problem.curators, Problem.testers)
-            ]
-            ids = list(through_ids[0].union(*through_ids[1:]))
+            ids = Problem.author_curator_tester_ids(self.profile)
             if ids:
                 _filter |= Q(id__in=ids)
         return _filter

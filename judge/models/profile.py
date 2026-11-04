@@ -384,6 +384,12 @@ class Profile(models.Model):
 
     _pp_table = [pow(settings.DMOJ_PP_STEP, i) for i in range(settings.DMOJ_PP_ENTRIES)]
 
+    @cached_property
+    def has_problem_role(self):
+        from judge.models import Problem
+        return any(field.through.objects.filter(profile=self).exists()
+                   for field in (Problem.authors, Problem.curators, Problem.testers))
+
     def calculate_points(self, table=_pp_table):
         from judge.models import Problem
         public_problems = Problem.get_public_problems()
