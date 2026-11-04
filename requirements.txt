@@ -38,7 +38,7 @@ lupa
 netaddr
 webauthn<1
 nh3
-markdown2 @ git+https://github.com/VNOI-Admin/python-markdown2.git@860966466cc394e96377bbca408df2535afbc8a5
+markdown2 @ git+https://github.com/VNOI-Admin/python-markdown2.git@f9bd2e8c205f67f6ce9a298aea9cfebbbc31fdf0
 discord-webhook
 django-admin-sortable2
 icalendar
