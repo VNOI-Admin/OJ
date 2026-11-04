@@ -25,8 +25,8 @@
 
 {% block js_media %}
     <script>
-        window.point_start = {{point_start}};
-        window.point_end = {{point_end}};
+        window.point_start = {{ point_values.min if point_start is none else point_start }};
+        window.point_end = {{ point_values.max if point_end is none else point_end }};
         window.point_values = {{point_values|json|safe}};
     </script>
     {% compress js %}
@@ -98,7 +98,7 @@
 
                 var intFormatter = {
                     to: function (value) {
-                        return value;
+                        return +value.toFixed(2);
                     },
                     from: function (value) {
                         return +value;
@@ -112,7 +112,7 @@
                     noUiSlider.create($slider[0], {
                         start: [point_start, point_end],
                         connect: true,
-                        snap: true,
+                        step: 0.01,
                         tooltips: [intFormatter, intFormatter],
                         range: point_values
                     }).on('change', function (values) {

@@ -209,7 +209,8 @@ class Problem(models.Model):
     points = models.FloatField(verbose_name=_('points'),
                                help_text=_('Points awarded for problem completion. '
                                            "Points are displayed with a 'p' suffix if partial."),
-                               validators=[MinValueValidator(settings.DMOJ_PROBLEM_MIN_PROBLEM_POINTS)])
+                               validators=[MinValueValidator(settings.DMOJ_PROBLEM_MIN_PROBLEM_POINTS),
+                                           MaxValueValidator(settings.DMOJ_PROBLEM_MAX_PROBLEM_POINTS)])
     partial = models.BooleanField(verbose_name=_('allows partial points'), default=False)
     allowed_languages = models.ManyToManyField(Language, verbose_name=_('allowed languages'),
                                                help_text=_('List of allowed submission languages.'))
@@ -417,12 +418,21 @@ class Problem(models.Model):
 
     @classmethod
     def q_add_author_curator_tester(cls, q, profile):
+        if not profile.has_problem_role:
+            return q
+
         # This is way faster than the obvious |= Q(authors=profile) et al. because we are not doing
         # joins and forcing the user to clean it up with .distinct().
         q |= Exists(Problem.authors.through.objects.filter(problem=OuterRef('pk'), profile=profile))
         q |= Exists(Problem.curators.through.objects.filter(problem=OuterRef('pk'), profile=profile))
         q |= Exists(Problem.testers.through.objects.filter(problem=OuterRef('pk'), profile=profile))
         return q
+
+    @classmethod
+    def author_curator_tester_ids(cls, profile):
+        querysets = [field.through.objects.filter(profile=profile).values_list('problem_id', flat=True)
+                     for field in (cls.authors, cls.curators, cls.testers)]
+        return list(querysets[0].union(*querysets[1:]))
 
     @classmethod
     def organization_filter_q(cls, queryset):
@@ -672,11 +682,17 @@ class Problem(models.Model):
             ('edit_type_group_all_problem', _('Edit type and group for all problems')),
         )
         indexes = [
-            models.Index(fields=['is_public', 'is_organization_private', '-date']),
+            # Ascending date on purpose: InnoDB appends the id ascending
+            models.Index(fields=['is_public', 'is_organization_private', 'date']),
             # The archived problem list is always scoped to one organization.
             models.Index(fields=['organization', '-archived_at']),
-            # Org problem list view
+            # Org problem list view for org admin
             models.Index(fields=['organization', 'date']),
+            # Org problem list view for users
+            models.Index(fields=['organization', 'is_public', 'deleted_at', 'date']),
+            # Problem list sorted by points or # AC
+            models.Index(fields=['is_public', 'is_organization_private', 'deleted_at', 'points']),
+            models.Index(fields=['is_public', 'is_organization_private', 'deleted_at', 'user_count']),
         ]
         verbose_name = _('problem')
         verbose_name_plural = _('problems')
