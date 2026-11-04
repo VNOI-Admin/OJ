@@ -678,6 +678,9 @@ class Problem(models.Model):
             models.Index(fields=['organization', '-archived_at']),
             # Org problem list view
             models.Index(fields=['organization', 'date']),
+            # Problem list sorted by points or # AC
+            models.Index(fields=['is_public', 'is_organization_private', 'deleted_at', 'points']),
+            models.Index(fields=['is_public', 'is_organization_private', 'deleted_at', 'user_count']),
         ]
         verbose_name = _('problem')
         verbose_name_plural = _('problems')
