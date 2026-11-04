@@ -2,7 +2,8 @@ window.MathJax = {
     loader: {
         load: ['[tex]/color'],
         paths: {
-            mathjax: '/static/vnoj/mathjax/3.2.0/es5'
+            mathjax: '/static/vnoj/mathjax/4.1.3',
+            fonts: '/static/vnoj/mathjax/4.1.3/fonts'
         }
     },
     tex: {
@@ -15,6 +16,11 @@ window.MathJax = {
         ]
     },
     options: {
-        enableMenu: false
+        enableMenu: false,
+        menuOptions: {
+            settings: {
+                enrich: false
+            }
+        }
     }
 };
