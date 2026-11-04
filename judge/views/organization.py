@@ -10,7 +10,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin, PermissionRequiredMixin
 from django.core.exceptions import ImproperlyConfigured, PermissionDenied
 from django.db import IntegrityError, transaction
-from django.db.models import Count, Exists, FilteredRelation, OuterRef, Q, Subquery, Sum
+from django.db.models import Count, FilteredRelation, OuterRef, Q, Subquery, Sum
 from django.db.models.expressions import F, Value
 from django.db.models.functions import Coalesce
 from django.forms import Form, modelformset_factory
@@ -32,6 +32,7 @@ from judge.models import BlogPost, Comment, Contest, Language, Organization, \
     OrganizationRequest, Problem, Profile, Submission
 from judge.models.profile import OrganizationMonthlyUsage, OrganizationQuota
 from judge.tasks import on_new_problem, restore_organization_archived_problems
+from judge.user_translations import gettext as user_gettext
 from judge.utils.cache_helper import storage_pie_cache_factory
 from judge.utils.celery import redirect_to_task_status
 from judge.utils.infinite_paginator import InfinitePaginationMixin
@@ -760,39 +761,14 @@ class ProblemListOrganization(PrivateOrganizationMixin, ProblemList):
     def get_hot_problems(self):
         return None
 
-    def get_normal_queryset(self):
-        return super().get_normal_queryset().prefetch_related('tags')
-
     def get_context_data(self, **kwargs):
         context = super(ProblemListOrganization, self).get_context_data(**kwargs)
-        context['show_org_tags'] = True
-        context['org_tags_filter'] = self.organization.problem_tags.all()
-        raw_tags = self.request.GET.getlist('tag')
-        context['selected_tags'] = [int(t) for t in raw_tags if t.isdigit()]
-        context['untagged_selected'] = 'untagged' in raw_tags or self.request.GET.get('untagged') == '1'
         if not self.is_in_organization_subdomain():
             context['title'] = self.organization.name
         return context
 
     def get_filter(self):
-        _filter = get_organization_problem_filter(self.organization, self.request.user, self.profile)
-
-        # The tag filter is a multi-select whose values are tag ids plus an
-        # 'untagged' sentinel; ?untagged=1 is the equivalent single-purpose link.
-        raw_tags = self.request.GET.getlist('tag')
-        tag_ids = [t for t in raw_tags if t.isdigit()]
-        want_untagged = 'untagged' in raw_tags or self.request.GET.get('untagged') == '1'
-
-        tag_filter = Q()
-        if tag_ids:
-            tag_filter |= Q(id__in=Problem.tags.through.objects.filter(organizationproblemtag__in=tag_ids)
-                            .values('problem_id'))
-        if want_untagged:
-            tag_filter |= ~Exists(Problem.tags.through.objects.filter(problem=OuterRef('pk')))
-        if tag_filter:
-            _filter &= tag_filter
-
-        return _filter
+        return get_organization_problem_filter(self.organization, self.request.user, self.profile)
 
 
 class RandomProblemOrganization(ProblemListOrganization):
@@ -842,10 +818,11 @@ class OrganizationUserSolvedProblems(AdminOrganizationMixin, TitleMixin, Templat
         untagged = _('Untagged')
         sections = defaultdict(list)
         solved = set()
-        # The tags join yields one row per (problem, tag); untagged problems come through as tags__name=None.
-        for row in problems.filter(id__in=solved_ids).values('id', 'code', 'name', 'tags__name'):
+        # The types join yields one row per (problem, type); problems with no type come through as None.
+        for row in problems.filter(id__in=solved_ids).values('id', 'code', 'name', 'types__full_name'):
             solved.add(row['id'])
-            sections[row['tags__name'] or untagged].append({'code': row['code'], 'name': row['name']})
+            section = user_gettext(row['types__full_name']) if row['types__full_name'] else untagged
+            sections[section].append({'code': row['code'], 'name': row['name']})
         solved_cnt = len(solved)
 
         tag_sections = []

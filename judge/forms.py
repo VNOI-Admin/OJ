@@ -192,14 +192,12 @@ class ProblemEditForm(ModelForm):
             self.fields['statement_file'].initial = PdfStatementUrl(self.instance.pdf_url)
         self.fields['statement_file'].widget.clear_checkbox_label = _('Delete')
 
+        self.fields.pop('tags')
+
         # Only allow to public/private problem in organization
         if org_pk is None:
             self.fields.pop('is_public')
-            self.fields.pop('tags')
         else:
-            self.fields['tags'].queryset = OrganizationProblemTag.objects.filter(organization_id=org_pk)
-            self.fields.pop('types')
-            self.fields['group'].widget = forms.HiddenInput()
             self.fields['testers'].label = _('Private users')
             self.fields['testers'].help_text = _('If private, only these users may see the problem.')
             self.fields['testers'].widget.data_view = None

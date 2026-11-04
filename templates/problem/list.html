@@ -70,7 +70,7 @@
 
                 $('#random').click(function (e) {
                     var action = $form.attr('action');
-                    var random_url = '{% if show_org_tags %}{{ url('problem_random_organization', organization.slug) }}{% else %}{{ url('problem_random') }}{% endif %}';
+                    var random_url = '{% if organization %}{{ url('problem_random_organization', organization.slug) }}{% else %}{{ url('problem_random') }}{% endif %}';
                     $form.attr('action', random_url).attr('target', '_blank').submit();
                     $form.attr('action', action).attr('target', '');
                     e.preventDefault();
