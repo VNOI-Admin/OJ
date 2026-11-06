@@ -71,7 +71,7 @@ def _get_result_data(results):
             {'code': 'CE', 'name': gettext_noop('Compile Error'), 'count': results['CE']},
             {'code': 'TLE', 'name': gettext_noop('Timeout'), 'count': results['TLE']},
             {'code': 'ERR', 'name': gettext_noop('Error'),
-             'count': results['MLE'] + results['OLE'] + results['IR'] + results['RTE'] + results['AB'] + results['IE']},
+             'count': sum(results[code] for code in ('MLE', 'OLE', 'IR', 'RTE', 'AB', 'IE', 'CKE'))},
         ],
         'total': sum(results.values()),
     }

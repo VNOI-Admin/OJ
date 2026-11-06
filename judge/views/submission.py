@@ -450,7 +450,7 @@ class SubmissionsListBase(DiggPaginatorMixin, TitleMixin, ListView):
     def get_searchable_status_codes(self):
         hidden_codes = ['SC']
         if not self.could_filter_by_status():
-            hidden_codes += ['IE', 'QU', 'P', 'G', 'D']
+            hidden_codes += ['IE', 'CKE', 'QU', 'P', 'G', 'D']
         return [(key, value) for key, value in Submission.SEARCHABLE_STATUS if key not in hidden_codes]
 
     def get_context_data(self, **kwargs):

@@ -65,7 +65,7 @@ class AtCoderContestFormat(DefaultContestFormat):
                 if self.config['penalty']:
                     # An IE can have a submission result of `None`
                     subs = participation.submissions.exclude(submission__result__isnull=True) \
-                                                    .exclude(submission__result__in=['IE', 'CE']) \
+                                                    .exclude(submission__result__in=['IE', 'CE', 'CKE']) \
                                                     .filter(problem_id=prob)
                     if score:
                         prev = subs.filter(submission__date__lte=time).count() - 1

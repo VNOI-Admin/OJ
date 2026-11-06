@@ -1117,7 +1117,7 @@ class ContestRanking(ContestRankingBase):
             .values_list('problem_id', 'points', 'submission__result', 'submission__date')
             .order_by('submission__date')
         ):
-            if result in (None, 'CE', 'IE'):
+            if result in (None, 'CE', 'IE', 'CKE'):
                 continue
             t = (sub_date - virtual_part.real_start).total_seconds()
             own_subs.append([prob_id, float(points), round(t, 3)])
@@ -1368,7 +1368,7 @@ def build_contest_replay_data(contest):
 
     subs = []
     for part_id, prob_id, points, result, sub_date in subs_qs:
-        if result in (None, 'CE', 'IE'):
+        if result in (None, 'CE', 'IE', 'CKE'):
             continue
         t = (sub_date - contest.start_time).total_seconds()
         subs.append([part_id, prob_id, float(points), round(t, 3)])
