@@ -11,6 +11,9 @@
             window.previous_template = '';
 
             function update_language_template() {
+                {% if request.in_contest %}
+                return;  // in contest, don't risk overwriting what the user is typing
+                {% endif %}
                 var source = $('textarea#id_source');
                 if (source.val() == window.previous_template.replace(/\r/g, '') || source.val() == '') {
                     var lang_id = $('#id_language').val();
@@ -28,7 +31,9 @@
                         $.get('{{ url('language_template_ajax') }}', {
                             id: lang_id
                         }).done(function (template) {
-                            update_submit_area(template);
+                            // user may have typed while the request was in flight
+                            if (source.val() == window.previous_template.replace(/\r/g, '') || source.val() == '')
+                                update_submit_area(template);
                         });
                     }
                 }
