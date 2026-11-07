@@ -1906,6 +1906,9 @@ class ContestProblemMakePublic(LoginRequiredMixin, ContestMixin, SingleObjectMix
         if not contest.is_editable_by(request.user):
             raise PermissionDenied(_('You do not have permission to edit this contest.'))
 
+        if not contest.ended:
+            raise PermissionDenied(_('Problems can only be made public after the contest has ended.'))
+
         now = timezone.now()
         contest_problems = contest.contest_problems.prefetch_related('problem').all()
         for contest_problem in contest_problems:

@@ -146,6 +146,18 @@ class ContestProblemMakePublicTestCase(TestCase):
         self.assertFalse(self.problem_with_editorial.is_public)
         mock_rescore.delay.assert_not_called()
 
+    @patch('judge.views.contests.rescore_problem')
+    def test_running_contest_denied(self, mock_rescore):
+        self.contest.end_time = timezone.now() + timezone.timedelta(hours=1)
+        self.contest.save(update_fields=['end_time'])
+        self.client.force_login(self.staff_editor)
+        response = self.client.post(self._get_url())
+
+        self.assertContains(response, 'Problems can only be made public after the contest has ended.')
+        self.problem_with_editorial.refresh_from_db()
+        self.assertFalse(self.problem_with_editorial.is_public)
+        mock_rescore.delay.assert_not_called()
+
 
 class ContestProblemSetSourceTestCase(TestCase):
     @classmethod
