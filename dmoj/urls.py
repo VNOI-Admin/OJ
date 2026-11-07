@@ -502,6 +502,15 @@ if settings.VNOJ_ENABLE_SYNC_API:
             ),
         ])),
     )
+    # CLICS Contest API event feed for the ICPC live overlay (live-v3 `clics` plugin).
+    # live-v3 settings: source = "<site>/api/clics", contestId = "<contest key>".
+    urlpatterns.append(
+        path(
+            'api/clics/contests/<str:contest_code>/event-feed',
+            api.api_v2.APIContestClicsEventFeed.as_view(),
+            name='api_contest_clics_event_feed',
+        ),
+    )
 
 try:
     with open(os.path.join(os.path.dirname(__file__), 'local_urls.py')) as f:

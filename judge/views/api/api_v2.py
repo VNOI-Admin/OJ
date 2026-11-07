@@ -1,13 +1,17 @@
+import json
+import time
+
 from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import F
-from django.http import Http404, JsonResponse
+from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.functional import cached_property
 from django.views.generic.detail import BaseDetailView
 
 from judge.models import Contest, ContestParticipation, Submission
+from judge.utils.clics import build_clics_events
 
 
 class APIKeyRequiredException(Exception):
@@ -210,3 +214,31 @@ class APIContestSyncSubmissions(APIContestSyncBase):
             }
             for submission in submissions
         ]
+
+
+class APIContestClicsEventFeed(APIContestSyncBase):
+    """CLICS Contest API event feed (NDJSON), consumed by the ICPC live overlay (live-v3)."""
+
+    # live-v3 only finishes its initial load after 1 second without new events. If the
+    # end_of_updates state arrives before that, it treats the contest as final before replaying the
+    # runs, and anything waiting for finalization (e.g. emulation) sees no results at all.
+    FINALIZE_DELAY = 1.5
+
+    @staticmethod
+    def to_line(event):
+        return json.dumps(event, ensure_ascii=False, separators=(',', ':')) + '\n'
+
+    def render_to_response(self, context, **response_kwargs):
+        # `?finalize=1`: mark a finished contest as final so live-v3 can replay it (emulation mode).
+        finalize = self.request.GET.get('finalize') in ('1', 'true')
+        events = list(build_clics_events(context['object'], now=self._now, finalize=finalize))
+        content_type = 'application/x-ndjson; charset=utf-8'
+        if not events[-1]['data'].get('end_of_updates'):
+            return HttpResponse(''.join(map(self.to_line, events)), content_type=content_type)
+
+        def stream():
+            yield ''.join(map(self.to_line, events[:-1]))
+            time.sleep(self.FINALIZE_DELAY)
+            yield self.to_line(events[-1])
+
+        return StreamingHttpResponse(stream(), content_type=content_type)
