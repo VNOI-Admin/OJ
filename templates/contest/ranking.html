@@ -161,10 +161,21 @@
                         .replace(/[đĐ]/g, 'd').toLowerCase().trim();
                 }
 
+                function isSubsequence(query, text) {
+                    let i = 0;
+                    for (const c of text) {
+                        if (c === query[i]) i++;
+                    }
+                    return i === query.length;
+                }
+
                 $('#org-search').on('input', function () {
                     let query = normalizeSearch($(this).val());
+                    let compact = query.replace(/\s+/g, '');
                     $('#org-check-list option').each(function () {
-                        this.hidden = query !== '' && !normalizeSearch(this.value).includes(query);
+                        let name = normalizeSearch(this.value);
+                        let initials = name.split(/\s+/).map(w => w[0]).join('');
+                        this.hidden = query !== '' && !name.includes(query) && !isSubsequence(compact, initials);
                     });
                 });
 
