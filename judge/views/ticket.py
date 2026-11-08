@@ -59,7 +59,13 @@ class TicketForm(forms.Form):
 class TicketCreationMixin:
     form_class = TicketForm
 
+    def get_contest_assignees(self):
+        contest = self.request.participation.contest
+        return list(contest.authors.all()) + list(contest.curators.all())
+
     def get_assignees(self):
+        if self.request.in_contest:
+            return self.get_contest_assignees()
         return []
 
     def get_form_kwargs(self):
@@ -117,9 +123,8 @@ class NewProblemTicketView(LoginRequiredMixin, ProblemMixin, TitleMixin, TicketC
 
     def get_assignees(self):
         if self.request.in_contest:
-            contest = self.request.participation.contest
-            if self.object.contests.filter(contest=contest).exists():
-                return list(contest.authors.all()) + list(contest.curators.all())
+            if self.object.contests.filter(contest=self.request.participation.contest).exists():
+                return self.get_contest_assignees()
         return list(self.object.authors.all()) + list(self.object.curators.all())
 
     def get_title(self):
