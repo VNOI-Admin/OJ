@@ -269,16 +269,13 @@ class APISubmit(APIMixin, ProblemMixin, ProblemSubmitMixin, SingleObjectMixin, V
         return response
 
     def get_submit_data(self):
-        language_id = self.request.POST.get('language')
+        language = Language.objects.filter(key=self.request.POST.get('language')).first()
+        if language is None:
+            raise ValidationError('Unknown language.')
         upload = self.request.FILES.get('file')
-        try:
-            language = Language.objects.filter(id=language_id).first()
-        except (TypeError, ValueError):
-            # Let the form's ModelChoiceField report the invalid choice.
-            language = None
-        data, files = {'language': language_id}, {}
+        data, files = {'language': language.id}, {}
         if upload is not None:
-            if language is not None and not language.file_only:
+            if not language.file_only:
                 if upload.size > 65536 * 4:
                     raise ValidationError('File is too big (maximum 65536 characters).')
                 content = upload.read()
@@ -300,7 +297,7 @@ class APISubmit(APIMixin, ProblemMixin, ProblemSubmitMixin, SingleObjectMixin, V
 
 
 class APILanguageTable(APIMixin, View):
-    """Languages `problem` accepts submissions in."""
+    """Language keys `problem` accepts, grouped by file extension."""
 
     def get(self, request, *args, **kwargs):
         code = request.GET.get('problem')
@@ -313,15 +310,7 @@ class APILanguageTable(APIMixin, View):
         if not problem.is_accessible_by(request.user):
             raise Http404()
 
-        languages = list(problem.usable_languages.order_by('name', 'key').values(
-            'id', 'key', 'name', 'extension', 'file_only', 'file_size_limit',
-        ))
-        language_ids = {language['id'] for language in languages}
-        default_language_id = None
-        if request.profile and request.profile.language_id in language_ids:
-            default_language_id = request.profile.language_id
-
-        return JsonResponse(self.get_base_response(data={
-            'default_language_id': default_language_id,
-            'languages': languages,
-        }))
+        table = {}
+        for extension, key in problem.usable_languages.order_by('key').values_list('extension', 'key'):
+            table.setdefault(extension, []).append(key)
+        return JsonResponse(self.get_base_response(data=table))

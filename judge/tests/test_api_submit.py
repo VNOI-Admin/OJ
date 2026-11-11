@@ -33,7 +33,7 @@ class APISubmitTestCase(TestCase):
     def submit(self, name, content, language, url=URL):
         return self.client.post(url, {
             'file': SimpleUploadedFile(name, content),
-            'language': language.id,
+            'language': language.key,
         }, **self.auth)
 
     def test_text_file_becomes_source(self, judge_submission):
@@ -89,20 +89,19 @@ class APISubmitTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertFalse(Submission.objects.exists())
 
-    def test_non_numeric_language_rejected(self, judge_submission):
+    def test_unknown_language_rejected(self, judge_submission):
         response = self.client.post(URL, {
             'file': SimpleUploadedFile('a.cpp', b'int main() {}\n'),
             'language': 'abc',
         }, **self.auth)
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.json()['error']['message'],
-                         'Select a valid choice. That choice is not one of the available choices.')
+        self.assertEqual(response.json()['error']['message'], 'Unknown language.')
         self.assertFalse(Submission.objects.exists())
 
     def test_login_required(self, judge_submission):
         response = self.client.post(URL, {
             'file': SimpleUploadedFile('a.cpp', b'int main() {}\n'),
-            'language': self.cpp.id,
+            'language': self.cpp.key,
         })
         self.assertEqual(response.status_code, 302)
         self.assertFalse(Submission.objects.exists())
@@ -125,25 +124,11 @@ class APISubmitTestCase(TestCase):
 
     def test_language_table_for_problem(self, judge_submission):
         response = self.client.get(TABLE_URL, {'problem': 'a'}, **self.auth)
-        data = response.json()['data']
-        languages = data['languages']
-        self.assertEqual({language['key'] for language in languages}, {'CPP17', 'OUTPUT'})
-        output = next(language for language in languages if language['key'] == 'OUTPUT')
-        self.assertEqual((output['extension'], output['file_only'], output['file_size_limit']), ('zip', True, 10))
-        # The profile default (CPP20) is not allowed for this problem.
-        self.assertNotIn(self.user.profile.language_id, {language['id'] for language in languages})
-        self.assertIsNone(data['default_language_id'])
-
-    def test_language_table_default_language_allowed(self, judge_submission):
-        self.user.profile.language = self.cpp
-        self.user.profile.save(update_fields=['language'])
-        response = self.client.get(TABLE_URL, {'problem': 'a'}, **self.auth)
-        self.assertEqual(response.json()['data']['default_language_id'], self.cpp.id)
+        self.assertEqual(response.json()['data'], {'cpp': ['CPP17'], 'zip': ['OUTPUT']})
 
     def test_language_table_anonymous(self, judge_submission):
         response = self.client.get(TABLE_URL, {'problem': 'a'})
         self.assertEqual(response.status_code, 200)
-        self.assertIsNone(response.json()['data']['default_language_id'])
 
     def test_language_table_hidden_problem(self, judge_submission):
         response = self.client.get(TABLE_URL, {'problem': 'hidden'}, **self.auth)
