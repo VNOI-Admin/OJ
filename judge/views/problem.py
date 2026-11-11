@@ -280,14 +280,18 @@ class ProblemSubmitMixin:
             return self.old_submission.language
         return self.request.profile.language
 
+    def get_submit_data(self):
+        return self.request.POST, self.request.FILES
+
     def get_submit_form(self, **kwargs):
         if not self.request.user.is_authenticated:
             return None
 
         if self.request.method == 'POST':
+            data, files = self.get_submit_data()
             form = ProblemSubmitForm(
-                self.request.POST,
-                self.request.FILES,
+                data,
+                files,
                 instance=Submission(user=self.request.profile, problem=self.object),
             )
         else:
@@ -351,20 +355,23 @@ class ProblemSubmitMixin:
             Submission.objects.filter(user=request.profile, rejudged_date__isnull=True)
                               .exclude(status__in=['D', 'IE', 'CE', 'AB']).count() >= settings.DMOJ_SUBMISSION_LIMIT
         ):
-            return HttpResponse(format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429), None
+            return self.submission_rejected(_('Too many submissions'), _('You submitted too many submissions.'),
+                                            429), None
 
         if not self.object.allowed_languages.filter(id=form.cleaned_data['language'].id).exists():
             raise PermissionDenied()
 
         if not request.user.is_superuser and self.object.banned_users.filter(id=request.profile.id).exists():
-            return generic_message(request, _('Banned from submitting'),
-                                   _('You have been declared persona non grata for this problem. '
-                                     'You are permanently barred from submitting to this problem.')), None
+            return self.submission_rejected(_('Banned from submitting'),
+                                            _('You have been declared persona non grata for this problem. '
+                                              'You are permanently barred from submitting to this problem.'),
+                                            403), None
 
         # Must check for zero and not None. None means infinite submissions remaining.
         if self.remaining_submission_count == 0:
-            return generic_message(request, _('Too many submissions'),
-                                   _('You have exceeded the submission limit for this problem.')), None
+            return self.submission_rejected(_('Too many submissions'),
+                                            _('You have exceeded the submission limit for this problem.'),
+                                            403), None
 
         # Organization credit check
         if settings.VNOJ_ENABLE_ORGANIZATION_CREDIT_LIMITATION:
@@ -385,14 +392,14 @@ class ProblemSubmitMixin:
             if organization is not None:
                 if not organization.has_credit_left():
                     org_name = organization.name
-                    return generic_message(
-                        request,
+                    return self.submission_rejected(
                         _('No credit'),
                         _(
                             'The organization %s has no credit left to execute this submission. '
                             'Ask the organization to buy more credit.',
                         )
                         % org_name,
+                        403,
                     ), None
 
         # Create submission
@@ -441,7 +448,13 @@ class ProblemSubmitMixin:
                 new_submission.problem.code,
             )
 
-        return HttpResponseRedirect(reverse('submission_status', args=(new_submission.id,))), None
+        return self.submission_accepted(new_submission), None
+
+    def submission_rejected(self, title, message, status):
+        return generic_message(self.request, title, message, status=status)
+
+    def submission_accepted(self, submission):
+        return HttpResponseRedirect(reverse('submission_status', args=(submission.id,)))
 
 
 class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin, ProblemSubmitMixin,
