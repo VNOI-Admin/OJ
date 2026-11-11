@@ -5,13 +5,16 @@ from django.conf import settings
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import F
 from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
+from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 from django.utils.functional import cached_property
-from django.views.generic.detail import BaseDetailView
+from django.views.generic import View
+from django.views.generic.detail import BaseDetailView, SingleObjectMixin
 
-from judge.models import Contest, ContestParticipation, Submission
+from judge.models import Contest, ContestParticipation, Language, Problem, Submission
 from judge.utils.clics import build_clics_events
+from judge.views.problem import ProblemDeleted, ProblemMixin, ProblemSubmitMixin
 
 
 class APIKeyRequiredException(Exception):
@@ -242,3 +245,72 @@ class APIContestClicsEventFeed(APIContestSyncBase):
             yield self.to_line(events[-1])
 
         return StreamingHttpResponse(stream(), content_type=content_type)
+
+
+class APISubmit(APIMixin, ProblemMixin, ProblemSubmitMixin, SingleObjectMixin, View):
+    """Submit `file` in `language` to a problem, with the same checks as the submit page."""
+
+    http_method_names = ['post']
+
+    def post(self, request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            raise PermissionDenied()
+        try:
+            self.object = self.get_object()
+        except ProblemDeleted:
+            raise Http404()
+
+        try:
+            response, form = self.handle_submission_post(request)
+        except ValidationError as e:
+            return self.submission_rejected(None, e.message, 400)
+        if form is not None:
+            return self.submission_rejected(None, ' '.join(e for errors in form.errors.values() for e in errors), 400)
+        return response
+
+    def get_submit_data(self):
+        language = Language.objects.filter(key=self.request.POST.get('language')).first()
+        if language is None:
+            raise ValidationError('Unknown language.')
+        upload = self.request.FILES.get('file')
+        data, files = {'language': language.id}, {}
+        if upload is not None:
+            if not language.file_only:
+                if upload.size > 65536 * 4:
+                    raise ValidationError('File is too big (maximum 65536 characters).')
+                content = upload.read()
+                if b'\x00' in content:
+                    raise ValidationError('File is not a text file.')
+                try:
+                    data['source'] = content.decode('utf-8-sig')
+                except UnicodeDecodeError:
+                    raise ValidationError('File is not valid UTF-8 text.')
+            else:
+                files['submission_file'] = upload
+        return data, files
+
+    def submission_rejected(self, title, message, status):
+        return JsonResponse(self.get_base_response(error={'code': status, 'message': message}), status=status)
+
+    def submission_accepted(self, submission):
+        return JsonResponse(self.get_base_response(data={'id': submission.id}), status=201)
+
+
+class APILanguageTable(APIMixin, View):
+    """Language keys `problem` accepts, grouped by file extension."""
+
+    def get(self, request, *args, **kwargs):
+        code = request.GET.get('problem')
+        if not code:
+            return JsonResponse(self.get_base_response(error={
+                'code': 400,
+                'message': 'problem is required',
+            }), status=400)
+        problem = get_object_or_404(Problem, code=code, deleted_at__isnull=True)
+        if not problem.is_accessible_by(request.user):
+            raise Http404()
+
+        table = {}
+        for extension, key in problem.usable_languages.order_by('key').values_list('extension', 'key'):
+            table.setdefault(extension, []).append(key)
+        return JsonResponse(self.get_base_response(data=table))

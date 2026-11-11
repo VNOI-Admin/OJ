@@ -344,6 +344,8 @@ urlpatterns = [
 
     path('runtimes/', language.LanguageList.as_view(), name='runtime_list'),
     path('runtimes/matrix/', status.version_matrix, name='version_matrix'),
+    path('api/v2/submit/<str:problem>', api.api_v2.APISubmit.as_view(), name='api_submit'),
+    path('api/v2/language/table', api.api_v2.APILanguageTable.as_view(), name='api_language_table'),
     path('status/', status.status_all, name='status_all'),
     path('status/oj/', status.status_oj, name='status_oj'),
 
