@@ -164,7 +164,7 @@ class APIMiddleware(object):
 
         try:
             id, secret = struct.unpack('>I32s', base64.urlsafe_b64decode(token.group(1)))
-            request.user = User.objects.get(id=id)
+            request.user = User.objects.get(id=id, is_active=True)
 
             # User hasn't generated a token
             if not request.user.profile.api_token:
