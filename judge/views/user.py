@@ -532,6 +532,18 @@ def edit_profile(request):
 
 
 @require_POST
+@login_required
+def generate_api_token(request):
+    if not settings.VNOJ_ENABLE_API_TOKEN_GENERATION:
+        return JsonResponse({'error': 'API token generation is disabled'}, status=403)
+    profile = request.profile
+    with revisions.create_revision(atomic=True):
+        revisions.set_user(request.user)
+        revisions.set_comment(_('Generated API token for user'))
+        return JsonResponse({'data': {'token': profile.generate_api_token()}})
+
+
+@require_POST
 def set_theme(request):
     theme = request.POST.get('theme', 'light')
     if theme not in ('light', 'dark', 'auto'):

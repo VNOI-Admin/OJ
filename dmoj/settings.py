@@ -55,6 +55,8 @@ VNOJ_ORG_PP_ENTRIES = 100
 VNOJ_ORG_PP_SCALE = 1
 
 VNOJ_ENABLE_SYNC_API = False
+# Allow users to generate personal API tokens via /api/token/generate/
+VNOJ_ENABLE_API_TOKEN_GENERATION = False
 GLOBAL_API_KEY = 'test-api-key-123'
 
 VNOJ_OFFICIAL_CONTEST_MODE = False
