@@ -119,29 +119,6 @@
                             $('#api-token').text(data.data.token);
                             $('#generate-api-token-button').text({{ _('Regenerate')|htmltojs }});
 
-                            // Add remove button on-the-fly
-                            if ($('#remove-api-token-button').length == 0) {
-                                $('#generate-api-token-button').after($('<a id="remove-api-token-button" \
-                                    href="{{ url('remove_api_token') }}" \
-                                    class="button inline-button ml-5">{{ _('Remove') }}</a>'));
-                            }
-                        },
-                    });
-                }
-            });
-
-            // Delegated event handler because the remove button may have been added on-the-fly
-            $('#api-token-td').on('click', '#remove-api-token-button', function (event) {
-                event.preventDefault();
-                if (confirm({{ _('Are you sure you want to remove your API token?')|htmltojs }})) {
-                    $.ajax({
-                        type: 'POST',
-                        url: $(this).attr('href'),
-                        dataType: 'json',
-                        success: function(data) {
-                            $('#api-token').text('');
-                            $('#generate-api-token-button').text({{ _('Generate')|htmltojs }});
-                            $('#remove-api-token-button').remove();
                         },
                     });
                 }

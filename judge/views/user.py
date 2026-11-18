@@ -559,18 +559,6 @@ def set_theme(request):
 
 @require_POST
 @login_required
-def remove_api_token(request):
-    profile = request.profile
-    with revisions.create_revision(atomic=True):
-        profile.api_token = None
-        profile.save()
-        revisions.set_user(request.user)
-        revisions.set_comment(_('Removed API token for user'))
-    return JsonResponse({})
-
-
-@require_POST
-@login_required
 def generate_scratch_codes(request):
     profile = request.profile
     with revisions.create_revision(atomic=True):
