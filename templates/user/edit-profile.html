@@ -57,16 +57,6 @@
             width: 340px;
         }
 
-        .api-token {
-            padding-top: 5px;
-            font-family: Consolas, Liberation Mono, Monaco, Courier New, monospace;
-            font-size: 12px;
-            -webkit-user-select: all;
-            -ms-user-select: all;
-            user-select: all;
-            white-space: nowrap;
-        }
-
         .ml-5 {
             margin-left: 5px;
         }
@@ -101,27 +91,6 @@
 
             $('#disable-2fa-button').click(function () {
                 alert({{ _('The administrators for this site require all the staff to have Two-factor Authentication enabled, so it may not be disabled at this time.')|htmltojs }});
-            });
-
-            $('#generate-api-token-button').click(function (event) {
-                event.preventDefault();
-                if (confirm({{ _('Are you sure you want to generate or regenerate your API token?')|htmltojs }} + '\n'
-                          + {{ _('This will invalidate any previous API tokens.')|htmltojs }} + ' '
-                          + {{ _('It also allows access to your account without Two-factor Authentication.')|htmltojs }} + '\n\n'
-                          + {{ _('You will not be able to view your API token after you leave this page!')|htmltojs }})) {
-                    $('#api-token').text({{ _('Generating...')|htmltojs }});
-
-                    $.ajax({
-                        type: 'POST',
-                        url: $(this).attr('href'),
-                        dataType: 'json',
-                        success: function(data) {
-                            $('#api-token').text(data.data.token);
-                            $('#generate-api-token-button').text({{ _('Regenerate')|htmltojs }});
-
-                        },
-                    });
-                }
             });
 
             // Alert when leaving an org
