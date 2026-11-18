@@ -80,9 +80,6 @@ register_patterns = [
     path('2fa/webauthn/assert/', two_factor.WebAuthnAttestView.as_view(), name='webauthn_assert'),
     path('2fa/webauthn/delete/<int:pk>', two_factor.WebAuthnDeleteView.as_view(), name='webauthn_delete'),
     path('2fa/scratchcode/generate/', user.generate_scratch_codes, name='generate_scratch_codes'),
-
-    path('api/token/generate/', user.generate_api_token, name='generate_api_token'),
-    path('api/token/remove/', user.remove_api_token, name='remove_api_token'),
 ]
 
 

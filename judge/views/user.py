@@ -532,16 +532,6 @@ def edit_profile(request):
 
 
 @require_POST
-@login_required
-def generate_api_token(request):
-    profile = request.profile
-    with revisions.create_revision(atomic=True):
-        revisions.set_user(request.user)
-        revisions.set_comment(_('Generated API token for user'))
-        return JsonResponse({'data': {'token': profile.generate_api_token()}})
-
-
-@require_POST
 def set_theme(request):
     theme = request.POST.get('theme', 'light')
     if theme not in ('light', 'dark', 'auto'):
@@ -553,18 +543,6 @@ def set_theme(request):
     else:
         response.set_cookie(settings.SITE_THEME_COOKIE_NAME, theme, max_age=settings.SITE_THEME_COOKIE_AGE)
     return response
-
-
-@require_POST
-@login_required
-def remove_api_token(request):
-    profile = request.profile
-    with revisions.create_revision(atomic=True):
-        profile.api_token = None
-        profile.save()
-        revisions.set_user(request.user)
-        revisions.set_comment(_('Removed API token for user'))
-    return JsonResponse({})
 
 
 @require_POST
