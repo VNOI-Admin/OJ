@@ -15,7 +15,7 @@
     }
 
     // Process one submission; mutates `s` (the state object for this problem).
-    // Backend omits CE/IE/null subs, so every sub here is a scoring attempt.
+    // Backend omits CE/IE/CKE/null subs, so every sub here is a scoring attempt.
     function updateState(s, sub) {
         if (sub.pts > s.bestPts) {
             s.bestPts     = sub.pts;

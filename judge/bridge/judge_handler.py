@@ -209,7 +209,7 @@ class JudgeHandler(ZlibPacketHandler):
             return
 
         attempt_no = Submission.objects.filter(problem__id=pid, contest__participation__id=part_id, user__id=uid,
-                                               date__lt=sub_date).exclude(status__in=('CE', 'IE')).count() + 1
+                                               date__lt=sub_date).exclude(status__in=('CE', 'IE', 'CKE')).count() + 1
 
         try:
             time, memory = (LanguageLimit.objects.filter(problem__id=pid, language__id=lid)
@@ -485,15 +485,17 @@ class JudgeHandler(ZlibPacketHandler):
         self._free_self(packet)
 
         id = packet['submission-id']
-        if Submission.objects.filter(id=id).update(status='IE', result='IE', error=packet['message']):
+        result = 'CKE' if packet.get('error-type') == 'checker' else 'IE'
+        if Submission.objects.filter(id=id).update(status=result, result=result, error=packet['message']):
+            self._submission_cache_id = None
             event.post('sub_%s' % Submission.get_id_secret(id), {'type': 'internal-error'})
             self._post_update_submission(id, 'internal-error', done=True)
             json_log.info(self._make_json_log(packet, action='internal-error', message=packet['message'],
-                                              finish=True, result='IE'))
+                                              finish=True, result=result))
         else:
             logger.warning('Unknown submission: %s', id)
             json_log.error(self._make_json_log(packet, action='internal-error', info='unknown submission',
-                                               message=packet['message'], finish=True, result='IE'))
+                                               message=packet['message'], finish=True, result=result))
 
     def on_submission_terminated(self, packet):
         logger.info('%s: Submission aborted: %s', self.name, packet['submission-id'])

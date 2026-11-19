@@ -29,6 +29,7 @@ SUBMISSION_RESULT = (
     ('RTE', _('Runtime Error')),
     ('CE', _('Compile Error')),
     ('IE', _('Internal Error')),
+    ('CKE', _('Checker Error')),
     ('SC', _('Short Circuited')),
     ('AB', _('Aborted')),
 )
@@ -39,6 +40,7 @@ SUBMISSION_STATUS = (
     ('G', _('Grading')),
     ('D', _('Completed')),
     ('IE', _('Internal Error')),
+    ('CKE', _('Checker Error')),
     ('CE', _('Compile Error')),
     ('AB', _('Aborted')),
 )
@@ -65,6 +67,7 @@ class Submission(models.Model):
         'RTE': _('Runtime Error'),
         'CE': _('Compile Error'),
         'IE': _('Internal Error (judging server error)'),
+        'CKE': _('Checker Error'),
         'QU': _('Queued'),
         'P': _('Processing'),
         'G': _('Grading'),
@@ -80,7 +83,7 @@ class Submission(models.Model):
     points = models.FloatField(verbose_name=_('points granted'), null=True)
     language = models.ForeignKey(Language, verbose_name=_('submission language'),
                                  on_delete=models.CASCADE, db_index=False)
-    status = models.CharField(verbose_name=_('status'), max_length=2, choices=STATUS, default='QU', db_index=True)
+    status = models.CharField(verbose_name=_('status'), max_length=3, choices=STATUS, default='QU', db_index=True)
     result = models.CharField(verbose_name=_('result'), max_length=3, choices=SUBMISSION_RESULT,
                               default=None, null=True, blank=True)
     error = models.TextField(verbose_name=_('compile errors'), null=True, blank=True)
@@ -106,7 +109,7 @@ class Submission(models.Model):
     @property
     def result_class(self):
         # This exists to save all these conditionals from being executed (slowly) in each row.html template
-        if self.status in ('IE', 'CE'):
+        if self.status in ('IE', 'CE', 'CKE'):
             return self.status
         return Submission.result_class_from_code(self.result)
 

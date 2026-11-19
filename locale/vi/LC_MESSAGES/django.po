@@ -3483,6 +3483,10 @@ msgstr "Lỗi dịch (CE)"
 msgid "Internal Error"
 msgstr "Lỗi Nội Bộ"
 
+#: judge/models/submission.py
+msgid "Checker Error"
+msgstr "Lỗi trình kiểm tra"
+
 #: judge/models/submission.py:32 judge/models/submission.py:60
 msgid "Short Circuited"
 msgstr "Ngắn Mạch"
@@ -8752,6 +8756,10 @@ msgstr ""
 #: templates/submission/internal-error-message.html:5
 msgid "An internal error occurred while grading."
 msgstr "Một lỗi hệ thống vừa xảy ra trong quá trình chấm bài."
+
+#: templates/submission/internal-error-message.html
+msgid "A checker error occurred while grading."
+msgstr "Một lỗi trình kiểm tra vừa xảy ra trong quá trình chấm bài."
 
 #: templates/submission/internal-error-message.html:12
 msgid "Error information"
