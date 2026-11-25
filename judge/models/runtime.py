@@ -54,6 +54,10 @@ class Language(models.Model):
     include_in_problem = models.BooleanField(verbose_name=_('Include in problems'), default=False,
                                              help_text=_('If true, this language will be added to all problems'))
 
+    is_disabled = models.BooleanField(verbose_name=_('disabled'), default=False,
+                                      help_text=_('If true, users cannot submit in this language and it is hidden '
+                                                  'from the supported language lists.'))
+
     def runtime_versions(self):
         runtimes = OrderedDict()
         # There be dragons here if two judges specify different priorities

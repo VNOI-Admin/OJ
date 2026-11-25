@@ -440,7 +440,7 @@ class ProblemSubmitForm(ModelForm):
         super(ProblemSubmitForm, self).__init__(*args, **kwargs)
         self.fields['language'].empty_label = None
         self.fields['language'].label_from_instance = attrgetter('display_name')
-        self.fields['language'].queryset = Language.objects.filter(judges__online=True).distinct()
+        self.fields['language'].queryset = Language.objects.filter(judges__online=True, is_disabled=False).distinct()
 
         if judge_choices:
             self.fields['judge'].widget = Select2Widget(

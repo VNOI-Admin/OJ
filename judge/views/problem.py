@@ -358,7 +358,7 @@ class ProblemSubmitMixin:
         ):
             return HttpResponse(format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429), None
 
-        if not self.object.allowed_languages.filter(id=form.cleaned_data['language'].id).exists():
+        if not self.object.allowed_languages.filter(id=form.cleaned_data['language'].id, is_disabled=False).exists():
             raise PermissionDenied()
 
         if not request.user.is_superuser and self.object.banned_users.filter(id=request.profile.id).exists():
@@ -483,7 +483,8 @@ class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin
             online=True,
             storages__contains=[self.object.effective_storage],
         )
-        context['show_languages'] = self.object.allowed_languages.count() != Language.objects.count()
+        context['show_languages'] = (self.object.allowed_languages.filter(is_disabled=False).count() !=
+                                     Language.objects.filter(is_disabled=False).count())
         context['has_pdf_render'] = PDF_RENDERING_ENABLED
         context['completed_problem_ids'] = self.get_completed_problems()
         context['attempted_problems'] = self.get_attempted_problems()
