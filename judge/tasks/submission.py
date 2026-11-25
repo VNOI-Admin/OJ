@@ -19,6 +19,7 @@ def apply_submission_filter(queryset, id_range, languages, results):
     if results:
         queryset = queryset.filter(result__in=results)
     queryset = queryset.exclude(locked_after__lt=timezone.now()) \
+                       .exclude(language__is_disabled=True) \
                        .exclude(status__in=Submission.IN_PROGRESS_GRADING_STATUS)
     return queryset
 

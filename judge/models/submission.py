@@ -127,6 +127,8 @@ class Submission(models.Model):
         return self.locked_after is not None and self.locked_after < timezone.now()
 
     def judge(self, *args, rejudge=False, force_judge=False, rejudge_user=None, **kwargs):
+        if self.language.is_disabled:
+            return
         if force_judge or not self.is_locked:
             if rejudge:
                 with revisions.create_revision(manage_manually=True):

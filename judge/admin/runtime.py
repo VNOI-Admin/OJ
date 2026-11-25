@@ -22,9 +22,10 @@ class LanguageForm(ModelForm):
 
 class LanguageAdmin(VersionAdmin):
     fields = ('key', 'name', 'short_name', 'common_name', 'file_only', 'file_size_limit',
-              'include_in_problem', 'ace', 'pygments', 'info', 'extension',
+              'include_in_problem', 'is_disabled', 'ace', 'pygments', 'info', 'extension',
               'description', 'template')
-    list_display = ('key', 'name', 'common_name', 'info')
+    list_display = ('key', 'name', 'common_name', 'info', 'is_disabled')
+    list_filter = ('is_disabled',)
     form = LanguageForm
 
     def save_model(self, request, obj, form, change):
