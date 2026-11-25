@@ -117,7 +117,12 @@ class Language(models.Model):
 
     @classmethod
     def get_default_language_pk(cls):
-        return cls.get_default_language().pk
+        # Only select pk: old migrations call this as a field default before newer Language columns exist.
+        for key in (settings.DEFAULT_USER_LANGUAGE, 'PY3'):
+            pk = Language.objects.filter(key=key).values_list('pk', flat=True).first()
+            if pk is not None:
+                return pk
+        return cls.get_python3().pk
 
     class Meta:
         ordering = ['key']
