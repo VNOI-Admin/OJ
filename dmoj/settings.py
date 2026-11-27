@@ -138,7 +138,9 @@ VNOJ_COMMENT_RATE_LIMIT_WINDOW = datetime.timedelta(seconds=600)
 
 VNOJ_TESTCASE_VISIBLE_LENGTH = 60
 
-VNOJ_TAG_PROBLEM_MIN_RATING = 1900  # Minimum rating to be able to tag a problem
+# If True, the contest problem picker searches every visible problem (single search box)
+# instead of splitting into organization/private/public tabs.
+CROSS_ORGANIZATION_PROBLEM_SELECTION = False
 
 VNOJ_SHOULD_BAN_FOR_CHEATING_IN_CONTESTS = False
 VNOJ_CONTEST_CHEATING_BAN_MESSAGE = 'Banned for multiple cheating offenses during contests'
@@ -191,53 +193,8 @@ CELERY_TIMEZONE = 'UTC'
 # has about 5~6 fields, so we need to raise this
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 3000
 
-# List of online judge preset for OJ API
-OJ_PROBLEM_PRESET = [
-    {
-        'regex': r'^https://codeforces\.com/problemset/problem/(?P<contestid>\w+)/(?P<index>\w+)$',
-        'codename': 'CF_%s_%s',
-        'judge': 'Codeforces',
-    },
-    {
-        'regex': r'^https://codeforces\.com/contest/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
-        'codename': 'CF_%s_%s',
-        'judge': 'Codeforces',
-    },
-    {
-        'regex': r'^^https://atcoder.jp/contests/(?:\w*)/tasks/(?P<codename>\w+)$',
-        'codename': 'AC_%s',
-        'judge': 'Atcoder',
-    },
-    {
-        'regex': r'^https://oj\.vnoi\.info/problem/(?P<codename>\w+)$',
-        'codename': 'VNOJ_%s',
-        'judge': 'VNOJ',
-    },
-    {
-        'regex': r'^https://open\.kattis\.com/problems/(?P<codename>\w+)$',
-        'codename': 'KATTIS_%s',
-        'judge': 'Kattis',
-    },
-    {
-        'regex': r'^https://codeforces\.com/gym/(?P<contestid>\w+)/problem/(?P<index>\w+)$',
-        'codename': 'CFGYM_%s_%s',
-        'judge': 'CodeforcesGym',
-    },
-]
-
-OJ_LIST = [
-    ('Atcoder', 'Atcoder'),
-    ('Codeforces', 'Codeforces'),
-    ('CodeforcesGym', 'Codeforces (Gym)'),
-    ('Kattis', 'Kattis'),
-    ('VNOJ', 'VNOJ'),
-]
-
-OJ_REQUESTS_TIMEOUT = 5  # in seconds
-
-OJAPI_CACHE_TIMEOUT = 3600  # Cache timeout for OJAPI data
-
 # External service to handle problem archiving
+OJ_REQUESTS_TIMEOUT = 5  # in seconds
 VNOJ_PROBLEM_ARCHIVE_SERVICE_URL = None
 VNOJ_PROBLEM_ARCHIVE_SERVICE_TOKEN = None
 
@@ -248,8 +205,6 @@ DISCORD_WEBHOOK = {
     'on_new_ticket': None,
     'on_new_comment': None,
     'on_new_problem': None,
-    'on_new_tag_problem': None,
-    'on_new_tag': None,
     'on_new_blogpost': None,
     'on_error': None,
     'on_long_queue': None,
@@ -276,7 +231,8 @@ DMOJ_PROBLEM_MIN_TIME_LIMIT = 0.01  # seconds
 DMOJ_PROBLEM_MAX_TIME_LIMIT = 60  # seconds
 DMOJ_PROBLEM_MIN_MEMORY_LIMIT = 0  # kilobytes
 DMOJ_PROBLEM_MAX_MEMORY_LIMIT = 1048576  # kilobytes
-DMOJ_PROBLEM_MIN_PROBLEM_POINTS = 0
+DMOJ_PROBLEM_MIN_PROBLEM_POINTS = 0.01
+DMOJ_PROBLEM_MAX_PROBLEM_POINTS = 2
 DMOJ_PROBLEM_HOT_PROBLEM_COUNT = 7
 
 # Grace period before a soft-deleted problem is permanently removed
@@ -419,14 +375,6 @@ else:
                         'judge.ProblemGroup',
                         'judge.ProblemType',
                         'judge.License',
-                    ],
-                },
-                {
-                    'model': 'judge.TagProblem',
-                    'icon': 'fa-tag',
-                    'children': [
-                        'judge.TagGroup',
-                        'judge.Tag',
                     ],
                 },
                 ('judge.Submission', 'fa-check-square-o'),
@@ -642,7 +590,7 @@ LANGUAGES = [
     ('vi', _('Vietnamese')),
 ]
 
-BLEACH_USER_SAFE_TAGS = [
+MARKDOWN_SAFE_TAGS = [
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
     'b', 'i', 'strong', 'em', 'tt', 'del', 'kbd', 's', 'abbr', 'cite', 'mark', 'q', 'samp', 'small',
     'u', 'var', 'wbr', 'dfn', 'ruby', 'rb', 'rp', 'rt', 'rtc', 'sub', 'sup', 'time', 'data',
@@ -651,14 +599,14 @@ BLEACH_USER_SAFE_TAGS = [
     'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'caption', 'colgroup', 'col', 'tfoot',
     'img', 'audio', 'video', 'source',
     'a', 'strike',
-    'noscript', 'center', 'object', 'iframe',
+    'noscript', 'center',
 ]
 
-BLEACH_USER_SAFE_ATTRS = {
+MARKDOWN_SAFE_ATTRS = {
     '*': ['id', 'class', 'data', 'height'],
     'img': ['src', 'alt', 'title', 'width', 'height', 'data-src', 'align'],
     'a': ['href', 'alt', 'title'],
-    'iframe': ['src', 'height', 'width', 'allow'],
+    'iframe': ['src', 'height', 'width'],
     'abbr': ['title'],
     'dfn': ['title'],
     'time': ['datetime'],
@@ -671,68 +619,70 @@ BLEACH_USER_SAFE_ATTRS = {
     'li': ['value'],
 }
 
-MARKDOWN_STAFF_EDITABLE_STYLE = {
-    'safe_mode': False,
-    'use_camo': True,
-    'texoid': True,
-    'math': True,
-    'bleach': {
-        'tags': BLEACH_USER_SAFE_TAGS,
-        'attributes': BLEACH_USER_SAFE_ATTRS,
-        'styles': True,
-        'mathml': True,
-    },
-}
-
 MARKDOWN_ADMIN_EDITABLE_STYLE = {
     'safe_mode': False,
     'use_camo': True,
-    'texoid': True,
-    'math': True,
+}
+
+MARKDOWN_STYLING_ALLOWED_STYLE = {
+    'safe_mode': False,
+    'use_camo': True,
+    'nofollow': True,
+    'sanitizer': {
+        'tags': MARKDOWN_SAFE_TAGS,
+        'attributes': MARKDOWN_SAFE_ATTRS,
+        'styles': True,
+        'mathml': False,
+    },
+}
+
+MARKDOWN_EMBEDDED_ALLOWED_STYLE = {
+    'safe_mode': False,
+    'use_camo': True,
+    'nofollow': True,
+    'sanitizer': {
+        'tags': MARKDOWN_SAFE_TAGS + ['object', 'iframe'],
+        'attributes': MARKDOWN_SAFE_ATTRS,
+        'styles': True,
+        'mathml': False,
+    },
 }
 
 MARKDOWN_DEFAULT_STYLE = {
     'safe_mode': True,
     'nofollow': True,
     'use_camo': True,
-    'math': True,
-    'bleach': {
-        'tags': BLEACH_USER_SAFE_TAGS,
-        'attributes': BLEACH_USER_SAFE_ATTRS,
+    'sanitizer': {
+        'tags': MARKDOWN_SAFE_TAGS,
+        'attributes': MARKDOWN_SAFE_ATTRS,
         'styles': False,
-        'mathml': True,
-    },
-}
-
-MARKDOWN_USER_LARGE_STYLE = {
-    'safe_mode': True,
-    'nofollow': True,
-    'use_camo': True,
-    'math': True,
-    'bleach': {
-        'tags': BLEACH_USER_SAFE_TAGS,
-        'attributes': BLEACH_USER_SAFE_ATTRS,
-        'styles': False,
-        'mathml': True,
+        'mathml': False,
     },
 }
 
 MARKDOWN_STYLES = {
+    # untrusted user input
     'default': MARKDOWN_DEFAULT_STYLE,
     'comment': MARKDOWN_DEFAULT_STYLE,
-    'self-description': MARKDOWN_USER_LARGE_STYLE,
-    'problem': MARKDOWN_STAFF_EDITABLE_STYLE,
+    'organization-about': MARKDOWN_DEFAULT_STYLE,
+    'ticket': MARKDOWN_DEFAULT_STYLE,
+    'self-description': MARKDOWN_DEFAULT_STYLE,
+
+    # fully trusted user input
     'problem-full': MARKDOWN_ADMIN_EDITABLE_STYLE,
-    'contest': MARKDOWN_STAFF_EDITABLE_STYLE,
     'flatpage': MARKDOWN_ADMIN_EDITABLE_STYLE,
-    'language': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'license': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'judge': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'blog': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'solution': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'contest_tag': MARKDOWN_STAFF_EDITABLE_STYLE,
-    'organization-about': MARKDOWN_USER_LARGE_STYLE,
-    'ticket': MARKDOWN_USER_LARGE_STYLE,
+
+    # use minimal styling css
+    'contest': MARKDOWN_STYLING_ALLOWED_STYLE,
+    'language': MARKDOWN_STYLING_ALLOWED_STYLE,
+    'license': MARKDOWN_STYLING_ALLOWED_STYLE,
+    'judge': MARKDOWN_STYLING_ALLOWED_STYLE,
+    'contest_tag': MARKDOWN_STYLING_ALLOWED_STYLE,
+    'blog': MARKDOWN_STYLING_ALLOWED_STYLE,
+
+    # allow iframe and object in problem
+    'problem': MARKDOWN_EMBEDDED_ALLOWED_STYLE,
+    'solution': MARKDOWN_EMBEDDED_ALLOWED_STYLE,
 }
 
 MARTOR_ENABLE_CONFIGS = {

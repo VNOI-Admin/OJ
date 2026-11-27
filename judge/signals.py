@@ -14,10 +14,11 @@ from registration.signals import user_registered
 
 from judge.caching import finished_submission
 from judge.models import BlogPost, Comment, Contest, ContestAnnouncement, ContestProblem, ContestSubmission, \
-    EFFECTIVE_MATH_ENGINES, Judge, Language, License, MiscConfig, Organization, Problem, Profile, Submission, \
-    WebAuthnCredential
+    EFFECTIVE_MATH_ENGINES, Judge, Language, License, MiscConfig, NavigationBar, Organization, Problem, Profile, \
+    Submission, WebAuthnCredential
 from judge.models.problem_data import problem_data_storage
 from judge.tasks import on_new_comment
+from judge.template_context import NAVIGATION_BAR_CACHE_KEY
 from judge.views.register import RegistrationView
 
 
@@ -170,6 +171,12 @@ def misc_config_update(sender, instance, **kwargs):
 @receiver(post_delete, sender=MiscConfig)
 def misc_config_delete(sender, instance, **kwargs):
     cache.delete('misc_config')
+
+
+@receiver(post_save, sender=NavigationBar)
+@receiver(post_delete, sender=NavigationBar)
+def navigation_bar_update(sender, instance, **kwargs):
+    cache.delete(NAVIGATION_BAR_CACHE_KEY)
 
 
 @receiver(post_save, sender=ContestSubmission)

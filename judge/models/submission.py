@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -29,7 +30,6 @@ SUBMISSION_RESULT = (
     ('RTE', _('Runtime Error')),
     ('CE', _('Compile Error')),
     ('IE', _('Internal Error')),
-    ('CKE', _('Checker Error')),
     ('SC', _('Short Circuited')),
     ('AB', _('Aborted')),
 )
@@ -40,7 +40,6 @@ SUBMISSION_STATUS = (
     ('G', _('Grading')),
     ('D', _('Completed')),
     ('IE', _('Internal Error')),
-    ('CKE', _('Checker Error')),
     ('CE', _('Compile Error')),
     ('AB', _('Aborted')),
 )
@@ -67,7 +66,6 @@ class Submission(models.Model):
         'RTE': _('Runtime Error'),
         'CE': _('Compile Error'),
         'IE': _('Internal Error (judging server error)'),
-        'CKE': _('Checker Error'),
         'QU': _('Queued'),
         'P': _('Processing'),
         'G': _('Grading'),
@@ -83,7 +81,7 @@ class Submission(models.Model):
     points = models.FloatField(verbose_name=_('points granted'), null=True)
     language = models.ForeignKey(Language, verbose_name=_('submission language'),
                                  on_delete=models.CASCADE, db_index=False)
-    status = models.CharField(verbose_name=_('status'), max_length=3, choices=STATUS, default='QU', db_index=True)
+    status = models.CharField(verbose_name=_('status'), max_length=2, choices=STATUS, default='QU', db_index=True)
     result = models.CharField(verbose_name=_('result'), max_length=3, choices=SUBMISSION_RESULT,
                               default=None, null=True, blank=True)
     error = models.TextField(verbose_name=_('compile errors'), null=True, blank=True)
@@ -107,9 +105,23 @@ class Submission(models.Model):
         return result
 
     @property
+    def internal_error_info(self):
+        """Return a checker marker and message, or the original legacy text."""
+        if self.status == 'IE' and self.error and self.error.startswith('{'):
+            try:
+                data = json.loads(self.error)
+            except (ValueError, RecursionError):
+                pass
+            else:
+                if (isinstance(data, dict) and data.get('version') == '1'
+                        and data.get('error-type') == 'checker' and isinstance(data.get('message'), str)):
+                    return True, data['message']
+        return False, self.error
+
+    @property
     def result_class(self):
         # This exists to save all these conditionals from being executed (slowly) in each row.html template
-        if self.status in ('IE', 'CE', 'CKE'):
+        if self.status in ('IE', 'CE'):
             return self.status
         return Submission.result_class_from_code(self.result)
 
@@ -130,6 +142,8 @@ class Submission(models.Model):
         return self.locked_after is not None and self.locked_after < timezone.now()
 
     def judge(self, *args, rejudge=False, force_judge=False, rejudge_user=None, **kwargs):
+        if self.language.is_disabled:
+            return
         if force_judge or not self.is_locked:
             if rejudge:
                 with revisions.create_revision(manage_manually=True):
@@ -161,8 +175,7 @@ class Submission(models.Model):
             return True
         elif source_visibility == SubmissionSourceAccess.SOLVED and \
                 (self.problem.is_public or self.problem.testers.filter(id=profile.id).exists()) and \
-                self.problem.submission_set.filter(user_id=profile.id, result='AC',
-                                                   points=self.problem.points).exists():
+                self.problem.submission_set.filter(user_id=profile.id, result='AC').exists():
             return True
         elif source_visibility == SubmissionSourceAccess.ONLY_OWN and \
                 self.problem.testers.filter(id=profile.id).exists():

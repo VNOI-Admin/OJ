@@ -70,7 +70,7 @@ def version_matrix(request):
     groups = defaultdict(list)
 
     judges = {judge.id: judge.name for judge in Judge.objects.filter(online=True)}
-    languages = Language.objects.filter(judges__online=True).distinct()
+    languages = Language.objects.filter(judges__online=True, is_disabled=False).distinct()
 
     for runtime in RuntimeVersion.objects.filter(judge__online=True).order_by('priority'):
         matrix[runtime.judge_id][runtime.language_id].append(runtime)

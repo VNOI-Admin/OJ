@@ -93,7 +93,7 @@ class VNOJContestFormat(DefaultContestFormat):
                 dt = (time - participation.start).total_seconds()
                 # An IE can have a submission result of `None`
                 problem_subs = participation.submissions.exclude(submission__result__isnull=True) \
-                                            .exclude(submission__result__in=['IE', 'CE', 'CKE']) \
+                                            .exclude(submission__result__in=['IE', 'CE']) \
                                             .filter(problem_id=prob)
 
                 # Compute penalty

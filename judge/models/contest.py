@@ -462,6 +462,10 @@ class Contest(models.Model):
                 raise self.PrivateContest()
             return
 
+        # Public contests are accessible to everyone; skip the permission queries below.
+        if self.is_public_contest():
+            return
+
         # If the user can view or edit all contests
         if user.has_perm('judge.see_private_contest') or user.has_perm('judge.edit_all_contest'):
             return
@@ -526,6 +530,9 @@ class Contest(models.Model):
     def get_public_contests(cls):
         return cls.objects.filter(is_visible=True, is_organization_private=False, is_private=False) \
                           .defer('description').distinct()
+
+    def is_public_contest(self):
+        return self.is_visible and not self.is_private and not self.is_organization_private
 
     @classmethod
     def get_visible_contests(cls, user):

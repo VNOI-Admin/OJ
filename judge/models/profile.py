@@ -275,9 +275,6 @@ class Profile(models.Model):
                                       default=False)
     ban_reason = models.TextField(null=True, blank=True,
                                   help_text=_('Show to banned user in login page.'))
-    allow_tagging = models.BooleanField(verbose_name=_('Allow tagging'),
-                                        help_text=_('User will be allowed to tag problems.'),
-                                        default=True)
     rating = models.IntegerField(null=True, default=None)
     user_script = models.TextField(verbose_name=_('user script'), default='', blank=True, max_length=65536,
                                    help_text=_('User-defined JavaScript for site customization.'))
@@ -371,15 +368,6 @@ class Profile(models.Model):
         return self.user != staff and not self.user.is_superuser and staff.has_perm('judge.ban_user')
 
     @cached_property
-    def can_tag_problems(self):
-        if self.allow_tagging:
-            if self.user.has_perm('judge.add_tagproblem'):
-                return True
-            if self.rating is not None and self.rating >= settings.VNOJ_TAG_PROBLEM_MIN_RATING:
-                return True
-        return False
-
-    @cached_property
     def resolved_ace_theme(self):
         if self.ace_theme != 'auto':
             return self.ace_theme
@@ -395,6 +383,12 @@ class Profile(models.Model):
         return set(self.contest_history.filter(virtual=0).values_list('contest_id', flat=True))
 
     _pp_table = [pow(settings.DMOJ_PP_STEP, i) for i in range(settings.DMOJ_PP_ENTRIES)]
+
+    @cached_property
+    def has_problem_role(self):
+        from judge.models import Problem
+        return any(field.through.objects.filter(profile=self).exists()
+                   for field in (Problem.authors, Problem.curators, Problem.testers))
 
     def calculate_points(self, table=_pp_table):
         from judge.models import Problem
@@ -480,6 +474,13 @@ class Profile(models.Model):
     remove_contest.alters_data = True
 
     def update_contest(self):
+        if self.current_contest_id is None:
+            return
+        field = self._meta.get_field('current_contest')
+        if not field.is_cached(self):
+            # Fetch participation and contest in one query instead of two lazy loads.
+            self.current_contest = field.related_model.objects.select_related('contest') \
+                .filter(id=self.current_contest_id).first()
         contest = self.current_contest
         if contest is not None and (contest.ended or not contest.contest.is_accessible_by(self.user)):
             self.remove_contest()

@@ -14,5 +14,5 @@ class LanguageList(TitleMixin, ListView):
     def get_queryset(self):
         queryset = super().get_queryset().prefetch_related('runtimeversion_set')
         if not self.request.user.is_superuser and not self.request.user.is_staff:
-            queryset = queryset.filter(judges__online=True).distinct()
+            queryset = queryset.filter(judges__online=True, is_disabled=False).distinct()
         return queryset

@@ -54,6 +54,10 @@ class Language(models.Model):
     include_in_problem = models.BooleanField(verbose_name=_('Include in problems'), default=False,
                                              help_text=_('If true, this language will be added to all problems'))
 
+    is_disabled = models.BooleanField(verbose_name=_('disabled'), default=False,
+                                      help_text=_('If true, users cannot submit in this language and it is hidden '
+                                                  'from the supported language lists.'))
+
     def runtime_versions(self):
         runtimes = OrderedDict()
         # There be dragons here if two judges specify different priorities
@@ -113,7 +117,12 @@ class Language(models.Model):
 
     @classmethod
     def get_default_language_pk(cls):
-        return cls.get_default_language().pk
+        # Only select pk: old migrations call this as a field default before newer Language columns exist.
+        for key in (settings.DEFAULT_USER_LANGUAGE, 'PY3'):
+            pk = Language.objects.filter(key=key).values_list('pk', flat=True).first()
+            if pk is not None:
+                return pk
+        return cls.get_python3().pk
 
     class Meta:
         ordering = ['key']

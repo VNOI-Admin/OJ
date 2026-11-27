@@ -55,7 +55,7 @@ def get_contest_problem(problem, profile):
 
 
 def get_contest_submission_count(problem, profile, virtual):
-    return profile.current_contest.submissions.exclude(submission__status__in=['IE', 'CKE']) \
+    return profile.current_contest.submissions.exclude(submission__status__in=['IE']) \
                   .filter(problem__problem=problem, participation__virtual=virtual).count()
 
 
@@ -261,7 +261,7 @@ class ProblemSubmitMixin:
         max_subs = self.contest_problem and self.contest_problem.max_submissions
         if max_subs is None:
             return None
-        # When an IE/CKE submission is rejudged into another status, it will count towards the
+        # When an IE submission is rejudged into a non-IE status, it will count towards the
         # submission limit. We max with 0 to ensure that `remaining_submission_count` returns
         # a non-negative integer, which is required for future checks in this view.
         return max(
@@ -354,12 +354,11 @@ class ProblemSubmitMixin:
         if (
             not request.user.has_perm('judge.spam_submission') and
             Submission.objects.filter(user=request.profile, rejudged_date__isnull=True)
-                              .exclude(status__in=['D', 'IE', 'CE', 'AB', 'CKE'])
-                              .count() >= settings.DMOJ_SUBMISSION_LIMIT
+                              .exclude(status__in=['D', 'IE', 'CE', 'AB']).count() >= settings.DMOJ_SUBMISSION_LIMIT
         ):
             return HttpResponse(format_html('<h1>{0}</h1>', _('You submitted too many submissions.')), status=429), None
 
-        if not self.object.allowed_languages.filter(id=form.cleaned_data['language'].id).exists():
+        if not self.object.allowed_languages.filter(id=form.cleaned_data['language'].id, is_disabled=False).exists():
             raise PermissionDenied()
 
         if not request.user.is_superuser and self.object.banned_users.filter(id=request.profile.id).exists():
@@ -484,7 +483,8 @@ class ProblemDetail(ProblemMixin, ProblemClarificationsMixin, SolvedProblemMixin
             online=True,
             storages__contains=[self.object.effective_storage],
         )
-        context['show_languages'] = self.object.allowed_languages.count() != Language.objects.count()
+        context['show_languages'] = (self.object.allowed_languages.filter(is_disabled=False).count() !=
+                                     Language.objects.filter(is_disabled=False).count())
         context['has_pdf_render'] = PDF_RENDERING_ENABLED
         context['completed_problem_ids'] = self.get_completed_problems()
         context['attempted_problems'] = self.get_attempted_problems()
@@ -680,11 +680,7 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         if self.profile is not None:
             # Resolve the ids up front: OR EXISTS(...) defeats the (is_public, is_organization_private, date)
             # index and scans the whole table, a short literal id list does not.
-            through_ids = [
-                field.through.objects.filter(profile=self.profile).values_list('problem_id', flat=True)
-                for field in (Problem.authors, Problem.curators, Problem.testers)
-            ]
-            ids = list(through_ids[0].union(*through_ids[1:]))
+            ids = Problem.author_curator_tester_ids(self.profile)
             if ids:
                 _filter |= Q(id__in=ids)
         return _filter
@@ -721,7 +717,6 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
                         Q(code__icontains=query) | Q(name__icontains=query) | Q(source__icontains=query) |
                         Q(id__in=ProblemTranslation.objects.filter(
                             name__icontains=query, language=self.request.LANGUAGE_CODE).values('problem_id')))
-        self.prepoint_queryset = queryset
         if self.point_start is not None:
             queryset = queryset.filter(points__gte=self.point_start)
         if self.point_end is not None:
@@ -751,30 +746,14 @@ class ProblemList(QueryStringSortMixin, TitleMixin, SolvedProblemMixin, Infinite
         context['completed_problem_ids'] = self.get_completed_problems()
         context['attempted_problems'] = self.get_attempted_problems()
         context['hot_problems'] = self.get_hot_problems()
-        context['point_start'], context['point_end'], context['point_values'] = self.get_noui_slider_points()
+        context['point_start'], context['point_end'] = self.point_start, self.point_end
+        context['point_values'] = {
+            'min': settings.DMOJ_PROBLEM_MIN_PROBLEM_POINTS,
+            'max': settings.DMOJ_PROBLEM_MAX_PROBLEM_POINTS,
+        }
         context.update(self.get_sort_context())
         context.update(self.get_sort_paginate_context())
         return context
-
-    def get_noui_slider_points(self):
-        points = sorted(self.prepoint_queryset.values_list('points', flat=True).distinct())
-        if not points:
-            return 0, 0, {}
-        if len(points) == 1:
-            return points[0] - 1, points[0] + 1, {
-                'min': points[0] - 1,
-                '50%': points[0],
-                'max': points[0] + 1,
-            }
-
-        start, end = points[0], points[-1]
-        if self.point_start is not None:
-            start = self.point_start
-        if self.point_end is not None:
-            end = self.point_end
-        points_map = {0.0: 'min', 1.0: 'max'}
-        size = len(points) - 1
-        return start, end, {points_map.get(i / size, '%.2f%%' % (100 * i / size,)): j for i, j in enumerate(points)}
 
     def GET_with_session(self, request, key):
         if not request.GET:
@@ -1137,8 +1116,10 @@ class ProblemEdit(ProblemMixin, TitleMixin, UpdateView):
         return kwargs
 
     def save_statement(self, form, problem):
-        statement_file = form.files.get('statement_file', None)
-        if statement_file is not None:
+        statement_file = form.cleaned_data.get('statement_file')
+        if statement_file is False:
+            problem.pdf_url = ''
+        elif statement_file is not None:
             problem.pdf_url = pdf_statement_uploader(statement_file)
 
     def post(self, request, *args, **kwargs):

@@ -44,7 +44,7 @@ class ECOOContestFormat(DefaultContestFormat):
         score = 0
         format_data = {}
 
-        submissions = participation.submissions.exclude(submission__result__in=('IE', 'CE', 'CKE'))
+        submissions = participation.submissions.exclude(submission__result__in=('IE', 'CE'))
 
         submission_counts = {
             data['problem_id']: data['count'] for data in submissions.values('problem_id').annotate(count=Count('id'))

@@ -894,10 +894,10 @@ msgstr ""
 
 #: judge/forms.py:261
 msgid ""
-"Points awarded for problem completion. From 0 to 2. You can approximate: 0.5 "
+"Points awarded for problem completion. From 0.01 to 2. You can approximate: 0.5 "
 "is as hard as Problem 1 of VOI; 1 = Problem 2 of VOI; 1.5 = Problem 3 of VOI."
 msgstr ""
-"Điểm của bài, từ 0 tới 2. Có thể xấp xỉ điểm như sau: bài có điểm 0.5 sẽ khó "
+"Điểm của bài, từ 0.01 tới 2. Có thể xấp xỉ điểm như sau: bài có điểm 0.5 sẽ khó "
 "như bài 1 thi HSG QG; 1 điểm = bài 2; 1.5 điểm = bài 3."
 
 #: judge/forms.py:267 judge/forms.py:927
@@ -3482,10 +3482,6 @@ msgstr "Lỗi dịch (CE)"
 #: judge/models/submission.py:31 judge/models/submission.py:41
 msgid "Internal Error"
 msgstr "Lỗi Nội Bộ"
-
-#: judge/models/submission.py
-msgid "Checker Error"
-msgstr "Lỗi trình kiểm tra"
 
 #: judge/models/submission.py:32 judge/models/submission.py:60
 msgid "Short Circuited"
@@ -8744,6 +8740,10 @@ msgstr "Phiên bản"
 msgid "%(date)s on judge %(judge)s"
 msgstr "%(date)s ở máy chấm %(judge)s"
 
+#: templates/submission/internal-error-message.html:4
+msgid "A checker error occurred while grading."
+msgstr "Một lỗi từ bộ kiểm tra đã xảy ra trong quá trình chấm bài."
+
 #: templates/submission/internal-error-message.html:3
 #, python-format
 msgid ""
@@ -8756,10 +8756,6 @@ msgstr ""
 #: templates/submission/internal-error-message.html:5
 msgid "An internal error occurred while grading."
 msgstr "Một lỗi hệ thống vừa xảy ra trong quá trình chấm bài."
-
-#: templates/submission/internal-error-message.html
-msgid "A checker error occurred while grading."
-msgstr "Một lỗi trình kiểm tra vừa xảy ra trong quá trình chấm bài."
 
 #: templates/submission/internal-error-message.html:12
 msgid "Error information"
