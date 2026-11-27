@@ -1,5 +1,6 @@
 import hashlib
 import hmac
+import json
 
 from django.conf import settings
 from django.core.exceptions import ObjectDoesNotExist
@@ -102,6 +103,20 @@ class Submission(models.Model):
         if result == 'PAC':
             return '_AC'
         return result
+
+    @property
+    def internal_error_info(self):
+        """Return a checker marker and message, or the original legacy text."""
+        if self.status == 'IE' and self.error and self.error.startswith('{'):
+            try:
+                data = json.loads(self.error)
+            except (ValueError, RecursionError):
+                pass
+            else:
+                if (isinstance(data, dict) and data.get('version') == '1' and
+                        data.get('error-type') == 'checker' and isinstance(data.get('message'), str)):
+                    return True, data['message']
+        return False, self.error
 
     @property
     def result_class(self):

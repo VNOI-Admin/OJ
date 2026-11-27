@@ -8740,6 +8740,10 @@ msgstr "Phiên bản"
 msgid "%(date)s on judge %(judge)s"
 msgstr "%(date)s ở máy chấm %(judge)s"
 
+#: templates/submission/internal-error-message.html:4
+msgid "A checker error occurred while grading."
+msgstr "Một lỗi từ bộ kiểm tra đã xảy ra trong quá trình chấm bài."
+
 #: templates/submission/internal-error-message.html:3
 #, python-format
 msgid ""

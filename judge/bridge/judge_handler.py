@@ -485,7 +485,10 @@ class JudgeHandler(ZlibPacketHandler):
         self._free_self(packet)
 
         id = packet['submission-id']
-        if Submission.objects.filter(id=id).update(status='IE', result='IE', error=packet['message']):
+        error = packet['message']
+        if packet.get('error-type') == 'checker':
+            error = json.dumps({'version': '1', 'error-type': 'checker', 'message': error})
+        if Submission.objects.filter(id=id).update(status='IE', result='IE', error=error):
             event.post('sub_%s' % Submission.get_id_secret(id), {'type': 'internal-error'})
             self._post_update_submission(id, 'internal-error', done=True)
             json_log.info(self._make_json_log(packet, action='internal-error', message=packet['message'],
