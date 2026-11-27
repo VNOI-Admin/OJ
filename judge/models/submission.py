@@ -113,8 +113,8 @@ class Submission(models.Model):
             except (ValueError, RecursionError):
                 pass
             else:
-                if (isinstance(data, dict) and data.get('version') == '1'
-                        and data.get('error-type') == 'checker' and isinstance(data.get('message'), str)):
+                if (isinstance(data, dict) and data.get('version') == '1' and
+                        data.get('error-type') == 'checker' and isinstance(data.get('message'), str)):
                     return True, data['message']
         return False, self.error
 
